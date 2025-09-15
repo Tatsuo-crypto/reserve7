@@ -125,8 +125,16 @@ export default function ReservationsPage() {
     return clientReservationsInMonth.length
   }
 
+
   // Handle reservation cancellation
   const handleCancel = async (reservationId: string) => {
+    // Check if user is logged in
+    if (!session?.user) {
+      alert('ログインが必要です。ログインページにリダイレクトします。')
+      router.push('/login')
+      return
+    }
+    
     if (!confirm('この予約をキャンセルしますか？')) {
       return
     }
@@ -134,6 +142,10 @@ export default function ReservationsPage() {
     try {
       const response = await fetch(`/api/reservations/${reservationId}`, {
         method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include', // Include session cookies
       })
 
       if (response.ok) {
@@ -142,7 +154,12 @@ export default function ReservationsPage() {
         alert('予約がキャンセルされました')
       } else {
         const data = await response.json()
-        alert(data.error || '予約のキャンセルに失敗しました')
+        if (data.error === '認証が必要です') {
+          alert('セッションが期限切れです。再度ログインしてください。')
+          router.push('/login')
+        } else {
+          alert(data.error || '予約のキャンセルに失敗しました')
+        }
       }
     } catch (error) {
       console.error('Cancel error:', error)
@@ -173,6 +190,7 @@ export default function ReservationsPage() {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include', // Include session cookies
         body: JSON.stringify({
           title: editFormData.title,
           startTime: new Date(editFormData.startTime).toISOString(),
