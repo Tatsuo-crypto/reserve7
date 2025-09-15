@@ -38,6 +38,8 @@ export default function ReservationsPage() {
     endTime: '',
     notes: ''
   })
+  const [showConfirmModal, setShowConfirmModal] = useState(false)
+  const [reservationToCancel, setReservationToCancel] = useState<string | null>(null)
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -127,7 +129,7 @@ export default function ReservationsPage() {
 
 
   // Handle reservation cancellation
-  const handleCancel = async (reservationId: string) => {
+  const handleCancel = (reservationId: string) => {
     // Check if user is logged in
     if (!session?.user) {
       alert('ログインが必要です。ログインページにリダイレクトします。')
@@ -135,12 +137,19 @@ export default function ReservationsPage() {
       return
     }
     
-    if (!confirm('この予約をキャンセルしますか？')) {
-      return
-    }
+    // Show custom confirm modal
+    setReservationToCancel(reservationId)
+    setShowConfirmModal(true)
+  }
 
+  // Confirm cancellation
+  const confirmCancel = async () => {
+    if (!reservationToCancel) return
+
+    setShowConfirmModal(false)
+    
     try {
-      const response = await fetch(`/api/reservations/${reservationId}`, {
+      const response = await fetch(`/api/reservations/${reservationToCancel}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -150,7 +159,7 @@ export default function ReservationsPage() {
 
       if (response.ok) {
         // Remove the reservation from the list
-        setReservations(prev => prev.filter(r => r.id !== reservationId))
+        setReservations(prev => prev.filter(r => r.id !== reservationToCancel))
         alert('予約がキャンセルされました')
       } else {
         const data = await response.json()
@@ -164,7 +173,15 @@ export default function ReservationsPage() {
     } catch (error) {
       console.error('Cancel error:', error)
       alert('予約のキャンセルに失敗しました')
+    } finally {
+      setReservationToCancel(null)
     }
+  }
+
+  // Cancel the cancellation
+  const cancelCancel = () => {
+    setShowConfirmModal(false)
+    setReservationToCancel(null)
   }
 
   // Handle reservation edit
@@ -234,7 +251,7 @@ export default function ReservationsPage() {
         </div>
       </div>
     )
-  }
+  }  
 
   if (status === 'unauthenticated') {
     return null // Will redirect
@@ -367,13 +384,23 @@ export default function ReservationsPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex space-x-2">
                           <button
-                            onClick={() => handleEdit(reservation)}
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault()
+                              e.stopPropagation()
+                              handleEdit(reservation)
+                            }}
                             className="text-blue-600 hover:text-blue-900 transition-colors"
                           >
                             変更
                           </button>
                           <button
-                            onClick={() => handleCancel(reservation.id)}
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault()
+                              e.stopPropagation()
+                              handleCancel(reservation.id)
+                            }}
                             className="text-red-600 hover:text-red-900 transition-colors"
                           >
                             キャンセル
@@ -478,6 +505,43 @@ export default function ReservationsPage() {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirm Cancel Modal */}
+      {showConfirmModal && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="mt-3">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+                <svg className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 text-center mb-4">
+                予約をキャンセルしますか？
+              </h3>
+              <p className="text-sm text-gray-500 text-center mb-6">
+                この操作は取り消すことができません。
+              </p>
+              <div className="flex justify-center space-x-3">
+                <button
+                  type="button"
+                  onClick={cancelCancel}
+                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors"
+                >
+                  キャンセル
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmCancel}
+                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+                >
+                  削除する
+                </button>
+              </div>
             </div>
           </div>
         </div>
