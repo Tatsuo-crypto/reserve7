@@ -337,7 +337,7 @@ export default function ReservationsPage() {
                     )}
                     {isAdmin && (
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        タイトル
+                        回数
                       </th>
                     )}
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -372,7 +372,7 @@ export default function ReservationsPage() {
                       )}
                       {isAdmin && (
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {reservation.title}
+                          {getMonthlyCount(reservation, reservations)}回目
                         </td>
                       )}
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
