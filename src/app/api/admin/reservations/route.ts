@@ -3,7 +3,6 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/app/api/auth/[...nextauth]/route'
 import { supabase } from '@/lib/supabase'
 import { isAdmin } from '@/lib/env'
-import { createReservationSchema } from '@/lib/validations'
 import { createGoogleCalendarService } from '@/lib/google-calendar'
 
 export async function POST(request: NextRequest) {
@@ -28,7 +27,14 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     
     // Validate input
-    const { clientEmail, title, startTime, notes } = createReservationSchema.parse(body)
+    const { clientEmail, title, startTime, notes } = body
+    
+    if (!clientEmail || !title || !startTime) {
+      return NextResponse.json(
+        { error: 'クライアントメール、タイトル、開始時間は必須です' },
+        { status: 400 }
+      )
+    }
 
     // Get client user ID
     const { data: clientUser, error: clientError } = await supabase

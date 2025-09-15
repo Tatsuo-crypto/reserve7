@@ -27,6 +27,7 @@ export async function GET(request: NextRequest) {
         end_time,
         notes,
         created_at,
+        external_event_id,
         users!client_id (
           id,
           full_name,

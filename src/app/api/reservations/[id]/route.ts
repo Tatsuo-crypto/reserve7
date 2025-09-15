@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/app/api/auth/[...nextauth]/route'
 import { supabase } from '@/lib/supabase'
 import { isAdmin } from '@/lib/env'
+import { createGoogleCalendarService } from '@/lib/google-calendar'
 
 export async function DELETE(
   request: NextRequest,
@@ -28,6 +29,7 @@ export async function DELETE(
       .select(`
         id,
         client_id,
+        external_event_id,
         users!client_id (
           email
         )
@@ -50,6 +52,20 @@ export async function DELETE(
         { error: 'この予約を削除する権限がありません' },
         { status: 403 }
       )
+    }
+
+    // Delete from Google Calendar first (if event exists)
+    if (reservation.external_event_id) {
+      const calendarService = createGoogleCalendarService()
+      if (calendarService) {
+        try {
+          await calendarService.deleteEvent(reservation.external_event_id)
+          console.log('Google Calendar event deleted:', reservation.external_event_id)
+        } catch (calendarError) {
+          console.error('Calendar event deletion failed:', calendarError)
+          // Continue with reservation deletion even if calendar sync fails
+        }
+      }
     }
 
     // Delete the reservation
@@ -115,6 +131,7 @@ export async function PUT(
         id,
         client_id,
         title,
+        external_event_id,
         users!client_id (
           email,
           full_name
@@ -178,6 +195,27 @@ export async function PUT(
         { error: '指定された時間は他の予約と重複しています' },
         { status: 409 }
       )
+    }
+
+    // Update Google Calendar event first (if event exists)
+    if (reservation.external_event_id) {
+      const calendarService = createGoogleCalendarService()
+      if (calendarService) {
+        try {
+          await calendarService.updateEvent(reservation.external_event_id, {
+            title,
+            startTime: startDateTime.toISOString(),
+            endTime: endDateTime.toISOString(),
+            clientName: (reservation.users as any).full_name,
+            clientEmail: (reservation.users as any).email,
+            notes: notes || undefined,
+          })
+          console.log('Google Calendar event updated:', reservation.external_event_id)
+        } catch (calendarError) {
+          console.error('Calendar event update failed:', calendarError)
+          // Continue with reservation update even if calendar sync fails
+        }
+      }
     }
 
     // Update the reservation

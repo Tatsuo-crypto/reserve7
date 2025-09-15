@@ -2,32 +2,35 @@ import { google } from 'googleapis'
 import { env } from './env'
 
 export class GoogleCalendarService {
-  private calendar
-  private auth
+  private calendar: any
 
   constructor() {
-    if (!env.GOOGLE_SERVICE_ACCOUNT_KEY || !env.GOOGLE_CALENDAR_ID) {
-      throw new Error('Google Calendar credentials not configured')
-    }
-
     try {
-      // Parse the service account key from environment variable
-      const serviceAccountKey = JSON.parse(env.GOOGLE_SERVICE_ACCOUNT_KEY)
+      if (!env.GOOGLE_SERVICE_ACCOUNT_KEY || !env.GOOGLE_CALENDAR_ID) {
+        console.warn('Google Calendar credentials not configured')
+        this.calendar = null
+        return
+      }
+
+      // console.log('Initializing Google Calendar service...')
+      // console.log('Calendar ID:', env.GOOGLE_CALENDAR_ID)
+      // console.log('Service account key exists:', !!env.GOOGLE_SERVICE_ACCOUNT_KEY)
       
-      // Create JWT auth client
-      this.auth = new google.auth.JWT(
-        serviceAccountKey.client_email,
+      const credentials = JSON.parse(env.GOOGLE_SERVICE_ACCOUNT_KEY)
+      // console.log('Service account email:', credentials.client_email)
+      
+      const auth = new google.auth.JWT(
+        credentials.client_email,
         undefined,
-        serviceAccountKey.private_key,
-        ['https://www.googleapis.com/auth/calendar'],
-        undefined
+        credentials.private_key,
+        ['https://www.googleapis.com/auth/calendar']
       )
 
-      // Initialize Calendar API
-      this.calendar = google.calendar({ version: 'v3', auth: this.auth })
+      this.calendar = google.calendar({ version: 'v3', auth })
+      console.log('Google Calendar service initialized successfully')
     } catch (error) {
       console.error('Failed to initialize Google Calendar service:', error)
-      throw new Error('Google Calendar service initialization failed')
+      this.calendar = null
     }
   }
 
@@ -42,50 +45,40 @@ export class GoogleCalendarService {
     clientEmail: string
     notes?: string
   }): Promise<string> {
-    try {
-      const event = {
-        summary: `${reservation.title} - ${reservation.clientName}`,
-        description: [
-          `クライアント: ${reservation.clientName} (${reservation.clientEmail})`,
-          reservation.notes ? `メモ: ${reservation.notes}` : '',
-        ].filter(Boolean).join('\n'),
-        start: {
-          dateTime: reservation.startTime,
-          timeZone: 'Asia/Tokyo',
-        },
-        end: {
-          dateTime: reservation.endTime,
-          timeZone: 'Asia/Tokyo',
-        },
-        attendees: [
-          {
-            email: reservation.clientEmail,
-            displayName: reservation.clientName,
-          }
-        ],
-        reminders: {
-          useDefault: false,
-          overrides: [
-            { method: 'email', minutes: 24 * 60 }, // 24 hours before
-            { method: 'popup', minutes: 30 }, // 30 minutes before
-          ],
-        },
-      }
+    if (!this.calendar) {
+      throw new Error('Google Calendar service not initialized')
+    }
 
+    const event = {
+      summary: `${reservation.title} - ${reservation.clientName}`,
+      description: [
+        `クライアント: ${reservation.clientName} (${reservation.clientEmail})`,
+        reservation.notes ? `メモ: ${reservation.notes}` : '',
+      ].filter(Boolean).join('\n'),
+      start: {
+        dateTime: reservation.startTime,
+        timeZone: 'Asia/Tokyo',
+      },
+      end: {
+        dateTime: reservation.endTime,
+        timeZone: 'Asia/Tokyo',
+      },
+    }
+
+    try {
       const response = await this.calendar.events.insert({
         calendarId: env.GOOGLE_CALENDAR_ID!,
         requestBody: event,
-        sendUpdates: 'all', // Send email notifications to attendees
       })
 
       if (!response.data.id) {
-        throw new Error('Failed to create calendar event - no event ID returned')
+        throw new Error('Event creation failed - no event ID returned')
       }
 
       return response.data.id
     } catch (error) {
-      console.error('Failed to create calendar event:', error)
-      throw new Error('Calendar event creation failed')
+      console.error('Google Calendar event creation error:', error)
+      throw error
     }
   }
 
@@ -100,38 +93,35 @@ export class GoogleCalendarService {
     clientEmail: string
     notes?: string
   }): Promise<void> {
-    try {
-      const event = {
-        summary: `${reservation.title} - ${reservation.clientName}`,
-        description: [
-          `クライアント: ${reservation.clientName} (${reservation.clientEmail})`,
-          reservation.notes ? `メモ: ${reservation.notes}` : '',
-        ].filter(Boolean).join('\n'),
-        start: {
-          dateTime: reservation.startTime,
-          timeZone: 'Asia/Tokyo',
-        },
-        end: {
-          dateTime: reservation.endTime,
-          timeZone: 'Asia/Tokyo',
-        },
-        attendees: [
-          {
-            email: reservation.clientEmail,
-            displayName: reservation.clientName,
-          }
-        ],
-      }
+    if (!this.calendar) {
+      throw new Error('Google Calendar service not initialized')
+    }
 
+    const event = {
+      summary: `${reservation.title} - ${reservation.clientName}`,
+      description: [
+        `クライアント: ${reservation.clientName} (${reservation.clientEmail})`,
+        reservation.notes ? `メモ: ${reservation.notes}` : '',
+      ].filter(Boolean).join('\n'),
+      start: {
+        dateTime: reservation.startTime,
+        timeZone: 'Asia/Tokyo',
+      },
+      end: {
+        dateTime: reservation.endTime,
+        timeZone: 'Asia/Tokyo',
+      },
+    }
+
+    try {
       await this.calendar.events.update({
         calendarId: env.GOOGLE_CALENDAR_ID!,
         eventId: eventId,
         requestBody: event,
-        sendUpdates: 'all',
       })
     } catch (error) {
-      console.error('Failed to update calendar event:', error)
-      throw new Error('Calendar event update failed')
+      console.error('Google Calendar event update error:', error)
+      throw error
     }
   }
 
@@ -143,11 +133,10 @@ export class GoogleCalendarService {
       await this.calendar.events.delete({
         calendarId: env.GOOGLE_CALENDAR_ID!,
         eventId: eventId,
-        sendUpdates: 'all',
       })
     } catch (error) {
-      console.error('Failed to delete calendar event:', error)
-      throw new Error('Calendar event deletion failed')
+      console.error('Google Calendar event deletion error:', error)
+      throw error
     }
   }
 

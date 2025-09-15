@@ -19,7 +19,21 @@ const envSchema = z.object({
   GOOGLE_SERVICE_ACCOUNT_KEY: z.string().optional(),
 });
 
-export const env = envSchema.parse(process.env);
+export const env = {
+  SUPABASE_URL: process.env.SUPABASE_URL!,
+  SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY!,
+  NEXTAUTH_URL: process.env.NEXTAUTH_URL!,
+  NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET!,
+  ADMIN_EMAILS: process.env.ADMIN_EMAILS || '',
+  GOOGLE_CALENDAR_ID: process.env.GOOGLE_CALENDAR_ID,
+  GOOGLE_SERVICE_ACCOUNT_KEY: process.env.GOOGLE_SERVICE_ACCOUNT_KEY,
+}
+
+// Debug environment variables (remove in production)
+// console.log('Environment variables loaded:')
+// console.log('GOOGLE_CALENDAR_ID:', env.GOOGLE_CALENDAR_ID)
+// console.log('GOOGLE_SERVICE_ACCOUNT_KEY exists:', !!env.GOOGLE_SERVICE_ACCOUNT_KEY)
+// console.log('GOOGLE_SERVICE_ACCOUNT_KEY length:', env.GOOGLE_SERVICE_ACCOUNT_KEY?.length)
 
 export function isAdminEmail(email: string): boolean {
   const adminEmails = env.ADMIN_EMAILS.split(',').map(e => e.trim().toLowerCase());
