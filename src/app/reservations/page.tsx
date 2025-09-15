@@ -27,9 +27,17 @@ export default function ReservationsPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const [reservations, setReservations] = useState<Reservation[]>([])
-  const [isAdmin, setIsAdmin] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [editingReservation, setEditingReservation] = useState<Reservation | null>(null)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [editFormData, setEditFormData] = useState({
+    title: '',
+    startTime: '',
+    endTime: '',
+    notes: ''
+  })
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -115,6 +123,88 @@ export default function ReservationsPage() {
     
     // Return the count (length of filtered array)
     return clientReservationsInMonth.length
+  }
+
+  // Handle reservation cancellation
+  const handleCancel = async (reservationId: string) => {
+    if (!confirm('この予約をキャンセルしますか？')) {
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/reservations/${reservationId}`, {
+        method: 'DELETE',
+      })
+
+      if (response.ok) {
+        // Remove the reservation from the list
+        setReservations(prev => prev.filter(r => r.id !== reservationId))
+        alert('予約がキャンセルされました')
+      } else {
+        const data = await response.json()
+        alert(data.error || '予約のキャンセルに失敗しました')
+      }
+    } catch (error) {
+      console.error('Cancel error:', error)
+      alert('予約のキャンセルに失敗しました')
+    }
+  }
+
+  // Handle reservation edit
+  const handleEdit = (reservation: Reservation) => {
+    setEditingReservation(reservation)
+    setEditFormData({
+      title: reservation.title || '',
+      startTime: reservation.startTime.slice(0, 16), // Format for datetime-local input
+      endTime: reservation.endTime.slice(0, 16),
+      notes: reservation.notes || ''
+    })
+    setShowEditModal(true)
+  }
+
+  // Handle edit form submission
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editingReservation) return
+
+    try {
+      const response = await fetch(`/api/reservations/${editingReservation.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: editFormData.title,
+          startTime: new Date(editFormData.startTime).toISOString(),
+          endTime: new Date(editFormData.endTime).toISOString(),
+          notes: editFormData.notes
+        })
+      })
+
+      if (response.ok) {
+        // Update the reservation in the list
+        setReservations(prev => prev.map(r => 
+          r.id === editingReservation.id 
+            ? {
+                ...r,
+                title: editFormData.title,
+                startTime: new Date(editFormData.startTime).toISOString(),
+                endTime: new Date(editFormData.endTime).toISOString(),
+                notes: editFormData.notes
+              }
+            : r
+        ))
+        setShowEditModal(false)
+        setEditingReservation(null)
+        alert('予約が更新されました')
+      } else {
+        const data = await response.json()
+        alert(data.error || '予約の更新に失敗しました')
+      }
+    } catch (error) {
+      console.error('Update error:', error)
+      alert('予約の更新に失敗しました')
+    }
   }
 
   if (status === 'loading' || loading) {
@@ -205,27 +295,25 @@ export default function ReservationsPage() {
                         回数
                       </th>
                     )}
+                    {isAdmin && (
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        クライアント
+                      </th>
+                    )}
+                    {isAdmin && (
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        タイトル
+                      </th>
+                    )}
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       時間
                     </th>
-                    {isAdmin && (
-                      <>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          タイトル
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          クライアント
-                        </th>
-                      </>
-                    )}
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       メモ
                     </th>
-                    {isAdmin && (
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        作成日時
-                      </th>
-                    )}
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      操作
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -239,30 +327,41 @@ export default function ReservationsPage() {
                           {getMonthlyCount(reservation, reservations)}回目
                         </td>
                       )}
+                      {isAdmin && (
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          <div>
+                            <div className="font-medium">{reservation.client.fullName}</div>
+                            <div className="text-gray-500">{reservation.client.email}</div>
+                          </div>
+                        </td>
+                      )}
+                      {isAdmin && (
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {reservation.title}
+                        </td>
+                      )}
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {formatTime(reservation.startTime)} - {formatTime(reservation.endTime)}
                       </td>
-                      {isAdmin && (
-                        <>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {reservation.title}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            <div>
-                              <div className="font-medium">{reservation.client.fullName}</div>
-                              <div className="text-gray-500">{reservation.client.email}</div>
-                            </div>
-                          </td>
-                        </>
-                      )}
                       <td className="px-6 py-4 text-sm text-gray-900">
                         {reservation.notes || '-'}
                       </td>
-                      {isAdmin && (
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {formatDateTime(reservation.createdAt)}
-                        </td>
-                      )}
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => handleEdit(reservation)}
+                            className="text-blue-600 hover:text-blue-900 transition-colors"
+                          >
+                            変更
+                          </button>
+                          <button
+                            onClick={() => handleCancel(reservation.id)}
+                            className="text-red-600 hover:text-red-900 transition-colors"
+                          >
+                            キャンセル
+                          </button>
+                        </div>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -271,6 +370,100 @@ export default function ReservationsPage() {
           </div>
         )}
       </div>
+
+      {/* Edit Modal */}
+      {showEditModal && editingReservation && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="mt-3">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">
+                予約の変更
+              </h3>
+              <form onSubmit={handleEditSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    タイトル
+                  </label>
+                  <input
+                    type="text"
+                    value={editFormData.title}
+                    onChange={(e) => setEditFormData(prev => ({
+                      ...prev,
+                      title: e.target.value
+                    }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="予約タイトルを入力してください"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    開始時間
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={editFormData.startTime}
+                    onChange={(e) => setEditFormData(prev => ({
+                      ...prev,
+                      startTime: e.target.value
+                    }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    終了時間
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={editFormData.endTime}
+                    onChange={(e) => setEditFormData(prev => ({
+                      ...prev,
+                      endTime: e.target.value
+                    }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    メモ
+                  </label>
+                  <textarea
+                    value={editFormData.notes}
+                    onChange={(e) => setEditFormData(prev => ({
+                      ...prev,
+                      notes: e.target.value
+                    }))}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="メモを入力してください（任意）"
+                  />
+                </div>
+                <div className="flex justify-end space-x-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowEditModal(false)
+                      setEditingReservation(null)
+                    }}
+                    className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors"
+                  >
+                    キャンセル
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                  >
+                    更新
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
