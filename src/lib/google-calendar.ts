@@ -50,7 +50,7 @@ export class GoogleCalendarService {
     }
 
     const event = {
-      summary: `${reservation.title} - ${reservation.clientName}`,
+      summary: reservation.title,
       description: [
         `クライアント: ${reservation.clientName} (${reservation.clientEmail})`,
         reservation.notes ? `メモ: ${reservation.notes}` : '',
@@ -98,7 +98,7 @@ export class GoogleCalendarService {
     }
 
     const event = {
-      summary: `${reservation.title} - ${reservation.clientName}`,
+      summary: reservation.title,
       description: [
         `クライアント: ${reservation.clientName} (${reservation.clientEmail})`,
         reservation.notes ? `メモ: ${reservation.notes}` : '',

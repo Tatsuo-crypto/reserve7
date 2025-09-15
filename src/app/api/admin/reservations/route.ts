@@ -4,6 +4,7 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/route'
 import { supabase } from '@/lib/supabase'
 import { isAdmin } from '@/lib/env'
 import { createGoogleCalendarService } from '@/lib/google-calendar'
+import { generateReservationTitle, updateMonthlyTitles } from '@/lib/title-utils'
 
 export async function POST(request: NextRequest) {
   try {
@@ -27,11 +28,11 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     
     // Validate input
-    const { clientEmail, title, startTime, notes } = body
+    const { clientEmail, title, startTime, endTime, notes } = body
     
-    if (!clientEmail || !title || !startTime) {
+    if (!clientEmail || !startTime || !endTime) {
       return NextResponse.json(
-        { error: 'クライアントメール、タイトル、開始時間は必須です' },
+        { error: 'クライアントメール、開始時間、終了時間は必須です' },
         { status: 400 }
       )
     }
@@ -50,9 +51,16 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Calculate end time (60 minutes after start)
+    // Parse start and end times
     const startDateTime = new Date(startTime)
-    const endDateTime = new Date(startDateTime.getTime() + 60 * 60 * 1000) // Add 60 minutes
+    const endDateTime = new Date(endTime)
+
+    // Generate title based on chronological order
+    const generatedTitle = await generateReservationTitle(
+      clientUser.id,
+      clientUser.full_name,
+      startDateTime
+    )
 
     // Check for overlapping reservations
     const { data: existingReservations, error: overlapError } = await supabase
@@ -83,7 +91,7 @@ export async function POST(request: NextRequest) {
     if (calendarService) {
       try {
         externalEventId = await calendarService.createEvent({
-          title,
+          title: generatedTitle,
           startTime: startDateTime.toISOString(),
           endTime: endDateTime.toISOString(),
           clientName: clientUser.full_name,
@@ -102,7 +110,7 @@ export async function POST(request: NextRequest) {
       .from('reservations')
       .insert({
         client_id: clientUser.id,
-        title,
+        title: generatedTitle,
         start_time: startDateTime.toISOString(),
         end_time: endDateTime.toISOString(),
         notes: notes || null,
@@ -127,11 +135,11 @@ export async function POST(request: NextRequest) {
     if (error) {
       console.error('Reservation creation error:', error)
       
-      // If reservation creation fails but calendar event was created, try to clean up
+      // If calendar event was created but reservation failed, try to clean up
       if (externalEventId && calendarService) {
         try {
           await calendarService.deleteEvent(externalEventId)
-          console.log('Cleaned up calendar event due to reservation creation failure')
+          console.log('Cleaned up calendar event after reservation failure')
         } catch (cleanupError) {
           console.error('Failed to cleanup calendar event:', cleanupError)
         }
@@ -143,8 +151,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Update all titles in this month to ensure proper chronological order
+    const startMonth = startDateTime.getMonth()
+    const startYear = startDateTime.getFullYear()
+    await updateMonthlyTitles(clientUser.id, startYear, startMonth)
+
     return NextResponse.json({
-      message: '予約が正常に作成されました',
+      message: '予約が作成されました',
       reservation: {
         id: reservation.id,
         title: reservation.title,

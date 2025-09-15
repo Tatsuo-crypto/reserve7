@@ -32,8 +32,8 @@ export default function NewReservationPage() {
   
   const [formData, setFormData] = useState({
     clientId: '',
-    title: '',
     startTime: '',
+    duration: 60, // Default 60 minutes
     notes: '',
   })
 
@@ -99,53 +99,16 @@ export default function NewReservationPage() {
     }
   }
 
-  const generateTitle = async (client: Client) => {
-    try {
-      // Get the selected start time to calculate count based on chronological order
-      const selectedStartTime = formData.startTime
-      if (!selectedStartTime) {
-        // If no start time selected yet, default to count 1
-        setFormData(prev => ({
-          ...prev,
-          title: `${client.name}1`
-        }))
-        return
-      }
-
-      // Get all reservations for this client to calculate chronological count
-      const response = await fetch('/api/reservations')
-      if (response.ok) {
-        const data = await response.json()
-        const selectedDate = new Date(selectedStartTime)
-        const selectedMonth = selectedDate.getMonth()
-        const selectedYear = selectedDate.getFullYear()
-
-        // Filter reservations for same client, same month, and before selected date
-        const clientReservationsInMonth = data.reservations
-          .filter((r: any) => {
-            const rDate = new Date(r.startTime)
-            return r.client.id === client.id &&
-                   rDate.getMonth() === selectedMonth &&
-                   rDate.getFullYear() === selectedYear &&
-                   rDate < selectedDate
-          })
-          .sort((a: any, b: any) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
-
-        const count = clientReservationsInMonth.length + 1 // +1 for the new reservation
-        const title = `${client.name}${count}`
-        setFormData(prev => ({
-          ...prev,
-          title: title
-        }))
-      }
-    } catch (error) {
-      console.error('Error generating title:', error)
-      // Fallback to simple name if API fails
-      setFormData(prev => ({
-        ...prev,
-        title: `${client.name}1`
-      }))
+  const generateTitle = (client: Client) => {
+    // Get the selected start time to calculate count based on chronological order
+    const selectedStartTime = formData.startTime
+    if (!selectedStartTime) {
+      // If no start time selected yet, default to count 1
+      return `${client.name}1`
     }
+
+    // For now, just return client name + 1 as we'll calculate this on the server
+    return `${client.name}1`
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -158,11 +121,10 @@ export default function NewReservationPage() {
       // Debug: Log form data
       console.log('Form data:', formData)
       console.log('clientId:', formData.clientId, 'length:', formData.clientId.length)
-      console.log('title:', formData.title, 'length:', formData.title.length)
       console.log('startTime:', formData.startTime, 'length:', formData.startTime.length)
 
       // Validate required fields
-      if (!formData.clientId.trim() || !formData.title.trim() || !formData.startTime.trim()) {
+      if (!formData.clientId.trim() || !formData.startTime.trim()) {
         throw new Error('必須項目を入力してください')
       }
 
@@ -178,10 +140,17 @@ export default function NewReservationPage() {
         throw new Error('有効な日時を入力してください')
       }
 
+      // Calculate end time based on duration
+      const endDateTime = new Date(startDateTime.getTime() + formData.duration * 60 * 1000)
+
+      // Generate title based on client
+      const title = generateTitle(selectedClient)
+
       const requestData = {
         clientEmail: selectedClient.email,
-        title: formData.title,
+        title: title,
         startTime: startDateTime.toISOString(),
+        endTime: endDateTime.toISOString(),
         notes: formData.notes || undefined,
       }
 
@@ -320,23 +289,6 @@ export default function NewReservationPage() {
               </p>
             </div>
 
-            {/* Title */}
-            <div>
-              <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
-                予約タイトル *
-              </label>
-              <input
-                type="text"
-                id="title"
-                name="title"
-                value={formData.title}
-                onChange={handleInputChange}
-                required
-                maxLength={255}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="パーソナルトレーニング"
-              />
-            </div>
 
             {/* Start Time */}
             <div>
@@ -353,7 +305,30 @@ export default function NewReservationPage() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
               <p className="mt-1 text-sm text-gray-500">
-                予約は60分間の固定時間です
+                予約の開始日時を選択してください
+              </p>
+            </div>
+
+            {/* Session Duration */}
+            <div>
+              <label htmlFor="duration" className="block text-sm font-medium text-gray-700 mb-2">
+                セッション時間 *
+              </label>
+              <select
+                id="duration"
+                name="duration"
+                value={formData.duration}
+                onChange={handleInputChange}
+                required
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value={30}>30分</option>
+                <option value={60}>60分</option>
+                <option value={90}>90分</option>
+                <option value={120}>120分</option>
+              </select>
+              <p className="mt-1 text-sm text-gray-500">
+                セッションの時間を選択してください
               </p>
             </div>
 
@@ -401,7 +376,7 @@ export default function NewReservationPage() {
         <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
           <h3 className="text-sm font-medium text-blue-900 mb-2">予約作成について</h3>
           <ul className="text-sm text-blue-800 space-y-1">
-            <li>• 予約時間は60分固定です</li>
+            <li>• セッション時間は30分、60分、90分、120分から選択できます</li>
             <li>• 同じ時間帯に重複する予約は作成できません</li>
             <li>• クライアントのメールアドレスは登録済みのものを使用してください</li>
             <li>• 作成された予約はクライアントの予約一覧に表示されます</li>
