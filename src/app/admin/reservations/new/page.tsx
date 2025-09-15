@@ -77,6 +77,36 @@ export default function NewReservationPage() {
       ...prev,
       [name]: value
     }))
+
+    // Auto-generate title when client is selected
+    if (name === 'clientId' && value) {
+      const selectedClient = clients.find(client => client.id === value)
+      if (selectedClient) {
+        generateTitle(selectedClient)
+      }
+    }
+  }
+
+  const generateTitle = async (client: Client) => {
+    try {
+      // Get current month's reservation count for this client
+      const response = await fetch(`/api/clients?clientId=${client.id}`)
+      if (response.ok) {
+        const data = await response.json()
+        const title = `${client.name}${data.reservationCount}`
+        setFormData(prev => ({
+          ...prev,
+          title: title
+        }))
+      }
+    } catch (error) {
+      console.error('Error generating title:', error)
+      // Fallback to simple name if API fails
+      setFormData(prev => ({
+        ...prev,
+        title: `${client.name}1`
+      }))
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
