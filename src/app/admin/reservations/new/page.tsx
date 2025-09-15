@@ -5,6 +5,14 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 
+// Helper function to get default datetime (current time + 1 hour)
+function getDefaultDateTime() {
+  const now = new Date()
+  now.setHours(now.getHours() + 1)
+  now.setMinutes(0, 0, 0) // Round to the hour
+  return now.toISOString().slice(0, 16) // Format for datetime-local input
+}
+
 export default function NewReservationPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
@@ -18,6 +26,14 @@ export default function NewReservationPage() {
     startTime: '',
     notes: '',
   })
+
+  // Set default start time after component mounts
+  useEffect(() => {
+    setFormData(prev => ({
+      ...prev,
+      startTime: getDefaultDateTime()
+    }))
+  }, [])
 
   // Check admin access
   useEffect(() => {
@@ -43,8 +59,14 @@ export default function NewReservationPage() {
     setSuccess(null)
 
     try {
+      // Debug: Log form data
+      console.log('Form data:', formData)
+      console.log('clientEmail:', formData.clientEmail, 'length:', formData.clientEmail.length)
+      console.log('title:', formData.title, 'length:', formData.title.length)
+      console.log('startTime:', formData.startTime, 'length:', formData.startTime.length)
+
       // Validate required fields
-      if (!formData.clientEmail || !formData.title || !formData.startTime) {
+      if (!formData.clientEmail.trim() || !formData.title.trim() || !formData.startTime.trim()) {
         throw new Error('必須項目を入力してください')
       }
 
@@ -212,7 +234,7 @@ export default function NewReservationPage() {
                 type="datetime-local"
                 id="startTime"
                 name="startTime"
-                value={formData.startTime || getDefaultDateTime()}
+                value={formData.startTime}
                 onChange={handleInputChange}
                 required
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
