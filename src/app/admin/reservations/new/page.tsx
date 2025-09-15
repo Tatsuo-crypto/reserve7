@@ -5,6 +5,13 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 
+interface Client {
+  id: string
+  name: string
+  email: string
+  displayName: string
+}
+
 // Helper function to get default datetime (current time + 1 hour)
 function getDefaultDateTime() {
   const now = new Date()
@@ -20,15 +27,35 @@ export default function NewReservationPage() {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
 
+  const [clients, setClients] = useState<Client[]>([])
+  const [loadingClients, setLoadingClients] = useState(true)
+  
   const [formData, setFormData] = useState({
-    clientEmail: '',
+    clientId: '',
     title: '',
     startTime: '',
     notes: '',
   })
 
-  // Set default start time after component mounts
+  // Fetch clients and set default start time after component mounts
   useEffect(() => {
+    const fetchClients = async () => {
+      try {
+        const response = await fetch('/api/clients')
+        if (response.ok) {
+          const data = await response.json()
+          setClients(data.clients)
+        } else {
+          console.error('Failed to fetch clients')
+        }
+      } catch (error) {
+        console.error('Error fetching clients:', error)
+      } finally {
+        setLoadingClients(false)
+      }
+    }
+
+    fetchClients()
     setFormData(prev => ({
       ...prev,
       startTime: getDefaultDateTime()
@@ -44,7 +71,7 @@ export default function NewReservationPage() {
     }
   }, [status, session, router])
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target
     setFormData(prev => ({
       ...prev,
@@ -61,13 +88,19 @@ export default function NewReservationPage() {
     try {
       // Debug: Log form data
       console.log('Form data:', formData)
-      console.log('clientEmail:', formData.clientEmail, 'length:', formData.clientEmail.length)
+      console.log('clientId:', formData.clientId, 'length:', formData.clientId.length)
       console.log('title:', formData.title, 'length:', formData.title.length)
       console.log('startTime:', formData.startTime, 'length:', formData.startTime.length)
 
       // Validate required fields
-      if (!formData.clientEmail.trim() || !formData.title.trim() || !formData.startTime.trim()) {
+      if (!formData.clientId.trim() || !formData.title.trim() || !formData.startTime.trim()) {
         throw new Error('必須項目を入力してください')
+      }
+
+      // Find selected client
+      const selectedClient = clients.find(client => client.id === formData.clientId)
+      if (!selectedClient) {
+        throw new Error('有効なクライアントを選択してください')
       }
 
       // Convert local datetime to ISO string
@@ -77,7 +110,7 @@ export default function NewReservationPage() {
       }
 
       const requestData = {
-        clientEmail: formData.clientEmail,
+        clientEmail: selectedClient.email,
         title: formData.title,
         startTime: startDateTime.toISOString(),
         notes: formData.notes || undefined,
@@ -187,23 +220,34 @@ export default function NewReservationPage() {
         {/* Form */}
         <div className="bg-white rounded-lg shadow p-6">
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Client Email */}
+            {/* Client Selection */}
             <div>
-              <label htmlFor="clientEmail" className="block text-sm font-medium text-gray-700 mb-2">
-                クライアントメールアドレス *
+              <label htmlFor="clientId" className="block text-sm font-medium text-gray-700 mb-2">
+                クライアント選択 *
               </label>
-              <input
-                type="email"
-                id="clientEmail"
-                name="clientEmail"
-                value={formData.clientEmail}
-                onChange={handleInputChange}
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="client@example.com"
-              />
+              {loadingClients ? (
+                <div className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500">
+                  クライアント情報を読み込み中...
+                </div>
+              ) : (
+                <select
+                  id="clientId"
+                  name="clientId"
+                  value={formData.clientId}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">クライアントを選択してください</option>
+                  {clients.map(client => (
+                    <option key={client.id} value={client.id}>
+                      {client.displayName}
+                    </option>
+                  ))}
+                </select>
+              )}
               <p className="mt-1 text-sm text-gray-500">
-                予約を作成するクライアントのメールアドレスを入力してください
+                予約を作成するクライアントを選択してください
               </p>
             </div>
 
