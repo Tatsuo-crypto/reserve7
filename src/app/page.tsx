@@ -11,7 +11,7 @@ export default function HomePage() {
       <div className="border-4 border-dashed border-gray-200 rounded-lg p-8">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">
-            Reserve7 - ジム予約システム
+            T&J GYM - ジム予約システム
           </h2>
           <p className="text-gray-600 mb-8">
             段階的に機能を実装していきます

@@ -6,8 +6,8 @@ import Navigation from './components/Navigation'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata = {
-  title: 'Reserve7 - ジム予約システム',
-  description: 'ジムの予約管理システム',
+  title: 'T&J GYM - ジム予約システム',
+  description: 'T&J GYMの予約管理システム',
 }
 
 export default function RootLayout({
