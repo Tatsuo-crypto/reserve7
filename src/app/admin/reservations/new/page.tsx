@@ -73,6 +73,7 @@ export default function NewReservationPage() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target
+    
     setFormData(prev => ({
       ...prev,
       [name]: value
@@ -82,18 +83,56 @@ export default function NewReservationPage() {
     if (name === 'clientId' && value) {
       const selectedClient = clients.find(client => client.id === value)
       if (selectedClient) {
-        generateTitle(selectedClient)
+        // Use setTimeout to ensure state is updated before generating title
+        setTimeout(() => {
+          generateTitle(selectedClient)
+        }, 0)
+      }
+    } else if (name === 'startTime' && formData.clientId) {
+      const selectedClient = clients.find(client => client.id === formData.clientId)
+      if (selectedClient) {
+        // Use setTimeout to ensure state is updated before generating title
+        setTimeout(() => {
+          generateTitle(selectedClient)
+        }, 0)
       }
     }
   }
 
   const generateTitle = async (client: Client) => {
     try {
-      // Get current month's reservation count for this client
-      const response = await fetch(`/api/clients?clientId=${client.id}`)
+      // Get the selected start time to calculate count based on chronological order
+      const selectedStartTime = formData.startTime
+      if (!selectedStartTime) {
+        // If no start time selected yet, default to count 1
+        setFormData(prev => ({
+          ...prev,
+          title: `${client.name}1`
+        }))
+        return
+      }
+
+      // Get all reservations for this client to calculate chronological count
+      const response = await fetch('/api/reservations')
       if (response.ok) {
         const data = await response.json()
-        const title = `${client.name}${data.reservationCount}`
+        const selectedDate = new Date(selectedStartTime)
+        const selectedMonth = selectedDate.getMonth()
+        const selectedYear = selectedDate.getFullYear()
+
+        // Filter reservations for same client, same month, and before selected date
+        const clientReservationsInMonth = data.reservations
+          .filter((r: any) => {
+            const rDate = new Date(r.startTime)
+            return r.client.id === client.id &&
+                   rDate.getMonth() === selectedMonth &&
+                   rDate.getFullYear() === selectedYear &&
+                   rDate < selectedDate
+          })
+          .sort((a: any, b: any) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
+
+        const count = clientReservationsInMonth.length + 1 // +1 for the new reservation
+        const title = `${client.name}${count}`
         setFormData(prev => ({
           ...prev,
           title: title

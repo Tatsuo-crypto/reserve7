@@ -96,6 +96,27 @@ export default function ReservationsPage() {
     })
   }
 
+  // Calculate monthly reservation count for each reservation
+  const getMonthlyCount = (reservation: Reservation, allReservations: Reservation[]) => {
+    const reservationDate = new Date(reservation.startTime)
+    const reservationMonth = reservationDate.getMonth()
+    const reservationYear = reservationDate.getFullYear()
+    
+    // Get all reservations for the same client in the same month, sorted by start time
+    const clientReservationsInMonth = allReservations
+      .filter(r => {
+        const rDate = new Date(r.startTime)
+        return r.client.id === reservation.client.id &&
+               rDate.getMonth() === reservationMonth &&
+               rDate.getFullYear() === reservationYear &&
+               new Date(r.startTime) <= reservationDate
+      })
+      .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
+    
+    // Return the count (length of filtered array)
+    return clientReservationsInMonth.length
+  }
+
   if (status === 'loading' || loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -179,23 +200,32 @@ export default function ReservationsPage() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       日付
                     </th>
+                    {!isAdmin && (
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        回数
+                      </th>
+                    )}
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       時間
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      タイトル
-                    </th>
                     {isAdmin && (
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        クライアント
-                      </th>
+                      <>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          タイトル
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          クライアント
+                        </th>
+                      </>
                     )}
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       メモ
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      作成日時
-                    </th>
+                    {isAdmin && (
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        作成日時
+                      </th>
+                    )}
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -204,26 +234,35 @@ export default function ReservationsPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                         {formatDate(reservation.startTime)}
                       </td>
+                      {!isAdmin && (
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {getMonthlyCount(reservation, reservations)}回目
+                        </td>
+                      )}
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {formatTime(reservation.startTime)} - {formatTime(reservation.endTime)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {reservation.title}
-                      </td>
                       {isAdmin && (
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          <div>
-                            <div className="font-medium">{reservation.client.fullName}</div>
-                            <div className="text-gray-500">{reservation.client.email}</div>
-                          </div>
-                        </td>
+                        <>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {reservation.title}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            <div>
+                              <div className="font-medium">{reservation.client.fullName}</div>
+                              <div className="text-gray-500">{reservation.client.email}</div>
+                            </div>
+                          </td>
+                        </>
                       )}
                       <td className="px-6 py-4 text-sm text-gray-900">
                         {reservation.notes || '-'}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {formatDateTime(reservation.createdAt)}
-                      </td>
+                      {isAdmin && (
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {formatDateTime(reservation.createdAt)}
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>
