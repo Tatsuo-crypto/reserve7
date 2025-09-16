@@ -30,7 +30,7 @@ export default function Navigation() {
               <>
                 <Link
                   href="/dashboard"
-                  className="bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-300 px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                  className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors"
                 >
                   ダッシュボード
                 </Link>
@@ -38,13 +38,13 @@ export default function Navigation() {
                   <>
                     <Link
                       href="/admin/reservations/new"
-                      className="bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-300 px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                      className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors"
                     >
                       新規予約作成
                     </Link>
                     <Link
                       href="/admin/members"
-                      className="bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-300 px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                      className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors"
                     >
                       会員管理
                     </Link>
@@ -52,21 +52,23 @@ export default function Navigation() {
                 )}
                 <Link
                   href="/reservations"
-                  className="bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-300 px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                  className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors"
                 >
                   {session.user.role === 'ADMIN' ? '予約管理' : 'マイ予約'}
                 </Link>
-                <div className="flex items-center space-x-3">
-                  <span className="text-sm text-gray-600">
-                    {session.user.name}さん
-                  </span>
-                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${
+                <div className="flex items-center space-x-2">
+                  <div className="bg-gray-100 border border-gray-300 px-3 py-2 rounded text-sm">
+                    <span className="text-gray-700 font-medium">
+                      {session.user.name}さん
+                    </span>
+                  </div>
+                  <div className={`px-3 py-2 rounded text-xs font-medium border ${
                     session.user.role === 'ADMIN' 
                       ? 'bg-green-100 text-green-700 border-green-300' 
                       : 'bg-gray-100 text-gray-700 border-gray-300'
                   }`}>
                     {session.user.role === 'ADMIN' ? '管理者' : '会員'}
-                  </span>
+                  </div>
                 </div>
                 <button
                   onClick={handleLogout}
