@@ -82,7 +82,7 @@ function AdminDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Link
               href="/admin/reservations"
-              className="group bg-gradient-to-br from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 border border-blue-200 p-6 rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
+              className="group bg-white hover:bg-gray-50 border border-gray-200 p-6 rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
             >
               <div className="flex items-center mb-4">
                 <div className="bg-blue-500 p-3 rounded-lg">
@@ -91,13 +91,13 @@ function AdminDashboard() {
                   </svg>
                 </div>
               </div>
-              <h3 className="text-lg font-semibold text-blue-900 mb-2">予約管理</h3>
-              <p className="text-sm text-blue-700">予約の確認・管理</p>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">予約管理</h3>
+              <p className="text-sm text-gray-600">予約の確認・管理</p>
             </Link>
 
             <Link
               href="/admin/reservations/new"
-              className="group bg-gradient-to-br from-green-50 to-green-100 hover:from-green-100 hover:to-green-200 border border-green-200 p-6 rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
+              className="group bg-white hover:bg-gray-50 border border-gray-200 p-6 rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
             >
               <div className="flex items-center mb-4">
                 <div className="bg-green-500 p-3 rounded-lg">
@@ -106,13 +106,13 @@ function AdminDashboard() {
                   </svg>
                 </div>
               </div>
-              <h3 className="text-lg font-semibold text-green-900 mb-2">新規予約作成</h3>
-              <p className="text-sm text-green-700">新しい予約を作成</p>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">新規予約作成</h3>
+              <p className="text-sm text-gray-600">新しい予約を作成</p>
             </Link>
 
             <Link
               href="/admin/members"
-              className="group bg-gradient-to-br from-purple-50 to-purple-100 hover:from-purple-100 hover:to-purple-200 border border-purple-200 p-6 rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
+              className="group bg-white hover:bg-gray-50 border border-gray-200 p-6 rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
             >
               <div className="flex items-center mb-4">
                 <div className="bg-purple-500 p-3 rounded-lg">
@@ -121,8 +121,8 @@ function AdminDashboard() {
               </svg>
                 </div>
               </div>
-              <h3 className="text-lg font-semibold text-purple-900 mb-2">会員管理</h3>
-              <p className="text-sm text-purple-700">会員情報の管理</p>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">会員管理</h3>
+              <p className="text-sm text-gray-600">会員情報の管理</p>
             </Link>
           </div>
         </div>
