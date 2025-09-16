@@ -1,28 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '../auth/[...nextauth]/route'
 import { supabase } from '@/lib/supabase'
-import { getUserStoreId } from '@/lib/env'
+import { getAuthenticatedUser, createErrorResponse, createSuccessResponse } from '@/lib/api-utils'
 
 export async function GET(request: NextRequest) {
   try {
-    // Check authentication
-    const session = await getServerSession(authOptions)
-    console.log('Clients API - Session:', session)
+    const user = await getAuthenticatedUser()
     
-    if (!session?.user?.email) {
-      console.log('No session or email found')
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (!user) {
+      return createErrorResponse('認証が必要です', 401)
     }
 
-    // Check admin role
-    if (session.user.role !== 'ADMIN') {
-      console.log('User is not admin:', session.user.role)
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
+    if (!user.isAdmin) {
+      return createErrorResponse('管理者権限が必要です', 403)
     }
 
-    const userStoreId = getUserStoreId(session.user.email!)
-    console.log('Clients API - UserEmail:', session.user.email, 'UserStoreId:', userStoreId)
+    console.log('Clients API - UserEmail:', user.email, 'UserStoreId:', user.storeId)
 
     // Get query parameters
     const { searchParams } = new URL(request.url)
@@ -38,7 +30,7 @@ export async function GET(request: NextRequest) {
         .from('reservations')
         .select('id')
         .eq('client_id', clientId)
-        .eq('calendar_id', userStoreId)
+        .eq('calendar_id', user.storeId)
         .gte('start_time', startOfMonth.toISOString())
         .lte('start_time', endOfMonth.toISOString())
 
@@ -56,7 +48,7 @@ export async function GET(request: NextRequest) {
     const { data: clients, error } = await supabase
       .from('users')
       .select('id, full_name, email, store_id')
-      .eq('store_id', userStoreId)
+      .eq('store_id', user.storeId)
       .neq('email', 'tandjgym@gmail.com')
       .neq('email', 'tandjgym2goutenn@gmail.com')
       .order('full_name', { ascending: true })
@@ -67,18 +59,16 @@ export async function GET(request: NextRequest) {
     }
 
 
-    // Format clients for dropdown display
+    // Format clients for dropdown
     const formattedClients = clients.map(client => ({
       id: client.id,
       name: client.full_name,
-      email: client.email,
-      displayName: `${client.full_name} (${client.email})`
+      email: client.email
     }))
 
-    return NextResponse.json({ clients: formattedClients })
-
+    return createSuccessResponse(formattedClients)
   } catch (error) {
-    console.error('API error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error('Clients API error:', error)
+    return createErrorResponse('Internal server error', 500)
   }
 }

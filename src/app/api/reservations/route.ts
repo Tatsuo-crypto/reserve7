@@ -1,28 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/app/api/auth/[...nextauth]/route'
 import { supabase } from '@/lib/supabase'
-import { isAdmin, getUserStoreId } from '@/lib/env'
+import { getAuthenticatedUser, createErrorResponse, createSuccessResponse } from '@/lib/api-utils'
 
 export async function GET(request: NextRequest) {
   try {
     // Check authentication - get session with request context
-    const session = await getServerSession(authOptions)
-    console.log('Session check:', session)
+    const user = await getAuthenticatedUser()
     
-    if (!session?.user?.email) {
-      console.log('No session or email found')
-      return NextResponse.json(
-        { error: '認証が必要です' },
-        { status: 401 }
-      )
+    if (!user) {
+      return createErrorResponse('認証が必要です', 401)
     }
 
-    const userEmail = session.user.email
-    const isUserAdmin = isAdmin(userEmail)
-    const userStoreId = getUserStoreId(userEmail)
-    
-    console.log('Reservations API - User:', userEmail, 'Admin:', isUserAdmin, 'StoreId:', userStoreId)
+    console.log('Reservations API - User:', user.email, 'Admin:', user.isAdmin, 'StoreId:', user.storeId)
 
     let query = supabase
       .from('reservations')
@@ -44,38 +33,34 @@ export async function GET(request: NextRequest) {
       `)
       .order('start_time', { ascending: true })
 
-    // If not admin, only show user's own reservations
-    if (!isUserAdmin) {
-      // First get user ID and store_id
+    // Filter by store and user permissions
+    query = query.eq('calendar_id', user.storeId)
+    
+    if (!user.isAdmin) {
+      // Regular users can only see their own reservations
       const { data: userData } = await supabase
         .from('users')
         .select('id, store_id')
-        .eq('email', userEmail)
+        .eq('email', user.email)
         .single()
-
+      
       if (!userData) {
-        return NextResponse.json(
-          { error: 'ユーザーが見つかりません' },
-          { status: 404 }
-        )
+        return createErrorResponse('ユーザーが見つかりません', 404)
       }
-
-      // Filter by client_id and user's store calendar_id
+      
+      // Ensure user can only see reservations from their store
       query = query.eq('client_id', userData.id)
       query = query.eq('calendar_id', userData.store_id)
     } else {
-      // Admin sees all reservations in their store
-      query = query.eq('calendar_id', userStoreId)
+      // Admin users can see all reservations from their store
+      query = query.eq('calendar_id', user.storeId)
     }
 
     const { data: reservations, error } = await query
 
     if (error) {
       console.error('Reservations fetch error:', error)
-      return NextResponse.json(
-        { error: '予約の取得に失敗しました' },
-        { status: 500 }
-      )
+      return createErrorResponse('Internal server error', 500)
     }
 
     // Format the response
@@ -94,16 +79,13 @@ export async function GET(request: NextRequest) {
       }
     })) || []
 
-    return NextResponse.json({
+    return createSuccessResponse({
       reservations: formattedReservations,
-      isAdmin: isUserAdmin,
+      isAdmin: user.isAdmin,
     })
 
   } catch (error) {
     console.error('Reservations API error:', error)
-    return NextResponse.json(
-      { error: 'サーバーエラーが発生しました' },
-      { status: 500 }
-    )
+    return createErrorResponse('サーバーエラーが発生しました', 500)
   }
 }

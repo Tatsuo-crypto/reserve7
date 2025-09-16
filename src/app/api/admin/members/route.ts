@@ -1,89 +1,74 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '../../auth/[...nextauth]/route'
 import { supabase } from '@/lib/supabase'
-import { getUserStoreId } from '@/lib/env'
+import { getAuthenticatedUser, createErrorResponse, createSuccessResponse } from '@/lib/api-utils'
 
 export async function GET(request: NextRequest) {
   try {
-    // Check authentication
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const user = await getAuthenticatedUser()
+    
+    if (!user) {
+      return createErrorResponse('認証が必要です', 401)
     }
 
-    // Check admin role
-    if (session.user.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
+    if (!user.isAdmin) {
+      return createErrorResponse('管理者権限が必要です', 403)
     }
 
-    const userStoreId = getUserStoreId(session.user.email)
+    // Use user.storeId from authenticated user
 
     // Get members from the same store (exclude admin accounts)
     const { data: members, error } = await supabase
       .from('users')
       .select('id, full_name, email, status, store_id, created_at')
-      .eq('store_id', userStoreId)
+      .eq('store_id', user.storeId)
       .neq('email', 'tandjgym@gmail.com')
       .neq('email', 'tandjgym2goutenn@gmail.com')
       .order('created_at', { ascending: false })
 
     if (error) {
       console.error('Database error:', error)
-      return NextResponse.json({ error: 'Failed to fetch members' }, { status: 500 })
+      return createErrorResponse('Failed to fetch members', 500)
     }
 
-    return NextResponse.json({ members })
-
+    return createSuccessResponse(members)
   } catch (error) {
-    console.error('API error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error('Members API error:', error)
+    return createErrorResponse('Internal server error', 500)
   }
 }
 
 export async function PATCH(request: NextRequest) {
   try {
-    // Check authentication
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.email) {
-      console.error('PATCH /api/admin/members - No session')
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const user = await getAuthenticatedUser()
+    
+    if (!user) {
+      return createErrorResponse('認証が必要です', 401)
     }
 
-    // Check admin role
-    if (session.user.role !== 'ADMIN') {
-      console.error('PATCH /api/admin/members - Not admin:', session.user.role)
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
+    if (!user.isAdmin) {
+      return createErrorResponse('管理者権限が必要です', 403)
     }
 
     const { memberId, status } = await request.json()
-    console.log('PATCH /api/admin/members - Request:', { memberId, status })
 
     // Validate status
     if (!['active', 'suspended', 'withdrawn'].includes(status)) {
-      console.error('PATCH /api/admin/members - Invalid status:', status)
-      return NextResponse.json({ error: 'Invalid status' }, { status: 400 })
+      return createErrorResponse('Invalid status', 400)
     }
-
-    const userStoreId = getUserStoreId(session.user.email)
-    console.log('PATCH /api/admin/members - User store:', userStoreId)
 
     // First check if the member exists and belongs to the same store
     const { data: member, error: fetchError } = await supabase
       .from('users')
       .select('id, email, store_id')
       .eq('id', memberId)
-      .eq('store_id', userStoreId)
+      .eq('store_id', user.storeId)
       .neq('email', 'tandjgym@gmail.com')
       .neq('email', 'tandjgym2goutenn@gmail.com')
       .single()
 
     if (fetchError || !member) {
-      console.error('PATCH /api/admin/members - Member not found or access denied:', fetchError)
-      return NextResponse.json({ error: 'Member not found or access denied' }, { status: 404 })
+      return createErrorResponse('Member not found or access denied', 404)
     }
-
-    console.log('PATCH /api/admin/members - Found member:', member)
 
     // Update member status
     const { data, error } = await supabase
@@ -93,15 +78,13 @@ export async function PATCH(request: NextRequest) {
       .select()
 
     if (error) {
-      console.error('PATCH /api/admin/members - Database error:', error)
-      return NextResponse.json({ error: 'Failed to update member status' }, { status: 500 })
+      console.error('Database error:', error)
+      return createErrorResponse('Failed to update member status', 500)
     }
 
-    console.log('PATCH /api/admin/members - Update successful:', data)
-    return NextResponse.json({ success: true })
-
+    return createSuccessResponse({ success: true })
   } catch (error) {
-    console.error('PATCH /api/admin/members - API error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error('Members API error:', error)
+    return createErrorResponse('Internal server error', 500)
   }
 }

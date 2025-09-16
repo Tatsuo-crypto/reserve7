@@ -3,6 +3,7 @@
 import { useSession, signOut } from 'next-auth/react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { getStoreDisplayName } from '@/lib/auth-utils'
 
 export default function Navigation() {
   const { data: session, status } = useSession()
@@ -57,10 +58,8 @@ export default function Navigation() {
                   {session.user.role === 'ADMIN' ? '予約管理' : 'マイ予約'}
                 </Link>
                 <div className="bg-white border border-gray-300 px-4 py-2 rounded-lg shadow-sm text-sm flex items-center space-x-3">
-                  <span className="text-gray-800 font-semibold">
-                    {session.user.email === 'tandjgym@gmail.com' ? 'T&J GYM1号店' : 
-                     session.user.email === 'tandjgym2goutenn@gmail.com' ? 'T&J GYM2号店' : 
-                     session.user.name + 'さん'}
+                  <span className="text-gray-700 font-medium">
+                    {getStoreDisplayName(session.user.email)}
                   </span>
                   <span className={`px-3 py-1 rounded-full text-xs font-medium border ${
                     session.user.role === 'ADMIN' 
