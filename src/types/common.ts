@@ -14,14 +14,21 @@ export interface User {
 export interface Reservation {
   id: string
   client_id: string
+  client_name?: string
   title: string
   start: string
   end: string
+  date?: string
+  start_time?: string
+  end_time?: string
   notes?: string
+  memo?: string
   calendar_id: number
   external_event_id?: string
   created_at: string
+  visit_count?: number
   client?: {
+    id: string
     full_name: string
     email: string
   }

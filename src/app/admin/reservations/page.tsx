@@ -4,18 +4,9 @@ import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-
-interface Reservation {
-  id: string
-  client_id: string
-  client_name: string
-  date: string
-  start_time: string
-  end_time: string
-  memo?: string
-  visit_count: number
-  calendar_id: string
-}
+import LoadingSpinner from '@/components/ui/LoadingSpinner'
+import ErrorMessage from '@/components/ui/ErrorMessage'
+import { Reservation } from '@/types/common'
 
 export default function AdminReservationsPage() {
   const { data: session, status } = useSession()
@@ -43,8 +34,8 @@ export default function AdminReservationsPage() {
       try {
         const response = await fetch('/api/reservations')
         if (response.ok) {
-          const data = await response.json()
-          setReservations(data.reservations || [])
+          const result = await response.json()
+          setReservations(result.data?.reservations || [])
         } else {
           const errorData = await response.json()
           setError(`予約データの取得に失敗しました: ${errorData.error || 'Unknown error'}`)
@@ -86,7 +77,7 @@ export default function AdminReservationsPage() {
     }
   }
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString?: string) => {
     if (!dateString) return ''
     return new Date(dateString).toLocaleDateString('ja-JP', {
       year: 'numeric',
@@ -96,12 +87,12 @@ export default function AdminReservationsPage() {
     })
   }
 
-  const formatTime = (timeString: string) => {
+  const formatTime = (timeString?: string) => {
     if (!timeString) return ''
     return timeString.slice(0, 5) // HH:MM format
   }
 
-  const isPastReservation = (date: string, endTime: string) => {
+  const isPastReservation = (date?: string, endTime?: string) => {
     if (!date || !endTime) return false
     const reservationDateTime = new Date(`${date}T${endTime}`)
     return reservationDateTime < new Date()
@@ -111,7 +102,8 @@ export default function AdminReservationsPage() {
   if (status === 'loading') {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">認証状態を確認中...</div>
+        <LoadingSpinner size="lg" />
+        <span className="ml-3 text-lg">認証状態を確認中...</span>
       </div>
     )
   }
@@ -119,7 +111,8 @@ export default function AdminReservationsPage() {
   if (status === 'unauthenticated') {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">ログインページにリダイレクト中...</div>
+        <LoadingSpinner size="lg" />
+        <span className="ml-3 text-lg">ログインページにリダイレクト中...</span>
       </div>
     )
   }
@@ -127,7 +120,8 @@ export default function AdminReservationsPage() {
   if (status === 'authenticated' && session?.user?.role !== 'ADMIN') {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">予約ページにリダイレクト中...</div>
+        <LoadingSpinner size="lg" />
+        <span className="ml-3 text-lg">予約ページにリダイレクト中...</span>
       </div>
     )
   }
@@ -135,7 +129,8 @@ export default function AdminReservationsPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">予約データを読み込み中...</div>
+        <LoadingSpinner size="lg" />
+        <span className="ml-3 text-lg">予約データを読み込み中...</span>
       </div>
     )
   }
@@ -168,9 +163,7 @@ export default function AdminReservationsPage() {
         </div>
 
         {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 rounded-md p-4">
-            <p className="text-red-800">{error}</p>
-          </div>
+          <ErrorMessage message={error} className="mb-6" />
         )}
 
         {/* Reservations Table */}
@@ -213,7 +206,7 @@ export default function AdminReservationsPage() {
                         {reservation.visit_count}回目
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {reservation.client_name}
+                        {reservation.client_name || reservation.client?.full_name || '-'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {formatDate(reservation.date)}
