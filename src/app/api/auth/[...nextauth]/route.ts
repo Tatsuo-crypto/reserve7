@@ -2,7 +2,7 @@ import NextAuth from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import bcrypt from 'bcryptjs'
 import { supabase } from '@/lib/supabase'
-import { isAdminEmail } from '@/lib/env'
+import { isAdmin } from '@/lib/auth-utils'
 import { loginSchema } from '@/lib/validations'
 
 const authOptions = {
@@ -40,7 +40,7 @@ const authOptions = {
           }
 
           // Determine user role
-          const role = isAdminEmail(user.email) ? 'ADMIN' : 'CLIENT'
+          const role = isAdmin(user.email) ? 'ADMIN' : 'CLIENT'
 
           return {
             id: user.id,

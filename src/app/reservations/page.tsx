@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { getStoreName } from '@/lib/env'
+import { getStoreDisplayName } from '@/lib/auth-utils'
 
 interface Reservation {
   id: string
@@ -30,7 +30,7 @@ export default function ReservationsPage() {
   const router = useRouter()
   const [reservations, setReservations] = useState<Reservation[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState('')
   const [isAdmin, setIsAdmin] = useState(false)
   const [editingReservation, setEditingReservation] = useState<Reservation | null>(null)
   const [showEditModal, setShowEditModal] = useState(false)
@@ -65,10 +65,12 @@ export default function ReservationsPage() {
       if (!response.ok) {
         throw new Error('予約の取得に失敗しました')
       }
-
-      const data: ReservationsResponse = await response.json()
-      setReservations(data.reservations)
-      setIsAdmin(data.isAdmin)
+      if (response.ok) {
+        const result = await response.json()
+        const data = result.data || result
+        setReservations(data.reservations || [])
+        setIsAdmin(data.isAdmin || false)
+      }
     } catch (error) {
       console.error('Fetch reservations error:', error)
       setError(error instanceof Error ? error.message : '予約の取得に失敗しました')
@@ -317,7 +319,7 @@ export default function ReservationsPage() {
         )}
 
         {/* Reservations List */}
-        {reservations.length === 0 ? (
+        {!reservations || reservations.length === 0 ? (
           <div className="bg-white rounded-lg shadow p-8 text-center">
             <div className="text-gray-400 mb-4">
               <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -380,7 +382,7 @@ export default function ReservationsPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {reservations.map((reservation) => (
+                  {reservations && reservations.map((reservation) => (
                     <tr key={reservation.id} className={getRowClassName(reservation)}>
                       {isAdmin ? (
                         <>
