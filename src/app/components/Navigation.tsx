@@ -30,7 +30,7 @@ export default function Navigation() {
               <>
                 <Link
                   href="/dashboard"
-                  className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                  className="bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-300 px-4 py-2 rounded-md text-sm font-medium transition-colors"
                 >
                   ダッシュボード
                 </Link>
