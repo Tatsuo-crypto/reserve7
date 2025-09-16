@@ -56,7 +56,7 @@ export default function Navigation() {
                 >
                   {session.user.role === 'ADMIN' ? '予約管理' : 'マイ予約'}
                 </Link>
-                <div className="bg-white border border-gray-300 px-4 py-3 rounded-lg shadow-sm text-sm flex items-center space-x-3">
+                <div className="bg-white border border-gray-300 px-4 py-2 rounded-lg shadow-sm text-sm flex items-center space-x-3">
                   <span className="text-gray-800 font-semibold">
                     {session.user.email === 'tandjgym@gmail.com' ? 'T&J GYM1号店' : 
                      session.user.email === 'tandjgym2goutenn@gmail.com' ? 'T&J GYM2号店' : 
