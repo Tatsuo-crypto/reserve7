@@ -9,7 +9,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     
     // Validate input
-    const { fullName, email, password } = createUserSchema.parse(body)
+    const { fullName, email, password, storeId: selectedStoreId } = body
+    const validatedData = createUserSchema.parse({ fullName, email, password })
 
     // Check if user already exists
     const { data: existingUser } = await supabase
@@ -29,8 +30,8 @@ export async function POST(request: NextRequest) {
     const saltRounds = 12
     const passwordHash = await bcrypt.hash(password, saltRounds)
 
-    // Determine store_id based on email
-    const storeId = getUserStoreId(email.toLowerCase())
+    // Use selected store ID or determine from email as fallback
+    const storeId = selectedStoreId === '1' ? 'tandjgym@gmail.com' : 'tandjgym2goutenn@gmail.com'
 
     // Create user
     const { data: user, error } = await supabase

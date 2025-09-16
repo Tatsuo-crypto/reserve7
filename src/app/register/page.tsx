@@ -10,7 +10,8 @@ export default function RegisterPage() {
     fullName: '',
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    storeId: '1' // Default to store 1
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isLoading, setIsLoading] = useState(false)
@@ -55,6 +56,7 @@ export default function RegisterPage() {
           fullName: formData.fullName,
           email: formData.email,
           password: formData.password,
+          storeId: formData.storeId,
         }),
       })
 
@@ -74,7 +76,7 @@ export default function RegisterPage() {
     }
   }
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
     // Clear error when user starts typing
@@ -100,6 +102,33 @@ export default function RegisterPage() {
         
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
+            <div>
+              <label htmlFor="storeId" className="block text-sm font-medium text-gray-700">
+                利用店舗を選択してください
+              </label>
+              <div className="relative mt-1">
+                <select
+                  id="storeId"
+                  name="storeId"
+                  required
+                  className="appearance-none relative block w-full px-3 py-2 pr-10 border border-gray-300 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm bg-white"
+                  value={formData.storeId}
+                  onChange={handleChange}
+                >
+                  <option value="1">T&J GYM 1号店</option>
+                  <option value="2">T&J GYM 2号店</option>
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                  <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </div>
+              </div>
+              {errors.storeId && (
+                <p className="mt-1 text-sm text-red-600">{errors.storeId}</p>
+              )}
+            </div>
+
             <div>
               <label htmlFor="fullName" className="block text-sm font-medium text-gray-700">
                 氏名
