@@ -58,7 +58,9 @@ export default function Navigation() {
                 </Link>
                 <div className="bg-gray-100 border border-gray-300 px-3 py-2 rounded text-sm flex items-center space-x-2">
                   <span className="text-gray-700 font-medium">
-                    {session.user.name}さん
+                    {session.user.email === 'tandjgym@gmail.com' ? 'T&J GYM1号店' : 
+                     session.user.email === 'tandjgym2goutenn@gmail.com' ? 'T&J GYM2号店' : 
+                     session.user.name + 'さん'}
                   </span>
                   <span className={`px-2 py-1 rounded-full text-xs font-medium border ${
                     session.user.role === 'ADMIN' 
