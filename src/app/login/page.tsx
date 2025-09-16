@@ -37,21 +37,15 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      console.log('ログイン試行:', formData.email)
-      
       const result = await signIn('credentials', {
         email: formData.email,
         password: formData.password,
         redirect: false,
       })
 
-      console.log('ログイン結果:', result)
-
       if (result?.error) {
-        console.error('ログインエラー:', result.error)
         setError('メールアドレスまたはパスワードが正しくありません')
       } else if (result?.ok) {
-        console.log('ログイン成功、ダッシュボードにリダイレクト')
         router.push('/dashboard')
       } else {
         setError('ログインに失敗しました。もう一度お試しください。')
@@ -90,21 +84,6 @@ export default function LoginPage() {
           </div>
         )}
         
-        <div className="mb-6 bg-blue-50 border border-blue-200 rounded-md p-4">
-          <h3 className="text-sm font-medium text-blue-900 mb-3">テスト用アカウント</h3>
-          <div className="text-sm text-blue-800 space-y-2">
-            <div>
-              <p className="font-semibold">◆管理者アカウント</p>
-              <p><strong>T&J GYM1号店:</strong> tandjgym@gmail.com / 30tandjgym30</p>
-              <p><strong>T&J GYM2号店:</strong> tandjgym2goutenn@gmail.com / 30tandjgym30</p>
-            </div>
-            <div className="mt-3">
-              <p className="font-semibold">◆会員アカウント</p>
-              <p><strong>1号店会員:</strong> member1@example.com / member1@example.com</p>
-              <p><strong>2号店会員:</strong> member2@example.com / member2@example.com</p>
-            </div>
-          </div>
-        </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">

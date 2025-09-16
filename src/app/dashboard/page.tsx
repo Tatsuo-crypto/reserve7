@@ -37,9 +37,6 @@ export default function DashboardPage() {
   }
 
   const isAdmin = session.user.role === 'ADMIN'
-  
-  console.log('Dashboard - User:', session.user)
-  console.log('Dashboard - isAdmin:', isAdmin)
 
   return (
     <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">

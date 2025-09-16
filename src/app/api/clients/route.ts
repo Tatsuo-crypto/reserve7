@@ -52,12 +52,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ reservationCount })
     }
 
-    // Get clients filtered by user's store (exclude admin accounts and inactive members)
+    // Get clients for the user's store
     const { data: clients, error } = await supabase
       .from('users')
-      .select('id, full_name, email, store_id, status')
+      .select('id, full_name, email, store_id')
       .eq('store_id', userStoreId)
-      .eq('status', 'active')
       .neq('email', 'tandjgym@gmail.com')
       .neq('email', 'tandjgym2goutenn@gmail.com')
       .order('full_name', { ascending: true })
@@ -67,7 +66,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch clients' }, { status: 500 })
     }
 
-    console.log('Clients API - UserStoreId:', userStoreId, 'Clients found:', clients)
 
     // Format clients for dropdown display
     const formattedClients = clients.map(client => ({
