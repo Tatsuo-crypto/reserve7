@@ -42,12 +42,6 @@ export default function Navigation() {
                     >
                       新規予約作成
                     </Link>
-                    <Link
-                      href="/admin/calendar-test"
-                      className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium"
-                    >
-                      カレンダーテスト
-                    </Link>
                   </>
                 )}
                 <Link
