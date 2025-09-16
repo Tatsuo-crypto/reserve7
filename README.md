@@ -2,33 +2,28 @@
 
 T&J GYMの複数店舗対応予約管理システムです。
 
-## 実装済み機能
+## 機能概要
 
-### ✅ データベース機能
-- User: fullName / email(unique) / passwordHash / store_id / createdAt
-- Reservation: id / clientId(User.id) / title / start / end / notes / calendar_id / externalEventId / createdAt
-- 店舗別データ分離対応
+### 🏪 店舗管理
+- 複数店舗対応（1号店・2号店）
+- 店舗別データ分離とアクセス制御
+- 管理者・会員の権限管理
 
-### ✅ 認証・権限機能
-- 新規登録：fullName・email・password（bcryptハッシュ保存）
-- ログイン/ログアウト
-- 店舗別アクセス制御：メールアドレスで自動判定
-  - `tandjgym@gmail.com` → T&J GYM1号店
-  - `tandjgym2goutenn@gmail.com` → T&J GYM2号店
-- 管理者権限：ADMIN_EMAILSで設定
+### 👥 ユーザー管理
+- 会員登録・ログイン機能
+- 管理者による会員ステータス管理
+- セキュアなパスワード管理
 
-### ✅ 予約機能
-- 会員（CLIENT）：自店舗の自分の予約のみ表示・編集・キャンセル
-- 管理者（ADMIN）：自店舗の全予約の管理・作成
-- 柔軟なセッション時間：30分/60分/90分/120分
+### 📅 予約管理
+- 直感的な予約作成・編集・キャンセル
+- 柔軟なセッション時間設定
+- 自動タイトル生成と回数管理
 - 店舗別重複防止
-- 自動タイトル生成（クライアント名 + 回数）
 
-### ✅ 複数Googleカレンダー連動
-- T&J GYM1号店：`tandjgym@gmail.com`
-- T&J GYM2号店：`tandjgym2goutenn@gmail.com`
-- 予約作成・更新・削除の自動同期
-- タイムゾーン：Asia/Tokyo
+### 🗓️ Googleカレンダー連携
+- リアルタイム同期
+- 店舗別カレンダー管理
+- 自動イベント作成・更新・削除
 
 ## セットアップ手順
 
@@ -38,13 +33,7 @@ T&J GYMの複数店舗対応予約管理システムです。
 npm install
 ```
 
-### 2. Supabaseプロジェクトの設定
-
-1. [Supabase](https://supabase.com/)でプロジェクトを作成
-2. SQL Editorで `database/schema.sql` を実行
-3. プロジェクトの設定からURL・ANON KEYを取得
-
-### 3. 環境変数の設定
+### 2. 環境変数の設定
 
 `.env.local` ファイルを作成：
 
@@ -52,27 +41,34 @@ npm install
 # Database
 SUPABASE_URL=your_supabase_project_url
 SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 
 # Authentication
 NEXTAUTH_URL=http://localhost:3000
 NEXTAUTH_SECRET=your_nextauth_secret_key
 
-# Admin Emails (comma-separated)
+# Admin Configuration
 ADMIN_EMAILS=tandjgym@gmail.com,tandjgym2goutenn@gmail.com
 
-# Google Calendar
+# Google Calendar Integration
 GOOGLE_CALENDAR_ID_1=tandjgym@gmail.com
 GOOGLE_CALENDAR_ID_2=tandjgym2goutenn@gmail.com
 GOOGLE_SERVICE_ACCOUNT_KEY=your_service_account_json_key
 ```
 
-### 4. 開発サーバーの起動
+### 3. データベースセットアップ
+
+1. [Supabase](https://supabase.com/)でプロジェクトを作成
+2. SQL Editorで `database/schema.sql` を実行
+3. 必要に応じて初期データを投入
+
+### 4. アプリケーション起動
 
 ```bash
 npm run dev
 ```
 
-http://localhost:3000 でアプリケーションにアクセスできます。
+http://localhost:3000 でアクセス可能です。
 
 ## 技術スタック
 
@@ -84,49 +80,36 @@ http://localhost:3000 でアプリケーションにアクセスできます。
 - **バリデーション**: Zod
 - **カレンダー**: Google Calendar API
 
-## プロジェクト構造
+## アーキテクチャ
 
-```
-src/
-├── app/                 # Next.js App Router
-│   ├── layout.tsx      # ルートレイアウト
-│   ├── page.tsx        # ホームページ
-│   ├── providers.tsx   # NextAuth プロバイダー
-│   ├── globals.css     # グローバルスタイル
-│   ├── components/     # 共通コンポーネント
-│   │   └── Navigation.tsx
-│   ├── api/            # API Routes
-│   │   └── auth/       # 認証関連API
-│   ├── register/       # 会員登録ページ
-│   ├── login/          # ログインページ
-│   └── dashboard/      # ダッシュボード
-├── lib/                # ユーティリティ・設定
-│   ├── types.ts        # TypeScript型定義
-│   ├── env.ts          # 環境変数バリデーション
-│   ├── supabase.ts     # Supabaseクライアント
-│   └── validations.ts  # Zodバリデーションスキーマ
-├── types/              # 型定義
-│   └── next-auth.d.ts  # NextAuth型拡張
-database/
-└── schema.sql          # データベーススキーマ
-```
+### セキュリティ
+- bcryptによるパスワードハッシュ化
+- NextAuth.jsによるセッション管理
+- 店舗別データアクセス制御
+- 管理者権限の適切な分離
 
-## 店舗別アクセス制御
+### データベース設計
+- PostgreSQL (Supabase)
+- 店舗別データ分離
+- リレーショナル設計による整合性保証
 
-### ログイン方式
-- **T&J GYM1号店**: `tandjgym@gmail.com`でログイン
-- **T&J GYM2号店**: `tandjgym2goutenn@gmail.com`でログイン
+### 外部連携
+- Google Calendar API
+- リアルタイム同期
+- エラーハンドリング
 
-### データ分離
-- 各店舗のユーザーは自店舗のデータのみアクセス可能
-- 予約作成時は自動的にログイン店舗のカレンダーに作成
-- 管理者も店舗別に権限が分離
+## 使用方法
 
-## システム状況
+### 管理者機能
+1. 管理者アカウントでログイン
+2. ダッシュボードから各機能にアクセス
+3. 予約管理・会員管理・新規予約作成
 
-**全機能実装完了**: T&J GYM複数店舗対応システム
-- ✅ ユーザー登録・ログイン・ログアウト
-- ✅ 店舗別アクセス制御
-- ✅ 予約管理（作成・編集・キャンセル）
-- ✅ 複数Googleカレンダー連動
-- ✅ 自動タイトル生成・回数管理
+### 会員機能
+1. 会員アカウントでログイン
+2. マイ予約から自分の予約を確認
+3. 予約の編集・キャンセルが可能
+
+## ライセンス
+
+このプロジェクトは T&J GYM 専用システムです。
