@@ -30,6 +30,7 @@ export async function DELETE(
         id,
         client_id,
         external_event_id,
+        calendar_id,
         users!client_id (
           email
         )
@@ -59,7 +60,7 @@ export async function DELETE(
       const calendarService = createGoogleCalendarService()
       if (calendarService) {
         try {
-          await calendarService.deleteEvent(reservation.external_event_id)
+          await calendarService.deleteEvent(reservation.external_event_id, reservation.calendar_id)
           console.log('Google Calendar event deleted:', reservation.external_event_id)
         } catch (calendarError) {
           console.error('Calendar event deletion failed:', calendarError)
@@ -132,6 +133,7 @@ export async function PUT(
         client_id,
         title,
         external_event_id,
+        calendar_id,
         users!client_id (
           email,
           full_name
@@ -209,6 +211,7 @@ export async function PUT(
             clientName: (reservation.users as any).full_name,
             clientEmail: (reservation.users as any).email,
             notes: notes || undefined,
+            calendarId: reservation.calendar_id,
           })
           console.log('Google Calendar event updated:', reservation.external_event_id)
         } catch (calendarError) {
