@@ -1,32 +1,34 @@
-# Reserve7 - ジム予約システム
+# T&J GYM - ジム予約システム
 
-段階的に機能を実装するジム予約管理システムです。
+T&J GYMの複数店舗対応予約管理システムです。
 
-## 実装予定の機能
+## 実装済み機能
 
-### ① データベース機能（最小）✅
-- User: fullName / email(unique) / passwordHash / createdAt
-- Reservation: id / clientId(User.id) / title / start / end / notes? / externalEventId? / createdAt
-- インデックス例：@@index([clientId, start])
-- 運用前提：60分固定（end = start + 60min）
+### ✅ データベース機能
+- User: fullName / email(unique) / passwordHash / store_id / createdAt
+- Reservation: id / clientId(User.id) / title / start / end / notes / calendar_id / externalEventId / createdAt
+- 店舗別データ分離対応
 
-### ② ログイン機能（最小）✅
-- 新規登録（会員）：fullName・email・password（PWはbcryptハッシュ保存）
+### ✅ 認証・権限機能
+- 新規登録：fullName・email・password（bcryptハッシュ保存）
 - ログイン/ログアウト
-- 権限（簡易）：.env の ADMIN_EMAILS="owner@example.com,staff@example.com" に含まれるメールをジム側（ADMIN）と判定。以外は会員（CLIENT）
+- 店舗別アクセス制御：メールアドレスで自動判定
+  - `tandjgym@gmail.com` → T&J GYM1号店
+  - `tandjgym2goutenn@gmail.com` → T&J GYM2号店
+- 管理者権限：ADMIN_EMAILSで設定
 
-### ③ 予約機能（更新後要件）
-- 会員（CLIENT）：自分の予約を一覧表示のみ（作成/編集/キャンセルなし）
-- ジム側（ADMIN）：全予約の一覧＋予約の作成
-- 作成入力：client（既存ユーザー選択：id or email）／title／start（ISO）／notes?
-- 仕様：60分固定（end = start + 60min）
-- 重複防止：同時刻の重複は拒否（409）
+### ✅ 予約機能
+- 会員（CLIENT）：自店舗の自分の予約のみ表示・編集・キャンセル
+- 管理者（ADMIN）：自店舗の全予約の管理・作成
+- 柔軟なセッション時間：30分/60分/90分/120分
+- 店舗別重複防止
+- 自動タイトル生成（クライアント名 + 回数）
 
-### ④ Googleカレンダー連動（最小）
-- 対象：ジム側（ADMIN）が作成した予約のみ自動反映
-- 予約作成時：events.insert → 返却 event.id を Reservation.externalEventId に保存
+### ✅ 複数Googleカレンダー連動
+- T&J GYM1号店：`tandjgym@gmail.com`
+- T&J GYM2号店：`tandjgym2goutenn@gmail.com`
+- 予約作成・更新・削除の自動同期
 - タイムゾーン：Asia/Tokyo
-- カレンダー運用：ジム用カレンダー1つをサービスアカウントに編集権限で共有
 
 ## セットアップ手順
 
@@ -56,12 +58,12 @@ NEXTAUTH_URL=http://localhost:3000
 NEXTAUTH_SECRET=your_nextauth_secret_key
 
 # Admin Emails (comma-separated)
-ADMIN_EMAILS=owner@example.com,staff@example.com
+ADMIN_EMAILS=tandjgym@gmail.com,tandjgym2goutenn@gmail.com
 
-# Google Calendar (Stage 4)
-GOOGLE_CLIENT_ID=your_google_client_id
-GOOGLE_CLIENT_SECRET=your_google_client_secret
-GOOGLE_CALENDAR_ID=your_gym_calendar_id
+# Google Calendar
+GOOGLE_CALENDAR_ID_1=tandjgym@gmail.com
+GOOGLE_CALENDAR_ID_2=tandjgym2goutenn@gmail.com
+GOOGLE_SERVICE_ACCOUNT_KEY=your_service_account_json_key
 ```
 
 ### 4. 開発サーバーの起動
@@ -109,19 +111,22 @@ database/
 └── schema.sql          # データベーススキーマ
 ```
 
-## 開発の進め方
+## 店舗別アクセス制御
 
-各段階を順番に実装し、動作確認してから次の段階に進みます：
+### ログイン方式
+- **T&J GYM1号店**: `tandjgym@gmail.com`でログイン
+- **T&J GYM2号店**: `tandjgym2goutenn@gmail.com`でログイン
 
-1. ✅ **Stage ①**: データベース機能の確認
-2. ✅ **Stage ②**: 認証機能の実装・テスト
-3. **Stage ③**: 予約機能の実装・テスト  
-4. **Stage ④**: Googleカレンダー連動の実装・テスト
+### データ分離
+- 各店舗のユーザーは自店舗のデータのみアクセス可能
+- 予約作成時は自動的にログイン店舗のカレンダーに作成
+- 管理者も店舗別に権限が分離
 
-## 現在の状況
+## システム状況
 
-**Stage ② 完了**: 認証システムが実装されました
-- ユーザー登録・ログイン・ログアウト機能
-- 役割ベースのアクセス制御（CLIENT/ADMIN）
-- bcryptによるパスワードハッシュ化
-- NextAuth.jsによるセッション管理
+**全機能実装完了**: T&J GYM複数店舗対応システム
+- ✅ ユーザー登録・ログイン・ログアウト
+- ✅ 店舗別アクセス制御
+- ✅ 予約管理（作成・編集・キャンセル）
+- ✅ 複数Googleカレンダー連動
+- ✅ 自動タイトル生成・回数管理

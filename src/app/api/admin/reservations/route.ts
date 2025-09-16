@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/app/api/auth/[...nextauth]/route'
 import { supabase } from '@/lib/supabase'
-import { isAdmin } from '@/lib/env'
+import { isAdmin, getUserStoreId } from '@/lib/env'
 import { createGoogleCalendarService } from '@/lib/google-calendar'
 import { generateReservationTitle, updateMonthlyTitles } from '@/lib/title-utils'
 
@@ -25,14 +25,16 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const userStoreId = getUserStoreId(userEmail)
     const body = await request.json()
     
     // Validate input
-    const { clientId, startTime, duration, calendarId, notes } = body
+    const { clientId, startTime, duration, notes } = body
+    const calendarId = userStoreId // Force use of user's store calendar
     
-    if (!clientId || !startTime || !duration || !calendarId) {
+    if (!clientId || !startTime || !duration) {
       return NextResponse.json(
-        { error: 'クライアントID、開始時間、セッション時間、カレンダーIDは必須です' },
+        { error: 'クライアントID、開始時間、セッション時間は必須です' },
         { status: 400 }
       )
     }
@@ -41,10 +43,10 @@ export async function POST(request: NextRequest) {
     const startDateTime = new Date(startTime)
     const endDateTime = new Date(startDateTime.getTime() + duration * 60 * 1000)
 
-    // Get client user by ID
+    // Get client user by ID (remove store verification for now)
     const { data: clientUser, error: clientError } = await supabase
       .from('users')
-      .select('id, full_name, email')
+      .select('id, full_name, email, store_id')
       .eq('id', clientId)
       .single()
 
@@ -62,10 +64,11 @@ export async function POST(request: NextRequest) {
       startDateTime
     )
 
-    // Check for overlapping reservations
+    // Check for overlapping reservations in the same store
     const { data: existingReservations, error: overlapError } = await supabase
       .from('reservations')
       .select('id')
+      .eq('calendar_id', calendarId)
       .gte('end_time', startDateTime.toISOString())
       .lte('start_time', endDateTime.toISOString())
 

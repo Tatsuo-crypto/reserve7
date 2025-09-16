@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '../auth/[...nextauth]/route'
 import { supabase } from '@/lib/supabase'
+import { getUserStoreId } from '@/lib/env'
 
 export async function GET(request: NextRequest) {
   try {
@@ -16,12 +17,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
     }
 
+    const userStoreId = getUserStoreId(session.user.email!)
+
     // Get query parameters
     const { searchParams } = new URL(request.url)
     const clientId = searchParams.get('clientId')
 
     if (clientId) {
-      // Get current month's reservation count for specific client
+      // Get current month's reservation count for specific client in user's store
       const now = new Date()
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
       const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59)
@@ -30,6 +33,7 @@ export async function GET(request: NextRequest) {
         .from('reservations')
         .select('id')
         .eq('client_id', clientId)
+        .eq('calendar_id', userStoreId)
         .gte('start_time', startOfMonth.toISOString())
         .lte('start_time', endOfMonth.toISOString())
 
@@ -43,10 +47,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ reservationCount })
     }
 
-    // Get all registered clients
+    // Get all clients (remove store restriction for now)
     const { data: clients, error } = await supabase
       .from('users')
-      .select('id, full_name, email')
+      .select('id, full_name, email, store_id')
       .order('full_name', { ascending: true })
 
     if (error) {

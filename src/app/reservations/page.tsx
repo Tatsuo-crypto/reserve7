@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
+import { getStoreName } from '@/lib/env'
 
 interface Reservation {
   id: string
@@ -383,7 +384,7 @@ export default function ReservationsPage() {
                       )}
                       {isAdmin && (
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {reservation.calendarId === 'tandjgym@gmail.com' ? 'T&J GYM1号店' : 'T&J GYM2号店'}
+                          {getStoreName(reservation.calendarId)}
                         </td>
                       )}
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">

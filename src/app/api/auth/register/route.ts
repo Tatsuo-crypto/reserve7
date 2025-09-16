@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import { supabase } from '@/lib/supabase'
 import { createUserSchema } from '@/lib/validations'
+import { getUserStoreId } from '@/lib/env'
 
 export async function POST(request: NextRequest) {
   try {
@@ -28,6 +29,9 @@ export async function POST(request: NextRequest) {
     const saltRounds = 12
     const passwordHash = await bcrypt.hash(password, saltRounds)
 
+    // Determine store_id based on email
+    const storeId = getUserStoreId(email.toLowerCase())
+
     // Create user
     const { data: user, error } = await supabase
       .from('users')
@@ -35,8 +39,9 @@ export async function POST(request: NextRequest) {
         full_name: fullName,
         email: email.toLowerCase(),
         password_hash: passwordHash,
+        store_id: storeId,
       })
-      .select('id, full_name, email, created_at')
+      .select('id, full_name, email, store_id, created_at')
       .single()
 
     if (error) {

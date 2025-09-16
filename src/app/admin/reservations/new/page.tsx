@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
+import { getUserStoreId, getStoreName } from '@/lib/env'
 
 interface Client {
   id: string
@@ -34,7 +35,7 @@ export default function NewReservationPage() {
     clientId: '',
     startTime: '',
     duration: 60, // Default 60 minutes
-    calendarId: 'tandjgym@gmail.com', // Default to first calendar
+    calendarId: '', // Will be set based on user's store
     notes: '',
   })
 
@@ -57,11 +58,17 @@ export default function NewReservationPage() {
     }
 
     fetchClients()
-    setFormData(prev => ({
-      ...prev,
-      startTime: getDefaultDateTime()
-    }))
-  }, [])
+    
+    // Set default values based on user's store
+    if (session?.user?.email) {
+      const userStoreId = getUserStoreId(session.user.email)
+      setFormData(prev => ({
+        ...prev,
+        startTime: getDefaultDateTime(),
+        calendarId: userStoreId
+      }))
+    }
+  }, [session])
 
   // Check admin access
   useEffect(() => {
@@ -311,24 +318,16 @@ export default function NewReservationPage() {
               </p>
             </div>
 
-            {/* Calendar Selection */}
+            {/* Store Display (Read-only) */}
             <div>
-              <label htmlFor="calendarId" className="block text-sm font-medium text-gray-700 mb-2">
-                店舗選択 *
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                店舗
               </label>
-              <select
-                id="calendarId"
-                name="calendarId"
-                value={formData.calendarId}
-                onChange={handleInputChange}
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="tandjgym@gmail.com">T&J GYM1号店</option>
-                <option value="tandjgym2goutenn@gmail.com">T&J GYM2号店</option>
-              </select>
+              <div className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700">
+                {session?.user?.email ? getStoreName(getUserStoreId(session.user.email)) : 'T&J GYM1号店'}
+              </div>
               <p className="mt-1 text-sm text-gray-500">
-                予約を作成する店舗を選択してください
+                ログインしている店舗での予約作成です
               </p>
             </div>
 

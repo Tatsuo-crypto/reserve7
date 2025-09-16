@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { isAdminEmail } from '@/lib/env'
 import { loginSchema } from '@/lib/validations'
 
-export const authOptions = {
+const authOptions = {
   providers: [
     CredentialsProvider({
       name: 'credentials',
@@ -79,4 +79,4 @@ export const authOptions = {
 }
 
 const handler = NextAuth(authOptions)
-export { handler as GET, handler as POST }
+export { handler as GET, handler as POST, authOptions }

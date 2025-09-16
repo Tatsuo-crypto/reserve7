@@ -48,4 +48,28 @@ export function isAdminEmail(email: string): boolean {
   return adminEmails.includes(email.toLowerCase());
 }
 
+export function getUserStoreId(email: string): string {
+  const normalizedEmail = email.toLowerCase().trim();
+  
+  if (normalizedEmail === 'tandjgym@gmail.com') {
+    return 'tandjgym@gmail.com';
+  } else if (normalizedEmail === 'tandjgym2goutenn@gmail.com') {
+    return 'tandjgym2goutenn@gmail.com';
+  } else if (normalizedEmail.includes('tandjgym2goutenn') || normalizedEmail.includes('2goutenn')) {
+    return 'tandjgym2goutenn@gmail.com';
+  }
+  
+  // Default to store 1 for other users
+  return 'tandjgym@gmail.com';
+}
+
+export function getStoreCalendarId(storeId: string): string {
+  return storeId; // Store ID and Calendar ID are the same
+}
+
+export function getStoreName(storeId: string): string {
+  const store = CALENDARS.find(cal => cal.id === storeId);
+  return store ? store.name : 'T&J GYM1号店';
+}
+
 export const isAdmin = isAdminEmail;

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/app/api/auth/[...nextauth]/route'
 import { supabase } from '@/lib/supabase'
-import { isAdmin } from '@/lib/env'
+import { isAdmin, getUserStoreId } from '@/lib/env'
 
 export async function GET(request: NextRequest) {
   try {
@@ -17,6 +17,7 @@ export async function GET(request: NextRequest) {
 
     const userEmail = session.user.email
     const isUserAdmin = isAdmin(userEmail)
+    const userStoreId = getUserStoreId(userEmail)
 
     let query = supabase
       .from('reservations')
@@ -26,17 +27,22 @@ export async function GET(request: NextRequest) {
         start_time,
         end_time,
         notes,
+        calendar_id,
         created_at,
         external_event_id,
         users!client_id (
           id,
           full_name,
-          email
+          email,
+          store_id
         )
       `)
       .order('start_time', { ascending: true })
 
-    // If not admin, only show user's own reservations
+    // Filter by store - both admins and regular users only see their store's data
+    query = query.eq('calendar_id', userStoreId)
+
+    // If not admin, only show user's own reservations within their store
     if (!isUserAdmin) {
       // First get user ID
       const { data: userData } = await supabase
@@ -72,6 +78,7 @@ export async function GET(request: NextRequest) {
       startTime: reservation.start_time,
       endTime: reservation.end_time,
       notes: reservation.notes,
+      calendarId: reservation.calendar_id,
       createdAt: reservation.created_at,
       client: {
         id: (reservation.users as any).id,
