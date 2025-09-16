@@ -122,14 +122,6 @@ function AdminDashboard() {
         </div>
       </div>
 
-      <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-        <h4 className="text-sm font-medium text-green-900 mb-2">
-          Stage ③ - 予約機能（完了）
-        </h4>
-        <p className="text-sm text-green-700">
-          管理者として認証されました。全ての予約管理機能が利用可能です。
-        </p>
-      </div>
     </div>
   )
 }
@@ -161,14 +153,6 @@ function ClientDashboard() {
         </div>
       </div>
 
-      <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-        <h4 className="text-sm font-medium text-green-900 mb-2">
-          Stage ③ - 予約機能（完了）
-        </h4>
-        <p className="text-sm text-green-700">
-          会員として認証されました。自分の予約一覧を確認できます。
-        </p>
-      </div>
     </div>
   )
 }
