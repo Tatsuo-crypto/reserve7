@@ -44,11 +44,11 @@ export default function DashboardPage() {
   return (
     <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
       {/* Header */}
-      <div className="bg-white shadow rounded-lg mb-6">
-        <div className="px-4 py-5 sm:p-6">
+      <div className="bg-white shadow-sm border border-gray-200 rounded-lg mb-6">
+        <div className="px-6 py-5">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">
+              <h1 className="text-2xl font-semibold text-gray-900">
                 ダッシュボード
               </h1>
               <p className="mt-1 text-sm text-gray-600">
@@ -56,16 +56,12 @@ export default function DashboardPage() {
               </p>
             </div>
             <div className="flex items-center space-x-4">
-              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                isAdmin 
-                  ? 'bg-purple-100 text-purple-800' 
-                  : 'bg-blue-100 text-blue-800'
-              }`}>
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700 border border-gray-300">
                 {isAdmin ? 'ジム管理者' : '会員'}
               </span>
               <button
                 onClick={handleLogout}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors"
               >
                 ログアウト
               </button>
@@ -89,55 +85,55 @@ function AdminDashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white shadow rounded-lg">
-        <div className="px-4 py-5 sm:p-6">
-          <h2 className="text-lg font-medium text-gray-900 mb-4">
+      <div className="bg-white shadow-sm border border-gray-200 rounded-lg">
+        <div className="px-6 py-5">
+          <h2 className="text-lg font-semibold text-gray-900 mb-6">
             管理者機能
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Link
               href="/admin/reservations"
-              className="group bg-gradient-to-br from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 border border-blue-200 p-6 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
+              className="group bg-white hover:bg-gray-50 border border-gray-200 p-6 rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
             >
               <div className="flex items-center mb-4">
-                <div className="bg-blue-500 p-3 rounded-lg">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="bg-gray-100 p-3 rounded-lg">
+                  <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                   </svg>
                 </div>
               </div>
-              <h3 className="text-xl font-bold text-blue-900 mb-2 group-hover:text-blue-700">予約管理</h3>
-              <p className="text-blue-700 text-sm">予約の確認・編集・削除</p>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">予約管理</h3>
+              <p className="text-gray-600 text-sm">予約の確認・編集・削除</p>
             </Link>
             
             <Link
               href="/admin/reservations/new"
-              className="group bg-gradient-to-br from-green-50 to-green-100 hover:from-green-100 hover:to-green-200 border border-green-200 p-6 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
+              className="group bg-white hover:bg-gray-50 border border-gray-200 p-6 rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
             >
               <div className="flex items-center mb-4">
-                <div className="bg-green-500 p-3 rounded-lg">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="bg-gray-100 p-3 rounded-lg">
+                  <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                   </svg>
                 </div>
               </div>
-              <h3 className="text-xl font-bold text-green-900 mb-2 group-hover:text-green-700">新規予約作成</h3>
-              <p className="text-green-700 text-sm">クライアントの予約を作成</p>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">新規予約作成</h3>
+              <p className="text-gray-600 text-sm">クライアントの予約を作成</p>
             </Link>
 
             <Link
               href="/admin/members"
-              className="group bg-gradient-to-br from-purple-50 to-purple-100 hover:from-purple-100 hover:to-purple-200 border border-purple-200 p-6 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
+              className="group bg-white hover:bg-gray-50 border border-gray-200 p-6 rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
             >
               <div className="flex items-center mb-4">
-                <div className="bg-purple-500 p-3 rounded-lg">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="bg-gray-100 p-3 rounded-lg">
+                  <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                   </svg>
                 </div>
               </div>
-              <h3 className="text-xl font-bold text-purple-900 mb-2 group-hover:text-purple-700">会員管理</h3>
-              <p className="text-purple-700 text-sm">会員ステータスの管理</p>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">会員管理</h3>
+              <p className="text-gray-600 text-sm">会員ステータスの管理</p>
             </Link>
           </div>
         </div>
@@ -152,13 +148,20 @@ function ClientDashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white shadow rounded-lg">
-        <div className="px-4 py-5 sm:p-6">
-          <h2 className="text-lg font-medium text-gray-900 mb-4">
+      <div className="bg-white shadow-sm border border-gray-200 rounded-lg">
+        <div className="px-6 py-5">
+          <h2 className="text-lg font-semibold text-gray-900 mb-6">
             会員機能
           </h2>
-          <div className="border-2 border-green-200 bg-green-50 rounded-lg p-6 text-center">
-            <h3 className="text-md font-medium text-gray-900 mb-2">
+          <div className="bg-white border border-gray-200 rounded-lg p-6 text-center">
+            <div className="flex items-center justify-center mb-4">
+              <div className="bg-gray-100 p-3 rounded-lg">
+                <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3a2 2 0 012-2h4a2 2 0 012 2v4m-6 0h6m-6 0a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V9a2 2 0 00-2-2h-4" />
+                </svg>
+              </div>
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
               マイ予約
             </h3>
             <p className="text-sm text-gray-600 mb-4">
@@ -166,7 +169,7 @@ function ClientDashboard() {
             </p>
             <button
               onClick={() => router.push('/reservations')}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors"
             >
               マイ予約を見る
             </button>
