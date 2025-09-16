@@ -63,9 +63,13 @@ export default function MembersPage() {
     }
   }, [session, status])
 
-  const handleStatusChange = async (memberId: string, newStatus: string) => {
+  const [selectedStatuses, setSelectedStatuses] = useState<{[key: string]: string}>({})
+
+  const handleStatusChange = async (memberId: string, newStatus?: string) => {
+    const statusToUpdate = newStatus || selectedStatuses[memberId] || 'active'
+    
     try {
-      console.log('ステータス更新開始:', { memberId, newStatus })
+      console.log('ステータス更新開始:', { memberId, statusToUpdate })
       
       const response = await fetch('/api/admin/members', {
         method: 'PATCH',
@@ -74,7 +78,7 @@ export default function MembersPage() {
         },
         body: JSON.stringify({
           memberId,
-          status: newStatus,
+          status: statusToUpdate,
         }),
       })
 
@@ -85,9 +89,16 @@ export default function MembersPage() {
         // Update local state
         setMembers(prev => prev.map(member => 
           member.id === memberId 
-            ? { ...member, status: newStatus as 'active' | 'suspended' | 'withdrawn' }
+            ? { ...member, status: statusToUpdate as 'active' | 'suspended' | 'withdrawn' }
             : member
         ))
+        
+        // Clear selected status for this member
+        setSelectedStatuses(prev => {
+          const updated = { ...prev }
+          delete updated[memberId]
+          return updated
+        })
         
         // Show success message if it was simulated
         if (result.message) {
@@ -223,23 +234,38 @@ export default function MembersPage() {
                         {member.email}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(member.status)}`}>
-                          {getStatusText(member.status)}
-                        </span>
+                        <div className="flex items-center">
+                          <div className={`w-3 h-3 rounded-full mr-2 ${
+                            member.status === 'active' ? 'bg-green-400' :
+                            member.status === 'suspended' ? 'bg-yellow-400' : 'bg-red-400'
+                          }`}></div>
+                          <span className={`inline-flex px-3 py-1 text-sm font-medium rounded-full ${getStatusColor(member.status)}`}>
+                            {getStatusText(member.status)}
+                          </span>
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {new Date(member.created_at).toLocaleDateString('ja-JP')}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <select
-                          value={member.status || 'active'}
-                          onChange={(e) => handleStatusChange(member.id, e.target.value)}
-                          className="border border-gray-300 rounded-md px-3 py-1 text-sm"
-                        >
-                          <option value="active">在籍</option>
-                          <option value="suspended">休会</option>
-                          <option value="withdrawn">退会</option>
-                        </select>
+                        <div className="flex items-center space-x-2">
+                          <select
+                            value={selectedStatuses[member.id] || member.status || 'active'}
+                            onChange={(e) => setSelectedStatuses(prev => ({...prev, [member.id]: e.target.value}))}
+                            className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                          >
+                            <option value="active">在籍</option>
+                            <option value="suspended">休会</option>
+                            <option value="withdrawn">退会</option>
+                          </select>
+                          <button
+                            onClick={() => handleStatusChange(member.id)}
+                            disabled={!selectedStatuses[member.id] || selectedStatuses[member.id] === member.status}
+                            className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                          >
+                            変更
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
