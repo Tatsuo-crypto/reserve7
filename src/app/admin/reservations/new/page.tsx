@@ -46,6 +46,7 @@ export default function NewReservationPage() {
         const response = await fetch('/api/clients')
         if (response.ok) {
           const data = await response.json()
+          console.log('Frontend - Clients received:', data.clients)
           setClients(data.clients)
         } else {
           console.error('Failed to fetch clients')

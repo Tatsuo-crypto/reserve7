@@ -64,13 +64,13 @@ export async function POST(request: NextRequest) {
       startDateTime
     )
 
-    // Check for overlapping reservations in the same store
+    // Check for overlapping reservations in the same calendar (excluding adjacent times)
     const { data: existingReservations, error: overlapError } = await supabase
       .from('reservations')
       .select('id')
       .eq('calendar_id', calendarId)
-      .gte('end_time', startDateTime.toISOString())
-      .lte('start_time', endDateTime.toISOString())
+      .gt('end_time', startDateTime.toISOString())
+      .lt('start_time', endDateTime.toISOString())
 
     if (overlapError) {
       console.error('Overlap check error:', overlapError)

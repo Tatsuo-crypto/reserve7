@@ -129,6 +129,22 @@ export default function ReservationsPage() {
     return clientReservationsInMonth.length
   }
 
+  // Check if reservation is in the past
+  const isPastReservation = (reservation: Reservation) => {
+    const now = new Date()
+    const reservationEnd = new Date(reservation.endTime)
+    return reservationEnd < now
+  }
+
+  // Get row styling based on reservation timing
+  const getRowClassName = (reservation: Reservation) => {
+    const baseClass = "hover:bg-gray-50"
+    if (isPastReservation(reservation)) {
+      return `${baseClass} bg-gray-100 text-gray-600`
+    }
+    return `${baseClass} bg-white`
+  }
+
 
   // Handle reservation cancellation
   const handleCancel = (reservationId: string) => {
@@ -324,101 +340,111 @@ export default function ReservationsPage() {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      日付
-                    </th>
-                    {!isAdmin && (
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        回数
-                      </th>
+                    {isAdmin ? (
+                      <>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          日付
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          クライアント
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          時間
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          回数
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          メモ
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          操作
+                        </th>
+                      </>
+                    ) : (
+                      <>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          回数
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          日付
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          時間
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          メモ
+                        </th>
+                      </>
                     )}
-                    {isAdmin && (
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        クライアント
-                      </th>
-                    )}
-                    {isAdmin && (
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        回数
-                      </th>
-                    )}
-                    {isAdmin && (
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        店舗
-                      </th>
-                    )}
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      時間
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      メモ
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      操作
-                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {reservations.map((reservation) => (
-                    <tr key={reservation.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {formatDate(reservation.startTime)}
-                      </td>
-                      {!isAdmin && (
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {getMonthlyCount(reservation, reservations)}回目
-                        </td>
+                    <tr key={reservation.id} className={getRowClassName(reservation)}>
+                      {isAdmin ? (
+                        <>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            {formatDate(reservation.startTime)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            <div>
+                              <div className="font-medium">{reservation.client.fullName}</div>
+                              <div className="text-gray-500">{reservation.client.email}</div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            {formatTime(reservation.startTime)} - {formatTime(reservation.endTime)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            {getMonthlyCount(reservation, reservations)}回目
+                          </td>
+                          <td className="px-6 py-4 text-sm">
+                            {reservation.notes || '-'}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div className="flex space-x-2">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.preventDefault()
+                                  e.stopPropagation()
+                                  handleEdit(reservation)
+                                }}
+                                className="text-blue-600 hover:text-blue-900 transition-colors"
+                              >
+                                変更
+                              </button>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.preventDefault()
+                                  e.stopPropagation()
+                                  handleCancel(reservation.id)
+                                }}
+                                className="text-red-600 hover:text-red-900 transition-colors"
+                              >
+                                キャンセル
+                              </button>
+                            </div>
+                          </td>
+                        </>
+                      ) : (
+                        <>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            {getMonthlyCount(reservation, reservations)}回目
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            {formatDate(reservation.startTime)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            {formatTime(reservation.startTime)} - {formatTime(reservation.endTime)}
+                          </td>
+                          <td className="px-6 py-4 text-sm">
+                            {reservation.notes || '-'}
+                          </td>
+                        </>
                       )}
-                      {isAdmin && (
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          <div>
-                            <div className="font-medium">{reservation.client.fullName}</div>
-                            <div className="text-gray-500">{reservation.client.email}</div>
-                          </div>
-                        </td>
-                      )}
-                      {isAdmin && (
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {getMonthlyCount(reservation, reservations)}回目
-                        </td>
-                      )}
-                      {isAdmin && (
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {getStoreName(reservation.calendarId)}
-                        </td>
-                      )}
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {formatTime(reservation.startTime)} - {formatTime(reservation.endTime)}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-900">
-                        {reservation.notes || '-'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <div className="flex space-x-2">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.preventDefault()
-                              e.stopPropagation()
-                              handleEdit(reservation)
-                            }}
-                            className="text-blue-600 hover:text-blue-900 transition-colors"
-                          >
-                            変更
-                          </button>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.preventDefault()
-                              e.stopPropagation()
-                              handleCancel(reservation.id)
-                            }}
-                            className="text-red-600 hover:text-red-900 transition-colors"
-                          >
-                            キャンセル
-                          </button>
-                        </div>
-                      </td>
                     </tr>
                   ))}
                 </tbody>

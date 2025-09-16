@@ -8,16 +8,21 @@ export async function GET(request: NextRequest) {
   try {
     // Check authentication
     const session = await getServerSession(authOptions)
-    if (!session) {
+    console.log('Clients API - Session:', session)
+    
+    if (!session?.user?.email) {
+      console.log('No session or email found')
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // Check admin role
     if (session.user.role !== 'ADMIN') {
+      console.log('User is not admin:', session.user.role)
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
     }
 
     const userStoreId = getUserStoreId(session.user.email!)
+    console.log('Clients API - UserEmail:', session.user.email, 'UserStoreId:', userStoreId)
 
     // Get query parameters
     const { searchParams } = new URL(request.url)
@@ -47,16 +52,21 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ reservationCount })
     }
 
-    // Get all clients (remove store restriction for now)
+    // Get clients filtered by user's store (exclude admin accounts)
     const { data: clients, error } = await supabase
       .from('users')
       .select('id, full_name, email, store_id')
+      .eq('store_id', userStoreId)
+      .neq('email', 'tandjgym@gmail.com')
+      .neq('email', 'tandjgym2goutenn@gmail.com')
       .order('full_name', { ascending: true })
 
     if (error) {
       console.error('Database error:', error)
       return NextResponse.json({ error: 'Failed to fetch clients' }, { status: 500 })
     }
+
+    console.log('Clients API - UserStoreId:', userStoreId, 'Clients found:', clients)
 
     // Format clients for dropdown display
     const formattedClients = clients.map(client => ({

@@ -6,9 +6,12 @@ import { isAdmin, getUserStoreId } from '@/lib/env'
 
 export async function GET(request: NextRequest) {
   try {
-    // Check authentication
+    // Check authentication - get session with request context
     const session = await getServerSession(authOptions)
+    console.log('Session check:', session)
+    
     if (!session?.user?.email) {
+      console.log('No session or email found')
       return NextResponse.json(
         { error: '認証が必要です' },
         { status: 401 }
@@ -18,6 +21,8 @@ export async function GET(request: NextRequest) {
     const userEmail = session.user.email
     const isUserAdmin = isAdmin(userEmail)
     const userStoreId = getUserStoreId(userEmail)
+    
+    console.log('Reservations API - User:', userEmail, 'Admin:', isUserAdmin, 'StoreId:', userStoreId)
 
     let query = supabase
       .from('reservations')
@@ -39,15 +44,12 @@ export async function GET(request: NextRequest) {
       `)
       .order('start_time', { ascending: true })
 
-    // Filter by store - both admins and regular users only see their store's data
-    query = query.eq('calendar_id', userStoreId)
-
-    // If not admin, only show user's own reservations within their store
+    // If not admin, only show user's own reservations
     if (!isUserAdmin) {
-      // First get user ID
+      // First get user ID and store_id
       const { data: userData } = await supabase
         .from('users')
-        .select('id')
+        .select('id, store_id')
         .eq('email', userEmail)
         .single()
 
@@ -58,7 +60,12 @@ export async function GET(request: NextRequest) {
         )
       }
 
+      // Filter by client_id and user's store calendar_id
       query = query.eq('client_id', userData.id)
+      query = query.eq('calendar_id', userData.store_id)
+    } else {
+      // Admin sees all reservations in their store
+      query = query.eq('calendar_id', userStoreId)
     }
 
     const { data: reservations, error } = await query
