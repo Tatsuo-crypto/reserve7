@@ -95,29 +95,35 @@ function AdminDashboard() {
             管理者機能
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Link
-              href="/admin/reservations"
-              className="bg-blue-500 hover:bg-blue-600 text-white p-6 rounded-lg shadow hover:shadow-md transition-all"
-            >
-              <h3 className="text-lg font-semibold mb-2">予約管理</h3>
-              <p className="text-blue-100">予約の確認・編集・削除</p>
-            </Link>
+            <div className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow">
+              <Link
+                href="/admin/reservations"
+                className="inline-block bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md font-semibold transition-colors mb-3"
+              >
+                予約管理
+              </Link>
+              <p className="text-gray-600">予約の確認・編集・削除</p>
+            </div>
             
-            <Link
-              href="/admin/reservations/new"
-              className="bg-green-500 hover:bg-green-600 text-white p-6 rounded-lg shadow hover:shadow-md transition-all"
-            >
-              <h3 className="text-lg font-semibold mb-2">新規予約作成</h3>
-              <p className="text-green-100">クライアントの予約を作成</p>
-            </Link>
+            <div className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow">
+              <Link
+                href="/admin/reservations/new"
+                className="inline-block bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md font-semibold transition-colors mb-3"
+              >
+                新規予約作成
+              </Link>
+              <p className="text-gray-600">クライアントの予約を作成</p>
+            </div>
 
-            <Link
-              href="/admin/members"
-              className="bg-purple-500 hover:bg-purple-600 text-white p-6 rounded-lg shadow hover:shadow-md transition-all"
-            >
-              <h3 className="text-lg font-semibold mb-2">会員管理</h3>
-              <p className="text-purple-100">会員ステータスの管理</p>
-            </Link>
+            <div className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow">
+              <Link
+                href="/admin/members"
+                className="inline-block bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-md font-semibold transition-colors mb-3"
+              >
+                会員管理
+              </Link>
+              <p className="text-gray-600">会員ステータスの管理</p>
+            </div>
           </div>
         </div>
       </div>
