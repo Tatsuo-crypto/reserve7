@@ -38,28 +38,36 @@ export default function Navigation() {
                   <>
                     <Link
                       href="/admin/reservations/new"
-                      className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                      className="bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
                     >
                       新規予約作成
+                    </Link>
+                    <Link
+                      href="/admin/members"
+                      className="bg-purple-500 hover:bg-purple-600 text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                    >
+                      会員管理
                     </Link>
                   </>
                 )}
                 <Link
                   href="/reservations"
-                  className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
                 >
                   {session.user.role === 'ADMIN' ? '予約管理' : 'マイ予約'}
                 </Link>
-                <span className="text-sm text-gray-600">
-                  {session.user.name}さん
-                </span>
-                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                  session.user.role === 'ADMIN' 
-                    ? 'bg-purple-100 text-purple-800' 
-                    : 'bg-blue-100 text-blue-800'
-                }`}>
-                  {session.user.role === 'ADMIN' ? '管理者' : '会員'}
-                </span>
+                <div className="flex items-center space-x-3">
+                  <span className="text-sm text-gray-600">
+                    {session.user.name}さん
+                  </span>
+                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${
+                    session.user.role === 'ADMIN' 
+                      ? 'bg-purple-50 text-purple-700 border-purple-200' 
+                      : 'bg-blue-50 text-blue-700 border-blue-200'
+                  }`}>
+                    {session.user.role === 'ADMIN' ? '管理者' : '会員'}
+                  </span>
+                </div>
                 <button
                   onClick={handleLogout}
                   className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
