@@ -69,13 +69,10 @@ export default function LoginPage() {
       <div className="max-w-md w-full space-y-8">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            ログイン
+            T&J GYM
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            または{' '}
-            <Link href="/register" className="font-medium text-indigo-600 hover:text-indigo-500">
-              新規会員登録はこちら
-            </Link>
+          <p className="mt-2 text-center text-lg text-gray-700">
+            予約確認フォーム
           </p>
         </div>
 
@@ -137,8 +134,8 @@ export default function LoginPage() {
           </div>
 
           <div className="text-center">
-            <Link href="/" className="text-sm text-indigo-600 hover:text-indigo-500">
-              ← ホームに戻る
+            <Link href="/register" className="text-sm text-indigo-600 hover:text-indigo-500">
+              ← 新規登録
             </Link>
           </div>
         </form>
