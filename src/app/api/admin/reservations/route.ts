@@ -28,20 +28,24 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     
     // Validate input
-    const { clientEmail, title, startTime, endTime, notes } = body
+    const { clientId, startTime, duration, calendarId, notes } = body
     
-    if (!clientEmail || !startTime || !endTime) {
+    if (!clientId || !startTime || !duration || !calendarId) {
       return NextResponse.json(
-        { error: 'クライアントメール、開始時間、終了時間は必須です' },
+        { error: 'クライアントID、開始時間、セッション時間、カレンダーIDは必須です' },
         { status: 400 }
       )
     }
 
-    // Get client user ID
+    // Calculate end time from duration
+    const startDateTime = new Date(startTime)
+    const endDateTime = new Date(startDateTime.getTime() + duration * 60 * 1000)
+
+    // Get client user by ID
     const { data: clientUser, error: clientError } = await supabase
       .from('users')
       .select('id, full_name, email')
-      .eq('email', clientEmail.toLowerCase())
+      .eq('id', clientId)
       .single()
 
     if (clientError || !clientUser) {
@@ -50,10 +54,6 @@ export async function POST(request: NextRequest) {
         { status: 404 }
       )
     }
-
-    // Parse start and end times
-    const startDateTime = new Date(startTime)
-    const endDateTime = new Date(endTime)
 
     // Generate title based on chronological order
     const generatedTitle = await generateReservationTitle(
@@ -97,6 +97,7 @@ export async function POST(request: NextRequest) {
           clientName: clientUser.full_name,
           clientEmail: clientUser.email,
           notes: notes || undefined,
+          calendarId: calendarId,
         })
         console.log('Google Calendar event created:', externalEventId)
       } catch (calendarError) {
@@ -114,6 +115,7 @@ export async function POST(request: NextRequest) {
         start_time: startDateTime.toISOString(),
         end_time: endDateTime.toISOString(),
         notes: notes || null,
+        calendar_id: calendarId,
         external_event_id: externalEventId,
       })
       .select(`
@@ -138,7 +140,7 @@ export async function POST(request: NextRequest) {
       // If calendar event was created but reservation failed, try to clean up
       if (externalEventId && calendarService) {
         try {
-          await calendarService.deleteEvent(externalEventId)
+          await calendarService.deleteEvent(externalEventId, calendarId)
           console.log('Cleaned up calendar event after reservation failure')
         } catch (cleanupError) {
           console.error('Failed to cleanup calendar event:', cleanupError)

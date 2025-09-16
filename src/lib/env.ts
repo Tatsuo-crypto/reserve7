@@ -15,7 +15,8 @@ const envSchema = z.object({
   // Google Calendar (optional for now)
   GOOGLE_CLIENT_ID: z.string().optional(),
   GOOGLE_CLIENT_SECRET: z.string().optional(),
-  GOOGLE_CALENDAR_ID: z.string().optional(),
+  GOOGLE_CALENDAR_ID_1: z.string().optional(),
+  GOOGLE_CALENDAR_ID_2: z.string().optional(),
   GOOGLE_SERVICE_ACCOUNT_KEY: z.string().optional(),
 });
 
@@ -25,9 +26,16 @@ export const env = {
   NEXTAUTH_URL: process.env.NEXTAUTH_URL!,
   NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET!,
   ADMIN_EMAILS: process.env.ADMIN_EMAILS || '',
-  GOOGLE_CALENDAR_ID: process.env.GOOGLE_CALENDAR_ID,
+  GOOGLE_CALENDAR_ID_1: process.env.GOOGLE_CALENDAR_ID_1,
+  GOOGLE_CALENDAR_ID_2: process.env.GOOGLE_CALENDAR_ID_2,
   GOOGLE_SERVICE_ACCOUNT_KEY: process.env.GOOGLE_SERVICE_ACCOUNT_KEY,
 }
+
+// Calendar configurations
+export const CALENDARS = [
+  { id: 'tandjgym@gmail.com', name: 'T&J GYM1号店' },
+  { id: 'tandjgym2goutenn@gmail.com', name: 'T&J GYM2号店' },
+]
 
 // Debug environment variables (remove in production)
 // console.log('Environment variables loaded:')

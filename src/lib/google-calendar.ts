@@ -6,7 +6,7 @@ export class GoogleCalendarService {
 
   constructor() {
     try {
-      if (!env.GOOGLE_SERVICE_ACCOUNT_KEY || !env.GOOGLE_CALENDAR_ID) {
+      if (!env.GOOGLE_SERVICE_ACCOUNT_KEY) {
         console.warn('Google Calendar credentials not configured')
         this.calendar = null
         return
@@ -44,6 +44,7 @@ export class GoogleCalendarService {
     clientName: string
     clientEmail: string
     notes?: string
+    calendarId: string
   }): Promise<string> {
     if (!this.calendar) {
       throw new Error('Google Calendar service not initialized')
@@ -67,7 +68,7 @@ export class GoogleCalendarService {
 
     try {
       const response = await this.calendar.events.insert({
-        calendarId: env.GOOGLE_CALENDAR_ID!,
+        calendarId: reservation.calendarId,
         requestBody: event,
       })
 
@@ -92,6 +93,7 @@ export class GoogleCalendarService {
     clientName: string
     clientEmail: string
     notes?: string
+    calendarId: string
   }): Promise<void> {
     if (!this.calendar) {
       throw new Error('Google Calendar service not initialized')
@@ -115,7 +117,7 @@ export class GoogleCalendarService {
 
     try {
       await this.calendar.events.update({
-        calendarId: env.GOOGLE_CALENDAR_ID!,
+        calendarId: reservation.calendarId,
         eventId: eventId,
         requestBody: event,
       })
@@ -128,10 +130,10 @@ export class GoogleCalendarService {
   /**
    * Delete a calendar event
    */
-  async deleteEvent(eventId: string): Promise<void> {
+  async deleteEvent(eventId: string, calendarId: string): Promise<void> {
     try {
       await this.calendar.events.delete({
-        calendarId: env.GOOGLE_CALENDAR_ID!,
+        calendarId: calendarId,
         eventId: eventId,
       })
     } catch (error) {
@@ -144,7 +146,7 @@ export class GoogleCalendarService {
    * Check if Google Calendar is properly configured
    */
   static isConfigured(): boolean {
-    return !!(env.GOOGLE_SERVICE_ACCOUNT_KEY && env.GOOGLE_CALENDAR_ID)
+    return !!(env.GOOGLE_SERVICE_ACCOUNT_KEY)
   }
 }
 

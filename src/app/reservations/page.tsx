@@ -10,6 +10,7 @@ interface Reservation {
   startTime: string
   endTime: string
   notes?: string
+  calendarId: string
   createdAt: string
   client: {
     id: string
@@ -340,6 +341,11 @@ export default function ReservationsPage() {
                         回数
                       </th>
                     )}
+                    {isAdmin && (
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        店舗
+                      </th>
+                    )}
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       時間
                     </th>
@@ -373,6 +379,11 @@ export default function ReservationsPage() {
                       {isAdmin && (
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {getMonthlyCount(reservation, reservations)}回目
+                        </td>
+                      )}
+                      {isAdmin && (
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {reservation.calendarId === 'tandjgym@gmail.com' ? 'T&J GYM1号店' : 'T&J GYM2号店'}
                         </td>
                       )}
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">

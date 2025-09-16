@@ -17,6 +17,7 @@ export async function updateMonthlyTitles(clientId: string, year: number, month:
         end_time,
         title, 
         notes,
+        calendar_id,
         external_event_id,
         users!client_id (
           id,
@@ -59,14 +60,14 @@ export async function updateMonthlyTitles(clientId: string, year: number, month:
       let calendarUpdate = Promise.resolve()
       if (reservation.external_event_id && calendarService) {
         try {
-          const clientData = reservation.users as any
           calendarUpdate = calendarService.updateEvent(reservation.external_event_id, {
             title: newTitle,
             startTime: reservation.start_time,
             endTime: reservation.end_time,
-            clientName: clientData.full_name,
-            clientEmail: clientData.email,
+            clientName: reservation.users[0].full_name,
+            clientEmail: reservation.users[0].email,
             notes: reservation.notes || undefined,
+            calendarId: reservation.calendar_id,
           })
         } catch (calendarError) {
           console.error(`Failed to update calendar event ${reservation.external_event_id}:`, calendarError)

@@ -18,6 +18,7 @@ CREATE TABLE reservations (
     start_time TIMESTAMPTZ NOT NULL,
     end_time TIMESTAMPTZ NOT NULL,
     notes TEXT,
+    calendar_id TEXT NOT NULL DEFAULT 'tandjgym@gmail.com',
     google_calendar_event_id TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
