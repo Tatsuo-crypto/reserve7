@@ -3,6 +3,7 @@
 import { useSession, signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
+import Link from 'next/link'
 
 export default function DashboardPage() {
   const { data: session, status } = useSession()
@@ -93,36 +94,30 @@ function AdminDashboard() {
           <h2 className="text-lg font-medium text-gray-900 mb-4">
             管理者機能
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="border-2 border-green-200 bg-green-50 rounded-lg p-6 text-center">
-              <h3 className="text-md font-medium text-gray-900 mb-2">
-                全予約管理
-              </h3>
-              <p className="text-sm text-gray-600 mb-4">
-                全会員の予約を確認・管理
-              </p>
-              <button
-                onClick={() => router.push('/reservations')}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              >
-                予約管理画面へ
-              </button>
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Link
+              href="/admin/reservations"
+              className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow"
+            >
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">予約管理</h3>
+              <p className="text-gray-600">予約の確認・編集・削除</p>
+            </Link>
             
-            <div className="border-2 border-green-200 bg-green-50 rounded-lg p-6 text-center">
-              <h3 className="text-md font-medium text-gray-900 mb-2">
-                予約作成
-              </h3>
-              <p className="text-sm text-gray-600 mb-4">
-                会員の予約を代理作成
-              </p>
-              <button
-                onClick={() => router.push('/admin/reservations/new')}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-              >
-                新規予約作成
-              </button>
-            </div>
+            <Link
+              href="/admin/reservations/new"
+              className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow"
+            >
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">新規予約作成</h3>
+              <p className="text-gray-600">クライアントの予約を作成</p>
+            </Link>
+
+            <Link
+              href="/admin/members"
+              className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow"
+            >
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">会員管理</h3>
+              <p className="text-gray-600">会員ステータスの管理</p>
+            </Link>
           </div>
         </div>
       </div>

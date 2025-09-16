@@ -52,11 +52,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ reservationCount })
     }
 
-    // Get clients filtered by user's store (exclude admin accounts)
+    // Get clients filtered by user's store (exclude admin accounts and inactive members)
     const { data: clients, error } = await supabase
       .from('users')
-      .select('id, full_name, email, store_id')
+      .select('id, full_name, email, store_id, status')
       .eq('store_id', userStoreId)
+      .eq('status', 'active')
       .neq('email', 'tandjgym@gmail.com')
       .neq('email', 'tandjgym2goutenn@gmail.com')
       .order('full_name', { ascending: true })
