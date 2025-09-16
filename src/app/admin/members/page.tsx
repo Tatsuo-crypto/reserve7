@@ -40,8 +40,9 @@ export default function MembersPage() {
       try {
         const response = await fetch('/api/admin/members')
         if (response.ok) {
-          const data = await response.json()
-          setMembers(data.members)
+          const result = await response.json()
+          const data = result.data || result
+          setMembers(data.members || [])
         } else {
           const errorData = await response.json()
           console.error('API Error:', errorData)
@@ -203,8 +204,13 @@ export default function MembersPage() {
         {/* Members Table */}
         <div className="bg-white shadow overflow-hidden sm:rounded-md">
           <div className="px-4 py-5 sm:p-6">
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
+            {!members || members.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-gray-500">会員データがありません</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -225,7 +231,7 @@ export default function MembersPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {members.map((member) => (
+                  {members && members.map((member) => (
                     <tr key={member.id}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                         {member.full_name}
@@ -271,15 +277,10 @@ export default function MembersPage() {
                   ))}
                 </tbody>
               </table>
-            </div>
+              </div>
+            )}
           </div>
         </div>
-
-        {members.length === 0 && !loading && (
-          <div className="text-center py-12">
-            <p className="text-gray-500">会員が見つかりません</p>
-          </div>
-        )}
       </div>
     </div>
   )
