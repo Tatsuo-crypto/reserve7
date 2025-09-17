@@ -140,8 +140,11 @@ function ClientDashboard() {
       try {
         const response = await fetch('/api/user/profile')
         if (response.ok) {
-          const data = await response.json()
-          setUserInfo(data)
+          const result = await response.json()
+          console.log('User profile response:', result)
+          setUserInfo(result.data || result)
+        } else {
+          console.error('Failed to fetch user info:', await response.text())
         }
       } catch (error) {
         console.error('Failed to fetch user info:', error)

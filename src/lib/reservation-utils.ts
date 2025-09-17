@@ -18,22 +18,24 @@ export function getPlanMaxCount(plan: string): number {
 }
 
 export async function getMonthlyReservationCount(userId: string, year: number, month: number): Promise<number> {
-  const startDate = new Date(year, month - 1, 1)
-  const endDate = new Date(year, month, 0, 23, 59, 59)
-
-  const { data, error } = await supabase
+  const startDate = `${year}-${month.toString().padStart(2, '0')}-01T00:00:00+00:00`
+  const nextMonth = month === 12 ? 1 : month + 1
+  const nextYear = month === 12 ? year + 1 : year
+  const endDate = `${nextYear}-${nextMonth.toString().padStart(2, '0')}-01T00:00:00+00:00`
+  
+  const { data: reservations, error } = await supabase
     .from('reservations')
     .select('id')
     .eq('client_id', userId)
-    .gte('start_time', startDate.toISOString())
-    .lte('start_time', endDate.toISOString())
+    .gte('start_time', startDate)
+    .lt('start_time', endDate)
 
   if (error) {
-    console.error('Error fetching monthly reservation count:', error)
+    console.error('Error fetching monthly reservations:', error)
     return 0
   }
 
-  return data?.length || 0
+  return reservations?.length || 0
 }
 
 export async function getUserMonthlyUsage(userId: string): Promise<MonthlyUsage> {
