@@ -141,13 +141,15 @@ function ClientDashboard() {
         const response = await fetch('/api/user/profile')
         if (response.ok) {
           const result = await response.json()
-          console.log('User profile response:', result)
           setUserInfo(result.data || result)
         } else {
-          console.error('Failed to fetch user info:', await response.text())
+          // If API fails, show default plan without usage info
+          setUserInfo({ plan: '月4回', status: 'active' })
         }
       } catch (error) {
         console.error('Failed to fetch user info:', error)
+        // Fallback to default values
+        setUserInfo({ plan: '月4回', status: 'active' })
       } finally {
         setLoading(false)
       }
@@ -155,6 +157,8 @@ function ClientDashboard() {
 
     if (session?.user) {
       fetchUserInfo()
+    } else {
+      setLoading(false)
     }
   }, [session])
 
