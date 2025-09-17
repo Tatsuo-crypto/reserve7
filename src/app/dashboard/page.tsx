@@ -132,7 +132,7 @@ function AdminDashboard() {
 function ClientDashboard() {
   const router = useRouter()
   const { data: session } = useSession()
-  const [userInfo, setUserInfo] = useState<{plan?: string, status?: string}>({})
+  const [userInfo, setUserInfo] = useState<{plan?: string, status?: string, monthlyUsage?: {currentCount: number, maxCount: number, planName: string}}>({})
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -174,7 +174,11 @@ function ClientDashboard() {
                 <div>
                   <p className="text-sm font-medium text-blue-800">現在のプラン</p>
                   <p className="text-lg font-semibold text-blue-900">
-                    {loading ? '読み込み中...' : (userInfo.plan || '月4回')}
+                    {loading ? '読み込み中...' : (
+                      userInfo.monthlyUsage 
+                        ? `${userInfo.monthlyUsage.planName} (${userInfo.monthlyUsage.currentCount}/${userInfo.monthlyUsage.maxCount})`
+                        : (userInfo.plan || '月4回')
+                    )}
                   </p>
                 </div>
               </div>

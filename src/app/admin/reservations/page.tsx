@@ -14,6 +14,7 @@ export default function AdminReservationsPage() {
   const [reservations, setReservations] = useState<Reservation[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [monthlyUsage, setMonthlyUsage] = useState<{[key: string]: {currentCount: number, maxCount: number, planName: string}}>({})
 
   // Check admin access
   useEffect(() => {
@@ -28,14 +29,40 @@ export default function AdminReservationsPage() {
     }
   }, [status, session, router])
 
-  // Fetch reservations
+  // Fetch reservations and monthly usage
   useEffect(() => {
     const fetchReservations = async () => {
       try {
         const response = await fetch('/api/reservations')
         if (response.ok) {
           const result = await response.json()
-          setReservations(result.data?.reservations || [])
+          const reservationsData = result.data?.reservations || []
+          setReservations(reservationsData)
+          
+          // Fetch monthly usage for each unique client
+          const clientIds = reservationsData.map((r: any) => r.client_id).filter(Boolean) as string[]
+          const uniqueClients = Array.from(new Set(clientIds))
+          const usagePromises = uniqueClients.map(async (clientId: string) => {
+            try {
+              const usageResponse = await fetch(`/api/reservations/monthly-count?clientId=${clientId}`)
+              if (usageResponse.ok) {
+                const usageData = await usageResponse.json()
+                return { clientId, usage: usageData.data }
+              }
+            } catch (error) {
+              console.error('Failed to fetch usage for client:', clientId, error)
+            }
+            return null
+          })
+          
+          const usageResults = await Promise.all(usagePromises)
+          const usageMap: {[key: string]: any} = {}
+          usageResults.forEach(result => {
+            if (result) {
+              usageMap[result.clientId] = result.usage
+            }
+          })
+          setMonthlyUsage(usageMap)
         } else {
           const errorData = await response.json()
           setError(`予約データの取得に失敗しました: ${errorData.error || 'Unknown error'}`)
@@ -174,7 +201,7 @@ export default function AdminReservationsPage() {
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      来店回数
+                      回数
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       会員名
@@ -203,7 +230,10 @@ export default function AdminReservationsPage() {
                       }
                     >
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {reservation.visit_count}回目
+                        {monthlyUsage[reservation.client_id] 
+                          ? `1回目 (${monthlyUsage[reservation.client_id].currentCount}/${monthlyUsage[reservation.client_id].maxCount})`
+                          : '1回目'
+                        }
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {reservation.client_name || reservation.client?.full_name || '-'}

@@ -7,6 +7,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/app/api/auth/[...nextauth]/route'
 import { isAdmin, getUserStoreId } from './auth-utils'
 import { ApiResponse } from '@/types/common'
+import { supabase } from '@/lib/supabase'
 
 export async function getAuthenticatedUser() {
   const session = await getServerSession(authOptions)
@@ -15,7 +16,19 @@ export async function getAuthenticatedUser() {
     return null
   }
 
+  // Get user ID from database
+  const { data: user, error } = await supabase
+    .from('users')
+    .select('id')
+    .eq('email', session.user.email)
+    .single()
+
+  if (error || !user) {
+    return null
+  }
+
   return {
+    id: user.id,
     email: session.user.email,
     name: session.user.name || '',
     isAdmin: isAdmin(session.user.email),

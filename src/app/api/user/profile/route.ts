@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { getAuthenticatedUser, createErrorResponse, createSuccessResponse } from '@/lib/api-utils'
+import { getUserMonthlyUsage } from '@/lib/reservation-utils'
 
 export async function GET(request: NextRequest) {
   try {
@@ -22,7 +23,13 @@ export async function GET(request: NextRequest) {
       return createErrorResponse('Failed to fetch user profile', 500)
     }
 
-    return createSuccessResponse(userProfile)
+    // Get monthly usage information
+    const monthlyUsage = await getUserMonthlyUsage(user.id)
+
+    return createSuccessResponse({
+      ...userProfile,
+      monthlyUsage
+    })
   } catch (error) {
     console.error('User profile API error:', error)
     return createErrorResponse('Internal server error', 500)
