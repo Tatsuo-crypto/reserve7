@@ -280,9 +280,6 @@ export default function MembersPage() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       登録日
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      操作
-                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -295,63 +292,37 @@ export default function MembersPage() {
                         {member.email}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {member.plan || '月4回'}
+                        <select
+                          value={selectedPlans[member.id] || member.plan || '月4回'}
+                          onChange={(e) => {
+                            setSelectedPlans(prev => ({...prev, [member.id]: e.target.value}))
+                            handlePlanChange(member.id, e.target.value)
+                          }}
+                          className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 w-full"
+                        >
+                          <option value="月2回">月2回</option>
+                          <option value="月4回">月4回</option>
+                          <option value="月6回">月6回</option>
+                          <option value="月8回">月8回</option>
+                          <option value="ダイエットコース">ダイエットコース</option>
+                        </select>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className={`w-3 h-3 rounded-full mr-2 ${
-                            member.status === 'active' ? 'bg-green-400' :
-                            member.status === 'suspended' ? 'bg-yellow-400' : 'bg-red-400'
-                          }`}></div>
-                          <span className={`inline-flex px-3 py-1 text-sm font-medium rounded-full ${getStatusColor(member.status)}`}>
-                            {getStatusText(member.status)}
-                          </span>
-                        </div>
+                        <select
+                          value={selectedStatuses[member.id] || member.status || 'active'}
+                          onChange={(e) => {
+                            setSelectedStatuses(prev => ({...prev, [member.id]: e.target.value}))
+                            handleStatusChange(member.id, e.target.value)
+                          }}
+                          className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 w-full"
+                        >
+                          <option value="active">在籍</option>
+                          <option value="suspended">休会</option>
+                          <option value="withdrawn">退会</option>
+                        </select>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {new Date(member.created_at).toLocaleDateString('ja-JP')}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <div className="flex flex-col space-y-2">
-                          <div className="flex items-center space-x-2">
-                            <select
-                              value={selectedPlans[member.id] || member.plan || '月4回'}
-                              onChange={(e) => setSelectedPlans(prev => ({...prev, [member.id]: e.target.value}))}
-                              className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                            >
-                              <option value="月2回">月2回</option>
-                              <option value="月4回">月4回</option>
-                              <option value="月6回">月6回</option>
-                              <option value="月8回">月8回</option>
-                              <option value="ダイエットコース">ダイエットコース</option>
-                            </select>
-                            <button
-                              onClick={() => handlePlanChange(member.id)}
-                              disabled={!selectedPlans[member.id] || selectedPlans[member.id] === member.plan}
-                              className="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-3 py-1 rounded-md text-xs font-medium transition-colors"
-                            >
-                              プラン変更
-                            </button>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <select
-                              value={selectedStatuses[member.id] || member.status || 'active'}
-                              onChange={(e) => setSelectedStatuses(prev => ({...prev, [member.id]: e.target.value}))}
-                              className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                            >
-                              <option value="active">在籍</option>
-                              <option value="suspended">休会</option>
-                              <option value="withdrawn">退会</option>
-                            </select>
-                            <button
-                              onClick={() => handleStatusChange(member.id)}
-                              disabled={!selectedStatuses[member.id] || selectedStatuses[member.id] === member.status}
-                              className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-3 py-1 rounded-md text-xs font-medium transition-colors"
-                            >
-                              ステータス変更
-                            </button>
-                          </div>
-                        </div>
                       </td>
                     </tr>
                   ))}
