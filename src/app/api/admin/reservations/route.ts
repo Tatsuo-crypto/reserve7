@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/app/api/auth/[...nextauth]/route'
 import { supabase } from '@/lib/supabase'
-import { isAdmin, getUserStoreId } from '@/lib/env'
+import { isAdmin, getUserStoreId } from '@/lib/auth-utils'
 import { createGoogleCalendarService } from '@/lib/google-calendar'
 import { generateReservationTitle, updateMonthlyTitles } from '@/lib/title-utils'
 
