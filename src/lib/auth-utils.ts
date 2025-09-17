@@ -7,15 +7,15 @@ export function isAdmin(email: string): boolean {
   return adminEmails.includes(email)
 }
 
-export function getUserStoreId(email: string): number {
+export function getUserStoreId(email: string): string {
   if (email === 'tandjgym@gmail.com') {
-    return 1
+    return 'tandjgym@gmail.com'
   } else if (email === 'tandjgym2goutenn@gmail.com') {
-    return 2
+    return 'tandjgym2goutenn@gmail.com'
   }
   // For regular users, extract store ID from their registration
   // This is a fallback - in practice, store_id should be stored in the user record
-  return 1 // Default to store 1
+  return 'tandjgym@gmail.com' // Default to store 1
 }
 
 export function getStoreDisplayName(email: string): string {
@@ -27,8 +27,8 @@ export function getStoreDisplayName(email: string): string {
   return email
 }
 
-export function getCalendarId(storeId: number): string {
-  return storeId === 1 
+export function getCalendarId(storeId: string): string {
+  return storeId === 'tandjgym@gmail.com' 
     ? process.env.GOOGLE_CALENDAR_ID_1 || 'tandjgym@gmail.com'
     : process.env.GOOGLE_CALENDAR_ID_2 || 'tandjgym2goutenn@gmail.com'
 }
