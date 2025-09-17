@@ -35,6 +35,12 @@ export default function Navigation() {
                 >
                   ダッシュボード
                 </Link>
+                <Link
+                  href="/reservations"
+                  className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors"
+                >
+                  {session.user.role === 'ADMIN' ? '予約管理' : 'マイ予約'}
+                </Link>
                 {session?.user?.role === 'ADMIN' && (
                   <>
                     <Link
@@ -51,12 +57,6 @@ export default function Navigation() {
                     </Link>
                   </>
                 )}
-                <Link
-                  href="/reservations"
-                  className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors"
-                >
-                  {session.user.role === 'ADMIN' ? '予約管理' : 'マイ予約'}
-                </Link>
                 <div className="bg-white border border-gray-300 px-4 py-2 rounded-lg shadow-sm text-sm flex items-center space-x-3">
                   <span className="text-gray-700 font-medium">
                     {getStoreDisplayName(session.user.email)}
