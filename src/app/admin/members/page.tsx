@@ -9,6 +9,7 @@ interface Member {
   id: string
   full_name: string
   email: string
+  plan?: string
   status?: 'active' | 'suspended' | 'withdrawn'
   store_id: string
   created_at: string
@@ -65,6 +66,7 @@ export default function MembersPage() {
   }, [session, status])
 
   const [selectedStatuses, setSelectedStatuses] = useState<{[key: string]: string}>({})
+  const [selectedPlans, setSelectedPlans] = useState<{[key: string]: string}>({})
 
   const handleStatusChange = async (memberId: string, newStatus?: string) => {
     const statusToUpdate = newStatus || selectedStatuses[memberId] || 'active'
@@ -113,6 +115,56 @@ export default function MembersPage() {
     } catch (error) {
       console.error('ステータス更新例外:', error)
       setError('ステータス更新中にエラーが発生しました')
+    }
+  }
+
+  const handlePlanChange = async (memberId: string, newPlan?: string) => {
+    const planToUpdate = newPlan || selectedPlans[memberId] || '月4回'
+    
+    try {
+      console.log('プラン更新開始:', { memberId, planToUpdate })
+      
+      const response = await fetch('/api/admin/members', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          memberId,
+          plan: planToUpdate,
+        }),
+      })
+
+      const result = await response.json()
+      console.log('プラン更新レスポンス:', result)
+
+      if (response.ok) {
+        // Update local state
+        setMembers(prev => prev.map(member => 
+          member.id === memberId 
+            ? { ...member, plan: planToUpdate }
+            : member
+        ))
+        
+        // Clear selection
+        setSelectedPlans(prev => {
+          const newState = { ...prev }
+          delete newState[memberId]
+          return newState
+        })
+        
+        setError('プラン更新完了: ' + planToUpdate)
+        
+        // Clear success message after 3 seconds
+        setTimeout(() => {
+          setError('')
+        }, 3000)
+      } else {
+        setError('プラン更新に失敗しました: ' + (result.error || 'Unknown error'))
+      }
+    } catch (error) {
+      console.error('プラン更新エラー:', error)
+      setError('プラン更新中にエラーが発生しました')
     }
   }
 
@@ -220,6 +272,9 @@ export default function MembersPage() {
                       メールアドレス
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      プラン
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       ステータス
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -239,6 +294,9 @@ export default function MembersPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {member.email}
                       </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {member.plan || '月4回'}
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className={`w-3 h-3 rounded-full mr-2 ${
@@ -254,23 +312,45 @@ export default function MembersPage() {
                         {new Date(member.created_at).toLocaleDateString('ja-JP')}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <div className="flex items-center space-x-2">
-                          <select
-                            value={selectedStatuses[member.id] || member.status || 'active'}
-                            onChange={(e) => setSelectedStatuses(prev => ({...prev, [member.id]: e.target.value}))}
-                            className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                          >
-                            <option value="active">在籍</option>
-                            <option value="suspended">休会</option>
-                            <option value="withdrawn">退会</option>
-                          </select>
-                          <button
-                            onClick={() => handleStatusChange(member.id)}
-                            disabled={!selectedStatuses[member.id] || selectedStatuses[member.id] === member.status}
-                            className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
-                          >
-                            変更
-                          </button>
+                        <div className="flex flex-col space-y-2">
+                          <div className="flex items-center space-x-2">
+                            <select
+                              value={selectedPlans[member.id] || member.plan || '月4回'}
+                              onChange={(e) => setSelectedPlans(prev => ({...prev, [member.id]: e.target.value}))}
+                              className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            >
+                              <option value="月2回">月2回</option>
+                              <option value="月4回">月4回</option>
+                              <option value="月6回">月6回</option>
+                              <option value="月8回">月8回</option>
+                              <option value="ダイエットコース">ダイエットコース</option>
+                            </select>
+                            <button
+                              onClick={() => handlePlanChange(member.id)}
+                              disabled={!selectedPlans[member.id] || selectedPlans[member.id] === member.plan}
+                              className="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-3 py-1 rounded-md text-xs font-medium transition-colors"
+                            >
+                              プラン変更
+                            </button>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <select
+                              value={selectedStatuses[member.id] || member.status || 'active'}
+                              onChange={(e) => setSelectedStatuses(prev => ({...prev, [member.id]: e.target.value}))}
+                              className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            >
+                              <option value="active">在籍</option>
+                              <option value="suspended">休会</option>
+                              <option value="withdrawn">退会</option>
+                            </select>
+                            <button
+                              onClick={() => handleStatusChange(member.id)}
+                              disabled={!selectedStatuses[member.id] || selectedStatuses[member.id] === member.status}
+                              className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-3 py-1 rounded-md text-xs font-medium transition-colors"
+                            >
+                              ステータス変更
+                            </button>
+                          </div>
                         </div>
                       </td>
                     </tr>

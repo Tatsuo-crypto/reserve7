@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     // Get members from the same store (exclude admin accounts)
     const { data: members, error } = await supabase
       .from('users')
-      .select('id, full_name, email, status, store_id, created_at')
+      .select('id, full_name, email, plan, status, store_id, created_at')
       .eq('store_id', user.storeId)
       .neq('email', 'tandjgym@gmail.com')
       .neq('email', 'tandjgym2goutenn@gmail.com')
@@ -49,11 +49,16 @@ export async function PATCH(request: NextRequest) {
       return createErrorResponse('管理者権限が必要です', 403)
     }
 
-    const { memberId, status } = await request.json()
+    const { memberId, status, plan } = await request.json()
 
-    // Validate status
-    if (!['active', 'suspended', 'withdrawn'].includes(status)) {
+    // Validate status if provided
+    if (status && !['active', 'suspended', 'withdrawn'].includes(status)) {
       return createErrorResponse('Invalid status', 400)
+    }
+
+    // Validate plan if provided
+    if (plan && !['月2回', '月4回', '月6回', '月8回', 'ダイエットコース'].includes(plan)) {
+      return createErrorResponse('Invalid plan', 400)
     }
 
     // First check if the member exists and belongs to the same store
@@ -70,16 +75,21 @@ export async function PATCH(request: NextRequest) {
       return createErrorResponse('Member not found or access denied', 404)
     }
 
-    // Update member status
+    // Prepare update object
+    const updateData: any = {}
+    if (status) updateData.status = status
+    if (plan) updateData.plan = plan
+
+    // Update member
     const { data, error } = await supabase
       .from('users')
-      .update({ status })
+      .update(updateData)
       .eq('id', memberId)
       .select()
 
     if (error) {
       console.error('Database error:', error)
-      return createErrorResponse('Failed to update member status', 500)
+      return createErrorResponse('Failed to update member', 500)
     }
 
     return createSuccessResponse({ success: true })
