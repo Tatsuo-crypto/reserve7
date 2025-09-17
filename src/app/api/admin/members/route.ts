@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
       return createErrorResponse('Failed to fetch members', 500)
     }
 
-    return createSuccessResponse(members)
+    return createSuccessResponse({ members })
   } catch (error) {
     console.error('Members API error:', error)
     return createErrorResponse('Internal server error', 500)
