@@ -45,9 +45,10 @@ export default function NewReservationPage() {
       try {
         const response = await fetch('/api/clients')
         if (response.ok) {
-          const data = await response.json()
+          const result = await response.json()
+          const data = result.data || result
           console.log('Frontend - Clients received:', data.clients)
-          setClients(data.clients)
+          setClients(data.clients || [])
         } else {
           console.error('Failed to fetch clients')
         }
@@ -287,7 +288,7 @@ export default function NewReservationPage() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="">クライアントを選択してください</option>
-                  {clients.map(client => (
+                  {clients && clients.map(client => (
                     <option key={client.id} value={client.id}>
                       {client.displayName}
                     </option>
