@@ -1,8 +1,8 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
 import Link from 'next/link'
 
 export default function DashboardPage() {
@@ -131,9 +131,77 @@ function AdminDashboard() {
 
 function ClientDashboard() {
   const router = useRouter()
+  const { data: session } = useSession()
+  const [userInfo, setUserInfo] = useState<{plan?: string, status?: string}>({})
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      try {
+        const response = await fetch('/api/user/profile')
+        if (response.ok) {
+          const data = await response.json()
+          setUserInfo(data)
+        }
+      } catch (error) {
+        console.error('Failed to fetch user info:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (session?.user) {
+      fetchUserInfo()
+    }
+  }, [session])
 
   return (
     <div className="space-y-6">
+      {/* ユーザー情報カード */}
+      <div className="bg-white shadow-sm border border-gray-200 rounded-lg">
+        <div className="px-6 py-5">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+            会員情報
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-center">
+                <div className="bg-blue-500 p-2 rounded-lg mr-3">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-blue-800">現在のプラン</p>
+                  <p className="text-lg font-semibold text-blue-900">
+                    {loading ? '読み込み中...' : (userInfo.plan || '月4回')}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <div className="flex items-center">
+                <div className="bg-green-500 p-2 rounded-lg mr-3">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-green-800">ステータス</p>
+                  <p className="text-lg font-semibold text-green-900">
+                    {loading ? '読み込み中...' : (
+                      userInfo.status === 'active' ? '在籍' :
+                      userInfo.status === 'suspended' ? '休会' :
+                      userInfo.status === 'withdrawn' ? '退会' : '在籍'
+                    )}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="bg-white shadow-sm border border-gray-200 rounded-lg">
         <div className="px-6 py-5">
           <h2 className="text-lg font-semibold text-gray-900 mb-6">
