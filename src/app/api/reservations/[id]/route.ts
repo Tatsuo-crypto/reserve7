@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/app/api/auth/[...nextauth]/route'
 import { supabase } from '@/lib/supabase'
-import { isAdmin } from '@/lib/env'
+import { isAdmin } from '@/lib/auth-utils'
 import { createGoogleCalendarService } from '@/lib/google-calendar'
 
 export async function DELETE(
