@@ -348,10 +348,10 @@ export default function ReservationsPage() {
                           日付
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          クライアント
+                          時間
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          時間
+                          クライアント
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           回数
@@ -390,16 +390,16 @@ export default function ReservationsPage() {
                             {formatDate(reservation.startTime)}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            {formatTime(reservation.startTime)} - {formatTime(reservation.endTime)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
                             <div>
                               <div className="font-medium">{reservation.client.fullName}</div>
                               <div className="text-gray-500">{reservation.client.email}</div>
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm">
-                            {formatTime(reservation.startTime)} - {formatTime(reservation.endTime)}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm">
-                            {getMonthlyCount(reservation, reservations)}回目
+                            {getMonthlyCount(reservation, reservations)}回目（{getMonthlyCount(reservation, reservations)}/4）
                           </td>
                           <td className="px-6 py-4 text-sm">
                             {reservation.notes || '-'}
@@ -434,7 +434,7 @@ export default function ReservationsPage() {
                       ) : (
                         <>
                           <td className="px-6 py-4 whitespace-nowrap text-sm">
-                            {getMonthlyCount(reservation, reservations)}回目
+                            {getMonthlyCount(reservation, reservations)}回目（{getMonthlyCount(reservation, reservations)}/4）
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             {formatDate(reservation.startTime)}

@@ -133,7 +133,9 @@ function ClientDashboard() {
   const router = useRouter()
   const { data: session } = useSession()
   const [userInfo, setUserInfo] = useState<{plan?: string, status?: string, monthlyUsage?: {currentCount: number, maxCount: number, planName: string}}>({})
+  const [reservations, setReservations] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [reservationsLoading, setReservationsLoading] = useState(true)
 
   useEffect(() => {
     const fetchUserInfo = async () => {
@@ -155,10 +157,26 @@ function ClientDashboard() {
       }
     }
 
+    const fetchReservations = async () => {
+      try {
+        const response = await fetch('/api/user/reservations')
+        if (response.ok) {
+          const result = await response.json()
+          setReservations(result.data?.reservations || [])
+        }
+      } catch (error) {
+        console.error('Failed to fetch reservations:', error)
+      } finally {
+        setReservationsLoading(false)
+      }
+    }
+
     if (session?.user) {
       fetchUserInfo()
+      fetchReservations()
     } else {
       setLoading(false)
+      setReservationsLoading(false)
     }
   }, [session])
 
@@ -213,32 +231,74 @@ function ClientDashboard() {
         </div>
       </div>
 
+      {/* 予約一覧 */}
       <div className="bg-white shadow-sm border border-gray-200 rounded-lg">
         <div className="px-6 py-5">
-          <h2 className="text-lg font-semibold text-gray-900 mb-6">
-            会員機能
-          </h2>
-          <div className="bg-white border border-gray-200 rounded-lg p-6 text-center">
-            <div className="flex items-center justify-center mb-4">
-              <div className="bg-gray-100 p-3 rounded-lg">
-                <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3a2 2 0 012-2h4a2 2 0 012 2v4m-6 0h6m-6 0a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V9a2 2 0 00-2-2h-4" />
-                </svg>
-              </div>
-            </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-lg font-semibold text-gray-900">
               マイ予約
-            </h3>
-            <p className="text-sm text-gray-600 mb-4">
-              自分の予約一覧を確認
-            </p>
+            </h2>
             <button
               onClick={() => router.push('/reservations')}
-              className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors"
+              className="text-indigo-600 hover:text-indigo-700 text-sm font-medium"
             >
-              マイ予約を見る
+              すべて見る →
             </button>
           </div>
+          
+          {reservationsLoading ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
+              <p className="mt-2 text-gray-600">読み込み中...</p>
+            </div>
+          ) : reservations.filter(reservation => !reservation.isPast).length === 0 ? (
+            <div className="text-center py-8">
+              <div className="bg-gray-100 p-3 rounded-lg inline-block mb-4">
+                <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3a2 2 0 012-2h4a2 2 0 012 2v4m-6 0h6m-6 0a2 2 0 00-2-2v10a2 2 0 002 2h10a2 2 0 002-2V9a2 2 0 00-2-2h-4" />
+                </svg>
+              </div>
+              <p className="text-gray-600">予約がありません</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {reservations.filter(reservation => !reservation.isPast).slice(0, 3).map((reservation) => (
+                <div 
+                  key={reservation.id} 
+                  className={`border rounded-lg p-4 ${
+                    reservation.isPast ? 'bg-gray-50 border-gray-200' : 'bg-blue-50 border-blue-200'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className={`font-medium ${
+                        reservation.isPast ? 'text-gray-700' : 'text-blue-900'
+                      }`}>
+                        {reservation.sequenceNumber}回目（{reservation.sequenceNumber}/{userInfo.monthlyUsage?.maxCount || 4}）　{reservation.date}　{reservation.time}
+                      </p>
+                    </div>
+                    <div className={`px-2 py-1 rounded text-xs font-medium ${
+                      reservation.isPast 
+                        ? 'bg-gray-200 text-gray-700' 
+                        : 'bg-blue-200 text-blue-800'
+                    }`}>
+                      {reservation.isPast ? '完了' : '予約済み'}
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {reservations.filter(reservation => !reservation.isPast).length > 3 && (
+                <div className="text-center pt-2">
+                  <button
+                    onClick={() => router.push('/reservations')}
+                    className="text-indigo-600 hover:text-indigo-700 text-sm font-medium"
+                  >
+                    他 {reservations.filter(reservation => !reservation.isPast).length - 3} 件の予約を見る
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 

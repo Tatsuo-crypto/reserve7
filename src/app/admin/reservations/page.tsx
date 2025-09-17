@@ -8,10 +8,22 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import ErrorMessage from '@/components/ui/ErrorMessage'
 import { Reservation } from '@/types/common'
 
+// Helper function to calculate reservation sequence for a specific client
+function getReservationSequence(targetReservation: any, allReservations: any[]): number {
+  // Filter reservations for the same client and sort by date
+  const clientReservations = allReservations
+    .filter(r => r.client?.id === targetReservation.client?.id)
+    .sort((a, b) => new Date(a.startTime || a.start_time).getTime() - new Date(b.startTime || b.start_time).getTime())
+  
+  // Find the index of the target reservation and add 1 (1-based indexing)
+  const index = clientReservations.findIndex(r => r.id === targetReservation.id)
+  return index >= 0 ? index + 1 : 1
+}
+
 export default function AdminReservationsPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
-  const [reservations, setReservations] = useState<Reservation[]>([])
+  const [reservations, setReservations] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [monthlyUsage, setMonthlyUsage] = useState<{[key: string]: {currentCount: number, maxCount: number, planName: string}}>({})
@@ -40,7 +52,7 @@ export default function AdminReservationsPage() {
           setReservations(reservationsData)
           
           // Fetch monthly usage for each unique client
-          const clientIds = reservationsData.map((r: any) => r.client_id).filter(Boolean) as string[]
+          const clientIds = reservationsData.map((r: any) => r.client?.id).filter(Boolean) as string[]
           const uniqueClients = Array.from(new Set(clientIds))
           const usagePromises = uniqueClients.map(async (clientId: string) => {
             try {
@@ -116,12 +128,22 @@ export default function AdminReservationsPage() {
 
   const formatTime = (timeString?: string) => {
     if (!timeString) return ''
-    return timeString.slice(0, 5) // HH:MM format
+    try {
+      const date = new Date(timeString)
+      return date.toLocaleTimeString('ja-JP', { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: false
+      })
+    } catch (error) {
+      // Fallback to slice method if date parsing fails
+      return timeString.slice(0, 5)
+    }
   }
 
-  const isPastReservation = (date?: string, endTime?: string) => {
-    if (!date || !endTime) return false
-    const reservationDateTime = new Date(`${date}T${endTime}`)
+  const isPastReservation = (startTime?: string, endTime?: string) => {
+    if (!endTime) return false
+    const reservationDateTime = new Date(endTime)
     return reservationDateTime < new Date()
   }
 
@@ -224,25 +246,25 @@ export default function AdminReservationsPage() {
                   {reservations.map((reservation) => (
                     <tr 
                       key={reservation.id}
-                      className={isPastReservation(reservation.date, reservation.end_time) 
+                      className={isPastReservation(reservation.startTime || reservation.start_time, reservation.endTime || reservation.end_time) 
                         ? 'bg-gray-50 text-gray-600' 
                         : ''
                       }
                     >
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {monthlyUsage[reservation.client_id] 
-                          ? `1回目 (${monthlyUsage[reservation.client_id].currentCount}/${monthlyUsage[reservation.client_id].maxCount})`
-                          : '1回目'
+                        {reservation.client?.id && monthlyUsage[reservation.client.id] 
+                          ? `${getReservationSequence(reservation, reservations)}回目（${getReservationSequence(reservation, reservations)}/${monthlyUsage[reservation.client.id].maxCount}）`
+                          : `${getReservationSequence(reservation, reservations)}回目`
                         }
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {reservation.client_name || reservation.client?.full_name || '-'}
+                        {reservation.client?.fullName || reservation.client?.full_name || reservation.client_name || '-'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {formatDate(reservation.date)}
+                        {formatDate(reservation.startTime || reservation.start_time)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {formatTime(reservation.start_time)} - {formatTime(reservation.end_time)}
+                        {formatTime(reservation.startTime || reservation.start_time)} - {formatTime(reservation.endTime || reservation.end_time)}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-900">
                         {reservation.memo || '-'}
