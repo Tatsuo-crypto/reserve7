@@ -44,11 +44,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ reservationCount })
     }
 
-    // Get clients for the user's store
+    // Get clients for the user's store (only active members)
     const { data: clients, error } = await supabase
       .from('users')
-      .select('id, full_name, email, store_id')
+      .select('id, full_name, email, store_id, status')
       .eq('store_id', user.storeId)
+      .eq('status', 'active')
       .neq('email', 'tandjgym@gmail.com')
       .neq('email', 'tandjgym2goutenn@gmail.com')
       .order('full_name', { ascending: true })
@@ -66,7 +67,7 @@ export async function GET(request: NextRequest) {
       email: client.email
     }))
 
-    return createSuccessResponse(formattedClients)
+    return createSuccessResponse({ clients: formattedClients })
   } catch (error) {
     console.error('Clients API error:', error)
     return createErrorResponse('Internal server error', 500)

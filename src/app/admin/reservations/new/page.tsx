@@ -290,7 +290,7 @@ export default function NewReservationPage() {
                   <option value="">クライアントを選択してください</option>
                   {clients && clients.map(client => (
                     <option key={client.id} value={client.id}>
-                      {client.displayName}
+                      {client.name}
                     </option>
                   ))}
                 </select>
