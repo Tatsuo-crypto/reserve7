@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
-import { getUserStoreId, getStoreName } from '@/lib/env'
+import { getStoreDisplayName } from '@/lib/auth-utils'
 
 interface Client {
   id: string
@@ -62,7 +62,7 @@ export default function NewReservationPage() {
     
     // Set default values based on user's store
     if (session?.user?.email) {
-      const userStoreId = getUserStoreId(session.user.email)
+      const userStoreId = session.user.email === 'tandjgym@gmail.com' ? 'tandjgym@gmail.com' : 'tandjgym2goutenn@gmail.com'
       setFormData(prev => ({
         ...prev,
         startTime: getDefaultDateTime(),
@@ -325,7 +325,7 @@ export default function NewReservationPage() {
                 店舗
               </label>
               <div className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700">
-                {session?.user?.email ? getStoreName(getUserStoreId(session.user.email)) : 'T&J GYM1号店'}
+                {session?.user?.email ? getStoreDisplayName(session.user.email) : 'T&J GYM1号店'}
               </div>
               <p className="mt-1 text-sm text-gray-500">
                 ログインしている店舗での予約作成です
