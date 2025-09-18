@@ -113,3 +113,4 @@ http://localhost:3000 でアクセス可能です。
 ## ライセンス
 
 このプロジェクトは T&J GYM 専用システムです。
+# Force Vercel rebuild
