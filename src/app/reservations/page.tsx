@@ -338,44 +338,47 @@ export default function ReservationsPage() {
             </p>
           </div>
         ) : (
-          <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-            <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-              <table className="min-w-max divide-y divide-gray-200">
-                <thead className="bg-gradient-to-r from-blue-50 to-indigo-50">
+          <div className="bg-white rounded-lg shadow overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
                   <tr>
                     {isAdmin ? (
                       <>
-                        <th className="px-8 py-4 text-left text-sm font-semibold text-gray-700 whitespace-nowrap min-w-[120px] border-r border-gray-200">
-                          日付
-                        </th>
-                        <th className="px-8 py-4 text-left text-sm font-semibold text-gray-700 whitespace-nowrap min-w-[160px] border-r border-gray-200">
-                          時間
-                        </th>
-                        <th className="px-8 py-4 text-left text-sm font-semibold text-gray-700 whitespace-nowrap min-w-[200px] border-r border-gray-200">
-                          クライアント
-                        </th>
-                        <th className="px-8 py-4 text-left text-sm font-semibold text-gray-700 whitespace-nowrap min-w-[120px] border-r border-gray-200">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           回数
                         </th>
-                        <th className="px-8 py-4 text-left text-sm font-semibold text-gray-700 whitespace-nowrap min-w-[180px] border-r border-gray-200">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          会員名
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          日付
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          時間
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           メモ
                         </th>
-                        <th className="px-8 py-4 text-left text-sm font-semibold text-gray-700 whitespace-nowrap min-w-[140px]">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           操作
                         </th>
                       </>
                     ) : (
                       <>
-                        <th className="px-8 py-4 text-left text-sm font-semibold text-gray-700 whitespace-nowrap min-w-[120px] border-r border-gray-200">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           回数
                         </th>
-                        <th className="px-8 py-4 text-left text-sm font-semibold text-gray-700 whitespace-nowrap min-w-[120px] border-r border-gray-200">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          会員名
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           日付
                         </th>
-                        <th className="px-8 py-4 text-left text-sm font-semibold text-gray-700 whitespace-nowrap min-w-[160px] border-r border-gray-200">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           時間
                         </th>
-                        <th className="px-8 py-4 text-left text-sm font-semibold text-gray-700 whitespace-nowrap min-w-[180px]">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           メモ
                         </th>
                       </>
@@ -387,39 +390,25 @@ export default function ReservationsPage() {
                     <tr key={reservation.id} className={getRowClassName(reservation)}>
                       {isAdmin ? (
                         <>
-                          <td className="px-8 py-4 whitespace-nowrap text-sm font-medium border-r border-gray-100">
-                            <div className="flex items-center">
-                              <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
-                              {formatDate(reservation.startTime)}
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            {getMonthlyCount(reservation, reservations)}回目（{getMonthlyCount(reservation, reservations)}/{reservation.client.plan === 'ダイエットコース' ? 8 : 4}）
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            <div>
+                              <div className="font-medium">{reservation.client.fullName}</div>
+                              <div className="text-gray-500">{reservation.client.email}</div>
                             </div>
                           </td>
-                          <td className="px-8 py-4 whitespace-nowrap text-sm border-r border-gray-100">
-                            <div className="bg-gray-50 px-3 py-1 rounded-full text-center">
-                              {formatTime(reservation.startTime)} - {formatTime(reservation.endTime)}
-                            </div>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            {formatDate(reservation.startTime)}
                           </td>
-                          <td className="px-8 py-4 whitespace-nowrap text-sm border-r border-gray-100">
-                            <div className="flex items-center space-x-3">
-                              <div className="w-8 h-8 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white text-xs font-semibold">
-                                {reservation.client.fullName.charAt(0)}
-                              </div>
-                              <div>
-                                <div className="font-medium text-gray-900">{reservation.client.fullName}</div>
-                                <div className="text-gray-500 text-xs">{reservation.client.email}</div>
-                              </div>
-                            </div>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            {formatTime(reservation.startTime)} - {formatTime(reservation.endTime)}
                           </td>
-                          <td className="px-8 py-4 whitespace-nowrap text-sm border-r border-gray-100">
-                            <div className="bg-green-50 text-green-700 px-3 py-1 rounded-full text-center font-medium">
-                              {getMonthlyCount(reservation, reservations)}回目 ({getMonthlyCount(reservation, reservations)}/{reservation.client.plan === 'ダイエットコース' ? 8 : 4})
-                            </div>
+                          <td className="px-6 py-4 text-sm">
+                            {reservation.notes || '-'}
                           </td>
-                          <td className="px-8 py-4 text-sm border-r border-gray-100">
-                            <div className="max-w-[150px] truncate" title={reservation.notes || '-'}>
-                              {reservation.notes || <span className="text-gray-400">-</span>}
-                            </div>
-                          </td>
-                          <td className="px-8 py-4 whitespace-nowrap text-sm font-medium">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             <div className="flex space-x-2">
                               <button
                                 type="button"
@@ -428,7 +417,7 @@ export default function ReservationsPage() {
                                   e.stopPropagation()
                                   handleEdit(reservation)
                                 }}
-                                className="bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-1 rounded-md text-xs font-medium transition-colors"
+                                className="text-blue-600 hover:text-blue-900 transition-colors"
                               >
                                 変更
                               </button>
@@ -439,7 +428,7 @@ export default function ReservationsPage() {
                                   e.stopPropagation()
                                   handleCancel(reservation.id)
                                 }}
-                                className="bg-red-50 text-red-600 hover:bg-red-100 px-3 py-1 rounded-md text-xs font-medium transition-colors"
+                                className="text-red-600 hover:text-red-900 transition-colors"
                               >
                                 キャンセル
                               </button>
@@ -448,26 +437,23 @@ export default function ReservationsPage() {
                         </>
                       ) : (
                         <>
-                          <td className="px-8 py-4 whitespace-nowrap text-sm border-r border-gray-100">
-                            <div className="bg-green-50 text-green-700 px-3 py-1 rounded-full text-center font-medium">
-                              {getMonthlyCount(reservation, reservations)}回目 ({getMonthlyCount(reservation, reservations)}/{reservation.client.plan === 'ダイエットコース' ? 8 : 4})
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            {getMonthlyCount(reservation, reservations)}回目（{getMonthlyCount(reservation, reservations)}/{reservation.client.plan === 'ダイエットコース' ? 8 : 4}）
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            <div>
+                              <div className="font-medium">{reservation.client.fullName}</div>
+                              <div className="text-gray-500">{reservation.client.email}</div>
                             </div>
                           </td>
-                          <td className="px-8 py-4 whitespace-nowrap text-sm font-medium border-r border-gray-100">
-                            <div className="flex items-center">
-                              <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
-                              {formatDate(reservation.startTime)}
-                            </div>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            {formatDate(reservation.startTime)}
                           </td>
-                          <td className="px-8 py-4 whitespace-nowrap text-sm border-r border-gray-100">
-                            <div className="bg-gray-50 px-3 py-1 rounded-full text-center">
-                              {formatTime(reservation.startTime)} - {formatTime(reservation.endTime)}
-                            </div>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            {formatTime(reservation.startTime)} - {formatTime(reservation.endTime)}
                           </td>
-                          <td className="px-8 py-4 text-sm">
-                            <div className="max-w-[150px] truncate" title={reservation.notes || '-'}>
-                              {reservation.notes || <span className="text-gray-400">-</span>}
-                            </div>
+                          <td className="px-6 py-4 text-sm">
+                            {reservation.notes || '-'}
                           </td>
                         </>
                       )}
