@@ -1,6 +1,32 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // appDir is now stable in Next.js 14, no need for experimental flag
+  experimental: {
+    appDir: true,
+  },
+  // Force cache busting
+  generateEtags: false,
+  poweredByHeader: false,
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-cache, no-store, must-revalidate',
+          },
+          {
+            key: 'Pragma',
+            value: 'no-cache',
+          },
+          {
+            key: 'Expires',
+            value: '0',
+          },
+        ],
+      },
+    ]
+  },
 }
 
 module.exports = nextConfig
