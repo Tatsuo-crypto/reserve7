@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     // Get members from the same store (exclude admin accounts)
     const { data: members, error } = await supabase
       .from('users')
-      .select('id, full_name, email, plan, status, store_id, created_at')
+      .select('id, full_name, email, plan, status, store_id, created_at, memo')
       .eq('store_id', user.storeId)
       .neq('email', 'tandjgym@gmail.com')
       .neq('email', 'tandjgym2goutenn@gmail.com')
@@ -49,7 +49,7 @@ export async function PATCH(request: NextRequest) {
       return createErrorResponse('管理者権限が必要です', 403)
     }
 
-    const { memberId, status, plan } = await request.json()
+    const { memberId, status, plan, memo } = await request.json()
 
     // Validate status if provided
     if (status && !['active', 'suspended', 'withdrawn'].includes(status)) {
@@ -79,6 +79,7 @@ export async function PATCH(request: NextRequest) {
     const updateData: any = {}
     if (status) updateData.status = status
     if (plan) updateData.plan = plan
+    if (memo !== undefined) updateData.memo = memo
 
     // Update member
     const { data, error } = await supabase

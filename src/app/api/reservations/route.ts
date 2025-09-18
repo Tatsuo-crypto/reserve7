@@ -28,7 +28,8 @@ export async function GET(request: NextRequest) {
           id,
           full_name,
           email,
-          store_id
+          store_id,
+          plan
         )
       `)
       .order('start_time', { ascending: true })
@@ -76,6 +77,7 @@ export async function GET(request: NextRequest) {
         id: (reservation.users as any).id,
         fullName: (reservation.users as any).full_name,
         email: (reservation.users as any).email,
+        plan: (reservation.users as any).plan,
       }
     })) || []
 

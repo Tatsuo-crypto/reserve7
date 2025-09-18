@@ -13,6 +13,7 @@ interface Member {
   status?: 'active' | 'suspended' | 'withdrawn'
   store_id: string
   created_at: string
+  memo?: string
 }
 
 export default function MembersPage() {
@@ -67,6 +68,7 @@ export default function MembersPage() {
 
   const [selectedStatuses, setSelectedStatuses] = useState<{[key: string]: string}>({})
   const [selectedPlans, setSelectedPlans] = useState<{[key: string]: string}>({})
+  const [memos, setMemos] = useState<{[key: string]: string}>({})
 
   const handleStatusChange = async (memberId: string, newStatus?: string) => {
     const statusToUpdate = newStatus || selectedStatuses[memberId] || 'active'
@@ -165,6 +167,40 @@ export default function MembersPage() {
     } catch (error) {
       console.error('プラン更新エラー:', error)
       setError('プラン更新中にエラーが発生しました')
+    }
+  }
+
+  const handleMemoChange = async (memberId: string, memo: string) => {
+    try {
+      const response = await fetch('/api/admin/members', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          memberId,
+          memo,
+        }),
+      })
+
+      const result = await response.json()
+
+      if (response.ok) {
+        // Update local state
+        setMembers(prev => prev.map(member => 
+          member.id === memberId 
+            ? { ...member, memo }
+            : member
+        ))
+        
+        setError('メモ更新完了')
+        setTimeout(() => setError(''), 2000)
+      } else {
+        setError('メモ更新に失敗しました: ' + (result.error || 'Unknown error'))
+      }
+    } catch (error) {
+      console.error('メモ更新エラー:', error)
+      setError('メモ更新中にエラーが発生しました')
     }
   }
 
@@ -278,6 +314,9 @@ export default function MembersPage() {
                       ステータス
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      メモ
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       登録日
                     </th>
                   </tr>
@@ -320,6 +359,22 @@ export default function MembersPage() {
                           <option value="suspended">休会</option>
                           <option value="withdrawn">退会</option>
                         </select>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <input
+                          type="text"
+                          value={memos[member.id] !== undefined ? memos[member.id] : (member.memo || '')}
+                          onChange={(e) => {
+                            setMemos(prev => ({...prev, [member.id]: e.target.value}))
+                          }}
+                          onBlur={(e) => {
+                            if (e.target.value !== (member.memo || '')) {
+                              handleMemoChange(member.id, e.target.value)
+                            }
+                          }}
+                          placeholder="メモを入力..."
+                          className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 w-full"
+                        />
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {new Date(member.created_at).toLocaleDateString('ja-JP')}

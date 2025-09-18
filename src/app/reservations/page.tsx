@@ -17,6 +17,7 @@ interface Reservation {
     id: string
     fullName: string
     email: string
+    plan?: string
   }
 }
 
@@ -399,7 +400,7 @@ export default function ReservationsPage() {
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm">
-                            {getMonthlyCount(reservation, reservations)}回目（{getMonthlyCount(reservation, reservations)}/4）
+                            {getMonthlyCount(reservation, reservations)}回目（{getMonthlyCount(reservation, reservations)}/{reservation.client.plan === 'ダイエットコース' ? 8 : 4}）
                           </td>
                           <td className="px-6 py-4 text-sm">
                             {reservation.notes || '-'}
@@ -434,7 +435,7 @@ export default function ReservationsPage() {
                       ) : (
                         <>
                           <td className="px-6 py-4 whitespace-nowrap text-sm">
-                            {getMonthlyCount(reservation, reservations)}回目（{getMonthlyCount(reservation, reservations)}/4）
+                            {getMonthlyCount(reservation, reservations)}回目（{getMonthlyCount(reservation, reservations)}/{reservation.client.plan === 'ダイエットコース' ? 8 : 4}）
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             {formatDate(reservation.startTime)}
