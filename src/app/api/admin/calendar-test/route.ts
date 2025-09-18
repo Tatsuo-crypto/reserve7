@@ -33,7 +33,8 @@ export async function POST(request: NextRequest) {
         endTime,
         clientName,
         clientEmail,
-        notes
+        notes,
+        calendarId: 'primary'
       })
 
       return NextResponse.json({

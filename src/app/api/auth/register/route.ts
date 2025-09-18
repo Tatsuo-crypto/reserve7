@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import { supabase } from '@/lib/supabase'
 import { createUserSchema } from '@/lib/validations'
-import { getUserStoreId } from '@/lib/env'
+import { getUserStoreId } from '@/lib/auth-utils'
 
 export async function POST(request: NextRequest) {
   try {
