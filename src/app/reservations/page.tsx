@@ -391,7 +391,7 @@ export default function ReservationsPage() {
                       {isAdmin ? (
                         <>
                           <td className="px-6 py-4 whitespace-nowrap text-sm">
-                            {getMonthlyCount(reservation, reservations)}回目（{getMonthlyCount(reservation, reservations)}/{reservation.client.plan === 'ダイエットコース' ? 8 : 4}）
+                            {getMonthlyCount(reservation, reservations)}回目（{getMonthlyCount(reservation, reservations)}/{reservation.client.plan === 'ダイエットコース' ? 8 : reservation.client.plan === '月6回プラン' ? 6 : 4}）
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm">
                             <div>
@@ -438,7 +438,7 @@ export default function ReservationsPage() {
                       ) : (
                         <>
                           <td className="px-6 py-4 whitespace-nowrap text-sm">
-                            {getMonthlyCount(reservation, reservations)}回目（{getMonthlyCount(reservation, reservations)}/{reservation.client.plan === 'ダイエットコース' ? 8 : 4}）
+                            {getMonthlyCount(reservation, reservations)}回目（{getMonthlyCount(reservation, reservations)}/{reservation.client.plan === 'ダイエットコース' ? 8 : reservation.client.plan === '月6回プラン' ? 6 : 4}）
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm">
                             <div>
