@@ -41,10 +41,14 @@ export async function GET(request: NextRequest) {
       date: new Date(reservation.start_time).toLocaleDateString('ja-JP'),
       time: `${new Date(reservation.start_time).toLocaleTimeString('ja-JP', { 
         hour: '2-digit', 
-        minute: '2-digit' 
+        minute: '2-digit',
+        hour12: false,
+        timeZone: 'Asia/Tokyo'
       })} - ${new Date(reservation.end_time).toLocaleTimeString('ja-JP', { 
         hour: '2-digit', 
-        minute: '2-digit' 
+        minute: '2-digit',
+        hour12: false,
+        timeZone: 'Asia/Tokyo'
       })}`,
       notes: reservation.notes,
       isPast: new Date(reservation.end_time) < new Date(),
