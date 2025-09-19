@@ -280,10 +280,10 @@ export default function ReservationsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex justify-between items-center">
+          <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">
                 {isAdmin ? '予約管理' : 'マイ予約'}
@@ -298,7 +298,7 @@ export default function ReservationsPage() {
             {isAdmin && (
               <button
                 onClick={() => router.push('/admin/reservations/new')}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700"
               >
                 新規予約作成
               </button>
@@ -338,9 +338,10 @@ export default function ReservationsPage() {
             </p>
           </div>
         ) : (
-          <div className="bg-white rounded-lg shadow overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="min-w-max divide-y divide-gray-200">
+          <div className="bg-white shadow overflow-hidden sm:rounded-md">
+            <div className="px-4 py-5 sm:p-6">
+              <div className="overflow-x-auto">
+                <table className="min-w-max divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
                     {isAdmin ? (
@@ -461,6 +462,7 @@ export default function ReservationsPage() {
                   ))}
                 </tbody>
               </table>
+              </div>
             </div>
           </div>
         )}
