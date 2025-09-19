@@ -280,7 +280,7 @@ export default function ReservationsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between">
@@ -392,7 +392,12 @@ export default function ReservationsPage() {
                       {isAdmin ? (
                         <>
                           <td className="px-6 py-4 whitespace-nowrap text-sm min-w-[120px]">
-                            {getMonthlyCount(reservation, reservations)}回目（{getMonthlyCount(reservation, reservations)}/{reservation.client.plan === 'ダイエットコース' ? 8 : reservation.client.plan === '月6回プラン' ? 6 : 4}）
+                            {getMonthlyCount(reservation, reservations)}回目（{getMonthlyCount(reservation, reservations)}/{
+                              reservation.client.plan === 'ダイエットコース' ? 8 : 
+                              reservation.client.plan === '月6回プラン' ? 6 :
+                              reservation.client.plan === '月6回' ? 6 :
+                              reservation.client.plan?.includes('6回') ? 6 : 4
+                            }）
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm min-w-[150px]">
                             <div>
@@ -439,7 +444,12 @@ export default function ReservationsPage() {
                       ) : (
                         <>
                           <td className="px-6 py-4 whitespace-nowrap text-sm min-w-[120px]">
-                            {getMonthlyCount(reservation, reservations)}回目（{getMonthlyCount(reservation, reservations)}/{reservation.client.plan === 'ダイエットコース' ? 8 : reservation.client.plan === '月6回プラン' ? 6 : 4}）
+                            {getMonthlyCount(reservation, reservations)}回目（{getMonthlyCount(reservation, reservations)}/{
+                              reservation.client.plan === 'ダイエットコース' ? 8 : 
+                              reservation.client.plan === '月6回プラン' ? 6 :
+                              reservation.client.plan === '月6回' ? 6 :
+                              reservation.client.plan?.includes('6回') ? 6 : 4
+                            }）
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm min-w-[150px]">
                             <div>
