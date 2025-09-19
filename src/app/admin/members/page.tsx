@@ -69,6 +69,8 @@ export default function MembersPage() {
   const [selectedStatuses, setSelectedStatuses] = useState<{[key: string]: string}>({})
   const [selectedPlans, setSelectedPlans] = useState<{[key: string]: string}>({})
   const [memos, setMemos] = useState<{[key: string]: string}>({})
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [memberToDelete, setMemberToDelete] = useState<{id: string, name: string} | null>(null)
 
   const handleStatusChange = async (memberId: string, newStatus?: string) => {
     const statusToUpdate = newStatus || selectedStatuses[memberId] || 'active'
@@ -204,6 +206,44 @@ export default function MembersPage() {
     }
   }
 
+  const handleDeleteMember = (memberId: string, memberName: string) => {
+    setMemberToDelete({ id: memberId, name: memberName })
+    setShowDeleteModal(true)
+  }
+
+  const confirmDeleteMember = async () => {
+    if (!memberToDelete) return
+
+    try {
+      const response = await fetch('/api/admin/members', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          memberId: memberToDelete.id,
+        }),
+      })
+
+      const result = await response.json()
+
+      if (response.ok) {
+        // Remove member from local state
+        setMembers(prev => prev.filter(member => member.id !== memberToDelete.id))
+        setError(`会員「${memberToDelete.name}」を削除しました`)
+        setTimeout(() => setError(''), 3000)
+      } else {
+        setError(`会員削除に失敗しました: ${result.error || 'Unknown error'}`)
+      }
+    } catch (error) {
+      console.error('会員削除エラー:', error)
+      setError('会員削除中にエラーが発生しました')
+    } finally {
+      setShowDeleteModal(false)
+      setMemberToDelete(null)
+    }
+  }
+
   const getStatusText = (status?: string) => {
     switch (status) {
       case 'active': return '在籍'
@@ -319,6 +359,9 @@ export default function MembersPage() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px]">
                       登録日
                     </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[100px]">
+                      操作
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -379,6 +422,14 @@ export default function MembersPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 min-w-[120px]">
                         {new Date(member.created_at).toLocaleDateString('ja-JP')}
                       </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm min-w-[100px]">
+                        <button
+                          onClick={() => handleDeleteMember(member.id, member.full_name)}
+                          className="text-red-600 hover:text-red-900 transition-colors"
+                        >
+                          削除
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -388,6 +439,42 @@ export default function MembersPage() {
           </div>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && memberToDelete && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="mt-3">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">
+                会員の削除
+              </h3>
+              <p className="text-sm text-gray-600 mb-6">
+                会員「{memberToDelete.name}」を削除してもよろしいですか？<br />
+                この操作は取り消すことができません。
+              </p>
+              <div className="flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowDeleteModal(false)
+                    setMemberToDelete(null)
+                  }}
+                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors"
+                >
+                  キャンセル
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmDeleteMember}
+                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+                >
+                  削除する
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

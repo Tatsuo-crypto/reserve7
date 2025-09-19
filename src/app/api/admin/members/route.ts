@@ -99,3 +99,60 @@ export async function PATCH(request: NextRequest) {
     return createErrorResponse('Internal server error', 500)
   }
 }
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const user = await getAuthenticatedUser()
+    
+    if (!user) {
+      return createErrorResponse('認証が必要です', 401)
+    }
+
+    if (!user.isAdmin) {
+      return createErrorResponse('管理者権限が必要です', 403)
+    }
+
+    const { memberId } = await request.json()
+
+    // First check if the member exists and belongs to the same store
+    const { data: member, error: fetchError } = await supabase
+      .from('users')
+      .select('id, email, store_id')
+      .eq('id', memberId)
+      .eq('store_id', user.storeId)
+      .neq('email', 'tandjgym@gmail.com')
+      .neq('email', 'tandjgym2goutenn@gmail.com')
+      .single()
+
+    if (fetchError || !member) {
+      return createErrorResponse('Member not found or access denied', 404)
+    }
+
+    // Delete member's reservations first
+    const { error: reservationsError } = await supabase
+      .from('reservations')
+      .delete()
+      .eq('user_id', memberId)
+
+    if (reservationsError) {
+      console.error('Failed to delete member reservations:', reservationsError)
+      return createErrorResponse('Failed to delete member reservations', 500)
+    }
+
+    // Delete member
+    const { error: deleteError } = await supabase
+      .from('users')
+      .delete()
+      .eq('id', memberId)
+
+    if (deleteError) {
+      console.error('Database error:', deleteError)
+      return createErrorResponse('Failed to delete member', 500)
+    }
+
+    return createSuccessResponse({ success: true })
+  } catch (error) {
+    console.error('Members API error:', error)
+    return createErrorResponse('Internal server error', 500)
+  }
+}
