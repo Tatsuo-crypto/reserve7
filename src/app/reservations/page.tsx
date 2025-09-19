@@ -382,9 +382,6 @@ export default function ReservationsPage() {
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[150px]">
                           メモ
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px]">
-                          操作
-                        </th>
                       </>
                     )}
                   </tr>
@@ -468,32 +465,6 @@ export default function ReservationsPage() {
                           </td>
                           <td className="px-6 py-4 text-sm min-w-[150px]">
                             {reservation.notes || '-'}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium min-w-[120px]">
-                            <div className="flex space-x-2">
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.preventDefault()
-                                  e.stopPropagation()
-                                  handleEdit(reservation)
-                                }}
-                                className="text-blue-600 hover:text-blue-900 transition-colors"
-                              >
-                                変更
-                              </button>
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.preventDefault()
-                                  e.stopPropagation()
-                                  handleCancel(reservation.id)
-                                }}
-                                className="text-red-600 hover:text-red-900 transition-colors"
-                              >
-                                キャンセル
-                              </button>
-                            </div>
                           </td>
                         </>
                       )}
