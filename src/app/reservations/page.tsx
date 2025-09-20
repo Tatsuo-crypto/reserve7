@@ -113,11 +113,12 @@ export default function ReservationsPage() {
   }
 
   // Get plan max count
-  const getPlanMaxCount = (plan: string) => {
+  const getPlanMaxCount = (plan: string | undefined) => {
+    if (!plan) return 4 // Default if plan is undefined
     if (plan === 'ダイエットコース') return 8
-    if (plan === '月6回プラン' || plan === '月6回' || plan?.includes('6回')) return 6
-    if (plan === '月8回プラン' || plan === '月8回' || plan?.includes('8回')) return 8
-    if (plan === '月2回プラン' || plan === '月2回' || plan?.includes('2回')) return 2
+    if (plan === '月6回プラン' || plan === '月6回' || plan.includes('6回')) return 6
+    if (plan === '月8回プラン' || plan === '月8回' || plan.includes('8回')) return 8
+    if (plan === '月2回プラン' || plan === '月2回' || plan.includes('2回')) return 2
     return 4 // Default for 月4回プラン or others
   }
 
