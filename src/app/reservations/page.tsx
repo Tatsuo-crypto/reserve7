@@ -112,6 +112,15 @@ export default function ReservationsPage() {
     })
   }
 
+  // Get plan max count
+  const getPlanMaxCount = (plan: string) => {
+    if (plan === 'ダイエットコース') return 8
+    if (plan === '月6回プラン' || plan === '月6回' || plan?.includes('6回')) return 6
+    if (plan === '月8回プラン' || plan === '月8回' || plan?.includes('8回')) return 8
+    if (plan === '月2回プラン' || plan === '月2回' || plan?.includes('2回')) return 2
+    return 4 // Default for 月4回プラン or others
+  }
+
   // Calculate monthly reservation count for each reservation
   const getMonthlyCount = (reservation: Reservation, allReservations: Reservation[]) => {
     const reservationDate = new Date(reservation.startTime)
@@ -408,12 +417,7 @@ export default function ReservationsPage() {
                       {isAdmin ? (
                         <>
                           <td className="px-6 py-4 whitespace-nowrap text-sm min-w-[120px]">
-                            {getMonthlyCount(reservation, reservations)}回目（{getMonthlyCount(reservation, reservations)}/{
-                              reservation.client.plan === 'ダイエットコース' ? 8 : 
-                              reservation.client.plan === '月6回プラン' ? 6 :
-                              reservation.client.plan === '月6回' ? 6 :
-                              reservation.client.plan?.includes('6回') ? 6 : 4
-                            }）
+                            {getMonthlyCount(reservation, reservations)}回目（{getMonthlyCount(reservation, reservations)}/{getPlanMaxCount(reservation.client.plan)}）
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm min-w-[150px]">
                             <div>
@@ -460,12 +464,7 @@ export default function ReservationsPage() {
                       ) : (
                         <>
                           <td className="px-6 py-4 whitespace-nowrap text-sm min-w-[120px]">
-                            {getMonthlyCount(reservation, reservations)}回目（{getMonthlyCount(reservation, reservations)}/{
-                              reservation.client.plan === 'ダイエットコース' ? 8 : 
-                              reservation.client.plan === '月6回プラン' ? 6 :
-                              reservation.client.plan === '月6回' ? 6 :
-                              reservation.client.plan?.includes('6回') ? 6 : 4
-                            }）
+                            {getMonthlyCount(reservation, reservations)}回目（{getMonthlyCount(reservation, reservations)}/{getPlanMaxCount(reservation.client.plan)}）
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm min-w-[150px]">
                             <div>

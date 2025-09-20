@@ -238,12 +238,6 @@ function ClientDashboard() {
             <h2 className="text-lg font-semibold text-gray-900">
               マイ予約
             </h2>
-            <button
-              onClick={() => router.push('/reservations')}
-              className="text-indigo-600 hover:text-indigo-700 text-sm font-medium"
-            >
-              すべて見る →
-            </button>
           </div>
           
           {reservationsLoading ? (
@@ -251,7 +245,7 @@ function ClientDashboard() {
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
               <p className="mt-2 text-gray-600">読み込み中...</p>
             </div>
-          ) : reservations.filter(reservation => !reservation.isPast).length === 0 ? (
+          ) : reservations.length === 0 ? (
             <div className="text-center py-8">
               <div className="bg-gray-100 p-3 rounded-lg inline-block mb-4">
                 <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -262,41 +256,49 @@ function ClientDashboard() {
             </div>
           ) : (
             <div className="space-y-3">
-              {reservations.filter(reservation => !reservation.isPast).slice(0, 3).map((reservation) => (
-                <div 
-                  key={reservation.id} 
-                  className={`border rounded-lg p-4 ${
-                    reservation.isPast ? 'bg-gray-50 border-gray-200' : 'bg-blue-50 border-blue-200'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className={`font-medium ${
-                        reservation.isPast ? 'text-gray-700' : 'text-blue-900'
+              {reservations.map((reservation, index) => {
+                // Format date with day of week
+                const formatDateWithDay = (dateString: string) => {
+                  const date = new Date(dateString)
+                  const year = date.getFullYear()
+                  const month = String(date.getMonth() + 1).padStart(2, '0')
+                  const day = String(date.getDate()).padStart(2, '0')
+                  const dayNames = ['日', '月', '火', '水', '木', '金', '土']
+                  const dayOfWeek = dayNames[date.getDay()]
+                  return `${year}/${month}/${day}(${dayOfWeek})`
+                }
+
+                // Extract time from time string (e.g., "12:00 - 13:00" -> "12:00")
+                const extractStartTime = (timeString: string) => {
+                  return timeString.split(' - ')[0]
+                }
+
+                return (
+                  <div 
+                    key={reservation.id} 
+                    className={`border rounded-lg p-4 ${
+                      reservation.isPast ? 'bg-gray-50 border-gray-200' : 'bg-blue-50 border-blue-200'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className={`font-medium ${
+                          reservation.isPast ? 'text-gray-700' : 'text-blue-900'
+                        }`}>
+                          {reservation.sequenceNumber}回目　{formatDateWithDay(reservation.date)}　{extractStartTime(reservation.time)}
+                        </p>
+                      </div>
+                      <div className={`px-2 py-1 rounded text-xs font-medium ${
+                        reservation.isPast 
+                          ? 'bg-gray-200 text-gray-700' 
+                          : 'bg-blue-200 text-blue-800'
                       }`}>
-                        {reservation.sequenceNumber}回目（{reservation.sequenceNumber}/{userInfo.monthlyUsage?.maxCount || 4}）　{reservation.date}　{reservation.time}
-                      </p>
-                    </div>
-                    <div className={`px-2 py-1 rounded text-xs font-medium ${
-                      reservation.isPast 
-                        ? 'bg-gray-200 text-gray-700' 
-                        : 'bg-blue-200 text-blue-800'
-                    }`}>
-                      {reservation.isPast ? '完了' : '予約済み'}
+                        {reservation.isPast ? '完了' : '予約済み'}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-              {reservations.filter(reservation => !reservation.isPast).length > 3 && (
-                <div className="text-center pt-2">
-                  <button
-                    onClick={() => router.push('/reservations')}
-                    className="text-indigo-600 hover:text-indigo-700 text-sm font-medium"
-                  >
-                    他 {reservations.filter(reservation => !reservation.isPast).length - 3} 件の予約を見る
-                  </button>
-                </div>
-              )}
+                )
+              })}
             </div>
           )}
         </div>
