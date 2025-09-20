@@ -96,8 +96,9 @@ export default function ReservationsPage() {
     const date = new Date(dateTimeString)
     return date.toLocaleDateString('ja-JP', {
       year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
+      month: 'numeric',
+      day: 'numeric',
+      weekday: 'short',
       timeZone: 'Asia/Tokyo'
     })
   }
@@ -430,7 +431,7 @@ export default function ReservationsPage() {
                             {formatDate(reservation.startTime)}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm min-w-[140px]">
-                            {formatTime(reservation.startTime)} - {formatTime(reservation.endTime)}
+                            {formatTime(reservation.startTime)}
                           </td>
                           <td className="px-6 py-4 text-sm min-w-[150px]">
                             {reservation.notes || '-'}
@@ -477,7 +478,7 @@ export default function ReservationsPage() {
                             {formatDate(reservation.startTime)}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm min-w-[140px]">
-                            {formatTime(reservation.startTime)} - {formatTime(reservation.endTime)}
+                            {formatTime(reservation.startTime)}
                           </td>
                           <td className="px-6 py-4 text-sm min-w-[150px]">
                             {reservation.notes || '-'}
