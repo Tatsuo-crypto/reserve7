@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth-config'
 import { supabase } from '@/lib/supabase'
-import { isAdmin } from '@/lib/auth-utils'
+import { requireAuth, handleApiError } from '@/lib/api-utils'
 import { createGoogleCalendarService } from '@/lib/google-calendar'
 
 export async function DELETE(
@@ -11,16 +9,12 @@ export async function DELETE(
 ) {
   try {
     // Check authentication
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.email) {
-      return NextResponse.json(
-        { error: '認証が必要です' },
-        { status: 401 }
-      )
+    const authResult = await requireAuth()
+    if (authResult instanceof NextResponse) {
+      return authResult
     }
 
-    const userEmail = session.user.email
-    const isUserAdmin = isAdmin(userEmail)
+    const { user, isAdmin: isUserAdmin } = authResult
     const reservationId = params.id
 
     // Get the reservation first to check ownership
@@ -46,7 +40,7 @@ export async function DELETE(
     }
 
     // Check if user can delete this reservation
-    const canDelete = isUserAdmin || (reservation.users as any).email === userEmail
+    const canDelete = isUserAdmin || (reservation.users as any).email === user.email
 
     if (!canDelete) {
       return NextResponse.json(
@@ -88,11 +82,7 @@ export async function DELETE(
     })
 
   } catch (error) {
-    console.error('Reservation deletion API error:', error)
-    return NextResponse.json(
-      { error: 'サーバーエラーが発生しました' },
-      { status: 500 }
-    )
+    return handleApiError(error, 'Reservation deletion DELETE')
   }
 }
 
@@ -102,16 +92,12 @@ export async function PUT(
 ) {
   try {
     // Check authentication
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.email) {
-      return NextResponse.json(
-        { error: '認証が必要です' },
-        { status: 401 }
-      )
+    const authResult = await requireAuth()
+    if (authResult instanceof NextResponse) {
+      return authResult
     }
 
-    const userEmail = session.user.email
-    const isUserAdmin = isAdmin(userEmail)
+    const { user, isAdmin: isUserAdmin } = authResult
     const reservationId = params.id
 
     // Parse request body
@@ -150,7 +136,7 @@ export async function PUT(
     }
 
     // Check if user can update this reservation
-    const canUpdate = isUserAdmin || (reservation.users as any).email === userEmail
+    const canUpdate = isUserAdmin || (reservation.users as any).email === user.email
 
     if (!canUpdate) {
       return NextResponse.json(
@@ -245,10 +231,6 @@ export async function PUT(
     })
 
   } catch (error) {
-    console.error('Reservation update API error:', error)
-    return NextResponse.json(
-      { error: 'サーバーエラーが発生しました' },
-      { status: 500 }
-    )
+    return handleApiError(error, 'Reservation update PUT')
   }
 }

@@ -13,35 +13,30 @@ const envSchema = z.object({
   ADMIN_EMAILS: z.string().min(1),
   
   // Google Calendar (optional for now)
-  GOOGLE_CLIENT_ID: z.string().optional(),
-  GOOGLE_CLIENT_SECRET: z.string().optional(),
   GOOGLE_CALENDAR_ID_1: z.string().optional(),
   GOOGLE_CALENDAR_ID_2: z.string().optional(),
   GOOGLE_SERVICE_ACCOUNT_KEY: z.string().optional(),
 });
 
-export const env = {
-  SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL!,
-  SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  NEXTAUTH_URL: process.env.NEXTAUTH_URL!,
-  NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET!,
+const rawEnv = {
+  SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL,
+  SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY,
+  NEXTAUTH_URL: process.env.NEXTAUTH_URL,
+  NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
   ADMIN_EMAILS: process.env.ADMIN_EMAILS || '',
   GOOGLE_CALENDAR_ID_1: process.env.GOOGLE_CALENDAR_ID_1,
   GOOGLE_CALENDAR_ID_2: process.env.GOOGLE_CALENDAR_ID_2,
   GOOGLE_SERVICE_ACCOUNT_KEY: process.env.GOOGLE_SERVICE_ACCOUNT_KEY,
 }
 
+// Validate environment variables at runtime
+export const env = envSchema.parse(rawEnv);
+
 // Calendar configurations
 export const CALENDARS = [
   { id: 'tandjgym@gmail.com', name: 'T&J GYM1号店' },
   { id: 'tandjgym2goutenn@gmail.com', name: 'T&J GYM2号店' },
-]
+] as const;
 
-// Debug environment variables (remove in production)
-// console.log('Environment variables loaded:')
-// console.log('GOOGLE_CALENDAR_ID:', env.GOOGLE_CALENDAR_ID)
-// console.log('GOOGLE_SERVICE_ACCOUNT_KEY exists:', !!env.GOOGLE_SERVICE_ACCOUNT_KEY)
-// console.log('GOOGLE_SERVICE_ACCOUNT_KEY length:', env.GOOGLE_SERVICE_ACCOUNT_KEY?.length)
-
-// Auth utility functions have been moved to @/lib/auth-utils.ts
-// Please import from there instead
+// Type-safe calendar configuration
+export type CalendarConfig = typeof CALENDARS[number];

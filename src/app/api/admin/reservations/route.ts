@@ -1,36 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth-config'
 import { supabase } from '@/lib/supabase'
-import { isAdmin, getUserStoreId } from '@/lib/auth-utils'
+import { requireAdminAuth, handleApiError } from '@/lib/api-utils'
 import { createGoogleCalendarService } from '@/lib/google-calendar'
 import { generateReservationTitle, updateMonthlyTitles } from '@/lib/title-utils'
 
 export async function POST(request: NextRequest) {
   try {
     // Check authentication and admin role
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.email) {
-      return NextResponse.json(
-        { error: '認証が必要です' },
-        { status: 401 }
-      )
+    const authResult = await requireAdminAuth()
+    if (authResult instanceof NextResponse) {
+      return authResult
     }
 
-    const userEmail = session.user.email
-    if (!isAdmin(userEmail)) {
-      return NextResponse.json(
-        { error: '管理者権限が必要です' },
-        { status: 403 }
-      )
-    }
-
-    const userStoreId = getUserStoreId(userEmail)
+    const { user } = authResult
     const body = await request.json()
     
     // Validate input
     const { clientId, startTime, duration, notes } = body
-    const calendarId = userStoreId // Force use of user's store calendar
+    const calendarId = user.storeId // Force use of user's store calendar
     
     if (!clientId || !startTime || !duration) {
       return NextResponse.json(
@@ -181,16 +168,6 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Admin reservation API error:', error)
     
-    if (error instanceof Error && error.name === 'ZodError') {
-      return NextResponse.json(
-        { error: '入力データが正しくありません' },
-        { status: 400 }
-      )
-    }
-
-    return NextResponse.json(
-      { error: 'サーバーエラーが発生しました' },
-      { status: 500 }
-    )
+    return handleApiError(error, 'Admin reservations POST')
   }
 }
