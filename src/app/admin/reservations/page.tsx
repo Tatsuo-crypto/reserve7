@@ -197,13 +197,13 @@ export default function AdminReservationsPage() {
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center">
               <Link
                 href="/admin/reservations/new"
-                className="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700 text-center whitespace-nowrap w-auto inline-block"
+                className="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700 text-center whitespace-nowrap w-44 inline-block"
               >
                 新規予約作成
               </Link>
               <Link
                 href="/dashboard"
-                className="bg-gray-600 text-white px-6 py-2 rounded-md hover:bg-gray-700 text-center whitespace-nowrap w-auto inline-block"
+                className="bg-gray-600 text-white px-6 py-2 rounded-md hover:bg-gray-700 text-center whitespace-nowrap w-44 inline-block"
               >
                 ダッシュボードに戻る
               </Link>
