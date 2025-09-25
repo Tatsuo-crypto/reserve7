@@ -205,7 +205,7 @@ export default function AdminReservationsPage() {
                 <p className="mt-2 text-gray-600">すべての予約を管理できます</p>
               </div>
             </div>
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center">
+            <div className="flex flex-col-reverse sm:flex-row gap-3 sm:gap-4 justify-center items-center">
               <Link
                 href="/dashboard"
                 className="bg-gray-600 text-white px-6 py-2 rounded-md hover:bg-gray-700 text-center whitespace-nowrap w-44 inline-block"
