@@ -303,17 +303,19 @@ export default function MembersPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="flex flex-col space-y-4">
+            <div className="text-center">
               <h1 className="text-3xl font-bold text-gray-900">会員管理</h1>
               <p className="mt-2 text-gray-600">会員のステータス管理</p>
             </div>
-            <Link
-              href="/dashboard"
-              className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700"
-            >
-              ダッシュボードに戻る
-            </Link>
+            <div className="flex justify-center">
+              <Link
+                href="/dashboard"
+                className="bg-gray-600 text-white px-6 py-2 rounded-md hover:bg-gray-700 text-center whitespace-nowrap w-44 inline-block"
+              >
+                ダッシュボード
+              </Link>
+            </div>
           </div>
         </div>
 
