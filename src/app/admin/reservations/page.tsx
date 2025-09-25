@@ -189,21 +189,21 @@ export default function AdminReservationsPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col space-y-4">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">予約管理</h1>
               <p className="mt-2 text-gray-600">全ての予約の確認・管理</p>
             </div>
-            <div className="flex space-x-4">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
               <Link
                 href="/admin/reservations/new"
-                className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700"
+                className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 text-center whitespace-nowrap"
               >
                 新規予約作成
               </Link>
               <Link
                 href="/dashboard"
-                className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700"
+                className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 text-center whitespace-nowrap"
               >
                 ダッシュボードに戻る
               </Link>
