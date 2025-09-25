@@ -304,9 +304,19 @@ export default function MembersPage() {
         {/* Header */}
         <div className="mb-8">
           <div className="flex flex-col space-y-4">
-            <div className="text-center">
-              <h1 className="text-3xl font-bold text-gray-900">会員管理</h1>
-              <p className="mt-2 text-gray-600">会員のステータス管理</p>
+            <div className="flex items-center justify-center">
+              <button
+                onClick={() => router.back()}
+                className="absolute left-4 text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <div className="text-center">
+                <h1 className="text-3xl font-bold text-gray-900">会員管理</h1>
+                <p className="mt-2 text-gray-600">会員のステータス管理</p>
+              </div>
             </div>
             <div className="flex justify-center">
               <Link
