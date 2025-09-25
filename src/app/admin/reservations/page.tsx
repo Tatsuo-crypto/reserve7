@@ -205,7 +205,7 @@ export default function AdminReservationsPage() {
                 href="/dashboard"
                 className="bg-gray-600 text-white px-6 py-2 rounded-md hover:bg-gray-700 text-center whitespace-nowrap w-44 inline-block"
               >
-                ダッシュボードに戻る
+                ダッシュボード
               </Link>
             </div>
           </div>
