@@ -20,15 +20,6 @@ function getDefaultDateTime() {
   return now.toISOString().slice(0, 16) // Format for datetime-local input
 }
 
-// Helper function to format date with Japanese day of week
-function formatDateWithDayOfWeek(dateString: string) {
-  if (!dateString) return ''
-  const date = new Date(dateString)
-  const dayNames = ['日', '月', '火', '水', '木', '金', '土']
-  const dayOfWeek = dayNames[date.getDay()]
-  
-  return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日（${dayOfWeek}）`
-}
 
 export default function NewReservationPage() {
   const { data: session, status } = useSession()
@@ -327,11 +318,6 @@ export default function NewReservationPage() {
               />
               <p className="mt-1 text-sm text-gray-500">
                 予約の開始日時を選択してください
-                {formData.startTime && (
-                  <span className="block mt-1 text-blue-600 font-medium">
-                    選択日: {formatDateWithDayOfWeek(formData.startTime)}
-                  </span>
-                )}
               </p>
             </div>
 
@@ -396,14 +382,14 @@ export default function NewReservationPage() {
               <button
                 type="button"
                 onClick={() => router.back()}
-                className="px-8 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors w-32 text-center whitespace-nowrap"
+                className="px-8 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors w-32 flex items-center justify-center whitespace-nowrap"
               >
                 キャンセル
               </button>
               <button
                 type="submit"
                 disabled={loading}
-                className="px-8 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors w-32 text-center whitespace-nowrap"
+                className="px-8 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors w-32 flex items-center justify-center whitespace-nowrap"
               >
                 {loading ? '作成中...' : '予約作成'}
               </button>
