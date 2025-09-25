@@ -294,16 +294,6 @@ function ClientDashboard() {
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex-1 min-w-0">
-                        {isFirstReservation && !reservation.isPast && (
-                          <div className="flex items-center mb-2">
-                            <span className="bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded-full mr-2">
-                              初回
-                            </span>
-                            <span className="text-orange-700 text-sm font-medium">
-                              体験レッスン
-                            </span>
-                          </div>
-                        )}
                         <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
                           <span className={`font-semibold text-lg ${
                             isFirstReservation && !reservation.isPast
