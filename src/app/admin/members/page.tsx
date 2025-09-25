@@ -318,14 +318,6 @@ export default function MembersPage() {
                 <p className="mt-2 text-gray-600">会員のステータス管理</p>
               </div>
             </div>
-            <div className="flex justify-center">
-              <Link
-                href="/dashboard"
-                className="bg-gray-600 text-white px-6 py-2 rounded-md hover:bg-gray-700 text-center whitespace-nowrap w-44 inline-block"
-              >
-                ダッシュボード
-              </Link>
-            </div>
           </div>
         </div>
 
