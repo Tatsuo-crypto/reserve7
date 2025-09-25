@@ -66,8 +66,14 @@ export default function NewReservationPage() {
       const userStoreId = session.user.email === 'tandjgym@gmail.com' ? 'tandjgym@gmail.com' : 'tandjgym2goutenn@gmail.com'
       setFormData(prev => ({
         ...prev,
-        startTime: getDefaultDateTime(),
+        startTime: prev.startTime || getDefaultDateTime(),
         calendarId: userStoreId
+      }))
+    } else {
+      // Set default time even if no session
+      setFormData(prev => ({
+        ...prev,
+        startTime: prev.startTime || getDefaultDateTime()
       }))
     }
   }, [session])
