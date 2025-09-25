@@ -190,7 +190,7 @@ export default function AdminReservationsPage() {
         {/* Header */}
         <div className="mb-8">
           <div className="flex flex-col space-y-4">
-            <div>
+            <div className="text-center">
               <h1 className="text-3xl font-bold text-gray-900">予約管理</h1>
               <p className="mt-2 text-gray-600">全ての予約の確認・管理</p>
             </div>
