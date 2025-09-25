@@ -230,18 +230,20 @@ export default function NewReservationPage() {
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center space-x-4">
-            <button
-              onClick={() => router.back()}
-              className="text-gray-600 hover:text-gray-900 transition-colors"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">新規予約作成</h1>
-              <p className="mt-2 text-gray-600">クライアントの予約を作成します</p>
+          <div className="flex flex-col space-y-4">
+            <div className="flex items-center justify-center">
+              <button
+                onClick={() => router.back()}
+                className="absolute left-4 text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <div className="text-center">
+                <h1 className="text-3xl font-bold text-gray-900">新規予約作成</h1>
+                <p className="mt-2 text-gray-600">クライアントの予約を作成します</p>
+              </div>
             </div>
           </div>
         </div>
@@ -377,20 +379,20 @@ export default function NewReservationPage() {
             </div>
 
             {/* Submit Button */}
-            <div className="flex justify-end space-x-4">
+            <div className="flex justify-center space-x-4">
               <button
                 type="button"
                 onClick={() => router.back()}
-                className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                className="px-8 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors w-32 text-center"
               >
                 キャンセル
               </button>
               <button
                 type="submit"
                 disabled={loading}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-8 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors w-32 text-center"
               >
-                {loading ? '作成中...' : '予約を作成'}
+                {loading ? '作成中...' : '予約作成'}
               </button>
             </div>
           </form>
