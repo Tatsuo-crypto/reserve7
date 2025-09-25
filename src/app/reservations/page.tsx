@@ -94,13 +94,12 @@ export default function ReservationsPage() {
 
   const formatDate = (dateTimeString: string) => {
     const date = new Date(dateTimeString)
-    return date.toLocaleDateString('ja-JP', {
-      year: 'numeric',
-      month: 'numeric',
-      day: 'numeric',
-      weekday: 'short',
-      timeZone: 'Asia/Tokyo'
-    })
+    const year = date.getFullYear()
+    const month = date.getMonth() + 1
+    const day = date.getDate()
+    const dayNames = ['日', '月', '火', '水', '木', '金', '土']
+    const dayOfWeek = dayNames[date.getDay()]
+    return `${year}年${month}月${day}日（${dayOfWeek}）`
   }
 
   const formatTime = (dateTimeString: string) => {

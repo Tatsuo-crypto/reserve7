@@ -13,11 +13,10 @@ interface Client {
   displayName: string
 }
 
-// Helper function to get default datetime (current time + 1 hour)
+// Helper function to get default datetime (today at 12:00)
 function getDefaultDateTime() {
   const now = new Date()
-  now.setHours(now.getHours() + 1)
-  now.setMinutes(0, 0, 0) // Round to the hour
+  now.setHours(12, 0, 0, 0) // Set to 12:00 PM
   return now.toISOString().slice(0, 16) // Format for datetime-local input
 }
 
@@ -202,11 +201,10 @@ export default function NewReservationPage() {
     }
   }
 
-  // Generate datetime-local input default (current time + 1 hour)
+  // Generate datetime-local input default (today at 12:00)
   const getDefaultDateTime = () => {
     const now = new Date()
-    now.setHours(now.getHours() + 1)
-    now.setMinutes(0, 0, 0) // Round to nearest hour
+    now.setHours(12, 0, 0, 0) // Set to 12:00 PM
     return now.toISOString().slice(0, 16) // Format for datetime-local input
   }
 
