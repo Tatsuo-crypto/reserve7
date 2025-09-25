@@ -273,27 +273,61 @@ function ClientDashboard() {
                   return timeString.split(' - ')[0]
                 }
 
+                const isFirstReservation = reservation.sequenceNumber === 1
+
                 return (
                   <div 
                     key={reservation.id} 
-                    className={`border rounded-lg p-4 ${
-                      reservation.isPast ? 'bg-gray-50 border-gray-200' : 'bg-blue-50 border-blue-200'
+                    className={`border rounded-lg p-4 transition-all ${
+                      isFirstReservation && !reservation.isPast
+                        ? 'bg-gradient-to-r from-orange-50 to-yellow-50 border-orange-300 shadow-md'
+                        : reservation.isPast 
+                        ? 'bg-gray-50 border-gray-200' 
+                        : 'bg-blue-50 border-blue-200'
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <div>
-                        <p className={`font-medium ${
-                          reservation.isPast ? 'text-gray-700' : 'text-blue-900'
-                        }`}>
-                          {reservation.sequenceNumber}回目　{formatDateWithDay(reservation.date)}　{extractStartTime(reservation.time)}
-                        </p>
+                      <div className="flex-1 min-w-0">
+                        {isFirstReservation && !reservation.isPast && (
+                          <div className="flex items-center mb-2">
+                            <span className="bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded-full mr-2">
+                              初回
+                            </span>
+                            <span className="text-orange-700 text-sm font-medium">
+                              体験レッスン
+                            </span>
+                          </div>
+                        )}
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                          <span className={`font-semibold text-lg ${
+                            isFirstReservation && !reservation.isPast
+                              ? 'text-orange-800'
+                              : reservation.isPast 
+                              ? 'text-gray-700' 
+                              : 'text-blue-900'
+                          }`}>
+                            {reservation.sequenceNumber}回目
+                          </span>
+                          <div className={`font-medium ${
+                            isFirstReservation && !reservation.isPast
+                              ? 'text-orange-700'
+                              : reservation.isPast 
+                              ? 'text-gray-600' 
+                              : 'text-blue-800'
+                          }`}>
+                            <span className="block sm:inline">{formatDateWithDay(reservation.date)}</span>
+                            <span className="block sm:inline sm:ml-2">{extractStartTime(reservation.time)}</span>
+                          </div>
+                        </div>
                       </div>
-                      <div className={`px-2 py-1 rounded text-xs font-medium ${
+                      <div className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ml-2 ${
                         reservation.isPast 
                           ? 'bg-gray-200 text-gray-700' 
+                          : isFirstReservation
+                          ? 'bg-orange-200 text-orange-800'
                           : 'bg-blue-200 text-blue-800'
                       }`}>
-                        {reservation.isPast ? '完了' : '予約済み'}
+                        {reservation.isPast ? '完了' : '予約済'}
                       </div>
                     </div>
                   </div>
