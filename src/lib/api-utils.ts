@@ -36,6 +36,35 @@ export async function getAuthenticatedUser() {
   }
 }
 
+export async function requireAuth(): Promise<NextResponse | { user: any; isAdmin: boolean }> {
+  const session = await getServerSession(authOptions)
+  
+  if (!session?.user?.email) {
+    return createErrorResponse('認証が必要です', 401)
+  }
+
+  const user = await getAuthenticatedUser()
+  if (!user) {
+    return createErrorResponse('ユーザー情報の取得に失敗しました', 401)
+  }
+
+  return { user, isAdmin: user.isAdmin }
+}
+
+export async function requireAdminAuth(): Promise<NextResponse | { user: any }> {
+  const authResult = await requireAuth()
+  
+  if (authResult instanceof NextResponse) {
+    return authResult
+  }
+
+  if (!authResult.isAdmin) {
+    return createErrorResponse('管理者権限が必要です', 403)
+  }
+
+  return { user: authResult.user }
+}
+
 export function createErrorResponse(message: string, status: number = 400): NextResponse {
   return NextResponse.json({ error: message }, { status })
 }

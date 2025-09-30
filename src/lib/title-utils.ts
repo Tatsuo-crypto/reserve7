@@ -58,7 +58,7 @@ export async function updateMonthlyTitles(clientId: string, year: number, month:
 
       // Update Google Calendar if external event exists
       let calendarUpdate = Promise.resolve()
-      if (reservation.external_event_id && calendarService) {
+      if (reservation.external_event_id && calendarService && reservation.users && reservation.users.length > 0) {
         try {
           calendarUpdate = calendarService.updateEvent(reservation.external_event_id, {
             title: newTitle,

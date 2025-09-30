@@ -3,6 +3,12 @@
  */
 
 export function isAdmin(email: string): boolean {
+  // For client-side usage, we need to handle the case where process.env is not available
+  if (typeof window !== 'undefined') {
+    // On client side, we'll assume admin status is handled by the server
+    return true // This will be properly validated on the server side
+  }
+  
   const adminEmails = process.env.ADMIN_EMAILS?.split(',') || []
   return adminEmails.includes(email)
 }

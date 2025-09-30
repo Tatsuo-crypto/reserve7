@@ -24,6 +24,7 @@ export async function GET(request: NextRequest) {
         calendar_id,
         created_at,
         external_event_id,
+        client_id,
         users!client_id (
           id,
           full_name,
@@ -73,11 +74,16 @@ export async function GET(request: NextRequest) {
       notes: reservation.notes,
       calendarId: reservation.calendar_id,
       createdAt: reservation.created_at,
-      client: {
+      client: reservation.client_id ? {
         id: (reservation.users as any).id,
         fullName: (reservation.users as any).full_name,
         email: (reservation.users as any).email,
         plan: (reservation.users as any).plan,
+      } : {
+        id: 'blocked',
+        fullName: '予約不可時間',
+        email: 'blocked@system',
+        plan: null,
       }
     })) || []
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
-import { getAuthenticatedUser, createErrorResponse, createSuccessResponse } from '@/lib/api-utils'
+import { getAuthenticatedUser, createErrorResponse, createSuccessResponse, handleApiError } from '@/lib/api-utils'
 import { getUserMonthlyUsage } from '@/lib/reservation-utils'
 
 export async function GET(request: NextRequest) {
@@ -31,7 +31,6 @@ export async function GET(request: NextRequest) {
       monthlyUsage
     })
   } catch (error) {
-    console.error('User profile API error:', error)
-    return createErrorResponse('Internal server error', 500)
+    return handleApiError(error, 'User profile GET')
   }
 }

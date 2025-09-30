@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { getStoreDisplayName } from '@/lib/auth-utils'
 
 interface Reservation {
@@ -94,13 +95,12 @@ export default function ReservationsPage() {
 
   const formatDate = (dateTimeString: string) => {
     const date = new Date(dateTimeString)
-    return date.toLocaleDateString('ja-JP', {
-      year: 'numeric',
-      month: 'numeric',
-      day: 'numeric',
-      weekday: 'short',
-      timeZone: 'Asia/Tokyo'
-    })
+    const year = date.getFullYear()
+    const month = date.getMonth() + 1
+    const day = date.getDate()
+    const dayNames = ['日', '月', '火', '水', '木', '金', '土']
+    const dayOfWeek = dayNames[date.getDay()]
+    return `${year}年${month}月${day}日（${dayOfWeek}）`
   }
 
   const formatTime = (dateTimeString: string) => {
@@ -125,6 +125,11 @@ export default function ReservationsPage() {
 
   // Calculate monthly reservation count for each reservation
   const getMonthlyCount = (reservation: Reservation, allReservations: Reservation[]) => {
+    // For blocked times, don't show count
+    if (reservation.client.id === 'blocked') {
+      return '-'
+    }
+    
     const reservationDate = new Date(reservation.startTime)
     const reservationMonth = reservationDate.getMonth()
     const reservationYear = reservationDate.getFullYear()
@@ -307,33 +312,37 @@ export default function ReservationsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                {isAdmin ? '予約管理' : 'マイ予約'}
-              </h1>
-              <p className="mt-2 text-gray-600">
-                {isAdmin 
-                  ? 'すべての予約を管理できます' 
-                  : 'あなたの予約一覧です'
-                }
+          <div className="flex flex-col items-center space-y-3">
+            <h1 className="text-4xl font-bold text-gray-900">
+              予約管理
+            </h1>
+            <div className="flex items-center justify-between w-full">
+              <button
+                onClick={() => router.back()}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <svg className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <p className="text-gray-600">
+                すべての予約を管理できます
               </p>
+              <div className="w-10"></div>
             </div>
             {isAdmin && (
-              <button
-                onClick={() => router.push('/admin/reservations/new')}
-                className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700"
+              <Link
+                href="/admin/reservations/new"
+                className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors"
               >
                 新規予約作成
-              </button>
+              </Link>
             )}
           </div>
         </div>
-
-        {/* Error Message */}
         {error && (
           <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
             <p className="text-red-800">{error}</p>
@@ -369,73 +378,77 @@ export default function ReservationsPage() {
             <div className="px-4 py-5 sm:p-6">
               <div className="overflow-x-auto">
                 <table className="min-w-max divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    {isAdmin ? (
-                      <>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px]">
-                          回数
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[150px]">
-                          会員名
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px]">
-                          日付
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[140px]">
-                          時間
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[150px]">
-                          メモ
-                        </th>
+                  <thead className="bg-gradient-to-r from-blue-50 to-indigo-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px] border-r border-gray-100">
+                        日付
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[140px] border-r border-gray-100">
+                        時間
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[150px] border-r border-gray-100">
+                        会員名
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px] border-r border-gray-100">
+                        回数
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[150px] border-r border-gray-100">
+                        メモ
+                      </th>
+                      {isAdmin && (
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px]">
                           操作
                         </th>
-                      </>
-                    ) : (
-                      <>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px]">
-                          回数
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[150px]">
-                          会員名
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px]">
-                          日付
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[140px]">
-                          時間
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[150px]">
-                          メモ
-                        </th>
-                      </>
-                    )}
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {reservations && reservations.map((reservation) => (
-                    <tr key={reservation.id} className={getRowClassName(reservation)}>
-                      {isAdmin ? (
-                        <>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm min-w-[120px]">
-                            {getMonthlyCount(reservation, reservations)}回目（{getMonthlyCount(reservation, reservations)}/{getPlanMaxCount(reservation.client.plan)}）
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm min-w-[150px]">
-                            <div>
-                              <div className="font-medium">{reservation.client.fullName}</div>
-                              <div className="text-gray-500">{reservation.client.email}</div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium min-w-[120px]">
+                      )}
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {reservations && reservations.map((reservation) => (
+                      <tr key={reservation.id} className={getRowClassName(reservation)}>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium min-w-[120px] border-r border-gray-100">
+                          <div className="bg-blue-50 text-blue-800 px-2 py-1 rounded-md text-center">
                             {formatDate(reservation.startTime)}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm min-w-[140px]">
-                            {formatTime(reservation.startTime)}
-                          </td>
-                          <td className="px-6 py-4 text-sm min-w-[150px]">
-                            {reservation.notes || '-'}
-                          </td>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm min-w-[140px] border-r border-gray-100">
+                          <div className="bg-gray-50 text-gray-800 px-2 py-1 rounded-md text-center">
+                            {formatTime(reservation.startTime)} - {formatTime(reservation.endTime)}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm min-w-[150px] border-r border-gray-100">
+                          <div className="flex items-center">
+                            <div className="flex-shrink-0 h-8 w-8">
+                              <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
+                                <span className="text-sm font-medium text-gray-700">
+                                  {reservation.client.id === 'blocked' ? 'B' : reservation.client.fullName.charAt(0)}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="ml-3">
+                              <div className="font-medium text-gray-900">
+                                {reservation.client.id === 'blocked' ? '予約不可時間' : reservation.client.fullName}
+                              </div>
+                              <div className="text-gray-500 text-xs">
+                                {reservation.client.id === 'blocked' ? 'blocked@system' : reservation.client.email}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm min-w-[120px] border-r border-gray-100">
+                          {reservation.client.id === 'blocked' ? (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                              予約不可
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                              {`${getMonthlyCount(reservation, reservations)}/${getPlanMaxCount(reservation.client.plan)}回（${new Date(reservation.startTime).getMonth() + 1}月）`}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 text-sm min-w-[150px] border-r border-gray-100">
+                          {reservation.notes || '-'}
+                        </td>
+                        {isAdmin && (
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium min-w-[120px]">
                             <div className="flex space-x-2">
                               <button
@@ -445,7 +458,7 @@ export default function ReservationsPage() {
                                   e.stopPropagation()
                                   handleEdit(reservation)
                                 }}
-                                className="text-blue-600 hover:text-blue-900 transition-colors"
+                                className="bg-blue-100 text-blue-600 hover:bg-blue-200 px-3 py-1 rounded-md transition-colors"
                               >
                                 変更
                               </button>
@@ -456,39 +469,17 @@ export default function ReservationsPage() {
                                   e.stopPropagation()
                                   handleCancel(reservation.id)
                                 }}
-                                className="text-red-600 hover:text-red-900 transition-colors"
+                                className="bg-red-100 text-red-600 hover:bg-red-200 px-3 py-1 rounded-md transition-colors"
                               >
                                 キャンセル
                               </button>
                             </div>
                           </td>
-                        </>
-                      ) : (
-                        <>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm min-w-[120px]">
-                            {getMonthlyCount(reservation, reservations)}回目（{getMonthlyCount(reservation, reservations)}/{getPlanMaxCount(reservation.client.plan)}）
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm min-w-[150px]">
-                            <div>
-                              <div className="font-medium">{reservation.client.fullName}</div>
-                              <div className="text-gray-500">{reservation.client.email}</div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium min-w-[120px]">
-                            {formatDate(reservation.startTime)}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm min-w-[140px]">
-                            {formatTime(reservation.startTime)}
-                          </td>
-                          <td className="px-6 py-4 text-sm min-w-[150px]">
-                            {reservation.notes || '-'}
-                          </td>
-                        </>
-                      )}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                        )}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
