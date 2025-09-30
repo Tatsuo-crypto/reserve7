@@ -127,14 +127,16 @@ export async function POST(request: NextRequest) {
     let externalEventId: string | null = null
     const calendarService = createGoogleCalendarService()
     
-    if (calendarService && clientId !== 'BLOCKED') {
+    if (calendarService) {
       try {
+        const clientName = clientId === 'BLOCKED' ? '予約不可時間' : clientUser!.full_name
+        const clientEmail = clientId === 'BLOCKED' ? 'blocked@system' : clientUser!.email
         externalEventId = await calendarService.createEvent({
           title: generatedTitle,
           startTime: startDateTime.toISOString(),
           endTime: endDateTime.toISOString(),
-          clientName: clientUser!.full_name,
-          clientEmail: clientUser!.email,
+          clientName,
+          clientEmail,
           notes: notes || undefined,
           calendarId: calendarId,
         })
