@@ -37,6 +37,11 @@ export default function NewReservationPage() {
     duration: 60, // Default 60 minutes
     calendarId: '', // Will be set based on user's store
     notes: '',
+    isBlocked: false, // New field for blocked time
+    // For blocked time - separate date and time fields
+    blockedDate: '',
+    blockedStartTime: '09:00',
+    blockedEndTime: '12:00',
   })
 
   // Fetch clients and set default start time after component mounts
@@ -134,20 +139,25 @@ export default function NewReservationPage() {
     setSuccess(null)
 
     try {
-      // Debug: Log form data
       console.log('Form data:', formData)
       console.log('clientId:', formData.clientId, 'length:', formData.clientId.length)
       console.log('startTime:', formData.startTime, 'length:', formData.startTime.length)
 
       // Validate required fields
-      if (!formData.clientId.trim() || !formData.startTime.trim()) {
-        throw new Error('必須項目を入力してください')
+      if (!formData.startTime.trim()) {
+        throw new Error('開始時間は必須です')
       }
 
-      // Find selected client
-      const selectedClient = clients.find(client => client.id === formData.clientId)
-      if (!selectedClient) {
-        throw new Error('有効なクライアントを選択してください')
+      // For blocked time, we don't need a client
+      let selectedClient = null
+      if (!formData.isBlocked) {
+        if (!formData.clientId.trim()) {
+          throw new Error('クライアントを選択してください')
+        }
+        selectedClient = clients.find(client => client.id === formData.clientId)
+        if (!selectedClient) {
+          throw new Error('有効なクライアントを選択してください')
+        }
       }
 
       // Convert local datetime to ISO string
@@ -159,17 +169,51 @@ export default function NewReservationPage() {
       // Calculate end time based on duration
       const endDateTime = new Date(startDateTime.getTime() + formData.duration * 60 * 1000)
 
-      // Generate title based on client
-      const title = generateTitle(selectedClient)
+      // Prepare data for API
+      let requestData
+      if (formData.isBlocked) {
+        // For blocked time, combine date and time fields
+        if (!formData.blockedDate || !formData.blockedStartTime || !formData.blockedEndTime) {
+          setError('予約不可時間の設定には日付、開始時刻、終了時刻が必要です')
+          return
+        }
 
-      const requestData = {
-        clientId: selectedClient.id,
-        startTime: startDateTime.toISOString(),
-        duration: formData.duration,
-        calendarId: formData.calendarId,
-        notes: formData.notes || undefined,
+        // Validate that end time is after start time
+        if (formData.blockedEndTime <= formData.blockedStartTime) {
+          setError('終了時刻は開始時刻より後に設定してください')
+          return
+        }
+
+        // Combine date and time
+        const startDateTime = `${formData.blockedDate}T${formData.blockedStartTime}`
+        const endDateTime = `${formData.blockedDate}T${formData.blockedEndTime}`
+        
+        // Calculate duration in minutes
+        const start = new Date(startDateTime)
+        const end = new Date(endDateTime)
+        const duration = Math.round((end.getTime() - start.getTime()) / (1000 * 60))
+
+        requestData = {
+          clientId: 'BLOCKED',
+          startTime: startDateTime,
+          duration: duration,
+          calendarId: formData.calendarId,
+          notes: formData.notes,
+          title: formData.notes || '予約不可',
+        }
+      } else {
+        // For regular reservation
+        requestData = {
+          clientId: formData.clientId,
+          startTime: formData.startTime,
+          duration: formData.duration,
+          calendarId: formData.calendarId,
+          notes: formData.notes,
+        }
       }
 
+      console.log('Sending request to API:', requestData)
+      
       const response = await fetch('/api/admin/reservations', {
         method: 'POST',
         headers: {
@@ -178,7 +222,9 @@ export default function NewReservationPage() {
         body: JSON.stringify(requestData),
       })
 
+      console.log('API Response status:', response.status)
       const data = await response.json()
+      console.log('API Response data:', data)
 
       if (!response.ok) {
         throw new Error(data.error || '予約の作成に失敗しました')
@@ -193,6 +239,10 @@ export default function NewReservationPage() {
         duration: 60,
         calendarId: 'tandjgym@gmail.com',
         notes: '',
+        isBlocked: false,
+        blockedDate: '',
+        blockedStartTime: '09:00',
+        blockedEndTime: '12:00',
       })
 
       // Redirect to reservations list after 2 seconds
@@ -276,56 +326,156 @@ export default function NewReservationPage() {
         {/* Form */}
         <div className="bg-white rounded-lg shadow p-6">
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Client Selection */}
+            {/* Reservation Type */}
             <div>
-              <label htmlFor="clientId" className="block text-sm font-medium text-gray-700 mb-2">
-                クライアント選択 *
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                予約タイプ *
               </label>
-              {loadingClients ? (
-                <div className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500">
-                  クライアント情報を読み込み中...
+              <div className="space-y-2">
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="reservationType"
+                    value="client"
+                    checked={!formData.isBlocked}
+                    onChange={() => setFormData(prev => ({ ...prev, isBlocked: false, clientId: '' }))}
+                    className="mr-2"
+                  />
+                  <span>クライアント予約</span>
+                </label>
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="reservationType"
+                    value="blocked"
+                    checked={formData.isBlocked}
+                    onChange={() => setFormData(prev => ({ ...prev, isBlocked: true, clientId: '' }))}
+                    className="mr-2"
+                  />
+                  <span>予約不可時間</span>
+                </label>
+              </div>
+            </div>
+
+            {/* Client Selection - Only show for client reservations */}
+            {!formData.isBlocked && (
+              <div>
+                <label htmlFor="clientId" className="block text-sm font-medium text-gray-700 mb-2">
+                  クライアント選択 *
+                </label>
+                {loadingClients ? (
+                  <div className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500">
+                    クライアント情報を読み込み中...
+                  </div>
+                ) : (
+                  <select
+                    id="clientId"
+                    name="clientId"
+                    value={formData.clientId}
+                    onChange={handleInputChange}
+                    required={!formData.isBlocked}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="">クライアントを選択してください</option>
+                    {clients && clients.map(client => (
+                      <option key={client.id} value={client.id}>
+                        {client.name}
+                      </option>
+                    ))}
+                  </select>
+                )}
+                <p className="mt-1 text-sm text-gray-500">
+                  予約を作成するクライアントを選択してください
+                </p>
+              </div>
+            )}
+
+
+            {/* Date and Time Selection */}
+            {formData.isBlocked ? (
+              // Blocked time: separate date and time inputs
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="blockedDate" className="block text-sm font-medium text-gray-700 mb-2">
+                    日付 *
+                  </label>
+                  <input
+                    type="date"
+                    id="blockedDate"
+                    value={formData.blockedDate}
+                    onChange={(e) => setFormData({ ...formData, blockedDate: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                  />
                 </div>
-              ) : (
-                <select
-                  id="clientId"
-                  name="clientId"
-                  value={formData.clientId}
-                  onChange={handleInputChange}
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label htmlFor="blockedStartTime" className="block text-sm font-medium text-gray-700 mb-2">
+                      開始時刻 *
+                    </label>
+                    <input
+                      type="time"
+                      id="blockedStartTime"
+                      value={formData.blockedStartTime}
+                      onChange={(e) => setFormData({ ...formData, blockedStartTime: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="blockedEndTime" className="block text-sm font-medium text-gray-700 mb-2">
+                      終了時刻 *
+                    </label>
+                    <input
+                      type="time"
+                      id="blockedEndTime"
+                      value={formData.blockedEndTime}
+                      onChange={(e) => setFormData({ ...formData, blockedEndTime: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+            ) : (
+              // Regular reservation: datetime-local only (no duration needed)
+              <div>
+                <label htmlFor="startTime" className="block text-sm font-medium text-gray-700 mb-2">
+                  開始日時 *
+                </label>
+                <input
+                  type="datetime-local"
+                  id="startTime"
+                  value={formData.startTime}
+                  onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+            )}
+
+            {/* Session Duration - Only show for regular reservations */}
+            {!formData.isBlocked && (
+              <div>
+                <label htmlFor="duration" className="block text-sm font-medium text-gray-700 mb-2">
+                  セッション時間 *
+                </label>
+                <select
+                  id="duration"
+                  value={formData.duration}
+                  onChange={(e) => setFormData({ ...formData, duration: parseInt(e.target.value) })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
                 >
-                  <option value="">クライアントを選択してください</option>
-                  {clients && clients.map(client => (
-                    <option key={client.id} value={client.id}>
-                      {client.name}
-                    </option>
-                  ))}
+                  <option value={30}>30分</option>
+                  <option value={60}>60分</option>
+                  <option value={90}>90分</option>
+                  <option value={120}>120分</option>
                 </select>
-              )}
-              <p className="mt-1 text-sm text-gray-500">
-                予約を作成するクライアントを選択してください
-              </p>
-            </div>
-
-
-            {/* Start Time */}
-            <div>
-              <label htmlFor="startTime" className="block text-sm font-medium text-gray-700 mb-2">
-                開始日時 *
-              </label>
-              <input
-                type="datetime-local"
-                id="startTime"
-                name="startTime"
-                value={formData.startTime}
-                onChange={handleInputChange}
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-              <p className="mt-1 text-sm text-gray-500">
-                予約の開始日時を選択してください
-              </p>
-            </div>
+              </div>
+            )}
 
             {/* Store Display (Read-only) */}
             <div>
@@ -340,33 +490,11 @@ export default function NewReservationPage() {
               </p>
             </div>
 
-            {/* Session Duration */}
-            <div>
-              <label htmlFor="duration" className="block text-sm font-medium text-gray-700 mb-2">
-                セッション時間 *
-              </label>
-              <select
-                id="duration"
-                name="duration"
-                value={formData.duration}
-                onChange={handleInputChange}
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value={30}>30分</option>
-                <option value={60}>60分</option>
-                <option value={90}>90分</option>
-                <option value={120}>120分</option>
-              </select>
-              <p className="mt-1 text-sm text-gray-500">
-                セッションの時間を選択してください
-              </p>
-            </div>
 
             {/* Notes */}
             <div>
               <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-2">
-                メモ（任意）
+                {formData.isBlocked ? '理由（任意）' : 'メモ（任意）'}
               </label>
               <textarea
                 id="notes"
@@ -376,7 +504,7 @@ export default function NewReservationPage() {
                 rows={4}
                 maxLength={1000}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="特記事項があれば入力してください"
+                placeholder={formData.isBlocked ? "予約不可の理由を入力してください（例：定期メンテナンス、休業日）" : "特記事項があれば入力してください"}
               />
               <p className="mt-1 text-sm text-gray-500">
                 {formData.notes.length}/1000文字
@@ -397,7 +525,7 @@ export default function NewReservationPage() {
                 disabled={loading}
                 className="px-8 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors w-32 flex items-center justify-center whitespace-nowrap"
               >
-                {loading ? '作成中...' : '予約作成'}
+                {loading ? '作成中...' : (formData.isBlocked ? '予約不可設定' : '予約作成')}
               </button>
             </div>
           </form>
@@ -405,12 +533,25 @@ export default function NewReservationPage() {
 
         {/* Info Box */}
         <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <h3 className="text-sm font-medium text-blue-900 mb-2">予約作成について</h3>
+          <h3 className="text-sm font-medium text-blue-900 mb-2">
+            {formData.isBlocked ? '予約不可時間について' : '予約作成について'}
+          </h3>
           <ul className="text-sm text-blue-800 space-y-1">
-            <li>• セッション時間は30分、60分、90分、120分から選択できます</li>
-            <li>• 同じ時間帯に重複する予約は作成できません</li>
-            <li>• クライアントのメールアドレスは登録済みのものを使用してください</li>
-            <li>• 作成された予約はクライアントの予約一覧に表示されます</li>
+            {formData.isBlocked ? (
+              <>
+                <li>• 予約不可時間は他の予約と重複できません</li>
+                <li>• 営業時間外、休業日、メンテナンス時間などに使用してください</li>
+                <li>• 理由を入力すると管理しやすくなります</li>
+                <li>• 予約一覧で「予約不可」として表示されます</li>
+              </>
+            ) : (
+              <>
+                <li>• セッション時間は30分、60分、90分、120分から選択できます</li>
+                <li>• 同じ時間帯に重複する予約は作成できません</li>
+                <li>• クライアントのメールアドレスは登録済みのものを使用してください</li>
+                <li>• 作成された予約はクライアントの予約一覧に表示されます</li>
+              </>
+            )}
           </ul>
         </div>
       </div>

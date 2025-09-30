@@ -67,13 +67,13 @@ function LoginForm() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
+    <div className="min-h-screen flex flex-col bg-gray-50 pt-20 pb-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full mx-auto space-y-4">
         <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          <h2 className="text-center text-3xl font-extrabold text-gray-900">
             T&J GYM
           </h2>
-          <p className="mt-2 text-center text-lg text-gray-700">
+          <p className="mt-1 text-center text-lg text-gray-700">
             予約確認フォーム
           </p>
         </div>
@@ -85,8 +85,8 @@ function LoginForm() {
         )}
         
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="space-y-4">
+        <form className="mt-4 space-y-3" onSubmit={handleSubmit}>
+          <div className="space-y-3">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
                 メールアドレス

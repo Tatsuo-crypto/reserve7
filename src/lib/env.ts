@@ -21,7 +21,7 @@ const envSchema = z.object({
 const rawEnv = {
   SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL,
   SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY,
-  NEXTAUTH_URL: process.env.NEXTAUTH_URL,
+  NEXTAUTH_URL: process.env.NEXTAUTH_URL || 'http://localhost:3000',
   NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
   ADMIN_EMAILS: process.env.ADMIN_EMAILS || '',
   GOOGLE_CALENDAR_ID_1: process.env.GOOGLE_CALENDAR_ID_1,

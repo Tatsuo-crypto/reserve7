@@ -30,26 +30,37 @@ export async function POST(request: NextRequest) {
     const startDateTime = new Date(startTime)
     const endDateTime = new Date(startDateTime.getTime() + duration * 60 * 1000)
 
-    // Get client user by ID (remove store verification for now)
-    const { data: clientUser, error: clientError } = await supabase
-      .from('users')
-      .select('id, full_name, email, store_id')
-      .eq('id', clientId)
-      .single()
+    // Handle blocked time vs regular reservation
+    let clientUser = null
+    let generatedTitle = ''
+    
+    if (clientId === 'BLOCKED') {
+      // For blocked time, use special values
+      generatedTitle = body.title || '予約不可'
+    } else {
+      // Get client user by ID for regular reservations
+      const { data: fetchedUser, error: clientError } = await supabase
+        .from('users')
+        .select('id, full_name, email, store_id')
+        .eq('id', clientId)
+        .single()
 
-    if (clientError || !clientUser) {
-      return NextResponse.json(
-        { error: 'クライアントユーザーが見つかりません' },
-        { status: 404 }
+      if (clientError || !fetchedUser) {
+        return NextResponse.json(
+          { error: 'クライアントユーザーが見つかりません' },
+          { status: 404 }
+        )
+      }
+      
+      clientUser = fetchedUser
+      // Generate title based on chronological order
+      generatedTitle = await generateReservationTitle(
+        clientUser.id,
+        clientUser.full_name,
+        startDateTime
       )
     }
 
-    // Generate title based on chronological order
-    const generatedTitle = await generateReservationTitle(
-      clientUser.id,
-      clientUser.full_name,
-      startDateTime
-    )
 
     // Check for overlapping reservations in the same calendar (excluding adjacent times)
     const { data: existingReservations, error: overlapError } = await supabase
@@ -74,18 +85,56 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Check for blocked times that overlap with the reservation (skip if table doesn't exist)
+    try {
+      const { data: blockedTimes, error: blockedTimeError } = await supabase
+        .from('blocked_times')
+        .select('id, reason, start_time, end_time')
+        .eq('calendar_id', calendarId)
+        .gt('end_time', startDateTime.toISOString())
+        .lt('start_time', endDateTime.toISOString())
+
+      if (blockedTimeError) {
+        // If table doesn't exist, just log and continue
+        if (blockedTimeError.code === 'PGRST116' || blockedTimeError.message.includes('does not exist')) {
+          console.log('blocked_times table does not exist, skipping blocked time check')
+        } else {
+          console.error('Blocked time check error:', blockedTimeError)
+          return NextResponse.json(
+            { error: 'ブロック時間のチェックに失敗しました' },
+            { status: 500 }
+          )
+        }
+      } else if (blockedTimes && blockedTimes.length > 0) {
+        const blockedTime = blockedTimes[0]
+        return NextResponse.json(
+          { 
+            error: `この時間帯は予約不可です（${blockedTime.reason}）`,
+            blockedTime: {
+              reason: blockedTime.reason,
+              startTime: blockedTime.start_time,
+              endTime: blockedTime.end_time
+            }
+          },
+          { status: 409 }
+        )
+      }
+    } catch (error) {
+      console.log('Error checking blocked times, continuing with reservation creation:', error)
+    }
+
     // Try to create Google Calendar event first (if configured)
     let externalEventId: string | null = null
     const calendarService = createGoogleCalendarService()
     
-    if (calendarService) {
+    if (calendarService && clientId !== 'BLOCKED') {
       try {
         externalEventId = await calendarService.createEvent({
           title: generatedTitle,
           startTime: startDateTime.toISOString(),
           endTime: endDateTime.toISOString(),
-          clientName: clientUser.full_name,
-          clientEmail: clientUser.email,
+          clientName: clientUser!.full_name,
+          clientEmail: clientUser!.email,
           notes: notes || undefined,
           calendarId: calendarId,
         })
@@ -97,17 +146,19 @@ export async function POST(request: NextRequest) {
     }
 
     // Create reservation
+    const reservationData = {
+      client_id: clientId === 'BLOCKED' ? null : clientUser!.id,
+      title: generatedTitle,
+      start_time: startDateTime.toISOString(),
+      end_time: endDateTime.toISOString(),
+      notes: notes || null,
+      calendar_id: calendarId,
+      external_event_id: externalEventId,
+    }
+
     const { data: reservation, error } = await supabase
       .from('reservations')
-      .insert({
-        client_id: clientUser.id,
-        title: generatedTitle,
-        start_time: startDateTime.toISOString(),
-        end_time: endDateTime.toISOString(),
-        notes: notes || null,
-        calendar_id: calendarId,
-        external_event_id: externalEventId,
-      })
+      .insert(reservationData)
       .select(`
         id,
         title,
@@ -138,15 +189,17 @@ export async function POST(request: NextRequest) {
       }
       
       return NextResponse.json(
-        { error: '予約の作成に失敗しました' },
+        { error: '予約の作成に失敗しました', details: (error as any)?.message || (error as any)?.hint || (error as any)?.code || null },
         { status: 500 }
       )
     }
 
-    // Update all titles in this month to ensure proper chronological order
-    const startMonth = startDateTime.getMonth()
-    const startYear = startDateTime.getFullYear()
-    await updateMonthlyTitles(clientUser.id, startYear, startMonth)
+    // Update all titles in this month to ensure proper chronological order (only for regular reservations)
+    if (clientId !== 'BLOCKED' && clientUser) {
+      const startMonth = startDateTime.getMonth()
+      const startYear = startDateTime.getFullYear()
+      await updateMonthlyTitles(clientUser.id, startYear, startMonth)
+    }
 
     return NextResponse.json({
       message: '予約が作成されました',
@@ -157,7 +210,11 @@ export async function POST(request: NextRequest) {
         endTime: reservation.end_time,
         notes: reservation.notes,
         createdAt: reservation.created_at,
-        client: {
+        client: (clientId === 'BLOCKED' || !reservation.users) ? {
+          id: 'blocked',
+          fullName: '予約不可時間',
+          email: 'blocked@system',
+        } : {
           id: (reservation.users as any).id,
           fullName: (reservation.users as any).full_name,
           email: (reservation.users as any).email,
