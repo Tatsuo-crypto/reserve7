@@ -141,6 +141,16 @@ function ClientDashboard() {
   const [loading, setLoading] = useState(true)
   const [reservationsLoading, setReservationsLoading] = useState(true)
 
+  // Helper: derive max count from plan string when API doesn't provide it
+  const getPlanMaxCount = (plan?: string, fallbackMax?: number) => {
+    if (typeof fallbackMax === 'number') return fallbackMax
+    if (!plan) return 4
+    if (plan.includes('8回')) return 8
+    if (plan.includes('6回')) return 6
+    if (plan.includes('2回')) return 2
+    return 4
+  }
+
   useEffect(() => {
     const fetchUserInfo = async () => {
       try {
@@ -243,7 +253,6 @@ function ClientDashboard() {
               マイ予約
             </h2>
           </div>
-          
           {reservationsLoading ? (
             <div className="text-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
@@ -260,78 +269,118 @@ function ClientDashboard() {
             </div>
           ) : (
             <div className="space-y-3">
-              {reservations.map((reservation, index) => {
-                // Format date with day of week
-                const formatDateWithDay = (dateString: string) => {
-                  const date = new Date(dateString)
-                  const year = date.getFullYear()
-                  const month = String(date.getMonth() + 1).padStart(2, '0')
-                  const day = String(date.getDate()).padStart(2, '0')
-                  const dayNames = ['日', '月', '火', '水', '木', '金', '土']
-                  const dayOfWeek = dayNames[date.getDay()]
-                  return `${year}/${month}/${day}(${dayOfWeek})`
-                }
+              {(() => {
+                // Build monthly counters so that each reservation knows its index within that month
+                const monthlyCounters: Record<string, number> = {}
+                const monthlyIndexById: Record<string, { idx: number; month: number }> = {}
 
-                // Extract time from time string (e.g., "12:00 - 13:00" -> "12:00")
-                const extractStartTime = (timeString: string) => {
-                  return timeString.split(' - ')[0]
-                }
+                reservations.forEach(r => {
+                  const d = new Date(r.date)
+                  const key = `${d.getFullYear()}-${d.getMonth()}`
+                  monthlyCounters[key] = (monthlyCounters[key] || 0) + 1
+                  monthlyIndexById[r.id] = { idx: monthlyCounters[key], month: d.getMonth() + 1 }
+                })
 
-                const isFirstReservation = reservation.sequenceNumber === 1
+                const monthMax = getPlanMaxCount(
+                  userInfo.monthlyUsage?.planName || userInfo.plan,
+                  userInfo.monthlyUsage?.maxCount
+                )
 
-                return (
-                  <div 
-                    key={reservation.id} 
-                    className={`border rounded-lg p-4 transition-all ${
-                      isFirstReservation && !reservation.isPast
-                        ? 'bg-gradient-to-r from-orange-50 to-yellow-50 border-orange-300 shadow-md'
-                        : reservation.isPast 
-                        ? 'bg-gray-50 border-gray-200' 
-                        : 'bg-blue-50 border-blue-200'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
-                          <span className={`font-semibold text-lg ${
-                            isFirstReservation && !reservation.isPast
-                              ? 'text-orange-800'
-                              : reservation.isPast 
-                              ? 'text-gray-700' 
-                              : 'text-blue-900'
-                          }`}>
-                            {reservation.sequenceNumber}回目
-                          </span>
-                          <div className={`font-medium ${
-                            isFirstReservation && !reservation.isPast
-                              ? 'text-orange-700'
-                              : reservation.isPast 
-                              ? 'text-gray-600' 
-                              : 'text-blue-800'
-                          }`}>
-                            <span className="block sm:inline">{formatDateWithDay(reservation.date)}</span>
-                            <span className="block sm:inline sm:ml-2">{extractStartTime(reservation.time)}</span>
+                return reservations.map((reservation) => {
+                  // Format date with day of week
+                  const formatDateWithDay = (dateString: string) => {
+                    const date = new Date(dateString)
+                    const year = date.getFullYear()
+                    const month = String(date.getMonth() + 1).padStart(2, '0')
+                    const day = String(date.getDate()).padStart(2, '0')
+                    const dayNames = ['日', '月', '火', '水', '木', '金', '土']
+                    const dayOfWeek = dayNames[date.getDay()]
+                    return `${year}/${month}/${day}(${dayOfWeek})`
+                  }
+
+                  // Extract time from time string (e.g., "12:00 - 13:00" -> "12:00")
+                  const extractStartTime = (timeString: string) => {
+                    return timeString.split(' - ')[0]
+                  }
+
+                  const isFirstReservation = reservation.sequenceNumber === 1
+                  const monthly = monthlyIndexById[reservation.id]
+
+                  const dateObj = new Date(reservation.date)
+                  const monthNum = dateObj.getMonth() + 1
+                  const yearNum = dateObj.getFullYear()
+
+                  return (
+                    <div key={reservation.id} className="flex items-stretch gap-3">
+                      {/* Left month mini-card */}
+                      <div className="w-16 sm:w-20 flex-shrink-0">
+                        <div className="h-full rounded-lg border border-purple-200 bg-purple-50 text-purple-800 flex flex-col items-center justify-center py-2">
+                          <div className="text-[10px] sm:text-xs opacity-70">{yearNum}</div>
+                          <div className="text-base sm:text-lg font-bold leading-tight">{monthNum}月</div>
+                        </div>
+                      </div>
+
+                      {/* Main reservation card */}
+                      <div 
+                        className={`flex-1 border rounded-lg p-4 transition-all ${
+                          isFirstReservation && !reservation.isPast
+                            ? 'bg-gradient-to-r from-orange-50 to-yellow-50 border-orange-300 shadow-md'
+                            : reservation.isPast 
+                            ? 'bg-gray-50 border-gray-200' 
+                            : 'bg-blue-50 border-blue-200'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                              <div className="flex items-center gap-2">
+                                <span className={`font-semibold text-lg ${
+                                  isFirstReservation && !reservation.isPast
+                                    ? 'text-orange-800'
+                                    : reservation.isPast 
+                                    ? 'text-gray-700' 
+                                    : 'text-blue-900'
+                                }`}>
+                                  {reservation.sequenceNumber}回目
+                                </span>
+                                {monthly && (
+                                  <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 border border-indigo-200 whitespace-nowrap">
+                                    {`${monthly.month}月の ${monthly.idx}/${monthMax}回`}
+                                  </span>
+                                )}
+                              </div>
+                              <div className={`font-medium ${
+                                isFirstReservation && !reservation.isPast
+                                  ? 'text-orange-700'
+                                  : reservation.isPast 
+                                  ? 'text-gray-600' 
+                                  : 'text-blue-800'
+                              }`}>
+                                <span className="block sm:inline">{formatDateWithDay(reservation.date)}</span>
+                                <span className="block sm:inline sm:ml-2">{extractStartTime(reservation.time)}</span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ml-2 ${
+                            reservation.isPast 
+                              ? 'bg-gray-200 text-gray-700' 
+                              : isFirstReservation
+                              ? 'bg-orange-200 text-orange-800'
+                              : 'bg-blue-200 text-blue-800'
+                            }`}>
+                            {reservation.isPast ? '完了' : '予約済'}
                           </div>
                         </div>
                       </div>
-                      <div className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ml-2 ${
-                        reservation.isPast 
-                          ? 'bg-gray-200 text-gray-700' 
-                          : isFirstReservation
-                          ? 'bg-orange-200 text-orange-800'
-                          : 'bg-blue-200 text-blue-800'
-                      }`}>
-                        {reservation.isPast ? '完了' : '予約済'}
-                      </div>
                     </div>
-                  </div>
-                )
-              })}
+                  )
+                })
+              })()}
             </div>
           )}
-        </div>
       </div>
-
     </div>
+  </div>
+
   )
 }
