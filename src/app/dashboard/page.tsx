@@ -215,7 +215,7 @@ function ClientDashboard() {
                   <p className="text-lg font-semibold text-blue-900">
                     {loading ? '読み込み中...' : (
                       userInfo.monthlyUsage 
-                        ? `${userInfo.monthlyUsage.planName} (${userInfo.monthlyUsage.currentCount}/${userInfo.monthlyUsage.maxCount})`
+                        ? `${userInfo.monthlyUsage.planName}`
                         : (userInfo.plan || '月4回')
                     )}
                   </p>
@@ -268,113 +268,124 @@ function ClientDashboard() {
               <p className="text-gray-600">予約がありません</p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-6">
               {(() => {
-                // Build monthly counters so that each reservation knows its index within that month
+                // helpers
+                const formatJPDate = (dateString: string) => {
+                  const date = new Date(dateString)
+                  const month = date.getMonth() + 1
+                  const day = date.getDate()
+                  const dayNames = ['日', '月', '火', '水', '木', '金', '土']
+                  const dayOfWeek = dayNames[date.getDay()]
+                  return `${month}月${day}日（${dayOfWeek}）`
+                }
+
+                // split reservations
+                const upcoming = [...reservations]
+                  .filter(r => !r.isPast)
+                  .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                const completed = [...reservations]
+                  .filter(r => r.isPast)
+                  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+
+                // Build monthly counters to show idx/max per month
                 const monthlyCounters: Record<string, number> = {}
                 const monthlyIndexById: Record<string, { idx: number; month: number }> = {}
-
-                reservations.forEach(r => {
+                const sortedAll = [...reservations].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                sortedAll.forEach(r => {
                   const d = new Date(r.date)
                   const key = `${d.getFullYear()}-${d.getMonth()}`
                   monthlyCounters[key] = (monthlyCounters[key] || 0) + 1
                   monthlyIndexById[r.id] = { idx: monthlyCounters[key], month: d.getMonth() + 1 }
                 })
 
-                const monthMax = getPlanMaxCount(
-                  userInfo.monthlyUsage?.planName || userInfo.plan,
-                  userInfo.monthlyUsage?.maxCount
-                )
+                const monthMax = (() => {
+                  return (userInfo.monthlyUsage?.maxCount) ?? (() => {
+                    const plan = userInfo.monthlyUsage?.planName || userInfo.plan || ''
+                    if (plan.includes('8回')) return 8
+                    if (plan.includes('6回')) return 6
+                    if (plan.includes('2回')) return 2
+                    return 4
+                  })()
+                })()
 
-                return reservations.map((reservation) => {
-                  // Format date with day of week
-                  const formatDateWithDay = (dateString: string) => {
-                    const date = new Date(dateString)
-                    const year = date.getFullYear()
-                    const month = String(date.getMonth() + 1).padStart(2, '0')
-                    const day = String(date.getDate()).padStart(2, '0')
-                    const dayNames = ['日', '月', '火', '水', '木', '金', '土']
-                    const dayOfWeek = dayNames[date.getDay()]
-                    return `${year}/${month}/${day}(${dayOfWeek})`
-                  }
+                // Render sections with card layout
+                const Section = ({ title, items }: { title: string; items: any[] }) => {
+                  // group items by year-month
+                  const groups: Record<string, { year: number; month: number; list: any[] }> = {}
+                  const sorted = [...items].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                  sorted.forEach(it => {
+                    const [y, m] = String(it.date).split('/')
+                    const key = `${y}-${m}`
+                    if (!groups[key]) groups[key] = { year: Number(y), month: Number(m), list: [] }
+                    groups[key].list.push(it)
+                  })
 
-                  // Extract time from time string (e.g., "12:00 - 13:00" -> "12:00")
-                  const extractStartTime = (timeString: string) => {
-                    return timeString.split(' - ')[0]
-                  }
-
-                  const isFirstReservation = reservation.sequenceNumber === 1
-                  const monthly = monthlyIndexById[reservation.id]
-
-                  const dateObj = new Date(reservation.date)
-                  const monthNum = dateObj.getMonth() + 1
-                  const yearNum = dateObj.getFullYear()
+                  const dayNames = ['日','月','火','水','木','金','土']
 
                   return (
-                    <div key={reservation.id} className="flex items-stretch gap-3">
-                      {/* Left month mini-card */}
-                      <div className="w-16 sm:w-20 flex-shrink-0">
-                        <div className="h-full rounded-lg border border-purple-200 bg-purple-50 text-purple-800 flex flex-col items-center justify-center py-2">
-                          <div className="text-[10px] sm:text-xs opacity-70">{yearNum}</div>
-                          <div className="text-base sm:text-lg font-bold leading-tight">{monthNum}月</div>
-                        </div>
-                      </div>
+                    <div>
+                      <h3 className="text-sm font-semibold text-gray-900 mb-2">{title}</h3>
+                      {items.length === 0 ? (
+                        <div className="text-gray-500 text-sm">該当の予約はありません</div>
+                      ) : (
+                        <div className="space-y-5">
+                          {Object.values(groups).map(group => (
+                            <div key={`${group.year}-${group.month}`} className="space-y-2">
+                              {/* monthly cards */}
+                              <div className="space-y-3">
+                                {group.list.map(item => {
+                                  const [yearStr, monthStr, dayStr] = String(item.date).split('/')
+                                  const year = Number(yearStr)
+                                  const month = Number(monthStr)
+                                  const day = Number(dayStr)
+                                  const dateObj = new Date(year, month - 1, day)
+                                  const dateLabel = `${month}月${day}日（${dayNames[dateObj.getDay()]}）`
+                                  const idxInfo = monthlyIndexById[item.id]
 
-                      {/* Main reservation card */}
-                      <div 
-                        className={`flex-1 border rounded-lg p-4 transition-all ${
-                          isFirstReservation && !reservation.isPast
-                            ? 'bg-gradient-to-r from-orange-50 to-yellow-50 border-orange-300 shadow-md'
-                            : reservation.isPast 
-                            ? 'bg-gray-50 border-gray-200' 
-                            : 'bg-blue-50 border-blue-200'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
-                              <div className="flex items-center gap-2">
-                                <span className={`font-semibold text-lg ${
-                                  isFirstReservation && !reservation.isPast
-                                    ? 'text-orange-800'
-                                    : reservation.isPast 
-                                    ? 'text-gray-700' 
-                                    : 'text-blue-900'
-                                }`}>
-                                  {reservation.sequenceNumber}回目
-                                </span>
-                                {monthly && (
-                                  <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 border border-indigo-200 whitespace-nowrap">
-                                    {`${monthly.month}月の ${monthly.idx}/${monthMax}回`}
-                                  </span>
-                                )}
-                              </div>
-                              <div className={`font-medium ${
-                                isFirstReservation && !reservation.isPast
-                                  ? 'text-orange-700'
-                                  : reservation.isPast 
-                                  ? 'text-gray-600' 
-                                  : 'text-blue-800'
-                              }`}>
-                                <span className="block sm:inline">{formatDateWithDay(reservation.date)}</span>
-                                <span className="block sm:inline sm:ml-2">{extractStartTime(reservation.time)}</span>
+                                  return (
+                                    <div key={item.id} className="flex items-stretch gap-3">
+                                      {/* Left month mini-card */}
+                                      <div className="w-16 sm:w-20 flex-shrink-0">
+                                        <div className="h-full rounded-lg border border-purple-200 bg-purple-50 text-purple-800 flex flex-col items-center justify-center py-2">
+                                          <div className="text-[10px] sm:text-xs opacity-70">{year}</div>
+                                          <div className="text-base sm:text-lg font-bold leading-tight">{month}月</div>
+                                        </div>
+                                      </div>
+
+                                      {/* Right detail card */}
+                                      <div className={`flex-1 border rounded-lg p-4 ${title === '予約済み' ? 'bg-blue-50 border-blue-200' : 'bg-white border-gray-200'}`}>
+                                        <div className="flex items-center justify-between">
+                                          <div className="flex-1 min-w-0">
+                                            <div className="font-semibold text-gray-900 text-lg">{`${idxInfo?.idx ?? '-'}回目（${idxInfo?.idx ?? '-'} / ${monthMax}）`}</div>
+                                            <div className="mt-1 text-gray-700">
+                                              <div className="font-medium">{dateLabel}</div>
+                                              <div className="font-medium">{item.time}</div>
+                                            </div>
+                                          </div>
+                                          <div className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ml-2 ${title === '予約済み' ? 'bg-blue-200 text-blue-800' : 'bg-gray-200 text-gray-700'}`}>
+                                            {title === '予約済み' ? '予約済' : '完了'}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  )
+                                })}
                               </div>
                             </div>
-                          </div>
-                          <div className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ml-2 ${
-                            reservation.isPast 
-                              ? 'bg-gray-200 text-gray-700' 
-                              : isFirstReservation
-                              ? 'bg-orange-200 text-orange-800'
-                              : 'bg-blue-200 text-blue-800'
-                            }`}>
-                            {reservation.isPast ? '完了' : '予約済'}
-                          </div>
+                          ))}
                         </div>
-                      </div>
+                      )}
                     </div>
                   )
-                })
+                }
+
+                return (
+                  <>
+                    <Section title="予約済み" items={upcoming} />
+                    <Section title="完了" items={completed} />
+                  </>
+                )
               })()}
             </div>
           )}
