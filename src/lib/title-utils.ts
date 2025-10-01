@@ -39,16 +39,38 @@ export async function updateMonthlyTitles(clientId: string, year: number, month:
       return true // No reservations to update
     }
 
-    // Get client name from the first reservation's title (extract name part)
-    const firstTitle = reservations[0].title
-    const clientName = firstTitle.replace(/\d+$/, '') // Remove trailing numbers
+    // Get client information directly from users table
+    const { data: clientData, error: clientError } = await supabase
+      .from('users')
+      .select('full_name, plan')
+      .eq('id', clientId)
+      .single()
+
+    let clientName = 'Unknown'
+    if (clientData && !clientError) {
+      clientName = clientData.full_name
+    } else {
+      console.error('Error fetching client data:', clientError)
+    }
+
+    // Get plan max count
+    const getPlanMaxCount = (plan: string | undefined) => {
+      if (!plan) return 4
+      if (plan === 'ダイエットコース') return 8
+      if (plan.includes('6回')) return 6
+      if (plan.includes('8回')) return 8
+      if (plan.includes('2回')) return 2
+      return 4
+    }
+
+    const maxCount = getPlanMaxCount(clientData?.plan)
 
     // Initialize Google Calendar service
     const calendarService = createGoogleCalendarService()
 
     // Update each reservation with correct sequential number
     const updates = reservations.map(async (reservation, index) => {
-      const newTitle = `${clientName}${index + 1}`
+      const newTitle = `${clientName}${index + 1}/${maxCount}`
       
       // Update database
       const dbUpdate = supabase
@@ -100,6 +122,29 @@ export async function generateReservationTitle(
   const startMonth = startDateTime.getMonth()
   const startYear = startDateTime.getFullYear()
   
+  // Get client plan information
+  const { data: clientData, error: clientError } = await supabase
+    .from('users')
+    .select('plan')
+    .eq('id', clientId)
+    .single()
+
+  if (clientError) {
+    console.error('Error fetching client plan:', clientError)
+  }
+
+  // Get plan max count
+  const getPlanMaxCount = (plan: string | undefined) => {
+    if (!plan) return 4
+    if (plan === 'ダイエットコース') return 8
+    if (plan.includes('6回')) return 6
+    if (plan.includes('8回')) return 8
+    if (plan.includes('2回')) return 2
+    return 4
+  }
+
+  const maxCount = getPlanMaxCount(clientData?.plan)
+  
   // Get existing reservations for this client in the same month
   const { data: existingReservations, error } = await supabase
     .from('reservations')
@@ -111,7 +156,7 @@ export async function generateReservationTitle(
 
   if (error) {
     console.error('Error fetching existing reservations:', error)
-    return `${clientName}1` // Fallback
+    return `${clientName}1/${maxCount}` // Fallback
   }
 
   // Calculate the count for this reservation (chronological order)
@@ -120,5 +165,5 @@ export async function generateReservationTitle(
   ) || []
   
   const monthlyCount = reservationsBeforeThis.length + 1
-  return `${clientName}${monthlyCount}`
+  return `${clientName}${monthlyCount}/${maxCount}`
 }
