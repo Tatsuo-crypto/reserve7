@@ -72,6 +72,49 @@ export default function MembersPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [memberToDelete, setMemberToDelete] = useState<{id: string, name: string} | null>(null)
 
+  // Sorting state
+  const [sortKey, setSortKey] = useState<'plan' | 'status' | 'created' | null>(null)
+  const [sortAsc, setSortAsc] = useState(true)
+
+  const getPlanRank = (plan?: string) => {
+    if (!plan) return 999
+    if (plan.includes('2回')) return 2
+    if (plan.includes('4回')) return 4
+    if (plan.includes('6回')) return 6
+    if (plan.includes('8回')) return 8
+    if (plan.includes('ダイエット')) return 100
+    return 999
+  }
+
+  const getStatusRank = (status?: string) => {
+    switch (status) {
+      case 'active': return 1 // 在籍
+      case 'suspended': return 2 // 休会
+      case 'withdrawn': return 3 // 退会
+      default: return 9
+    }
+  }
+
+  const sortedMembers = (() => {
+    const arr = [...members]
+    if (!sortKey) return arr
+    return arr.sort((a, b) => {
+      let av = 0, bv = 0
+      if (sortKey === 'plan') {
+        av = getPlanRank(a.plan)
+        bv = getPlanRank(b.plan)
+      } else if (sortKey === 'status') {
+        av = getStatusRank(a.status)
+        bv = getStatusRank(b.status)
+      } else if (sortKey === 'created') {
+        av = new Date(a.created_at).getTime()
+        bv = new Date(b.created_at).getTime()
+      }
+      const comp = av === bv ? (a.full_name || '').localeCompare(b.full_name || '') : av - bv
+      return sortAsc ? comp : -comp
+    })
+  })()
+
   const handleStatusChange = async (memberId: string, newStatus?: string) => {
     const statusToUpdate = newStatus || selectedStatuses[memberId] || 'active'
     
@@ -351,17 +394,22 @@ export default function MembersPage() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[200px]">
                       メールアドレス
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[140px]">
-                      プラン
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[140px] cursor-pointer select-none"
+                        onClick={() => { setSortKey(prev => prev === 'plan' ? 'plan' : 'plan'); setSortAsc(prev => sortKey === 'plan' ? !prev : true) }}>
+                      プラン {sortKey === 'plan' ? (sortAsc ? '▲' : '▼') : ''}
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px]">
-                      ステータス
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px] cursor-pointer select-none"
+                        onClick={() => { setSortKey(prev => prev === 'status' ? 'status' : 'status'); setSortAsc(prev => sortKey === 'status' ? !prev : true) }}>
+                      ステータス {sortKey === 'status' ? (sortAsc ? '▲' : '▼') : ''}
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[150px]">
                       メモ
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px]">
-                      登録日
+                    <th
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px] cursor-pointer select-none"
+                      onClick={() => { setSortKey('created'); setSortAsc(prev => sortKey === 'created' ? !prev : true) }}
+                    >
+                      登録日 {sortKey === 'created' ? (sortAsc ? '▲' : '▼') : ''}
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[100px]">
                       操作
@@ -369,10 +417,15 @@ export default function MembersPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {members && members.map((member) => (
+                  {sortedMembers && sortedMembers.map((member) => (
                     <tr key={member.id}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 min-w-[120px]">
-                        {member.full_name}
+                        <Link
+                          href={`/admin/members/${member.id}`}
+                          className="text-indigo-600 hover:text-indigo-800 hover:underline"
+                        >
+                          {member.full_name}
+                        </Link>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 min-w-[200px]">
                         {member.email}

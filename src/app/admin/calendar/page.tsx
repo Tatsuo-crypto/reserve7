@@ -38,55 +38,35 @@ export default function AdminCalendarPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-      {/* Header */}
-      <div className="bg-white shadow-sm border border-gray-200 rounded-lg mb-6">
-        <div className="px-6 py-5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Link
-                href="/dashboard"
-                className="text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </Link>
-              <div>
-                <h1 className="text-2xl font-semibold text-gray-900">
-                  カレンダー表示
-                </h1>
-                <p className="mt-1 text-sm text-gray-600">
-                  予約と予約不可時間をカレンダー形式で確認
-                </p>
+    <div className="min-h-screen bg-gray-50">
+      <div className="w-full">
+        {/* Header */}
+        <div className="mb-0">
+          <div className="px-4 sm:px-6 py-4 sm:py-5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <Link
+                  href="/dashboard"
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <svg className="w-7 h-7 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </Link>
               </div>
-            </div>
-            <div className="flex items-center space-x-3">
-              <Link
-                href="/admin/reservations/new"
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-              >
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-                新規予約作成
-              </Link>
-              <Link
-                href="/admin/reservations"
-                className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-              >
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                </svg>
-                予約一覧
-              </Link>
+              <div className="flex-1 text-center">
+                <h1 className="text-3xl sm:text-2xl font-bold text-gray-900">カレンダー表示</h1>
+                <p className="mt-1 text-base sm:text-sm text-gray-600">予約のステータス管理</p>
+              </div>
+              <div className="w-7 sm:w-6" />
+              {/* Header actions removed as requested */}
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Calendar Component */}
-      <CalendarView />
+        {/* Calendar Component */}
+        <CalendarView />
+      </div>
     </div>
   )
 }

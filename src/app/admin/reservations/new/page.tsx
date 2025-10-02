@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect } from 'react'
 import { getStoreDisplayName } from '@/lib/auth-utils'
 
@@ -24,6 +24,7 @@ function getDefaultDateTime() {
 export default function NewReservationPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
@@ -82,6 +83,17 @@ export default function NewReservationPage() {
       }))
     }
   }, [session])
+
+  // Prefill startTime from query param if provided (e.g., from Timeline click)
+  useEffect(() => {
+    const qsStartTime = searchParams?.get('startTime')
+    if (qsStartTime) {
+      setFormData(prev => ({
+        ...prev,
+        startTime: qsStartTime,
+      }))
+    }
+  }, [searchParams])
 
   // Check admin access
   useEffect(() => {
