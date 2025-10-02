@@ -39,7 +39,7 @@ export default function Navigation() {
                   ホーム
                 </Link>
                 <Link
-                  href="/reservations"
+                  href={session.user.role === 'ADMIN' ? '/admin/calendar' : '/reservations'}
                   className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors"
                 >
                   {session.user.role === 'ADMIN' ? '予約管理' : 'マイ予約'}
@@ -166,7 +166,7 @@ export default function Navigation() {
                   ホーム
                 </Link>
                 <Link
-                  href="/reservations"
+                  href={session.user.role === 'ADMIN' ? '/admin/calendar' : '/reservations'}
                   className="text-gray-700 hover:text-gray-900 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
