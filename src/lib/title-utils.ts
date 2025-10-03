@@ -71,33 +71,60 @@ export async function updateMonthlyTitles(clientId: string, year: number, month:
     // Update each reservation with correct sequential number
     const updates = reservations.map(async (reservation, index) => {
       const newTitle = `${clientName}${index + 1}/${maxCount}`
-      
-      // Update database
-      const dbUpdate = supabase
-        .from('reservations')
-        .update({ title: newTitle })
-        .eq('id', reservation.id)
 
-      // Update Google Calendar if external event exists
-      let calendarUpdate = Promise.resolve()
-      if (reservation.external_event_id && calendarService && reservation.users && reservation.users.length > 0) {
+      // Normalize user shape (object or single-element array)
+      const userRel: any = Array.isArray((reservation as any).users)
+        ? (reservation as any).users[0]
+        : (reservation as any).users
+
+      // If Google Calendar is configured and we have client info, delete and recreate the event
+      if (calendarService && userRel) {
         try {
-          calendarUpdate = calendarService.updateEvent(reservation.external_event_id, {
+          // Delete existing event if any
+          if (reservation.external_event_id) {
+            try {
+              await calendarService.deleteEvent(reservation.external_event_id, reservation.calendar_id)
+            } catch (delErr) {
+              console.error(`Failed to delete calendar event ${reservation.external_event_id}:`, delErr)
+              // continue to recreate regardless
+            }
+          }
+
+          // Create new event with updated title
+          const newEventId = await calendarService.createEvent({
             title: newTitle,
             startTime: reservation.start_time,
             endTime: reservation.end_time,
-            clientName: reservation.users[0].full_name,
-            clientEmail: reservation.users[0].email,
+            clientName: userRel.full_name,
+            clientEmail: userRel.email,
             notes: reservation.notes || undefined,
             calendarId: reservation.calendar_id,
           })
-        } catch (calendarError) {
-          console.error(`Failed to update calendar event ${reservation.external_event_id}:`, calendarError)
-          // Continue with database update even if calendar fails
-        }
-      }
 
-      return Promise.all([dbUpdate, calendarUpdate])
+          // Update DB: title and external_event_id
+          await supabase
+            .from('reservations')
+            .update({ title: newTitle, external_event_id: newEventId })
+            .eq('id', reservation.id)
+
+          return true
+        } catch (calendarError) {
+          console.error(`Failed to recreate calendar event for reservation ${reservation.id}:`, calendarError)
+          // Fallback to DB-only title update
+          await supabase
+            .from('reservations')
+            .update({ title: newTitle })
+            .eq('id', reservation.id)
+          return false
+        }
+      } else {
+        // Calendar not configured: DB-only title update
+        await supabase
+          .from('reservations')
+          .update({ title: newTitle })
+          .eq('id', reservation.id)
+        return false
+      }
     })
 
     // Execute all updates

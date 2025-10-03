@@ -309,6 +309,16 @@ export default function MembersPage() {
     }
   }
 
+  // Small accent dot color next to the member name
+  const getStatusDotColor = (status?: string) => {
+    switch (status) {
+      case 'active': return 'bg-green-500'
+      case 'suspended': return 'bg-yellow-500'
+      case 'withdrawn': return 'bg-red-500'
+      default: return 'bg-green-500'
+    }
+  }
+
   // 認証状態をチェック中の場合
   if (status === 'loading') {
     return (
@@ -424,12 +434,15 @@ export default function MembersPage() {
                   {sortedMembers && (showOnlyActive ? sortedMembers.filter(m => (m.status || 'active') === 'active') : sortedMembers).map((member) => (
                     <tr key={member.id}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 min-w-[120px]">
-                        <Link
-                          href={`/admin/members/${member.id}`}
-                          className="text-indigo-600 hover:text-indigo-800 hover:underline"
-                        >
-                          {member.full_name}
-                        </Link>
+                        <div className="flex items-center">
+                          <Link
+                            href={`/admin/members/${member.id}`}
+                            className="text-indigo-600 hover:text-indigo-800 hover:underline"
+                          >
+                            {member.full_name}
+                          </Link>
+                          <span className={`ml-2 inline-block w-2 h-2 rounded-full ${getStatusDotColor(member.status)}`} aria-hidden="true"></span>
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 min-w-[200px]">
                         {member.email}

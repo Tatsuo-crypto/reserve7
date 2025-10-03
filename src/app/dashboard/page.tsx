@@ -73,25 +73,7 @@ function AdminDashboard() {
     <div className="space-y-6">
       <div className="bg-white shadow-sm border border-gray-200 rounded-xl p-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          {/* 会員管理 */}
-          <Link
-            href="/admin/members"
-            className="group bg-gradient-to-br from-white to-purple-50 hover:from-purple-50 hover:to-purple-100 border border-purple-200 p-8 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col min-h-[200px] transform hover:-translate-y-1"
-          >
-            <div className="flex items-center mb-6">
-              <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-purple-200 rounded-xl flex items-center justify-center group-hover:from-purple-200 group-hover:to-purple-300 transition-all duration-300 shadow-sm">
-                <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 515.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-              </div>
-            </div>
-            <div className="flex-1">
-              <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-purple-800 transition-colors duration-200">会員管理</h3>
-              <p className="text-base text-gray-600 leading-relaxed">会員情報の管理</p>
-            </div>
-          </Link>
-
-          {/* 予約管理 */}
+          {/* 予約管理（上） */}
           <Link
             href="/admin/calendar"
             className="group bg-gradient-to-br from-white to-blue-50 hover:from-blue-50 hover:to-blue-100 border border-blue-200 p-8 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col min-h-[200px] transform hover:-translate-y-1"
@@ -106,6 +88,24 @@ function AdminDashboard() {
             <div className="flex-1">
               <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-blue-800 transition-colors duration-200">予約管理</h3>
               <p className="text-base text-gray-600 leading-relaxed">すべての予約を確認・管理</p>
+            </div>
+          </Link>
+
+          {/* 会員管理（下） */}
+          <Link
+            href="/admin/members"
+            className="group bg-gradient-to-br from-white to-purple-50 hover:from-purple-50 hover:to-purple-100 border border-purple-200 p-8 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col min-h-[200px] transform hover:-translate-y-1"
+          >
+            <div className="flex items-center mb-6">
+              <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-purple-200 rounded-xl flex items-center justify-center group-hover:from-purple-200 group-hover:to-purple-300 transition-all duration-300 shadow-sm">
+                <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              </div>
+            </div>
+            <div className="flex-1">
+              <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-purple-800 transition-colors duration-200">会員管理</h3>
+              <p className="text-base text-gray-600 leading-relaxed">会員情報の管理</p>
             </div>
           </Link>
         </div>

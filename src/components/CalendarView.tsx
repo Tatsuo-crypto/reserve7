@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import TimelineView from './TimelineView'
 
 interface Reservation {
@@ -9,6 +10,7 @@ interface Reservation {
   startTime: string
   endTime: string
   notes?: string
+  memo?: string
   client: {
     id: string
     fullName: string
@@ -24,6 +26,7 @@ interface CalendarEvent {
   time: string
   type: 'reservation' | 'blocked'
   clientName?: string
+  notes?: string
 }
 
 export default function CalendarView() {
@@ -33,6 +36,8 @@ export default function CalendarView() {
   const [debugInfo, setDebugInfo] = useState<string>('')
   const [viewMode, setViewMode] = useState<'month' | 'timeline'>('month')
   const [selectedDate, setSelectedDate] = useState<string>('')
+
+  // Note: タイトルの採番はサーバ側で行うため、フロントでは変更しない
 
   // Get calendar data
   useEffect(() => {
@@ -56,7 +61,7 @@ export default function CalendarView() {
           if (reservations.length > 0) {
             console.log('First reservation:', reservations[0])
             
-            // Transform reservations to calendar events
+            // Transform reservations to calendar events (タイトルはサーバの値をそのまま使用)
             const calendarEvents: CalendarEvent[] = reservations.map(reservation => {
               console.log('Processing reservation:', reservation)
               const startDate = new Date(reservation.startTime)
@@ -90,7 +95,8 @@ export default function CalendarView() {
                 date: dateInJST,
                 time: `${startTime} - ${endTime}`,
                 type: reservation.client.id === 'blocked' ? 'blocked' : 'reservation',
-                clientName: reservation.client.id === 'blocked' ? '予約不可' : reservation.client.fullName
+                clientName: reservation.client.id === 'blocked' ? '予約不可' : reservation.client.fullName,
+                notes: reservation.memo || reservation.notes || ''
               }
               console.log('Created event:', event)
               return event
@@ -271,7 +277,8 @@ export default function CalendarView() {
                     date: dateInJST,
                     time: `${startTime} - ${endTime}`,
                     type: reservation.client.id === 'blocked' ? 'blocked' : 'reservation',
-                    clientName: reservation.client.id === 'blocked' ? '予約不可' : reservation.client.fullName
+                    clientName: reservation.client.id === 'blocked' ? '予約不可' : reservation.client.fullName,
+                    notes: reservation.memo || reservation.notes || ''
                   }
                 })
                 
@@ -290,7 +297,7 @@ export default function CalendarView() {
   return (
     <div className="rounded-lg w-full">
       {/* White container: Month title -> Calendar grid -> Legend */}
-      <div className="mx-2 sm:mx-4 bg-white rounded-lg p-4">
+      <div className="mx-2 sm:mx-4 bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
         {/* Month Navigation */}
         <div className="">
           <div className="flex items-center justify-center space-x-6">
@@ -356,6 +363,15 @@ export default function CalendarView() {
             </div>
           </div>
         </div>
+      </div>
+      {/* Button to navigate to reservation list */}
+      <div className="mt-4 flex justify-center">
+        <Link
+          href="/admin/reservations"
+          className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md shadow-sm hover:bg-indigo-700 transition-colors"
+        >
+          予約一覧を見る
+        </Link>
       </div>
     </div>
   )

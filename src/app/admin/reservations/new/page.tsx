@@ -257,10 +257,10 @@ export default function NewReservationPage() {
         blockedEndTime: '12:00',
       })
 
-      // Redirect to reservations list after 2 seconds
+      // Redirect to calendar after 1.5 seconds
       setTimeout(() => {
-        router.push('/reservations')
-      }, 2000)
+        router.push('/admin/calendar')
+      }, 1500)
 
     } catch (error) {
       console.error('Create reservation error:', error)
@@ -324,7 +324,7 @@ export default function NewReservationPage() {
               </svg>
               <p className="text-green-800">{success}</p>
             </div>
-            <p className="text-green-700 text-sm mt-1">予約一覧ページに移動します...</p>
+            <p className="text-green-700 text-sm mt-1">カレンダーに移動します...</p>
           </div>
         )}
 

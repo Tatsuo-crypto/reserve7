@@ -11,6 +11,7 @@ interface CalendarEvent {
   time: string
   type: 'reservation' | 'blocked'
   clientName?: string
+  notes?: string
 }
 
 interface TimelineViewProps {
@@ -25,7 +26,7 @@ export default function TimelineView({ selectedDate, events, onBack, onEventsUpd
   const [selectedTimeSlot, setSelectedTimeSlot] = useState('')
   const router = useRouter()
   const [showEditModal, setShowEditModal] = useState(false)
-  const [editingReservation, setEditingReservation] = useState<{ id: string } | null>(null)
+  const [editingReservation, setEditingReservation] = useState<{ id: string; type?: 'reservation' | 'blocked' } | null>(null)
   const [editFormData, setEditFormData] = useState({
     title: '',
     startTime: '',
@@ -34,7 +35,7 @@ export default function TimelineView({ selectedDate, events, onBack, onEventsUpd
   })
   // Generate time slots (0:00 - 23:00, hourly)
   const generateTimeSlots = () => {
-    const slots = []
+    const slots: string[] = []
     for (let hour = 0; hour <= 23; hour++) {
       slots.push(`${String(hour).padStart(2, '0')}:00`)
     }
@@ -45,7 +46,6 @@ export default function TimelineView({ selectedDate, events, onBack, onEventsUpd
   
   // Filter events for selected date
   const dayEvents = events.filter(event => event.date === selectedDate)
-  
   // Parse event time and calculate position
   const parseEventTime = (timeStr: string) => {
     const [startTime, endTime] = timeStr.split(' - ')
@@ -111,12 +111,12 @@ export default function TimelineView({ selectedDate, events, onBack, onEventsUpd
     const [startStr, endStr] = ev.time.split(' - ')
     const startIso = `${selectedDate}T${startStr}`
     const endIso = `${selectedDate}T${endStr}`
-    setEditingReservation({ id: ev.id })
+    setEditingReservation({ id: ev.id, type: ev.type })
     setEditFormData({
       title: ev.title || '',
       startTime: startIso,
       endTime: endIso,
-      notes: ''
+      notes: ev.notes || ''
     })
     setShowEditModal(true)
   }
@@ -147,6 +147,28 @@ export default function TimelineView({ selectedDate, events, onBack, onEventsUpd
     } catch (err) {
       console.error(err)
       alert('予約の更新に失敗しました')
+    }
+  }
+
+  const handleDeleteReservation = async () => {
+    if (!editingReservation) return
+    if (!confirm('この予約を削除しますか？')) return
+    try {
+      const res = await fetch(`/api/reservations/${editingReservation.id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        alert(data.error || '予約の削除に失敗しました')
+        return
+      }
+      setShowEditModal(false)
+      setEditingReservation(null)
+      onEventsUpdate()
+    } catch (err) {
+      console.error(err)
+      alert('予約の削除に失敗しました')
     }
   }
 
@@ -257,7 +279,9 @@ export default function TimelineView({ selectedDate, events, onBack, onEventsUpd
                     onClick={(e) => openEditFromEvent(e, event)}
                   >
                     <div className="truncate font-semibold">{event.title}</div>
-                    <div className="text-xs opacity-75">{event.time}</div>
+                    {event.notes && (
+                      <div className="text-xs opacity-75 truncate">{event.notes}</div>
+                    )}
                   </div>
                 )
               })}
@@ -348,26 +372,37 @@ export default function TimelineView({ selectedDate, events, onBack, onEventsUpd
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
-                <div className="flex justify-end space-x-3 pt-4">
-                  <button
-                    type="button"
-                    onClick={() => { setShowEditModal(false); setEditingReservation(null) }}
-                    className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors"
-                  >
-                    キャンセル
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                  >
-                    更新
-                  </button>
+                <div className="flex items-center justify-between pt-4">
+                  <div>
+                    <button
+                      type="button"
+                      onClick={handleDeleteReservation}
+                      className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+                    >
+                      削除
+                    </button>
+                  </div>
+                  <div className="flex space-x-3">
+                    <button
+                      type="button"
+                      onClick={() => { setShowEditModal(false); setEditingReservation(null) }}
+                      className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors"
+                    >
+                      キャンセル
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                    >
+                      更新
+                    </button>
+                  </div>
                 </div>
               </form>
             </div>
           </div>
         </div>
       )}
-</div>
+    </div>
   )
 }
