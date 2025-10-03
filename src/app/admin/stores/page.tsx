@@ -9,8 +9,6 @@ type Store = {
   email?: string | null
   calendar_id: string
   status: 'active' | 'inactive'
-  address?: string | null
-  phone?: string | null
   created_at: string
   updated_at: string
   memberCount?: number
@@ -50,24 +48,22 @@ export default function StoresPage() {
   // modal state
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<Store | null>(null)
-  const [form, setForm] = useState<{ name: string; email?: string; calendarId: string; status: 'active' | 'inactive'; address?: string; phone?: string }>({
+  const [form, setForm] = useState<{ name: string; email?: string; calendarId: string; status: 'active' | 'inactive' }>({
     name: '',
     email: '',
     calendarId: '',
     status: 'active',
-    address: '',
-    phone: ''
   })
 
   const openCreate = () => {
     setEditing(null)
-    setForm({ name: '', email: '', calendarId: '', status: 'active', address: '', phone: '' })
+    setForm({ name: '', email: '', calendarId: '', status: 'active' })
     setModalOpen(true)
   }
 
   const openEdit = (s: Store) => {
     setEditing(s)
-    setForm({ name: s.name, email: s.email || '', calendarId: s.calendar_id, status: s.status, address: s.address || '', phone: s.phone || '' })
+    setForm({ name: s.name, email: s.email || '', calendarId: s.calendar_id, status: s.status })
     setModalOpen(true)
   }
 
@@ -84,8 +80,6 @@ export default function StoresPage() {
           email: form.email || null,
           calendarId: form.calendarId,
           status: form.status,
-          address: form.address || null,
-          phone: form.phone || null,
         })
       })
       if (!res.ok) throw new Error(await res.text())
@@ -176,7 +170,6 @@ export default function StoresPage() {
                     <tr key={s.id} className="hover:bg-gray-50">
                       <td className="px-3 py-2 border-b">
                         <div className="font-medium text-gray-900">{s.name}</div>
-                        <div className="text-gray-500 text-xs">{s.address || ''} {s.phone ? ` / ${s.phone}` : ''}</div>
                       </td>
                       <td className="px-3 py-2 border-b">
                         <div className="text-gray-800 truncate max-w-[220px]" title={s.email || ''}>{s.email || '-'}</div>
