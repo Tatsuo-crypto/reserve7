@@ -127,6 +127,25 @@ function AdminDashboard() {
               <p className="text-base text-gray-600 leading-relaxed">トレーナー情報の管理</p>
             </div>
           </Link>
+
+          {/* 店舗管理（新規） */}
+          <Link
+            href="/admin/stores"
+            className="group bg-gradient-to-br from-white to-indigo-50 hover:from-indigo-50 hover:to-indigo-100 border border-indigo-200 p-8 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col min-h-[200px] transform hover:-translate-y-1"
+          >
+            <div className="flex items-center mb-6">
+              <div className="w-16 h-16 bg-gradient-to-br from-indigo-100 to-indigo-200 rounded-xl flex items-center justify-center group-hover:from-indigo-200 group-hover:to-indigo-300 transition-all duration-300 shadow-sm">
+                <svg className="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10l9-7 9 7v8a2 2 0 01-2 2H5a2 2 0 01-2-2v-8z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 22V12h6v10" />
+                </svg>
+              </div>
+            </div>
+            <div className="flex-1">
+              <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-indigo-800 transition-colors duration-200">店舗管理</h3>
+              <p className="text-base text-gray-600 leading-relaxed">店舗情報の管理</p>
+            </div>
+          </Link>
         </div>
       </div>
     </div>
