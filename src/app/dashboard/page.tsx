@@ -108,6 +108,25 @@ function AdminDashboard() {
               <p className="text-base text-gray-600 leading-relaxed">会員情報の管理</p>
             </div>
           </Link>
+
+          {/* トレーナー管理（新規） */}
+          <Link
+            href="/admin/trainers"
+            className="group bg-gradient-to-br from-white to-emerald-50 hover:from-emerald-50 hover:to-emerald-100 border border-emerald-200 p-8 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col min-h-[200px] transform hover:-translate-y-1"
+          >
+            <div className="flex items-center mb-6">
+              <div className="w-16 h-16 bg-gradient-to-br from-emerald-100 to-emerald-200 rounded-xl flex items-center justify-center group-hover:from-emerald-200 group-hover:to-emerald-300 transition-all duration-300 shadow-sm">
+                <svg className="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l6.16-3.422A12.083 12.083 0 0112 21.5 12.083 12.083 0 015.84 10.578L12 14z" />
+                </svg>
+              </div>
+            </div>
+            <div className="flex-1">
+              <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-emerald-800 transition-colors duration-200">トレーナー管理</h3>
+              <p className="text-base text-gray-600 leading-relaxed">トレーナー情報の管理</p>
+            </div>
+          </Link>
         </div>
       </div>
     </div>
