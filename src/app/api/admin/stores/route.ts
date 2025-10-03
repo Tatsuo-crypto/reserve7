@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
 
     let q = supabase
       .from('stores')
-      .select('id, name, calendar_id, status, address, phone, created_at, updated_at')
+      .select('id, name, email, calendar_id, status, address, phone, created_at, updated_at')
       .order('name', { ascending: true })
 
     if (status && status !== 'all') q = q.eq('status', status)
@@ -25,7 +25,24 @@ export async function GET(request: NextRequest) {
     const { data, error } = await q
     if (error) throw error
 
-    return NextResponse.json({ stores: data ?? [] })
+    const stores = data ?? []
+    const ids = stores.map((s: any) => s.id)
+    let memberCounts: Record<string, number> = {}
+    if (ids.length > 0) {
+      try {
+        const { data: counts, error: rpcErr } = await supabase.rpc('members_count_by_store', { store_ids: ids })
+        if (rpcErr) throw rpcErr
+        memberCounts = (counts || []).reduce((acc: any, row: any) => {
+          acc[row.store_id] = row.member_count
+          return acc
+        }, {})
+      } catch (e) {
+        console.error('members_count_by_store RPC failed:', e)
+      }
+    }
+
+    const result = stores.map((s: any) => ({ ...s, memberCount: memberCounts[s.id] || 0 }))
+    return NextResponse.json({ stores: result })
   } catch (error) {
     return handleApiError(error, 'Admin stores GET')
   }
@@ -38,7 +55,7 @@ export async function POST(request: NextRequest) {
     if (auth instanceof NextResponse) return auth
 
     const body = await request.json()
-    const { name, calendarId, status = 'active', address, phone } = body
+    const { name, email, calendarId, status = 'active', address, phone } = body
 
     if (!name || !calendarId) {
       return NextResponse.json({ error: '店舗名とカレンダーIDは必須です' }, { status: 400 })
@@ -46,8 +63,8 @@ export async function POST(request: NextRequest) {
 
     const { data, error } = await supabase
       .from('stores')
-      .insert({ name, calendar_id: calendarId, status, address, phone })
-      .select('id, name, calendar_id, status, address, phone, created_at, updated_at')
+      .insert({ name, email, calendar_id: calendarId, status, address, phone })
+      .select('id, name, email, calendar_id, status, address, phone, created_at, updated_at')
       .single()
 
     if (error) throw error

@@ -6,12 +6,14 @@ import { useEffect, useMemo, useState } from 'react'
 type Store = {
   id: string
   name: string
+  email?: string | null
   calendar_id: string
   status: 'active' | 'inactive'
   address?: string | null
   phone?: string | null
   created_at: string
   updated_at: string
+  memberCount?: number
 }
 
 export default function StoresPage() {
@@ -48,8 +50,9 @@ export default function StoresPage() {
   // modal state
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<Store | null>(null)
-  const [form, setForm] = useState<{ name: string; calendarId: string; status: 'active' | 'inactive'; address?: string; phone?: string }>({
+  const [form, setForm] = useState<{ name: string; email?: string; calendarId: string; status: 'active' | 'inactive'; address?: string; phone?: string }>({
     name: '',
+    email: '',
     calendarId: '',
     status: 'active',
     address: '',
@@ -58,13 +61,13 @@ export default function StoresPage() {
 
   const openCreate = () => {
     setEditing(null)
-    setForm({ name: '', calendarId: '', status: 'active', address: '', phone: '' })
+    setForm({ name: '', email: '', calendarId: '', status: 'active', address: '', phone: '' })
     setModalOpen(true)
   }
 
   const openEdit = (s: Store) => {
     setEditing(s)
-    setForm({ name: s.name, calendarId: s.calendar_id, status: s.status, address: s.address || '', phone: s.phone || '' })
+    setForm({ name: s.name, email: s.email || '', calendarId: s.calendar_id, status: s.status, address: s.address || '', phone: s.phone || '' })
     setModalOpen(true)
   }
 
@@ -78,6 +81,7 @@ export default function StoresPage() {
         credentials: 'include',
         body: JSON.stringify({
           name: form.name,
+          email: form.email || null,
           calendarId: form.calendarId,
           status: form.status,
           address: form.address || null,
@@ -160,7 +164,9 @@ export default function StoresPage() {
                 <thead>
                   <tr className="bg-gray-50 text-gray-600">
                     <th className="text-left px-3 py-2 border-b">店舗名</th>
+                    <th className="text-left px-3 py-2 border-b">メール</th>
                     <th className="text-left px-3 py-2 border-b">カレンダーID</th>
+                    <th className="text-right px-3 py-2 border-b">会員数</th>
                     <th className="text-left px-3 py-2 border-b">ステータス</th>
                     <th className="text-right px-3 py-2 border-b">操作</th>
                   </tr>
@@ -173,7 +179,13 @@ export default function StoresPage() {
                         <div className="text-gray-500 text-xs">{s.address || ''} {s.phone ? ` / ${s.phone}` : ''}</div>
                       </td>
                       <td className="px-3 py-2 border-b">
+                        <div className="text-gray-800 truncate max-w-[220px]" title={s.email || ''}>{s.email || '-'}</div>
+                      </td>
+                      <td className="px-3 py-2 border-b">
                         <div className="text-gray-800 truncate max-w-[260px]" title={s.calendar_id}>{s.calendar_id}</div>
+                      </td>
+                      <td className="px-3 py-2 border-b text-right">
+                        <div className="text-gray-900">{s.memberCount ?? 0}</div>
                       </td>
                       <td className="px-3 py-2 border-b">
                         <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${s.status === 'active' ? 'bg-indigo-100 text-indigo-800' : 'bg-gray-200 text-gray-700'}`}>{s.status === 'active' ? '有効' : '無効'}</span>
@@ -207,6 +219,10 @@ export default function StoresPage() {
               <div className="md:col-span-2">
                 <label className="block text-xs text-gray-500 mb-1">カレンダーID</label>
                 <input className="w-full border rounded-md px-3 py-2 text-sm" value={form.calendarId} onChange={(e) => setForm(f => ({ ...f, calendarId: e.target.value }))} />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-xs text-gray-500 mb-1">店舗メール</label>
+                <input className="w-full border rounded-md px-3 py-2 text-sm" value={form.email} onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))} />
               </div>
               <div>
                 <label className="block text-xs text-gray-500 mb-1">ステータス</label>

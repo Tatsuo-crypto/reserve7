@@ -9,11 +9,12 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     if (auth instanceof NextResponse) return auth
 
     const body = await request.json()
-    const { name, calendarId, status, address, phone } = body
+    const { name, email, calendarId, status, address, phone } = body
 
     const updates: any = {}
     if (typeof name === 'string') updates.name = name
     if (typeof calendarId === 'string') updates.calendar_id = calendarId
+    if (typeof email === 'string' || email === null) updates.email = email
     if (typeof status === 'string') updates.status = status
     if (typeof address === 'string' || address === null) updates.address = address
     if (typeof phone === 'string' || phone === null) updates.phone = phone
@@ -26,7 +27,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       .from('stores')
       .update(updates)
       .eq('id', params.id)
-      .select('id, name, calendar_id, status, address, phone, created_at, updated_at')
+      .select('id, name, email, calendar_id, status, address, phone, created_at, updated_at')
       .single()
 
     if (error) throw error
