@@ -54,6 +54,13 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Start Next.js (background)
+        run: |
+          nohup npm run start >/dev/null 2>&1 &
+
+      - name: Wait for server
+        run: npx wait-on http://localhost:3000 --timeout 60000
+
       - name: E2E (smoke)
         run: npm run test
 
