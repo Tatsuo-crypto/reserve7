@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+export const dynamic = 'force-dynamic'
 import { supabase } from '@/lib/supabase'
 import { requireAdminAuth, handleApiError } from '@/lib/api-utils'
 import { createGoogleCalendarService } from '@/lib/google-calendar'
@@ -16,7 +17,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     
     // Validate input
-    const { clientId, startTime, duration, notes } = body
+    const { clientId, startTime, duration, notes, trainerId } = body
     const calendarId = user.storeId // Force use of user's store calendar
     
     if (!clientId || !startTime || !duration) {
@@ -34,9 +35,21 @@ export async function POST(request: NextRequest) {
     let clientUser = null
     let generatedTitle = ''
     
+    let trainerName: string | null = null
     if (clientId === 'BLOCKED') {
       // For blocked time, use special values
       generatedTitle = body.title || '予約不可'
+      // If trainerId specified, fetch trainer name to display under the blocked label
+      if (trainerId) {
+        const { data: trainer, error: trainerErr } = await supabase
+          .from('trainers')
+          .select('id, full_name')
+          .eq('id', trainerId)
+          .single()
+        if (!trainerErr && trainer) {
+          trainerName = trainer.full_name
+        }
+      }
     } else {
       // Get client user by ID for regular reservations
       const { data: fetchedUser, error: clientError } = await supabase
@@ -148,12 +161,16 @@ export async function POST(request: NextRequest) {
     }
 
     // Create reservation
+    const mergedNotes = [
+      notes || null,
+      trainerName ? `担当: ${trainerName}` : null,
+    ].filter(Boolean).join(' / ')
     const reservationData = {
       client_id: clientId === 'BLOCKED' ? null : clientUser!.id,
       title: generatedTitle,
       start_time: startDateTime.toISOString(),
       end_time: endDateTime.toISOString(),
-      notes: notes || null,
+      notes: mergedNotes || null,
       calendar_id: calendarId,
       external_event_id: externalEventId,
     }

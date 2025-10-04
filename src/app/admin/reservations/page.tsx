@@ -305,7 +305,7 @@ export default function AdminReservationsPage() {
                 </svg>
               </button>
               <p className="text-gray-600">
-                すべての予約を管理できます
+                予約のステータス管理
               </p>
               <div className="w-10"></div>
             </div>

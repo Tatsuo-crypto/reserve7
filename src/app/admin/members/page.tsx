@@ -72,6 +72,53 @@ export default function MembersPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [memberToDelete, setMemberToDelete] = useState<{id: string, name: string} | null>(null)
 
+  // Sorting state
+  const [sortKey, setSortKey] = useState<'plan' | 'status' | 'created' | null>(null)
+  const [sortAsc, setSortAsc] = useState(true)
+
+  // Show only active filter (UI button below table)
+  const [showOnlyActive, setShowOnlyActive] = useState(true)
+
+
+  const getPlanRank = (plan?: string) => {
+    if (!plan) return 999
+    if (plan.includes('2回')) return 2
+    if (plan.includes('4回')) return 4
+    if (plan.includes('6回')) return 6
+    if (plan.includes('8回')) return 8
+    if (plan.includes('ダイエット')) return 100
+    return 999
+  }
+
+  const getStatusRank = (status?: string) => {
+    switch (status) {
+      case 'active': return 1 // 在籍
+      case 'suspended': return 2 // 休会
+      case 'withdrawn': return 3 // 退会
+      default: return 9
+    }
+  }
+
+  const sortedMembers = (() => {
+    const arr = [...members]
+    if (!sortKey) return arr
+    return arr.sort((a, b) => {
+      let av = 0, bv = 0
+      if (sortKey === 'plan') {
+        av = getPlanRank(a.plan)
+        bv = getPlanRank(b.plan)
+      } else if (sortKey === 'status') {
+        av = getStatusRank(a.status)
+        bv = getStatusRank(b.status)
+      } else if (sortKey === 'created') {
+        av = new Date(a.created_at).getTime()
+        bv = new Date(b.created_at).getTime()
+      }
+      const comp = av === bv ? (a.full_name || '').localeCompare(b.full_name || '') : av - bv
+      return sortAsc ? comp : -comp
+    })
+  })()
+
   const handleStatusChange = async (memberId: string, newStatus?: string) => {
     const statusToUpdate = newStatus || selectedStatuses[memberId] || 'active'
     
@@ -262,6 +309,16 @@ export default function MembersPage() {
     }
   }
 
+  // Small accent dot color next to the member name
+  const getStatusDotColor = (status?: string) => {
+    switch (status) {
+      case 'active': return 'bg-green-500'
+      case 'suspended': return 'bg-yellow-500'
+      case 'withdrawn': return 'bg-red-500'
+      default: return 'bg-green-500'
+    }
+  }
+
   // 認証状態をチェック中の場合
   if (status === 'loading') {
     return (
@@ -351,17 +408,22 @@ export default function MembersPage() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[200px]">
                       メールアドレス
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[140px]">
-                      プラン
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[140px] cursor-pointer select-none"
+                        onClick={() => { setSortKey(prev => prev === 'plan' ? 'plan' : 'plan'); setSortAsc(prev => sortKey === 'plan' ? !prev : true) }}>
+                      プラン {sortKey === 'plan' ? (sortAsc ? '▲' : '▼') : ''}
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px]">
-                      ステータス
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px] cursor-pointer select-none"
+                        onClick={() => { setSortKey(prev => prev === 'status' ? 'status' : 'status'); setSortAsc(prev => sortKey === 'status' ? !prev : true) }}>
+                      ステータス {sortKey === 'status' ? (sortAsc ? '▲' : '▼') : ''}
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[150px]">
                       メモ
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px]">
-                      登録日
+                    <th
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px] cursor-pointer select-none"
+                      onClick={() => { setSortKey('created'); setSortAsc(prev => sortKey === 'created' ? !prev : true) }}
+                    >
+                      登録日 {sortKey === 'created' ? (sortAsc ? '▲' : '▼') : ''}
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[100px]">
                       操作
@@ -369,10 +431,18 @@ export default function MembersPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {members && members.map((member) => (
+                  {sortedMembers && (showOnlyActive ? sortedMembers.filter(m => (m.status || 'active') === 'active') : sortedMembers).map((member) => (
                     <tr key={member.id}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 min-w-[120px]">
-                        {member.full_name}
+                        <div className="flex items-center">
+                          <Link
+                            href={`/admin/members/${member.id}`}
+                            className="text-indigo-600 hover:text-indigo-800 hover:underline"
+                          >
+                            {member.full_name}
+                          </Link>
+                          <span className={`ml-2 inline-block w-2 h-2 rounded-full ${getStatusDotColor(member.status)}`} aria-hidden="true"></span>
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 min-w-[200px]">
                         {member.email}
@@ -426,59 +496,27 @@ export default function MembersPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 min-w-[120px]">
                         {new Date(member.created_at).toLocaleDateString('ja-JP')}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm min-w-[100px]">
-                        <button
-                          onClick={() => handleDeleteMember(member.id, member.full_name)}
-                          className="text-red-600 hover:text-red-900 transition-colors"
-                        >
-                          削除
-                        </button>
-                      </td>
-                    </tr>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm min-w-[100px] text-gray-400">-</td>
+                  </tr>
                   ))}
                 </tbody>
               </table>
               </div>
             )}
+            {/* Bottom Active-only Toggle */}
+            <div className="mt-6 flex items-center justify-center">
+              <button
+                onClick={() => setShowOnlyActive(prev => !prev)}
+                className={`px-4 py-2 text-sm font-medium rounded-md border ${showOnlyActive ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}`}
+              >
+                {showOnlyActive ? 'すべて表示' : '在籍のみ表示'}
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Delete Confirmation Modal */}
-      {showDeleteModal && memberToDelete && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <div className="mt-3">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">
-                会員の削除
-              </h3>
-              <p className="text-sm text-gray-600 mb-6">
-                会員「{memberToDelete.name}」を削除してもよろしいですか？<br />
-                この操作は取り消すことができません。
-              </p>
-              <div className="flex justify-end space-x-3">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowDeleteModal(false)
-                    setMemberToDelete(null)
-                  }}
-                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors"
-                >
-                  キャンセル
-                </button>
-                <button
-                  type="button"
-                  onClick={confirmDeleteMember}
-                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
-                >
-                  削除する
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* 削除モーダルは使用しない（非表示運用に変更） */}
     </div>
   )
 }

@@ -13,6 +13,9 @@ export const loginSchema = z.object({
 });
 
 // Reservation validation schemas
+/**
+ * @deprecated 予約バリデーションの暫定スキーマです。フォーム/サーバの実装固有のスキーマに置き換える計画のため新規利用は避けてください。
+ */
 export const createReservationSchema = z.object({
   clientEmail: z.string().email('有効なメールアドレスを入力してください'),
   title: z.string().min(1, 'タイトルは必須です').max(255, 'タイトルは255文字以内で入力してください'),
@@ -21,6 +24,9 @@ export const createReservationSchema = z.object({
 });
 
 // Helper function to validate 60-minute duration
+/**
+ * @deprecated 固定60分の検証ヘルパー。可変長に対応する実装に置き換える計画のため新規利用は避けてください。
+ */
 export function validateReservationDuration(startTime: Date, endTime: Date): boolean {
   const durationMs = endTime.getTime() - startTime.getTime();
   const expectedDurationMs = 60 * 60 * 1000; // 60 minutes
@@ -28,6 +34,9 @@ export function validateReservationDuration(startTime: Date, endTime: Date): boo
 }
 
 // Helper function to calculate end time (start + 60 minutes)
+/**
+ * @deprecated 固定60分の終了時刻計算。可変長に対応する実装に置き換える計画のため新規利用は避けてください。
+ */
 export function calculateEndTime(startTime: Date): Date {
   return new Date(startTime.getTime() + 60 * 60 * 1000);
 }

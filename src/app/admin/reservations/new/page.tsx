@@ -1,8 +1,9 @@
 'use client'
+export const dynamic = 'force-dynamic'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect } from 'react'
 import { getStoreDisplayName } from '@/lib/auth-utils'
 
@@ -13,6 +14,13 @@ interface Client {
   displayName: string
 }
 
+type Trainer = {
+  id: string
+  full_name: string
+  store_id: string
+  status: 'active' | 'inactive'
+}
+
 // Helper function to get default datetime (today at 12:00)
 function getDefaultDateTime() {
   const now = new Date()
@@ -21,15 +29,18 @@ function getDefaultDateTime() {
 }
 
 
-export default function NewReservationPage() {
+function NewReservationContent() {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
 
   const [clients, setClients] = useState<Client[]>([])
   const [loadingClients, setLoadingClients] = useState(true)
+  const [trainers, setTrainers] = useState<Trainer[]>([])
+  const [loadingTrainers, setLoadingTrainers] = useState(true)
   
   const [formData, setFormData] = useState({
     clientId: '',
@@ -42,6 +53,7 @@ export default function NewReservationPage() {
     blockedDate: '',
     blockedStartTime: '09:00',
     blockedEndTime: '12:00',
+    trainerId: '',
   })
 
   // Fetch clients and set default start time after component mounts
@@ -82,6 +94,39 @@ export default function NewReservationPage() {
       }))
     }
   }, [session])
+
+  // Load active trainers for current store when calendarId changes
+  useEffect(() => {
+    const loadTrainers = async () => {
+      if (!formData.calendarId) return
+      try {
+        setLoadingTrainers(true)
+        const res = await fetch(`/api/admin/trainers?status=active&storeId=${encodeURIComponent(formData.calendarId)}`, { credentials: 'include' })
+        if (res.ok) {
+          const data = await res.json()
+          setTrainers(data.trainers || [])
+        } else {
+          setTrainers([])
+        }
+      } catch {
+        setTrainers([])
+      } finally {
+        setLoadingTrainers(false)
+      }
+    }
+    loadTrainers()
+  }, [formData.calendarId])
+
+  // Prefill startTime from query param if provided (e.g., from Timeline click)
+  useEffect(() => {
+    const qsStartTime = searchParams?.get('startTime')
+    if (qsStartTime) {
+      setFormData(prev => ({
+        ...prev,
+        startTime: qsStartTime,
+      }))
+    }
+  }, [searchParams])
 
   // Check admin access
   useEffect(() => {
@@ -200,6 +245,7 @@ export default function NewReservationPage() {
           calendarId: formData.calendarId,
           notes: formData.notes,
           title: formData.notes || '予約不可',
+          ...(formData.trainerId ? { trainerId: formData.trainerId } : {}),
         }
       } else {
         // For regular reservation
@@ -243,12 +289,13 @@ export default function NewReservationPage() {
         blockedDate: '',
         blockedStartTime: '09:00',
         blockedEndTime: '12:00',
+        trainerId: '',
       })
 
-      // Redirect to reservations list after 2 seconds
+      // Redirect to calendar after 1.5 seconds
       setTimeout(() => {
-        router.push('/reservations')
-      }, 2000)
+        router.push('/admin/calendar')
+      }, 1500)
 
     } catch (error) {
       console.error('Create reservation error:', error)
@@ -312,7 +359,7 @@ export default function NewReservationPage() {
               </svg>
               <p className="text-green-800">{success}</p>
             </div>
-            <p className="text-green-700 text-sm mt-1">予約一覧ページに移動します...</p>
+            <p className="text-green-700 text-sm mt-1">カレンダーに移動します...</p>
           </div>
         )}
 
@@ -438,6 +485,30 @@ export default function NewReservationPage() {
                     />
                   </div>
                 </div>
+
+                {/* Trainer selection for blocked time */}
+                <div>
+                  <label htmlFor="trainerId" className="block text-sm font-medium text-gray-700 mb-2">対象トレーナー（任意）</label>
+                  {loadingTrainers ? (
+                    <div className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500">
+                      トレーナー情報を読み込み中...
+                    </div>
+                  ) : (
+                    <select
+                      id="trainerId"
+                      name="trainerId"
+                      value={formData.trainerId}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="">店舗全体（全トレーナー）</option>
+                      {trainers.map(tr => (
+                        <option key={tr.id} value={tr.id}>{tr.full_name}</option>
+                      ))}
+                    </select>
+                  )}
+                  <p className="mt-1 text-sm text-gray-500">指定すると、そのトレーナーの枠のみ予約不可にします。</p>
+                </div>
               </div>
             ) : (
               // Regular reservation: datetime-local only (no duration needed)
@@ -556,5 +627,13 @@ export default function NewReservationPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function NewReservationPage() {
+  return (
+    <Suspense fallback={null}>
+      <NewReservationContent />
+    </Suspense>
   )
 }

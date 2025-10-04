@@ -76,6 +76,19 @@ export function createSuccessResponse<T>(data: T, message?: string): NextRespons
 }
 
 export function handleApiError(error: any, context: string): NextResponse {
+  // Log full error on server
   console.error(`${context} error:`, error)
-  return createErrorResponse('Internal server error', 500)
+
+  // Try to surface useful info to client
+  const message =
+    (error && (error.message || error.msg || error.error || error.details))
+      || (typeof error === 'string' ? error : null)
+      || 'Internal server error'
+
+  const status = (error && (error.status || error.code))
+    && Number.isFinite(Number(error.status || error.code))
+      ? Number(error.status || error.code)
+      : 500
+
+  return NextResponse.json({ error: String(message) }, { status })
 }

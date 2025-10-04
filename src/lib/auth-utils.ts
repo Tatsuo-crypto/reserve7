@@ -33,6 +33,11 @@ export function getStoreDisplayName(email: string): string {
   return email
 }
 
+/**
+ * @deprecated レガシーなカレンダーID判定ヘルパーです。
+ * 環境変数や店舗/トレーナーレコード由来の calendar_id を直接使用してください。
+ * 将来の削除候補のため新規利用は避けてください。
+ */
 export function getCalendarId(storeId: string): string {
   return storeId === 'tandjgym@gmail.com' 
     ? process.env.GOOGLE_CALENDAR_ID_1 || 'tandjgym@gmail.com'

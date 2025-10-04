@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { requireAuth, handleApiError } from '@/lib/api-utils'
+import { updateMonthlyTitles } from '@/lib/title-utils'
 import { createGoogleCalendarService } from '@/lib/google-calendar'
 
 export async function DELETE(
@@ -23,6 +24,7 @@ export async function DELETE(
       .select(`
         id,
         client_id,
+        start_time,
         external_event_id,
         calendar_id,
         users!client_id (
@@ -75,6 +77,16 @@ export async function DELETE(
         { error: '予約の削除に失敗しました' },
         { status: 500 }
       )
+    }
+
+    // After deletion, renumber titles for this client's month and update Google Calendar
+    if (reservation.client_id && reservation.start_time) {
+      try {
+        const d = new Date((reservation as any).start_time)
+        await updateMonthlyTitles((reservation as any).client_id as string, d.getFullYear(), d.getMonth())
+      } catch (e) {
+        console.error('Failed to update monthly titles after deletion:', e)
+      }
     }
 
     return NextResponse.json({
@@ -224,6 +236,18 @@ export async function PUT(
         { error: '予約の更新に失敗しました' },
         { status: 500 }
       )
+    }
+
+    // After update, renumber titles for this client's month and update Google Calendar as needed
+    try {
+      const d = new Date(startDateTime)
+      const clientId = (reservation as any).client_id as string | null
+      if (clientId) {
+        await updateMonthlyTitles(clientId, d.getFullYear(), d.getMonth())
+      }
+    } catch (e) {
+      console.error('Failed to update monthly titles after PUT:', e)
+      // Do not fail the request; return success for the update itself
     }
 
     return NextResponse.json({

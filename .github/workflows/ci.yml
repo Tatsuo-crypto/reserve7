@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [ main, develop, feature/**, chore/** ]
+  push:
+    branches: [ chore/safe-optimize-2025-10-04 ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: http://localhost:54321
+      SUPABASE_URL: http://localhost:54321
+      SUPABASE_ANON_KEY: dummy_anon
+      SUPABASE_SERVICE_ROLE_KEY: dummy
+      NEXTAUTH_SECRET: dummy_secret_32chars_minimum________________
+      NEXTAUTH_URL: http://localhost:3000
+      ADMIN_EMAILS: dummy@example.com
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      # Debug step removed after stabilization
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+      - name: Start Next.js (background)
+        run: |
+          nohup npm run start >/dev/null 2>&1 &
+
+      - name: Wait for server
+        run: npx wait-on http://localhost:3000 --timeout 60000
+
+      - name: E2E (smoke)
+        run: npm run test
+
+      - name: Bundle size check (±5%)
+        run: |
+          ANALYZE=true npm run build
+          node scripts/compare-bundle-size.js
