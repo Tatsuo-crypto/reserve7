@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+export const dynamic = 'force-dynamic'
 import { supabase } from '@/lib/supabase'
 import { getAuthenticatedUser, createErrorResponse, createSuccessResponse, handleApiError } from '@/lib/api-utils'
 import { getUserMonthlyUsage } from '@/lib/reservation-utils'

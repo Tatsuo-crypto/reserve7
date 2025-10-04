@@ -7,7 +7,14 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "playwright test -c ./playwright.config.ts --reporter=list",
+    "test:e2e": "playwright test",
+    "analyze": "ANALYZE=true next build",
+    "deps:check": "depcheck",
+    "ts-prune": "ts-prune -p tsconfig.json",
+    "ci:all": "npm run typecheck && npm run lint && npm run build && npm run test"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
@@ -34,9 +41,13 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
+    "@next/bundle-analyzer": "^15.5.4",
+    "@playwright/test": "^1.55.1",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "depcheck": "^1.4.7",
+    "ts-prune": "^0.10.3",
     "typescript": "^5"
   }
 }

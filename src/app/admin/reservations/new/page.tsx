@@ -1,6 +1,7 @@
 'use client'
+export const dynamic = 'force-dynamic'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect } from 'react'
@@ -327,6 +328,7 @@ export default function NewReservationPage() {
   }
 
   return (
+    <Suspense fallback={null}>
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
@@ -626,5 +628,6 @@ export default function NewReservationPage() {
         </div>
       </div>
     </div>
+    </Suspense>
   )
 }
