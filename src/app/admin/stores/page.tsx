@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 type Store = {
   id: string
@@ -15,10 +16,12 @@ type Store = {
 }
 
 export default function StoresPage() {
+  const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [stores, setStores] = useState<Store[]>([])
   const [query, setQuery] = useState('')
   const [status, setStatus] = useState<'all' | 'active' | 'inactive'>('all')
+  const SHOW_FILTERS = false
 
   const listUrl = useMemo(() => {
     const params = new URLSearchParams()
@@ -82,13 +85,17 @@ export default function StoresPage() {
           status: form.status,
         })
       })
-      if (!res.ok) throw new Error(await res.text())
+      if (!res.ok) {
+        const txt = await res.text()
+        alert(`保存に失敗しました: ${txt}`)
+        return
+      }
       setModalOpen(false)
       setEditing(null)
       fetchList()
     } catch (e) {
       console.error(e)
-      alert('保存に失敗しました')
+      alert('保存に失敗しました: ネットワークまたはサーバーエラー')
     }
   }
 
@@ -110,40 +117,54 @@ export default function StoresPage() {
 
   return (
     <div className="max-w-6xl mx-auto py-6 sm:px-6 lg:px-8">
-      {/* Header */}
-      <div className="bg-white shadow-sm border border-gray-200 rounded-lg mb-6">
-        <div className="px-6 py-5 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold text-gray-900">店舗管理</h1>
-            <p className="mt-1 text-sm text-gray-600">店舗情報の閲覧・管理</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link href="/dashboard" className="inline-flex items-center px-3 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50">戻る</Link>
-            <button className="inline-flex items-center px-3 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-700" onClick={openCreate}>新規店舗</button>
-          </div>
-        </div>
-      </div>
-
-      {/* Filters */}
-      <div className="bg-white shadow-sm border border-gray-200 rounded-lg mb-3">
-        <div className="px-6 py-4 grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div>
-            <label className="block text-xs text-gray-500 mb-1">ステータス</label>
-            <select className="w-full border rounded-md px-2 py-2 text-sm" value={status} onChange={(e) => setStatus(e.target.value as any)}>
-              <option value="all">すべて</option>
-              <option value="active">有効（active）</option>
-              <option value="inactive">無効（inactive）</option>
-            </select>
-          </div>
-          <div className="md:col-span-2">
-            <label className="block text-xs text-gray-500 mb-1">検索（店舗名・カレンダーID）</label>
-            <div className="flex gap-2">
-              <input className="flex-1 border rounded-md px-3 py-2 text-sm" placeholder="例: 一号店 or calendar-id@group.calendar.google.com" value={query} onChange={(e) => setQuery(e.target.value)} />
-              <button onClick={fetchList} className="px-3 py-2 text-sm rounded-md border bg-gray-50 hover:bg-gray-100">検索</button>
+      {/* Header - centered with back chevron */}
+      <div className="mb-6">
+        <div className="flex flex-col space-y-4">
+          <div className="flex items-center justify-center relative">
+            <button
+              onClick={() => router.back()}
+              className="absolute left-0 text-gray-600 hover:text-gray-900 transition-colors"
+              aria-label="戻る"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <div className="text-center">
+              <h1 className="text-3xl font-bold text-gray-900">店舗管理</h1>
+              <p className="mt-2 text-gray-600">店舗情報の閲覧・管理</p>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Action bar (centered) */}
+      <div className="flex justify-center mb-4">
+        <button className="inline-flex items-center px-4 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-700" onClick={openCreate}>新規店舗</button>
+      </div>
+
+      {/* Filters (temporarily hidden) */}
+      {SHOW_FILTERS && (
+        <div className="bg-white shadow-sm border border-gray-200 rounded-lg mb-3">
+          <div className="px-6 py-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">ステータス</label>
+              <select className="w-full border rounded-md px-2 py-2 text-sm" value={status} onChange={(e) => setStatus(e.target.value as any)}>
+                <option value="all">すべて</option>
+                <option value="active">有効（active）</option>
+                <option value="inactive">無効（inactive）</option>
+              </select>
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-xs text-gray-500 mb-1">検索（店舗名・カレンダーID）</label>
+              <div className="flex gap-2">
+                <input className="flex-1 border rounded-md px-3 py-2 text-sm" placeholder="例: 一号店 or calendar-id@group.calendar.google.com" value={query} onChange={(e) => setQuery(e.target.value)} />
+                <button onClick={fetchList} className="px-3 py-2 text-sm rounded-md border bg-gray-50 hover:bg-gray-100">検索</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Table */}
       <div className="bg-white shadow-sm border border-gray-200 rounded-lg">
@@ -154,37 +175,37 @@ export default function StoresPage() {
             <div className="text-center py-12 text-gray-500 text-sm">該当の店舗がありません</div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full text-sm">
+              <table className="min-w-[980px] sm:min-w-[1100px] text-sm">
                 <thead>
                   <tr className="bg-gray-50 text-gray-600">
-                    <th className="text-left px-3 py-2 border-b">店舗名</th>
-                    <th className="text-left px-3 py-2 border-b">メール</th>
-                    <th className="text-left px-3 py-2 border-b">カレンダーID</th>
-                    <th className="text-right px-3 py-2 border-b">会員数</th>
-                    <th className="text-left px-3 py-2 border-b">ステータス</th>
-                    <th className="text-right px-3 py-2 border-b">操作</th>
+                    <th className="text-center px-3 py-2 border-b whitespace-nowrap min-w-[180px]">店舗名</th>
+                    <th className="text-center px-3 py-2 border-b whitespace-nowrap min-w-[220px]">メール</th>
+                    <th className="text-center px-3 py-2 border-b whitespace-nowrap min-w-[260px]">カレンダーID</th>
+                    <th className="text-center px-3 py-2 border-b whitespace-nowrap min-w-[80px]">会員数</th>
+                    <th className="text-center px-3 py-2 border-b whitespace-nowrap min-w-[120px]">ステータス</th>
+                    <th className="text-center px-3 py-2 border-b whitespace-nowrap min-w-[160px]">操作</th>
                   </tr>
                 </thead>
                 <tbody>
                   {stores.map(s => (
                     <tr key={s.id} className="hover:bg-gray-50">
-                      <td className="px-3 py-2 border-b">
-                        <div className="font-medium text-gray-900">{s.name}</div>
+                      <td className="px-3 py-2 border-b whitespace-nowrap text-center">
+                        <div className="font-medium text-gray-900 whitespace-nowrap">{s.name}</div>
                       </td>
-                      <td className="px-3 py-2 border-b">
-                        <div className="text-gray-800 truncate max-w-[220px]" title={s.email || ''}>{s.email || '-'}</div>
+                      <td className="px-3 py-2 border-b whitespace-nowrap text-center">
+                        <div className="text-gray-800 truncate max-w-[240px] mx-auto" title={s.email || ''}>{s.email || '-'}</div>
                       </td>
-                      <td className="px-3 py-2 border-b">
-                        <div className="text-gray-800 truncate max-w-[260px]" title={s.calendar_id}>{s.calendar_id}</div>
+                      <td className="px-3 py-2 border-b whitespace-nowrap text-center">
+                        <div className="text-gray-800 truncate max-w-[300px] mx-auto" title={s.calendar_id}>{s.calendar_id}</div>
                       </td>
-                      <td className="px-3 py-2 border-b text-right">
+                      <td className="px-3 py-2 border-b text-center whitespace-nowrap">
                         <div className="text-gray-900">{s.memberCount ?? 0}</div>
                       </td>
-                      <td className="px-3 py-2 border-b">
+                      <td className="px-3 py-2 border-b whitespace-nowrap text-center">
                         <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${s.status === 'active' ? 'bg-indigo-100 text-indigo-800' : 'bg-gray-200 text-gray-700'}`}>{s.status === 'active' ? '有効' : '無効'}</span>
                       </td>
-                      <td className="px-3 py-2 border-b text-right">
-                        <div className="inline-flex items-center gap-2">
+                      <td className="px-3 py-2 border-b text-center whitespace-nowrap">
+                        <div className="inline-flex items-center gap-2 whitespace-nowrap justify-center">
                           <button className="px-2 py-1 text-xs rounded-md border hover:bg-gray-50" onClick={() => openEdit(s)}>編集</button>
                           <button className={`px-2 py-1 text-xs rounded-md border ${s.status === 'active' ? 'hover:bg-red-50' : 'hover:bg-indigo-50'}`} onClick={() => toggleActive(s)}>{s.status === 'active' ? '無効化' : '有効化'}</button>
                         </div>
@@ -224,14 +245,7 @@ export default function StoresPage() {
                   <option value="inactive">無効（inactive）</option>
                 </select>
               </div>
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">電話</label>
-                <input className="w-full border rounded-md px-3 py-2 text-sm" value={form.phone} onChange={(e) => setForm(f => ({ ...f, phone: e.target.value }))} />
-              </div>
-              <div className="md:col-span-2">
-                <label className="block text-xs text-gray-500 mb-1">住所</label>
-                <input className="w-full border rounded-md px-3 py-2 text-sm" value={form.address} onChange={(e) => setForm(f => ({ ...f, address: e.target.value }))} />
-              </div>
+              {/* 電話・住所は今は不要のため非表示 */}
             </div>
             <div className="mt-6 flex justify-end gap-3">
               <button className="px-3 py-2 text-sm rounded-md border" onClick={() => setModalOpen(false)}>キャンセル</button>

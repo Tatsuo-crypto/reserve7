@@ -41,10 +41,24 @@ export async function POST(request: NextRequest) {
     if (auth instanceof NextResponse) return auth
 
     const body = await request.json()
-    const { fullName, email, storeId, status = 'active', phone, notes } = body
+    const rawFullName = body?.fullName
+    const rawEmail = body?.email
+    const rawStoreId = body?.storeId
+    const status = body?.status ?? 'active'
+    const phone = body?.phone
+    const notes = body?.notes
 
-    if (!fullName || !email || !storeId) {
-      return NextResponse.json({ error: '氏名、メール、担当店舗は必須です' }, { status: 400 })
+    const fullName = typeof rawFullName === 'string' ? rawFullName.trim() : ''
+    const email = typeof rawEmail === 'string' ? rawEmail.trim() : ''
+    const storeId = typeof rawStoreId === 'string' ? rawStoreId.trim() : ''
+
+    const missing: string[] = []
+    if (!fullName) missing.push('氏名')
+    if (!email) missing.push('メール')
+    if (!storeId) missing.push('担当店舗')
+    if (missing.length > 0) {
+      console.warn('Admin trainers POST missing fields:', { body, parsed: { fullName, email, storeId } })
+      return NextResponse.json({ error: `${missing.join('、')} は必須です` }, { status: 400 })
     }
 
     const { data, error } = await supabase

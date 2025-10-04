@@ -79,3 +79,24 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     return handleApiError(error, 'Admin trainers PATCH')
   }
 }
+
+// DELETE /api/admin/trainers/[id] - delete a trainer
+export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+  try {
+    const auth = await requireAdminAuth()
+    if (auth instanceof NextResponse) return auth
+
+    const { data, error } = await supabase
+      .from('trainers')
+      .delete()
+      .eq('id', params.id)
+      .select('id')
+      .single()
+
+    if (error) throw error
+
+    return NextResponse.json({ success: true, id: data?.id })
+  } catch (error) {
+    return handleApiError(error, 'Admin trainers DELETE')
+  }
+}

@@ -32,26 +32,13 @@ export default function Navigation() {
               </div>
             ) : session ? (
               <>
-                <Link
-                  href="/dashboard"
-                  className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors"
-                >
-                  ホーム
-                </Link>
-                <Link
-                  href={session.user.role === 'ADMIN' ? '/admin/calendar' : '/reservations'}
-                  className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors"
-                >
-                  {session.user.role === 'ADMIN' ? '予約管理' : 'マイ予約'}
-                </Link>
+                <Link href="/dashboard" className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors">ホーム</Link>
+                <Link href={session.user.role === 'ADMIN' ? '/admin/reservations' : '/reservations'} className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors">予約</Link>
                 {session?.user?.role === 'ADMIN' && (
                   <>
-                    <Link
-                      href="/admin/members"
-                      className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors"
-                    >
-                      会員管理
-                    </Link>
+                    <Link href="/admin/members" className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors">会員管理</Link>
+                    <Link href="/admin/trainers" className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors">トレーナー管理</Link>
+                    <Link href="/admin/stores" className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors">店舗管理</Link>
                   </>
                 )}
                 <div className="bg-white border border-gray-300 px-4 py-2 rounded-lg shadow-sm text-sm flex items-center space-x-3">
@@ -158,29 +145,13 @@ export default function Navigation() {
                     </span>
                   </div>
                 </div>
-                <Link
-                  href="/dashboard"
-                  className="text-gray-700 hover:text-gray-900 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  ホーム
-                </Link>
-                <Link
-                  href={session.user.role === 'ADMIN' ? '/admin/calendar' : '/reservations'}
-                  className="text-gray-700 hover:text-gray-900 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  {session.user.role === 'ADMIN' ? '予約管理' : 'マイ予約'}
-                </Link>
+                <Link href="/dashboard" className="text-gray-700 hover:text-gray-900 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium" onClick={() => setIsMobileMenuOpen(false)}>ホーム</Link>
+                <Link href={session.user.role === 'ADMIN' ? '/admin/reservations' : '/reservations'} className="text-gray-700 hover:text-gray-900 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium" onClick={() => setIsMobileMenuOpen(false)}>予約</Link>
                 {session?.user?.role === 'ADMIN' && (
                   <>
-                    <Link
-                      href="/admin/members"
-                      className="text-gray-700 hover:text-gray-900 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      会員管理
-                    </Link>
+                    <Link href="/admin/members" className="text-gray-700 hover:text-gray-900 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium" onClick={() => setIsMobileMenuOpen(false)}>会員管理</Link>
+                    <Link href="/admin/trainers" className="text-gray-700 hover:text-gray-900 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium" onClick={() => setIsMobileMenuOpen(false)}>トレーナー管理</Link>
+                    <Link href="/admin/stores" className="text-gray-700 hover:text-gray-900 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium" onClick={() => setIsMobileMenuOpen(false)}>店舗管理</Link>
                   </>
                 )}
                 <button

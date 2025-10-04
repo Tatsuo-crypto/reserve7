@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { supabaseAdmin as supabase } from '@/lib/supabase-admin'
 import { requireAdminAuth, handleApiError } from '@/lib/api-utils'
 
 // GET /api/admin/stores?status=active|inactive&query=...
@@ -26,11 +26,12 @@ export async function GET(request: NextRequest) {
     if (error) throw error
 
     const stores = data ?? []
-    const ids = stores.map((s: any) => s.id)
+    const calendarIds = stores.map((s: any) => s.calendar_id)
     let memberCounts: Record<string, number> = {}
-    if (ids.length > 0) {
+    if (calendarIds.length > 0) {
       try {
-        const { data: counts, error: rpcErr } = await supabase.rpc('members_count_by_store', { store_ids: ids })
+        const idsText = calendarIds.map((x: any) => String(x))
+        const { data: counts, error: rpcErr } = await supabase.rpc('members_count_by_store', { store_ids: idsText })
         if (rpcErr) throw rpcErr
         memberCounts = (counts || []).reduce((acc: any, row: any) => {
           acc[row.store_id] = row.member_count
@@ -41,7 +42,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const result = stores.map((s: any) => ({ ...s, memberCount: memberCounts[s.id] || 0 }))
+    const result = stores.map((s: any) => ({ ...s, memberCount: memberCounts[s.calendar_id] || 0 }))
     return NextResponse.json({ stores: result })
   } catch (error) {
     return handleApiError(error, 'Admin stores GET')

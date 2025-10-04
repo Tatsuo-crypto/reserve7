@@ -86,7 +86,7 @@ function AdminDashboard() {
               </div>
             </div>
             <div className="flex-1">
-              <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-blue-800 transition-colors duration-200">予約管理</h3>
+              <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-blue-800 transition-colors duration-200">予約</h3>
               <p className="text-base text-gray-600 leading-relaxed">すべての予約を確認・管理</p>
             </div>
           </Link>

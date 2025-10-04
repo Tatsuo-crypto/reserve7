@@ -13,6 +13,13 @@ interface Client {
   displayName: string
 }
 
+type Trainer = {
+  id: string
+  full_name: string
+  store_id: string
+  status: 'active' | 'inactive'
+}
+
 // Helper function to get default datetime (today at 12:00)
 function getDefaultDateTime() {
   const now = new Date()
@@ -31,6 +38,8 @@ export default function NewReservationPage() {
 
   const [clients, setClients] = useState<Client[]>([])
   const [loadingClients, setLoadingClients] = useState(true)
+  const [trainers, setTrainers] = useState<Trainer[]>([])
+  const [loadingTrainers, setLoadingTrainers] = useState(true)
   
   const [formData, setFormData] = useState({
     clientId: '',
@@ -43,6 +52,7 @@ export default function NewReservationPage() {
     blockedDate: '',
     blockedStartTime: '09:00',
     blockedEndTime: '12:00',
+    trainerId: '',
   })
 
   // Fetch clients and set default start time after component mounts
@@ -83,6 +93,28 @@ export default function NewReservationPage() {
       }))
     }
   }, [session])
+
+  // Load active trainers for current store when calendarId changes
+  useEffect(() => {
+    const loadTrainers = async () => {
+      if (!formData.calendarId) return
+      try {
+        setLoadingTrainers(true)
+        const res = await fetch(`/api/admin/trainers?status=active&storeId=${encodeURIComponent(formData.calendarId)}`, { credentials: 'include' })
+        if (res.ok) {
+          const data = await res.json()
+          setTrainers(data.trainers || [])
+        } else {
+          setTrainers([])
+        }
+      } catch {
+        setTrainers([])
+      } finally {
+        setLoadingTrainers(false)
+      }
+    }
+    loadTrainers()
+  }, [formData.calendarId])
 
   // Prefill startTime from query param if provided (e.g., from Timeline click)
   useEffect(() => {
@@ -212,6 +244,7 @@ export default function NewReservationPage() {
           calendarId: formData.calendarId,
           notes: formData.notes,
           title: formData.notes || '予約不可',
+          ...(formData.trainerId ? { trainerId: formData.trainerId } : {}),
         }
       } else {
         // For regular reservation
@@ -255,6 +288,7 @@ export default function NewReservationPage() {
         blockedDate: '',
         blockedStartTime: '09:00',
         blockedEndTime: '12:00',
+        trainerId: '',
       })
 
       // Redirect to calendar after 1.5 seconds
@@ -449,6 +483,30 @@ export default function NewReservationPage() {
                       required
                     />
                   </div>
+                </div>
+
+                {/* Trainer selection for blocked time */}
+                <div>
+                  <label htmlFor="trainerId" className="block text-sm font-medium text-gray-700 mb-2">対象トレーナー（任意）</label>
+                  {loadingTrainers ? (
+                    <div className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500">
+                      トレーナー情報を読み込み中...
+                    </div>
+                  ) : (
+                    <select
+                      id="trainerId"
+                      name="trainerId"
+                      value={formData.trainerId}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="">店舗全体（全トレーナー）</option>
+                      {trainers.map(tr => (
+                        <option key={tr.id} value={tr.id}>{tr.full_name}</option>
+                      ))}
+                    </select>
+                  )}
+                  <p className="mt-1 text-sm text-gray-500">指定すると、そのトレーナーの枠のみ予約不可にします。</p>
                 </div>
               </div>
             ) : (
