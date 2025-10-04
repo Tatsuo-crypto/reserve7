@@ -34,7 +34,7 @@ jobs:
       - name: E2E (smoke)
         run: npm run test
 
-      # Optional bundle-size gate placeholder
-      # - name: Bundle size check
-      #   run: |
-      #     echo "Bundle size gate placeholder (±5%)"
+      - name: Bundle size check (±5%)
+        run: |
+          ANALYZE=true npm run build
+          node scripts/compare-bundle-size.js

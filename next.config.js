@@ -20,6 +20,11 @@ const baseConfig = {
 // Enable bundle analyzer when ANALYZE=true
 const withBundleAnalyzer = require('@next/bundle-analyzer')({
   enabled: process.env.ANALYZE === 'true',
+  openAnalyzer: false,
+  analyzerMode: 'static',
+  reportFilename: '.next/analyze/client.html',
+  generateStatsFile: true,
+  statsFilename: '.next/analyze/stats.json',
 })
 
 module.exports = withBundleAnalyzer(baseConfig)
