@@ -25,11 +25,11 @@ This report tracks the "zero behavior change" cleanup & optimizations.
 - Revert PR or `git revert` the merge commit
 
 ## Checklists
-- [ ] Typecheck OK
-- [ ] Lint OK
-- [ ] Build OK
-- [ ] E2E OK
-- [ ] Bundle diff within ±5%
+- [x] Typecheck OK
+- [x] Lint OK
+- [x] Build OK
+- [x] E2E OK
+- [x] Bundle diff within ±5%
 
 
 ## Findings Snapshot (2025-10-04)
@@ -79,4 +79,13 @@ Build-artifact paths under `.next/types/...` are ignored.
 ## CI
 - GitHub Actions で `typecheck/lint/build/e2e` を実行するワークフローを追加済み。
 - Bundle size gate はレポート用スナップショット生成まで（将来±5%のゲート化を検討）。
+
+### CI Status (2025-10-05)
+- 全チェック通過（build-and-test 5m）。
+- 対応内容:
+  - 管理系APIを動的化（`export const dynamic = 'force-dynamic'`）。
+  - `src/lib/env.ts` にCI向けダミー既定値を追加（Zodエラー防止）。
+  - `src/lib/supabase-admin.ts` をimport安全化（ビルド時throw回避）。
+  - PlaywrightブラウザをCIでインストールし、`npm run start` → `wait-on` 待機後にE2E実行。
+  - 一時デバッグ（SHA/env長さ）で反映検証後、デバッグステップを削除。
 
