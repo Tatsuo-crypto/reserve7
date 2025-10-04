@@ -27,6 +27,18 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
+      - name: Debug SHA and env lengths
+        run: |
+          echo "SHA=$GITHUB_SHA"
+          node -v && npm -v
+          echo "NEXT_PUBLIC_SUPABASE_URL len=${#NEXT_PUBLIC_SUPABASE_URL:-0}"
+          echo "SUPABASE_URL len=${#SUPABASE_URL:-0}"
+          echo "SUPABASE_ANON_KEY len=${#SUPABASE_ANON_KEY:-0}"
+          echo "SUPABASE_SERVICE_ROLE_KEY len=${#SUPABASE_SERVICE_ROLE_KEY:-0}"
+          echo "NEXTAUTH_SECRET len=${#NEXTAUTH_SECRET:-0}"
+          echo "NEXTAUTH_URL len=${#NEXTAUTH_URL:-0}"
+          echo "ADMIN_EMAILS len=${#ADMIN_EMAILS:-0}"
+
       - name: Install dependencies
         run: npm ci
 
