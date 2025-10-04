@@ -9,6 +9,12 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: http://localhost:54321
+      SUPABASE_SERVICE_ROLE_KEY: dummy
+      NEXTAUTH_SECRET: dummy_secret_32chars_minimum________________
+      NEXTAUTH_URL: http://localhost:3000
+      ADMIN_EMAILS: dummy@example.com
     steps:
       - name: Checkout
         uses: actions/checkout@v4

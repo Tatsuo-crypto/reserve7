@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+export const dynamic = 'force-dynamic'
 import { supabase } from '@/lib/supabase'
 import { requireAdminAuth, handleApiError } from '@/lib/api-utils'
 import { createGoogleCalendarService } from '@/lib/google-calendar'
