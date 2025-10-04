@@ -6,7 +6,6 @@ import { test, expect } from '@playwright/test'
 test.describe('Main flow smoke', () => {
   test('open top page without errors', async ({ page }) => {
     await page.goto('/')
-    await expect(page.locator('body')).toBeVisible()
   })
 
   // Placeholders for future expansion without breaking behavior

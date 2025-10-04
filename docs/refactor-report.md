@@ -40,7 +40,7 @@ This report tracks the "zero behavior change" cleanup & optimizations.
 - @types/react-dom (types tooling; keep for now)
 - autoprefixer (tooling; tailwind/postcss pipeline present -> keep)
 - bcrypt (unused, code uses bcryptjs) -> REMOVED
-- date-fns (verify usage; appears referenced in code)
+- date-fns (KEPT: 実コード参照ありのため維持)
 - postcss (tooling; keep)
 - tailwindcss (tooling; keep)
 
@@ -69,9 +69,14 @@ Build-artifact paths under `.next/types/...` are ignored.
 
 ### Completed Safe Deletions
 - Removed dependency: `bcrypt` (reason: codebase uses `bcryptjs` exclusively).
+- Removed components: `src/components/ui/StatusBadge.tsx`, `src/components/ui/SuccessMessage.tsx` (no references)
 
 ### Next Steps
-- Vet `date-fns` usage thoroughly; if used, remove from candidate list.
+- date-fns は候補から除外済み。
 - Verify `getCalendarId` and UI components usage; deprecate or delete only with 100% certainty.
 - Add CI workflow to enforce `ci:all` and (optionally) bundle-size gate.
+
+## CI
+- GitHub Actions で `typecheck/lint/build/e2e` を実行するワークフローを追加済み。
+- Bundle size gate はレポート用スナップショット生成まで（将来±5%のゲート化を検討）。
 
