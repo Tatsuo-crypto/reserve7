@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [ main, develop, feature/**, chore/** ]
+  push:
+    branches: [ chore/safe-optimize-2025-10-04 ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+      - name: E2E (smoke)
+        run: npm run test
+
+      # Optional bundle-size gate placeholder
+      # - name: Bundle size check
+      #   run: |
+      #     echo "Bundle size gate placeholder (±5%)"

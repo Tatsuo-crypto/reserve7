@@ -29,7 +29,7 @@ function getDefaultDateTime() {
 }
 
 
-export default function NewReservationPage() {
+function NewReservationContent() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -328,7 +328,6 @@ export default function NewReservationPage() {
   }
 
   return (
-    <Suspense fallback={null}>
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
@@ -628,6 +627,13 @@ export default function NewReservationPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function NewReservationPage() {
+  return (
+    <Suspense fallback={null}>
+      <NewReservationContent />
     </Suspense>
   )
 }
