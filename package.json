@@ -14,7 +14,8 @@
     "analyze": "ANALYZE=true next build",
     "deps:check": "depcheck",
     "ts-prune": "ts-prune -p tsconfig.json",
-    "ci:all": "npm run typecheck && npm run lint && npm run build && npm run test"
+    "ci:all": "npm run typecheck && npm run lint && npm run build && npm run test",
+    "icons:build": "node scripts/generate-icons.mjs"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
@@ -46,6 +47,7 @@
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "depcheck": "^1.4.7",
+    "sharp": "^0.33.3",
     "ts-prune": "^0.10.3",
     "typescript": "^5"
   }
