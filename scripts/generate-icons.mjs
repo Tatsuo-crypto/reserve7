@@ -35,14 +35,6 @@ async function main() {
     })
   )
 
-  // Optional ICO (contains 16/32)
-  const icoPath = path.join(publicDir, 'favicon.ico')
-  await sharp(buffer)
-    .resize(32, 32, { fit: 'contain', background: { r: 17, g: 24, b: 39, alpha: 1 } })
-    .toFormat('ico')
-    .toFile(icoPath)
-  console.log('Generated favicon.ico')
-
   console.log('All icons generated in /public')
 }
 
