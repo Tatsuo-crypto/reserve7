@@ -177,7 +177,9 @@ export default function ClientReservationsPage() {
                   </div>
                   
                   {/* Reservations in this month */}
-                  {futureByMonth[monthKey].map((reservation) => (
+                  {futureByMonth[monthKey]
+                    .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())
+                    .map((reservation) => (
                     <div
                       key={reservation.id}
                       className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow ml-4"
@@ -227,7 +229,9 @@ export default function ClientReservationsPage() {
                   </div>
                   
                   {/* Reservations in this month */}
-                  {pastByMonth[monthKey].map((reservation) => (
+                  {pastByMonth[monthKey]
+                    .sort((a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime())
+                    .map((reservation) => (
                     <div
                       key={reservation.id}
                       className="border border-gray-200 rounded-lg p-4 bg-gray-50 ml-4"
