@@ -20,11 +20,12 @@ export async function GET(request: NextRequest) {
     // Find user by access_token
     const { data: user, error } = await supabase
       .from('users')
-      .select('id, full_name, email, store_id, role')
+      .select('id, full_name, email, store_id')
       .eq('access_token', token)
       .single()
 
     if (error || !user) {
+      console.error('Token lookup error:', error)
       return NextResponse.json(
         { error: '無効なトークンです' },
         { status: 401 }
