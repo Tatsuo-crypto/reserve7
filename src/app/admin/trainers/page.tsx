@@ -15,6 +15,7 @@ type Trainer = {
   notes?: string | null
   created_at: string
   updated_at: string
+  access_token?: string
 }
 
 type StoreOption = {
@@ -205,6 +206,24 @@ export default function TrainersPage() {
     }
   }
 
+  // Copy trainer access URL to clipboard
+  const handleCopyAccessUrl = async (accessToken: string, trainerName: string) => {
+    if (!accessToken) {
+      alert('アクセストークンが設定されていません')
+      return
+    }
+    const baseUrl = window.location.origin
+    const accessUrl = `${baseUrl}/trainer/${accessToken}`
+    
+    try {
+      await navigator.clipboard.writeText(accessUrl)
+      alert(`「${trainerName}」様の専用URLをコピーしました`)
+    } catch (err) {
+      console.error('Failed to copy URL:', err)
+      alert('URLのコピーに失敗しました')
+    }
+  }
+
   return (
     <div className="max-w-6xl mx-auto py-6 sm:px-6 lg:px-8">
       {/* Header - centered with back chevron */}
@@ -318,6 +337,15 @@ export default function TrainersPage() {
                       </td>
                       <td className="px-3 py-2 border-b text-right whitespace-nowrap">
                         <div className="inline-flex items-center gap-2">
+                          {t.access_token && (
+                            <button 
+                              className="px-2 py-1 text-xs rounded-md bg-indigo-600 text-white hover:bg-indigo-700"
+                              onClick={() => handleCopyAccessUrl(t.access_token!, t.full_name)}
+                              title="専用URLをコピー"
+                            >
+                              URL
+                            </button>
+                          )}
                           <button className="px-2 py-1 text-xs rounded-md border hover:bg-gray-50" onClick={() => openEdit(t)}>編集</button>
                         </div>
                       </td>

@@ -256,25 +256,99 @@ export default function TimelineView({ selectedDate, events, onBack, onEventsUpd
             })()}
 
             {/* Events */}
-            {events
-              .filter(event => event.date === selectedDate)
-              .map((event, index) => {
+            {(() => {
+              const dayEventsFiltered = events.filter(event => event.date === selectedDate)
+              
+              // Sort events by start time
+              const sortedEvents = [...dayEventsFiltered].sort((a, b) => {
+                const aStart = parseEventTime(a.time).startMinutes
+                const bStart = parseEventTime(b.time).startMinutes
+                return aStart - bStart
+              })
+              
+              // Assign columns to events
+              const eventColumns = new Map<string, { column: number, totalColumns: number }>()
+              
+              sortedEvents.forEach((event) => {
+                const { startMinutes, endMinutes } = parseEventTime(event.time)
+                
+                // Find all overlapping events that have already been assigned columns
+                const usedColumns = new Set<number>()
+                let maxOverlapColumns = 0
+                
+                sortedEvents.forEach((otherEvent) => {
+                  if (otherEvent.id === event.id) return
+                  
+                  const { startMinutes: otherStart, endMinutes: otherEnd } = parseEventTime(otherEvent.time)
+                  
+                  // Check if they overlap
+                  if (startMinutes < otherEnd && endMinutes > otherStart) {
+                    const otherColumn = eventColumns.get(otherEvent.id)
+                    if (otherColumn) {
+                      usedColumns.add(otherColumn.column)
+                      maxOverlapColumns = Math.max(maxOverlapColumns, otherColumn.totalColumns)
+                    }
+                  }
+                })
+                
+                // Find first available column
+                let column = 0
+                while (usedColumns.has(column)) {
+                  column++
+                }
+                
+                const totalColumns = Math.max(maxOverlapColumns, column + 1)
+                eventColumns.set(event.id, { column, totalColumns })
+              })
+              
+              // Update totalColumns for all overlapping events
+              sortedEvents.forEach((event) => {
+                const { startMinutes, endMinutes } = parseEventTime(event.time)
+                let maxColumns = eventColumns.get(event.id)?.totalColumns || 1
+                
+                sortedEvents.forEach((otherEvent) => {
+                  if (otherEvent.id === event.id) return
+                  const { startMinutes: otherStart, endMinutes: otherEnd } = parseEventTime(otherEvent.time)
+                  
+                  if (startMinutes < otherEnd && endMinutes > otherStart) {
+                    const otherInfo = eventColumns.get(otherEvent.id)
+                    if (otherInfo) {
+                      maxColumns = Math.max(maxColumns, otherInfo.totalColumns)
+                    }
+                  }
+                })
+                
+                const current = eventColumns.get(event.id)
+                if (current) {
+                  eventColumns.set(event.id, { ...current, totalColumns: maxColumns })
+                }
+              })
+              
+              return dayEventsFiltered.map((event, index) => {
                 const [startTime] = event.time.split(' - ')
                 const [hours, minutes] = startTime.split(':').map(Number)
                 const topPosition = (hours * 48) + (minutes * 48 / 60)
                 
+                const layoutInfo = eventColumns.get(event.id) || { column: 0, totalColumns: 1 }
+                const widthPercent = 100 / layoutInfo.totalColumns
+                const leftPercent = layoutInfo.column * widthPercent
+                
                 return (
                   <div
                     key={`${event.id}-${index}`}
-                    className={`absolute left-0 right-0 mx-1 px-2 py-1 rounded text-xs font-medium ${
+                    className={`absolute px-2 py-1 rounded text-xs font-medium ${
                       event.type === 'blocked' 
                         ? 'bg-red-100 border border-red-200 text-red-800'
                         : 'bg-green-100 border border-green-200 text-green-800'
                     }`}
                     style={{ 
                       top: `${topPosition}px`,
+                      left: `${leftPercent}%`,
+                      width: `${widthPercent}%`,
                       height: '46px',
-                      zIndex: 10
+                      zIndex: 10,
+                      paddingLeft: '4px',
+                      paddingRight: '4px'
                     }}
                     onClick={(e) => openEditFromEvent(e, event)}
                   >
@@ -284,7 +358,8 @@ export default function TimelineView({ selectedDate, events, onBack, onEventsUpd
                     )}
                   </div>
                 )
-              })}
+              })
+            })()}
 
             {/* Empty State */}
             {events.filter(event => event.date === selectedDate).length === 0 && (
