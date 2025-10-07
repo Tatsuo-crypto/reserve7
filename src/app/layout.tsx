@@ -16,12 +16,12 @@ export const metadata = {
       { url: '/android-chrome-512x512.png', sizes: '512x512', type: 'image/png' },
     ],
     apple: [
-      { url: '/apple-touch-icon.png?v=5', sizes: '180x180' },
-      { url: '/apple-touch-icon-precomposed.png?v=5', sizes: '180x180' },
-      { url: '/apple-touch-icon-180x180.png?v=5', sizes: '180x180' },
-      { url: '/apple-touch-icon-167x167.png?v=5', sizes: '167x167' },
-      { url: '/apple-touch-icon-152x152.png?v=5', sizes: '152x152' },
-      { url: '/apple-touch-icon-120x120.png?v=5', sizes: '120x120' },
+      { url: '/apple-touch-icon.png?v=6', sizes: '180x180' },
+      { url: '/apple-touch-icon-precomposed.png?v=6', sizes: '180x180' },
+      { url: '/apple-touch-icon-180x180.png?v=6', sizes: '180x180' },
+      { url: '/apple-touch-icon-167x167.png?v=6', sizes: '167x167' },
+      { url: '/apple-touch-icon-152x152.png?v=6', sizes: '152x152' },
+      { url: '/apple-touch-icon-120x120.png?v=6', sizes: '120x120' },
     ],
   },
 }
