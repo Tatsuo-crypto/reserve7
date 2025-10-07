@@ -143,19 +143,40 @@ export default function ClientReservationsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 mb-6">予約一覧</h1>
-          <div className="space-y-3">
-            <div className="flex items-baseline">
-              <span className="text-sm font-medium text-gray-500 w-24">お名前</span>
-              <span className="text-xl font-semibold text-gray-900">{user.name} 様</span>
+        <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl shadow-xl p-8 mb-6 text-white">
+          <div className="flex items-center mb-6">
+            <div className="bg-white/20 backdrop-blur-sm rounded-full p-3 mr-4">
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
             </div>
-            <div className="flex items-baseline">
-              <span className="text-sm font-medium text-gray-500 w-24">プラン</span>
-              <span className="text-lg text-gray-700">{user.plan}</span>
+            <h1 className="text-3xl font-bold">予約一覧</h1>
+          </div>
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 space-y-4">
+            <div className="flex items-center">
+              <div className="flex items-center justify-center w-10 h-10 bg-white/20 rounded-lg mr-4">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </div>
+              <div>
+                <div className="text-sm text-white/70 mb-1">お名前</div>
+                <div className="text-2xl font-bold">{user.name} 様</div>
+              </div>
+            </div>
+            <div className="flex items-center">
+              <div className="flex items-center justify-center w-10 h-10 bg-white/20 rounded-lg mr-4">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                </svg>
+              </div>
+              <div>
+                <div className="text-sm text-white/70 mb-1">プラン</div>
+                <div className="text-xl font-semibold">{user.plan}</div>
+              </div>
             </div>
           </div>
         </div>
