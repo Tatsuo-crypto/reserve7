@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
     // Find user by access_token
     const { data: user, error } = await supabase
       .from('users')
-      .select('id, full_name, email, store_id')
+      .select('id, full_name, email, store_id, plan')
       .eq('access_token', token)
       .single()
 
@@ -39,6 +39,7 @@ export async function GET(request: NextRequest) {
         name: user.full_name,
         email: user.email,
         storeId: user.store_id,
+        plan: user.plan || '月4回',
       }
     })
 

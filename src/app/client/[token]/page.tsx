@@ -8,6 +8,7 @@ interface User {
   name: string
   email: string
   storeId: string
+  plan: string
 }
 
 interface Reservation {
@@ -109,9 +110,18 @@ export default function ClientReservationsPage() {
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">予約一覧</h1>
-          <p className="text-gray-600">{user.name} 様</p>
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 mb-6">
+          <h1 className="text-3xl font-bold text-gray-900 mb-6">予約一覧</h1>
+          <div className="space-y-3">
+            <div className="flex items-baseline">
+              <span className="text-sm font-medium text-gray-500 w-24">お名前</span>
+              <span className="text-xl font-semibold text-gray-900">{user.name} 様</span>
+            </div>
+            <div className="flex items-baseline">
+              <span className="text-sm font-medium text-gray-500 w-24">プラン</span>
+              <span className="text-lg text-gray-700">{user.plan}</span>
+            </div>
+          </div>
         </div>
 
         {/* Future Reservations */}
