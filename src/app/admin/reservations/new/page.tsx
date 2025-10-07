@@ -49,6 +49,8 @@ function NewReservationContent() {
     calendarId: '', // Will be set based on user's store
     notes: '',
     isBlocked: false, // New field for blocked time
+    isTrial: false,   // New field for trial reservation
+    trialClientName: '', // For trial: manual client name input
     // For blocked time - separate date and time fields
     blockedDate: '',
     blockedStartTime: '09:00',
@@ -195,7 +197,7 @@ function NewReservationContent() {
 
       // For blocked time, we don't need a client
       let selectedClient = null
-      if (!formData.isBlocked) {
+      if (!formData.isBlocked && !formData.isTrial) {
         if (!formData.clientId.trim()) {
           throw new Error('クライアントを選択してください')
         }
@@ -203,6 +205,11 @@ function NewReservationContent() {
         if (!selectedClient) {
           throw new Error('有効なクライアントを選択してください')
         }
+      }
+      
+      // For trial, validate trial client name
+      if (formData.isTrial && !formData.trialClientName.trim()) {
+        throw new Error('体験者名を入力してください')
       }
 
       // Convert local datetime to ISO string
@@ -247,8 +254,20 @@ function NewReservationContent() {
           title: formData.notes || '予約不可',
           ...(formData.trainerId ? { trainerId: formData.trainerId } : {}),
         }
+      } else if (formData.isTrial) {
+        // For trial reservation - use special clientId and include name in notes
+        const trialNotes = `[体験] ${formData.trialClientName}${formData.notes ? ` - ${formData.notes}` : ''}`
+        
+        requestData = {
+          clientId: 'TRIAL',
+          startTime: formData.startTime,
+          duration: formData.duration,
+          calendarId: formData.calendarId,
+          notes: trialNotes,
+          title: `体験 - ${formData.trialClientName}`,
+        }
       } else {
-        // For regular reservation
+        // For regular client reservation
         requestData = {
           clientId: formData.clientId,
           startTime: formData.startTime,
@@ -276,7 +295,7 @@ function NewReservationContent() {
         throw new Error(data.error || '予約の作成に失敗しました')
       }
 
-      setSuccess('予約が正常に作成されました')
+      setSuccess(formData.isTrial ? '体験予約が正常に作成されました' : '予約が正常に作成されました')
       
       // Reset form
       setFormData({
@@ -286,6 +305,8 @@ function NewReservationContent() {
         calendarId: 'tandjgym@gmail.com',
         notes: '',
         isBlocked: false,
+        isTrial: false,
+        trialClientName: '',
         blockedDate: '',
         blockedStartTime: '09:00',
         blockedEndTime: '12:00',
@@ -384,11 +405,22 @@ function NewReservationContent() {
                     type="radio"
                     name="reservationType"
                     value="client"
-                    checked={!formData.isBlocked}
-                    onChange={() => setFormData(prev => ({ ...prev, isBlocked: false, clientId: '' }))}
+                    checked={!formData.isBlocked && !formData.isTrial}
+                    onChange={() => setFormData(prev => ({ ...prev, isBlocked: false, isTrial: false, clientId: '' }))}
                     className="mr-2"
                   />
-                  <span>クライアント予約</span>
+                  <span>予約</span>
+                </label>
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="reservationType"
+                    value="trial"
+                    checked={formData.isTrial}
+                    onChange={() => setFormData(prev => ({ ...prev, isBlocked: false, isTrial: true, clientId: '' }))}
+                    className="mr-2"
+                  />
+                  <span>体験</span>
                 </label>
                 <label className="flex items-center">
                   <input
@@ -396,16 +428,16 @@ function NewReservationContent() {
                     name="reservationType"
                     value="blocked"
                     checked={formData.isBlocked}
-                    onChange={() => setFormData(prev => ({ ...prev, isBlocked: true, clientId: '' }))}
+                    onChange={() => setFormData(prev => ({ ...prev, isBlocked: true, isTrial: false, clientId: '' }))}
                     className="mr-2"
                   />
-                  <span>予約不可時間</span>
+                  <span>予約不可</span>
                 </label>
               </div>
             </div>
 
-            {/* Client Selection - Only show for client reservations */}
-            {!formData.isBlocked && (
+            {/* Client Selection - Only show when not blocked */}
+            {!formData.isBlocked && !formData.isTrial && (
               <div>
                 <label htmlFor="clientId" className="block text-sm font-medium text-gray-700 mb-2">
                   クライアント選択 *
@@ -420,7 +452,7 @@ function NewReservationContent() {
                     name="clientId"
                     value={formData.clientId}
                     onChange={handleInputChange}
-                    required={!formData.isBlocked}
+                    required
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
                     <option value="">クライアントを選択してください</option>
@@ -433,6 +465,28 @@ function NewReservationContent() {
                 )}
                 <p className="mt-1 text-sm text-gray-500">
                   予約を作成するクライアントを選択してください
+                </p>
+              </div>
+            )}
+
+            {/* Trial Client Name - Manual text input for trial */}
+            {formData.isTrial && (
+              <div>
+                <label htmlFor="trialClientName" className="block text-sm font-medium text-gray-700 mb-2">
+                  体験者名 *
+                </label>
+                <input
+                  type="text"
+                  id="trialClientName"
+                  name="trialClientName"
+                  value={formData.trialClientName}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="体験者の名前を入力してください"
+                />
+                <p className="mt-1 text-sm text-gray-500">
+                  体験予約を作成する方の名前を入力してください
                 </p>
               </div>
             )}
@@ -527,7 +581,7 @@ function NewReservationContent() {
               </div>
             )}
 
-            {/* Session Duration - Only show for regular reservations */}
+            {/* Session Duration - Only show for regular reservations (client/trial) */}
             {!formData.isBlocked && (
               <div>
                 <label htmlFor="duration" className="block text-sm font-medium text-gray-700 mb-2">
@@ -596,7 +650,7 @@ function NewReservationContent() {
                 disabled={loading}
                 className="px-8 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors w-32 flex items-center justify-center whitespace-nowrap"
               >
-                {loading ? '作成中...' : (formData.isBlocked ? '予約不可設定' : '予約作成')}
+                {loading ? '作成中...' : (formData.isBlocked ? '予約不可設定' : (formData.isTrial ? '体験予約作成' : '予約作成'))}
               </button>
             </div>
           </form>
@@ -605,7 +659,7 @@ function NewReservationContent() {
         {/* Info Box */}
         <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
           <h3 className="text-sm font-medium text-blue-900 mb-2">
-            {formData.isBlocked ? '予約不可時間について' : '予約作成について'}
+            {formData.isBlocked ? '予約不可時間について' : (formData.isTrial ? '体験予約について' : '予約作成について')}
           </h3>
           <ul className="text-sm text-blue-800 space-y-1">
             {formData.isBlocked ? (
@@ -620,7 +674,7 @@ function NewReservationContent() {
                 <li>• セッション時間は30分、60分、90分、120分から選択できます</li>
                 <li>• 同じ時間帯に重複する予約は作成できません</li>
                 <li>• クライアントのメールアドレスは登録済みのものを使用してください</li>
-                <li>• 作成された予約はクライアントの予約一覧に表示されます</li>
+                {formData.isTrial && <li>• 体験予約はメモに自動で [体験] が付与されます</li>}
               </>
             )}
           </ul>

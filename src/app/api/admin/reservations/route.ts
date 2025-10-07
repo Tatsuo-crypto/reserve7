@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     const startDateTime = new Date(startTime)
     const endDateTime = new Date(startDateTime.getTime() + duration * 60 * 1000)
 
-    // Handle blocked time vs regular reservation
+    // Handle blocked time vs trial vs regular reservation
     let clientUser = null
     let generatedTitle = ''
     
@@ -50,6 +50,9 @@ export async function POST(request: NextRequest) {
           trainerName = trainer.full_name
         }
       }
+    } else if (clientId === 'TRIAL') {
+      // For trial reservation, use provided title from request
+      generatedTitle = body.title || '体験予約'
     } else {
       // Get client user by ID for regular reservations
       const { data: fetchedUser, error: clientError } = await supabase
@@ -76,26 +79,29 @@ export async function POST(request: NextRequest) {
 
 
     // Check for overlapping reservations in the same calendar (excluding adjacent times)
-    const { data: existingReservations, error: overlapError } = await supabase
-      .from('reservations')
-      .select('id')
-      .eq('calendar_id', calendarId)
-      .gt('end_time', startDateTime.toISOString())
-      .lt('start_time', endDateTime.toISOString())
+    // Skip overlap check for 2nd store (tandjgym2goutenn@gmail.com) to allow multiple concurrent reservations
+    if (calendarId !== 'tandjgym2goutenn@gmail.com') {
+      const { data: existingReservations, error: overlapError } = await supabase
+        .from('reservations')
+        .select('id')
+        .eq('calendar_id', calendarId)
+        .gt('end_time', startDateTime.toISOString())
+        .lt('start_time', endDateTime.toISOString())
 
-    if (overlapError) {
-      console.error('Overlap check error:', overlapError)
-      return NextResponse.json(
-        { error: '予約の重複チェックに失敗しました' },
-        { status: 500 }
-      )
-    }
+      if (overlapError) {
+        console.error('Overlap check error:', overlapError)
+        return NextResponse.json(
+          { error: '予約の重複チェックに失敗しました' },
+          { status: 500 }
+        )
+      }
 
-    if (existingReservations && existingReservations.length > 0) {
-      return NextResponse.json(
-        { error: 'この時間帯は既に予約されています' },
-        { status: 409 }
-      )
+      if (existingReservations && existingReservations.length > 0) {
+        return NextResponse.json(
+          { error: 'この時間帯は既に予約されています' },
+          { status: 409 }
+        )
+      }
     }
 
     // Check for blocked times that overlap with the reservation (skip if table doesn't exist)
@@ -142,8 +148,16 @@ export async function POST(request: NextRequest) {
     
     if (calendarService) {
       try {
-        const clientName = clientId === 'BLOCKED' ? '予約不可時間' : clientUser!.full_name
-        const clientEmail = clientId === 'BLOCKED' ? 'blocked@system' : clientUser!.email
+        const clientName = clientId === 'BLOCKED' 
+          ? '予約不可時間' 
+          : clientId === 'TRIAL'
+          ? generatedTitle
+          : clientUser!.full_name
+        const clientEmail = clientId === 'BLOCKED' 
+          ? 'blocked@system' 
+          : clientId === 'TRIAL'
+          ? 'trial@system'
+          : clientUser!.email
         externalEventId = await calendarService.createEvent({
           title: generatedTitle,
           startTime: startDateTime.toISOString(),
@@ -166,7 +180,7 @@ export async function POST(request: NextRequest) {
       trainerName ? `担当: ${trainerName}` : null,
     ].filter(Boolean).join(' / ')
     const reservationData = {
-      client_id: clientId === 'BLOCKED' ? null : clientUser!.id,
+      client_id: (clientId === 'BLOCKED' || clientId === 'TRIAL') ? null : clientUser!.id,
       title: generatedTitle,
       start_time: startDateTime.toISOString(),
       end_time: endDateTime.toISOString(),
@@ -214,7 +228,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Update all titles in this month to ensure proper chronological order (only for regular reservations)
-    if (clientId !== 'BLOCKED' && clientUser) {
+    if (clientId !== 'BLOCKED' && clientId !== 'TRIAL' && clientUser) {
       const startMonth = startDateTime.getMonth()
       const startYear = startDateTime.getFullYear()
       await updateMonthlyTitles(clientUser.id, startYear, startMonth)
@@ -229,10 +243,18 @@ export async function POST(request: NextRequest) {
         endTime: reservation.end_time,
         notes: reservation.notes,
         createdAt: reservation.created_at,
-        client: (clientId === 'BLOCKED' || !reservation.users) ? {
+        client: clientId === 'BLOCKED' ? {
           id: 'blocked',
           fullName: '予約不可時間',
           email: 'blocked@system',
+        } : clientId === 'TRIAL' ? {
+          id: 'trial',
+          fullName: '体験予約',
+          email: 'trial@system',
+        } : !reservation.users ? {
+          id: 'unknown',
+          fullName: '不明',
+          email: 'unknown@system',
         } : {
           id: (reservation.users as any).id,
           fullName: (reservation.users as any).full_name,
