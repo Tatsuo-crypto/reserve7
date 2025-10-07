@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
     // Get members from the same store (exclude admin accounts)
     const { data: members, error } = await supabase
       .from('users')
-      .select('id, full_name, email, plan, status, store_id, created_at, memo')
+      .select('id, full_name, email, plan, status, store_id, created_at, memo, access_token')
       .eq('store_id', user.storeId)
       .neq('email', 'tandjgym@gmail.com')
       .neq('email', 'tandjgym2goutenn@gmail.com')

@@ -14,6 +14,7 @@ interface Member {
   store_id: string
   created_at: string
   memo?: string
+  access_token?: string
 }
 
 export default function MembersPage() {
@@ -78,6 +79,21 @@ export default function MembersPage() {
 
   // Show only active filter (UI button below table)
   const [showOnlyActive, setShowOnlyActive] = useState(true)
+
+  // Copy access URL to clipboard
+  const handleCopyAccessUrl = async (accessToken: string, memberName: string) => {
+    const baseUrl = window.location.origin
+    const accessUrl = `${baseUrl}/client/${accessToken}`
+    
+    try {
+      await navigator.clipboard.writeText(accessUrl)
+      setError(`「${memberName}」様の専用URLをコピーしました`)
+      setTimeout(() => setError(''), 3000)
+    } catch (err) {
+      console.error('Failed to copy URL:', err)
+      setError('URLのコピーに失敗しました')
+    }
+  }
 
 
   const getPlanRank = (plan?: string) => {
@@ -496,7 +512,22 @@ export default function MembersPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 min-w-[120px]">
                         {new Date(member.created_at).toLocaleDateString('ja-JP')}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm min-w-[100px] text-gray-400">-</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm min-w-[100px]">
+                        {member.access_token ? (
+                          <button
+                            onClick={() => handleCopyAccessUrl(member.access_token!, member.full_name)}
+                            className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                            title="専用URLをコピー"
+                          >
+                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                            URL
+                          </button>
+                        ) : (
+                          <span className="text-gray-400">-</span>
+                        )}
+                      </td>
                   </tr>
                   ))}
                 </tbody>

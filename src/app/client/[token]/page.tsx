@@ -1,0 +1,199 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useParams } from 'next/navigation'
+
+interface User {
+  id: string
+  name: string
+  email: string
+  storeId: string
+}
+
+interface Reservation {
+  id: string
+  title: string
+  start_time: string
+  end_time: string
+  notes?: string
+  created_at: string
+}
+
+export default function ClientReservationsPage() {
+  const params = useParams()
+  const token = params?.token as string
+
+  const [user, setUser] = useState<User | null>(null)
+  const [reservations, setReservations] = useState<Reservation[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true)
+
+        // Verify token and get user info
+        const userResponse = await fetch(`/api/auth/token?token=${token}`)
+        if (!userResponse.ok) {
+          setError('無効なURLです')
+          return
+        }
+        const userData = await userResponse.json()
+        setUser(userData.user)
+
+        // Get reservations
+        const reservationsResponse = await fetch(`/api/client/reservations?token=${token}`)
+        if (!reservationsResponse.ok) {
+          setError('予約の取得に失敗しました')
+          return
+        }
+        const reservationsData = await reservationsResponse.json()
+        setReservations(reservationsData.data.reservations || [])
+
+      } catch (err) {
+        console.error('Error fetching data:', err)
+        setError('データの取得に失敗しました')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (token) {
+      fetchData()
+    }
+  }, [token])
+
+  // Format date for display
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr)
+    return date.toLocaleDateString('ja-JP', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZone: 'Asia/Tokyo'
+    })
+  }
+
+  // Separate past and future reservations
+  const now = new Date()
+  const futureReservations = reservations.filter(r => new Date(r.start_time) >= now)
+  const pastReservations = reservations.filter(r => new Date(r.start_time) < now)
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">読み込み中...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error || !user) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-500 text-6xl mb-4">⚠️</div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">アクセスエラー</h1>
+          <p className="text-gray-600">{error || '無効なURLです'}</p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Header */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">予約一覧</h1>
+          <p className="text-gray-600">{user.name} 様</p>
+        </div>
+
+        {/* Future Reservations */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">今後の予約</h2>
+          {futureReservations.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              今後の予約はありません
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {futureReservations.map((reservation) => (
+                <div
+                  key={reservation.id}
+                  className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                        {reservation.title}
+                      </h3>
+                      <p className="text-gray-600 mb-2">
+                        📅 {formatDate(reservation.start_time)}
+                      </p>
+                      {reservation.notes && (
+                        <p className="text-sm text-gray-500 mt-2">
+                          💬 {reservation.notes}
+                        </p>
+                      )}
+                    </div>
+                    <div className="ml-4">
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                        予約済み
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Past Reservations */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">過去の予約</h2>
+          {pastReservations.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              過去の予約はありません
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {pastReservations.map((reservation) => (
+                <div
+                  key={reservation.id}
+                  className="border border-gray-200 rounded-lg p-4 bg-gray-50"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-gray-700 mb-1">
+                        {reservation.title}
+                      </h3>
+                      <p className="text-gray-500 mb-2">
+                        📅 {formatDate(reservation.start_time)}
+                      </p>
+                      {reservation.notes && (
+                        <p className="text-sm text-gray-400 mt-2">
+                          💬 {reservation.notes}
+                        </p>
+                      )}
+                    </div>
+                    <div className="ml-4">
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-200 text-gray-600">
+                        完了
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
