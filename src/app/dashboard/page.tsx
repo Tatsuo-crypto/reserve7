@@ -68,9 +68,52 @@ export default function DashboardPage() {
 
 function AdminDashboard() {
   const router = useRouter()
+  const [showIconBanner, setShowIconBanner] = useState(false)
+
+  useEffect(() => {
+    // Check if iOS device
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+    // Check if not dismissed
+    const dismissed = localStorage.getItem('icon-update-dismissed')
+    if (isIOS && !dismissed) {
+      setShowIconBanner(true)
+    }
+  }, [])
+
+  const dismissBanner = () => {
+    localStorage.setItem('icon-update-dismissed', 'true')
+    setShowIconBanner(false)
+  }
 
   return (
     <div className="space-y-6">
+      {/* Icon Update Banner for iOS */}
+      {showIconBanner && (
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4 shadow-sm">
+          <div className="flex items-start">
+            <div className="flex-shrink-0">
+              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div className="ml-3 flex-1">
+              <h3 className="text-sm font-medium text-blue-900">アイコンが新しくなりました</h3>
+              <div className="mt-2 text-sm text-blue-700">
+                <p>ホーム画面のアイコンを更新するには、<Link href="/home-icon" className="font-semibold underline">こちら</Link>のページから再度「ホーム画面に追加」してください。</p>
+              </div>
+            </div>
+            <button
+              onClick={dismissBanner}
+              className="flex-shrink-0 ml-3 text-blue-400 hover:text-blue-600"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="bg-white shadow-sm border border-gray-200 rounded-xl p-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           {/* 予約管理（上） */}
