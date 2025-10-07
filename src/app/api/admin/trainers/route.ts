@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
 
     let q = supabase
       .from('trainers')
-      .select('id, full_name, email, store_id, status, phone, notes, created_at, updated_at')
+      .select('id, full_name, email, store_id, status, phone, notes, created_at, updated_at, access_token')
       .order('full_name', { ascending: true })
 
     if (storeId) q = q.eq('store_id', storeId)
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
     const { data, error } = await supabase
       .from('trainers')
       .insert({ full_name: fullName, email, store_id: storeId, status, phone, notes })
-      .select('id, full_name, email, store_id, status, phone, notes, created_at, updated_at')
+      .select('id, full_name, email, store_id, status, phone, notes, created_at, updated_at, access_token')
       .single()
 
     if (error) throw error
