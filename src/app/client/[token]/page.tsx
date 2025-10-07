@@ -78,10 +78,46 @@ export default function ClientReservationsPage() {
     })
   }
 
+  // Format title to show "パーソナル X/Y回目"
+  const formatTitle = (title: string) => {
+    // Extract the count pattern like "増村浩気1/4" and convert to "パーソナル1/4回目"
+    const match = title.match(/(\d+)\/(\d+)$/)
+    if (match) {
+      return `パーソナル${match[1]}/${match[2]}回目`
+    }
+    return title
+  }
+
+  // Get month key from date (e.g., "2025年10月")
+  const getMonthKey = (dateStr: string) => {
+    const date = new Date(dateStr)
+    return date.toLocaleDateString('ja-JP', {
+      year: 'numeric',
+      month: 'long',
+      timeZone: 'Asia/Tokyo'
+    })
+  }
+
   // Separate past and future reservations
   const now = new Date()
   const futureReservations = reservations.filter(r => new Date(r.start_time) >= now)
   const pastReservations = reservations.filter(r => new Date(r.start_time) < now)
+
+  // Group reservations by month
+  const groupByMonth = (reservations: Reservation[]) => {
+    const grouped: { [key: string]: Reservation[] } = {}
+    reservations.forEach(reservation => {
+      const monthKey = getMonthKey(reservation.start_time)
+      if (!grouped[monthKey]) {
+        grouped[monthKey] = []
+      }
+      grouped[monthKey].push(reservation)
+    })
+    return grouped
+  }
+
+  const futureByMonth = groupByMonth(futureReservations)
+  const pastByMonth = groupByMonth(pastReservations)
 
   if (loading) {
     return (
@@ -132,32 +168,42 @@ export default function ClientReservationsPage() {
               今後の予約はありません
             </div>
           ) : (
-            <div className="space-y-4">
-              {futureReservations.map((reservation) => (
-                <div
-                  key={reservation.id}
-                  className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                        {reservation.title}
-                      </h3>
-                      <p className="text-gray-600 mb-2">
-                        📅 {formatDate(reservation.start_time)}
-                      </p>
-                      {reservation.notes && (
-                        <p className="text-sm text-gray-500 mt-2">
-                          💬 {reservation.notes}
-                        </p>
-                      )}
-                    </div>
-                    <div className="ml-4">
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-                        予約済み
-                      </span>
-                    </div>
+            <div className="space-y-6">
+              {Object.keys(futureByMonth).sort().map((monthKey) => (
+                <div key={monthKey} className="space-y-3">
+                  {/* Month Header */}
+                  <div className="bg-gradient-to-r from-blue-50 to-blue-100 border-l-4 border-blue-500 px-4 py-2 rounded">
+                    <h3 className="text-lg font-bold text-blue-900">{monthKey}</h3>
                   </div>
+                  
+                  {/* Reservations in this month */}
+                  {futureByMonth[monthKey].map((reservation) => (
+                    <div
+                      key={reservation.id}
+                      className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow ml-4"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                            {formatTitle(reservation.title)}
+                          </h3>
+                          <p className="text-gray-600 mb-2">
+                            📅 {formatDate(reservation.start_time)}
+                          </p>
+                          {reservation.notes && (
+                            <p className="text-sm text-gray-500 mt-2">
+                              💬 {reservation.notes}
+                            </p>
+                          )}
+                        </div>
+                        <div className="ml-4">
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                            予約済み
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               ))}
             </div>
@@ -172,32 +218,42 @@ export default function ClientReservationsPage() {
               過去の予約はありません
             </div>
           ) : (
-            <div className="space-y-4">
-              {pastReservations.map((reservation) => (
-                <div
-                  key={reservation.id}
-                  className="border border-gray-200 rounded-lg p-4 bg-gray-50"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-gray-700 mb-1">
-                        {reservation.title}
-                      </h3>
-                      <p className="text-gray-500 mb-2">
-                        📅 {formatDate(reservation.start_time)}
-                      </p>
-                      {reservation.notes && (
-                        <p className="text-sm text-gray-400 mt-2">
-                          💬 {reservation.notes}
-                        </p>
-                      )}
-                    </div>
-                    <div className="ml-4">
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-200 text-gray-600">
-                        完了
-                      </span>
-                    </div>
+            <div className="space-y-6">
+              {Object.keys(pastByMonth).sort().reverse().map((monthKey) => (
+                <div key={monthKey} className="space-y-3">
+                  {/* Month Header */}
+                  <div className="bg-gradient-to-r from-gray-50 to-gray-100 border-l-4 border-gray-400 px-4 py-2 rounded">
+                    <h3 className="text-lg font-bold text-gray-700">{monthKey}</h3>
                   </div>
+                  
+                  {/* Reservations in this month */}
+                  {pastByMonth[monthKey].map((reservation) => (
+                    <div
+                      key={reservation.id}
+                      className="border border-gray-200 rounded-lg p-4 bg-gray-50 ml-4"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h3 className="text-lg font-semibold text-gray-700 mb-1">
+                            {formatTitle(reservation.title)}
+                          </h3>
+                          <p className="text-gray-500 mb-2">
+                            📅 {formatDate(reservation.start_time)}
+                          </p>
+                          {reservation.notes && (
+                            <p className="text-sm text-gray-400 mt-2">
+                              💬 {reservation.notes}
+                            </p>
+                          )}
+                        </div>
+                        <div className="ml-4">
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-200 text-gray-600">
+                            完了
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               ))}
             </div>
