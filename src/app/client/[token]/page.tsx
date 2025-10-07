@@ -169,7 +169,14 @@ export default function ClientReservationsPage() {
             </div>
           ) : (
             <div className="space-y-6">
-              {Object.keys(futureByMonth).sort().map((monthKey) => (
+              {Object.entries(futureByMonth)
+                .sort((a, b) => {
+                  // Sort by the first reservation's date in each month (ascending - oldest first)
+                  const dateA = new Date(a[1][0].start_time)
+                  const dateB = new Date(b[1][0].start_time)
+                  return dateA.getTime() - dateB.getTime()
+                })
+                .map(([monthKey, reservations]) => (
                 <div key={monthKey} className="space-y-3">
                   {/* Month Header */}
                   <div className="bg-gradient-to-r from-blue-50 to-blue-100 border-l-4 border-blue-500 px-4 py-2 rounded">
@@ -177,7 +184,7 @@ export default function ClientReservationsPage() {
                   </div>
                   
                   {/* Reservations in this month */}
-                  {futureByMonth[monthKey]
+                  {reservations
                     .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())
                     .map((reservation) => (
                     <div
@@ -221,7 +228,14 @@ export default function ClientReservationsPage() {
             </div>
           ) : (
             <div className="space-y-6">
-              {Object.keys(pastByMonth).sort().reverse().map((monthKey) => (
+              {Object.entries(pastByMonth)
+                .sort((a, b) => {
+                  // Sort by the first reservation's date in each month (descending - newest first)
+                  const dateA = new Date(a[1][0].start_time)
+                  const dateB = new Date(b[1][0].start_time)
+                  return dateB.getTime() - dateA.getTime()
+                })
+                .map(([monthKey, reservations]) => (
                 <div key={monthKey} className="space-y-3">
                   {/* Month Header */}
                   <div className="bg-gradient-to-r from-gray-50 to-gray-100 border-l-4 border-gray-400 px-4 py-2 rounded">
@@ -229,7 +243,7 @@ export default function ClientReservationsPage() {
                   </div>
                   
                   {/* Reservations in this month */}
-                  {pastByMonth[monthKey]
+                  {reservations
                     .sort((a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime())
                     .map((reservation) => (
                     <div
