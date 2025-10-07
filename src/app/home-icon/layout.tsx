@@ -1,13 +1,18 @@
 import type { Metadata } from 'next'
 
+// Use timestamp to force cache refresh
+const timestamp = Date.now()
+
 export const metadata: Metadata = {
   icons: {
     icon: [
-      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
-      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+      { url: `/favicon-32x32.png?v=${timestamp}`, sizes: '32x32', type: 'image/png' },
+      { url: `/favicon-16x16.png?v=${timestamp}`, sizes: '16x16', type: 'image/png' },
     ],
-    // Use a brand-new filename to bypass iOS cache
-    apple: [{ url: '/apple-touch-icon-20251007.png?v=1', sizes: '180x180' }],
+    apple: [
+      { url: `/apple-touch-icon.png?v=${timestamp}`, sizes: '180x180', type: 'image/png' },
+      { url: `/apple-touch-icon-precomposed.png?v=${timestamp}`, sizes: '180x180', type: 'image/png' },
+    ],
   },
 }
 
