@@ -1,10 +1,20 @@
 'use client'
 
 import { useSession } from 'next-auth/react'
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
 export default function HomePage() {
-  const { data: session } = useSession()
+  const { data: session, status } = useSession()
+  const router = useRouter()
+
+  useEffect(() => {
+    // If logged in, redirect to dashboard
+    if (status === 'authenticated') {
+      router.push('/dashboard')
+    }
+  }, [status, router])
 
   return (
     <div className="px-4 py-6 sm:px-0">

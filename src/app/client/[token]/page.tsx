@@ -143,9 +143,26 @@ export default function ClientReservationsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
+    <div className="min-h-screen bg-gray-50">
+      {/* Fixed Header */}
+      <header className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <h1 className="text-xl font-bold text-gray-900">T&J GYM</h1>
+            <button
+              className="p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+              aria-label="メニュー"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* User Info */}
         <div className="bg-white rounded-xl shadow-md border border-gray-200 p-8 mb-6">
           <h1 className="text-3xl font-bold text-gray-900 mb-6 pb-4 border-b border-gray-200">予約一覧</h1>
           <div className="space-y-4">

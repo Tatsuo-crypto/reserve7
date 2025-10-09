@@ -231,7 +231,7 @@ export default function TrainersPage() {
         <div className="flex flex-col space-y-4">
           <div className="flex items-center justify-center relative">
             <button
-              onClick={() => router.back()}
+              onClick={() => router.push('/dashboard')}
               className="absolute left-0 text-gray-600 hover:text-gray-900 transition-colors"
               aria-label="戻る"
             >

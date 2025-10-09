@@ -2,14 +2,20 @@
 
 import { useSession, signOut } from 'next-auth/react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { getStoreDisplayName } from '@/lib/auth-utils'
 import { useState } from 'react'
 
 export default function Navigation() {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const pathname = usePathname()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+
+  // Don't show navigation on client pages
+  if (pathname && pathname.startsWith('/client/')) {
+    return null
+  }
 
   const handleLogout = async () => {
     await signOut({ redirect: false })

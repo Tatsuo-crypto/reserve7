@@ -297,7 +297,7 @@ export default function AdminReservationsPage() {
             </h1>
             <div className="flex items-center justify-between w-full">
               <button
-                onClick={() => router.back()}
+                onClick={() => router.push('/dashboard')}
                 className="p-2 hover:bg-gray-100 rounded-full transition-colors"
               >
                 <svg className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
