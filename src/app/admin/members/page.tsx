@@ -379,7 +379,7 @@ export default function MembersPage() {
           <div className="flex flex-col space-y-4">
             <div className="flex items-center justify-center relative">
               <button
-                onClick={() => router.back()}
+                onClick={() => router.push('/dashboard')}
                 className="absolute left-0 text-gray-600 hover:text-gray-900 transition-colors"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
