@@ -4,6 +4,7 @@ import type { Metadata } from 'next'
 const timestamp = Date.now()
 
 export const metadata: Metadata = {
+  title: 'T&J GYM',
   icons: {
     icon: [
       { url: `/favicon-32x32.png?v=${timestamp}`, sizes: '32x32', type: 'image/png' },
@@ -14,6 +15,7 @@ export const metadata: Metadata = {
       { url: `/apple-touch-icon-precomposed.png?v=${timestamp}`, sizes: '180x180', type: 'image/png' },
     ],
   },
+  manifest: '/manifest.json',
 }
 
 export default function Layout({ children }: { children: React.ReactNode }) {
