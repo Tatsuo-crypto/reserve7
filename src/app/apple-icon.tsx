@@ -25,20 +25,17 @@ export default function AppleIcon() {
           borderRadius: 32,
         }}
       >
-        <svg
-          width={120}
-          height={120}
-          viewBox="0 0 128 128"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          aria-hidden
+        <div
+          style={{
+            display: 'flex',
+            fontSize: 72,
+            fontWeight: 700,
+            letterSpacing: '-0.02em',
+            fontFamily: 'system-ui, -apple-system, sans-serif',
+          }}
         >
-          <rect x="28" y="58" width="72" height="12" rx="2" fill={fg} />
-          <rect x="16" y="48" width="8" height="32" rx="2" fill={fg} />
-          <rect x="8" y="40" width="8" height="48" rx="2" fill={fg} />
-          <rect x="104" y="48" width="8" height="32" rx="2" fill={fg} />
-          <rect x="112" y="40" width="8" height="48" rx="2" fill={fg} />
-        </svg>
+          T&J
+        </div>
       </div>
     ),
     {
