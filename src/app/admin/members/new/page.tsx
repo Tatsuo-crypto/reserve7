@@ -156,7 +156,7 @@ export default function NewMemberPage() {
           </div>
 
           {/* ボタン */}
-          <div className="flex justify-end space-x-4">
+          <div className="flex justify-center space-x-4">
             <button
               type="button"
               onClick={() => router.back()}
