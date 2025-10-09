@@ -38,6 +38,73 @@ export async function GET(request: NextRequest) {
   }
 }
 
+export async function POST(request: NextRequest) {
+  try {
+    const user = await getAuthenticatedUser()
+    
+    if (!user) {
+      return createErrorResponse('認証が必要です', 401)
+    }
+
+    if (!user.isAdmin) {
+      return createErrorResponse('管理者権限が必要です', 403)
+    }
+
+    const { fullName, email, plan, status, memo } = await request.json()
+
+    // Validation
+    if (!fullName || !email) {
+      return createErrorResponse('名前とメールアドレスは必須です', 400)
+    }
+
+    // Validate status if provided
+    if (status && !['active', 'suspended', 'withdrawn'].includes(status)) {
+      return createErrorResponse('無効なステータスです', 400)
+    }
+
+    // Validate plan if provided
+    if (plan && !['月2回', '月4回', '月6回', '月8回', 'ダイエットコース'].includes(plan)) {
+      return createErrorResponse('無効なプランです', 400)
+    }
+
+    // Check if email already exists
+    const { data: existingUser } = await supabase
+      .from('users')
+      .select('id')
+      .eq('email', email)
+      .single()
+
+    if (existingUser) {
+      return createErrorResponse('このメールアドレスは既に登録されています', 400)
+    }
+
+    // Create new member
+    const { data: newMember, error } = await supabase
+      .from('users')
+      .insert([{
+        full_name: fullName,
+        email: email,
+        plan: plan || '月4回',
+        status: status || 'active',
+        store_id: user.storeId,
+        memo: memo || null,
+        role: 'CLIENT',
+      }])
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Database error:', error)
+      return createErrorResponse('会員の追加に失敗しました', 500)
+    }
+
+    return createSuccessResponse({ member: newMember })
+  } catch (error) {
+    console.error('Members API error:', error)
+    return createErrorResponse('Internal server error', 500)
+  }
+}
+
 export async function PATCH(request: NextRequest) {
   try {
     const user = await getAuthenticatedUser()
