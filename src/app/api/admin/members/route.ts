@@ -15,46 +15,23 @@ export async function GET(request: NextRequest) {
       return createErrorResponse('管理者権限が必要です', 403)
     }
 
-    // Get storeId from query params or use user's storeId
-    const { searchParams } = new URL(request.url)
-    const storeId = searchParams.get('storeId') || user.storeId
+    // Use user.storeId from authenticated user
 
-    // Get plan price mapping
-    const planPrices: { [key: string]: number } = {
-      '月2回': 13200,
-      '月4回': 26400,
-      '月6回': 39600,
-      '月8回': 52800,
-      'ダイエットコース': 66000,
-    }
-
-    // Get members from the specified store (exclude admin accounts)
+    // Get members from the same store (exclude admin accounts)
     const { data: members, error } = await supabase
       .from('users')
       .select('id, full_name, email, plan, status, store_id, created_at, memo, access_token')
-      .eq('store_id', storeId)
+      .eq('store_id', user.storeId)
       .neq('email', 'tandjgym@gmail.com')
       .neq('email', 'tandjgym2goutenn@gmail.com')
       .order('created_at', { ascending: false })
-
-    console.log(`[Members API] storeId: ${storeId}, found ${members?.length || 0} members`)
-    console.log('[Members API] members data:', members)
 
     if (error) {
       console.error('Database error:', error)
       return createErrorResponse('Failed to fetch members', 500)
     }
 
-    // Add monthly_fee to each member
-    const membersWithFee = members?.map(member => ({
-      ...member,
-      name: member.full_name,
-      monthly_fee: planPrices[member.plan] || 0
-    })) || []
-
-    console.log(`[Members API] Returning ${membersWithFee.length} members with fees`)
-
-    return createSuccessResponse({ members: membersWithFee })
+    return createSuccessResponse({ members })
   } catch (error) {
     console.error('Members API error:', error)
     return createErrorResponse('Internal server error', 500)
@@ -73,15 +50,11 @@ export async function POST(request: NextRequest) {
       return createErrorResponse('管理者権限が必要です', 403)
     }
 
-    const { fullName, email, plan, status, memo, storeId, monthlyFee } = await request.json()
+    const { fullName, email, plan, status, memo } = await request.json()
 
     // Validation
     if (!fullName || !email) {
       return createErrorResponse('名前とメールアドレスは必須です', 400)
-    }
-
-    if (!storeId) {
-      return createErrorResponse('店舗の選択は必須です', 400)
     }
 
     // Validate status if provided
@@ -106,24 +79,17 @@ export async function POST(request: NextRequest) {
     }
 
     // Create new member
-    const insertData: any = {
-      full_name: fullName,
-      email: email,
-      plan: plan || '月4回',
-      status: status || 'active',
-      store_id: storeId,
-      memo: memo || null,
-      role: 'CLIENT',
-    }
-
-    // Add monthly_fee if provided
-    if (monthlyFee !== undefined && monthlyFee !== null) {
-      insertData.monthly_fee = monthlyFee
-    }
-
     const { data: newMember, error } = await supabase
       .from('users')
-      .insert([insertData])
+      .insert([{
+        full_name: fullName,
+        email: email,
+        plan: plan || '月4回',
+        status: status || 'active',
+        store_id: user.storeId,
+        memo: memo || null,
+        role: 'CLIENT',
+      }])
       .select()
       .single()
 
