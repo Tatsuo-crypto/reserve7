@@ -37,6 +37,9 @@ export async function GET(request: NextRequest) {
       .neq('email', 'tandjgym2goutenn@gmail.com')
       .order('created_at', { ascending: false })
 
+    console.log(`[Members API] storeId: ${storeId}, found ${members?.length || 0} members`)
+    console.log('[Members API] members data:', members)
+
     if (error) {
       console.error('Database error:', error)
       return createErrorResponse('Failed to fetch members', 500)
@@ -48,6 +51,8 @@ export async function GET(request: NextRequest) {
       name: member.full_name,
       monthly_fee: planPrices[member.plan] || 0
     })) || []
+
+    console.log(`[Members API] Returning ${membersWithFee.length} members with fees`)
 
     return createSuccessResponse({ members: membersWithFee })
   } catch (error) {

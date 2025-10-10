@@ -47,7 +47,9 @@ export default function StoreDetailPage() {
         setStore(storeData.store)
 
         // Fetch members
-        const membersRes = await fetch(`/api/admin/members?storeId=${storeId}`, {
+        const membersUrl = `/api/admin/members?storeId=${storeId}`
+        console.log('Fetching members from URL:', membersUrl)
+        const membersRes = await fetch(membersUrl, {
           credentials: 'include'
         })
         if (!membersRes.ok) {
@@ -55,9 +57,13 @@ export default function StoreDetailPage() {
         }
         const membersData = await membersRes.json()
         console.log('Members API response:', membersData)
+        console.log('membersData.data:', membersData.data)
+        console.log('membersData.data.members:', membersData.data?.members)
+        console.log('membersData.members:', membersData.members)
         // API response structure: { data: { members: [...] } } or { members: [...] }
         const membersList = membersData.data?.members || membersData.members || []
         console.log('Members list:', membersList)
+        console.log('Members list length:', membersList.length)
         setMembers(membersList)
 
       } catch (err) {
