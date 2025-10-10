@@ -60,8 +60,22 @@ export default function StoreDetailPage() {
         console.log('membersData.data:', membersData.data)
         console.log('membersData.data.members:', membersData.data?.members)
         console.log('membersData.members:', membersData.members)
-        // API response structure: { data: { members: [...] } } or { members: [...] }
-        const membersList = membersData.data?.members || membersData.members || []
+        
+        // Handle different response structures:
+        // 1. { data: { members: [...] } }
+        // 2. { members: [...] }
+        // 3. { data: [...] } (if data is directly an array)
+        let membersList: Member[] = []
+        if (Array.isArray(membersData.data?.members)) {
+          membersList = membersData.data.members
+        } else if (Array.isArray(membersData.members)) {
+          membersList = membersData.members
+        } else if (Array.isArray(membersData.data)) {
+          membersList = membersData.data
+        } else if (Array.isArray(membersData)) {
+          membersList = membersData
+        }
+        
         console.log('Members list:', membersList)
         console.log('Members list length:', membersList.length)
         setMembers(membersList)
