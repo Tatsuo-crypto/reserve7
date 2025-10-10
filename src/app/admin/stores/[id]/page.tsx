@@ -34,6 +34,7 @@ export default function StoreDetailPage() {
     const fetchData = async () => {
       try {
         setLoading(true)
+        console.log('Fetching store data for storeId:', storeId)
         
         // Fetch store info
         const storeRes = await fetch(`/api/admin/stores/${storeId}`, {
@@ -53,7 +54,11 @@ export default function StoreDetailPage() {
           throw new Error('会員情報の取得に失敗しました')
         }
         const membersData = await membersRes.json()
-        setMembers(membersData.members || [])
+        console.log('Members API response:', membersData)
+        // API response structure: { data: { members: [...] } } or { members: [...] }
+        const membersList = membersData.data?.members || membersData.members || []
+        console.log('Members list:', membersList)
+        setMembers(membersList)
 
       } catch (err) {
         console.error('Error fetching data:', err)
