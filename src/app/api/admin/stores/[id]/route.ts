@@ -3,6 +3,31 @@ export const dynamic = 'force-dynamic'
 import { supabaseAdmin as supabase } from '@/lib/supabase-admin'
 import { requireAdminAuth, handleApiError } from '@/lib/api-utils'
 
+// GET /api/admin/stores/[id]
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+  try {
+    const auth = await requireAdminAuth()
+    if (auth instanceof NextResponse) return auth
+
+    const { data, error } = await supabase
+      .from('stores')
+      .select('id, name, email, calendar_id, status, address, phone, created_at, updated_at')
+      .eq('id', params.id)
+      .single()
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return NextResponse.json({ error: '店舗が見つかりません' }, { status: 404 })
+      }
+      throw error
+    }
+
+    return NextResponse.json({ store: data })
+  } catch (error) {
+    return handleApiError(error, 'Admin stores GET')
+  }
+}
+
 // PUT /api/admin/stores/[id]
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {

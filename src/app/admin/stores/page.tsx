@@ -190,7 +190,12 @@ export default function StoresPage() {
                   {stores.map(s => (
                     <tr key={s.id} className="hover:bg-gray-50">
                       <td className="px-3 py-2 border-b whitespace-nowrap text-center">
-                        <div className="font-medium text-gray-900 whitespace-nowrap">{s.name}</div>
+                        <Link 
+                          href={`/admin/stores/${s.id}`}
+                          className="font-medium text-blue-600 hover:text-blue-800 hover:underline whitespace-nowrap"
+                        >
+                          {s.name}
+                        </Link>
                       </td>
                       <td className="px-3 py-2 border-b whitespace-nowrap text-center">
                         <div className="text-gray-800 truncate max-w-[240px] mx-auto" title={s.email || ''}>{s.email || '-'}</div>

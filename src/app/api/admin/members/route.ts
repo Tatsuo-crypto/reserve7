@@ -15,13 +15,24 @@ export async function GET(request: NextRequest) {
       return createErrorResponse('管理者権限が必要です', 403)
     }
 
-    // Use user.storeId from authenticated user
+    // Get storeId from query params or use user's storeId
+    const { searchParams } = new URL(request.url)
+    const storeId = searchParams.get('storeId') || user.storeId
 
-    // Get members from the same store (exclude admin accounts)
+    // Get plan price mapping
+    const planPrices: { [key: string]: number } = {
+      '月2回': 13200,
+      '月4回': 26400,
+      '月6回': 39600,
+      '月8回': 52800,
+      'ダイエットコース': 66000,
+    }
+
+    // Get members from the specified store (exclude admin accounts)
     const { data: members, error } = await supabase
       .from('users')
       .select('id, full_name, email, plan, status, store_id, created_at, memo, access_token')
-      .eq('store_id', user.storeId)
+      .eq('store_id', storeId)
       .neq('email', 'tandjgym@gmail.com')
       .neq('email', 'tandjgym2goutenn@gmail.com')
       .order('created_at', { ascending: false })
@@ -31,7 +42,14 @@ export async function GET(request: NextRequest) {
       return createErrorResponse('Failed to fetch members', 500)
     }
 
-    return createSuccessResponse({ members })
+    // Add monthly_fee to each member
+    const membersWithFee = members?.map(member => ({
+      ...member,
+      name: member.full_name,
+      monthly_fee: planPrices[member.plan] || 0
+    })) || []
+
+    return createSuccessResponse({ members: membersWithFee })
   } catch (error) {
     console.error('Members API error:', error)
     return createErrorResponse('Internal server error', 500)
