@@ -73,11 +73,15 @@ export async function POST(request: NextRequest) {
       return createErrorResponse('管理者権限が必要です', 403)
     }
 
-    const { fullName, email, plan, status, memo } = await request.json()
+    const { fullName, email, plan, status, memo, storeId, monthlyFee } = await request.json()
 
     // Validation
     if (!fullName || !email) {
       return createErrorResponse('名前とメールアドレスは必須です', 400)
+    }
+
+    if (!storeId) {
+      return createErrorResponse('店舗の選択は必須です', 400)
     }
 
     // Validate status if provided
@@ -102,17 +106,24 @@ export async function POST(request: NextRequest) {
     }
 
     // Create new member
+    const insertData: any = {
+      full_name: fullName,
+      email: email,
+      plan: plan || '月4回',
+      status: status || 'active',
+      store_id: storeId,
+      memo: memo || null,
+      role: 'CLIENT',
+    }
+
+    // Add monthly_fee if provided
+    if (monthlyFee !== undefined && monthlyFee !== null) {
+      insertData.monthly_fee = monthlyFee
+    }
+
     const { data: newMember, error } = await supabase
       .from('users')
-      .insert([{
-        full_name: fullName,
-        email: email,
-        plan: plan || '月4回',
-        status: status || 'active',
-        store_id: user.storeId,
-        memo: memo || null,
-        role: 'CLIENT',
-      }])
+      .insert([insertData])
       .select()
       .single()
 

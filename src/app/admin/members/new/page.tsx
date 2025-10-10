@@ -1,19 +1,51 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+
+type Store = {
+  id: string
+  name: string
+}
 
 export default function NewMemberPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [stores, setStores] = useState<Store[]>([])
+  const [loadingStores, setLoadingStores] = useState(true)
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
     plan: '月4回',
+    monthlyFee: 26400,
+    storeId: '',
     status: 'active',
     memo: '',
   })
+
+  // Fetch stores on mount
+  useEffect(() => {
+    const fetchStores = async () => {
+      try {
+        const response = await fetch('/api/admin/stores')
+        if (response.ok) {
+          const data = await response.json()
+          const storesList = data.stores || []
+          setStores(storesList)
+          // Set default store if available
+          if (storesList.length > 0) {
+            setFormData(prev => ({ ...prev, storeId: storesList[0].id }))
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch stores:', error)
+      } finally {
+        setLoadingStores(false)
+      }
+    }
+    fetchStores()
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -48,7 +80,22 @@ export default function NewMemberPage() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
+    
+    // Update monthly fee when plan changes
+    if (name === 'plan') {
+      const planPrices: { [key: string]: number } = {
+        '月2回': 13200,
+        '月4回': 26400,
+        '月6回': 39600,
+        '月8回': 52800,
+        'ダイエットコース': 66000,
+      }
+      setFormData(prev => ({ ...prev, plan: value, monthlyFee: planPrices[value] || 0 }))
+    } else if (name === 'monthlyFee') {
+      setFormData(prev => ({ ...prev, monthlyFee: parseInt(value) || 0 }))
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }))
+    }
   }
 
   return (
@@ -101,6 +148,33 @@ export default function NewMemberPage() {
             <p className="mt-1 text-sm text-gray-500">会員専用URLの発行に使用されます</p>
           </div>
 
+          {/* 店舗選択 */}
+          <div>
+            <label htmlFor="storeId" className="block text-sm font-medium text-gray-700 mb-2">
+              所属店舗 <span className="text-red-500">*</span>
+            </label>
+            {loadingStores ? (
+              <div className="text-sm text-gray-500">店舗を読み込み中...</div>
+            ) : stores.length === 0 ? (
+              <div className="text-sm text-red-600">店舗が登録されていません</div>
+            ) : (
+              <select
+                id="storeId"
+                name="storeId"
+                value={formData.storeId}
+                onChange={handleChange}
+                required
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                {stores.map((store) => (
+                  <option key={store.id} value={store.id}>
+                    {store.name}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+
           {/* プラン */}
           <div>
             <label htmlFor="plan" className="block text-sm font-medium text-gray-700 mb-2">
@@ -119,6 +193,26 @@ export default function NewMemberPage() {
               <option value="月8回">月8回</option>
               <option value="ダイエットコース">ダイエットコース</option>
             </select>
+          </div>
+
+          {/* 月会費 */}
+          <div>
+            <label htmlFor="monthlyFee" className="block text-sm font-medium text-gray-700 mb-2">
+              月会費（円）
+            </label>
+            <input
+              type="number"
+              id="monthlyFee"
+              name="monthlyFee"
+              value={formData.monthlyFee}
+              onChange={handleChange}
+              min="0"
+              step="100"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+            <p className="mt-1 text-sm text-gray-500">
+              ¥{formData.monthlyFee.toLocaleString()}（プラン選択時に自動入力されます）
+            </p>
           </div>
 
           {/* ステータス */}
