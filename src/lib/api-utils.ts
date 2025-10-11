@@ -16,10 +16,10 @@ export async function getAuthenticatedUser() {
     return null
   }
 
-  // Get user ID from database
+  // Get user ID and store_id from database
   const { data: user, error } = await supabase
     .from('users')
-    .select('id')
+    .select('id, store_id')
     .eq('email', session.user.email)
     .single()
 
@@ -32,7 +32,7 @@ export async function getAuthenticatedUser() {
     email: session.user.email,
     name: session.user.name || '',
     isAdmin: isAdmin(session.user.email),
-    storeId: getUserStoreId(session.user.email)
+    storeId: user.store_id || getUserStoreId(session.user.email)
   }
 }
 

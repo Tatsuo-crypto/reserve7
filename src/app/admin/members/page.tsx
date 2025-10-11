@@ -12,9 +12,14 @@ interface Member {
   plan?: string
   status?: 'active' | 'suspended' | 'withdrawn'
   store_id: string
+  monthly_fee?: number
   created_at: string
   memo?: string
   access_token?: string
+  stores?: {
+    id: string
+    name: string
+  }
 }
 
 export default function MembersPage() {
@@ -45,6 +50,9 @@ export default function MembersPage() {
         if (response.ok) {
           const result = await response.json()
           const data = result.data || result
+          console.log('API Response:', data)
+          console.log('First member:', data.members?.[0])
+          console.log('First member stores:', data.members?.[0]?.stores)
           setMembers(data.members || [])
         } else {
           const errorData = await response.json()
@@ -102,6 +110,7 @@ export default function MembersPage() {
     if (plan.includes('4回')) return 4
     if (plan.includes('6回')) return 6
     if (plan.includes('8回')) return 8
+    if (plan.includes('カウンセリング')) return 1
     if (plan.includes('ダイエット')) return 100
     return 999
   }
@@ -405,6 +414,44 @@ export default function MembersPage() {
           </div>
         </div>
 
+        {/* Plan Summary */}
+        {members && members.length > 0 && (() => {
+          const activeMembersList = showOnlyActive ? members.filter(m => (m.status || 'active') === 'active') : members
+          const planStats: { [key: string]: { count: number; total: number } } = {}
+          
+          activeMembersList.forEach(member => {
+            const plan = member.plan || 'その他'
+            if (!planStats[plan]) {
+              planStats[plan] = { count: 0, total: 0 }
+            }
+            planStats[plan].count += 1
+            planStats[plan].total += member.monthly_fee || 0
+          })
+
+          const totalCount = Object.values(planStats).reduce((sum, stat) => sum + stat.count, 0)
+          const totalAmount = Object.values(planStats).reduce((sum, stat) => sum + stat.total, 0)
+
+          return (
+            <div className="mb-6 bg-white shadow rounded-lg p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">プラン別サマリー</h2>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                {Object.entries(planStats).sort(([a], [b]) => a.localeCompare(b)).map(([plan, stats]) => (
+                  <div key={plan} className="bg-gray-50 rounded-lg p-4 border border-gray-200 flex flex-col h-full">
+                    <div className="text-sm font-medium text-gray-700 mb-2 h-10 flex items-center">{plan}</div>
+                    <div className="text-2xl font-bold text-indigo-600">{stats.count}名</div>
+                    <div className="text-sm text-gray-600 mt-1">¥{stats.total.toLocaleString()}</div>
+                  </div>
+                ))}
+                <div className="bg-indigo-50 rounded-lg p-4 border-2 border-indigo-300 flex flex-col h-full">
+                  <div className="text-sm font-medium text-indigo-900 mb-2 h-10 flex items-center">合計</div>
+                  <div className="text-2xl font-bold text-indigo-700">{totalCount}名</div>
+                  <div className="text-sm text-indigo-700 mt-1 font-semibold">¥{totalAmount.toLocaleString()}</div>
+                </div>
+              </div>
+            </div>
+          )
+        })()}
+
         {error && (
           <div className={`mb-6 border rounded-md p-4 ${
             error.includes('更新完了') 
@@ -430,18 +477,24 @@ export default function MembersPage() {
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px]">
-                      会員名
+                      店舗
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[200px]">
-                      メールアドレス
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px]">
+                      会員名
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[140px] cursor-pointer select-none"
                         onClick={() => { setSortKey(prev => prev === 'plan' ? 'plan' : 'plan'); setSortAsc(prev => sortKey === 'plan' ? !prev : true) }}>
                       プラン {sortKey === 'plan' ? (sortAsc ? '▲' : '▼') : ''}
                     </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[100px]">
+                      月会費
+                    </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px] cursor-pointer select-none"
                         onClick={() => { setSortKey(prev => prev === 'status' ? 'status' : 'status'); setSortAsc(prev => sortKey === 'status' ? !prev : true) }}>
                       ステータス {sortKey === 'status' ? (sortAsc ? '▲' : '▼') : ''}
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[200px]">
+                      メールアドレス
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[150px]">
                       メモ
@@ -460,6 +513,9 @@ export default function MembersPage() {
                 <tbody className="bg-white divide-y divide-gray-200">
                   {sortedMembers && (showOnlyActive ? sortedMembers.filter(m => (m.status || 'active') === 'active') : sortedMembers).map((member) => (
                     <tr key={member.id}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 min-w-[120px]">
+                        {member.stores?.name || '-'}
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 min-w-[120px]">
                         <div className="flex items-center">
                           <Link
@@ -470,9 +526,6 @@ export default function MembersPage() {
                           </Link>
                           <span className={`ml-2 inline-block w-2 h-2 rounded-full ${getStatusDotColor(member.status)}`} aria-hidden="true"></span>
                         </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 min-w-[200px]">
-                        {member.email}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 min-w-[140px]">
                         <select
@@ -487,8 +540,14 @@ export default function MembersPage() {
                           <option value="月4回">月4回</option>
                           <option value="月6回">月6回</option>
                           <option value="月8回">月8回</option>
-                          <option value="ダイエットコース">ダイエットコース</option>
+                          <option value="ダイエットコース【2ヶ月】">ダイエットコース【2ヶ月】</option>
+                          <option value="ダイエットコース【3ヶ月】">ダイエットコース【3ヶ月】</option>
+                          <option value="ダイエットコース【6ヶ月】">ダイエットコース【6ヶ月】</option>
+                          <option value="カウンセリング">カウンセリング</option>
                         </select>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 min-w-[100px]">
+                        {member.monthly_fee ? `¥${member.monthly_fee.toLocaleString()}` : '-'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap min-w-[120px]">
                         <select
@@ -503,6 +562,9 @@ export default function MembersPage() {
                           <option value="suspended">休会</option>
                           <option value="withdrawn">退会</option>
                         </select>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 min-w-[200px]">
+                        {member.email}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 min-w-[150px]">
                         <input
@@ -524,20 +586,17 @@ export default function MembersPage() {
                         {new Date(member.created_at).toLocaleDateString('ja-JP')}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm min-w-[100px]">
-                        {member.access_token ? (
-                          <button
-                            onClick={() => handleCopyAccessUrl(member.access_token!, member.full_name)}
-                            className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                            title="専用URLをコピー"
+                        <div className="flex items-center space-x-2">
+                          <Link
+                            href={`/admin/members/${member.id}/edit`}
+                            className="inline-flex items-center px-3 py-1 border border-gray-300 text-xs font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                            title="編集"
                           >
-                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                             </svg>
-                            URL
-                          </button>
-                        ) : (
-                          <span className="text-gray-400">-</span>
-                        )}
+                          </Link>
+                        </div>
                       </td>
                   </tr>
                   ))}

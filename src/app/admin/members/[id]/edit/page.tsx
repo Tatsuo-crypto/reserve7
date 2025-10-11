@@ -1,11 +1,15 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useParams } from 'next/navigation'
 
-export default function NewMemberPage() {
+export default function EditMemberPage() {
   const router = useRouter()
+  const params = useParams()
+  const memberId = params.id as string
+  
   const [loading, setLoading] = useState(false)
+  const [fetchLoading, setFetchLoading] = useState(true)
   const [error, setError] = useState('')
   const [stores, setStores] = useState<{id: string, name: string}[]>([])
   const [formData, setFormData] = useState({
@@ -18,36 +22,36 @@ export default function NewMemberPage() {
     memo: '',
   })
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError('')
-
-    try {
-      const response = await fetch('/api/admin/members', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      })
-
-      const result = await response.json()
-
-      if (response.ok) {
-        // Success
-        alert('会員を追加しました')
-        router.push('/admin/members')
-      } else {
-        setError(result.error || '会員の追加に失敗しました')
+  // Fetch member data
+  useEffect(() => {
+    const fetchMember = async () => {
+      try {
+        const response = await fetch(`/api/admin/members/${memberId}`)
+        if (response.ok) {
+          const result = await response.json()
+          const member = result.data || result
+          setFormData({
+            fullName: member.full_name || '',
+            email: member.email || '',
+            storeId: member.store_id || '',
+            plan: member.plan || '月4回',
+            monthlyFee: member.monthly_fee ? member.monthly_fee.toString() : '',
+            status: member.status || 'active',
+            memo: member.memo || '',
+          })
+        } else {
+          setError('会員情報の取得に失敗しました')
+        }
+      } catch (error) {
+        console.error('Failed to fetch member:', error)
+        setError('会員情報の取得中にエラーが発生しました')
+      } finally {
+        setFetchLoading(false)
       }
-    } catch (error) {
-      console.error('Error:', error)
-      setError('会員の追加中にエラーが発生しました')
-    } finally {
-      setLoading(false)
     }
-  }
+
+    fetchMember()
+  }, [memberId])
 
   // Fetch stores
   useEffect(() => {
@@ -58,10 +62,6 @@ export default function NewMemberPage() {
           const result = await response.json()
           const data = result.data || result
           setStores(data.stores || [])
-          // Set first store as default if available
-          if (data.stores && data.stores.length > 0) {
-            setFormData(prev => ({ ...prev, storeId: data.stores[0].id }))
-          }
         }
       } catch (error) {
         console.error('Failed to fetch stores:', error)
@@ -70,17 +70,64 @@ export default function NewMemberPage() {
     fetchStores()
   }, [])
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError('')
+
+    try {
+      const response = await fetch('/api/admin/members', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          memberId,
+          fullName: formData.fullName,
+          email: formData.email,
+          storeId: formData.storeId,
+          plan: formData.plan,
+          monthlyFee: formData.monthlyFee,
+          status: formData.status,
+          memo: formData.memo,
+        }),
+      })
+
+      const result = await response.json()
+
+      if (response.ok) {
+        alert('会員情報を更新しました')
+        router.push('/admin/members')
+      } else {
+        setError(result.error || '会員情報の更新に失敗しました')
+      }
+    } catch (error) {
+      console.error('Error:', error)
+      setError('会員情報の更新中にエラーが発生しました')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
+  }
+
+  if (fetchLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg">会員情報を読み込み中...</div>
+      </div>
+    )
   }
 
   return (
     <div className="max-w-2xl mx-auto py-8 px-4">
       <div className="bg-white shadow-sm border border-gray-200 rounded-lg p-6">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">新規会員追加</h1>
-          <p className="mt-2 text-sm text-gray-600">会員情報を入力してください</p>
+          <h1 className="text-2xl font-bold text-gray-900">会員情報編集</h1>
+          <p className="mt-2 text-sm text-gray-600">会員情報を更新してください</p>
         </div>
 
         {error && (
@@ -122,7 +169,6 @@ export default function NewMemberPage() {
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               placeholder="example@email.com"
             />
-            <p className="mt-1 text-sm text-gray-500">会員専用URLの発行に使用されます</p>
           </div>
 
           {/* 店舗 */}
@@ -223,7 +269,7 @@ export default function NewMemberPage() {
           <div className="flex justify-center space-x-4">
             <button
               type="button"
-              onClick={() => router.back()}
+              onClick={() => router.push('/admin/members')}
               className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
             >
               キャンセル
@@ -233,20 +279,10 @@ export default function NewMemberPage() {
               disabled={loading}
               className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {loading ? '追加中...' : '会員を追加'}
+              {loading ? '更新中...' : '会員情報を更新'}
             </button>
           </div>
         </form>
-
-        {/* Info Box */}
-        <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <h3 className="text-sm font-medium text-blue-900 mb-2">会員追加について</h3>
-          <ul className="text-sm text-blue-800 space-y-1">
-            <li>• 会員追加後、会員管理ページから専用URLを発行できます</li>
-            <li>• メールアドレスは専用URL発行時に必要です</li>
-            <li>• プランとステータスは後から変更できます</li>
-          </ul>
-        </div>
       </div>
     </div>
   )
