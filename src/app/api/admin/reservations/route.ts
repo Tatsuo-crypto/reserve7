@@ -18,7 +18,22 @@ export async function POST(request: NextRequest) {
     
     // Validate input
     const { clientId, startTime, duration, notes, trainerId } = body
-    const calendarId = user.storeId // Force use of user's store calendar
+    
+    // Get Google Calendar ID from stores table
+    const { data: store, error: storeError } = await supabase
+      .from('stores')
+      .select('calendar_id')
+      .eq('id', user.storeId)
+      .single()
+    
+    if (storeError || !store) {
+      return NextResponse.json(
+        { error: '店舗情報の取得に失敗しました' },
+        { status: 500 }
+      )
+    }
+    
+    const calendarId = store.calendar_id // Google Calendar ID (email format)
     
     if (!clientId || !startTime || !duration) {
       return NextResponse.json(

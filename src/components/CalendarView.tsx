@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import TimelineView from './TimelineView'
+import { useSession } from 'next-auth/react'
 
 interface Reservation {
   id: string
@@ -16,6 +17,7 @@ interface Reservation {
     fullName: string
     email: string
     plan?: string
+    storeId?: string
   }
 }
 
@@ -30,6 +32,7 @@ interface CalendarEvent {
 }
 
 export default function CalendarView() {
+  const { data: session } = useSession()
   const [currentDate, setCurrentDate] = useState(new Date())
   const [events, setEvents] = useState<CalendarEvent[]>([])
   const [loading, setLoading] = useState(true)
@@ -123,7 +126,7 @@ export default function CalendarView() {
     }
 
     fetchCalendarData()
-  }, [])
+  }, [session])
 
   // Helper functions
   const formatMonth = (date: Date) => {

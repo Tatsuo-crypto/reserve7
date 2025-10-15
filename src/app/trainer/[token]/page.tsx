@@ -75,80 +75,85 @@ export default function TrainerDashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">T&J GYM</h1>
-              <p className="text-sm text-gray-600 mt-1">トレーナー: {trainer.name} 様</p>
+    <div className="min-h-screen">
+      {/* Top Navigation */}
+      <header className="bg-gradient-to-b from-white to-gray-50 border-b border-gray-100 shadow">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="text-xl font-semibold text-gray-900">
+              T&J GYM
             </div>
-            <div className="text-right">
-              <div className="text-sm text-gray-600">{getStoreDisplayName(trainer.storeId)}</div>
+            <div className="bg-white border border-gray-300 px-4 py-2 rounded-lg shadow-sm text-sm flex items-center space-x-3">
+              <span className="text-gray-700 font-medium">
+                {getStoreDisplayName(trainer.storeId)}
+              </span>
+              <span className="px-3 py-1 rounded-full text-xs font-medium border bg-blue-100 text-blue-700 border-blue-300">
+                トレーナー
+              </span>
             </div>
           </div>
         </div>
-      </div>
+      </header>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+        {/* Header */}
+        <div className="bg-white shadow-sm border border-gray-200 rounded-lg mb-6">
+          <div className="px-6 py-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-semibold text-gray-900">
+                  ダッシュボード
+                </h1>
+                <p className="mt-1 text-sm text-gray-600">
+                  ようこそ、{trainer.name}さん
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
 
       {/* Dashboard Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* 予約管理 */}
-          <Link
-            href={`/admin/calendar?trainerToken=${token}`}
-            className="group bg-white hover:bg-blue-50 border-2 border-gray-200 hover:border-blue-300 rounded-2xl p-8 shadow-sm hover:shadow-md transition-all duration-200"
-          >
-            <div className="flex items-start">
-              <div className="flex-shrink-0">
-                <div className="w-16 h-16 bg-blue-100 rounded-xl flex items-center justify-center group-hover:bg-blue-200 transition-colors">
+      <div className="space-y-6 pb-6">
+        <div className="bg-white shadow-sm border border-gray-200 rounded-xl p-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            {/* 予約管理 */}
+            <Link
+              href={`/admin/calendar?trainerToken=${token}`}
+              className="group bg-gradient-to-br from-white to-blue-50 hover:from-blue-50 hover:to-blue-100 border border-blue-200 p-8 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col min-h-[200px] transform hover:-translate-y-1"
+            >
+              <div className="flex items-center mb-6">
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl flex items-center justify-center group-hover:from-blue-200 group-hover:to-blue-300 transition-all duration-300 shadow-sm">
                   <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
                   </svg>
                 </div>
               </div>
-              <div className="ml-6 flex-1">
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">予約</h3>
-                <p className="text-gray-600">すべての予約を確認・管理</p>
+              <div className="flex-1">
+                <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-blue-800 transition-colors duration-200">予約</h3>
+                <p className="text-base text-gray-600 leading-relaxed">すべての予約を確認・管理</p>
               </div>
-            </div>
-          </Link>
+            </Link>
 
-          {/* 会員管理 */}
-          <Link
-            href={`/admin/members?trainerToken=${token}`}
-            className="group bg-white hover:bg-purple-50 border-2 border-gray-200 hover:border-purple-300 rounded-2xl p-8 shadow-sm hover:shadow-md transition-all duration-200"
-          >
-            <div className="flex items-start">
-              <div className="flex-shrink-0">
-                <div className="w-16 h-16 bg-purple-100 rounded-xl flex items-center justify-center group-hover:bg-purple-200 transition-colors">
+            {/* 会員管理 */}
+            <Link
+              href={`/admin/members?trainerToken=${token}`}
+              className="group bg-gradient-to-br from-white to-purple-50 hover:from-purple-50 hover:to-purple-100 border border-purple-200 p-8 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col min-h-[200px] transform hover:-translate-y-1"
+            >
+              <div className="flex items-center mb-6">
+                <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-purple-200 rounded-xl flex items-center justify-center group-hover:from-purple-200 group-hover:to-purple-300 transition-all duration-300 shadow-sm">
                   <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                   </svg>
                 </div>
               </div>
-              <div className="ml-6 flex-1">
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">会員管理</h3>
-                <p className="text-gray-600">会員情報の管理</p>
+              <div className="flex-1">
+                <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-purple-800 transition-colors duration-200">会員管理</h3>
+                <p className="text-base text-gray-600 leading-relaxed">会員情報の管理</p>
               </div>
-            </div>
-          </Link>
-        </div>
-
-        {/* Info Section */}
-        <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
-          <div className="flex">
-            <svg className="w-6 h-6 text-blue-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-blue-900">トレーナー権限</h3>
-              <div className="mt-2 text-sm text-blue-700">
-                <p>予約管理と会員管理機能をご利用いただけます。</p>
-              </div>
-            </div>
+            </Link>
           </div>
         </div>
+      </div>
       </div>
     </div>
   )

@@ -5,14 +5,57 @@ import { getAuthenticatedUser, createErrorResponse, createSuccessResponse } from
 
 export async function GET(request: NextRequest) {
   try {
-    // Check authentication - get session with request context
-    const user = await getAuthenticatedUser()
+    // Check for token-based authentication (for member-specific URLs)
+    const { searchParams } = new URL(request.url)
+    const token = searchParams.get('token')
     
-    if (!user) {
-      return createErrorResponse('認証が必要です', 401)
+    let user = null
+    let tokenUser = null
+    
+    if (token) {
+      // Token-based authentication for members
+      const { data: userData, error: tokenError } = await supabase
+        .from('users')
+        .select('id, email, full_name, store_id, access_token')
+        .eq('access_token', token)
+        .single()
+      
+      if (tokenError || !userData) {
+        return createErrorResponse('無効なアクセストークンです', 401)
+      }
+      
+      tokenUser = userData
+      user = {
+        id: userData.id,
+        email: userData.email,
+        name: userData.full_name,
+        isAdmin: false,
+        storeId: userData.store_id
+      }
+    } else {
+      // Session-based authentication
+      user = await getAuthenticatedUser()
+      
+      if (!user) {
+        return createErrorResponse('認証が必要です', 401)
+      }
     }
 
-    console.log('Reservations API - User:', user.email, 'Admin:', user.isAdmin, 'StoreId:', user.storeId)
+    console.log('Reservations API - User:', user.email, 'Admin:', user.isAdmin, 'StoreId:', user.storeId, 'Token:', !!token)
+
+    // Get Google Calendar ID from stores table
+    const { data: store, error: storeError } = await supabase
+      .from('stores')
+      .select('calendar_id')
+      .eq('id', user.storeId)
+      .single()
+    
+    if (storeError || !store) {
+      console.error('Store fetch error:', storeError)
+      return createErrorResponse('店舗情報の取得に失敗しました', 500)
+    }
+    
+    const calendarId = store.calendar_id
 
     let query = supabase
       .from('reservations')
@@ -37,26 +80,29 @@ export async function GET(request: NextRequest) {
       .order('start_time', { ascending: true })
 
     // Filter by store and user permissions
-    query = query.eq('calendar_id', user.storeId)
+    query = query.eq('calendar_id', calendarId)
     
     if (!user.isAdmin) {
       // Regular users can only see their own reservations
-      const { data: userData } = await supabase
-        .from('users')
-        .select('id, store_id')
-        .eq('email', user.email)
-        .single()
-      
-      if (!userData) {
-        return createErrorResponse('ユーザーが見つかりません', 404)
+      if (token && tokenUser) {
+        // Token-based: use tokenUser.id directly
+        query = query.eq('client_id', tokenUser.id)
+      } else {
+        // Session-based: fetch user ID from database
+        const { data: userData } = await supabase
+          .from('users')
+          .select('id, store_id')
+          .eq('email', user.email)
+          .single()
+        
+        if (!userData) {
+          return createErrorResponse('ユーザーが見つかりません', 404)
+        }
+        
+        // Ensure user can only see reservations from their store
+        query = query.eq('client_id', userData.id)
       }
-      
-      // Ensure user can only see reservations from their store
-      query = query.eq('client_id', userData.id)
-      query = query.eq('calendar_id', userData.store_id)
-    } else {
-      // Admin users can see all reservations from their store
-      query = query.eq('calendar_id', user.storeId)
+      // calendar_id is already filtered above
     }
 
     const { data: reservations, error } = await query

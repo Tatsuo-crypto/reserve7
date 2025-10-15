@@ -1,12 +1,13 @@
 'use client'
 
-import { useParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import { useParams } from 'next/navigation'
 
 interface User {
   id: string
   name: string
   email: string
+  storeId: string
   plan: string
 }
 
@@ -15,24 +16,30 @@ interface Reservation {
   title: string
   start_time: string
   end_time: string
-  notes: string | null
+  notes?: string
   created_at: string
 }
 
-export default function ClientReservationsPage() {
+export default function ClientReservationsContent() {
   const params = useParams()
   const token = params?.token as string
 
   const [user, setUser] = useState<User | null>(null)
-  const [futureReservations, setFutureReservations] = useState<Reservation[]>([])
-  const [pastReservations, setPastReservations] = useState<Reservation[]>([])
+  const [reservations, setReservations] = useState<Reservation[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [futureReservations, setFutureReservations] = useState<Reservation[]>([])
+  const [pastReservations, setPastReservations] = useState<Reservation[]>([])
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
+    setMounted(true)
+    
     const fetchData = async () => {
       try {
-        // Get user info
+        setLoading(true)
+
+        // Verify token and get user info
         const userResponse = await fetch(`/api/auth/token?token=${token}`)
         if (!userResponse.ok) {
           setError('無効なURLです')
@@ -48,11 +55,16 @@ export default function ClientReservationsPage() {
           return
         }
         const reservationsData = await reservationsResponse.json()
+        const allReservations = reservationsData.data.reservations || []
+        const future = reservationsData.data.futureReservations || []
+        const past = reservationsData.data.pastReservations || []
         
-        setFutureReservations(reservationsData.data.futureReservations || [])
-        setPastReservations(reservationsData.data.pastReservations || [])
+        setReservations(allReservations)
+        setFutureReservations(future)
+        setPastReservations(past)
+
       } catch (err) {
-        console.error('Error:', err)
+        console.error('Error fetching data:', err)
         setError('データの取得に失敗しました')
       } finally {
         setLoading(false)
@@ -64,16 +76,20 @@ export default function ClientReservationsPage() {
     }
   }, [token])
 
+  // Format date for display
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr)
-    const year = date.getFullYear()
-    const month = date.getMonth() + 1
-    const day = date.getDate()
-    const hours = String(date.getHours()).padStart(2, '0')
-    const minutes = String(date.getMinutes()).padStart(2, '0')
-    return `${year}年${month}月${day}日 ${hours}:${minutes}`
+    return date.toLocaleDateString('ja-JP', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZone: 'Asia/Tokyo'
+    })
   }
 
+  // Format title to show "パーソナル X/Y回目"
   const formatTitle = (title: string) => {
     const match = title.match(/(\d+)\/(\d+)$/)
     if (match) {
@@ -82,13 +98,17 @@ export default function ClientReservationsPage() {
     return title
   }
 
+  // Get month key from date
   const getMonthKey = (dateStr: string) => {
     const date = new Date(dateStr)
-    const year = date.getFullYear()
-    const month = date.getMonth() + 1
-    return `${year}年${month}月`
+    return date.toLocaleDateString('ja-JP', {
+      year: 'numeric',
+      month: 'long',
+      timeZone: 'Asia/Tokyo'
+    })
   }
 
+  // Group reservations by month
   const groupByMonth = (reservations: Reservation[]) => {
     const grouped: { [key: string]: Reservation[] } = {}
     reservations.forEach(reservation => {
@@ -101,7 +121,11 @@ export default function ClientReservationsPage() {
     return grouped
   }
 
-  if (loading) {
+  const futureByMonth = groupByMonth(futureReservations)
+  const pastByMonth = groupByMonth(pastReservations)
+
+  // Prevent hydration error by showing loading during mount
+  if (!mounted || loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -124,16 +148,17 @@ export default function ClientReservationsPage() {
     )
   }
 
-  const futureByMonth = groupByMonth(futureReservations)
-  const pastByMonth = groupByMonth(pastReservations)
-
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Fixed Header */}
       <header className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <h1 className="text-xl font-bold text-gray-900">T&J GYM</h1>
-            <button className="p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100" aria-label="メニュー">
+            <button
+              className="p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+              aria-label="メニュー"
+            >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
               </svg>
@@ -143,8 +168,9 @@ export default function ClientReservationsPage() {
       </header>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* User Info */}
         <div className="bg-white rounded-xl shadow-md border border-gray-200 p-8 mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 mb-6 pb-4 border-b border-gray-200">会員情報</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-6 pb-4 border-b border-gray-200">予約一覧</h1>
           <div className="space-y-4">
             <div className="flex items-center p-4 bg-blue-50 rounded-lg border border-blue-100">
               <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-full mr-4">
@@ -171,72 +197,112 @@ export default function ClientReservationsPage() {
           </div>
         </div>
 
+        {/* Future Reservations */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
           <h2 className="text-xl font-bold text-gray-900 mb-4">今後の予約</h2>
           {futureReservations.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">今後の予約はありません</div>
+            <div className="text-center py-8 text-gray-500">
+              今後の予約はありません
+            </div>
           ) : (
             <div className="space-y-6">
               {Object.entries(futureByMonth)
-                .sort((a, b) => new Date(a[1][0].start_time).getTime() - new Date(b[1][0].start_time).getTime())
+                .sort((a, b) => {
+                  const dateA = new Date(a[1][0].start_time)
+                  const dateB = new Date(b[1][0].start_time)
+                  return dateA.getTime() - dateB.getTime()
+                })
                 .map(([monthKey, reservations]) => (
-                  <div key={monthKey} className="space-y-3">
-                    <div className="bg-gradient-to-r from-blue-50 to-blue-100 border-l-4 border-blue-500 px-4 py-2 rounded">
-                      <h3 className="text-lg font-bold text-blue-900">{monthKey}</h3>
-                    </div>
-                    {reservations
-                      .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())
-                      .map((reservation) => (
-                        <div key={reservation.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow ml-4">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <h3 className="text-lg font-semibold text-gray-900 mb-1">{formatTitle(reservation.title)}</h3>
-                              <p className="text-gray-600 mb-2">📅 {formatDate(reservation.start_time)}</p>
-                              {reservation.notes && <p className="text-sm text-gray-500 mt-2">💬 {reservation.notes}</p>}
-                            </div>
-                            <div className="ml-4">
-                              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">予約済み</span>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
+                <div key={monthKey} className="space-y-3">
+                  <div className="bg-gradient-to-r from-blue-50 to-blue-100 border-l-4 border-blue-500 px-4 py-2 rounded">
+                    <h3 className="text-lg font-bold text-blue-900">{monthKey}</h3>
                   </div>
-                ))}
+                  {reservations
+                    .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())
+                    .map((reservation) => (
+                    <div
+                      key={reservation.id}
+                      className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow ml-4"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                            {formatTitle(reservation.title)}
+                          </h3>
+                          <p className="text-gray-600 mb-2">
+                            📅 {formatDate(reservation.start_time)}
+                          </p>
+                          {reservation.notes && (
+                            <p className="text-sm text-gray-500 mt-2">
+                              💬 {reservation.notes}
+                            </p>
+                          )}
+                        </div>
+                        <div className="ml-4">
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                            予約済み
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ))}
             </div>
           )}
         </div>
 
+        {/* Past Reservations */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <h2 className="text-xl font-bold text-gray-900 mb-4">過去の予約</h2>
           {pastReservations.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">過去の予約はありません</div>
+            <div className="text-center py-8 text-gray-500">
+              過去の予約はありません
+            </div>
           ) : (
             <div className="space-y-6">
               {Object.entries(pastByMonth)
-                .sort((a, b) => new Date(b[1][0].start_time).getTime() - new Date(a[1][0].start_time).getTime())
+                .sort((a, b) => {
+                  const dateA = new Date(a[1][0].start_time)
+                  const dateB = new Date(b[1][0].start_time)
+                  return dateB.getTime() - dateA.getTime()
+                })
                 .map(([monthKey, reservations]) => (
-                  <div key={monthKey} className="space-y-3">
-                    <div className="bg-gradient-to-r from-gray-50 to-gray-100 border-l-4 border-gray-400 px-4 py-2 rounded">
-                      <h3 className="text-lg font-bold text-gray-700">{monthKey}</h3>
-                    </div>
-                    {reservations
-                      .sort((a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime())
-                      .map((reservation) => (
-                        <div key={reservation.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50 ml-4">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <h3 className="text-lg font-semibold text-gray-700 mb-1">{formatTitle(reservation.title)}</h3>
-                              <p className="text-gray-500 mb-2">📅 {formatDate(reservation.start_time)}</p>
-                              {reservation.notes && <p className="text-sm text-gray-400 mt-2">💬 {reservation.notes}</p>}
-                            </div>
-                            <div className="ml-4">
-                              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-200 text-gray-600">完了</span>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
+                <div key={monthKey} className="space-y-3">
+                  <div className="bg-gradient-to-r from-gray-50 to-gray-100 border-l-4 border-gray-400 px-4 py-2 rounded">
+                    <h3 className="text-lg font-bold text-gray-700">{monthKey}</h3>
                   </div>
-                ))}
+                  {reservations
+                    .sort((a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime())
+                    .map((reservation) => (
+                    <div
+                      key={reservation.id}
+                      className="border border-gray-200 rounded-lg p-4 bg-gray-50 ml-4"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h3 className="text-lg font-semibold text-gray-700 mb-1">
+                            {formatTitle(reservation.title)}
+                          </h3>
+                          <p className="text-gray-500 mb-2">
+                            📅 {formatDate(reservation.start_time)}
+                          </p>
+                          {reservation.notes && (
+                            <p className="text-sm text-gray-400 mt-2">
+                              💬 {reservation.notes}
+                            </p>
+                          )}
+                        </div>
+                        <div className="ml-4">
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-200 text-gray-600">
+                            完了
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ))}
             </div>
           )}
         </div>

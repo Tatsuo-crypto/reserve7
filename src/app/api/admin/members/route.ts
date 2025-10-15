@@ -110,6 +110,11 @@ export async function POST(request: NextRequest) {
       return createErrorResponse('このメールアドレスは既に登録されています', 400)
     }
 
+    // Generate unique access token
+    const generateToken = () => {
+      return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
+    }
+
     // Create new member
     const { data: newMember, error } = await supabase
       .from('users')
@@ -122,6 +127,7 @@ export async function POST(request: NextRequest) {
         monthly_fee: monthlyFee ? parseInt(monthlyFee) : 0,
         memo: memo || null,
         role: 'CLIENT',
+        access_token: generateToken(),
       }])
       .select()
       .single()

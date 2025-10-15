@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 
 interface Member {
@@ -22,9 +22,11 @@ interface Member {
   }
 }
 
-export default function MembersPage() {
+function MembersPageContent() {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const trainerToken = searchParams.get('trainerToken')
   const [members, setMembers] = useState<Member[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -53,7 +55,20 @@ export default function MembersPage() {
           console.log('API Response:', data)
           console.log('First member:', data.members?.[0])
           console.log('First member stores:', data.members?.[0]?.stores)
-          setMembers(data.members || [])
+          
+          // Filter members based on selected store
+          const selectedStore = localStorage.getItem('selectedStore')
+          let filteredMembers = data.members || []
+          
+          console.log('Selected store:', selectedStore)
+          console.log('Session user email:', session?.user?.email)
+          console.log('Total members:', filteredMembers.length)
+          console.log('Sample member:', filteredMembers[0])
+          
+          // Admin can see all members, no filtering needed for now
+          // Store filtering will be implemented when store relationship is properly set up
+          
+          setMembers(filteredMembers)
         } else {
           const errorData = await response.json()
           console.error('API Error:', errorData)
@@ -388,7 +403,7 @@ export default function MembersPage() {
           <div className="flex flex-col space-y-4">
             <div className="flex items-center justify-center relative">
               <button
-                onClick={() => router.push('/dashboard')}
+                onClick={() => router.push(trainerToken ? `/trainer/${trainerToken}` : '/dashboard')}
                 className="absolute left-0 text-gray-600 hover:text-gray-900 transition-colors"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -413,44 +428,6 @@ export default function MembersPage() {
             </div>
           </div>
         </div>
-
-        {/* Plan Summary */}
-        {members && members.length > 0 && (() => {
-          const activeMembersList = showOnlyActive ? members.filter(m => (m.status || 'active') === 'active') : members
-          const planStats: { [key: string]: { count: number; total: number } } = {}
-          
-          activeMembersList.forEach(member => {
-            const plan = member.plan || 'その他'
-            if (!planStats[plan]) {
-              planStats[plan] = { count: 0, total: 0 }
-            }
-            planStats[plan].count += 1
-            planStats[plan].total += member.monthly_fee || 0
-          })
-
-          const totalCount = Object.values(planStats).reduce((sum, stat) => sum + stat.count, 0)
-          const totalAmount = Object.values(planStats).reduce((sum, stat) => sum + stat.total, 0)
-
-          return (
-            <div className="mb-6 bg-white shadow rounded-lg p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">プラン別サマリー</h2>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                {Object.entries(planStats).sort(([a], [b]) => a.localeCompare(b)).map(([plan, stats]) => (
-                  <div key={plan} className="bg-gray-50 rounded-lg p-4 border border-gray-200 flex flex-col h-full">
-                    <div className="text-sm font-medium text-gray-700 mb-2 h-10 flex items-center">{plan}</div>
-                    <div className="text-2xl font-bold text-indigo-600">{stats.count}名</div>
-                    <div className="text-sm text-gray-600 mt-1">¥{stats.total.toLocaleString()}</div>
-                  </div>
-                ))}
-                <div className="bg-indigo-50 rounded-lg p-4 border-2 border-indigo-300 flex flex-col h-full">
-                  <div className="text-sm font-medium text-indigo-900 mb-2 h-10 flex items-center">合計</div>
-                  <div className="text-2xl font-bold text-indigo-700">{totalCount}名</div>
-                  <div className="text-sm text-indigo-700 mt-1 font-semibold">¥{totalAmount.toLocaleString()}</div>
-                </div>
-              </div>
-            </div>
-          )
-        })()}
 
         {error && (
           <div className={`mb-6 border rounded-md p-4 ${
@@ -486,9 +463,6 @@ export default function MembersPage() {
                         onClick={() => { setSortKey(prev => prev === 'plan' ? 'plan' : 'plan'); setSortAsc(prev => sortKey === 'plan' ? !prev : true) }}>
                       プラン {sortKey === 'plan' ? (sortAsc ? '▲' : '▼') : ''}
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[100px]">
-                      月会費
-                    </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px] cursor-pointer select-none"
                         onClick={() => { setSortKey(prev => prev === 'status' ? 'status' : 'status'); setSortAsc(prev => sortKey === 'status' ? !prev : true) }}>
                       ステータス {sortKey === 'status' ? (sortAsc ? '▲' : '▼') : ''}
@@ -518,12 +492,17 @@ export default function MembersPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 min-w-[120px]">
                         <div className="flex items-center">
-                          <Link
-                            href={`/admin/members/${member.id}`}
-                            className="text-indigo-600 hover:text-indigo-800 hover:underline"
-                          >
-                            {member.full_name}
-                          </Link>
+                          {member.access_token ? (
+                            <Link
+                              href={`/client/${member.access_token}`}
+                              className="text-indigo-600 hover:text-indigo-800 hover:underline"
+                              target="_blank"
+                            >
+                              {member.full_name}
+                            </Link>
+                          ) : (
+                            <span className="text-gray-900">{member.full_name}</span>
+                          )}
                           <span className={`ml-2 inline-block w-2 h-2 rounded-full ${getStatusDotColor(member.status)}`} aria-hidden="true"></span>
                         </div>
                       </td>
@@ -545,9 +524,6 @@ export default function MembersPage() {
                           <option value="ダイエットコース【6ヶ月】">ダイエットコース【6ヶ月】</option>
                           <option value="カウンセリング">カウンセリング</option>
                         </select>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 min-w-[100px]">
-                        {member.monthly_fee ? `¥${member.monthly_fee.toLocaleString()}` : '-'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap min-w-[120px]">
                         <select
@@ -585,7 +561,7 @@ export default function MembersPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 min-w-[120px]">
                         {new Date(member.created_at).toLocaleDateString('ja-JP')}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm min-w-[100px]">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm min-w-[200px]">
                         <div className="flex items-center space-x-2">
                           <Link
                             href={`/admin/members/${member.id}/edit`}
@@ -596,6 +572,22 @@ export default function MembersPage() {
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                             </svg>
                           </Link>
+                          {member.access_token && (
+                            <button
+                              onClick={() => {
+                                const url = `${window.location.origin}/client/${member.access_token}`
+                                navigator.clipboard.writeText(url)
+                                setError('専用URLをコピーしました')
+                                setTimeout(() => setError(''), 2000)
+                              }}
+                              className="inline-flex items-center px-3 py-1 border border-blue-300 text-xs font-medium rounded-md text-blue-700 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                              title="専用URLをコピー"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                              </svg>
+                            </button>
+                          )}
                         </div>
                       </td>
                   </tr>
@@ -619,5 +611,20 @@ export default function MembersPage() {
 
       {/* 削除モーダルは使用しない（非表示運用に変更） */}
     </div>
+  )
+}
+
+export default function MembersPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">読み込み中...</p>
+        </div>
+      </div>
+    }>
+      <MembersPageContent />
+    </Suspense>
   )
 }
