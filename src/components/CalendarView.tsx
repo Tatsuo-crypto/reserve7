@@ -50,6 +50,25 @@ export default function CalendarView() {
     return nameParts[0] || fullName
   }
 
+  // タイトルから苗字と回数を抽出（例：「東條成美1/6」→「東條1/6」）
+  const formatReservationTitle = (title: string) => {
+    if (!title) return ''
+    
+    // 「予約不可」などの特殊なタイトルはそのまま返す
+    if (!title.match(/\d+\/\d+/)) return title
+    
+    // 「名前X/Y」の形式から「苗字X/Y」を抽出
+    const match = title.match(/^(.+?)(\d+\/\d+)$/)
+    if (match) {
+      const fullName = match[1].trim()
+      const count = match[2]
+      const lastName = extractLastName(fullName)
+      return `${lastName}${count}`
+    }
+    
+    return title
+  }
+
   // Reset to month view when component mounts (e.g., after creating a reservation)
   useEffect(() => {
     setViewMode('month')
@@ -228,14 +247,14 @@ export default function CalendarView() {
             {dayEvents.slice(0, 4).map(event => (
               <div
                 key={event.id}
-                className={`text-[10px] px-1 py-[3.3px] rounded truncate leading-tight mb-1 font-medium ${
+                className={`h-[16.6px] text-[12px] px-1 flex items-center rounded truncate leading-tight mb-1 font-medium ${
                   event.type === 'reservation'
                     ? 'bg-green-100 text-green-800 border border-green-200'
                     : 'bg-red-100 text-red-800 border border-red-200'
                 }`}
                 title={`${event.title} (${event.time})`}
               >
-                {event.title}
+                {formatReservationTitle(event.title)}
               </div>
             ))}
             {dayEvents.length > 4 && (
@@ -330,7 +349,7 @@ export default function CalendarView() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            <h3 className="text-base sm:text-sm font-medium text-gray-900 min-w-[160px] text-center">
+            <h3 className="text-xl sm:text-lg font-medium text-gray-900 min-w-[160px] text-center">
               {formatMonth(currentDate)}
             </h3>
             <button

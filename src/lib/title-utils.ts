@@ -71,6 +71,9 @@ export async function updateMonthlyTitles(clientId: string, year: number, month:
       console.error('Error fetching client data:', clientError)
     }
 
+    // Extract last name for title
+    const lastName = extractLastName(clientName)
+
     // Determine plan max count for this client (fallback safe)
     const maxCount = getPlanMaxCount((clientData as any)?.plan)
 
@@ -79,7 +82,7 @@ export async function updateMonthlyTitles(clientId: string, year: number, month:
 
     // Update each reservation with correct sequential number
     const updates = reservations.map(async (reservation, index) => {
-      const newTitle = `${clientName}${index + 1}/${maxCount}`
+      const newTitle = `${lastName}${index + 1}/${maxCount}`
 
       // Normalize user shape (object or single-element array)
       const userRel: any = Array.isArray((reservation as any).users)
@@ -148,6 +151,17 @@ export async function updateMonthlyTitles(clientId: string, year: number, month:
 }
 
 /**
+ * Extract last name (surname) from full name
+ * Handles both half-width and full-width spaces
+ */
+function extractLastName(fullName: string): string {
+  if (!fullName) return ''
+  // Split by half-width or full-width space
+  const nameParts = fullName.split(/\s|　/)
+  return nameParts[0] || fullName
+}
+
+/**
  * Get the correct title for a new reservation based on chronological order
  */
 export async function generateReservationTitle(
@@ -177,7 +191,9 @@ export async function generateReservationTitle(
 
   if (error) {
     console.error('Error fetching existing reservations:', error)
-    return `${clientName}1/${maxCount}` // Fallback
+    // Extract last name for fallback
+    const lastName = extractLastName(clientName)
+    return `${lastName}1/${maxCount}` // Fallback
   }
 
   // Calculate cumulative count for this reservation (chronological order)
@@ -186,7 +202,9 @@ export async function generateReservationTitle(
   ) || []
   
   const monthlyCount = reservationsBeforeThis.length + 1
-  return `${clientName}${monthlyCount}/${maxCount}`
+  // Use only last name in the title
+  const lastName = extractLastName(clientName)
+  return `${lastName}${monthlyCount}/${maxCount}`
 }
 
 /**
@@ -228,12 +246,13 @@ export async function updateAllTitles(clientId: string) {
       ? (reservations[0] as any).users[0]
       : (reservations[0] as any).users
     const clientName = userRel?.full_name || 'Unknown'
+    const lastName = extractLastName(clientName)
     const maxCount = getPlanMaxCount(userRel?.plan)
 
     const calendarService = createGoogleCalendarService()
 
     const updates = reservations.map(async (reservation, index) => {
-      const newTitle = `${clientName}${index + 1}/${maxCount}`
+      const newTitle = `${lastName}${index + 1}/${maxCount}`
 
       // Normalize user shape per row
       const u: any = Array.isArray((reservation as any).users)
