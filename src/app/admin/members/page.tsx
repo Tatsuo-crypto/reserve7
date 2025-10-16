@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import TrackingModal from './TrackingModal'
 
 interface Member {
   id: string
@@ -95,6 +96,8 @@ function MembersPageContent() {
   const [memos, setMemos] = useState<{[key: string]: string}>({})
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [memberToDelete, setMemberToDelete] = useState<{id: string, name: string} | null>(null)
+  const [showTrackingModal, setShowTrackingModal] = useState(false)
+  const [selectedMember, setSelectedMember] = useState<{id: string, name: string} | null>(null)
 
   // Sorting state
   const [sortKey, setSortKey] = useState<'plan' | 'status' | 'created' | null>(null)
@@ -495,8 +498,7 @@ function MembersPageContent() {
                           {member.access_token ? (
                             <Link
                               href={`/client/${member.access_token}`}
-                              className="text-indigo-600 hover:text-indigo-800 hover:underline"
-                              target="_blank"
+                              className="text-indigo-600 hover:text-indigo-800 hover:underline font-semibold"
                             >
                               {member.full_name}
                             </Link>
@@ -561,7 +563,7 @@ function MembersPageContent() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 min-w-[120px]">
                         {new Date(member.created_at).toLocaleDateString('ja-JP')}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm min-w-[200px]">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm min-w-[250px]">
                         <div className="flex items-center space-x-2">
                           <Link
                             href={`/admin/members/${member.id}/edit`}
@@ -572,6 +574,7 @@ function MembersPageContent() {
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                             </svg>
                           </Link>
+                          {/* トラッキング・目標編集ボタンは非表示 */}
                           {member.access_token && (
                             <button
                               onClick={() => {
@@ -610,6 +613,19 @@ function MembersPageContent() {
       </div>
 
       {/* 削除モーダルは使用しない（非表示運用に変更） */}
+
+      {/* トラッキングモーダル */}
+      {selectedMember && (
+        <TrackingModal
+          isOpen={showTrackingModal}
+          onClose={() => {
+            setShowTrackingModal(false)
+            setSelectedMember(null)
+          }}
+          memberId={selectedMember.id}
+          memberName={selectedMember.name}
+        />
+      )}
     </div>
   )
 }
