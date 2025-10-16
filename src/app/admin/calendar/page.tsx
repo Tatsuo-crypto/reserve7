@@ -43,8 +43,8 @@ function AdminCalendarPageContent() {
     <div className="min-h-screen bg-gray-50">
       <div className="w-full">
         {/* Header */}
-        <div className="mb-0">
-          <div className="px-4 sm:px-6 py-4 sm:py-5">
+        <div className="mb-4">
+          <div className="px-4 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
                 <Link
