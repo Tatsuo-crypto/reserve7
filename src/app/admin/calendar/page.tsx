@@ -52,7 +52,7 @@ function AdminCalendarPageContent() {
                 </Link>
               </div>
               <div className="flex-1 text-center">
-                <h1 className="text-3xl sm:text-2xl font-bold text-gray-900">カレンダー表示</h1>
+                <h1 className="text-3xl sm:text-2xl font-bold text-gray-900">予約</h1>
                 <p className="mt-1 text-base sm:text-sm text-gray-600">予約のステータス管理</p>
               </div>
               <div className="w-7 sm:w-6" />

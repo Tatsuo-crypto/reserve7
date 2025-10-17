@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 export const dynamic = 'force-dynamic'
-import { supabase } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabase'
 import { getAuthenticatedUser, createErrorResponse, createSuccessResponse } from '@/lib/api-utils'
 
 export async function GET(request: NextRequest) {
@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
     const allStores = searchParams.get('all_stores') === 'true'
 
     // Build query
-    let query = supabase
+    let query = supabaseAdmin
       .from('users')
       .select(`
         id, 
@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get stores separately
-    const { data: stores, error: storesError } = await supabase
+    const { data: stores, error: storesError } = await supabaseAdmin
       .from('stores')
       .select('id, name')
 
@@ -106,7 +106,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if email already exists
-    const { data: existingUser } = await supabase
+    const { data: existingUser } = await supabaseAdmin
       .from('users')
       .select('id')
       .eq('email', email)
@@ -122,7 +122,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create new member
-    const { data: newMember, error } = await supabase
+    const { data: newMember, error } = await supabaseAdmin
       .from('users')
       .insert([{
         full_name: fullName,
@@ -176,7 +176,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     // First check if the member exists
-    const { data: member, error: fetchError } = await supabase
+    const { data: member, error: fetchError } = await supabaseAdmin
       .from('users')
       .select('id, email, store_id')
       .eq('id', memberId)
@@ -199,7 +199,7 @@ export async function PATCH(request: NextRequest) {
     if (memo !== undefined) updateData.memo = memo
 
     // Update member
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('users')
       .update(updateData)
       .eq('id', memberId)
@@ -232,7 +232,7 @@ export async function DELETE(request: NextRequest) {
     const { memberId } = await request.json()
 
     // First check if the member exists and belongs to the same store
-    const { data: member, error: fetchError } = await supabase
+    const { data: member, error: fetchError } = await supabaseAdmin
       .from('users')
       .select('id, email, store_id')
       .eq('id', memberId)
@@ -246,7 +246,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Delete member's reservations first
-    const { error: reservationsError } = await supabase
+    const { error: reservationsError } = await supabaseAdmin
       .from('reservations')
       .delete()
       .eq('user_id', memberId)
@@ -257,7 +257,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Delete member
-    const { error: deleteError } = await supabase
+    const { error: deleteError } = await supabaseAdmin
       .from('users')
       .delete()
       .eq('id', memberId)
