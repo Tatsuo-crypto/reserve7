@@ -25,8 +25,12 @@ export async function GET(request: NextRequest) {
     const allStores = searchParams.get('all_stores') === 'true'
     console.log('All stores requested:', allStores)
 
-    // Build query
-    let query = supabaseAdmin
+    console.log('Building query...')
+    console.log('User storeId for filtering:', user.storeId)
+    console.log('All stores mode:', allStores)
+
+    // Build base query
+    const baseQuery = supabaseAdmin
       .from('users')
       .select(`
         id, 
@@ -43,18 +47,22 @@ export async function GET(request: NextRequest) {
       .neq('email', 'tandjgym@gmail.com')
       .neq('email', 'tandjgym2goutenn@gmail.com')
 
-    // If not requesting all stores, filter by user's store
-    if (!allStores) {
-      console.log('Filtering by store:', user.storeId)
-      query = query.eq('store_id', user.storeId)
-    }
+    // Apply store filter if needed
+    const query = allStores 
+      ? baseQuery 
+      : baseQuery.eq('store_id', user.storeId)
 
     console.log('Executing members query...')
     const { data: members, error } = await query.order('created_at', { ascending: false })
 
     if (error) {
-      console.error('Database error fetching members:', error)
-      return createErrorResponse('Failed to fetch members', 500)
+      console.error('=== DATABASE ERROR ===')
+      console.error('Error code:', error.code)
+      console.error('Error message:', error.message)
+      console.error('Error details:', error.details)
+      console.error('Error hint:', error.hint)
+      console.error('Full error:', JSON.stringify(error, null, 2))
+      return createErrorResponse(`Failed to fetch members: ${error.message}`, 500)
     }
 
     console.log('Members fetched:', members?.length || 0)
