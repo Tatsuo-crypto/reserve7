@@ -26,18 +26,18 @@ export default function Navigation() {
     <header className="bg-gradient-to-b from-white to-gray-50 border-b border-gray-100 shadow">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          <Link href="/dashboard" className="text-3xl sm:text-4xl font-bold text-gray-900 hover:text-gray-700">
+          <Link href="/dashboard" className="text-2xl sm:text-3xl font-bold text-gray-900 hover:text-gray-700">
             T&J GYM
           </Link>
           
           {/* Right side: Admin info + Navigation */}
           <div className="flex items-center space-x-3">
             {session?.user?.role === 'ADMIN' && (
-              <div className="flex items-center space-x-2 px-3 sm:px-4 py-1.5 sm:py-2 border border-green-200 rounded-lg">
-                <span className="text-sm sm:text-base font-semibold text-gray-800">
+              <div className="flex items-center space-x-2 px-2 sm:px-3 py-1 sm:py-1.5 border border-green-200 rounded-lg">
+                <span className="text-xs sm:text-sm font-semibold text-gray-800">
                   {getStoreDisplayName(session.user.email)}
                 </span>
-                <span className="px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-bold bg-green-500 text-white">
+                <span className="px-1.5 sm:px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-bold bg-green-500 text-white">
                   管理者
                 </span>
               </div>
@@ -110,7 +110,7 @@ export default function Navigation() {
             <span className="sr-only">メニューを開く</span>
             {/* Hamburger icon */}
             <svg
-              className={`${isMobileMenuOpen ? 'hidden' : 'block'} h-8 w-8`}
+              className={`${isMobileMenuOpen ? 'hidden' : 'block'} h-7 w-7`}
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"
@@ -126,7 +126,7 @@ export default function Navigation() {
             </svg>
             {/* Close icon */}
             <svg
-              className={`${isMobileMenuOpen ? 'block' : 'hidden'} h-8 w-8`}
+              className={`${isMobileMenuOpen ? 'block' : 'hidden'} h-7 w-7`}
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"
