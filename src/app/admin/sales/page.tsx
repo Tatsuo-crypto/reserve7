@@ -60,11 +60,8 @@ export default function SalesPage() {
           console.error('Sales: API error:', response.error)
           setError(`会員データの取得に失敗しました: ${response.error}`)
         } else if (response.data) {
-          // API returns {data: {members: []}}, fetchApi wraps it as {data: {data: {members: []}}}
-          // OR the API might return {members: []} directly
-          const membersData = (response.data as any).data?.members || response.data.members || []
-          console.log('Sales: Members received:', membersData.length)
-          setMembers(membersData)
+          console.log('Sales: Members received:', response.data.members?.length)
+          setMembers(response.data.members || [])
         } else {
           console.log('Sales: No data in response')
         }

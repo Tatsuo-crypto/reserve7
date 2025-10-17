@@ -21,14 +21,17 @@ async function fetchApi<T>(
       },
     });
 
-    const data = await response.json();
+    const responseData = await response.json();
 
     if (!response.ok) {
       return {
-        error: data.error || `HTTPエラー: ${response.status}`,
+        error: responseData.error || `HTTPエラー: ${response.status}`,
       };
     }
 
+    // If API returns {data: {...}}, unwrap it
+    // Otherwise, return the response as-is
+    const data = responseData.data || responseData;
     return { data };
   } catch (error) {
     console.error('API Error:', error);
