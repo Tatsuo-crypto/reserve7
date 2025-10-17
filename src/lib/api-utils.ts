@@ -51,12 +51,18 @@ export async function getAuthenticatedUser() {
       console.log('All stores in database:', allStores)
     }
     
+    // For store_id, use calendar_id (email) directly instead of store UUID
+    // This matches how data is stored in users.store_id
+    const storeId = calendarId || getUserStoreId(session.user.email)
+    
+    console.log('Using storeId:', storeId)
+    
     return {
       id: session.user.email, // Use email as ID for admins
       email: session.user.email,
       name: session.user.name || '',
       isAdmin: true,
-      storeId: store?.id || getUserStoreId(session.user.email)
+      storeId: storeId
     }
   }
 
