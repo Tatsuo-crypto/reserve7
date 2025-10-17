@@ -16,7 +16,21 @@ export async function getAuthenticatedUser() {
     return null
   }
 
-  // Get user ID and store_id from database
+  // Check if admin
+  const adminCheck = isAdmin(session.user.email)
+  
+  // If admin, use store ID from email
+  if (adminCheck) {
+    return {
+      id: session.user.email, // Use email as ID for admins
+      email: session.user.email,
+      name: session.user.name || '',
+      isAdmin: true,
+      storeId: getUserStoreId(session.user.email)
+    }
+  }
+
+  // For non-admin users, get from database
   const { data: user, error } = await supabaseAdmin
     .from('users')
     .select('id, store_id')
@@ -31,7 +45,7 @@ export async function getAuthenticatedUser() {
     id: user.id,
     email: session.user.email,
     name: session.user.name || '',
-    isAdmin: isAdmin(session.user.email),
+    isAdmin: false,
     storeId: user.store_id || getUserStoreId(session.user.email)
   }
 }
