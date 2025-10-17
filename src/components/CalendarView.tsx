@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import TimelineView from './TimelineView'
+import { useSession } from 'next-auth/react'
 
 interface Reservation {
   id: string
@@ -16,6 +17,7 @@ interface Reservation {
     fullName: string
     email: string
     plan?: string
+    storeId?: string
   }
 }
 
@@ -30,6 +32,7 @@ interface CalendarEvent {
 }
 
 export default function CalendarView() {
+  const { data: session } = useSession()
   const [currentDate, setCurrentDate] = useState(new Date())
   const [events, setEvents] = useState<CalendarEvent[]>([])
   const [loading, setLoading] = useState(true)
@@ -38,6 +41,39 @@ export default function CalendarView() {
   const [selectedDate, setSelectedDate] = useState<string>('')
 
   // Note: タイトルの採番はサーバ側で行うため、フロントでは変更しない
+
+  // 苗字のみを抽出（スペース区切りの最初の部分）
+  const extractLastName = (fullName: string) => {
+    if (!fullName) return ''
+    // 半角スペースまたは全角スペースで分割
+    const nameParts = fullName.split(/\s|　/)
+    return nameParts[0] || fullName
+  }
+
+  // タイトルから苗字と回数を抽出（例：「東條成美1/6」→「東條1/6」）
+  const formatReservationTitle = (title: string) => {
+    if (!title) return ''
+    
+    // 「予約不可」などの特殊なタイトルはそのまま返す
+    if (!title.match(/\d+\/\d+/)) return title
+    
+    // 「名前X/Y」の形式から「苗字X/Y」を抽出
+    const match = title.match(/^(.+?)(\d+\/\d+)$/)
+    if (match) {
+      const fullName = match[1].trim()
+      const count = match[2]
+      const lastName = extractLastName(fullName)
+      return `${lastName}${count}`
+    }
+    
+    return title
+  }
+
+  // Reset to month view when component mounts (e.g., after creating a reservation)
+  useEffect(() => {
+    setViewMode('month')
+    setSelectedDate('')
+  }, [])
 
   // Get calendar data
   useEffect(() => {
@@ -95,7 +131,7 @@ export default function CalendarView() {
                 date: dateInJST,
                 time: `${startTime} - ${endTime}`,
                 type: reservation.client.id === 'blocked' ? 'blocked' : 'reservation',
-                clientName: reservation.client.id === 'blocked' ? '予約不可' : reservation.client.fullName,
+                clientName: reservation.client.id === 'blocked' ? '予約不可' : extractLastName(reservation.client.fullName),
                 notes: reservation.memo || reservation.notes || ''
               }
               console.log('Created event:', event)
@@ -123,7 +159,7 @@ export default function CalendarView() {
     }
 
     fetchCalendarData()
-  }, [])
+  }, [session])
 
   // Helper functions
   const formatMonth = (date: Date) => {
@@ -139,7 +175,9 @@ export default function CalendarView() {
   }
 
   const getFirstDayOfMonth = (date: Date) => {
-    return new Date(date.getFullYear(), date.getMonth(), 1).getDay()
+    const day = new Date(date.getFullYear(), date.getMonth(), 1).getDay()
+    // 月曜日始まりに調整: 日曜日(0)を6に、月曜日(1)を0に
+    return (day + 6) % 7
   }
 
   const getEventsForDate = (dateStr: string) => {
@@ -176,7 +214,7 @@ export default function CalendarView() {
     // Empty cells for days before the first day of the month
     for (let i = 0; i < firstDay; i++) {
       days.push(
-        <div key={`empty-${i}`} className="h-24 bg-gray-50 border border-gray-200"></div>
+        <div key={`empty-${i}`} className="h-28 bg-gray-50 border border-gray-100"></div>
       )
     }
 
@@ -191,7 +229,7 @@ export default function CalendarView() {
       days.push(
         <div
           key={day}
-          className="h-24 border border-gray-200 p-1 overflow-hidden cursor-pointer flex flex-col bg-white hover:bg-gray-50"
+          className="h-28 p-1 overflow-hidden cursor-pointer flex flex-col bg-white hover:bg-gray-50 border border-gray-100"
           onClick={() => handleDateClick(dateStr)}
         >
           <div className="text-sm font-medium mb-1 flex-shrink-0 flex justify-start">
@@ -200,21 +238,23 @@ export default function CalendarView() {
                 {day}
               </div>
             ) : (
-              <span className="text-gray-900">{day}</span>
+              <div className="w-6 h-6 flex items-center justify-center text-gray-900">
+                {day}
+              </div>
             )}
           </div>
-          <div className="flex-1 min-h-0 space-y-0 overflow-hidden">
+          <div className="flex-1 min-h-0 overflow-hidden">
             {dayEvents.slice(0, 4).map(event => (
               <div
                 key={event.id}
-                className={`text-[8px] px-0.5 py-0 rounded truncate leading-none ${
+                className={`h-[16.6px] text-[12px] px-1 flex items-center rounded truncate leading-tight mb-1 font-medium ${
                   event.type === 'reservation'
                     ? 'bg-green-100 text-green-800 border border-green-200'
                     : 'bg-red-100 text-red-800 border border-red-200'
                 }`}
                 title={`${event.title} (${event.time})`}
               >
-                {event.title}
+                {formatReservationTitle(event.title)}
               </div>
             ))}
             {dayEvents.length > 4 && (
@@ -277,7 +317,7 @@ export default function CalendarView() {
                     date: dateInJST,
                     time: `${startTime} - ${endTime}`,
                     type: reservation.client.id === 'blocked' ? 'blocked' : 'reservation',
-                    clientName: reservation.client.id === 'blocked' ? '予約不可' : reservation.client.fullName,
+                    clientName: reservation.client.id === 'blocked' ? '予約不可' : extractLastName(reservation.client.fullName),
                     notes: reservation.memo || reservation.notes || ''
                   }
                 })
@@ -295,11 +335,11 @@ export default function CalendarView() {
   }
 
   return (
-    <div className="rounded-lg w-full">
+    <div className="w-full">
       {/* White container: Month title -> Calendar grid -> Legend */}
-      <div className="mx-2 sm:mx-4 bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
+      <div className="bg-white p-0">
         {/* Month Navigation */}
-        <div className="">
+        <div className="p-4">
           <div className="flex items-center justify-center space-x-6">
             <button
               onClick={() => navigateMonth('prev')}
@@ -309,7 +349,7 @@ export default function CalendarView() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            <h3 className="text-base sm:text-sm font-medium text-gray-900 min-w-[160px] text-center">
+            <h3 className="text-xl sm:text-lg font-medium text-gray-900 min-w-[160px] text-center">
               {formatMonth(currentDate)}
             </h3>
             <button
@@ -323,7 +363,7 @@ export default function CalendarView() {
           </div>
         </div>
         {/* Calendar Body */}
-        <div className="pt-4">
+        <div className="px-0 pb-4">
           {loading ? (
             <div className="flex items-center justify-center h-64">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
@@ -333,9 +373,9 @@ export default function CalendarView() {
             <div className="">
               {/* Days of week header (no divider line) */}
               <div className="grid grid-cols-7 mb-1">
-                {['日', '月', '火', '水', '木', '金', '土'].map((day, index) => (
+                {['月', '火', '水', '木', '金', '土', '日'].map((day, index) => (
                   <div key={day} className={`p-2 text-center text-sm font-medium ${
-                    index === 0 ? 'text-red-500' : index === 6 ? 'text-blue-500' : 'text-gray-700'
+                    index === 5 ? 'text-blue-500' : index === 6 ? 'text-red-500' : 'text-gray-700'
                   }`}>
                     {day}
                   </div>
@@ -351,7 +391,7 @@ export default function CalendarView() {
         </div>
 
         {/* Legend inside white container */}
-        <div className="px-6 py-3">
+        <div className="px-4 py-3">
           <div className="flex items-center justify-center space-x-6 text-sm">
             <div className="flex items-center space-x-2">
               <div className="w-3 h-3 bg-green-100 border border-green-200 rounded"></div>

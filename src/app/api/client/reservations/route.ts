@@ -53,9 +53,17 @@ export async function GET(request: NextRequest) {
       )
     }
 
+    // Separate past and future reservations on server side
+    const nowISO = new Date().toISOString()
+    const allReservations = reservations || []
+    const futureReservations = allReservations.filter(r => r.start_time >= nowISO)
+    const pastReservations = allReservations.filter(r => r.start_time < nowISO)
+
     return NextResponse.json({
       data: {
-        reservations: reservations || []
+        reservations: allReservations,
+        futureReservations,
+        pastReservations
       }
     })
 

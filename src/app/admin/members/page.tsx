@@ -1,41 +1,37 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import TrackingModal from './TrackingModal'
+import type { Member } from '@/types'
+import { 
+  getPlanRank, 
+  getStatusRank, 
+  getStatusText, 
+  getStatusColor, 
+  getStatusDotColor,
+  generateMemberAccessUrl
+} from '@/lib/utils/member'
+import { PLAN_LIST } from '@/lib/constants'
 
-interface Member {
-  id: string
-  full_name: string
-  email: string
-  plan?: string
-  status?: 'active' | 'suspended' | 'withdrawn'
-  store_id: string
-  created_at: string
-  memo?: string
-  access_token?: string
-}
-
-export default function MembersPage() {
+function MembersPageContent() {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const trainerToken = searchParams.get('trainerToken')
   const [members, setMembers] = useState<Member[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
   // Check admin access
   useEffect(() => {
-    if (status === 'loading') return // まだ読み込み中
+    if (status === 'loading') return
     if (status === 'unauthenticated') {
       router.push('/login')
-      return
-    } 
-    if (status === 'authenticated' && session?.user?.role !== 'ADMIN') {
-      router.push('/reservations')
-      return
     }
-  }, [status, session, router])
+  }, [status, router])
 
   // Fetch members
   useEffect(() => {
@@ -59,19 +55,19 @@ export default function MembersPage() {
       }
     }
 
-    // 認証済みかつ管理者の場合のみデータを取得
-    if (status === 'authenticated' && session?.user?.role === 'ADMIN') {
+    // 認証済みの場合データを取得
+    if (status === 'authenticated') {
       fetchMembers()
-    } else if (status === 'authenticated' && session?.user?.role !== 'ADMIN') {
-      setLoading(false)
     }
-  }, [session, status])
+  }, [status])
 
   const [selectedStatuses, setSelectedStatuses] = useState<{[key: string]: string}>({})
   const [selectedPlans, setSelectedPlans] = useState<{[key: string]: string}>({})
   const [memos, setMemos] = useState<{[key: string]: string}>({})
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [memberToDelete, setMemberToDelete] = useState<{id: string, name: string} | null>(null)
+  const [showTrackingModal, setShowTrackingModal] = useState(false)
+  const [selectedMember, setSelectedMember] = useState<{id: string, name: string} | null>(null)
 
   // Sorting state
   const [sortKey, setSortKey] = useState<'plan' | 'status' | 'created' | null>(null)
@@ -82,10 +78,8 @@ export default function MembersPage() {
 
   // Copy access URL to clipboard
   const handleCopyAccessUrl = async (accessToken: string, memberName: string) => {
-    const baseUrl = window.location.origin
-    const accessUrl = `${baseUrl}/client/${accessToken}`
-    
     try {
+      const accessUrl = generateMemberAccessUrl(accessToken)
       await navigator.clipboard.writeText(accessUrl)
       setError(`「${memberName}」様の専用URLをコピーしました`)
       setTimeout(() => setError(''), 3000)
@@ -96,24 +90,7 @@ export default function MembersPage() {
   }
 
 
-  const getPlanRank = (plan?: string) => {
-    if (!plan) return 999
-    if (plan.includes('2回')) return 2
-    if (plan.includes('4回')) return 4
-    if (plan.includes('6回')) return 6
-    if (plan.includes('8回')) return 8
-    if (plan.includes('ダイエット')) return 100
-    return 999
-  }
-
-  const getStatusRank = (status?: string) => {
-    switch (status) {
-      case 'active': return 1 // 在籍
-      case 'suspended': return 2 // 休会
-      case 'withdrawn': return 3 // 退会
-      default: return 9
-    }
-  }
+  // Utility functions imported from @/lib/utils/member
 
   const sortedMembers = (() => {
     const arr = [...members]
@@ -307,33 +284,7 @@ export default function MembersPage() {
     }
   }
 
-  const getStatusText = (status?: string) => {
-    switch (status) {
-      case 'active': return '在籍'
-      case 'suspended': return '休会'
-      case 'withdrawn': return '退会'
-      default: return '在籍' // Default to active if status is undefined
-    }
-  }
-
-  const getStatusColor = (status?: string) => {
-    switch (status) {
-      case 'active': return 'bg-green-100 text-green-800'
-      case 'suspended': return 'bg-yellow-100 text-yellow-800'
-      case 'withdrawn': return 'bg-red-100 text-red-800'
-      default: return 'bg-green-100 text-green-800' // Default to active styling
-    }
-  }
-
-  // Small accent dot color next to the member name
-  const getStatusDotColor = (status?: string) => {
-    switch (status) {
-      case 'active': return 'bg-green-500'
-      case 'suspended': return 'bg-yellow-500'
-      case 'withdrawn': return 'bg-red-500'
-      default: return 'bg-green-500'
-    }
-  }
+  // Status utility functions imported from @/lib/utils/member
 
   // 認証状態をチェック中の場合
   if (status === 'loading') {
@@ -349,15 +300,6 @@ export default function MembersPage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-lg">ログインページにリダイレクト中...</div>
-      </div>
-    )
-  }
-
-  // 管理者以外の場合はリダイレクト処理中
-  if (status === 'authenticated' && session?.user?.role !== 'ADMIN') {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">予約ページにリダイレクト中...</div>
       </div>
     )
   }
@@ -379,7 +321,7 @@ export default function MembersPage() {
           <div className="flex flex-col space-y-4">
             <div className="flex items-center justify-center relative">
               <button
-                onClick={() => router.push('/dashboard')}
+                onClick={() => router.push(trainerToken ? `/trainer/${trainerToken}` : '/dashboard')}
                 className="absolute left-0 text-gray-600 hover:text-gray-900 transition-colors"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -430,10 +372,10 @@ export default function MembersPage() {
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px]">
-                      会員名
+                      店舗
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[200px]">
-                      メールアドレス
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px]">
+                      会員名
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[140px] cursor-pointer select-none"
                         onClick={() => { setSortKey(prev => prev === 'plan' ? 'plan' : 'plan'); setSortAsc(prev => sortKey === 'plan' ? !prev : true) }}>
@@ -442,6 +384,9 @@ export default function MembersPage() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px] cursor-pointer select-none"
                         onClick={() => { setSortKey(prev => prev === 'status' ? 'status' : 'status'); setSortAsc(prev => sortKey === 'status' ? !prev : true) }}>
                       ステータス {sortKey === 'status' ? (sortAsc ? '▲' : '▼') : ''}
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[200px]">
+                      メールアドレス
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[150px]">
                       メモ
@@ -460,19 +405,23 @@ export default function MembersPage() {
                 <tbody className="bg-white divide-y divide-gray-200">
                   {sortedMembers && (showOnlyActive ? sortedMembers.filter(m => (m.status || 'active') === 'active') : sortedMembers).map((member) => (
                     <tr key={member.id}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 min-w-[120px]">
+                        {member.stores?.name || '-'}
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 min-w-[120px]">
                         <div className="flex items-center">
-                          <Link
-                            href={`/admin/members/${member.id}`}
-                            className="text-indigo-600 hover:text-indigo-800 hover:underline"
-                          >
-                            {member.full_name}
-                          </Link>
+                          {member.access_token ? (
+                            <Link
+                              href={`/client/${member.access_token}`}
+                              className="text-indigo-600 hover:text-indigo-800 hover:underline font-semibold"
+                            >
+                              {member.full_name}
+                            </Link>
+                          ) : (
+                            <span className="text-gray-900">{member.full_name}</span>
+                          )}
                           <span className={`ml-2 inline-block w-2 h-2 rounded-full ${getStatusDotColor(member.status)}`} aria-hidden="true"></span>
                         </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 min-w-[200px]">
-                        {member.email}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 min-w-[140px]">
                         <select
@@ -483,11 +432,9 @@ export default function MembersPage() {
                           }}
                           className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 w-full min-w-[120px]"
                         >
-                          <option value="月2回">月2回</option>
-                          <option value="月4回">月4回</option>
-                          <option value="月6回">月6回</option>
-                          <option value="月8回">月8回</option>
-                          <option value="ダイエットコース">ダイエットコース</option>
+                          {PLAN_LIST.map(plan => (
+                            <option key={plan} value={plan}>{plan}</option>
+                          ))}
                         </select>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap min-w-[120px]">
@@ -503,6 +450,9 @@ export default function MembersPage() {
                           <option value="suspended">休会</option>
                           <option value="withdrawn">退会</option>
                         </select>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 min-w-[200px]">
+                        {member.email}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 min-w-[150px]">
                         <input
@@ -523,21 +473,35 @@ export default function MembersPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 min-w-[120px]">
                         {new Date(member.created_at).toLocaleDateString('ja-JP')}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm min-w-[100px]">
-                        {member.access_token ? (
-                          <button
-                            onClick={() => handleCopyAccessUrl(member.access_token!, member.full_name)}
-                            className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                            title="専用URLをコピー"
+                      <td className="px-6 py-4 whitespace-nowrap text-sm min-w-[250px]">
+                        <div className="flex items-center space-x-2">
+                          <Link
+                            href={`/admin/members/${member.id}/edit`}
+                            className="inline-flex items-center px-3 py-1 border border-gray-300 text-xs font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                            title="編集"
                           >
-                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                             </svg>
-                            URL
-                          </button>
-                        ) : (
-                          <span className="text-gray-400">-</span>
-                        )}
+                          </Link>
+                          {/* トラッキング・目標編集ボタンは非表示 */}
+                          {member.access_token && (
+                            <button
+                              onClick={() => {
+                                const url = `${window.location.origin}/client/${member.access_token}`
+                                navigator.clipboard.writeText(url)
+                                setError('専用URLをコピーしました')
+                                setTimeout(() => setError(''), 2000)
+                              }}
+                              className="inline-flex items-center px-3 py-1 border border-blue-300 text-xs font-medium rounded-md text-blue-700 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                              title="専用URLをコピー"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                              </svg>
+                            </button>
+                          )}
+                        </div>
                       </td>
                   </tr>
                   ))}
@@ -559,6 +523,34 @@ export default function MembersPage() {
       </div>
 
       {/* 削除モーダルは使用しない（非表示運用に変更） */}
+
+      {/* トラッキングモーダル */}
+      {selectedMember && (
+        <TrackingModal
+          isOpen={showTrackingModal}
+          onClose={() => {
+            setShowTrackingModal(false)
+            setSelectedMember(null)
+          }}
+          memberId={selectedMember.id}
+          memberName={selectedMember.name}
+        />
+      )}
     </div>
+  )
+}
+
+export default function MembersPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">読み込み中...</p>
+        </div>
+      </div>
+    }>
+      <MembersPageContent />
+    </Suspense>
   )
 }

@@ -15,23 +15,56 @@ export async function GET(request: NextRequest) {
       return createErrorResponse('管理者権限が必要です', 403)
     }
 
-    // Use user.storeId from authenticated user
+    // Check if requesting all stores (for sales page)
+    const { searchParams } = new URL(request.url)
+    const allStores = searchParams.get('all_stores') === 'true'
 
-    // Get members from the same store (exclude admin accounts)
-    const { data: members, error } = await supabase
+    // Build query
+    let query = supabase
       .from('users')
-      .select('id, full_name, email, plan, status, store_id, created_at, memo, access_token')
-      .eq('store_id', user.storeId)
+      .select(`
+        id, 
+        full_name, 
+        email, 
+        plan, 
+        status, 
+        store_id,
+        monthly_fee,
+        created_at, 
+        memo, 
+        access_token
+      `)
       .neq('email', 'tandjgym@gmail.com')
       .neq('email', 'tandjgym2goutenn@gmail.com')
-      .order('created_at', { ascending: false })
+
+    // If not requesting all stores, filter by user's store
+    if (!allStores) {
+      query = query.or(`store_id.eq.${user.storeId},store_id.is.null`)
+    }
+
+    const { data: members, error } = await query.order('created_at', { ascending: false })
 
     if (error) {
       console.error('Database error:', error)
       return createErrorResponse('Failed to fetch members', 500)
     }
 
-    return createSuccessResponse({ members })
+    // Get stores separately
+    const { data: stores, error: storesError } = await supabase
+      .from('stores')
+      .select('id, name')
+
+    if (storesError) {
+      console.error('Stores fetch error:', storesError)
+    }
+
+    // Map stores to members
+    const membersWithStores = members?.map(member => ({
+      ...member,
+      stores: stores?.find(store => store.id === member.store_id) || null
+    }))
+
+    return createSuccessResponse({ members: membersWithStores })
   } catch (error) {
     console.error('Members API error:', error)
     return createErrorResponse('Internal server error', 500)
@@ -50,11 +83,15 @@ export async function POST(request: NextRequest) {
       return createErrorResponse('管理者権限が必要です', 403)
     }
 
-    const { fullName, email, plan, status, memo } = await request.json()
+    const { fullName, email, plan, status, memo, storeId, monthlyFee } = await request.json()
 
     // Validation
     if (!fullName || !email) {
       return createErrorResponse('名前とメールアドレスは必須です', 400)
+    }
+
+    if (!storeId) {
+      return createErrorResponse('店舗の選択は必須です', 400)
     }
 
     // Validate status if provided
@@ -63,7 +100,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate plan if provided
-    if (plan && !['月2回', '月4回', '月6回', '月8回', 'ダイエットコース'].includes(plan)) {
+    const validPlans = ['月2回', '月4回', '月6回', '月8回', 'ダイエットコース', 'ダイエットコース【2ヶ月】', 'ダイエットコース【3ヶ月】', 'ダイエットコース【6ヶ月】', 'カウンセリング']
+    if (plan && !validPlans.includes(plan)) {
       return createErrorResponse('無効なプランです', 400)
     }
 
@@ -78,6 +116,11 @@ export async function POST(request: NextRequest) {
       return createErrorResponse('このメールアドレスは既に登録されています', 400)
     }
 
+    // Generate unique access token
+    const generateToken = () => {
+      return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
+    }
+
     // Create new member
     const { data: newMember, error } = await supabase
       .from('users')
@@ -86,9 +129,11 @@ export async function POST(request: NextRequest) {
         email: email,
         plan: plan || '月4回',
         status: status || 'active',
-        store_id: user.storeId,
+        store_id: storeId,
+        monthly_fee: monthlyFee ? parseInt(monthlyFee) : 0,
         memo: memo || null,
         role: 'CLIENT',
+        access_token: generateToken(),
       }])
       .select()
       .single()
@@ -117,7 +162,7 @@ export async function PATCH(request: NextRequest) {
       return createErrorResponse('管理者権限が必要です', 403)
     }
 
-    const { memberId, status, plan, memo } = await request.json()
+    const { memberId, fullName, email, storeId, status, plan, monthlyFee, memo } = await request.json()
 
     // Validate status if provided
     if (status && !['active', 'suspended', 'withdrawn'].includes(status)) {
@@ -125,16 +170,16 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Validate plan if provided
-    if (plan && !['月2回', '月4回', '月6回', '月8回', 'ダイエットコース'].includes(plan)) {
+    const validPlans = ['月2回', '月4回', '月6回', '月8回', 'ダイエットコース', 'ダイエットコース【2ヶ月】', 'ダイエットコース【3ヶ月】', 'ダイエットコース【6ヶ月】', 'カウンセリング']
+    if (plan && !validPlans.includes(plan)) {
       return createErrorResponse('Invalid plan', 400)
     }
 
-    // First check if the member exists and belongs to the same store
+    // First check if the member exists
     const { data: member, error: fetchError } = await supabase
       .from('users')
       .select('id, email, store_id')
       .eq('id', memberId)
-      .eq('store_id', user.storeId)
       .neq('email', 'tandjgym@gmail.com')
       .neq('email', 'tandjgym2goutenn@gmail.com')
       .single()
@@ -145,8 +190,12 @@ export async function PATCH(request: NextRequest) {
 
     // Prepare update object
     const updateData: any = {}
+    if (fullName !== undefined) updateData.full_name = fullName
+    if (email !== undefined) updateData.email = email
+    if (storeId !== undefined) updateData.store_id = storeId
     if (status) updateData.status = status
     if (plan) updateData.plan = plan
+    if (monthlyFee !== undefined) updateData.monthly_fee = monthlyFee ? parseInt(monthlyFee) : 0
     if (memo !== undefined) updateData.memo = memo
 
     // Update member

@@ -1,16 +1,20 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 
 export default function NewMemberPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [stores, setStores] = useState<{id: string, name: string}[]>([])
   const [formData, setFormData] = useState({
-    fullName: '',
+    lastName: '',
+    firstName: '',
     email: '',
+    storeId: '',
     plan: '月4回',
+    monthlyFee: '',
     status: 'active',
     memo: '',
   })
@@ -21,12 +25,18 @@ export default function NewMemberPage() {
     setError('')
 
     try {
+      // Combine lastName and firstName with a space
+      const fullName = `${formData.lastName} ${formData.firstName}`.trim()
+      
       const response = await fetch('/api/admin/members', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          fullName,
+        }),
       })
 
       const result = await response.json()
@@ -45,6 +55,27 @@ export default function NewMemberPage() {
       setLoading(false)
     }
   }
+
+  // Fetch stores
+  useEffect(() => {
+    const fetchStores = async () => {
+      try {
+        const response = await fetch('/api/admin/stores')
+        if (response.ok) {
+          const result = await response.json()
+          const data = result.data || result
+          setStores(data.stores || [])
+          // Set first store as default if available
+          if (data.stores && data.stores.length > 0) {
+            setFormData(prev => ({ ...prev, storeId: data.stores[0].id }))
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch stores:', error)
+      }
+    }
+    fetchStores()
+  }, [])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -66,21 +97,38 @@ export default function NewMemberPage() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* 名前 */}
-          <div>
-            <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-2">
-              氏名 <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              id="fullName"
-              name="fullName"
-              value={formData.fullName}
-              onChange={handleChange}
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="山田 太郎"
-            />
+          {/* 氏名（苗字・名前） */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-2">
+                苗字 <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                id="lastName"
+                name="lastName"
+                value={formData.lastName}
+                onChange={handleChange}
+                required
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="山田"
+              />
+            </div>
+            <div>
+              <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-2">
+                名前 <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                id="firstName"
+                name="firstName"
+                value={formData.firstName}
+                onChange={handleChange}
+                required
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="太郎"
+              />
+            </div>
           </div>
 
           {/* メールアドレス */}
@@ -101,6 +149,26 @@ export default function NewMemberPage() {
             <p className="mt-1 text-sm text-gray-500">会員専用URLの発行に使用されます</p>
           </div>
 
+          {/* 店舗 */}
+          <div>
+            <label htmlFor="storeId" className="block text-sm font-medium text-gray-700 mb-2">
+              店舗 <span className="text-red-500">*</span>
+            </label>
+            <select
+              id="storeId"
+              name="storeId"
+              value={formData.storeId}
+              onChange={handleChange}
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="">店舗を選択してください</option>
+              {stores.map(store => (
+                <option key={store.id} value={store.id}>{store.name}</option>
+              ))}
+            </select>
+          </div>
+
           {/* プラン */}
           <div>
             <label htmlFor="plan" className="block text-sm font-medium text-gray-700 mb-2">
@@ -117,8 +185,28 @@ export default function NewMemberPage() {
               <option value="月4回">月4回</option>
               <option value="月6回">月6回</option>
               <option value="月8回">月8回</option>
-              <option value="ダイエットコース">ダイエットコース</option>
+              <option value="ダイエットコース【2ヶ月】">ダイエットコース【2ヶ月】</option>
+              <option value="ダイエットコース【3ヶ月】">ダイエットコース【3ヶ月】</option>
+              <option value="ダイエットコース【6ヶ月】">ダイエットコース【6ヶ月】</option>
+              <option value="カウンセリング">カウンセリング</option>
             </select>
+          </div>
+
+          {/* 月会費 */}
+          <div>
+            <label htmlFor="monthlyFee" className="block text-sm font-medium text-gray-700 mb-2">
+              月会費（円）
+            </label>
+            <input
+              type="number"
+              id="monthlyFee"
+              name="monthlyFee"
+              value={formData.monthlyFee}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="13200"
+            />
+            <p className="mt-1 text-sm text-gray-500">空欄の場合は0円として登録されます</p>
           </div>
 
           {/* ステータス */}

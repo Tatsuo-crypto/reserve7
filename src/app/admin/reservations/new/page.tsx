@@ -458,7 +458,7 @@ function NewReservationContent() {
                     <option value="">クライアントを選択してください</option>
                     {clients && clients.map(client => (
                       <option key={client.id} value={client.id}>
-                        {client.name}
+                        {client.name} ({client.email})
                       </option>
                     ))}
                   </select>
