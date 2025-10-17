@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 export const dynamic = 'force-dynamic'
-import { supabase } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabase'
 import { requireAdminAuth, handleApiError } from '@/lib/api-utils'
 
 // GET /api/admin/trainers?storeId=...&status=active|inactive&query=...
@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status') // active | inactive | all
     const query = searchParams.get('query') // name or email partial
 
-    let q = supabase
+    let q = supabaseAdmin
       .from('trainers')
       .select('id, full_name, email, store_id, status, phone, notes, created_at, updated_at, access_token')
       .order('full_name', { ascending: true })
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: `${missing.join('、')} は必須です` }, { status: 400 })
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('trainers')
       .insert({ full_name: fullName, email, store_id: storeId, status, phone, notes })
       .select('id, full_name, email, store_id, status, phone, notes, created_at, updated_at, access_token')

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 export const dynamic = 'force-dynamic'
-import { supabase } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabase'
 import { getAuthenticatedUser, createErrorResponse, createSuccessResponse } from '@/lib/api-utils'
 
 export async function GET(request: NextRequest) {
@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     
     if (token) {
       // Token-based authentication for members
-      const { data: userData, error: tokenError } = await supabase
+      const { data: userData, error: tokenError } = await supabaseAdmin
         .from('users')
         .select('id, email, full_name, store_id, access_token')
         .eq('access_token', token)
@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
     console.log('Reservations API - User:', user.email, 'Admin:', user.isAdmin, 'StoreId:', user.storeId, 'Token:', !!token)
 
     // Get Google Calendar ID from stores table
-    const { data: store, error: storeError } = await supabase
+    const { data: store, error: storeError } = await supabaseAdmin
       .from('stores')
       .select('calendar_id')
       .eq('id', user.storeId)
@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
     
     const calendarId = store.calendar_id
 
-    let query = supabase
+    let query = supabaseAdmin
       .from('reservations')
       .select(`
         id,
@@ -89,7 +89,7 @@ export async function GET(request: NextRequest) {
         query = query.eq('client_id', tokenUser.id)
       } else {
         // Session-based: fetch user ID from database
-        const { data: userData } = await supabase
+        const { data: userData } = await supabaseAdmin
           .from('users')
           .select('id, store_id')
           .eq('email', user.email)
