@@ -37,19 +37,26 @@ function MembersPageContent() {
   useEffect(() => {
     const fetchMembers = async () => {
       try {
+        console.log('Fetching members...')
         const response = await fetch('/api/admin/members')
+        console.log('Response status:', response.status)
+        
         if (response.ok) {
           const result = await response.json()
+          console.log('Success result:', result)
           const data = result.data || result
           setMembers(data.members || [])
         } else {
           const errorData = await response.json()
-          console.error('API Error:', errorData)
-          setError(`会員データの取得に失敗しました: ${errorData.error || 'Unknown error'}`)
+          console.error('API Error Response:', errorData)
+          console.error('Error details:', errorData.details)
+          setError(`会員データの取得に失敗しました: ${errorData.error || 'Unknown error'}${errorData.details?.message ? ' - ' + errorData.details.message : ''}`)
         }
       } catch (error) {
         console.error('Fetch Error:', error)
-        setError('会員データの取得中にエラーが発生しました')
+        console.error('Error type:', typeof error)
+        console.error('Error details:', error)
+        setError(`会員データの取得中にエラーが発生しました: ${error instanceof Error ? error.message : String(error)}`)
       } finally {
         setLoading(false)
       }

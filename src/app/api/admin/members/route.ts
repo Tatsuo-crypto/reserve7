@@ -82,9 +82,20 @@ export async function GET(request: NextRequest) {
     console.log('=== Members API GET completed successfully ===')
     return createSuccessResponse({ members: membersWithStores })
   } catch (error) {
-    console.error('Members API CATCH error:', error)
-    console.error('Error stack:', (error as Error).stack)
-    return createErrorResponse('Internal server error', 500)
+    console.error('=== Members API CATCH ERROR ===')
+    console.error('Error:', error)
+    console.error('Error message:', (error as Error)?.message)
+    console.error('Error stack:', (error as Error)?.stack)
+    console.error('Error name:', (error as Error)?.name)
+    
+    // Return detailed error in development
+    return NextResponse.json({
+      error: 'Internal server error',
+      details: process.env.NODE_ENV === 'development' ? {
+        message: (error as Error)?.message,
+        stack: (error as Error)?.stack
+      } : undefined
+    }, { status: 500 })
   }
 }
 
