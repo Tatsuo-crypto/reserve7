@@ -19,14 +19,24 @@ export async function getAuthenticatedUser() {
   // Check if admin
   const adminCheck = isAdmin(session.user.email)
   
-  // If admin, use store ID from email
+  // If admin, get store ID from stores table
   if (adminCheck) {
+    // Map admin email to store name
+    const storeName = session.user.email === 'tandjgym@gmail.com' ? 'T&J GYM 1号店' : 'T&J GYM 2号店'
+    
+    // Get store ID from database
+    const { data: store, error: storeError } = await supabaseAdmin
+      .from('stores')
+      .select('id')
+      .eq('name', storeName)
+      .single()
+    
     return {
       id: session.user.email, // Use email as ID for admins
       email: session.user.email,
       name: session.user.name || '',
       isAdmin: true,
-      storeId: getUserStoreId(session.user.email)
+      storeId: store?.id || getUserStoreId(session.user.email)
     }
   }
 
