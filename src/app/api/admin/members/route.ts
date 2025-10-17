@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
     // If not requesting all stores, filter by user's store
     if (!allStores) {
       console.log('Filtering by store:', user.storeId)
-      query = query.or(`store_id.eq.${user.storeId},store_id.is.null`)
+      query = query.eq('store_id', user.storeId)
     }
 
     console.log('Executing members query...')
