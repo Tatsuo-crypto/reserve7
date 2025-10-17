@@ -126,10 +126,12 @@ export default function ClientReservationsPage() {
     return `${year}年${month}月${day}日 ${hours}:${minutes}`
   }
 
-  const formatTitle = (title: string) => {
+  const formatTitle = (title: string, userPlan: string) => {
     const match = title.match(/(\d+)\/(\d+)$/)
     if (match) {
-      return `パーソナル${match[1]}/${match[2]}回目`
+      const currentCount = match[1]
+      // Always show "パーソナルX回目" format for all plans
+      return `パーソナル${currentCount}回目`
     }
     return title
   }
@@ -187,10 +189,7 @@ export default function ClientReservationsPage() {
             <h1 className="text-lg sm:text-xl font-bold text-gray-900 whitespace-nowrap">T&J GYM</h1>
             <div className="flex items-center gap-1 flex-shrink min-w-0">
               <div className="px-2 sm:px-3 py-1 sm:py-1.5 bg-blue-50 rounded-lg border border-blue-100">
-                <span className="text-sm sm:text-base font-semibold text-gray-900 truncate">{user.name}　様</span>
-              </div>
-              <div className="px-2 sm:px-3 py-1 sm:py-1.5 bg-green-50 rounded-lg border border-green-100">
-                <span className="text-sm sm:text-base font-semibold text-gray-900 whitespace-nowrap">{user.plan}</span>
+                <span className="text-xs sm:text-sm font-semibold text-gray-900 truncate">{user.name}　様</span>
               </div>
               <button className="p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100 flex-shrink-0" aria-label="メニュー">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -203,6 +202,17 @@ export default function ClientReservationsPage() {
       </header>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-4">
+
+        {/* プラン名表示 */}
+        <div className="bg-white rounded-lg shadow-md border border-gray-200 p-4 mb-6">
+          <div className="flex items-center gap-2">
+            <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
+              <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd" />
+            </svg>
+            <h2 className="text-lg font-bold text-gray-900">{user.plan}</h2>
+          </div>
+        </div>
 
         {/* トラッキング情報 */}
         {(yearlyGoals.length > 0 || monthlyGoals.length > 0 || weightRecords.length > 0 || squatRecords.length > 0) && (
@@ -427,12 +437,12 @@ export default function ClientReservationsPage() {
                       <h3 className="text-lg font-bold text-blue-900">{monthKey}</h3>
                     </div>
                     {reservations
-                      .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())
+                      .sort((a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime())
                       .map((reservation) => (
                         <div key={reservation.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow ml-4">
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
-                              <h3 className="text-lg font-semibold text-gray-900 mb-1">{formatTitle(reservation.title)}</h3>
+                              <h3 className="text-lg font-semibold text-gray-900 mb-1">{formatTitle(reservation.title, user.plan)}</h3>
                               <div className="flex items-center gap-1 text-gray-600 mb-2">
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -490,7 +500,7 @@ export default function ClientReservationsPage() {
                         <div key={reservation.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50 ml-4">
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
-                              <h3 className="text-lg font-semibold text-gray-700 mb-1">{formatTitle(reservation.title)}</h3>
+                              <h3 className="text-lg font-semibold text-gray-700 mb-1">{formatTitle(reservation.title, user.plan)}</h3>
                               <div className="flex items-center gap-1 text-gray-500 mb-2">
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -541,7 +551,7 @@ export default function ClientReservationsPage() {
                                 <div key={reservation.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50 ml-4">
                                   <div className="flex items-start justify-between">
                                     <div className="flex-1">
-                                      <h3 className="text-lg font-semibold text-gray-700 mb-1">{formatTitle(reservation.title)}</h3>
+                                      <h3 className="text-lg font-semibold text-gray-700 mb-1">{formatTitle(reservation.title, user.plan)}</h3>
                                       <div className="flex items-center gap-1 text-gray-500 mb-2">
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
