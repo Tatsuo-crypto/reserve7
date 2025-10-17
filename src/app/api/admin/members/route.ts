@@ -49,19 +49,22 @@ export async function GET(request: NextRequest) {
       return createErrorResponse('Failed to fetch members', 500)
     }
 
-    // Get stores separately
+    // Get stores separately with calendar_id
     const { data: stores, error: storesError } = await supabaseAdmin
       .from('stores')
-      .select('id, name')
+      .select('id, name, calendar_id')
 
     if (storesError) {
       console.error('Stores fetch error:', storesError)
     }
 
-    // Map stores to members
+    console.log('Stores data:', stores)
+    console.log('Sample member store_id:', members?.[0]?.store_id)
+
+    // Map stores to members using calendar_id (which matches store_id in users table)
     const membersWithStores = members?.map(member => ({
       ...member,
-      stores: stores?.find(store => store.id === member.store_id) || null
+      stores: stores?.find(store => store.calendar_id === member.store_id) || null
     }))
 
     return createSuccessResponse({ members: membersWithStores })
