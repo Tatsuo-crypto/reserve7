@@ -214,7 +214,7 @@ export default function CalendarView() {
     // Empty cells for days before the first day of the month
     for (let i = 0; i < firstDay; i++) {
       days.push(
-        <div key={`empty-${i}`} className="h-28 bg-gray-50 border border-gray-100"></div>
+        <div key={`empty-${i}`} className="h-24 bg-gray-50 border border-gray-100"></div>
       )
     }
 
@@ -229,7 +229,7 @@ export default function CalendarView() {
       days.push(
         <div
           key={day}
-          className="h-28 p-1 overflow-hidden cursor-pointer flex flex-col bg-white hover:bg-gray-50 border border-gray-100"
+          className="h-24 p-1 overflow-hidden cursor-pointer flex flex-col bg-white hover:bg-gray-50 border border-gray-100"
           onClick={() => handleDateClick(dateStr)}
         >
           <div className="text-sm font-medium mb-1 flex-shrink-0 flex justify-start">
@@ -247,7 +247,7 @@ export default function CalendarView() {
             {dayEvents.slice(0, 4).map(event => (
               <div
                 key={event.id}
-                className={`h-[16.6px] text-[12px] px-1 flex items-center rounded truncate leading-tight mb-1 font-medium ${
+                className={`h-[14px] text-[10px] px-0.5 flex items-center rounded truncate leading-none mb-0.5 font-medium ${
                   event.type === 'reservation'
                     ? 'bg-green-100 text-green-800 border border-green-200'
                     : 'bg-red-100 text-red-800 border border-red-200'
