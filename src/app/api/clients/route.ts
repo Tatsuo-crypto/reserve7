@@ -60,6 +60,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch clients' }, { status: 500 })
     }
 
+    console.log('Clients API - Found clients:', clients?.length || 0)
+    console.log('Clients API - Query filters:', {
+      storeId: user.storeId,
+      status: 'active'
+    })
 
     // Format clients for dropdown
     const formattedClients = clients.map(client => ({
@@ -67,6 +72,8 @@ export async function GET(request: NextRequest) {
       name: client.full_name,
       email: client.email
     }))
+
+    console.log('Clients API - Returning formatted clients:', formattedClients.length)
 
     return createSuccessResponse({ clients: formattedClients })
   } catch (error) {

@@ -63,17 +63,22 @@ function NewReservationContent() {
     const fetchClients = async () => {
       try {
         const response = await fetch('/api/clients')
+        console.log('Fetch clients response status:', response.status)
         if (response.ok) {
           const result = await response.json()
           const data = result.data || result
           console.log('Frontend - Clients received:', data.clients)
+          console.log('Frontend - Number of clients:', data.clients?.length || 0)
           setClients(data.clients || [])
         } else {
-          console.error('Failed to fetch clients')
+          console.error('Failed to fetch clients, status:', response.status)
+          const errorData = await response.json()
+          console.error('Error details:', errorData)
         }
       } catch (error) {
         console.error('Error fetching clients:', error)
       } finally {
+        console.log('Setting loadingClients to false')
         setLoadingClients(false)
       }
     }
@@ -481,22 +486,32 @@ function NewReservationContent() {
                   <div className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500">
                     クライアント情報を読み込み中...
                   </div>
+                ) : clients.length === 0 ? (
+                  <div className="w-full px-3 py-2 border border-yellow-300 rounded-lg bg-yellow-50 text-yellow-800">
+                    ⚠️ 登録されている会員が見つかりません
+                  </div>
                 ) : (
-                  <select
-                    id="clientId"
-                    name="clientId"
-                    value={formData.clientId}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="">クライアントを選択してください</option>
-                    {clients && clients.map(client => (
-                      <option key={client.id} value={client.id}>
-                        {client.name} ({client.email})
-                      </option>
-                    ))}
-                  </select>
+                  <>
+                    {console.log('Rendering select with clients:', clients.length, 'clients')}
+                    <select
+                      id="clientId"
+                      name="clientId"
+                      value={formData.clientId}
+                      onChange={handleInputChange}
+                      required
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="">クライアントを選択してください</option>
+                      {clients && clients.map(client => {
+                        console.log('Rendering client option:', client)
+                        return (
+                          <option key={client.id} value={client.id}>
+                            {client.name} ({client.email})
+                          </option>
+                        )
+                      })}
+                    </select>
+                  </>
                 )}
                 <p className="mt-1 text-sm text-gray-500">
                   予約を作成するクライアントを選択してください
