@@ -49,7 +49,13 @@ export async function GET(request: NextRequest) {
     }
 
     // Get clients for the user's store (only active members)
-    const { data: clients, error } = await supabase
+    // Try both UUID and email format for compatibility
+    const calendarId = (user as any).calendarId || user.email
+    
+    console.log('Querying users with:', { storeId: user.storeId, calendarId })
+    
+    // First try with UUID
+    let { data: clients, error } = await supabase
       .from('users')
       .select('id, full_name, email, store_id, status')
       .eq('store_id', user.storeId)
@@ -57,6 +63,22 @@ export async function GET(request: NextRequest) {
       .neq('email', 'tandjgym@gmail.com')
       .neq('email', 'tandjgym2goutenn@gmail.com')
       .order('full_name', { ascending: true })
+
+    // If no results and we have calendarId, try with email format
+    if (!error && (!clients || clients.length === 0) && calendarId && calendarId !== user.storeId) {
+      console.log('No clients found with UUID, trying email format:', calendarId)
+      const result = await supabase
+        .from('users')
+        .select('id, full_name, email, store_id, status')
+        .eq('store_id', calendarId)
+        .eq('status', 'active')
+        .neq('email', 'tandjgym@gmail.com')
+        .neq('email', 'tandjgym2goutenn@gmail.com')
+        .order('full_name', { ascending: true })
+      
+      clients = result.data
+      error = result.error
+    }
 
     if (error) {
       console.error('Database error:', error)
@@ -70,7 +92,7 @@ export async function GET(request: NextRequest) {
     })
 
     // Format clients for dropdown
-    const formattedClients = clients.map(client => ({
+    const formattedClients = (clients || []).map(client => ({
       id: client.id,
       name: client.full_name,
       email: client.email

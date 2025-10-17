@@ -48,12 +48,21 @@ export async function GET(request: NextRequest) {
       .neq('email', 'tandjgym2goutenn@gmail.com')
 
     // Apply store filter if needed
-    const query = allStores 
+    let query = allStores 
       ? baseQuery 
       : baseQuery.eq('store_id', user.storeId)
 
     console.log('Executing members query...')
-    const { data: members, error } = await query.order('created_at', { ascending: false })
+    let { data: members, error } = await query.order('created_at', { ascending: false })
+    
+    // If no results and not all stores mode, try with email format
+    const calendarId = (user as any).calendarId || user.email
+    if (!allStores && !error && (!members || members.length === 0) && calendarId && calendarId !== user.storeId) {
+      console.log('No members found with UUID, trying email format:', calendarId)
+      const result = await baseQuery.eq('store_id', calendarId).order('created_at', { ascending: false })
+      members = result.data
+      error = result.error
+    }
 
     if (error) {
       console.error('=== DATABASE ERROR ===')
