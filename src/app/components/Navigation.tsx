@@ -26,7 +26,7 @@ export default function Navigation() {
     <header className="bg-gradient-to-b from-white to-gray-50 border-b border-gray-100 shadow">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          <Link href="/dashboard" className="text-2xl sm:text-3xl font-bold text-gray-900 hover:text-gray-700">
+          <Link href="/dashboard" className="text-xl sm:text-2xl font-bold text-gray-900 hover:text-gray-700">
             T&J GYM
           </Link>
           
@@ -34,10 +34,10 @@ export default function Navigation() {
           <div className="flex items-center space-x-3">
             {session?.user?.role === 'ADMIN' && (
               <div className="flex items-center space-x-2 px-2 sm:px-3 py-1 sm:py-1.5 border border-green-200 rounded-lg">
-                <span className="text-xs sm:text-sm font-semibold text-gray-800">
+                <span className="text-[10px] sm:text-xs font-semibold text-gray-800">
                   {getStoreDisplayName(session.user.email)}
                 </span>
-                <span className="px-1.5 sm:px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-bold bg-green-500 text-white">
+                <span className="px-1.5 sm:px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold bg-green-500 text-white">
                   管理者
                 </span>
               </div>

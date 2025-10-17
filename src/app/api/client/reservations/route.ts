@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabase'
 
 export const dynamic = 'force-dynamic'
 
@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Find user by access_token
-    const { data: user, error: userError } = await supabase
+    const { data: user, error: userError } = await supabaseAdmin
       .from('users')
       .select('id')
       .eq('access_token', token)
@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get reservations for this client
-    const { data: reservations, error: reservationsError } = await supabase
+    const { data: reservations, error: reservationsError } = await supabaseAdmin
       .from('reservations')
       .select(`
         id,

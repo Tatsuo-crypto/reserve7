@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     }
 
     // トークンからユーザーIDを取得
-    const { data: user, error: userError } = await supabase
+    const { data: user, error: userError } = await supabaseAdmin
       .from('users')
       .select('id')
       .eq('access_token', token)
@@ -120,7 +120,7 @@ export async function POST(request: NextRequest) {
     }
 
     // トークンからユーザーIDを取得
-    const { data: user, error: userError } = await supabase
+    const { data: user, error: userError } = await supabaseAdmin
       .from('users')
       .select('id')
       .eq('access_token', token)
@@ -186,7 +186,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // トークンからユーザーIDを取得
-    const { data: user, error: userError } = await supabase
+    const { data: user, error: userError } = await supabaseAdmin
       .from('users')
       .select('id')
       .eq('access_token', token)
@@ -268,7 +268,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // トークンからユーザーIDを取得
-    const { data: user, error: userError } = await supabase
+    const { data: user, error: userError } = await supabaseAdmin
       .from('users')
       .select('id')
       .eq('access_token', token)

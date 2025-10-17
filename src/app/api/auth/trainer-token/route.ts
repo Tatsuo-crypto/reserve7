@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabase'
 
 export const dynamic = 'force-dynamic'
 
@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Find trainer by access_token
-    const { data: trainer, error } = await supabase
+    const { data: trainer, error } = await supabaseAdmin
       .from('trainers')
       .select('id, full_name, email, store_id, status')
       .eq('access_token', token)
