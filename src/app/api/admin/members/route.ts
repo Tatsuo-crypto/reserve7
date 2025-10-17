@@ -5,19 +5,25 @@ import { getAuthenticatedUser, createErrorResponse, createSuccessResponse } from
 
 export async function GET(request: NextRequest) {
   try {
+    console.log('=== Members API GET started ===')
+    
     const user = await getAuthenticatedUser()
+    console.log('User authenticated:', user ? 'Yes' : 'No', user?.email, user?.storeId)
     
     if (!user) {
+      console.error('No user found')
       return createErrorResponse('認証が必要です', 401)
     }
 
     if (!user.isAdmin) {
+      console.error('User is not admin:', user.email)
       return createErrorResponse('管理者権限が必要です', 403)
     }
 
     // Check if requesting all stores (for sales page)
     const { searchParams } = new URL(request.url)
     const allStores = searchParams.get('all_stores') === 'true'
+    console.log('All stores requested:', allStores)
 
     // Build query
     let query = supabaseAdmin
@@ -39,23 +45,29 @@ export async function GET(request: NextRequest) {
 
     // If not requesting all stores, filter by user's store
     if (!allStores) {
+      console.log('Filtering by store:', user.storeId)
       query = query.or(`store_id.eq.${user.storeId},store_id.is.null`)
     }
 
+    console.log('Executing members query...')
     const { data: members, error } = await query.order('created_at', { ascending: false })
 
     if (error) {
-      console.error('Database error:', error)
+      console.error('Database error fetching members:', error)
       return createErrorResponse('Failed to fetch members', 500)
     }
 
+    console.log('Members fetched:', members?.length || 0)
+
     // Get stores separately with calendar_id
+    console.log('Fetching stores...')
     const { data: stores, error: storesError } = await supabaseAdmin
       .from('stores')
       .select('id, name, calendar_id')
 
     if (storesError) {
       console.error('Stores fetch error:', storesError)
+      // Don't fail if stores can't be fetched, just log it
     }
 
     console.log('Stores data:', stores)
@@ -67,9 +79,11 @@ export async function GET(request: NextRequest) {
       stores: stores?.find(store => store.calendar_id === member.store_id) || null
     }))
 
+    console.log('=== Members API GET completed successfully ===')
     return createSuccessResponse({ members: membersWithStores })
   } catch (error) {
-    console.error('Members API error:', error)
+    console.error('Members API CATCH error:', error)
+    console.error('Error stack:', (error as Error).stack)
     return createErrorResponse('Internal server error', 500)
   }
 }
