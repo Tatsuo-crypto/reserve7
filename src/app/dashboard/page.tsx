@@ -40,23 +40,7 @@ export default function DashboardPage() {
   const isTrainer = session.user.role === 'TRAINER'
 
   return (
-    <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-      {/* Header */}
-      <div className="bg-white shadow-sm border border-gray-200 rounded-lg mb-6">
-        <div className="px-6 py-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-semibold text-gray-900">
-                ダッシュボード
-              </h1>
-              <p className="mt-1 text-sm text-gray-600">
-                ようこそ、{session.user.name}さん
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
+    <div>
       {/* Role-specific content */}
       {isAdmin ? (
         <AdminDashboard />
