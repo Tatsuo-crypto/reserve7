@@ -15,13 +15,13 @@ export function isAdmin(email: string): boolean {
 
 export function getUserStoreId(email: string): string {
   if (email === 'tandjgym@gmail.com') {
-    return 'tandjgym@gmail.com'
+    return '1'
   } else if (email === 'tandjgym2goutenn@gmail.com') {
-    return 'tandjgym2goutenn@gmail.com'
+    return '2'
   }
   // For regular users, extract store ID from their registration
   // This is a fallback - in practice, store_id should be stored in the user record
-  return 'tandjgym@gmail.com' // Default to store 1
+  return '1' // Default to store 1
 }
 
 export function getStoreDisplayName(email: string): string {
