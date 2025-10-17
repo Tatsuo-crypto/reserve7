@@ -1,6 +1,6 @@
 import CredentialsProvider from 'next-auth/providers/credentials'
 import bcrypt from 'bcryptjs'
-import { supabase } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabase'
 import { isAdmin } from '@/lib/auth-utils'
 import { loginSchema } from '@/lib/validations'
 
@@ -21,8 +21,27 @@ export const authOptions = {
           // Validate input
           const { email, password } = loginSchema.parse(credentials)
 
-          // Get user from database
-          const { data: user, error } = await supabase
+          // Check if admin account
+          if (isAdmin(email.toLowerCase())) {
+            // Special handling for admin accounts
+            const adminCredentials: { [key: string]: string } = {
+              'tandjgym@gmail.com': '1111',
+              'tandjgym2goutenn@gmail.com': '1112'
+            }
+
+            if (adminCredentials[email.toLowerCase()] === password) {
+              return {
+                id: email.toLowerCase(),
+                email: email.toLowerCase(),
+                name: email.toLowerCase() === 'tandjgym@gmail.com' ? 'T&J GYM 1号店' : 'T&J GYM 2号店',
+                role: 'ADMIN',
+              }
+            }
+            return null
+          }
+
+          // Get user from database (for non-admin users)
+          const { data: user, error } = await supabaseAdmin
             .from('users')
             .select('*')
             .eq('email', email.toLowerCase())
@@ -38,14 +57,11 @@ export const authOptions = {
             return null
           }
 
-          // Determine user role
-          const role = isAdmin(user.email) ? 'ADMIN' : 'CLIENT'
-
           return {
             id: user.id,
             email: user.email,
             name: user.full_name,
-            role: role,
+            role: 'CLIENT',
           }
         } catch (error) {
           console.error('Auth error:', error)
