@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
       return createErrorResponse('管理者権限が必要です', 403)
     }
 
-    console.log('Clients API - UserEmail:', user.email, 'UserStoreId:', user.storeId)
+    console.log('Clients API - UserEmail:', user.email, 'UserStoreId:', user.storeId, 'CalendarId:', (user as any).calendarId)
 
     // Get query parameters
     const { searchParams } = new URL(request.url)
@@ -27,11 +27,14 @@ export async function GET(request: NextRequest) {
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
       const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59)
 
+      // Use calendarId for reservations.calendar_id (email format)
+      const calendarId = (user as any).calendarId || user.storeId
+
       const { data: reservations, error: reservationError } = await supabase
         .from('reservations')
         .select('id')
         .eq('client_id', clientId)
-        .eq('calendar_id', user.storeId)
+        .eq('calendar_id', calendarId)
         .gte('start_time', startOfMonth.toISOString())
         .lte('start_time', endOfMonth.toISOString())
 
