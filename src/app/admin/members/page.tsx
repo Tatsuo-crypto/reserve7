@@ -34,16 +34,11 @@ function MembersPageContent() {
 
   // Check admin access
   useEffect(() => {
-    if (status === 'loading') return // まだ読み込み中
+    if (status === 'loading') return
     if (status === 'unauthenticated') {
       router.push('/login')
-      return
-    } 
-    if (status === 'authenticated' && session?.user?.role !== 'ADMIN') {
-      router.push('/reservations')
-      return
     }
-  }, [status, session, router])
+  }, [status, router])
 
   // Fetch members
   useEffect(() => {
@@ -53,23 +48,7 @@ function MembersPageContent() {
         if (response.ok) {
           const result = await response.json()
           const data = result.data || result
-          console.log('API Response:', data)
-          console.log('First member:', data.members?.[0])
-          console.log('First member stores:', data.members?.[0]?.stores)
-          
-          // Filter members based on selected store
-          const selectedStore = localStorage.getItem('selectedStore')
-          let filteredMembers = data.members || []
-          
-          console.log('Selected store:', selectedStore)
-          console.log('Session user email:', session?.user?.email)
-          console.log('Total members:', filteredMembers.length)
-          console.log('Sample member:', filteredMembers[0])
-          
-          // Admin can see all members, no filtering needed for now
-          // Store filtering will be implemented when store relationship is properly set up
-          
-          setMembers(filteredMembers)
+          setMembers(data.members || [])
         } else {
           const errorData = await response.json()
           console.error('API Error:', errorData)
@@ -83,13 +62,11 @@ function MembersPageContent() {
       }
     }
 
-    // 認証済みかつ管理者の場合のみデータを取得
-    if (status === 'authenticated' && session?.user?.role === 'ADMIN') {
+    // 認証済みの場合データを取得
+    if (status === 'authenticated') {
       fetchMembers()
-    } else if (status === 'authenticated' && session?.user?.role !== 'ADMIN') {
-      setLoading(false)
     }
-  }, [session, status])
+  }, [status])
 
   const [selectedStatuses, setSelectedStatuses] = useState<{[key: string]: string}>({})
   const [selectedPlans, setSelectedPlans] = useState<{[key: string]: string}>({})
@@ -376,15 +353,6 @@ function MembersPageContent() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-lg">ログインページにリダイレクト中...</div>
-      </div>
-    )
-  }
-
-  // 管理者以外の場合はリダイレクト処理中
-  if (status === 'authenticated' && session?.user?.role !== 'ADMIN') {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">予約ページにリダイレクト中...</div>
       </div>
     )
   }

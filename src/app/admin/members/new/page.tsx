@@ -9,7 +9,8 @@ export default function NewMemberPage() {
   const [error, setError] = useState('')
   const [stores, setStores] = useState<{id: string, name: string}[]>([])
   const [formData, setFormData] = useState({
-    fullName: '',
+    lastName: '',
+    firstName: '',
     email: '',
     storeId: '',
     plan: '月4回',
@@ -24,12 +25,18 @@ export default function NewMemberPage() {
     setError('')
 
     try {
+      // Combine lastName and firstName with a space
+      const fullName = `${formData.lastName} ${formData.firstName}`.trim()
+      
       const response = await fetch('/api/admin/members', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          fullName,
+        }),
       })
 
       const result = await response.json()
@@ -90,21 +97,38 @@ export default function NewMemberPage() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* 名前 */}
-          <div>
-            <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-2">
-              氏名 <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              id="fullName"
-              name="fullName"
-              value={formData.fullName}
-              onChange={handleChange}
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="山田 太郎"
-            />
+          {/* 氏名（苗字・名前） */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-2">
+                苗字 <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                id="lastName"
+                name="lastName"
+                value={formData.lastName}
+                onChange={handleChange}
+                required
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="山田"
+              />
+            </div>
+            <div>
+              <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-2">
+                名前 <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                id="firstName"
+                name="firstName"
+                value={formData.firstName}
+                onChange={handleChange}
+                required
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="太郎"
+              />
+            </div>
           </div>
 
           {/* メールアドレス */}

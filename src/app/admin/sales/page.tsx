@@ -42,19 +42,34 @@ export default function SalesPage() {
     }
   }, [status, session, router])
 
+  // Fetch stores
+  useEffect(() => {
+    const fetchStores = async () => {
+      try {
+        const response = await fetch('/api/admin/stores')
+        if (response.ok) {
+          const result = await response.json()
+          const data = result.data || result
+          setStores(data.stores || [])
+        }
+      } catch (error) {
+        console.error('Failed to fetch stores:', error)
+      }
+    }
+    if (status === 'authenticated' && session?.user?.role === 'ADMIN') {
+      fetchStores()
+    }
+  }, [status, session])
+
   // Fetch members
   useEffect(() => {
     const fetchMembers = async () => {
       try {
-        const response = await fetch('/api/admin/members')
+        // Fetch all stores data for sales page
+        const response = await fetch('/api/admin/members?all_stores=true')
         if (response.ok) {
           const result = await response.json()
           const data = result.data || result
-          console.log('API Response:', data)
-          console.log('First member:', data.members?.[0])
-          console.log('First member stores:', data.members?.[0]?.stores)
-          
-          // Admin can see all members
           setMembers(data.members || [])
         } else {
           const errorData = await response.json()
@@ -84,6 +99,10 @@ export default function SalesPage() {
   // Show only active filter
   const [showOnlyActive, setShowOnlyActive] = useState(true)
 
+  // Store filter
+  const [selectedStore, setSelectedStore] = useState<string>('all')
+  const [stores, setStores] = useState<{id: string, name: string}[]>([])
+
   const getPlanRank = (plan?: string) => {
     if (!plan) return 999
     if (plan.includes('2回')) return 2
@@ -105,7 +124,12 @@ export default function SalesPage() {
   }
 
   const sortedMembers = (() => {
-    const arr = [...members]
+    // Filter by store first
+    const filteredByStore = selectedStore === 'all' 
+      ? members 
+      : members.filter(m => m.store_id === selectedStore)
+    
+    const arr = [...filteredByStore]
     if (!sortKey) return arr
     return arr.sort((a, b) => {
       let av = 0, bv = 0
@@ -190,12 +214,34 @@ export default function SalesPage() {
                 <p className="mt-2 text-gray-600">プラン別売上の確認</p>
               </div>
             </div>
+
+            {/* Store Filter */}
+            <div className="flex justify-center">
+              <select
+                value={selectedStore}
+                onChange={(e) => setSelectedStore(e.target.value)}
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="all">全店舗</option>
+                {stores.map(store => (
+                  <option key={store.id} value={store.id}>{store.name}</option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
 
         {/* Plan Summary */}
         {members && members.length > 0 && (() => {
-          const activeMembersList = showOnlyActive ? members.filter(m => (m.status || 'active') === 'active') : members
+          // Filter by store
+          const filteredByStore = selectedStore === 'all' 
+            ? members 
+            : members.filter(m => m.store_id === selectedStore)
+          
+          const activeMembersList = showOnlyActive 
+            ? filteredByStore.filter(m => (m.status || 'active') === 'active') 
+            : filteredByStore
+          
           const planStats: { [key: string]: { count: number; total: number } } = {}
           
           activeMembersList.forEach(member => {

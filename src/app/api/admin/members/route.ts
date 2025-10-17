@@ -15,11 +15,12 @@ export async function GET(request: NextRequest) {
       return createErrorResponse('管理者権限が必要です', 403)
     }
 
-    // Use user.storeId from authenticated user
+    // Check if requesting all stores (for sales page)
+    const { searchParams } = new URL(request.url)
+    const allStores = searchParams.get('all_stores') === 'true'
 
-    // Get members from the same store (exclude admin accounts)
-    // Also include members with NULL store_id for now
-    const { data: members, error } = await supabase
+    // Build query
+    let query = supabase
       .from('users')
       .select(`
         id, 
@@ -33,10 +34,15 @@ export async function GET(request: NextRequest) {
         memo, 
         access_token
       `)
-      .or(`store_id.eq.${user.storeId},store_id.is.null`)
       .neq('email', 'tandjgym@gmail.com')
       .neq('email', 'tandjgym2goutenn@gmail.com')
-      .order('created_at', { ascending: false })
+
+    // If not requesting all stores, filter by user's store
+    if (!allStores) {
+      query = query.or(`store_id.eq.${user.storeId},store_id.is.null`)
+    }
+
+    const { data: members, error } = await query.order('created_at', { ascending: false })
 
     if (error) {
       console.error('Database error:', error)

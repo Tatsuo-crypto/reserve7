@@ -14,15 +14,10 @@ function AdminCalendarPageContent() {
 
   useEffect(() => {
     if (status === 'loading') return
-    if (!session) {
+    if (status === 'unauthenticated') {
       router.push('/login')
-      return
     }
-    if (session.user.role !== 'ADMIN') {
-      router.push('/dashboard')
-      return
-    }
-  }, [session, status, router])
+  }, [status, router])
 
   if (status === 'loading') {
     return (
@@ -35,7 +30,7 @@ function AdminCalendarPageContent() {
     )
   }
 
-  if (!session || session.user.role !== 'ADMIN') {
+  if (status === 'unauthenticated') {
     return null
   }
 

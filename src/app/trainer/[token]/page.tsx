@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import Link from 'next/link'
 
 interface Trainer {
   id: string
@@ -117,7 +116,7 @@ export default function TrainerDashboardPage() {
         <div className="bg-white shadow-sm border border-gray-200 rounded-xl p-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             {/* 予約管理 */}
-            <Link
+            <a
               href={`/admin/calendar?trainerToken=${token}`}
               className="group bg-gradient-to-br from-white to-blue-50 hover:from-blue-50 hover:to-blue-100 border border-blue-200 p-8 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col min-h-[200px] transform hover:-translate-y-1"
             >
@@ -132,10 +131,10 @@ export default function TrainerDashboardPage() {
                 <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-blue-800 transition-colors duration-200">予約</h3>
                 <p className="text-base text-gray-600 leading-relaxed">すべての予約を確認・管理</p>
               </div>
-            </Link>
+            </a>
 
             {/* 会員管理 */}
-            <Link
+            <a
               href={`/admin/members?trainerToken=${token}`}
               className="group bg-gradient-to-br from-white to-purple-50 hover:from-purple-50 hover:to-purple-100 border border-purple-200 p-8 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col min-h-[200px] transform hover:-translate-y-1"
             >
@@ -150,7 +149,7 @@ export default function TrainerDashboardPage() {
                 <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-purple-800 transition-colors duration-200">会員管理</h3>
                 <p className="text-base text-gray-600 leading-relaxed">会員情報の管理</p>
               </div>
-            </Link>
+            </a>
           </div>
         </div>
       </div>
