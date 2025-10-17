@@ -43,8 +43,8 @@ export async function GET(request: NextRequest) {
 
     console.log('Reservations API - User:', user.email, 'Admin:', user.isAdmin, 'StoreId:', user.storeId, 'Token:', !!token)
 
-    // Use storeId directly as calendarId (they are the same - email format)
-    const calendarId = user.storeId
+    // Use calendarId if available (for admins), otherwise use storeId
+    const calendarId = (user as any).calendarId || user.storeId
 
     let query = supabaseAdmin
       .from('reservations')

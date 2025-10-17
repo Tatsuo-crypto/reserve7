@@ -23,16 +23,39 @@ export async function getAuthenticatedUser() {
     // Check if admin
     const adminCheck = isAdmin(session.user.email)
     
-    // If admin, directly use email as storeId (matches users.store_id format)
+    // If admin, get store UUID from stores table using calendar_id
     if (adminCheck) {
-      // Admin emails are directly used as store_id in users table
-      const storeId = session.user.email === 'tandjgym@gmail.com' 
+      // Map email to calendar_id
+      const calendarId = session.user.email === 'tandjgym@gmail.com' 
         ? 'tandjgym@gmail.com' 
         : 'tandjgym2goutenn@gmail.com'
       
+      console.log('Admin authenticated, looking up store UUID for calendar_id:', calendarId)
+      
+      // Get store UUID from stores table
+      const { data: store, error: storeError } = await supabaseAdmin
+        .from('stores')
+        .select('id, calendar_id')
+        .eq('calendar_id', calendarId)
+        .single()
+      
+      if (storeError || !store) {
+        console.error('Failed to get store UUID:', storeError)
+        // Fallback: return calendar_id as storeId
+        return {
+          id: session.user.email,
+          email: session.user.email,
+          name: session.user.name || '',
+          isAdmin: true,
+          storeId: calendarId, // Use email as fallback
+          calendarId: calendarId
+        }
+      }
+      
       console.log('Admin authenticated successfully:', {
         email: session.user.email,
-        storeId: storeId
+        storeId: store.id,
+        calendarId: store.calendar_id
       })
       
       return {
@@ -40,7 +63,8 @@ export async function getAuthenticatedUser() {
         email: session.user.email,
         name: session.user.name || '',
         isAdmin: true,
-        storeId: storeId
+        storeId: store.id, // Use store UUID for database queries
+        calendarId: store.calendar_id // Keep calendar_id for Google Calendar API
       }
     }
 

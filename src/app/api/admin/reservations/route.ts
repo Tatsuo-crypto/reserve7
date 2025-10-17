@@ -19,8 +19,8 @@ export async function POST(request: NextRequest) {
     // Validate input
     const { clientId, startTime, duration, notes, trainerId } = body
     
-    // Use storeId directly as calendarId (they are the same - email format)
-    const calendarId = user.storeId
+    // Use calendarId if available (for admins), otherwise use storeId
+    const calendarId = (user as any).calendarId || user.storeId
     
     if (!clientId || !startTime || !duration) {
       return NextResponse.json(
