@@ -19,21 +19,26 @@ export async function getAuthenticatedUser() {
   // Check if admin
   const adminCheck = isAdmin(session.user.email)
   
-  // If admin, get store ID from stores table
+  // If admin, get store ID from stores table using calendar_id
   if (adminCheck) {
-    // Map admin email to store name
-    const storeName = session.user.email === 'tandjgym@gmail.com' ? 'T&J GYM 1号店' : 'T&J GYM 2号店'
+    // Map admin email to calendar_id (from env vars)
+    const calendarId = session.user.email === 'tandjgym@gmail.com' 
+      ? process.env.GOOGLE_CALENDAR_ID_1 
+      : process.env.GOOGLE_CALENDAR_ID_2
     
-    // Get store ID from database
+    console.log('Admin authentication attempt:', {
+      email: session.user.email,
+      calendarId
+    })
+    
+    // Get store ID from database using calendar_id
     const { data: store, error: storeError } = await supabaseAdmin
       .from('stores')
-      .select('id, name')
-      .eq('name', storeName)
+      .select('id, name, calendar_id')
+      .eq('calendar_id', calendarId)
       .single()
     
-    console.log('Admin authentication:', {
-      email: session.user.email,
-      storeName,
+    console.log('Store lookup result:', {
       foundStore: store,
       error: storeError
     })
@@ -42,7 +47,7 @@ export async function getAuthenticatedUser() {
     if (!store) {
       const { data: allStores } = await supabaseAdmin
         .from('stores')
-        .select('id, name')
+        .select('id, name, calendar_id')
       console.log('All stores in database:', allStores)
     }
     
