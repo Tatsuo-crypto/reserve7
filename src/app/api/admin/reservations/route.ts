@@ -190,7 +190,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Create reservation
-    const mergedNotes = [
+    // For trial reservations, don't include notes
+    const mergedNotes = clientId === 'TRIAL' ? null : [
       notes || null,
       trainerName ? `担当: ${trainerName}` : null,
     ].filter(Boolean).join(' / ')

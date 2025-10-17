@@ -125,13 +125,24 @@ export default function CalendarView() {
                 timeZone: 'Asia/Tokyo'
               }).split('/').map(part => part.padStart(2, '0')).join('-')
               
+              // Determine type based on title and client ID
+              const isBlocked = reservation.client.id === 'blocked' || (reservation.title && reservation.title.includes('予約不可'))
+              const isTrial = reservation.title && reservation.title.includes('体験')
+              
+              console.log('Processing reservation:', {
+                title: reservation.title,
+                clientId: reservation.client.id,
+                isBlocked,
+                isTrial
+              })
+              
               const event: CalendarEvent = {
                 id: reservation.id,
                 title: reservation.title,
                 date: dateInJST,
                 time: `${startTime} - ${endTime}`,
-                type: reservation.client.id === 'blocked' ? 'blocked' : 'reservation',
-                clientName: reservation.client.id === 'blocked' ? '予約不可' : extractLastName(reservation.client.fullName),
+                type: isBlocked ? 'blocked' : 'reservation',
+                clientName: isBlocked ? '予約不可' : isTrial ? '体験' : extractLastName(reservation.client.fullName),
                 notes: reservation.memo || reservation.notes || ''
               }
               console.log('Created event:', event)
@@ -244,19 +255,26 @@ export default function CalendarView() {
             )}
           </div>
           <div className="flex-1 min-h-0 overflow-hidden">
-            {dayEvents.slice(0, 4).map(event => (
-              <div
-                key={event.id}
-                className={`h-[14px] text-[10px] px-0.5 flex items-center rounded truncate leading-none mb-0.5 font-medium ${
-                  event.type === 'reservation'
-                    ? 'bg-green-100 text-green-800 border border-green-200'
-                    : 'bg-red-100 text-red-800 border border-red-200'
-                }`}
-                title={`${event.title} (${event.time})`}
-              >
-                {formatReservationTitle(event.title)}
-              </div>
-            ))}
+            {dayEvents.slice(0, 4).map(event => {
+              // Determine color based on reservation type
+              // Check trial BEFORE other types to ensure trial reservations are blue
+              const isTrial = event.title.includes('体験')
+              const colorClass = isTrial
+                ? 'bg-blue-100 text-blue-800 border border-blue-200'    // Trial = Blue (highest priority)
+                : event.type === 'reservation'
+                ? 'bg-green-100 text-green-800 border border-green-200'  // Regular = Green
+                : 'bg-red-100 text-red-800 border border-red-200'        // Blocked = Red
+              
+              return (
+                <div
+                  key={event.id}
+                  className={`h-[14px] text-[10px] px-0.5 flex items-center rounded truncate leading-none mb-0.5 font-medium ${colorClass}`}
+                  title={`${event.title} (${event.time})`}
+                >
+                  {formatReservationTitle(event.title)}
+                </div>
+              )
+            })}
             {dayEvents.length > 4 && (
               <div className="text-[8px] text-gray-500 px-0.5">
                 +{dayEvents.length - 4}

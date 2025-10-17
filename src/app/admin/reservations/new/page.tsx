@@ -123,9 +123,23 @@ function NewReservationContent() {
   useEffect(() => {
     const qsStartTime = searchParams?.get('startTime')
     if (qsStartTime) {
+      // Extract date and time from startTime (YYYY-MM-DDTHH:mm format)
+      const [date, time] = qsStartTime.split('T') // Split to get YYYY-MM-DD and HH:mm
+      
+      // Calculate end time as 1 hour after start time
+      let blockedEndTime = '12:00' // default
+      if (time) {
+        const [hours, minutes] = time.split(':').map(Number)
+        const endHours = (hours + 1) % 24 // Add 1 hour, wrap at 24
+        blockedEndTime = `${String(endHours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
+      }
+      
       setFormData(prev => ({
         ...prev,
         startTime: qsStartTime,
+        blockedDate: date, // Set blockedDate for when switching to blocked type
+        blockedStartTime: time || prev.blockedStartTime, // Set blockedStartTime from clicked time
+        blockedEndTime: blockedEndTime, // Set blockedEndTime as 1 hour after start
       }))
     }
   }, [searchParams])
@@ -428,7 +442,28 @@ function NewReservationContent() {
                     name="reservationType"
                     value="blocked"
                     checked={formData.isBlocked}
-                    onChange={() => setFormData(prev => ({ ...prev, isBlocked: true, isTrial: false, clientId: '' }))}
+                    onChange={() => {
+                      // When switching to blocked, extract date and time from startTime
+                      const [date, time] = formData.startTime ? formData.startTime.split('T') : ['', '']
+                      
+                      // Calculate end time as 1 hour after start time
+                      let blockedEndTime = formData.blockedEndTime
+                      if (time) {
+                        const [hours, minutes] = time.split(':').map(Number)
+                        const endHours = (hours + 1) % 24 // Add 1 hour, wrap at 24
+                        blockedEndTime = `${String(endHours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
+                      }
+                      
+                      setFormData(prev => ({
+                        ...prev,
+                        isBlocked: true,
+                        isTrial: false,
+                        clientId: '',
+                        blockedDate: date || prev.blockedDate, // Use extracted date or keep existing
+                        blockedStartTime: time || prev.blockedStartTime, // Use extracted time or keep existing
+                        blockedEndTime: blockedEndTime, // Set as 1 hour after start
+                      }))
+                    }}
                     className="mr-2"
                   />
                   <span>予約不可</span>

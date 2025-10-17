@@ -333,14 +333,26 @@ export default function TimelineView({ selectedDate, events, onBack, onEventsUpd
                 const widthPercent = 100 / layoutInfo.totalColumns
                 const leftPercent = layoutInfo.column * widthPercent
                 
+                // Determine color based on reservation type
+                // Check trial BEFORE blocked to ensure trial reservations are blue
+                const isTrial = event.title.includes('体験')
+                const colorClass = isTrial
+                  ? 'bg-blue-100 border border-blue-200 text-blue-800'  // Trial = Blue (highest priority)
+                  : event.type === 'blocked'
+                  ? 'bg-red-100 border border-red-200 text-red-800'      // Blocked = Red
+                  : 'bg-green-100 border border-green-200 text-green-800'  // Regular = Green
+                
+                console.log('Timeline event color:', {
+                  title: event.title,
+                  type: event.type,
+                  isTrial,
+                  colorClass: colorClass.split(' ')[0]
+                })
+                
                 return (
                   <div
                     key={`${event.id}-${index}`}
-                    className={`absolute px-2 py-1 rounded text-xs font-medium ${
-                      event.type === 'blocked' 
-                        ? 'bg-red-100 border border-red-200 text-red-800'
-                        : 'bg-green-100 border border-green-200 text-green-800'
-                    }`}
+                    className={`absolute px-2 py-1 rounded text-xs font-medium ${colorClass}`}
                     style={{ 
                       top: `${topPosition}px`,
                       left: `${leftPercent}%`,
@@ -353,7 +365,8 @@ export default function TimelineView({ selectedDate, events, onBack, onEventsUpd
                     onClick={(e) => openEditFromEvent(e, event)}
                   >
                     <div className="truncate font-semibold">{event.title}</div>
-                    {event.notes && (
+                    {/* Hide notes for trial reservations */}
+                    {event.notes && !isTrial && (
                       <div className="text-xs opacity-75 truncate">{event.notes}</div>
                     )}
                   </div>
@@ -382,6 +395,10 @@ export default function TimelineView({ selectedDate, events, onBack, onEventsUpd
           <div className="flex items-center space-x-2">
             <div className="w-3 h-3 bg-green-100 border border-green-200 rounded"></div>
             <span className="text-gray-600">予約</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <div className="w-3 h-3 bg-blue-100 border border-blue-200 rounded"></div>
+            <span className="text-gray-600">体験</span>
           </div>
           <div className="flex items-center space-x-2">
             <div className="w-3 h-3 bg-red-100 border border-red-200 rounded"></div>
