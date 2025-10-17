@@ -10,53 +10,70 @@ import { ApiResponse } from '@/types/common'
 import { supabaseAdmin } from '@/lib/supabase'
 
 export async function getAuthenticatedUser() {
-  const session = await getServerSession(authOptions)
-  
-  if (!session?.user?.email) {
-    return null
-  }
+  try {
+    const session = await getServerSession(authOptions)
+    
+    if (!session?.user?.email) {
+      console.error('No session or email found')
+      return null
+    }
 
-  // Check if admin
-  const adminCheck = isAdmin(session.user.email)
-  
-  // If admin, directly use email as storeId (matches users.store_id format)
-  if (adminCheck) {
-    // Admin emails are directly used as store_id in users table
-    const storeId = session.user.email === 'tandjgym@gmail.com' 
-      ? 'tandjgym@gmail.com' 
-      : 'tandjgym2goutenn@gmail.com'
+    console.log('getAuthenticatedUser called for:', session.user.email)
+
+    // Check if admin
+    const adminCheck = isAdmin(session.user.email)
     
-    console.log('Admin authenticated:', {
-      email: session.user.email,
-      storeId: storeId
-    })
+    // If admin, directly use email as storeId (matches users.store_id format)
+    if (adminCheck) {
+      // Admin emails are directly used as store_id in users table
+      const storeId = session.user.email === 'tandjgym@gmail.com' 
+        ? 'tandjgym@gmail.com' 
+        : 'tandjgym2goutenn@gmail.com'
+      
+      console.log('Admin authenticated successfully:', {
+        email: session.user.email,
+        storeId: storeId
+      })
+      
+      return {
+        id: session.user.email, // Use email as ID for admins
+        email: session.user.email,
+        name: session.user.name || '',
+        isAdmin: true,
+        storeId: storeId
+      }
+    }
+
+    // For non-admin users, get from database
+    console.log('Non-admin user, querying database...')
+    const { data: user, error } = await supabaseAdmin
+      .from('users')
+      .select('id, store_id')
+      .eq('email', session.user.email)
+      .single()
+
+    if (error) {
+      console.error('Database error for non-admin user:', error)
+      return null
+    }
     
+    if (!user) {
+      console.error('User not found in database:', session.user.email)
+      return null
+    }
+
+    console.log('Non-admin user found:', { id: user.id, storeId: user.store_id })
+
     return {
-      id: session.user.email, // Use email as ID for admins
+      id: user.id,
       email: session.user.email,
       name: session.user.name || '',
-      isAdmin: true,
-      storeId: storeId
+      isAdmin: false,
+      storeId: user.store_id || getUserStoreId(session.user.email)
     }
-  }
-
-  // For non-admin users, get from database
-  const { data: user, error } = await supabaseAdmin
-    .from('users')
-    .select('id, store_id')
-    .eq('email', session.user.email)
-    .single()
-
-  if (error || !user) {
+  } catch (error) {
+    console.error('getAuthenticatedUser error:', error)
     return null
-  }
-
-  return {
-    id: user.id,
-    email: session.user.email,
-    name: session.user.name || '',
-    isAdmin: false,
-    storeId: user.store_id || getUserStoreId(session.user.email)
   }
 }
 

@@ -43,19 +43,8 @@ export async function GET(request: NextRequest) {
 
     console.log('Reservations API - User:', user.email, 'Admin:', user.isAdmin, 'StoreId:', user.storeId, 'Token:', !!token)
 
-    // Get Google Calendar ID from stores table
-    const { data: store, error: storeError } = await supabaseAdmin
-      .from('stores')
-      .select('calendar_id')
-      .eq('id', user.storeId)
-      .single()
-    
-    if (storeError || !store) {
-      console.error('Store fetch error:', storeError)
-      return createErrorResponse('店舗情報の取得に失敗しました', 500)
-    }
-    
-    const calendarId = store.calendar_id
+    // Use storeId directly as calendarId (they are the same - email format)
+    const calendarId = user.storeId
 
     let query = supabaseAdmin
       .from('reservations')
