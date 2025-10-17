@@ -5,23 +5,16 @@ import { useSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import TrackingModal from './TrackingModal'
-
-interface Member {
-  id: string
-  full_name: string
-  email: string
-  plan?: string
-  status?: 'active' | 'suspended' | 'withdrawn'
-  store_id: string
-  monthly_fee?: number
-  created_at: string
-  memo?: string
-  access_token?: string
-  stores?: {
-    id: string
-    name: string
-  }
-}
+import type { Member } from '@/types'
+import { 
+  getPlanRank, 
+  getStatusRank, 
+  getStatusText, 
+  getStatusColor, 
+  getStatusDotColor,
+  generateMemberAccessUrl
+} from '@/lib/utils/member'
+import { PLAN_LIST } from '@/lib/constants'
 
 function MembersPageContent() {
   const { data: session, status } = useSession()
@@ -85,10 +78,8 @@ function MembersPageContent() {
 
   // Copy access URL to clipboard
   const handleCopyAccessUrl = async (accessToken: string, memberName: string) => {
-    const baseUrl = window.location.origin
-    const accessUrl = `${baseUrl}/client/${accessToken}`
-    
     try {
+      const accessUrl = generateMemberAccessUrl(accessToken)
       await navigator.clipboard.writeText(accessUrl)
       setError(`「${memberName}」様の専用URLをコピーしました`)
       setTimeout(() => setError(''), 3000)
@@ -99,25 +90,7 @@ function MembersPageContent() {
   }
 
 
-  const getPlanRank = (plan?: string) => {
-    if (!plan) return 999
-    if (plan.includes('2回')) return 2
-    if (plan.includes('4回')) return 4
-    if (plan.includes('6回')) return 6
-    if (plan.includes('8回')) return 8
-    if (plan.includes('カウンセリング')) return 1
-    if (plan.includes('ダイエット')) return 100
-    return 999
-  }
-
-  const getStatusRank = (status?: string) => {
-    switch (status) {
-      case 'active': return 1 // 在籍
-      case 'suspended': return 2 // 休会
-      case 'withdrawn': return 3 // 退会
-      default: return 9
-    }
-  }
+  // Utility functions imported from @/lib/utils/member
 
   const sortedMembers = (() => {
     const arr = [...members]
@@ -311,33 +284,7 @@ function MembersPageContent() {
     }
   }
 
-  const getStatusText = (status?: string) => {
-    switch (status) {
-      case 'active': return '在籍'
-      case 'suspended': return '休会'
-      case 'withdrawn': return '退会'
-      default: return '在籍' // Default to active if status is undefined
-    }
-  }
-
-  const getStatusColor = (status?: string) => {
-    switch (status) {
-      case 'active': return 'bg-green-100 text-green-800'
-      case 'suspended': return 'bg-yellow-100 text-yellow-800'
-      case 'withdrawn': return 'bg-red-100 text-red-800'
-      default: return 'bg-green-100 text-green-800' // Default to active styling
-    }
-  }
-
-  // Small accent dot color next to the member name
-  const getStatusDotColor = (status?: string) => {
-    switch (status) {
-      case 'active': return 'bg-green-500'
-      case 'suspended': return 'bg-yellow-500'
-      case 'withdrawn': return 'bg-red-500'
-      default: return 'bg-green-500'
-    }
-  }
+  // Status utility functions imported from @/lib/utils/member
 
   // 認証状態をチェック中の場合
   if (status === 'loading') {
@@ -485,14 +432,9 @@ function MembersPageContent() {
                           }}
                           className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 w-full min-w-[120px]"
                         >
-                          <option value="月2回">月2回</option>
-                          <option value="月4回">月4回</option>
-                          <option value="月6回">月6回</option>
-                          <option value="月8回">月8回</option>
-                          <option value="ダイエットコース【2ヶ月】">ダイエットコース【2ヶ月】</option>
-                          <option value="ダイエットコース【3ヶ月】">ダイエットコース【3ヶ月】</option>
-                          <option value="ダイエットコース【6ヶ月】">ダイエットコース【6ヶ月】</option>
-                          <option value="カウンセリング">カウンセリング</option>
+                          {PLAN_LIST.map(plan => (
+                            <option key={plan} value={plan}>{plan}</option>
+                          ))}
                         </select>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap min-w-[120px]">
