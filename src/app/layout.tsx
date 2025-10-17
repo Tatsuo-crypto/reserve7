@@ -41,7 +41,7 @@ export default function RootLayout({
         <Providers>
           <div className="min-h-screen bg-gray-50">
             <Navigation />
-            <main className="max-w-7xl mx-auto py-[30px] sm:px-6 lg:px-8">
+            <main className="py-[30px]">
               {children}
             </main>
           </div>

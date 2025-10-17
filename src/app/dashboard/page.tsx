@@ -40,7 +40,7 @@ export default function DashboardPage() {
   const isTrainer = session.user.role === 'TRAINER'
 
   return (
-    <div>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       {/* Role-specific content */}
       {isAdmin ? (
         <AdminDashboard />
