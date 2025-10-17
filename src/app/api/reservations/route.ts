@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
 
     console.log('Reservations API - User:', user.email, 'Admin:', user.isAdmin, 'StoreId:', user.storeId, 'Token:', !!token)
 
-    // Use calendarId if available (for admins), otherwise use storeId
+    // Use calendarId for reservations (email format)
     const calendarId = (user as any).calendarId || user.storeId
 
     let query = supabaseAdmin

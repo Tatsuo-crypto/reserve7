@@ -23,25 +23,23 @@ export async function getAuthenticatedUser() {
     // Check if admin
     const adminCheck = isAdmin(session.user.email)
     
-    // If admin, get store UUID from stores table using calendar_id
+    // If admin, get store UUID from stores table
     if (adminCheck) {
-      // Map email to calendar_id
+      // Map email to calendar_id (for Google Calendar)
       const calendarId = session.user.email === 'tandjgym@gmail.com' 
         ? 'tandjgym@gmail.com' 
         : 'tandjgym2goutenn@gmail.com'
       
-      console.log('Admin authenticated, looking up store UUID for calendar_id:', calendarId)
-      
-      // Get store UUID from stores table
+      // Try to get store UUID from stores table
       const { data: store, error: storeError } = await supabaseAdmin
         .from('stores')
         .select('id, calendar_id')
         .eq('calendar_id', calendarId)
         .single()
       
+      // If stores table doesn't exist or no store found, use email as storeId (fallback)
       if (storeError || !store) {
-        console.error('Failed to get store UUID:', storeError)
-        // Fallback: return calendar_id as storeId
+        console.warn('Store not found, using email as storeId. Error:', storeError?.message)
         return {
           id: session.user.email,
           email: session.user.email,
@@ -52,19 +50,19 @@ export async function getAuthenticatedUser() {
         }
       }
       
-      console.log('Admin authenticated successfully:', {
+      console.log('Admin authenticated with store UUID:', {
         email: session.user.email,
         storeId: store.id,
         calendarId: store.calendar_id
       })
       
       return {
-        id: session.user.email, // Use email as ID for admins
+        id: session.user.email,
         email: session.user.email,
         name: session.user.name || '',
         isAdmin: true,
-        storeId: store.id, // Use store UUID for database queries
-        calendarId: store.calendar_id // Keep calendar_id for Google Calendar API
+        storeId: store.id, // UUID for users.store_id
+        calendarId: store.calendar_id // Email for reservations.calendar_id
       }
     }
 

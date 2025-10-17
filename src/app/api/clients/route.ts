@@ -27,9 +27,9 @@ export async function GET(request: NextRequest) {
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
       const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59)
 
-      // Use calendarId for reservations.calendar_id (email format)
+      // Use calendarId for reservations (email format)
       const calendarId = (user as any).calendarId || user.storeId
-
+      
       const { data: reservations, error: reservationError } = await supabase
         .from('reservations')
         .select('id')
@@ -49,12 +49,12 @@ export async function GET(request: NextRequest) {
     }
 
     // Get clients for the user's store (only active members)
-    // Try both UUID and email format for compatibility
-    const calendarId = (user as any).calendarId || user.email
+    // Try both UUID (store.id) and email (calendar_id) formats
+    const calendarId = (user as any).calendarId
     
     console.log('Querying users with:', { storeId: user.storeId, calendarId })
     
-    // First try with UUID
+    // First try with storeId (UUID or email)
     let { data: clients, error } = await supabase
       .from('users')
       .select('id, full_name, email, store_id, status')
@@ -63,10 +63,10 @@ export async function GET(request: NextRequest) {
       .neq('email', 'tandjgym@gmail.com')
       .neq('email', 'tandjgym2goutenn@gmail.com')
       .order('full_name', { ascending: true })
-
-    // If no results and we have calendarId, try with email format
+    
+    // If no clients found and we have different calendarId, try with that
     if (!error && (!clients || clients.length === 0) && calendarId && calendarId !== user.storeId) {
-      console.log('No clients found with UUID, trying email format:', calendarId)
+      console.log('No clients with storeId, trying calendarId:', calendarId)
       const result = await supabase
         .from('users')
         .select('id, full_name, email, store_id, status')
@@ -76,8 +76,10 @@ export async function GET(request: NextRequest) {
         .neq('email', 'tandjgym2goutenn@gmail.com')
         .order('full_name', { ascending: true })
       
-      clients = result.data
-      error = result.error
+      if (!result.error && result.data && result.data.length > 0) {
+        clients = result.data
+        error = result.error
+      }
     }
 
     if (error) {

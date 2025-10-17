@@ -55,13 +55,16 @@ export async function GET(request: NextRequest) {
     console.log('Executing members query...')
     let { data: members, error } = await query.order('created_at', { ascending: false })
     
-    // If no results and not all stores mode, try with email format
-    const calendarId = (user as any).calendarId || user.email
+    // If no members found and not all stores mode, try with calendarId
+    const calendarId = (user as any).calendarId
     if (!allStores && !error && (!members || members.length === 0) && calendarId && calendarId !== user.storeId) {
-      console.log('No members found with UUID, trying email format:', calendarId)
+      console.log('No members with storeId, trying calendarId:', calendarId)
       const result = await baseQuery.eq('store_id', calendarId).order('created_at', { ascending: false })
-      members = result.data
-      error = result.error
+      
+      if (!result.error && result.data && result.data.length > 0) {
+        members = result.data
+        error = result.error
+      }
     }
 
     if (error) {
