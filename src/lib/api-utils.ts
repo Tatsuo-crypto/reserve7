@@ -27,9 +27,24 @@ export async function getAuthenticatedUser() {
     // Get store ID from database
     const { data: store, error: storeError } = await supabaseAdmin
       .from('stores')
-      .select('id')
+      .select('id, name')
       .eq('name', storeName)
       .single()
+    
+    console.log('Admin authentication:', {
+      email: session.user.email,
+      storeName,
+      foundStore: store,
+      error: storeError
+    })
+    
+    // If no store found, query all stores to see what's available
+    if (!store) {
+      const { data: allStores } = await supabaseAdmin
+        .from('stores')
+        .select('id, name')
+      console.log('All stores in database:', allStores)
+    }
     
     return {
       id: session.user.email, // Use email as ID for admins

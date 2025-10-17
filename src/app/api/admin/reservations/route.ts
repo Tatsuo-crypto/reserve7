@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 export const dynamic = 'force-dynamic'
-import { supabase } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabase'
 import { requireAdminAuth, handleApiError } from '@/lib/api-utils'
 import { createGoogleCalendarService } from '@/lib/google-calendar'
 import { generateReservationTitle, updateMonthlyTitles } from '@/lib/title-utils'
@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     const { clientId, startTime, duration, notes, trainerId } = body
     
     // Get Google Calendar ID from stores table
-    const { data: store, error: storeError } = await supabase
+    const { data: store, error: storeError } = await supabaseAdmin
       .from('stores')
       .select('calendar_id')
       .eq('id', user.storeId)
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
       generatedTitle = body.title || '予約不可'
       // If trainerId specified, fetch trainer name to display under the blocked label
       if (trainerId) {
-        const { data: trainer, error: trainerErr } = await supabase
+        const { data: trainer, error: trainerErr } = await supabaseAdmin
           .from('trainers')
           .select('id, full_name')
           .eq('id', trainerId)
@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
       generatedTitle = body.title || '体験予約'
     } else {
       // Get client user by ID for regular reservations
-      const { data: fetchedUser, error: clientError } = await supabase
+      const { data: fetchedUser, error: clientError } = await supabaseAdmin
         .from('users')
         .select('id, full_name, email, store_id')
         .eq('id', clientId)
@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
     // Check for overlapping reservations in the same calendar (excluding adjacent times)
     // Skip overlap check for 2nd store (tandjgym2goutenn@gmail.com) to allow multiple concurrent reservations
     if (calendarId !== 'tandjgym2goutenn@gmail.com') {
-      const { data: existingReservations, error: overlapError } = await supabase
+      const { data: existingReservations, error: overlapError } = await supabaseAdmin
         .from('reservations')
         .select('id')
         .eq('calendar_id', calendarId)
@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
 
     // Check for blocked times that overlap with the reservation (skip if table doesn't exist)
     try {
-      const { data: blockedTimes, error: blockedTimeError } = await supabase
+      const { data: blockedTimes, error: blockedTimeError } = await supabaseAdmin
         .from('blocked_times')
         .select('id, reason, start_time, end_time')
         .eq('calendar_id', calendarId)
@@ -204,7 +204,7 @@ export async function POST(request: NextRequest) {
       external_event_id: externalEventId,
     }
 
-    const { data: reservation, error } = await supabase
+    const { data: reservation, error } = await supabaseAdmin
       .from('reservations')
       .insert(reservationData)
       .select(`
