@@ -214,7 +214,7 @@ export default function CalendarView() {
     // Empty cells for days before the first day of the month
     for (let i = 0; i < firstDay; i++) {
       days.push(
-        <div key={`empty-${i}`} className="h-24 bg-gray-50 border border-gray-100"></div>
+        <div key={`empty-${i}`} className="h-[115px] bg-gray-50 border border-gray-100"></div>
       )
     }
 
@@ -229,7 +229,7 @@ export default function CalendarView() {
       days.push(
         <div
           key={day}
-          className="h-24 p-1 overflow-hidden cursor-pointer flex flex-col bg-white hover:bg-gray-50 border border-gray-100"
+          className="h-[115px] p-1 overflow-hidden cursor-pointer flex flex-col bg-white hover:bg-gray-50 border border-gray-100"
           onClick={() => handleDateClick(dateStr)}
         >
           <div className="text-sm font-medium mb-1 flex-shrink-0 flex justify-start">
