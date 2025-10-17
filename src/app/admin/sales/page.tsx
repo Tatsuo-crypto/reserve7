@@ -4,23 +4,9 @@ import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-
-interface Member {
-  id: string
-  full_name: string
-  email: string
-  plan?: string
-  status?: 'active' | 'suspended' | 'withdrawn'
-  store_id: string
-  monthly_fee?: number
-  created_at: string
-  memo?: string
-  access_token?: string
-  stores?: {
-    id: string
-    name: string
-  }
-}
+import { getPlanRank, getStatusRank, formatMonthlyFee } from '@/lib/utils/member'
+import { fetchMembers } from '@/lib/api-client'
+import type { Member } from '@/types'
 
 export default function SalesPage() {
   const { data: session, status } = useSession()
@@ -63,18 +49,15 @@ export default function SalesPage() {
 
   // Fetch members
   useEffect(() => {
-    const fetchMembers = async () => {
+    const loadMembers = async () => {
       try {
         // Fetch all stores data for sales page
-        const response = await fetch('/api/admin/members?all_stores=true')
-        if (response.ok) {
-          const result = await response.json()
-          const data = result.data || result
-          setMembers(data.members || [])
-        } else {
-          const errorData = await response.json()
-          console.error('API Error:', errorData)
-          setError(`会員データの取得に失敗しました: ${errorData.error || 'Unknown error'}`)
+        const response = await fetchMembers(true)
+        
+        if (response.error) {
+          setError(`会員データの取得に失敗しました: ${response.error}`)
+        } else if (response.data) {
+          setMembers(response.data.members || [])
         }
       } catch (error) {
         console.error('Fetch Error:', error)
@@ -86,7 +69,7 @@ export default function SalesPage() {
 
     // 認証済みかつ管理者の場合のみデータを取得
     if (status === 'authenticated' && session?.user?.role === 'ADMIN') {
-      fetchMembers()
+      loadMembers()
     } else if (status === 'authenticated' && session?.user?.role !== 'ADMIN') {
       setLoading(false)
     }
@@ -103,25 +86,7 @@ export default function SalesPage() {
   const [selectedStore, setSelectedStore] = useState<string>('all')
   const [stores, setStores] = useState<{id: string, name: string}[]>([])
 
-  const getPlanRank = (plan?: string) => {
-    if (!plan) return 999
-    if (plan.includes('2回')) return 2
-    if (plan.includes('4回')) return 4
-    if (plan.includes('6回')) return 6
-    if (plan.includes('8回')) return 8
-    if (plan.includes('カウンセリング')) return 1
-    if (plan.includes('ダイエット')) return 100
-    return 999
-  }
-
-  const getStatusRank = (status?: string) => {
-    switch (status) {
-      case 'active': return 1
-      case 'suspended': return 2
-      case 'withdrawn': return 3
-      default: return 9
-    }
-  }
+  // Utility functions imported from @/lib/utils/member
 
   const sortedMembers = (() => {
     // Filter by store first
