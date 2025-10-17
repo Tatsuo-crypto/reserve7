@@ -50,14 +50,23 @@ export default function SalesPage() {
   // Fetch members
   useEffect(() => {
     const loadMembers = async () => {
+      console.log('Sales: Starting to fetch members...')
       try {
         // Fetch all stores data for sales page
         const response = await fetchMembers(true)
+        console.log('Sales: API response:', response)
         
         if (response.error) {
+          console.error('Sales: API error:', response.error)
           setError(`会員データの取得に失敗しました: ${response.error}`)
         } else if (response.data) {
-          setMembers(response.data.members || [])
+          // API returns {data: {members: []}}, fetchApi wraps it as {data: {data: {members: []}}}
+          // OR the API might return {members: []} directly
+          const membersData = (response.data as any).data?.members || response.data.members || []
+          console.log('Sales: Members received:', membersData.length)
+          setMembers(membersData)
+        } else {
+          console.log('Sales: No data in response')
         }
       } catch (error) {
         console.error('Fetch Error:', error)
@@ -67,10 +76,12 @@ export default function SalesPage() {
       }
     }
 
+    console.log('Sales: Effect running - status:', status, 'role:', session?.user?.role)
     // 認証済みかつ管理者の場合のみデータを取得
     if (status === 'authenticated' && session?.user?.role === 'ADMIN') {
       loadMembers()
     } else if (status === 'authenticated' && session?.user?.role !== 'ADMIN') {
+      console.log('Sales: Not admin, skipping data fetch')
       setLoading(false)
     }
   }, [session, status])
