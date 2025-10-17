@@ -127,12 +127,20 @@ export default function ClientReservationsPage() {
   }
 
   const formatTitle = (title: string, userPlan: string) => {
-    const match = title.match(/(\d+)\/(\d+)$/)
-    if (match) {
-      const currentCount = match[1]
-      // Always show "パーソナルX回目" format for all plans
+    // Match both formats: "山口1/4" and "山口12" (cumulative count)
+    const matchWithSlash = title.match(/(\d+)\/(\d+)$/)
+    const matchWithoutSlash = title.match(/(\d+)$/)
+    
+    if (matchWithSlash) {
+      // Format: "山口1/4" -> "パーソナル1回目"
+      const currentCount = matchWithSlash[1]
+      return `パーソナル${currentCount}回目`
+    } else if (matchWithoutSlash) {
+      // Format: "山口12" -> "パーソナル12回目" (cumulative count)
+      const currentCount = matchWithoutSlash[1]
       return `パーソナル${currentCount}回目`
     }
+    
     return title
   }
 

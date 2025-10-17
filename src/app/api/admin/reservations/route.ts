@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic'
 import { supabaseAdmin } from '@/lib/supabase'
 import { requireAdminAuth, handleApiError } from '@/lib/api-utils'
 import { createGoogleCalendarService } from '@/lib/google-calendar'
-import { generateReservationTitle, updateMonthlyTitles } from '@/lib/title-utils'
+import { generateReservationTitle, updateMonthlyTitles, updateAllTitles, usesCumulativeCount } from '@/lib/title-utils'
 
 export async function POST(request: NextRequest) {
   try {
@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
       // Get client user by ID for regular reservations
       const { data: fetchedUser, error: clientError } = await supabaseAdmin
         .from('users')
-        .select('id, full_name, email, store_id')
+        .select('id, full_name, email, store_id, plan')
         .eq('id', clientId)
         .single()
 
@@ -243,11 +243,20 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Update all titles in this month to ensure proper chronological order (only for regular reservations)
+    // Update all titles for this client to maintain correct numbering
+    // For diet/counseling: use cumulative count (all time)
+    // For personal training: use monthly count
     if (clientId !== 'BLOCKED' && clientId !== 'TRIAL' && clientUser) {
-      const startMonth = startDateTime.getMonth()
-      const startYear = startDateTime.getFullYear()
-      await updateMonthlyTitles(clientUser.id, startYear, startMonth)
+      const plan = clientUser.plan || ''
+      if (usesCumulativeCount(plan)) {
+        // Diet/Counseling: cumulative count across all months
+        await updateAllTitles(clientUser.id)
+      } else {
+        // Personal training: monthly reset
+        const startMonth = startDateTime.getMonth()
+        const startYear = startDateTime.getFullYear()
+        await updateMonthlyTitles(clientUser.id, startYear, startMonth)
+      }
     }
 
     return NextResponse.json({

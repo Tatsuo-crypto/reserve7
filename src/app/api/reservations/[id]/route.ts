@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { requireAuth, handleApiError } from '@/lib/api-utils'
-import { updateMonthlyTitles } from '@/lib/title-utils'
+import { updateMonthlyTitles, updateAllTitles, usesCumulativeCount } from '@/lib/title-utils'
 import { createGoogleCalendarService } from '@/lib/google-calendar'
 
 export async function DELETE(
@@ -28,7 +28,8 @@ export async function DELETE(
         external_event_id,
         calendar_id,
         users!client_id (
-          email
+          email,
+          plan
         )
       `)
       .eq('id', reservationId)
@@ -79,13 +80,26 @@ export async function DELETE(
       )
     }
 
-    // After deletion, renumber titles for this client's month and update Google Calendar
+    // After deletion, renumber titles for this client and update Google Calendar
+    // For diet/counseling: use cumulative count (all time)
+    // For personal training: use monthly count
     if (reservation.client_id && reservation.start_time) {
       try {
-        const d = new Date((reservation as any).start_time)
-        await updateMonthlyTitles((reservation as any).client_id as string, d.getFullYear(), d.getMonth())
+        const userRel: any = Array.isArray((reservation as any).users)
+          ? (reservation as any).users[0]
+          : (reservation as any).users
+        const plan = userRel?.plan || ''
+        
+        if (usesCumulativeCount(plan)) {
+          // Diet/Counseling: cumulative count across all months
+          await updateAllTitles(reservation.client_id as string)
+        } else {
+          // Personal training: monthly reset
+          const d = new Date((reservation as any).start_time)
+          await updateMonthlyTitles((reservation as any).client_id as string, d.getFullYear(), d.getMonth())
+        }
       } catch (e) {
-        console.error('Failed to update monthly titles after deletion:', e)
+        console.error('Failed to update titles after deletion:', e)
       }
     }
 
@@ -134,7 +148,8 @@ export async function PUT(
         calendar_id,
         users!client_id (
           email,
-          full_name
+          full_name,
+          plan
         )
       `)
       .eq('id', reservationId)
@@ -238,15 +253,28 @@ export async function PUT(
       )
     }
 
-    // After update, renumber titles for this client's month and update Google Calendar as needed
+    // After update, renumber titles for this client and update Google Calendar as needed
+    // For diet/counseling: use cumulative count (all time)
+    // For personal training: use monthly count
     try {
       const d = new Date(startDateTime)
       const clientId = (reservation as any).client_id as string | null
       if (clientId) {
-        await updateMonthlyTitles(clientId, d.getFullYear(), d.getMonth())
+        const userRel: any = Array.isArray((reservation as any).users)
+          ? (reservation as any).users[0]
+          : (reservation as any).users
+        const plan = userRel?.plan || ''
+        
+        if (usesCumulativeCount(plan)) {
+          // Diet/Counseling: cumulative count across all months
+          await updateAllTitles(clientId)
+        } else {
+          // Personal training: monthly reset
+          await updateMonthlyTitles(clientId, d.getFullYear(), d.getMonth())
+        }
       }
     } catch (e) {
-      console.error('Failed to update monthly titles after PUT:', e)
+      console.error('Failed to update titles after PUT:', e)
       // Do not fail the request; return success for the update itself
     }
 

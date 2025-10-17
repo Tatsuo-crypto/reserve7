@@ -75,14 +75,26 @@ export async function updateMonthlyTitles(clientId: string, year: number, month:
     const lastName = extractLastName(clientName)
 
     // Determine plan max count for this client (fallback safe)
-    const maxCount = getPlanMaxCount((clientData as any)?.plan)
+    const plan = (clientData as any)?.plan || ''
+    const maxCount = getPlanMaxCount(plan)
+    
+    // Check if plan is diet course or counseling
+    const isDietOrCounseling = plan.includes('ダイエット') || plan.includes('カウンセリング')
 
     // Initialize Google Calendar service
     const calendarService = createGoogleCalendarService()
 
     // Update each reservation with correct sequential number
     const updates = reservations.map(async (reservation, index) => {
-      const newTitle = `${lastName}${index + 1}/${maxCount}`
+      // Generate title based on plan type
+      const newTitle = isDietOrCounseling 
+        ? `${lastName}${index + 1}`  // Diet/Counseling: "山口1"
+        : `${lastName}${index + 1}/${maxCount}`  // Personal: "山口1/4"
+
+      // Skip if title hasn't changed (no need to update DB or Google Calendar)
+      if (reservation.title === newTitle) {
+        return true
+      }
 
       // Normalize user shape (object or single-element array)
       const userRel: any = Array.isArray((reservation as any).users)
@@ -151,6 +163,15 @@ export async function updateMonthlyTitles(clientId: string, year: number, month:
 }
 
 /**
+ * Check if plan uses cumulative (non-resetting) count
+ * Diet courses and counseling use cumulative counting
+ */
+export function usesCumulativeCount(plan: string): boolean {
+  if (!plan) return false
+  return plan.includes('ダイエット') || plan.includes('カウンセリング')
+}
+
+/**
  * Extract last name (surname) from full name
  * Handles both half-width and full-width spaces
  */
@@ -204,7 +225,18 @@ export async function generateReservationTitle(
   const monthlyCount = reservationsBeforeThis.length + 1
   // Use only last name in the title
   const lastName = extractLastName(clientName)
-  return `${lastName}${monthlyCount}/${maxCount}`
+  
+  // Check if plan is diet course or counseling
+  const plan = clientData?.plan || ''
+  const isDietOrCounseling = plan.includes('ダイエット') || plan.includes('カウンセリング')
+  
+  if (isDietOrCounseling) {
+    // For diet/counseling: show only count (e.g., "山口1")
+    return `${lastName}${monthlyCount}`
+  } else {
+    // For personal training: show full format (e.g., "山口1/4")
+    return `${lastName}${monthlyCount}/${maxCount}`
+  }
 }
 
 /**
@@ -247,12 +279,24 @@ export async function updateAllTitles(clientId: string) {
       : (reservations[0] as any).users
     const clientName = userRel?.full_name || 'Unknown'
     const lastName = extractLastName(clientName)
-    const maxCount = getPlanMaxCount(userRel?.plan)
+    const plan = userRel?.plan || ''
+    const maxCount = getPlanMaxCount(plan)
+    
+    // Check if plan is diet course or counseling
+    const isDietOrCounseling = plan.includes('ダイエット') || plan.includes('カウンセリング')
 
     const calendarService = createGoogleCalendarService()
 
     const updates = reservations.map(async (reservation, index) => {
-      const newTitle = `${lastName}${index + 1}/${maxCount}`
+      // Generate title based on plan type
+      const newTitle = isDietOrCounseling 
+        ? `${lastName}${index + 1}`  // Diet/Counseling: "山口1"
+        : `${lastName}${index + 1}/${maxCount}`  // Personal: "山口1/4"
+
+      // Skip if title hasn't changed (no need to update DB or Google Calendar)
+      if (reservation.title === newTitle) {
+        return true
+      }
 
       // Normalize user shape per row
       const u: any = Array.isArray((reservation as any).users)
