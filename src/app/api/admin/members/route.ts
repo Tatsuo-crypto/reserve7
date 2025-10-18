@@ -93,10 +93,10 @@ export async function GET(request: NextRequest) {
     console.log('Stores data:', stores)
     console.log('Sample member store_id:', members?.[0]?.store_id)
 
-    // Map stores to members using calendar_id (which matches store_id in users table)
+    // Map stores to members using store UUID
     const membersWithStores = members?.map(member => ({
       ...member,
-      stores: stores?.find(store => store.calendar_id === member.store_id) || null
+      stores: stores?.find(store => store.id === member.store_id) || null
     }))
 
     console.log('=== Members API GET completed successfully ===')
