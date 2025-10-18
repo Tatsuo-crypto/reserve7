@@ -168,13 +168,30 @@ export async function updateMonthlyTitles(clientId: string, year: number, month:
  */
 export function usesCumulativeCount(plan: string): boolean {
   if (!plan) return false
-  const planLower = plan.toLowerCase()
-  return (
-    plan.includes('ダイエット') || 
+  
+  // Normalize: trim whitespace and convert to lowercase for comparison
+  const normalized = plan.trim().toLowerCase()
+  
+  // Check for diet/counseling in various formats
+  const isDiet = 
+    plan.includes('ダイエット') ||
+    normalized.includes('diet')
+  
+  const isCounseling = 
     plan.includes('カウンセリング') ||
-    planLower.includes('diet') ||
-    planLower.includes('counseling')
-  )
+    normalized.includes('counseling')
+  
+  // Log for debugging
+  if (isDiet || isCounseling) {
+    console.log('[usesCumulativeCount] Cumulative plan detected:', { 
+      plan, 
+      normalized, 
+      isDiet, 
+      isCounseling 
+    })
+  }
+  
+  return isDiet || isCounseling
 }
 
 /**
