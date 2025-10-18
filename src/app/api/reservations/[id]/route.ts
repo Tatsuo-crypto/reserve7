@@ -4,6 +4,8 @@ import { requireAuth, handleApiError } from '@/lib/api-utils'
 import { updateMonthlyTitles, updateAllTitles, usesCumulativeCount } from '@/lib/title-utils'
 import { createGoogleCalendarService } from '@/lib/google-calendar'
 
+export const dynamic = 'force-dynamic'
+
 export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
