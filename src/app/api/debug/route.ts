@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { getAuthenticatedUser } from '@/lib/api-utils'
 import { supabaseAdmin } from '@/lib/supabase'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET() {
   try {
     // 1. Get authenticated user
