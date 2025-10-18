@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabase'
 import { requireAuth, handleApiError } from '@/lib/api-utils'
 import { updateMonthlyTitles, updateAllTitles, usesCumulativeCount } from '@/lib/title-utils'
 import { createGoogleCalendarService } from '@/lib/google-calendar'
@@ -21,7 +21,7 @@ export async function DELETE(
     const reservationId = params.id
 
     // Get the reservation first to check ownership
-    const { data: reservation, error: fetchError } = await supabase
+    const { data: reservation, error: fetchError } = await supabaseAdmin
       .from('reservations')
       .select(`
         id,
@@ -69,7 +69,7 @@ export async function DELETE(
     }
 
     // Delete the reservation
-    const { error: deleteError } = await supabase
+    const { error: deleteError } = await supabaseAdmin
       .from('reservations')
       .delete()
       .eq('id', reservationId)
@@ -140,7 +140,7 @@ export async function PUT(
     }
 
     // Get the reservation first to check ownership
-    const { data: reservation, error: fetchError } = await supabase
+    const { data: reservation, error: fetchError } = await supabaseAdmin
       .from('reservations')
       .select(`
         id,
@@ -193,7 +193,7 @@ export async function PUT(
     }
 
     // Check for time conflicts with other reservations
-    const { data: conflicts, error: conflictError } = await supabase
+    const { data: conflicts, error: conflictError } = await supabaseAdmin
       .from('reservations')
       .select('id')
       .neq('id', reservationId) // Exclude current reservation
@@ -237,7 +237,7 @@ export async function PUT(
     }
 
     // Update the reservation
-    const { error: updateError } = await supabase
+    const { error: updateError } = await supabaseAdmin
       .from('reservations')
       .update({
         title: title,
