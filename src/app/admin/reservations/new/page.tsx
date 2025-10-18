@@ -62,19 +62,69 @@ function NewReservationContent() {
   useEffect(() => {
     const fetchClients = async () => {
       try {
-        const response = await fetch('/api/clients')
-        console.log('Fetch clients response status:', response.status)
-        if (response.ok) {
-          const result = await response.json()
-          const data = result.data || result
-          console.log('Frontend - Clients received:', data.clients)
-          console.log('Frontend - Number of clients:', data.clients?.length || 0)
-          setClients(data.clients || [])
-        } else {
-          console.error('Failed to fetch clients, status:', response.status)
-          const errorData = await response.json()
-          console.error('Error details:', errorData)
+        // Use Supabase client with anon key (RLS will handle permissions)
+        const { createClient } = await import('@supabase/supabase-js')
+        const supabase = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+        )
+        
+        // Get user's store ID from session
+        const userEmail = session?.user?.email
+        if (!userEmail) {
+          console.log('No user email, skipping clients fetch')
+          setLoadingClients(false)
+          return
         }
+        
+        // Determine calendar ID (email) based on user email
+        const calendarId = userEmail === 'tandjgym@gmail.com' 
+          ? 'tandjgym@gmail.com' 
+          : 'tandjgym2goutenn@gmail.com'
+        
+        console.log('Fetching store UUID for calendar:', calendarId)
+        
+        // First, get the store UUID from stores table
+        const { data: store, error: storeError } = await supabase
+          .from('stores')
+          .select('id')
+          .eq('calendar_id', calendarId)
+          .single()
+        
+        if (storeError || !store) {
+          console.error('Store not found:', storeError)
+          setLoadingClients(false)
+          return
+        }
+        
+        console.log('Fetching clients for store UUID:', store.id)
+        
+        // Query users table with the store UUID
+        const { data: clientsData, error } = await supabase
+          .from('users')
+          .select('id, full_name, email, store_id, status')
+          .eq('store_id', store.id)
+          .eq('status', 'active')
+          .neq('email', 'tandjgym@gmail.com')
+          .neq('email', 'tandjgym2goutenn@gmail.com')
+          .order('full_name', { ascending: true })
+        
+        if (error) {
+          console.error('Supabase error:', error)
+          throw error
+        }
+        
+        console.log('Clients fetched directly:', clientsData?.length || 0)
+        
+        // Transform to match expected Client interface
+        const formattedClients = (clientsData || []).map((client: any) => ({
+          id: client.id,
+          name: client.full_name,
+          email: client.email,
+          displayName: client.full_name
+        }))
+        
+        setClients(formattedClients)
       } catch (error) {
         console.error('Error fetching clients:', error)
       } finally {
@@ -83,9 +133,13 @@ function NewReservationContent() {
       }
     }
 
-    fetchClients()
-    
-    // Set default values based on user's store
+    if (session) {
+      fetchClients()
+    }
+  }, [session])
+  
+  // Set default values based on user's store
+  useEffect(() => {
     if (session?.user?.email) {
       const userStoreId = session.user.email === 'tandjgym@gmail.com' ? 'tandjgym@gmail.com' : 'tandjgym2goutenn@gmail.com'
       setFormData(prev => ({
