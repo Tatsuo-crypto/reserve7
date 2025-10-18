@@ -285,8 +285,10 @@ function NewReservationContent() {
         throw new Error('体験者名を入力してください')
       }
 
-      // Convert local datetime to ISO string
-      const startDateTime = new Date(formData.startTime)
+      // Convert local datetime to JST ISO string
+      // datetime-local gives us "2025-10-18T14:00" without timezone
+      // We need to treat this as JST and convert to UTC for storage
+      const startDateTime = new Date(formData.startTime + ':00+09:00') // Add JST timezone
       if (isNaN(startDateTime.getTime())) {
         throw new Error('有効な日時を入力してください')
       }
@@ -309,18 +311,18 @@ function NewReservationContent() {
           return
         }
 
-        // Combine date and time
-        const startDateTime = `${formData.blockedDate}T${formData.blockedStartTime}`
-        const endDateTime = `${formData.blockedDate}T${formData.blockedEndTime}`
+        // Combine date and time with JST timezone
+        const startDateTimeStr = `${formData.blockedDate}T${formData.blockedStartTime}:00+09:00`
+        const endDateTimeStr = `${formData.blockedDate}T${formData.blockedEndTime}:00+09:00`
         
         // Calculate duration in minutes
-        const start = new Date(startDateTime)
-        const end = new Date(endDateTime)
+        const start = new Date(startDateTimeStr)
+        const end = new Date(endDateTimeStr)
         const duration = Math.round((end.getTime() - start.getTime()) / (1000 * 60))
 
         requestData = {
           clientId: 'BLOCKED',
-          startTime: startDateTime,
+          startTime: start.toISOString(),
           duration: duration,
           calendarId: formData.calendarId,
           notes: formData.notes,
@@ -333,7 +335,7 @@ function NewReservationContent() {
         
         requestData = {
           clientId: 'TRIAL',
-          startTime: formData.startTime,
+          startTime: startDateTime.toISOString(),
           duration: formData.duration,
           calendarId: formData.calendarId,
           notes: trialNotes,
@@ -343,7 +345,7 @@ function NewReservationContent() {
         // For regular client reservation
         requestData = {
           clientId: formData.clientId,
-          startTime: formData.startTime,
+          startTime: startDateTime.toISOString(),
           duration: formData.duration,
           calendarId: formData.calendarId,
           notes: formData.notes,
