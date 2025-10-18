@@ -78,8 +78,8 @@ export async function updateMonthlyTitles(clientId: string, year: number, month:
     const plan = (clientData as any)?.plan || ''
     const maxCount = getPlanMaxCount(plan)
     
-    // Check if plan is diet course or counseling
-    const isDietOrCounseling = plan.includes('ダイエット') || plan.includes('カウンセリング')
+    // Check if plan uses cumulative count
+    const isCumulative = usesCumulativeCount(plan)
 
     // Initialize Google Calendar service
     const calendarService = createGoogleCalendarService()
@@ -87,7 +87,7 @@ export async function updateMonthlyTitles(clientId: string, year: number, month:
     // Update each reservation with correct sequential number
     const updates = reservations.map(async (reservation, index) => {
       // Generate title based on plan type
-      const newTitle = isDietOrCounseling 
+      const newTitle = isCumulative 
         ? `${lastName}${index + 1}`  // Diet/Counseling: "山口1"
         : `${lastName}${index + 1}/${maxCount}`  // Personal: "山口1/4"
 
@@ -168,7 +168,13 @@ export async function updateMonthlyTitles(clientId: string, year: number, month:
  */
 export function usesCumulativeCount(plan: string): boolean {
   if (!plan) return false
-  return plan.includes('ダイエット') || plan.includes('カウンセリング')
+  const planLower = plan.toLowerCase()
+  return (
+    plan.includes('ダイエット') || 
+    plan.includes('カウンセリング') ||
+    planLower.includes('diet') ||
+    planLower.includes('counseling')
+  )
 }
 
 /**
@@ -226,11 +232,11 @@ export async function generateReservationTitle(
   // Use only last name in the title
   const lastName = extractLastName(clientName)
   
-  // Check if plan is diet course or counseling
+  // Check if plan uses cumulative count
   const plan = clientData?.plan || ''
-  const isDietOrCounseling = plan.includes('ダイエット') || plan.includes('カウンセリング')
+  const isCumulative = usesCumulativeCount(plan)
   
-  if (isDietOrCounseling) {
+  if (isCumulative) {
     // For diet/counseling: show only count (e.g., "山口1")
     return `${lastName}${monthlyCount}`
   } else {
@@ -282,14 +288,14 @@ export async function updateAllTitles(clientId: string) {
     const plan = userRel?.plan || ''
     const maxCount = getPlanMaxCount(plan)
     
-    // Check if plan is diet course or counseling
-    const isDietOrCounseling = plan.includes('ダイエット') || plan.includes('カウンセリング')
+    // Check if plan uses cumulative count
+    const isCumulative = usesCumulativeCount(plan)
 
     const calendarService = createGoogleCalendarService()
 
     const updates = reservations.map(async (reservation, index) => {
       // Generate title based on plan type
-      const newTitle = isDietOrCounseling 
+      const newTitle = isCumulative 
         ? `${lastName}${index + 1}`  // Diet/Counseling: "山口1"
         : `${lastName}${index + 1}/${maxCount}`  // Personal: "山口1/4"
 
