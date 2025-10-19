@@ -235,7 +235,16 @@ export async function POST(request: NextRequest) {
     // For personal training: use monthly count
     if (clientId !== 'BLOCKED' && clientId !== 'TRIAL' && clientUser) {
       const plan = clientUser.plan || ''
-      if (usesCumulativeCount(plan)) {
+      const isCumulative = usesCumulativeCount(plan)
+      
+      console.log('[Reservation API] Title update decision:', {
+        clientName: clientUser.full_name,
+        plan,
+        isCumulative,
+        willUse: isCumulative ? 'updateAllTitles (cumulative)' : 'updateMonthlyTitles (monthly)'
+      })
+      
+      if (isCumulative) {
         // Diet/Counseling: cumulative count across all months
         await updateAllTitles(clientUser.id)
       } else {
