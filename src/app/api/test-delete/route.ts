@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
+import { env } from '@/lib/env'
 
 export const dynamic = 'force-dynamic'
 
@@ -17,10 +18,19 @@ export async function GET() {
       timestamp: new Date().toISOString(),
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       env: {
-        NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL ? 'SET' : 'NOT SET',
-        SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY ? 'SET' : 'NOT SET',
-        NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET ? 'SET' : 'NOT SET',
-        NEXTAUTH_URL: process.env.NEXTAUTH_URL || 'NOT SET',
+        // Show which env vars are being used by the app (via env.ts)
+        SUPABASE_URL: env.SUPABASE_URL ? 'SET' : 'NOT SET',
+        SUPABASE_ANON_KEY: env.SUPABASE_ANON_KEY ? 'SET' : 'NOT SET',
+        SUPABASE_SERVICE_ROLE_KEY: env.SUPABASE_SERVICE_ROLE_KEY ? 'SET' : 'NOT SET',
+        NEXTAUTH_SECRET: env.NEXTAUTH_SECRET ? 'SET' : 'NOT SET',
+        NEXTAUTH_URL: env.NEXTAUTH_URL || 'NOT SET',
+        // Show raw process.env for debugging
+        raw: {
+          SUPABASE_URL: process.env.SUPABASE_URL ? 'SET' : 'NOT SET',
+          NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL ? 'SET' : 'NOT SET',
+          SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY ? 'SET' : 'NOT SET',
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'SET' : 'NOT SET',
+        }
       },
       database: dbError ? `ERROR: ${dbError.message}` : 'Connected',
     })

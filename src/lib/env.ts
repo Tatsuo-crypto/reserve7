@@ -19,14 +19,31 @@ const envSchema = z.object({
   GOOGLE_SERVICE_ACCOUNT_KEY: z.string().optional(),
 });
 
-// In CI, we provide dummy defaults to allow build-time validation to pass.
+// Read environment variables with proper fallbacks
+// Support both NEXT_PUBLIC_ prefix (legacy Vercel) and non-prefixed (recommended)
 const rawEnv = {
-  SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || 'http://localhost:54321',
-  SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY || 'dummy_anon',
-  SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY || 'dummy_service_role',
+  // Supabase - server-side only
+  // Prefer non-prefixed, fallback to NEXT_PUBLIC_ for backward compatibility
+  SUPABASE_URL: 
+    process.env.SUPABASE_URL || 
+    process.env.NEXT_PUBLIC_SUPABASE_URL || 
+    'http://localhost:54321',
+  SUPABASE_ANON_KEY: 
+    process.env.SUPABASE_ANON_KEY || 
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 
+    'dummy_anon',
+  SUPABASE_SERVICE_ROLE_KEY: 
+    process.env.SUPABASE_SERVICE_ROLE_KEY || 
+    'dummy_service_role',
+  
+  // Authentication
   NEXTAUTH_URL: process.env.NEXTAUTH_URL || 'http://localhost:3000',
   NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET || 'dummy_secret_32chars_minimum________________',
+  
+  // Admin configuration
   ADMIN_EMAILS: process.env.ADMIN_EMAILS || 'dummy@example.com',
+  
+  // Google Calendar (optional)
   GOOGLE_CALENDAR_ID_1: process.env.GOOGLE_CALENDAR_ID_1,
   GOOGLE_CALENDAR_ID_2: process.env.GOOGLE_CALENDAR_ID_2,
   GOOGLE_SERVICE_ACCOUNT_KEY: process.env.GOOGLE_SERVICE_ACCOUNT_KEY,
