@@ -3,7 +3,20 @@
 import { useParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
-import TrackingModal from '@/app/admin/members/TrackingModal'
+import dynamic from 'next/dynamic'
+
+// TrackingModalを遅延読み込み（パフォーマンス向上）
+const TrackingModal = dynamic(() => import('@/app/admin/members/TrackingModal'), {
+  ssr: false,
+  loading: () => (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+        <p className="mt-2 text-sm text-gray-600">読み込み中...</p>
+      </div>
+    </div>
+  )
+})
 
 interface User {
   id: string
@@ -74,34 +87,50 @@ export default function ClientReservationsPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Get user info
+        // ユーザー情報を最初に取得（これが失敗したら他は実行しない）
         const userResponse = await fetch(`/api/auth/token?token=${token}`)
         if (!userResponse.ok) {
           setError('無効なURLです')
+          setLoading(false)
           return
         }
         const userData = await userResponse.json()
         setUser(userData.user)
 
-        // Get reservations
-        const reservationsResponse = await fetch(`/api/client/reservations?token=${token}`)
-        if (!reservationsResponse.ok) {
-          setError('予約の取得に失敗しました')
-          return
-        }
-        const reservationsData = await reservationsResponse.json()
-        
-        setFutureReservations(reservationsData.data.futureReservations || [])
-        setPastReservations(reservationsData.data.pastReservations || [])
+        // 予約とトラッキングデータを並列で取得（高速化）
+        const [reservationsResult, trackingResult] = await Promise.allSettled([
+          fetch(`/api/client/reservations?token=${token}`).then(async (res) => {
+            if (res.ok) {
+              const data = await res.json()
+              return data
+            }
+            throw new Error('予約の取得に失敗')
+          }),
+          fetch(`/api/client/tracking?token=${token}`).then(async (res) => {
+            if (res.ok) {
+              const data = await res.json()
+              return data
+            }
+            throw new Error('トラッキングの取得に失敗')
+          })
+        ])
 
-        // Get tracking data
-        const trackingResponse = await fetch(`/api/client/tracking?token=${token}`)
-        if (trackingResponse.ok) {
-          const trackingData = await trackingResponse.json()
-          setYearlyGoals(trackingData.data.yearlyGoals || [])
-          setMonthlyGoals(trackingData.data.monthlyGoals || [])
-          setWeightRecords(trackingData.data.weightRecords || [])
-          setSquatRecords(trackingData.data.squatRecords || [])
+        // 予約データの処理
+        if (reservationsResult.status === 'fulfilled') {
+          setFutureReservations(reservationsResult.value.data.futureReservations || [])
+          setPastReservations(reservationsResult.value.data.pastReservations || [])
+        } else {
+          console.error('予約データ取得エラー:', reservationsResult.reason)
+        }
+
+        // トラッキングデータの処理
+        if (trackingResult.status === 'fulfilled') {
+          setYearlyGoals(trackingResult.value.data.yearlyGoals || [])
+          setMonthlyGoals(trackingResult.value.data.monthlyGoals || [])
+          setWeightRecords(trackingResult.value.data.weightRecords || [])
+          setSquatRecords(trackingResult.value.data.squatRecords || [])
+        } else {
+          console.error('トラッキングデータ取得エラー:', trackingResult.reason)
         }
       } catch (err) {
         console.error('Error:', err)
