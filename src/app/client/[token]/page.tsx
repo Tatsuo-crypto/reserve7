@@ -68,8 +68,8 @@ export default function ClientReservationsPage() {
   const [showMonthlyGoals, setShowMonthlyGoals] = useState(false)
   const [showOlderMonths, setShowOlderMonths] = useState(false)
   const [showTrackingModal, setShowTrackingModal] = useState(false)
-  const { data: session } = useSession()
-  const isAdmin = session?.user?.role === 'ADMIN'
+  const { data: session, status: sessionStatus } = useSession()
+  const isAdmin = sessionStatus === 'authenticated' && session?.user?.role === 'ADMIN'
 
   useEffect(() => {
     const fetchData = async () => {
