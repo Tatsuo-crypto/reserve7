@@ -2,7 +2,7 @@
 
 import { useSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useEffect, Suspense } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import CalendarView from '@/components/CalendarView'
 import Link from 'next/link'
 
@@ -11,6 +11,8 @@ function AdminCalendarPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const trainerToken = searchParams.get('trainerToken')
+  const [viewMode, setViewMode] = useState<'month' | 'timeline'>('month')
+  const [calendarKey, setCalendarKey] = useState(0)
 
   useEffect(() => {
     if (status === 'loading') return
@@ -34,6 +36,17 @@ function AdminCalendarPageContent() {
     return null
   }
 
+  const handleBackClick = () => {
+    if (viewMode === 'timeline') {
+      // タイムライン表示の場合は月表示に戻る
+      setCalendarKey(prev => prev + 1)
+      setViewMode('month')
+    } else {
+      // 月表示の場合はダッシュボードに戻る
+      router.push(trainerToken ? `/trainer/${trainerToken}` : '/dashboard')
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="w-full">
@@ -42,14 +55,14 @@ function AdminCalendarPageContent() {
           <div className="px-4 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
-                <Link
-                  href={trainerToken ? `/trainer/${trainerToken}` : '/dashboard'}
+                <button
+                  onClick={handleBackClick}
                   className="text-gray-400 hover:text-gray-600 transition-colors"
                 >
                   <svg className="w-7 h-7 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                   </svg>
-                </Link>
+                </button>
               </div>
               <div className="flex-1 text-center">
                 <h1 className="text-3xl sm:text-2xl font-bold text-gray-900">予約</h1>
@@ -62,7 +75,11 @@ function AdminCalendarPageContent() {
         </div>
 
         {/* Calendar Component */}
-        <CalendarView />
+        <CalendarView 
+          key={calendarKey}
+          onViewModeChange={setViewMode}
+          onBackToMonth={() => setViewMode('month')}
+        />
       </div>
     </div>
   )

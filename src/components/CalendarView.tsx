@@ -31,7 +31,12 @@ interface CalendarEvent {
   notes?: string
 }
 
-export default function CalendarView() {
+interface CalendarViewProps {
+  onViewModeChange?: (mode: 'month' | 'timeline') => void
+  onBackToMonth?: () => void
+}
+
+export default function CalendarView({ onViewModeChange, onBackToMonth }: CalendarViewProps = {}) {
   const { data: session } = useSession()
   const [currentDate, setCurrentDate] = useState(new Date())
   const [events, setEvents] = useState<CalendarEvent[]>([])
@@ -210,11 +215,20 @@ export default function CalendarView() {
   const handleDateClick = (dateStr: string) => {
     setSelectedDate(dateStr)
     setViewMode('timeline')
+    if (onViewModeChange) {
+      onViewModeChange('timeline')
+    }
   }
 
   const handleBackToMonth = () => {
     setViewMode('month')
     setSelectedDate('')
+    if (onViewModeChange) {
+      onViewModeChange('month')
+    }
+    if (onBackToMonth) {
+      onBackToMonth()
+    }
   }
 
   const renderCalendarDays = () => {
@@ -295,6 +309,9 @@ export default function CalendarView() {
         selectedDate={selectedDate}
         events={events}
         onBack={handleBackToMonth}
+        onDateChange={(newDate) => {
+          setSelectedDate(newDate)
+        }}
         onEventsUpdate={() => {
           // Refresh events when new reservation is created
           const fetchCalendarData = async () => {

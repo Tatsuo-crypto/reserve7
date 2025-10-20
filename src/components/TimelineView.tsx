@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import QuickReservationModal from './QuickReservationModal'
 
@@ -19,9 +19,10 @@ interface TimelineViewProps {
   events: CalendarEvent[]
   onBack: () => void
   onEventsUpdate: () => void
+  onDateChange?: (date: string) => void
 }
 
-export default function TimelineView({ selectedDate, events, onBack, onEventsUpdate }: TimelineViewProps) {
+export default function TimelineView({ selectedDate, events, onBack, onEventsUpdate, onDateChange }: TimelineViewProps) {
   const [showQuickModal, setShowQuickModal] = useState(false)
   const [selectedTimeSlot, setSelectedTimeSlot] = useState('')
   const router = useRouter()
@@ -33,10 +34,14 @@ export default function TimelineView({ selectedDate, events, onBack, onEventsUpd
     endTime: '',
     notes: ''
   })
-  // Generate time slots (0:00 - 23:00, hourly)
+  
+  // スワイプ検出用
+  const touchStartX = useRef<number | null>(null)
+  const touchEndX = useRef<number | null>(null)
+  // Generate time slots (8:00 - 23:00, hourly)
   const generateTimeSlots = () => {
     const slots: string[] = []
-    for (let hour = 0; hour <= 23; hour++) {
+    for (let hour = 8; hour <= 23; hour++) {
       slots.push(`${String(hour).padStart(2, '0')}:00`)
     }
     return slots
@@ -58,10 +63,10 @@ export default function TimelineView({ selectedDate, events, onBack, onEventsUpd
     return { startMinutes, endMinutes, startTime, endTime }
   }
 
-  // Calculate position in timeline (pixel-based)
+  // Calculate position in timeline (pixel-based) - 8時スタート対応
   const getEventPosition = (startMinutes: number, endMinutes: number) => {
     const hourHeight = 48 // 1時間あたりのピクセル数
-    const startHour = startMinutes / 60
+    const startHour = startMinutes / 60 - 8 // 8時スタートなので8を引く
     const durationHours = (endMinutes - startMinutes) / 60
     
     const top = startHour * hourHeight
@@ -78,17 +83,17 @@ export default function TimelineView({ selectedDate, events, onBack, onEventsUpd
     const day = date.getDate()
     const dayNames = ['日', '月', '火', '水', '木', '金', '土']
     const dayOfWeek = dayNames[date.getDay()]
-    return `${year}年${month}月${day}日（${dayOfWeek}）`
+    return `${year}年${month}月${day}日(${dayOfWeek})`
   }
 
-  // Handle timeline click to create reservation
+  // Handle timeline click to create reservation - 8時スタート対応
   const handleTimelineClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect()
     const clickY = e.clientY - rect.top
     const hourHeight = 48
-    const clickedHour = Math.floor(clickY / hourHeight)
+    const clickedHour = Math.floor(clickY / hourHeight) + 8 // 8時スタートなので8を足す
     
-    if (clickedHour >= 0 && clickedHour < 24) {
+    if (clickedHour >= 8 && clickedHour <= 23) {
       const startTime = `${String(clickedHour).padStart(2, '0')}:00`
       const endHour = clickedHour + 1
       const endTime = `${String(endHour).padStart(2, '0')}:00`
@@ -98,6 +103,61 @@ export default function TimelineView({ selectedDate, events, onBack, onEventsUpd
       const startDateTime = `${selectedDate}T${startTime}`
       router.push(`/admin/reservations/new?startTime=${encodeURIComponent(startDateTime)}`)
     }
+  }
+  
+  // 日付変更関数
+  const changeDate = (days: number) => {
+    try {
+      const date = new Date(selectedDate + 'T00:00:00')
+      date.setDate(date.getDate() + days)
+      
+      // タイムゾーン問題を回避するため、ローカル時間で日付をフォーマット
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      const newDate = `${year}-${month}-${day}`
+      
+      if (onDateChange) {
+        onDateChange(newDate)
+      }
+    } catch (error) {
+      console.error('Date change error:', error)
+    }
+  }
+  
+  // スワイプイベントハンドラー
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX
+    touchEndX.current = e.touches[0].clientX
+  }
+  
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchEndX.current = e.touches[0].clientX
+  }
+  
+  const handleTouchEnd = () => {
+    if (touchStartX.current === null || touchEndX.current === null) {
+      touchStartX.current = null
+      touchEndX.current = null
+      return
+    }
+    
+    const diff = touchStartX.current - touchEndX.current
+    const threshold = 80 // 最小スワイプ距離（増やして誤操作を防ぐ）
+    
+    if (Math.abs(diff) > threshold) {
+      if (diff > 0) {
+        // 左スワイプ → 次の日
+        changeDate(1)
+      } else {
+        // 右スワイプ → 前の日
+        changeDate(-1)
+      }
+    }
+    
+    // 必ずリセット
+    touchStartX.current = null
+    touchEndX.current = null
   }
 
   const handleModalSuccess = () => {
@@ -175,32 +235,46 @@ export default function TimelineView({ selectedDate, events, onBack, onEventsUpd
   return (
     <div className="bg-white shadow-sm border border-gray-200 rounded-lg">
       {/* Header */}
-      <div className="px-6 py-4">
-        <div className="flex items-center justify-between">
-          <button
-            onClick={onBack}
-            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-          <div className="flex-1 text-center">
-            <h2 className="text-2xl font-bold text-gray-900">
+      <div className="px-4 py-4">
+        <div className="flex flex-col items-center space-y-2">
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={() => changeDate(-1)}
+              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md flex-shrink-0"
+              title="前の日"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <h2 className="text-xl font-bold text-gray-900 whitespace-nowrap">
               {formatSelectedDate(selectedDate)}
             </h2>
+            <button
+              onClick={() => changeDate(1)}
+              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md flex-shrink-0"
+              title="次の日"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
           </div>
-          <div className="text-sm text-gray-500 whitespace-nowrap">
+          <span className="text-sm text-gray-500">
             {dayEvents.length}件の予約
-          </div>
+          </span>
         </div>
       </div>
 
       {/* Timeline Body */}
-      <div className="p-6">
+      <div className="px-2 py-4"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
         <div className="flex">
           {/* Time Labels */}
-          <div className="w-20 flex-shrink-0 relative">
+          <div className="w-12 flex-shrink-0 relative">
             {timeSlots.map((time, index) => (
               <div
                 key={time}
@@ -215,7 +289,7 @@ export default function TimelineView({ selectedDate, events, onBack, onEventsUpd
 
           {/* Timeline Content */}
           <div 
-            className="flex-1 relative ml-4 cursor-pointer" 
+            className="flex-1 relative ml-2 cursor-pointer" 
             style={{ height: `${timeSlots.length * 48}px` }}
             onClick={handleTimelineClick}
           >
@@ -228,7 +302,7 @@ export default function TimelineView({ selectedDate, events, onBack, onEventsUpd
               />
             ))}
             
-            {/* Current time indicator (only for today's timeline in JST) */}
+            {/* Current time indicator (only for today's timeline in JST) - 8時スタート対応 */}
             {(() => {
               // Build today's date string in JST to match selectedDate format (YYYY-MM-DD)
               const todayStr = new Date().toLocaleDateString('ja-JP', {
@@ -243,7 +317,11 @@ export default function TimelineView({ selectedDate, events, onBack, onEventsUpd
               const now = new Date()
               const currentHour = now.getHours()
               const currentMinute = now.getMinutes()
-              const currentTimePosition = (currentHour + currentMinute / 60) * 48
+              
+              // 8時より前は表示しない
+              if (currentHour < 8) return null
+              
+              const currentTimePosition = ((currentHour - 8) + currentMinute / 60) * 48 // 8時スタート対応
 
               return (
                 <div
@@ -327,7 +405,7 @@ export default function TimelineView({ selectedDate, events, onBack, onEventsUpd
               return dayEventsFiltered.map((event, index) => {
                 const [startTime] = event.time.split(' - ')
                 const [hours, minutes] = startTime.split(':').map(Number)
-                const topPosition = (hours * 48) + (minutes * 48 / 60)
+                const topPosition = ((hours - 8) * 48) + (minutes * 48 / 60) // 8時スタート対応
                 
                 const layoutInfo = eventColumns.get(event.id) || { column: 0, totalColumns: 1 }
                 const widthPercent = 100 / layoutInfo.totalColumns
@@ -341,13 +419,6 @@ export default function TimelineView({ selectedDate, events, onBack, onEventsUpd
                   : event.type === 'blocked'
                   ? 'bg-red-100 border border-red-200 text-red-800'      // Blocked = Red
                   : 'bg-green-100 border border-green-200 text-green-800'  // Regular = Green
-                
-                console.log('Timeline event color:', {
-                  title: event.title,
-                  type: event.type,
-                  isTrial,
-                  colorClass: colorClass.split(' ')[0]
-                })
                 
                 return (
                   <div
@@ -391,7 +462,7 @@ export default function TimelineView({ selectedDate, events, onBack, onEventsUpd
 
       {/* Legend */}
       <div className="px-6 py-3 border-t border-gray-200 bg-gray-50">
-        <div className="flex items-center space-x-6 text-sm">
+        <div className="flex items-center justify-center space-x-6 text-sm">
           <div className="flex items-center space-x-2">
             <div className="w-3 h-3 bg-green-100 border border-green-200 rounded"></div>
             <span className="text-gray-600">予約</span>
