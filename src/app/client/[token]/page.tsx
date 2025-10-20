@@ -71,13 +71,6 @@ export default function ClientReservationsPage() {
   const { data: session, status: sessionStatus } = useSession()
   const isAdmin = sessionStatus === 'authenticated' && session?.user?.role === 'ADMIN'
 
-  // デバッグログ
-  useEffect(() => {
-    console.log('Session Status:', sessionStatus)
-    console.log('Session Data:', session)
-    console.log('Is Admin:', isAdmin)
-  }, [sessionStatus, session, isAdmin])
-
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -599,33 +592,18 @@ export default function ClientReservationsPage() {
           })()}
         </div>
 
-        {/* 管理者用編集ボタンまたはログインボタン */}
-        {user && (
+        {/* 管理者用編集ボタン */}
+        {isAdmin && user && (
           <div className="mt-6 flex justify-center">
-            {isAdmin ? (
-              <button
-                onClick={() => setShowTrackingModal(true)}
-                className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors shadow-md"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
-                編集
-              </button>
-            ) : sessionStatus === 'unauthenticated' && (
-              <button
-                onClick={() => {
-                  const callbackUrl = encodeURIComponent(`/client/${token}`)
-                  window.location.href = `/auth/signin?callbackUrl=${callbackUrl}`
-                }}
-                className="inline-flex items-center gap-2 px-6 py-3 bg-gray-600 text-white rounded-lg font-semibold hover:bg-gray-700 transition-colors shadow-md"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-                </svg>
-                管理者ログイン
-              </button>
-            )}
+            <button
+              onClick={() => setShowTrackingModal(true)}
+              className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors shadow-md"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              編集
+            </button>
           </div>
         )}
 
