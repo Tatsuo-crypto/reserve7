@@ -71,6 +71,13 @@ export default function ClientReservationsPage() {
   const { data: session, status: sessionStatus } = useSession()
   const isAdmin = sessionStatus === 'authenticated' && session?.user?.role === 'ADMIN'
 
+  // デバッグログ
+  useEffect(() => {
+    console.log('Session Status:', sessionStatus)
+    console.log('Session Data:', session)
+    console.log('Is Admin:', isAdmin)
+  }, [sessionStatus, session, isAdmin])
+
   useEffect(() => {
     const fetchData = async () => {
       try {
