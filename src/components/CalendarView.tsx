@@ -86,7 +86,9 @@ export default function CalendarView({ onViewModeChange, onBackToMonth }: Calend
       try {
         setLoading(true)
         
-        const response = await fetch('/api/reservations')
+        const response = await fetch('/api/reservations', {
+          next: { revalidate: 30 }, // Cache for 30 seconds
+        })
         console.log('Calendar API response status:', response.status)
         setDebugInfo(`API Status: ${response.status}`)
         
@@ -167,30 +169,30 @@ export default function CalendarView({ onViewModeChange, onBackToMonth }: Calend
     fetchCalendarData()
   }, [session])
 
-  // Helper functions
-  const formatMonth = (date: Date) => {
+  // Helper functions (memoized)
+  const formatMonth = useCallback((date: Date) => {
     return date.toLocaleDateString('ja-JP', { 
       year: 'numeric', 
       month: 'long',
       timeZone: 'Asia/Tokyo'
     })
-  }
+  }, [])
 
-  const getDaysInMonth = (date: Date) => {
+  const getDaysInMonth = useCallback((date: Date) => {
     return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate()
-  }
+  }, [])
 
-  const getFirstDayOfMonth = (date: Date) => {
+  const getFirstDayOfMonth = useCallback((date: Date) => {
     const day = new Date(date.getFullYear(), date.getMonth(), 1).getDay()
     // 月曜日始まりに調整: 日曜日(0)を6に、月曜日(1)を0に
     return (day + 6) % 7
-  }
+  }, [])
 
-  const getEventsForDate = (dateStr: string) => {
+  const getEventsForDate = useCallback((dateStr: string) => {
     return events.filter(event => event.date === dateStr)
-  }
+  }, [events])
 
-  const navigateMonth = (direction: 'prev' | 'next') => {
+  const navigateMonth = useCallback((direction: 'prev' | 'next') => {
     setCurrentDate(prev => {
       const newDate = new Date(prev)
       if (direction === 'prev') {
@@ -200,17 +202,17 @@ export default function CalendarView({ onViewModeChange, onBackToMonth }: Calend
       }
       return newDate
     })
-  }
+  }, [])
 
-  const handleDateClick = (dateStr: string) => {
+  const handleDateClick = useCallback((dateStr: string) => {
     setSelectedDate(dateStr)
     setViewMode('timeline')
     if (onViewModeChange) {
       onViewModeChange('timeline')
     }
-  }
+  }, [onViewModeChange, setSelectedDate, setViewMode])
 
-  const handleBackToMonth = () => {
+  const handleBackToMonth = useCallback(() => {
     setViewMode('month')
     setSelectedDate('')
     if (onViewModeChange) {
@@ -219,7 +221,7 @@ export default function CalendarView({ onViewModeChange, onBackToMonth }: Calend
     if (onBackToMonth) {
       onBackToMonth()
     }
-  }
+  }, [onViewModeChange, onBackToMonth])
 
   const renderCalendarDays = () => {
     const daysInMonth = getDaysInMonth(currentDate)

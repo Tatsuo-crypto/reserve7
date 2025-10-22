@@ -3,7 +3,11 @@ import { Inter } from 'next/font/google'
 import { Providers } from './providers'
 import Navigation from './components/Navigation'
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({ 
+  subsets: ['latin'],
+  display: 'swap',
+  preload: true,
+})
 
 // Use build-time timestamp to force cache refresh
 const iconVersion = Date.now()
