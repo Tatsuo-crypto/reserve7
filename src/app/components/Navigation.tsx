@@ -33,7 +33,7 @@ export default function Navigation() {
           {/* Right side: Admin info + Navigation */}
           <div className="flex items-center space-x-3">
             {session?.user?.role === 'ADMIN' && (
-              <div className="flex items-center space-x-2 px-2 sm:px-3 py-1 sm:py-1.5 border border-green-200 rounded-lg">
+              <div className="md:hidden flex items-center space-x-2 px-2 sm:px-3 py-1 sm:py-1.5 border border-green-200 rounded-lg">
                 <span className="text-[10px] sm:text-xs font-semibold text-gray-800">
                   {getStoreDisplayName(session.user.email)}
                 </span>
@@ -62,20 +62,6 @@ export default function Navigation() {
                     <Link href="/admin/stores" className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors">店舗管理</Link>
                   </>
                 )}
-                <div className="bg-white border border-gray-300 px-4 py-2 rounded-lg shadow-sm text-sm flex items-center space-x-3">
-                  <span className="text-gray-700 font-medium">
-                    {getStoreDisplayName(session.user.email)}
-                  </span>
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium border ${
-                    session.user.role === 'ADMIN' 
-                      ? 'bg-green-100 text-green-700 border-green-300'
-                      : session.user.role === 'TRAINER'
-                      ? 'bg-blue-100 text-blue-700 border-blue-300'
-                      : 'bg-gray-100 text-gray-700 border-gray-300'
-                  }`}>
-                    {session.user.role === 'ADMIN' ? '管理者' : session.user.role === 'TRAINER' ? 'トレーナー' : '会員'}
-                  </span>
-                </div>
                 <button
                   onClick={handleLogout}
                   className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm font-medium transition-colors border border-red-600"

@@ -418,7 +418,7 @@ function MembersPageContent() {
                             <span className={`mr-2 inline-block w-2 h-2 rounded-full ${getStatusDotColor(member.status)}`} aria-hidden="true"></span>
                             {member.access_token ? (
                               <Link
-                                href={`/client/${member.access_token}`}
+                                href={`/client/${member.access_token}?from=admin`}
                                 className="text-indigo-600 hover:text-indigo-800 hover:underline font-semibold"
                               >
                                 {member.full_name}

@@ -1,6 +1,6 @@
 'use client'
 
-import { useParams } from 'next/navigation'
+import { useParams, useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import dynamic from 'next/dynamic'
@@ -66,6 +66,8 @@ interface SquatRecord {
 export default function ClientReservationsPage() {
   const params = useParams()
   const token = params?.token as string
+  const searchParams = useSearchParams()
+  const fromAdmin = searchParams.get('from') === 'admin'
 
   const [user, setUser] = useState<User | null>(null)
   const [futureReservations, setFutureReservations] = useState<Reservation[]>([])
@@ -223,7 +225,20 @@ export default function ClientReservationsPage() {
       <header className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-3">
-            <h1 className="text-lg sm:text-xl font-bold text-gray-900 whitespace-nowrap">T&J GYM</h1>
+            <div className="flex items-center gap-2">
+              {fromAdmin && isAdmin && (
+                <a
+                  href="/admin/members"
+                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md"
+                  title="会員管理に戻る"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </a>
+              )}
+              <h1 className="text-lg sm:text-xl font-bold text-gray-900 whitespace-nowrap">T&J GYM</h1>
+            </div>
             <div className="flex items-center gap-1 flex-shrink min-w-0">
               <div className="px-2 sm:px-3 py-1 sm:py-1.5 bg-blue-50 rounded-lg border border-blue-100">
                 <span className="text-xs sm:text-sm font-semibold text-gray-900 truncate">{user.name}　様</span>
@@ -622,7 +637,7 @@ export default function ClientReservationsPage() {
         </div>
 
         {/* 管理者用編集ボタン */}
-        {isAdmin && user && (
+        {fromAdmin && isAdmin && user && (
           <div className="mt-6 flex justify-center">
             <button
               onClick={() => setShowTrackingModal(true)}
@@ -637,7 +652,7 @@ export default function ClientReservationsPage() {
         )}
 
         {/* TrackingModal */}
-        {isAdmin && user && showTrackingModal && (
+        {fromAdmin && isAdmin && user && showTrackingModal && (
           <TrackingModal
             isOpen={showTrackingModal}
             onClose={() => {

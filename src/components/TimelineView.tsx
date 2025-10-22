@@ -403,9 +403,15 @@ export default function TimelineView({ selectedDate, events, onBack, onEventsUpd
               })
               
               return dayEventsFiltered.map((event, index) => {
-                const [startTime] = event.time.split(' - ')
-                const [hours, minutes] = startTime.split(':').map(Number)
-                const topPosition = ((hours - 8) * 48) + (minutes * 48 / 60) // 8時スタート対応
+                const [startTime, endTime] = event.time.split(' - ')
+                const [startHours, startMinutes] = startTime.split(':').map(Number)
+                const [endHours, endMinutes] = endTime.split(':').map(Number)
+                
+                const topPosition = ((startHours - 8) * 48) + (startMinutes * 48 / 60) // 8時スタート対応
+                
+                // Calculate actual duration in minutes and height
+                const durationMinutes = (endHours * 60 + endMinutes) - (startHours * 60 + startMinutes)
+                const heightPx = (durationMinutes / 60) * 48 // 1時間 = 48px
                 
                 const layoutInfo = eventColumns.get(event.id) || { column: 0, totalColumns: 1 }
                 const widthPercent = 100 / layoutInfo.totalColumns
@@ -428,7 +434,7 @@ export default function TimelineView({ selectedDate, events, onBack, onEventsUpd
                       top: `${topPosition}px`,
                       left: `${leftPercent}%`,
                       width: `${widthPercent}%`,
-                      height: '46px',
+                      height: `${heightPx}px`,
                       zIndex: 10,
                       paddingLeft: '4px',
                       paddingRight: '4px'
