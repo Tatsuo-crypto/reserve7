@@ -86,27 +86,18 @@ export default function CalendarView({ onViewModeChange, onBackToMonth }: Calend
       try {
         setLoading(true)
         
-        const response = await fetch('/api/reservations', {
-          next: { revalidate: 30 }, // Cache for 30 seconds
-        })
-        console.log('Calendar API response status:', response.status)
+        const response = await fetch('/api/reservations')
         setDebugInfo(`API Status: ${response.status}`)
         
         if (response.ok) {
           const result = await response.json()
-          console.log('Calendar API result:', result)
           const data = result.data || result
-          console.log('Calendar API data:', data)
           const reservations: Reservation[] = data.reservations || []
-          console.log('Reservations count:', reservations.length)
           setDebugInfo(`API Status: ${response.status}, Count: ${reservations.length}`)
           
           if (reservations.length > 0) {
-            console.log('First reservation:', reservations[0])
-            
             // Transform reservations to calendar events (タイトルはサーバの値をそのまま使用)
             const calendarEvents: CalendarEvent[] = reservations.map(reservation => {
-              console.log('Processing reservation:', reservation)
               const startDate = new Date(reservation.startTime)
               const endDate = new Date(reservation.endTime)
               
@@ -210,7 +201,7 @@ export default function CalendarView({ onViewModeChange, onBackToMonth }: Calend
     if (onViewModeChange) {
       onViewModeChange('timeline')
     }
-  }, [onViewModeChange, setSelectedDate, setViewMode])
+  }, [onViewModeChange])
 
   const handleBackToMonth = useCallback(() => {
     setViewMode('month')
