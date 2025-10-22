@@ -72,7 +72,6 @@ function NewReservationContent() {
         // Get user's store ID from session
         const userEmail = session?.user?.email
         if (!userEmail) {
-          console.log('No user email, skipping clients fetch')
           setLoadingClients(false)
           return
         }
@@ -82,8 +81,6 @@ function NewReservationContent() {
           ? 'tandjgym@gmail.com' 
           : 'tandjgym2goutenn@gmail.com'
         
-        console.log('Fetching store UUID for calendar:', calendarId)
-        
         // First, get the store UUID from stores table
         const { data: store, error: storeError } = await supabase
           .from('stores')
@@ -92,12 +89,9 @@ function NewReservationContent() {
           .single()
         
         if (storeError || !store) {
-          console.error('Store not found:', storeError)
           setLoadingClients(false)
           return
         }
-        
-        console.log('Fetching clients for store UUID:', store.id)
         
         // Query users table with the store UUID
         const { data: clientsData, error } = await supabase
@@ -110,11 +104,8 @@ function NewReservationContent() {
           .order('full_name', { ascending: true })
         
         if (error) {
-          console.error('Supabase error:', error)
           throw error
         }
-        
-        console.log('Clients fetched directly:', clientsData?.length || 0)
         
         // Transform to match expected Client interface
         const formattedClients = (clientsData || []).map((client: any) => ({
@@ -128,7 +119,6 @@ function NewReservationContent() {
       } catch (error) {
         console.error('Error fetching clients:', error)
       } finally {
-        console.log('Setting loadingClients to false')
         setLoadingClients(false)
       }
     }
@@ -259,10 +249,6 @@ function NewReservationContent() {
     setSuccess(null)
 
     try {
-      console.log('Form data:', formData)
-      console.log('clientId:', formData.clientId, 'length:', formData.clientId.length)
-      console.log('startTime:', formData.startTime, 'length:', formData.startTime.length)
-
       // Validate required fields
       if (!formData.startTime.trim()) {
         throw new Error('開始時間は必須です')
@@ -352,8 +338,6 @@ function NewReservationContent() {
         }
       }
 
-      console.log('Sending request to API:', requestData)
-      
       const response = await fetch('/api/admin/reservations', {
         method: 'POST',
         headers: {
@@ -362,9 +346,7 @@ function NewReservationContent() {
         body: JSON.stringify(requestData),
       })
 
-      console.log('API Response status:', response.status)
       const data = await response.json()
-      console.log('API Response data:', data)
 
       if (!response.ok) {
         throw new Error(data.error || '予約の作成に失敗しました')
@@ -548,7 +530,6 @@ function NewReservationContent() {
                   </div>
                 ) : (
                   <>
-                    {console.log('Rendering select with clients:', clients.length, 'clients')}
                     <select
                       id="clientId"
                       name="clientId"
@@ -558,14 +539,11 @@ function NewReservationContent() {
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
                       <option value="">クライアントを選択してください</option>
-                      {clients && clients.map(client => {
-                        console.log('Rendering client option:', client)
-                        return (
-                          <option key={client.id} value={client.id}>
-                            {client.name} ({client.email})
-                          </option>
-                        )
-                      })}
+                      {clients && clients.map(client => (
+                        <option key={client.id} value={client.id}>
+                          {client.name} ({client.email})
+                        </option>
+                      ))}
                     </select>
                   </>
                 )}

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import Link from 'next/link'
 import TimelineView from './TimelineView'
 import { useSession } from 'next-auth/react'
@@ -134,14 +134,7 @@ export default function CalendarView({ onViewModeChange, onBackToMonth }: Calend
               const isBlocked = reservation.client.id === 'blocked' || (reservation.title && reservation.title.includes('予約不可'))
               const isTrial = reservation.title && reservation.title.includes('体験')
               
-              console.log('Processing reservation:', {
-                title: reservation.title,
-                clientId: reservation.client.id,
-                isBlocked,
-                isTrial
-              })
-              
-              const event: CalendarEvent = {
+              return {
                 id: reservation.id,
                 title: reservation.title,
                 date: dateInJST,
@@ -150,11 +143,8 @@ export default function CalendarView({ onViewModeChange, onBackToMonth }: Calend
                 clientName: isBlocked ? '予約不可' : isTrial ? '体験' : extractLastName(reservation.client.fullName),
                 notes: reservation.memo || reservation.notes || ''
               }
-              console.log('Created event:', event)
-              return event
             })
             
-            console.log('All calendar events:', calendarEvents)
             setEvents(calendarEvents)
             setDebugInfo(`API Status: ${response.status}, Count: ${reservations.length}, Events: ${calendarEvents.length}`)
           } else {
