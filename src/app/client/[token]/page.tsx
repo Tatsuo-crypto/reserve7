@@ -1,6 +1,6 @@
 'use client'
 
-import { useParams, useSearchParams } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import dynamic from 'next/dynamic'
@@ -66,9 +66,8 @@ interface SquatRecord {
 export default function ClientReservationsPage() {
   const params = useParams()
   const token = params?.token as string
-  const searchParams = useSearchParams()
-  const fromAdmin = searchParams.get('from') === 'admin'
-
+  
+  const [fromAdmin, setFromAdmin] = useState(false)
   const [user, setUser] = useState<User | null>(null)
   const [futureReservations, setFutureReservations] = useState<Reservation[]>([])
   const [pastReservations, setPastReservations] = useState<Reservation[]>([])
@@ -85,6 +84,14 @@ export default function ClientReservationsPage() {
   const [showTrackingModal, setShowTrackingModal] = useState(false)
   const { data: session, status: sessionStatus } = useSession()
   const isAdmin = sessionStatus === 'authenticated' && session?.user?.role === 'ADMIN'
+
+  // クエリパラメータを取得（Safari対応）
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search)
+      setFromAdmin(urlParams.get('from') === 'admin')
+    }
+  }, [])
 
   useEffect(() => {
     const fetchData = async () => {
