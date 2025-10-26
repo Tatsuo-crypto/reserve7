@@ -164,37 +164,58 @@ export async function POST(request: NextRequest) {
       return createErrorResponse('このメールアドレスは既に登録されています', 400)
     }
 
-    // Generate unique access token
-    const generateToken = () => {
-      return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
+    const insertData = {
+      full_name: fullName,
+      email: email,
+      password_hash: '', // トークンベース認証のためパスワードは不要
+      plan: plan || '月4回',
+      status: status || 'active',
+      store_id: storeId,
+      monthly_fee: monthlyFee ? parseInt(monthlyFee) : 0,
+      memo: memo || null,
+      role: 'CLIENT',
+      // access_tokenはSupabaseがUUIDで自動生成
     }
+
+    console.log('Inserting member with data:', {
+      ...insertData,
+      access_token: '█████' // トークンはマスク
+    })
 
     // Create new member
     const { data: newMember, error } = await supabaseAdmin
       .from('users')
-      .insert([{
-        full_name: fullName,
-        email: email,
-        plan: plan || '月4回',
-        status: status || 'active',
-        store_id: storeId,
-        monthly_fee: monthlyFee ? parseInt(monthlyFee) : 0,
-        memo: memo || null,
-        role: 'CLIENT',
-        access_token: generateToken(),
-      }])
+      .insert([insertData])
       .select()
       .single()
 
     if (error) {
       console.error('Database error:', error)
-      return createErrorResponse('会員の追加に失敗しました', 500)
+      console.error('Error details:', {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint
+      })
+      // 開発環境では詳細なエラーを返す
+      const errorMessage = process.env.NODE_ENV === 'development' 
+        ? `会員の追加に失敗しました: ${error.message}`
+        : '会員の追加に失敗しました'
+      return createErrorResponse(errorMessage, 500)
     }
 
     return createSuccessResponse({ member: newMember })
   } catch (error) {
     console.error('Members API error:', error)
-    return createErrorResponse('Internal server error', 500)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    console.error('Error message:', errorMessage)
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack')
+    return createErrorResponse(
+      process.env.NODE_ENV === 'development' 
+        ? `Internal server error: ${errorMessage}`
+        : 'Internal server error', 
+      500
+    )
   }
 }
 
