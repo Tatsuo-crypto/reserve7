@@ -96,14 +96,19 @@ export default function ClientReservationsPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        console.log('[Client Page] Fetching user data with token')
         // ユーザー情報を最初に取得（これが失敗したら他は実行しない）
         const userResponse = await fetch(`/api/auth/token?token=${token}`)
         if (!userResponse.ok) {
-          setError('無効なURLです')
+          const errorData = await userResponse.json().catch(() => ({}))
+          const errorMsg = errorData.error || '無効なURLです'
+          console.error('[Client Page] Token validation failed:', userResponse.status, errorMsg)
+          setError(errorMsg)
           setLoading(false)
           return
         }
         const userData = await userResponse.json()
+        console.log('[Client Page] User data fetched successfully')
         setUser(userData.user)
 
         // 予約とトラッキングデータを並列で取得（高速化）

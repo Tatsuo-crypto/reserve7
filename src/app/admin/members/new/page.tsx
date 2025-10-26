@@ -39,15 +39,18 @@ export default function NewMemberPage() {
         }),
       })
 
-      const result = await response.json()
-
-      if (response.ok) {
-        // Success
-        alert('会員を追加しました')
-        router.push('/admin/members')
-      } else {
-        setError(result.error || '会員の追加に失敗しました')
+      if (!response.ok) {
+        const result = await response.json()
+        const errorMsg = result.error || '会員の追加に失敗しました'
+        console.error('会員登録エラー:', errorMsg, result)
+        setError(errorMsg)
+        return
       }
+
+      const result = await response.json()
+      console.log('会員登録成功:', result)
+      alert('会員を追加しました')
+      router.push('/admin/members')
     } catch (error) {
       console.error('Error:', error)
       setError('会員の追加中にエラーが発生しました')
@@ -64,14 +67,22 @@ export default function NewMemberPage() {
         if (response.ok) {
           const result = await response.json()
           const data = result.data || result
-          setStores(data.stores || [])
+          const storesList = data.stores || []
+          setStores(storesList)
           // Set first store as default if available
-          if (data.stores && data.stores.length > 0) {
-            setFormData(prev => ({ ...prev, storeId: data.stores[0].id }))
+          if (storesList.length > 0) {
+            setFormData(prev => ({ ...prev, storeId: storesList[0].id }))
+          } else {
+            console.error('店舗情報が取得できませんでした')
+            setError('店舗情報の読み込みに失敗しました。ページをリロードしてください。')
           }
+        } else {
+          console.error('Stores API error:', response.status)
+          setError('店舗情報の取得に失敗しました')
         }
       } catch (error) {
         console.error('Failed to fetch stores:', error)
+        setError('店舗情報の読み込み中にエラーが発生しました')
       }
     }
     fetchStores()
