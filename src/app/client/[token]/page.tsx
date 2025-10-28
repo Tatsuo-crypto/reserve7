@@ -563,7 +563,7 @@ export default function ClientReservationsPage() {
                       <h3 className="text-sm font-bold text-gray-700">体重</h3>
                     </div>
                     <div className="space-y-2">
-                      {(showAllWeight ? weightRecords : weightRecords.slice(0, 3)).map((record) => (
+                      {weightRecords.slice(0, 1).map((record) => (
                         <div key={record.id} className="pt-3 pb-4 px-4 bg-green-50 rounded-lg border border-green-200 h-[90px] flex flex-col gap-1 overflow-hidden">
                           <div className="flex items-center justify-between">
                             <div className="text-base text-gray-900">{new Date(record.recorded_date).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}</div>
@@ -574,17 +574,6 @@ export default function ClientReservationsPage() {
                           )}
                         </div>
                       ))}
-                      {weightRecords.length > 3 && (
-                        <button
-                          onClick={() => setShowAllWeight(!showAllWeight)}
-                          className="flex items-center gap-1 text-xs text-green-600 hover:text-green-700"
-                        >
-                          <svg className={`w-3 h-3 transition-transform ${showAllWeight ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                          </svg>
-                          {showAllWeight ? '閉じる' : `過去の記録を表示 (${weightRecords.length - 3}件)`}
-                        </button>
-                      )}
                     </div>
                   </div>
                 )}
@@ -600,7 +589,7 @@ export default function ClientReservationsPage() {
                       <h3 className="text-sm font-bold text-gray-700">スクワット重量</h3>
                     </div>
                     <div className="space-y-2">
-                      {(showAllSquat ? squatRecords : squatRecords.slice(0, 3)).map((record) => (
+                      {squatRecords.slice(0, 1).map((record) => (
                         <div key={record.id} className="pt-3 pb-4 px-4 bg-purple-50 rounded-lg border border-purple-200 h-[90px] flex flex-col gap-1 overflow-hidden">
                           <div className="flex items-center justify-between">
                             <div className="text-base text-gray-900">{new Date(record.recorded_date).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}</div>
@@ -620,17 +609,6 @@ export default function ClientReservationsPage() {
                           </div>
                         </div>
                       ))}
-                      {squatRecords.length > 3 && (
-                        <button
-                          onClick={() => setShowAllSquat(!showAllSquat)}
-                          className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-700"
-                        >
-                          <svg className={`w-3 h-3 transition-transform ${showAllSquat ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                          </svg>
-                          {showAllSquat ? '閉じる' : `過去の記録を表示 (${squatRecords.length - 3}件)`}
-                        </button>
-                      )}
                     </div>
                   </div>
                 )}
