@@ -481,14 +481,14 @@ export default function ClientReservationsPage() {
                           disabled={isDisabled}
                           className={`${
                             isChecked 
-                              ? 'bg-gray-300 border-2 border-gray-500 shadow-none' 
-                              : 'bg-gradient-to-br from-blue-400 to-indigo-500 border-2 border-blue-600 shadow-lg'
-                          } w-full p-4 rounded-xl flex flex-col items-center justify-center min-h-[100px] transition-all ${
-                            !isDisabled ? 'hover:scale-105 hover:shadow-xl active:scale-95 cursor-pointer' : 'cursor-not-allowed opacity-60'
+                              ? 'bg-gray-100 border-2 border-gray-300' 
+                              : 'bg-blue-50 border-2 border-blue-200'
+                          } w-full p-4 rounded-lg shadow-sm flex flex-col items-center justify-center min-h-[100px] transition-all ${
+                            !isDisabled ? 'hover:bg-blue-100 hover:border-blue-300 hover:shadow-md active:scale-98 cursor-pointer' : 'cursor-not-allowed opacity-70'
                           }`}
                         >
                           <div className={`text-base font-bold text-center ${
-                            isChecked ? 'text-gray-600' : 'text-white'
+                            isChecked ? 'text-gray-500' : 'text-blue-700'
                           }`}>
                             {goal.goal_text}
                           </div>
