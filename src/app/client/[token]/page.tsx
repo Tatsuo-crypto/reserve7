@@ -98,6 +98,7 @@ export default function ClientReservationsPage() {
   const [streak, setStreak] = useState<Streak | null>(null)
   const [showReward, setShowReward] = useState(false)
   const [rewardAmount, setRewardAmount] = useState(0)
+  const [isTodayCompleted, setIsTodayCompleted] = useState(false)
   const { data: session, status: sessionStatus } = useSession()
   const isAdmin = sessionStatus === 'authenticated' && session?.user?.role === 'ADMIN'
 
@@ -168,8 +169,13 @@ export default function ClientReservationsPage() {
           const checkResponse = await fetch(`/api/client/goal-check?token=${token}`)
           if (checkResponse.ok) {
             const checkData = await checkResponse.json()
-            setGoalChecks(checkData.data.monthlyGoals || [])
+            const goals = checkData.data.monthlyGoals || []
+            setGoalChecks(goals)
             setStreak(checkData.data.streak)
+            
+            // 全てチェック済みか判定
+            const allChecked = goals.length > 0 && goals.every((g: GoalCheckData) => g.checked)
+            setIsTodayCompleted(allChecked)
           }
         } catch (err) {
           console.error('チェック情報取得エラー:', err)
@@ -189,11 +195,21 @@ export default function ClientReservationsPage() {
 
   // 目標チェックのハンドラー
   const handleGoalCheck = async (goalId: string, currentlyChecked: boolean) => {
+    // 本日達成済みの場合は変更不可
+    if (isTodayCompleted) {
+      return
+    }
+
+    // 既にチェック済みの場合はアンチェック不可
+    if (currentlyChecked) {
+      return
+    }
+
     try {
       const response = await fetch(`/api/client/goal-check?token=${token}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ goalId, checked: !currentlyChecked })
+        body: JSON.stringify({ goalId, checked: true })
       })
 
       if (response.ok) {
@@ -201,7 +217,7 @@ export default function ClientReservationsPage() {
         
         // チェック状況を更新
         setGoalChecks(prev => prev.map(goal => 
-          goal.id === goalId ? { ...goal, checked: !currentlyChecked } : goal
+          goal.id === goalId ? { ...goal, checked: true } : goal
         ))
 
         // ストリーク情報を更新
@@ -211,6 +227,7 @@ export default function ClientReservationsPage() {
 
         // 全てチェックされた場合、報酬を表示
         if (result.data.isCompleted && result.data.reward > 0) {
+          setIsTodayCompleted(true)
           setRewardAmount(result.data.reward)
           setShowReward(true)
           setTimeout(() => setShowReward(false), 3000)
@@ -455,19 +472,23 @@ export default function ClientReservationsPage() {
                     {displayGoals.slice(0, 3).map((goal) => {
                       const checkData = goalChecks.find(g => g.id === goal.id)
                       const isChecked = checkData?.checked || false
+                      const isDisabled = isTodayCompleted || isChecked
                       return (
                         <button
                           key={goal.id}
                           onClick={() => handleGoalCheck(goal.id, isChecked)}
+                          disabled={isDisabled}
                           className={`${
                             isChecked 
-                              ? 'bg-gradient-to-br from-green-100 to-emerald-100 border-2 border-green-500' 
+                              ? 'bg-gray-200 border-2 border-gray-400' 
                               : 'bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-400'
-                          } p-3 rounded-lg shadow-sm flex flex-col items-center justify-center min-h-[60px] transition-all hover:scale-105 active:scale-95`}
+                          } p-3 rounded-lg shadow-sm flex flex-col items-center justify-center h-[90px] transition-all ${
+                            !isDisabled ? 'hover:scale-105 active:scale-95 cursor-pointer' : 'cursor-not-allowed opacity-75'
+                          }`}
                         >
                           <div className="flex items-center gap-1 mb-1">
                             {isChecked ? (
-                              <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 24 24">
+                              <svg className="w-5 h-5 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                               </svg>
                             ) : (
@@ -477,7 +498,7 @@ export default function ClientReservationsPage() {
                             )}
                           </div>
                           <div className={`text-sm font-bold text-center line-clamp-2 ${
-                            isChecked ? 'text-green-700' : 'text-blue-700'
+                            isChecked ? 'text-gray-600' : 'text-blue-700'
                           }`}>
                             {goal.goal_text}
                           </div>
