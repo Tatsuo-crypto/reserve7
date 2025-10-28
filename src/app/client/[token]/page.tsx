@@ -47,6 +47,18 @@ interface MonthlyGoal {
   goal_text: string
 }
 
+interface GoalCheckData {
+  id: string
+  text: string
+  checked: boolean
+}
+
+interface Streak {
+  current_streak: number
+  max_streak: number
+  total_rewards: number
+}
+
 interface WeightRecord {
   id: string
   recorded_date: string
@@ -82,6 +94,10 @@ export default function ClientReservationsPage() {
   const [showMonthlyGoals, setShowMonthlyGoals] = useState(false)
   const [showOlderMonths, setShowOlderMonths] = useState(false)
   const [showTrackingModal, setShowTrackingModal] = useState(false)
+  const [goalChecks, setGoalChecks] = useState<GoalCheckData[]>([])
+  const [streak, setStreak] = useState<Streak | null>(null)
+  const [showReward, setShowReward] = useState(false)
+  const [rewardAmount, setRewardAmount] = useState(0)
   const { data: session, status: sessionStatus } = useSession()
   const isAdmin = sessionStatus === 'authenticated' && session?.user?.role === 'ADMIN'
 
@@ -146,6 +162,18 @@ export default function ClientReservationsPage() {
         } else {
           console.error('トラッキングデータ取得エラー:', trackingResult.reason)
         }
+
+        // チェック情報とストリークを取得
+        try {
+          const checkResponse = await fetch(`/api/client/goal-check?token=${token}`)
+          if (checkResponse.ok) {
+            const checkData = await checkResponse.json()
+            setGoalChecks(checkData.data.monthlyGoals || [])
+            setStreak(checkData.data.streak)
+          }
+        } catch (err) {
+          console.error('チェック情報取得エラー:', err)
+        }
       } catch (err) {
         console.error('Error:', err)
         setError('データの取得に失敗しました')
@@ -158,6 +186,40 @@ export default function ClientReservationsPage() {
       fetchData()
     }
   }, [token])
+
+  // 目標チェックのハンドラー
+  const handleGoalCheck = async (goalId: string, currentlyChecked: boolean) => {
+    try {
+      const response = await fetch(`/api/client/goal-check?token=${token}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ goalId, checked: !currentlyChecked })
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        
+        // チェック状況を更新
+        setGoalChecks(prev => prev.map(goal => 
+          goal.id === goalId ? { ...goal, checked: !currentlyChecked } : goal
+        ))
+
+        // ストリーク情報を更新
+        if (result.data.streak) {
+          setStreak(result.data.streak)
+        }
+
+        // 全てチェックされた場合、報酬を表示
+        if (result.data.isCompleted && result.data.reward > 0) {
+          setRewardAmount(result.data.reward)
+          setShowReward(true)
+          setTimeout(() => setShowReward(false), 3000)
+        }
+      }
+    } catch (error) {
+      console.error('チェック処理エラー:', error)
+    }
+  }
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr)
@@ -234,6 +296,21 @@ export default function ClientReservationsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* 報酬通知 */}
+      {showReward && (
+        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 animate-bounce">
+          <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-6 py-4 rounded-full shadow-2xl flex items-center gap-3">
+            <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+            </svg>
+            <div>
+              <div className="font-bold text-lg">全目標達成！</div>
+              <div className="text-sm">+{rewardAmount}pt 獲得！</div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <header className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-3">
@@ -342,6 +419,27 @@ export default function ClientReservationsPage() {
               
               return (
                 <div className="mb-6">
+                  {/* ストリーク表示 */}
+                  {streak && streak.current_streak > 0 && (
+                    <div className="mb-3 p-3 bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-400 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <svg className="w-5 h-5 text-orange-600" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                          </svg>
+                          <div>
+                            <div className="text-lg font-bold text-orange-700">{streak.current_streak}日連続達成！</div>
+                            <div className="text-xs text-gray-600">最高記録: {streak.max_streak}日</div>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-xs text-gray-500">累計報酬</div>
+                          <div className="text-xl font-bold text-orange-600">{streak.total_rewards}pt</div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="flex items-center gap-2 mb-2">
                     <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -352,13 +450,40 @@ export default function ClientReservationsPage() {
                     </h3>
                   </div>
                   
-                  {/* 今月の目標（3つまで横並び） */}
+                  {/* 今月の目標（３つまで横並び） - チェック機能付き */}
                   <div className="grid grid-cols-3 gap-3 mb-3">
-                    {displayGoals.slice(0, 3).map((goal) => (
-                      <div key={goal.id} className="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-400 p-3 rounded-lg shadow-sm flex items-center justify-center min-h-[60px]">
-                        <div className="text-sm font-bold text-blue-700 text-center line-clamp-2">{goal.goal_text}</div>
-                      </div>
-                    ))}
+                    {displayGoals.slice(0, 3).map((goal) => {
+                      const checkData = goalChecks.find(g => g.id === goal.id)
+                      const isChecked = checkData?.checked || false
+                      return (
+                        <button
+                          key={goal.id}
+                          onClick={() => handleGoalCheck(goal.id, isChecked)}
+                          className={`${
+                            isChecked 
+                              ? 'bg-gradient-to-br from-green-100 to-emerald-100 border-2 border-green-500' 
+                              : 'bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-400'
+                          } p-3 rounded-lg shadow-sm flex flex-col items-center justify-center min-h-[60px] transition-all hover:scale-105 active:scale-95`}
+                        >
+                          <div className="flex items-center gap-1 mb-1">
+                            {isChecked ? (
+                              <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                            ) : (
+                              <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                            )}
+                          </div>
+                          <div className={`text-sm font-bold text-center line-clamp-2 ${
+                            isChecked ? 'text-green-700' : 'text-blue-700'
+                          }`}>
+                            {goal.goal_text}
+                          </div>
+                        </button>
+                      )
+                    })}
                   </div>
                   
                   {/* 古い月の目標（折りたたみ） */}
