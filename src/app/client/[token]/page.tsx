@@ -475,24 +475,42 @@ export default function ClientReservationsPage() {
                       const isChecked = checkData?.checked || false
                       const isDisabled = isTodayCompleted || isChecked
                       return (
-                        <button
+                        <div
                           key={goal.id}
-                          onClick={() => handleGoalCheck(goal.id, isChecked)}
-                          disabled={isDisabled}
                           className={`${
                             isChecked 
                               ? 'bg-gray-100 border-2 border-gray-300 shadow-none' 
                               : 'bg-blue-50 border-2 border-blue-400 shadow-md'
-                          } w-full p-4 rounded-lg flex flex-col items-center justify-center min-h-[100px] transition-all ${
-                            !isDisabled ? 'hover:bg-blue-100 hover:border-blue-500 hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 active:shadow-md cursor-pointer' : 'cursor-not-allowed opacity-70'
-                          }`}
+                          } w-full p-4 rounded-lg flex flex-col items-center justify-center min-h-[100px] transition-all relative`}
                         >
+                          {/* 左上角のチェックボタン */}
+                          <button
+                            onClick={() => handleGoalCheck(goal.id, isChecked)}
+                            disabled={isDisabled}
+                            className={`absolute -top-2 -left-2 w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+                              isChecked 
+                                ? 'bg-gray-500 border-2 border-gray-600' 
+                                : 'bg-white border-2 border-blue-400 hover:border-blue-500 hover:shadow-md'
+                            } ${
+                              !isDisabled ? 'cursor-pointer hover:scale-110 active:scale-95' : 'cursor-not-allowed opacity-70'
+                            }`}
+                          >
+                            {isChecked ? (
+                              <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                              </svg>
+                            ) : (
+                              <div className="w-4 h-4 rounded-full border-2 border-blue-400"></div>
+                            )}
+                          </button>
+
+                          {/* 目標テキスト */}
                           <div className={`text-base font-bold text-center ${
                             isChecked ? 'text-gray-500' : 'text-blue-700'
                           }`}>
                             {goal.goal_text}
                           </div>
-                        </button>
+                        </div>
                       )
                     })}
                   </div>
