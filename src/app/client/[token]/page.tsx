@@ -230,7 +230,7 @@ export default function ClientReservationsPage() {
           setIsTodayCompleted(true)
           setRewardAmount(result.data.reward)
           setShowReward(true)
-          setTimeout(() => setShowReward(false), 3000)
+          setTimeout(() => setShowReward(false), 5000)
         }
       }
     } catch (error) {
@@ -315,8 +315,8 @@ export default function ClientReservationsPage() {
     <div className="min-h-screen bg-gray-50">
       {/* 報酬通知 */}
       {showReward && (
-        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 animate-bounce">
-          <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-6 py-4 rounded-full shadow-2xl flex items-center gap-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30 animate-fadeIn">
+          <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-8 py-6 rounded-2xl shadow-2xl flex items-center gap-4 animate-scaleIn">
             <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
               <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
             </svg>
