@@ -315,15 +315,14 @@ export default function ClientReservationsPage() {
     <div className="min-h-screen bg-gray-50">
       {/* 報酬通知 */}
       {showReward && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30 animate-fadeIn">
-          <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-8 py-6 rounded-2xl shadow-2xl flex items-center gap-4 animate-scaleIn">
-            <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30 animate-fadeInSlow">
+          <div className="bg-gradient-to-br from-yellow-400 via-orange-400 to-orange-500 text-white px-12 py-8 rounded-3xl shadow-2xl flex flex-col items-center gap-3 animate-scaleInSlow">
+            <svg className="w-10 h-10" fill="currentColor" viewBox="0 0 24 24">
               <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
             </svg>
-            <div>
-              <div className="font-bold text-lg">全目標達成！</div>
-              <div className="text-sm">+{rewardAmount}pt 獲得！</div>
-            </div>
+            <div className="font-bold text-xl">全目標達成！</div>
+            <div className="text-6xl font-black animate-pulse">+{rewardAmount}pt</div>
+            <div className="text-base opacity-90">獲得！</div>
           </div>
         </div>
       )}
