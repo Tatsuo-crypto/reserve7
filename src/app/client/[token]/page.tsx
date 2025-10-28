@@ -577,64 +577,80 @@ export default function ClientReservationsPage() {
             {(weightRecords.length > 0 || squatRecords.length > 0) && (
               <div className="grid grid-cols-2 gap-3 mb-6">
                 {/* 体重推移 */}
-                {weightRecords.length > 0 && (
-                  <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                      </svg>
-                      <h3 className="text-sm font-bold text-gray-700">体重</h3>
-                    </div>
-                    <div className="space-y-2">
-                      {weightRecords.slice(0, 1).map((record) => (
-                        <div key={record.id} className="pt-3 pb-4 px-4 bg-green-50 rounded-lg border border-green-200 h-[90px] flex flex-col gap-1 overflow-hidden">
+                {weightRecords.length > 0 && (() => {
+                  const latestWeight = weightRecords[0]
+                  const initialWeight = weightRecords[weightRecords.length - 1]
+                  const weightDiff = weightRecords.length > 1 ? initialWeight.weight_kg - latestWeight.weight_kg : 0
+                  return (
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        <h3 className="text-sm font-bold text-gray-700">体重</h3>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="pt-3 pb-4 px-4 bg-green-50 rounded-lg border border-green-200 h-[90px] flex flex-col gap-1 overflow-hidden">
                           <div className="flex items-center justify-between">
-                            <div className="text-base text-gray-900">{new Date(record.recorded_date).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}</div>
-                            <div className="text-base font-bold text-green-600">{record.weight_kg}kg</div>
+                            <div className="text-base text-gray-900">{new Date(latestWeight.recorded_date).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}</div>
+                            <div className="text-base font-bold text-green-600">{latestWeight.weight_kg}kg</div>
                           </div>
-                          {record.notes && (
-                            <div className="text-xs text-gray-500 break-words leading-tight">{record.notes}</div>
+                          {weightRecords.length > 1 && weightDiff !== 0 && (
+                            <div className="text-xs text-green-700 font-semibold">
+                              {weightDiff > 0 ? `-${weightDiff.toFixed(1)}kg` : `+${Math.abs(weightDiff).toFixed(1)}kg`} (初期から)
+                            </div>
+                          )}
+                          {latestWeight.notes && (
+                            <div className="text-xs text-gray-500 break-words leading-tight">{latestWeight.notes}</div>
                           )}
                         </div>
-                      ))}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )
+                })()}
 
                 {/* SQ推移 */}
-                {squatRecords.length > 0 && (
-                  <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z" />
-                      </svg>
-                      <h3 className="text-sm font-bold text-gray-700">スクワット重量</h3>
-                    </div>
-                    <div className="space-y-2">
-                      {squatRecords.slice(0, 1).map((record) => (
-                        <div key={record.id} className="pt-3 pb-4 px-4 bg-purple-50 rounded-lg border border-purple-200 h-[90px] flex flex-col gap-1 overflow-hidden">
+                {squatRecords.length > 0 && (() => {
+                  const latestSquat = squatRecords[0]
+                  const initialSquat = squatRecords[squatRecords.length - 1]
+                  const squatDiff = squatRecords.length > 1 ? latestSquat.weight_kg - initialSquat.weight_kg : 0
+                  return (
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z" />
+                        </svg>
+                        <h3 className="text-sm font-bold text-gray-700">スクワット重量</h3>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="pt-3 pb-4 px-4 bg-purple-50 rounded-lg border border-purple-200 h-[90px] flex flex-col gap-1 overflow-hidden">
                           <div className="flex items-center justify-between">
-                            <div className="text-base text-gray-900">{new Date(record.recorded_date).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}</div>
-                            <div className="text-base font-bold text-purple-600">{record.weight_kg}kg</div>
+                            <div className="text-base text-gray-900">{new Date(latestSquat.recorded_date).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}</div>
+                            <div className="text-base font-bold text-purple-600">{latestSquat.weight_kg}kg</div>
                           </div>
                           <div className="flex flex-col gap-0.5">
-                            {(record.reps || record.sets) && (
-                              <div className="text-xs text-gray-500 leading-tight">
-                                {record.reps && record.sets && `${record.reps}回 × ${record.sets}セット`}
-                                {record.reps && !record.sets && `${record.reps}回`}
-                                {!record.reps && record.sets && `${record.sets}セット`}
+                            {squatRecords.length > 1 && squatDiff !== 0 && (
+                              <div className="text-xs text-purple-700 font-semibold">
+                                {squatDiff > 0 ? `+${squatDiff.toFixed(1)}kg` : `-${Math.abs(squatDiff).toFixed(1)}kg`} (初期から)
                               </div>
                             )}
-                            {record.notes && (
-                              <div className="text-xs text-gray-500 break-words leading-tight">{record.notes}</div>
+                            {(latestSquat.reps || latestSquat.sets) && (
+                              <div className="text-xs text-gray-500 leading-tight">
+                                {latestSquat.reps && latestSquat.sets && `${latestSquat.reps}回 × ${latestSquat.sets}セット`}
+                                {latestSquat.reps && !latestSquat.sets && `${latestSquat.reps}回`}
+                                {!latestSquat.reps && latestSquat.sets && `${latestSquat.sets}セット`}
+                              </div>
+                            )}
+                            {latestSquat.notes && (
+                              <div className="text-xs text-gray-500 break-words leading-tight">{latestSquat.notes}</div>
                             )}
                           </div>
                         </div>
-                      ))}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )
+                })()}
               </div>
             )}
           </div>
