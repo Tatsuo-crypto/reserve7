@@ -481,10 +481,10 @@ export default function ClientReservationsPage() {
                           disabled={isDisabled}
                           className={`${
                             isChecked 
-                              ? 'bg-gray-100 border-2 border-gray-300' 
-                              : 'bg-blue-50 border-2 border-blue-200'
-                          } w-full p-4 rounded-lg shadow-sm flex flex-col items-center justify-center min-h-[100px] transition-all ${
-                            !isDisabled ? 'hover:bg-blue-100 hover:border-blue-300 hover:shadow-md active:scale-98 cursor-pointer' : 'cursor-not-allowed opacity-70'
+                              ? 'bg-gray-100 border-2 border-gray-300 shadow-none' 
+                              : 'bg-blue-50 border-2 border-blue-400 shadow-md'
+                          } w-full p-4 rounded-lg flex flex-col items-center justify-center min-h-[100px] transition-all ${
+                            !isDisabled ? 'hover:bg-blue-100 hover:border-blue-500 hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 active:shadow-md cursor-pointer' : 'cursor-not-allowed opacity-70'
                           }`}
                         >
                           <div className={`text-base font-bold text-center ${
@@ -550,7 +550,7 @@ export default function ClientReservationsPage() {
                       {(showAllWeight ? weightRecords : weightRecords.slice(0, 3)).map((record) => (
                         <div key={record.id} className="pt-3 pb-4 px-4 bg-green-50 rounded-lg border border-green-200 h-[90px] flex flex-col gap-1 overflow-hidden">
                           <div className="flex items-center justify-between">
-                            <div className="text-base font-bold text-gray-900">{new Date(record.recorded_date).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}</div>
+                            <div className="text-base text-gray-900">{new Date(record.recorded_date).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}</div>
                             <div className="text-base font-bold text-green-600">{record.weight_kg}kg</div>
                           </div>
                           {record.notes && (
@@ -587,7 +587,7 @@ export default function ClientReservationsPage() {
                       {(showAllSquat ? squatRecords : squatRecords.slice(0, 3)).map((record) => (
                         <div key={record.id} className="pt-3 pb-4 px-4 bg-purple-50 rounded-lg border border-purple-200 h-[90px] flex flex-col gap-1 overflow-hidden">
                           <div className="flex items-center justify-between">
-                            <div className="text-base font-bold text-gray-900">{new Date(record.recorded_date).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}</div>
+                            <div className="text-base text-gray-900">{new Date(record.recorded_date).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}</div>
                             <div className="text-base font-bold text-purple-600">{record.weight_kg}kg</div>
                           </div>
                           <div className="flex flex-col gap-0.5">
