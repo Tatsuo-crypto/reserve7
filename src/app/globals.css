@@ -12,7 +12,7 @@
   }
   
   .animate-fadeInSlow {
-    animation: fadeIn 0.8s ease-out;
+    animation: fadeIn 1.5s ease-in-out;
   }
   
   .animate-scaleInSlow {

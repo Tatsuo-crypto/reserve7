@@ -99,6 +99,8 @@ export default function ClientReservationsPage() {
   const [showReward, setShowReward] = useState(false)
   const [rewardAmount, setRewardAmount] = useState(0)
   const [isTodayCompleted, setIsTodayCompleted] = useState(false)
+  const [showMilestone, setShowMilestone] = useState(false)
+  const [milestoneAmount, setMilestoneAmount] = useState(0)
   const { data: session, status: sessionStatus } = useSession()
   const isAdmin = sessionStatus === 'authenticated' && session?.user?.role === 'ADMIN'
 
@@ -231,6 +233,15 @@ export default function ClientReservationsPage() {
           setRewardAmount(result.data.reward)
           setShowReward(true)
           setTimeout(() => setShowReward(false), 5000)
+          
+          // マイルストーン達成チェック
+          if (result.data.streak?.milestoneReached) {
+            setTimeout(() => {
+              setMilestoneAmount(result.data.streak.milestoneReached)
+              setShowMilestone(true)
+              setTimeout(() => setShowMilestone(false), 5000)
+            }, 5500) // 通常の報酬表示後に表示
+          }
         }
       }
     } catch (error) {
@@ -323,6 +334,19 @@ export default function ClientReservationsPage() {
             <div className="font-bold text-xl">全目標達成！</div>
             <div className="text-6xl font-black animate-pulse">+{rewardAmount}pt</div>
             <div className="text-base opacity-90">獲得！</div>
+          </div>
+        </div>
+      )}
+      
+      {/* マイルストーン達成通知 */}
+      {showMilestone && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 animate-fadeInSlow">
+          <div className="bg-gradient-to-br from-pink-400 via-purple-500 to-indigo-600 text-white px-16 py-10 rounded-3xl shadow-2xl flex flex-col items-center gap-4 animate-scaleInSlow">
+            <div className="text-6xl">🎉</div>
+            <div className="font-bold text-2xl">おめでとうございます！</div>
+            <div className="text-7xl font-black animate-pulse">{milestoneAmount}pt</div>
+            <div className="text-xl font-bold">達成！</div>
+            <div className="text-lg opacity-90">ご褒美ゲット！</div>
           </div>
         </div>
       )}

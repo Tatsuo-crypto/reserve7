@@ -184,13 +184,16 @@ export async function POST(request: NextRequest) {
         newMaxStreak = Math.max(newStreak, existingStreak.max_streak)
         reward = newStreak // 連続日数 = 報酬ポイント
 
+        const newTotalRewards = existingStreak.total_rewards + reward
+        const oldTotalRewards = existingStreak.total_rewards
+        
         const { data: updated } = await supabaseAdmin
           .from('goal_streaks')
           .update({
             current_streak: newStreak,
             max_streak: newMaxStreak,
             last_completed_date: today,
-            total_rewards: existingStreak.total_rewards + reward,
+            total_rewards: newTotalRewards,
             updated_at: new Date().toISOString()
           })
           .eq('id', existingStreak.id)
@@ -198,6 +201,14 @@ export async function POST(request: NextRequest) {
           .single()
 
         streak = updated
+        
+        // マイルストーンチェック (30pt, 90pt)
+        streak.milestoneReached = null
+        if (oldTotalRewards < 30 && newTotalRewards >= 30) {
+          streak.milestoneReached = 30
+        } else if (oldTotalRewards < 90 && newTotalRewards >= 90) {
+          streak.milestoneReached = 90
+        }
       } else {
         // 新規作成
         reward = 1
@@ -216,6 +227,7 @@ export async function POST(request: NextRequest) {
           .single()
 
         streak = created
+        streak.milestoneReached = null
       }
     } else {
       // 全てチェックされていない場合、現在のストリーク情報を取得
