@@ -487,16 +487,16 @@ export default function ClientReservationsPage() {
                             !isDisabled ? 'hover:scale-105 hover:shadow-xl active:scale-95 cursor-pointer' : 'cursor-not-allowed opacity-60'
                           }`}
                         >
-                          <div className={`text-base font-bold text-center mb-1 ${
+                          <div className={`text-base font-bold text-center ${
                             isChecked ? 'text-gray-600' : 'text-white'
                           }`}>
                             {goal.goal_text}
                           </div>
-                          <div className={`text-xs ${
-                            isChecked ? 'text-gray-500' : 'text-blue-100'
-                          }`}>
-                            {isChecked ? '達成済み' : 'タップしてチェック'}
-                          </div>
+                          {!isChecked && (
+                            <div className="text-xs text-blue-100 mt-1">
+                              タップしてチェック
+                            </div>
+                          )}
                         </button>
                       )
                     })}
