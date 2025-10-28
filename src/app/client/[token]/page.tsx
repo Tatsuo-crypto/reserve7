@@ -436,6 +436,17 @@ export default function ClientReservationsPage() {
               
               return (
                 <div className="mb-6">
+                  {/* タイトルを最上部に表示 */}
+                  <div className="flex items-center gap-2 mb-3">
+                    <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <h3 className="text-base font-bold text-gray-700">
+                      {currentYear}年{currentMonth}月の目標
+                      {isInherited && <span className="text-xs text-gray-500 ml-2">({goalYear}年{goalMonth}月から引き継ぎ)</span>}
+                    </h3>
+                  </div>
+
                   {/* ストリーク表示 */}
                   {streak && streak.current_streak > 0 && (
                     <div className="mb-3 p-3 bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-400 rounded-lg">
@@ -456,17 +467,6 @@ export default function ClientReservationsPage() {
                       </div>
                     </div>
                   )}
-
-                  {/* タイトルをカードの上に表示 */}
-                  <div className="flex items-center gap-2 mb-3">
-                    <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    <h3 className="text-base font-bold text-gray-700">
-                      {currentYear}年{currentMonth}月の目標
-                      {isInherited && <span className="text-xs text-gray-500 ml-2">({goalYear}年{goalMonth}月から引き継ぎ)</span>}
-                    </h3>
-                  </div>
                   
                   {/* 今月の目標（３つまで横並び） - チェック機能付き */}
                   <div className="grid grid-cols-3 gap-3 mb-3">
@@ -475,39 +475,29 @@ export default function ClientReservationsPage() {
                       const isChecked = checkData?.checked || false
                       const isDisabled = isTodayCompleted || isChecked
                       return (
-                        <div key={goal.id} className="flex flex-col items-center gap-2">
-                          {/* チェックマーク（上部） */}
-                          <div className="w-full flex justify-center">
-                            {isChecked ? (
-                              <svg className="w-8 h-8 text-gray-500" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                              </svg>
-                            ) : (
-                              <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                              </svg>
-                            )}
+                        <button
+                          key={goal.id}
+                          onClick={() => handleGoalCheck(goal.id, isChecked)}
+                          disabled={isDisabled}
+                          className={`${
+                            isChecked 
+                              ? 'bg-gray-300 border-2 border-gray-500 shadow-none' 
+                              : 'bg-gradient-to-br from-blue-400 to-indigo-500 border-2 border-blue-600 shadow-lg'
+                          } w-full p-4 rounded-xl flex flex-col items-center justify-center min-h-[100px] transition-all ${
+                            !isDisabled ? 'hover:scale-105 hover:shadow-xl active:scale-95 cursor-pointer' : 'cursor-not-allowed opacity-60'
+                          }`}
+                        >
+                          <div className={`text-base font-bold text-center mb-1 ${
+                            isChecked ? 'text-gray-600' : 'text-white'
+                          }`}>
+                            {goal.goal_text}
                           </div>
-                          
-                          {/* 目標ボタン */}
-                          <button
-                            onClick={() => handleGoalCheck(goal.id, isChecked)}
-                            disabled={isDisabled}
-                            className={`${
-                              isChecked 
-                                ? 'bg-gray-200 border-2 border-gray-400' 
-                                : 'bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-400'
-                            } w-full p-3 rounded-lg shadow-sm flex items-center justify-center h-[70px] transition-all ${
-                              !isDisabled ? 'hover:scale-105 active:scale-95 cursor-pointer' : 'cursor-not-allowed opacity-75'
-                            }`}
-                          >
-                            <div className={`text-sm font-bold text-center line-clamp-2 ${
-                              isChecked ? 'text-gray-600' : 'text-blue-700'
-                            }`}>
-                              {goal.goal_text}
-                            </div>
-                          </button>
-                        </div>
+                          <div className={`text-xs ${
+                            isChecked ? 'text-gray-500' : 'text-blue-100'
+                          }`}>
+                            {isChecked ? '達成済み' : 'タップしてチェック'}
+                          </div>
+                        </button>
                       )
                     })}
                   </div>
