@@ -492,11 +492,6 @@ export default function ClientReservationsPage() {
                           }`}>
                             {goal.goal_text}
                           </div>
-                          {!isChecked && (
-                            <div className="text-xs text-blue-100 mt-1">
-                              タップしてチェック
-                            </div>
-                          )}
                         </button>
                       )
                     })}
@@ -556,7 +551,7 @@ export default function ClientReservationsPage() {
                         <div key={record.id} className="pt-3 pb-4 px-4 bg-green-50 rounded-lg border border-green-200 h-[90px] flex flex-col gap-1 overflow-hidden">
                           <div className="flex items-center justify-between">
                             <div className="text-base font-bold text-gray-900">{new Date(record.recorded_date).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}</div>
-                            <div className="text-2xl font-bold text-green-600">{record.weight_kg}kg</div>
+                            <div className="text-base font-bold text-green-600">{record.weight_kg}kg</div>
                           </div>
                           {record.notes && (
                             <div className="text-xs text-gray-500 break-words leading-tight">{record.notes}</div>
@@ -593,7 +588,7 @@ export default function ClientReservationsPage() {
                         <div key={record.id} className="pt-3 pb-4 px-4 bg-purple-50 rounded-lg border border-purple-200 h-[90px] flex flex-col gap-1 overflow-hidden">
                           <div className="flex items-center justify-between">
                             <div className="text-base font-bold text-gray-900">{new Date(record.recorded_date).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}</div>
-                            <div className="text-2xl font-bold text-purple-600">{record.weight_kg}kg</div>
+                            <div className="text-base font-bold text-purple-600">{record.weight_kg}kg</div>
                           </div>
                           <div className="flex flex-col gap-0.5">
                             {(record.reps || record.sets) && (
