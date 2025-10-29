@@ -45,12 +45,22 @@ export class GoogleCalendarService {
     clientEmail: string
     notes?: string
     calendarId: string
+    memberCalendarEmail?: string | null
   }): Promise<string> {
     if (!this.calendar) {
       throw new Error('Google Calendar service not initialized')
     }
 
-    const event = {
+    // 出席者リストを作成（会員のGoogleカレンダーメールがあれば追加）
+    const attendees = []
+    if (reservation.memberCalendarEmail && reservation.memberCalendarEmail.trim() !== '') {
+      attendees.push({
+        email: reservation.memberCalendarEmail,
+        responseStatus: 'accepted', // 自動で承認済みにする
+      })
+    }
+
+    const event: any = {
       summary: reservation.title,
       description: [
         `クライアント: ${reservation.clientName} (${reservation.clientEmail})`,
@@ -64,6 +74,11 @@ export class GoogleCalendarService {
         dateTime: reservation.endTime,
         timeZone: 'Asia/Tokyo',
       },
+    }
+    
+    // 出席者がいる場合のみ追加
+    if (attendees.length > 0) {
+      event.attendees = attendees
     }
 
     try {
@@ -94,12 +109,22 @@ export class GoogleCalendarService {
     clientEmail: string
     notes?: string
     calendarId: string
+    memberCalendarEmail?: string | null
   }): Promise<void> {
     if (!this.calendar) {
       throw new Error('Google Calendar service not initialized')
     }
 
-    const event = {
+    // 出席者リストを作成
+    const attendees = []
+    if (reservation.memberCalendarEmail && reservation.memberCalendarEmail.trim() !== '') {
+      attendees.push({
+        email: reservation.memberCalendarEmail,
+        responseStatus: 'accepted',
+      })
+    }
+
+    const event: any = {
       summary: reservation.title,
       description: [
         `クライアント: ${reservation.clientName} (${reservation.clientEmail})`,
@@ -113,6 +138,10 @@ export class GoogleCalendarService {
         dateTime: reservation.endTime,
         timeZone: 'Asia/Tokyo',
       },
+    }
+    
+    if (attendees.length > 0) {
+      event.attendees = attendees
     }
 
     try {

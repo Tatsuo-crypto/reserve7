@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
       // Get client user by ID for regular reservations
       const { data: fetchedUser, error: clientError } = await supabaseAdmin
         .from('users')
-        .select('id, full_name, email, store_id, plan')
+        .select('id, full_name, email, google_calendar_email, store_id, plan')
         .eq('id', clientId)
         .single()
 
@@ -160,6 +160,10 @@ export async function POST(request: NextRequest) {
           : clientId === 'TRIAL'
           ? 'trial@system'
           : clientUser!.email
+        
+        // 会員のGoogleカレンダーメールが設定されている場合、出席者として追加
+        const memberCalendarEmail = clientUser?.google_calendar_email || null
+        
         externalEventId = await calendarService.createEvent({
           title: generatedTitle,
           startTime: startDateTime.toISOString(),
@@ -168,6 +172,7 @@ export async function POST(request: NextRequest) {
           clientEmail,
           notes: notes || undefined,
           calendarId: calendarId,
+          memberCalendarEmail, // 会員のカレンダーメールを渡す
         })
         console.log('Google Calendar event created:', externalEventId)
       } catch (calendarError) {

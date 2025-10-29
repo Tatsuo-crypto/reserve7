@@ -231,7 +231,7 @@ export async function PATCH(request: NextRequest) {
       return createErrorResponse('管理者権限が必要です', 403)
     }
 
-    const { memberId, fullName, email, storeId, status, plan, monthlyFee, memo } = await request.json()
+    const { memberId, fullName, email, googleCalendarEmail, storeId, status, plan, monthlyFee, memo } = await request.json()
 
     // Validate status if provided
     if (status && !['active', 'suspended', 'withdrawn'].includes(status)) {
@@ -261,6 +261,7 @@ export async function PATCH(request: NextRequest) {
     const updateData: any = {}
     if (fullName !== undefined) updateData.full_name = fullName
     if (email !== undefined) updateData.email = email
+    if (googleCalendarEmail !== undefined) updateData.google_calendar_email = googleCalendarEmail
     if (storeId !== undefined) updateData.store_id = storeId
     if (status) updateData.status = status
     if (plan) updateData.plan = plan
