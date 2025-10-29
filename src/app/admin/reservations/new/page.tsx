@@ -62,58 +62,25 @@ function NewReservationContent() {
   useEffect(() => {
     const fetchClients = async () => {
       try {
-        // Use Supabase client with anon key (RLS will handle permissions)
-        const { createClient } = await import('@supabase/supabase-js')
-        const supabase = createClient(
-          process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-        )
+        // Use API endpoint to fetch clients (works with RLS)
+        const response = await fetch('/api/admin/members')
         
-        // Get user's store ID from session
-        const userEmail = session?.user?.email
-        if (!userEmail) {
-          setLoadingClients(false)
-          return
+        if (!response.ok) {
+          throw new Error('Failed to fetch clients')
         }
         
-        // Determine calendar ID (email) based on user email
-        const calendarId = userEmail === 'tandjgym@gmail.com' 
-          ? 'tandjgym@gmail.com' 
-          : 'tandjgym2goutenn@gmail.com'
+        const result = await response.json()
+        const membersData = result.data?.members || result.members || []
         
-        // First, get the store UUID from stores table
-        const { data: store, error: storeError } = await supabase
-          .from('stores')
-          .select('id')
-          .eq('calendar_id', calendarId)
-          .single()
-        
-        if (storeError || !store) {
-          setLoadingClients(false)
-          return
-        }
-        
-        // Query users table with the store UUID
-        const { data: clientsData, error } = await supabase
-          .from('users')
-          .select('id, full_name, email, store_id, status')
-          .eq('store_id', store.id)
-          .eq('status', 'active')
-          .neq('email', 'tandjgym@gmail.com')
-          .neq('email', 'tandjgym2goutenn@gmail.com')
-          .order('full_name', { ascending: true })
-        
-        if (error) {
-          throw error
-        }
-        
-        // Transform to match expected Client interface
-        const formattedClients = (clientsData || []).map((client: any) => ({
-          id: client.id,
-          name: client.full_name,
-          email: client.email,
-          displayName: client.full_name
-        }))
+        // Filter active clients only and transform to match expected Client interface
+        const formattedClients = membersData
+          .filter((member: any) => member.status === 'active')
+          .map((member: any) => ({
+            id: member.id,
+            name: member.full_name,
+            email: member.email,
+            displayName: member.full_name
+          }))
         
         setClients(formattedClients)
       } catch (error) {
