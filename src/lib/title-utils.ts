@@ -1,4 +1,4 @@
-import { supabase } from './supabase'
+import { supabaseAdmin } from './supabase'
 import { createGoogleCalendarService } from './google-calendar'
 
 // Parse max count from plan string like "6回", "8回", fallback mapping for known labels
@@ -27,7 +27,7 @@ function getPlanMaxCount(plan: string | undefined): number {
 export async function updateMonthlyTitles(clientId: string, year: number, month: number) {
   try {
     // Get all reservations for this client in the specified month, ordered by start_time
-    const { data: reservations, error } = await supabase
+    const { data: reservations, error } = await supabaseAdmin
       .from('reservations')
       .select(`
         id, 
@@ -58,7 +58,7 @@ export async function updateMonthlyTitles(clientId: string, year: number, month:
     }
 
     // Get client information directly from users table
-    const { data: clientData, error: clientError } = await supabase
+    const { data: clientData, error: clientError } = await supabaseAdmin
       .from('users')
       .select('full_name, plan')
       .eq('id', clientId)
@@ -126,7 +126,7 @@ export async function updateMonthlyTitles(clientId: string, year: number, month:
           })
 
           // Update DB: title and external_event_id
-          await supabase
+          await supabaseAdmin
             .from('reservations')
             .update({ title: newTitle, external_event_id: newEventId })
             .eq('id', reservation.id)
@@ -135,7 +135,7 @@ export async function updateMonthlyTitles(clientId: string, year: number, month:
         } catch (calendarError) {
           console.error(`Failed to recreate calendar event for reservation ${reservation.id}:`, calendarError)
           // Fallback to DB-only title update
-          await supabase
+          await supabaseAdmin
             .from('reservations')
             .update({ title: newTitle })
             .eq('id', reservation.id)
@@ -143,7 +143,7 @@ export async function updateMonthlyTitles(clientId: string, year: number, month:
         }
       } else {
         // Calendar not configured: DB-only title update
-        await supabase
+        await supabaseAdmin
           .from('reservations')
           .update({ title: newTitle })
           .eq('id', reservation.id)
@@ -214,7 +214,7 @@ export async function generateReservationTitle(
   startDateTime: Date
 ): Promise<string> {
   // Get client plan information
-  const { data: clientData, error: clientError } = await supabase
+  const { data: clientData, error: clientError } = await supabaseAdmin
     .from('users')
     .select('plan')
     .eq('id', clientId)
@@ -227,7 +227,7 @@ export async function generateReservationTitle(
   const maxCount = getPlanMaxCount(clientData?.plan)
   
   // Get existing reservations for this client across all time (cumulative)
-  const { data: existingReservations, error } = await supabase
+  const { data: existingReservations, error } = await supabaseAdmin
     .from('reservations')
     .select('id, start_time')
     .eq('client_id', clientId)
@@ -269,7 +269,7 @@ export async function generateReservationTitle(
 export async function updateAllTitles(clientId: string) {
   try {
     // Fetch all reservations for the client ordered by time
-    const { data: reservations, error } = await supabase
+    const { data: reservations, error } = await supabaseAdmin
       .from('reservations')
       .select(`
         id,
@@ -340,15 +340,15 @@ export async function updateAllTitles(clientId: string) {
             notes: reservation.notes || undefined,
             calendarId: reservation.calendar_id,
           })
-          await supabase.from('reservations').update({ title: newTitle, external_event_id: newEventId }).eq('id', reservation.id)
+          await supabaseAdmin.from('reservations').update({ title: newTitle, external_event_id: newEventId }).eq('id', reservation.id)
           return true
         } catch (err) {
           console.error('Calendar sync failed while updating titles:', err)
-          await supabase.from('reservations').update({ title: newTitle }).eq('id', reservation.id)
+          await supabaseAdmin.from('reservations').update({ title: newTitle }).eq('id', reservation.id)
           return false
         }
       } else {
-        await supabase.from('reservations').update({ title: newTitle }).eq('id', reservation.id)
+        await supabaseAdmin.from('reservations').update({ title: newTitle }).eq('id', reservation.id)
         return false
       }
     })
