@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
       return createErrorResponse('管理者権限が必要です', 403)
     }
 
-    const { fullName, email, plan, status, memo, storeId, monthlyFee } = await request.json()
+    const { fullName, email, googleCalendarEmail, plan, status, memo, storeId, monthlyFee } = await request.json()
 
     // Validation
     if (!fullName || !email) {
@@ -167,6 +167,7 @@ export async function POST(request: NextRequest) {
     const insertData = {
       full_name: fullName,
       email: email,
+      google_calendar_email: googleCalendarEmail || null,
       password_hash: '', // トークンベース認証のためパスワードは不要
       plan: plan || '月4回',
       status: status || 'active',

@@ -12,6 +12,7 @@ export default function NewMemberPage() {
     lastName: '',
     firstName: '',
     email: '',
+    googleCalendarEmail: '',
     storeId: '',
     plan: '月4回',
     monthlyFee: '',
@@ -158,6 +159,25 @@ export default function NewMemberPage() {
               placeholder="example@email.com"
             />
             <p className="mt-1 text-sm text-gray-500">会員専用URLの発行に使用されます</p>
+          </div>
+
+          {/* Googleカレンダー連携用メールアドレス */}
+          <div>
+            <label htmlFor="googleCalendarEmail" className="block text-sm font-medium text-gray-700 mb-2">
+              Googleカレンダー連携用メールアドレス（任意）
+            </label>
+            <input
+              type="email"
+              id="googleCalendarEmail"
+              name="googleCalendarEmail"
+              value={formData.googleCalendarEmail}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="calendar@gmail.com"
+            />
+            <p className="mt-1 text-sm text-gray-500">
+              設定すると、予約時に会員のGoogleカレンダーにもイベントが追加されます
+            </p>
           </div>
 
           {/* 店舗 */}
