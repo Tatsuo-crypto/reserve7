@@ -51,15 +51,6 @@ export class GoogleCalendarService {
       throw new Error('Google Calendar service not initialized')
     }
 
-    // 出席者リストを作成（会員のGoogleカレンダーメールがあれば追加）
-    const attendees = []
-    if (reservation.memberCalendarEmail && reservation.memberCalendarEmail.trim() !== '') {
-      attendees.push({
-        email: reservation.memberCalendarEmail,
-        responseStatus: 'accepted', // 自動で承認済みにする
-      })
-    }
-
     const event: any = {
       summary: reservation.title,
       description: [
@@ -75,13 +66,9 @@ export class GoogleCalendarService {
         timeZone: 'Asia/Tokyo',
       },
     }
-    
-    // 出席者がいる場合のみ追加
-    if (attendees.length > 0) {
-      event.attendees = attendees
-    }
 
     try {
+      // ジムのカレンダーにイベント作成
       const response = await this.calendar.events.insert({
         calendarId: reservation.calendarId,
         requestBody: event,
@@ -91,7 +78,24 @@ export class GoogleCalendarService {
         throw new Error('Event creation failed - no event ID returned')
       }
 
-      return response.data.id
+      const eventId = response.data.id
+
+      // 会員のGoogleカレンダーメールが設定されている場合、会員のカレンダーにも別イベントとして作成
+      if (reservation.memberCalendarEmail && reservation.memberCalendarEmail.trim() !== '') {
+        try {
+          console.log(`📅 Creating event in member calendar: ${reservation.memberCalendarEmail}`)
+          await this.calendar.events.insert({
+            calendarId: reservation.memberCalendarEmail,
+            requestBody: event,
+          })
+          console.log(`✅ Event created in member calendar`)
+        } catch (memberCalError) {
+          console.error(`⚠️ Failed to create event in member calendar:`, memberCalError)
+          // 会員カレンダーへの作成失敗はエラーとせず、ジムのカレンダーのイベントIDを返す
+        }
+      }
+
+      return eventId
     } catch (error) {
       console.error('Google Calendar event creation error:', error)
       throw error
@@ -115,15 +119,6 @@ export class GoogleCalendarService {
       throw new Error('Google Calendar service not initialized')
     }
 
-    // 出席者リストを作成
-    const attendees = []
-    if (reservation.memberCalendarEmail && reservation.memberCalendarEmail.trim() !== '') {
-      attendees.push({
-        email: reservation.memberCalendarEmail,
-        responseStatus: 'accepted',
-      })
-    }
-
     const event: any = {
       summary: reservation.title,
       description: [
@@ -139,17 +134,16 @@ export class GoogleCalendarService {
         timeZone: 'Asia/Tokyo',
       },
     }
-    
-    if (attendees.length > 0) {
-      event.attendees = attendees
-    }
 
     try {
+      // ジムのカレンダーのイベントを更新
       await this.calendar.events.update({
         calendarId: reservation.calendarId,
         eventId: eventId,
         requestBody: event,
       })
+      
+      // Note: 会員カレンダーのイベントは title-utils.ts で削除→再作成する方式で対応
     } catch (error) {
       console.error('Google Calendar event update error:', error)
       throw error
