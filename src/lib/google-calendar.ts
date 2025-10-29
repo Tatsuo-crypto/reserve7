@@ -186,12 +186,17 @@ export class GoogleCalendarService {
 export function createGoogleCalendarService(): GoogleCalendarService | null {
   try {
     if (!GoogleCalendarService.isConfigured()) {
-      console.warn('Google Calendar not configured - calendar sync disabled')
+      console.warn('⚠️ Google Calendar not configured - calendar sync disabled')
+      console.warn('Missing environment variables:')
+      if (!env.GOOGLE_SERVICE_ACCOUNT_KEY) console.warn('  - GOOGLE_SERVICE_ACCOUNT_KEY')
+      if (!env.GOOGLE_CALENDAR_ID_1) console.warn('  - GOOGLE_CALENDAR_ID_1')
+      if (!env.GOOGLE_CALENDAR_ID_2) console.warn('  - GOOGLE_CALENDAR_ID_2')
       return null
     }
+    console.log('✅ Creating Google Calendar service...')
     return new GoogleCalendarService()
   } catch (error) {
-    console.error('Failed to create Google Calendar service:', error)
+    console.error('❌ Failed to create Google Calendar service:', error)
     return null
   }
 }

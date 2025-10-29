@@ -148,6 +148,8 @@ export async function POST(request: NextRequest) {
     let externalEventId: string | null = null
     const calendarService = createGoogleCalendarService()
     
+    console.log('📅 Google Calendar Service:', calendarService ? 'Initialized' : 'Not configured')
+    
     if (calendarService) {
       try {
         const clientName = clientId === 'BLOCKED' 
@@ -164,6 +166,12 @@ export async function POST(request: NextRequest) {
         // 会員のGoogleカレンダーメールが設定されている場合、出席者として追加
         const memberCalendarEmail = clientUser?.google_calendar_email || null
         
+        console.log('📅 Creating calendar event:', {
+          title: generatedTitle,
+          calendarId: calendarId,
+          memberCalendarEmail: memberCalendarEmail || '(not set)',
+        })
+        
         externalEventId = await calendarService.createEvent({
           title: generatedTitle,
           startTime: startDateTime.toISOString(),
@@ -174,11 +182,18 @@ export async function POST(request: NextRequest) {
           calendarId: calendarId,
           memberCalendarEmail, // 会員のカレンダーメールを渡す
         })
-        console.log('Google Calendar event created:', externalEventId)
+        
+        console.log('✅ Google Calendar event created:', externalEventId)
       } catch (calendarError) {
-        console.error('Calendar event creation failed:', calendarError)
+        console.error('❌ Calendar event creation failed:', calendarError)
+        if (calendarError instanceof Error) {
+          console.error('Error message:', calendarError.message)
+          console.error('Error stack:', calendarError.stack)
+        }
         // Continue with reservation creation even if calendar sync fails
       }
+    } else {
+      console.warn('⚠️ Calendar service not available - skipping Google Calendar sync')
     }
 
     // Create reservation
