@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 export const dynamic = 'force-dynamic'
-import { supabase } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabase'
 import { getAuthenticatedUser, createErrorResponse, createSuccessResponse } from '@/lib/api-utils'
 
 export async function GET(
@@ -21,12 +21,13 @@ export async function GET(
     const { id } = params
 
     // Get member by ID
-    const { data: member, error } = await supabase
+    const { data: member, error } = await supabaseAdmin
       .from('users')
       .select(`
         id,
         full_name,
         email,
+        google_calendar_email,
         plan,
         status,
         store_id,
