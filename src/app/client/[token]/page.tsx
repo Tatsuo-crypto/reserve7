@@ -98,6 +98,8 @@ export default function ClientReservationsPage() {
   const [streak, setStreak] = useState<Streak | null>(null)
   const [showReward, setShowReward] = useState(false)
   const [rewardAmount, setRewardAmount] = useState(0)
+  const [checkingGoalId, setCheckingGoalId] = useState<string | null>(null)
+  const [checkError, setCheckError] = useState<string | null>(null)
   const [isTodayCompleted, setIsTodayCompleted] = useState(false)
   const [showMilestone, setShowMilestone] = useState(false)
   const [milestoneAmount, setMilestoneAmount] = useState(0)
@@ -195,8 +197,8 @@ export default function ClientReservationsPage() {
     }
   }, [token])
 
-  // 目標チェックのハンドラー
-  const handleGoalCheck = async (goalId: string, currentlyChecked: boolean) => {
+  // 目標チェックのハンドラー（リトライ機能付き）
+  const handleGoalCheck = async (goalId: string, currentlyChecked: boolean, retryCount = 0) => {
     // 本日達成済みの場合は変更不可
     if (isTodayCompleted) {
       return
@@ -207,45 +209,89 @@ export default function ClientReservationsPage() {
       return
     }
 
+    // 既にチェック処理中の場合は何もしない（連続クリック防止）
+    if (checkingGoalId) {
+      return
+    }
+
+    // ローディング状態を設定
+    setCheckingGoalId(goalId)
+    setCheckError(null)
+
+    // 楽観的更新：UIを先に更新
+    const previousGoalChecks = goalChecks
+    setGoalChecks(prev => prev.map(goal => 
+      goal.id === goalId ? { ...goal, checked: true } : goal
+    ))
+
     try {
       const response = await fetch(`/api/client/goal-check?token=${token}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ goalId, checked: true })
+        body: JSON.stringify({ goalId, checked: true }),
+        signal: AbortSignal.timeout(10000) // 10秒でタイムアウト
       })
 
-      if (response.ok) {
-        const result = await response.json()
+      if (!response.ok) {
+        throw new Error(`サーバーエラー: ${response.status}`)
+      }
+
+      const result = await response.json()
+      
+      // サーバーからの結果でチェック状況を確認（楽観的更新の検証）
+      setGoalChecks(prev => prev.map(goal => 
+        goal.id === goalId ? { ...goal, checked: true } : goal
+      ))
+
+      // ストリーク情報を更新
+      if (result.data.streak) {
+        setStreak(result.data.streak)
+      }
+
+      // 全てチェックされた場合、報酬を表示
+      if (result.data.isCompleted && result.data.reward > 0) {
+        setIsTodayCompleted(true)
+        setRewardAmount(result.data.reward)
+        setShowReward(true)
+        setTimeout(() => setShowReward(false), 5000)
         
-        // チェック状況を更新
-        setGoalChecks(prev => prev.map(goal => 
-          goal.id === goalId ? { ...goal, checked: true } : goal
-        ))
-
-        // ストリーク情報を更新
-        if (result.data.streak) {
-          setStreak(result.data.streak)
-        }
-
-        // 全てチェックされた場合、報酬を表示
-        if (result.data.isCompleted && result.data.reward > 0) {
-          setIsTodayCompleted(true)
-          setRewardAmount(result.data.reward)
-          setShowReward(true)
-          setTimeout(() => setShowReward(false), 5000)
-          
-          // マイルストーン達成チェック
-          if (result.data.streak?.milestoneReached) {
-            setTimeout(() => {
-              setMilestoneAmount(result.data.streak.milestoneReached)
-              setShowMilestone(true)
-              setTimeout(() => setShowMilestone(false), 5000)
-            }, 5500) // 通常の報酬表示後に表示
-          }
+        // マイルストーン達成チェック
+        if (result.data.streak?.milestoneReached) {
+          setTimeout(() => {
+            setMilestoneAmount(result.data.streak.milestoneReached)
+            setShowMilestone(true)
+            setTimeout(() => setShowMilestone(false), 5000)
+          }, 5500) // 通常の報酬表示後に表示
         }
       }
+
+      // 成功したのでローディング状態を解除
+      setCheckingGoalId(null)
     } catch (error) {
       console.error('チェック処理エラー:', error)
+      
+      // エラーの場合、楽観的更新をロールバック
+      setGoalChecks(previousGoalChecks)
+      
+      // リトライロジック（最大2回まで）
+      if (retryCount < 2) {
+        console.log(`リトライ ${retryCount + 1}/2 回目...`)
+        setTimeout(() => {
+          setCheckingGoalId(null)
+          handleGoalCheck(goalId, currentlyChecked, retryCount + 1)
+        }, 1000 * (retryCount + 1)) // 1秒、2秒と待機時間を増やす
+      } else {
+        // リトライ上限に達した場合、エラーメッセージを表示
+        const errorMessage = error instanceof Error && error.name === 'TimeoutError'
+          ? '通信がタイムアウトしました。ネットワーク接続を確認してください。'
+          : 'チェックの保存に失敗しました。もう一度お試しください。'
+        
+        setCheckError(errorMessage)
+        setCheckingGoalId(null)
+        
+        // 5秒後にエラーメッセージを自動で消す
+        setTimeout(() => setCheckError(null), 5000)
+      }
     }
   }
 
