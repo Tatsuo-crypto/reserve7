@@ -15,13 +15,13 @@ export async function POST(request: NextRequest) {
 
     const { user } = authResult
     const body = await request.json()
-    
+
     // Validate input
     const { clientId, startTime, duration, notes, trainerId } = body
-    
+
     // Use calendarId for reservations (email format)
     const calendarId = (user as any).calendarId || user.storeId
-    
+
     if (!clientId || !startTime || !duration) {
       return NextResponse.json(
         { error: 'クライアントID、開始時間、セッション時間は必須です' },
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     // Handle blocked time vs trial vs regular reservation
     let clientUser = null
     let generatedTitle = ''
-    
+
     let trainerName: string | null = null
     if (clientId === 'BLOCKED') {
       // For blocked time, use special values
@@ -55,6 +55,9 @@ export async function POST(request: NextRequest) {
     } else if (clientId === 'TRIAL') {
       // For trial reservation, use provided title from request
       generatedTitle = body.title || '体験予約'
+    } else if (clientId === 'GUEST') {
+      // For guest reservation, use provided title from request
+      generatedTitle = body.title || 'ゲスト予約'
     } else {
       // Get client user by ID for regular reservations
       const { data: fetchedUser, error: clientError } = await supabaseAdmin
@@ -69,7 +72,7 @@ export async function POST(request: NextRequest) {
           { status: 404 }
         )
       }
-      
+
       clientUser = fetchedUser
       // Generate title based on chronological order
       generatedTitle = await generateReservationTitle(
@@ -129,7 +132,7 @@ export async function POST(request: NextRequest) {
       } else if (blockedTimes && blockedTimes.length > 0) {
         const blockedTime = blockedTimes[0]
         return NextResponse.json(
-          { 
+          {
             error: `この時間帯は予約不可です（${blockedTime.reason}）`,
             blockedTime: {
               reason: blockedTime.reason,
@@ -147,31 +150,35 @@ export async function POST(request: NextRequest) {
     // Try to create Google Calendar event first (if configured)
     let externalEventId: string | null = null
     const calendarService = createGoogleCalendarService()
-    
+
     console.log('📅 Google Calendar Service:', calendarService ? 'Initialized' : 'Not configured')
-    
+
     if (calendarService) {
       try {
-        const clientName = clientId === 'BLOCKED' 
-          ? '予約不可時間' 
+        const clientName = clientId === 'BLOCKED'
+          ? '予約不可時間'
           : clientId === 'TRIAL'
-          ? generatedTitle
-          : clientUser!.full_name
-        const clientEmail = clientId === 'BLOCKED' 
-          ? 'blocked@system' 
+            ? generatedTitle
+            : clientId === 'GUEST'
+              ? generatedTitle
+              : clientUser!.full_name
+        const clientEmail = clientId === 'BLOCKED'
+          ? 'blocked@system'
           : clientId === 'TRIAL'
-          ? 'trial@system'
-          : clientUser!.email
-        
+            ? 'trial@system'
+            : clientId === 'GUEST'
+              ? 'guest@system'
+              : clientUser!.email
+
         // 会員のGoogleカレンダーメールが設定されている場合、出席者として追加
         const memberCalendarEmail = clientUser?.google_calendar_email || null
-        
+
         console.log('📅 Creating calendar event:', {
           title: generatedTitle,
           calendarId: calendarId,
           memberCalendarEmail: memberCalendarEmail || '(not set)',
         })
-        
+
         externalEventId = await calendarService.createEvent({
           title: generatedTitle,
           startTime: startDateTime.toISOString(),
@@ -182,7 +189,7 @@ export async function POST(request: NextRequest) {
           calendarId: calendarId,
           memberCalendarEmail, // 会員のカレンダーメールを渡す
         })
-        
+
         console.log('✅ Google Calendar event created:', externalEventId)
       } catch (calendarError) {
         console.error('❌ Calendar event creation failed:', calendarError)
@@ -197,13 +204,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Create reservation
-    // For trial reservations, don't include notes
-    const mergedNotes = clientId === 'TRIAL' ? null : [
+    // For trial/guest reservations, don't include notes
+    const mergedNotes = (clientId === 'TRIAL' || clientId === 'GUEST') ? null : [
       notes || null,
       trainerName ? `担当: ${trainerName}` : null,
     ].filter(Boolean).join(' / ')
     const reservationData = {
-      client_id: (clientId === 'BLOCKED' || clientId === 'TRIAL') ? null : clientUser!.id,
+      client_id: (clientId === 'BLOCKED' || clientId === 'TRIAL' || clientId === 'GUEST') ? null : clientUser!.id,
       title: generatedTitle,
       start_time: startDateTime.toISOString(),
       end_time: endDateTime.toISOString(),
@@ -233,7 +240,7 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error('Reservation creation error:', error)
-      
+
       // If calendar event was created but reservation failed, try to clean up
       if (externalEventId && calendarService) {
         try {
@@ -243,7 +250,7 @@ export async function POST(request: NextRequest) {
           console.error('Failed to cleanup calendar event:', cleanupError)
         }
       }
-      
+
       return NextResponse.json(
         { error: '予約の作成に失敗しました', details: (error as any)?.message || (error as any)?.hint || (error as any)?.code || null },
         { status: 500 }
@@ -253,17 +260,20 @@ export async function POST(request: NextRequest) {
     // Update all titles for this client to maintain correct numbering
     // For diet/counseling: use cumulative count (all time)
     // For personal training: use monthly count
-    if (clientId !== 'BLOCKED' && clientId !== 'TRIAL' && clientUser) {
+    // Update all titles for this client to maintain correct numbering
+    // For diet/counseling: use cumulative count (all time)
+    // For personal training: use monthly count
+    if (clientId !== 'BLOCKED' && clientId !== 'TRIAL' && clientId !== 'GUEST' && clientUser) {
       const plan = clientUser.plan || ''
       const isCumulative = usesCumulativeCount(plan)
-      
+
       console.log('[Reservation API] Title update decision:', {
         clientName: clientUser.full_name,
         plan,
         isCumulative,
         willUse: isCumulative ? 'updateAllTitles (cumulative)' : 'updateMonthlyTitles (monthly)'
       })
-      
+
       if (isCumulative) {
         // Diet/Counseling: cumulative count across all months
         await updateAllTitles(clientUser.id)
@@ -292,6 +302,10 @@ export async function POST(request: NextRequest) {
           id: 'trial',
           fullName: '体験予約',
           email: 'trial@system',
+        } : clientId === 'GUEST' ? {
+          id: 'guest',
+          fullName: 'ゲスト予約',
+          email: 'guest@system',
         } : !reservation.users ? {
           id: 'unknown',
           fullName: '不明',
@@ -306,7 +320,7 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Admin reservation API error:', error)
-    
+
     return handleApiError(error, 'Admin reservations POST')
   }
 }

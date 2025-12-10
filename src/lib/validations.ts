@@ -3,7 +3,7 @@ import { z } from 'zod';
 // User validation schemas
 export const createUserSchema = z.object({
   fullName: z.string().min(1, '氏名は必須です').max(255, '氏名は255文字以内で入力してください'),
-  email: z.string().email('有効なメールアドレスを入力してください'),
+  email: z.string().email('有効なメールアドレスを入力してください').or(z.literal('')),
   password: z.string().min(8, 'パスワードは8文字以上で入力してください'),
 });
 

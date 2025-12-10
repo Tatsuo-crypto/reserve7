@@ -9,7 +9,7 @@ interface CalendarEvent {
   title: string
   date: string
   time: string
-  type: 'reservation' | 'blocked'
+  type: 'reservation' | 'blocked' | 'guest'
   clientName?: string
   notes?: string
 }
@@ -27,17 +27,25 @@ export default function TimelineView({ selectedDate, events, onBack, onEventsUpd
   const [selectedTimeSlot, setSelectedTimeSlot] = useState('')
   const router = useRouter()
   const [showEditModal, setShowEditModal] = useState(false)
-  const [editingReservation, setEditingReservation] = useState<{ id: string; type?: 'reservation' | 'blocked' } | null>(null)
+  const [editingReservation, setEditingReservation] = useState<{ id: string; type?: 'reservation' | 'blocked' | 'guest' } | null>(null)
   const [editFormData, setEditFormData] = useState({
     title: '',
     startTime: '',
     endTime: '',
     notes: ''
   })
-  
+
   // スワイプ検出用
   const touchStartX = useRef<number | null>(null)
   const touchEndX = useRef<number | null>(null)
+
+  // 苗字のみを抽出
+  const extractLastName = (fullName: string) => {
+    if (!fullName) return ''
+    const nameParts = fullName.split(/\s|　/)
+    return nameParts[0] || fullName
+  }
+
   // Generate time slots (8:00 - 23:00, hourly)
   const generateTimeSlots = () => {
     const slots: string[] = []
@@ -48,7 +56,7 @@ export default function TimelineView({ selectedDate, events, onBack, onEventsUpd
   }
 
   const timeSlots = generateTimeSlots()
-  
+
   // Filter events for selected date
   const dayEvents = events.filter(event => event.date === selectedDate)
   // Parse event time and calculate position
@@ -56,10 +64,10 @@ export default function TimelineView({ selectedDate, events, onBack, onEventsUpd
     const [startTime, endTime] = timeStr.split(' - ')
     const [startHour, startMin] = startTime.split(':').map(Number)
     const [endHour, endMin] = endTime.split(':').map(Number)
-    
+
     const startMinutes = startHour * 60 + startMin
     const endMinutes = endHour * 60 + endMin
-    
+
     return { startMinutes, endMinutes, startTime, endTime }
   }
 
@@ -68,10 +76,10 @@ export default function TimelineView({ selectedDate, events, onBack, onEventsUpd
     const hourHeight = 48 // 1時間あたりのピクセル数
     const startHour = startMinutes / 60 - 8 // 8時スタートなので8を引く
     const durationHours = (endMinutes - startMinutes) / 60
-    
+
     const top = startHour * hourHeight
     const height = durationHours * hourHeight
-    
+
     return { top, height }
   }
 
@@ -92,31 +100,31 @@ export default function TimelineView({ selectedDate, events, onBack, onEventsUpd
     const clickY = e.clientY - rect.top
     const hourHeight = 48
     const clickedHour = Math.floor(clickY / hourHeight) + 8 // 8時スタートなので8を足す
-    
+
     if (clickedHour >= 8 && clickedHour <= 23) {
       const startTime = `${String(clickedHour).padStart(2, '0')}:00`
       const endHour = clickedHour + 1
       const endTime = `${String(endHour).padStart(2, '0')}:00`
-      
+
       setSelectedTimeSlot(`${startTime} - ${endTime}`)
       // Navigate to New Reservation page with prefilled startTime
       const startDateTime = `${selectedDate}T${startTime}`
       router.push(`/admin/reservations/new?startTime=${encodeURIComponent(startDateTime)}`)
     }
   }
-  
+
   // 日付変更関数
   const changeDate = (days: number) => {
     try {
       const date = new Date(selectedDate + 'T00:00:00')
       date.setDate(date.getDate() + days)
-      
+
       // タイムゾーン問題を回避するため、ローカル時間で日付をフォーマット
       const year = date.getFullYear()
       const month = String(date.getMonth() + 1).padStart(2, '0')
       const day = String(date.getDate()).padStart(2, '0')
       const newDate = `${year}-${month}-${day}`
-      
+
       if (onDateChange) {
         onDateChange(newDate)
       }
@@ -124,27 +132,27 @@ export default function TimelineView({ selectedDate, events, onBack, onEventsUpd
       console.error('Date change error:', error)
     }
   }
-  
+
   // スワイプイベントハンドラー
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX
     touchEndX.current = e.touches[0].clientX
   }
-  
+
   const handleTouchMove = (e: React.TouchEvent) => {
     touchEndX.current = e.touches[0].clientX
   }
-  
+
   const handleTouchEnd = () => {
     if (touchStartX.current === null || touchEndX.current === null) {
       touchStartX.current = null
       touchEndX.current = null
       return
     }
-    
+
     const diff = touchStartX.current - touchEndX.current
     const threshold = 80 // 最小スワイプ距離（増やして誤操作を防ぐ）
-    
+
     if (Math.abs(diff) > threshold) {
       if (diff > 0) {
         // 左スワイプ → 次の日
@@ -154,7 +162,7 @@ export default function TimelineView({ selectedDate, events, onBack, onEventsUpd
         changeDate(-1)
       }
     }
-    
+
     // 必ずリセット
     touchStartX.current = null
     touchEndX.current = null
@@ -288,8 +296,8 @@ export default function TimelineView({ selectedDate, events, onBack, onEventsUpd
           </div>
 
           {/* Timeline Content */}
-          <div 
-            className="flex-1 relative ml-2 cursor-pointer" 
+          <div
+            className="flex-1 relative ml-2 cursor-pointer"
             style={{ height: `${timeSlots.length * 48}px` }}
             onClick={handleTimelineClick}
           >
@@ -301,7 +309,7 @@ export default function TimelineView({ selectedDate, events, onBack, onEventsUpd
                 style={{ top: `${index * 48}px` }}
               />
             ))}
-            
+
             {/* Current time indicator (only for today's timeline in JST) - 8時スタート対応 */}
             {(() => {
               // Build today's date string in JST to match selectedDate format (YYYY-MM-DD)
@@ -317,10 +325,10 @@ export default function TimelineView({ selectedDate, events, onBack, onEventsUpd
               const now = new Date()
               const currentHour = now.getHours()
               const currentMinute = now.getMinutes()
-              
+
               // 8時より前は表示しない
               if (currentHour < 8) return null
-              
+
               const currentTimePosition = ((currentHour - 8) + currentMinute / 60) * 48 // 8時スタート対応
 
               return (
@@ -336,29 +344,29 @@ export default function TimelineView({ selectedDate, events, onBack, onEventsUpd
             {/* Events */}
             {(() => {
               const dayEventsFiltered = events.filter(event => event.date === selectedDate)
-              
+
               // Sort events by start time
               const sortedEvents = [...dayEventsFiltered].sort((a, b) => {
                 const aStart = parseEventTime(a.time).startMinutes
                 const bStart = parseEventTime(b.time).startMinutes
                 return aStart - bStart
               })
-              
+
               // Assign columns to events
               const eventColumns = new Map<string, { column: number, totalColumns: number }>()
-              
+
               sortedEvents.forEach((event) => {
                 const { startMinutes, endMinutes } = parseEventTime(event.time)
-                
+
                 // Find all overlapping events that have already been assigned columns
                 const usedColumns = new Set<number>()
                 let maxOverlapColumns = 0
-                
+
                 sortedEvents.forEach((otherEvent) => {
                   if (otherEvent.id === event.id) return
-                  
+
                   const { startMinutes: otherStart, endMinutes: otherEnd } = parseEventTime(otherEvent.time)
-                  
+
                   // Check if they overlap
                   if (startMinutes < otherEnd && endMinutes > otherStart) {
                     const otherColumn = eventColumns.get(otherEvent.id)
@@ -368,26 +376,26 @@ export default function TimelineView({ selectedDate, events, onBack, onEventsUpd
                     }
                   }
                 })
-                
+
                 // Find first available column
                 let column = 0
                 while (usedColumns.has(column)) {
                   column++
                 }
-                
+
                 const totalColumns = Math.max(maxOverlapColumns, column + 1)
                 eventColumns.set(event.id, { column, totalColumns })
               })
-              
+
               // Update totalColumns for all overlapping events
               sortedEvents.forEach((event) => {
                 const { startMinutes, endMinutes } = parseEventTime(event.time)
                 let maxColumns = eventColumns.get(event.id)?.totalColumns || 1
-                
+
                 sortedEvents.forEach((otherEvent) => {
                   if (otherEvent.id === event.id) return
                   const { startMinutes: otherStart, endMinutes: otherEnd } = parseEventTime(otherEvent.time)
-                  
+
                   if (startMinutes < otherEnd && endMinutes > otherStart) {
                     const otherInfo = eventColumns.get(otherEvent.id)
                     if (otherInfo) {
@@ -395,42 +403,45 @@ export default function TimelineView({ selectedDate, events, onBack, onEventsUpd
                     }
                   }
                 })
-                
+
                 const current = eventColumns.get(event.id)
                 if (current) {
                   eventColumns.set(event.id, { ...current, totalColumns: maxColumns })
                 }
               })
-              
+
               return dayEventsFiltered.map((event, index) => {
                 const [startTime, endTime] = event.time.split(' - ')
                 const [startHours, startMinutes] = startTime.split(':').map(Number)
                 const [endHours, endMinutes] = endTime.split(':').map(Number)
-                
+
                 const topPosition = ((startHours - 8) * 48) + (startMinutes * 48 / 60) // 8時スタート対応
-                
+
                 // Calculate actual duration in minutes and height
                 const durationMinutes = (endHours * 60 + endMinutes) - (startHours * 60 + startMinutes)
                 const heightPx = (durationMinutes / 60) * 48 // 1時間 = 48px
-                
+
                 const layoutInfo = eventColumns.get(event.id) || { column: 0, totalColumns: 1 }
                 const widthPercent = 100 / layoutInfo.totalColumns
                 const leftPercent = layoutInfo.column * widthPercent
-                
+
                 // Determine color based on reservation type
-                // Check trial BEFORE blocked to ensure trial reservations are blue
+                // Check trial and guest BEFORE blocked/regular
                 const isTrial = event.title.includes('体験')
+                const isGuest = event.type === 'guest'
                 const colorClass = isTrial
                   ? 'bg-blue-100 border border-blue-200 text-blue-800'  // Trial = Blue (highest priority)
-                  : event.type === 'blocked'
-                  ? 'bg-red-100 border border-red-200 text-red-800'      // Blocked = Red
-                  : 'bg-green-100 border border-green-200 text-green-800'  // Regular = Green
-                
+                  : isGuest
+                    ? 'bg-purple-100 border border-purple-200 text-purple-800'  // Guest = Purple
+                    : event.type === 'blocked'
+                      ? 'bg-red-100 border border-red-200 text-red-800'      // Blocked = Red
+                      : 'bg-green-100 border border-green-200 text-green-800'  // Regular = Green
+
                 return (
                   <div
                     key={`${event.id}-${index}`}
                     className={`absolute px-2 py-1 rounded text-xs font-medium ${colorClass}`}
-                    style={{ 
+                    style={{
                       top: `${topPosition}px`,
                       left: `${leftPercent}%`,
                       width: `${widthPercent}%`,
@@ -476,6 +487,10 @@ export default function TimelineView({ selectedDate, events, onBack, onEventsUpd
           <div className="flex items-center space-x-2">
             <div className="w-3 h-3 bg-blue-100 border border-blue-200 rounded"></div>
             <span className="text-gray-600">体験</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <div className="w-3 h-3 bg-purple-100 border border-purple-200 rounded"></div>
+            <span className="text-gray-600">ゲスト</span>
           </div>
           <div className="flex items-center space-x-2">
             <div className="w-3 h-3 bg-red-100 border border-red-200 rounded"></div>

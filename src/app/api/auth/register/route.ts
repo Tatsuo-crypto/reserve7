@@ -7,23 +7,25 @@ import { getUserStoreId } from '@/lib/auth-utils'
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    
+
     // Validate input
     const { fullName, email, password, storeId: selectedStoreId } = body
     const validatedData = createUserSchema.parse({ fullName, email, password })
 
-    // Check if user already exists
-    const { data: existingUser } = await supabase
-      .from('users')
-      .select('id')
-      .eq('email', email.toLowerCase())
-      .single()
+    // Check if user already exists (only if email is provided)
+    if (email) {
+      const { data: existingUser } = await supabase
+        .from('users')
+        .select('id')
+        .eq('email', email.toLowerCase())
+        .single()
 
-    if (existingUser) {
-      return NextResponse.json(
-        { error: 'このメールアドレスは既に登録されています' },
-        { status: 400 }
-      )
+      if (existingUser) {
+        return NextResponse.json(
+          { error: 'このメールアドレスは既に登録されています' },
+          { status: 400 }
+        )
+      }
     }
 
     // Hash password
@@ -33,12 +35,18 @@ export async function POST(request: NextRequest) {
     // Use selected store ID or determine from email as fallback
     const storeId = selectedStoreId === '1' ? 'tandjgym@gmail.com' : 'tandjgym2goutenn@gmail.com'
 
+    // Handle empty email by generating a unique dummy email
+    // Format: no-email-[timestamp]-[random]@example.com
+    const finalEmail = email
+      ? email.toLowerCase()
+      : `no-email-${Date.now()}-${Math.floor(Math.random() * 10000)}@example.com`
+
     // Create user
     const { data: user, error } = await supabase
       .from('users')
       .insert({
         full_name: fullName,
-        email: email.toLowerCase(),
+        email: finalEmail,
         password_hash: passwordHash,
         store_id: storeId,
       })
@@ -65,7 +73,7 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Registration error:', error)
-    
+
     if (error instanceof Error && error.name === 'ZodError') {
       return NextResponse.json(
         { error: '入力データが正しくありません' },

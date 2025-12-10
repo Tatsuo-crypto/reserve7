@@ -41,7 +41,7 @@ function NewReservationContent() {
   const [loadingClients, setLoadingClients] = useState(true)
   const [trainers, setTrainers] = useState<Trainer[]>([])
   const [loadingTrainers, setLoadingTrainers] = useState(true)
-  
+
   const [formData, setFormData] = useState({
     clientId: '',
     startTime: '',
@@ -50,7 +50,9 @@ function NewReservationContent() {
     notes: '',
     isBlocked: false, // New field for blocked time
     isTrial: false,   // New field for trial reservation
+    isGuest: false,   // New field for guest reservation
     trialClientName: '', // For trial: manual client name input
+    guestName: '',       // For guest: manual client name input
     // For blocked time - separate date and time fields
     blockedDate: '',
     blockedStartTime: '09:00',
@@ -64,14 +66,14 @@ function NewReservationContent() {
       try {
         // Use API endpoint to fetch clients (works with RLS)
         const response = await fetch('/api/admin/members')
-        
+
         if (!response.ok) {
           throw new Error('Failed to fetch clients')
         }
-        
+
         const result = await response.json()
         const membersData = result.data?.members || result.members || []
-        
+
         // Filter active clients only and transform to match expected Client interface
         const formattedClients = membersData
           .filter((member: any) => member.status === 'active')
@@ -81,7 +83,7 @@ function NewReservationContent() {
             email: member.email,
             displayName: member.full_name
           }))
-        
+
         setClients(formattedClients)
       } catch (error) {
         console.error('Error fetching clients:', error)
@@ -94,7 +96,7 @@ function NewReservationContent() {
       fetchClients()
     }
   }, [session])
-  
+
   // Set default values based on user's store
   useEffect(() => {
     if (session?.user?.email) {
@@ -141,7 +143,7 @@ function NewReservationContent() {
     if (qsStartTime) {
       // Extract date and time from startTime (YYYY-MM-DDTHH:mm format)
       const [date, time] = qsStartTime.split('T') // Split to get YYYY-MM-DD and HH:mm
-      
+
       // Calculate end time as 1 hour after start time
       let blockedEndTime = '12:00' // default
       if (time) {
@@ -149,7 +151,7 @@ function NewReservationContent() {
         const endHours = (hours + 1) % 24 // Add 1 hour, wrap at 24
         blockedEndTime = `${String(endHours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
       }
-      
+
       setFormData(prev => ({
         ...prev,
         startTime: qsStartTime,
@@ -171,7 +173,7 @@ function NewReservationContent() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target
-    
+
     setFormData(prev => ({
       ...prev,
       [name]: value
@@ -223,7 +225,7 @@ function NewReservationContent() {
 
       // For blocked time, we don't need a client
       let selectedClient = null
-      if (!formData.isBlocked && !formData.isTrial) {
+      if (!formData.isBlocked && !formData.isTrial && !formData.isGuest) {
         if (!formData.clientId.trim()) {
           throw new Error('クライアントを選択してください')
         }
@@ -232,10 +234,15 @@ function NewReservationContent() {
           throw new Error('有効なクライアントを選択してください')
         }
       }
-      
+
       // For trial, validate trial client name
       if (formData.isTrial && !formData.trialClientName.trim()) {
         throw new Error('体験者名を入力してください')
+      }
+
+      // For guest, validate guest name
+      if (formData.isGuest && !formData.guestName.trim()) {
+        throw new Error('ゲスト名を入力してください')
       }
 
       // Convert local datetime to JST ISO string
@@ -267,7 +274,7 @@ function NewReservationContent() {
         // Combine date and time with JST timezone
         const startDateTimeStr = `${formData.blockedDate}T${formData.blockedStartTime}:00+09:00`
         const endDateTimeStr = `${formData.blockedDate}T${formData.blockedEndTime}:00+09:00`
-        
+
         // Calculate duration in minutes
         const start = new Date(startDateTimeStr)
         const end = new Date(endDateTimeStr)
@@ -285,7 +292,7 @@ function NewReservationContent() {
       } else if (formData.isTrial) {
         // For trial reservation - use special clientId and include name in notes
         const trialNotes = `[体験] ${formData.trialClientName}${formData.notes ? ` - ${formData.notes}` : ''}`
-        
+
         requestData = {
           clientId: 'TRIAL',
           startTime: startDateTime.toISOString(),
@@ -293,6 +300,18 @@ function NewReservationContent() {
           calendarId: formData.calendarId,
           notes: trialNotes,
           title: `体験 - ${formData.trialClientName}`,
+        }
+      } else if (formData.isGuest) {
+        // For guest reservation - use special clientId and include name in notes
+        const guestNotes = `[ゲスト] ${formData.guestName}${formData.notes ? ` - ${formData.notes}` : ''}`
+
+        requestData = {
+          clientId: 'GUEST',
+          startTime: startDateTime.toISOString(),
+          duration: formData.duration,
+          calendarId: formData.calendarId,
+          notes: guestNotes,
+          title: `ゲスト - ${formData.guestName}`,
         }
       } else {
         // For regular client reservation
@@ -320,7 +339,7 @@ function NewReservationContent() {
       }
 
       setSuccess(formData.isTrial ? '体験予約が正常に作成されました' : '予約が正常に作成されました')
-      
+
       // Reset form
       setFormData({
         clientId: '',
@@ -330,7 +349,9 @@ function NewReservationContent() {
         notes: '',
         isBlocked: false,
         isTrial: false,
+        isGuest: false,
         trialClientName: '',
+        guestName: '',
         blockedDate: '',
         blockedStartTime: '09:00',
         blockedEndTime: '12:00',
@@ -429,8 +450,8 @@ function NewReservationContent() {
                     type="radio"
                     name="reservationType"
                     value="client"
-                    checked={!formData.isBlocked && !formData.isTrial}
-                    onChange={() => setFormData(prev => ({ ...prev, isBlocked: false, isTrial: false, clientId: '' }))}
+                    checked={!formData.isBlocked && !formData.isTrial && !formData.isGuest}
+                    onChange={() => setFormData(prev => ({ ...prev, isBlocked: false, isTrial: false, isGuest: false, clientId: '' }))}
                     className="mr-2"
                   />
                   <span>予約</span>
@@ -441,10 +462,21 @@ function NewReservationContent() {
                     name="reservationType"
                     value="trial"
                     checked={formData.isTrial}
-                    onChange={() => setFormData(prev => ({ ...prev, isBlocked: false, isTrial: true, clientId: '' }))}
+                    onChange={() => setFormData(prev => ({ ...prev, isBlocked: false, isTrial: true, isGuest: false, clientId: '' }))}
                     className="mr-2"
                   />
                   <span>体験</span>
+                </label>
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="reservationType"
+                    value="guest"
+                    checked={formData.isGuest}
+                    onChange={() => setFormData(prev => ({ ...prev, isBlocked: false, isTrial: false, isGuest: true, clientId: '' }))}
+                    className="mr-2"
+                  />
+                  <span>ゲスト</span>
                 </label>
                 <label className="flex items-center">
                   <input
@@ -455,7 +487,7 @@ function NewReservationContent() {
                     onChange={() => {
                       // When switching to blocked, extract date and time from startTime
                       const [date, time] = formData.startTime ? formData.startTime.split('T') : ['', '']
-                      
+
                       // Calculate end time as 1 hour after start time
                       let blockedEndTime = formData.blockedEndTime
                       if (time) {
@@ -463,11 +495,12 @@ function NewReservationContent() {
                         const endHours = (hours + 1) % 24 // Add 1 hour, wrap at 24
                         blockedEndTime = `${String(endHours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
                       }
-                      
+
                       setFormData(prev => ({
                         ...prev,
                         isBlocked: true,
                         isTrial: false,
+                        isGuest: false,
                         clientId: '',
                         blockedDate: date || prev.blockedDate, // Use extracted date or keep existing
                         blockedStartTime: time || prev.blockedStartTime, // Use extracted time or keep existing
@@ -482,7 +515,7 @@ function NewReservationContent() {
             </div>
 
             {/* Client Selection - Only show when not blocked */}
-            {!formData.isBlocked && !formData.isTrial && (
+            {!formData.isBlocked && !formData.isTrial && !formData.isGuest && (
               <div>
                 <label htmlFor="clientId" className="block text-sm font-medium text-gray-700 mb-2">
                   クライアント選択 *
@@ -542,6 +575,28 @@ function NewReservationContent() {
               </div>
             )}
 
+            {/* Guest Name - Manual text input for guest */}
+            {formData.isGuest && (
+              <div>
+                <label htmlFor="guestName" className="block text-sm font-medium text-gray-700 mb-2">
+                  ゲスト名 *
+                </label>
+                <input
+                  type="text"
+                  id="guestName"
+                  name="guestName"
+                  value={formData.guestName}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="ゲストの名前を入力してください"
+                />
+                <p className="mt-1 text-sm text-gray-500">
+                  ゲスト予約を作成する方の名前を入力してください
+                </p>
+              </div>
+            )}
+
 
             {/* Date and Time Selection */}
             {formData.isBlocked ? (
@@ -560,7 +615,7 @@ function NewReservationContent() {
                     required
                   />
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label htmlFor="blockedStartTime" className="block text-sm font-medium text-gray-700 mb-2">
@@ -701,7 +756,7 @@ function NewReservationContent() {
                 disabled={loading}
                 className="px-8 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors w-32 flex items-center justify-center whitespace-nowrap"
               >
-                {loading ? '作成中...' : (formData.isBlocked ? '予約不可設定' : (formData.isTrial ? '体験予約作成' : '予約作成'))}
+                {loading ? '作成中...' : (formData.isBlocked ? '予約不可設定' : (formData.isTrial ? '体験予約作成' : (formData.isGuest ? 'ゲスト予約作成' : '予約作成')))}
               </button>
             </div>
           </form>
@@ -710,7 +765,7 @@ function NewReservationContent() {
         {/* Info Box */}
         <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
           <h3 className="text-sm font-medium text-blue-900 mb-2">
-            {formData.isBlocked ? '予約不可時間について' : (formData.isTrial ? '体験予約について' : '予約作成について')}
+            {formData.isBlocked ? '予約不可時間について' : (formData.isTrial ? '体験予約について' : (formData.isGuest ? 'ゲスト予約について' : '予約作成について'))}
           </h3>
           <ul className="text-sm text-blue-800 space-y-1">
             {formData.isBlocked ? (
@@ -726,6 +781,7 @@ function NewReservationContent() {
                 <li>• 同じ時間帯に重複する予約は作成できません</li>
                 <li>• クライアントのメールアドレスは登録済みのものを使用してください</li>
                 {formData.isTrial && <li>• 体験予約はメモに自動で [体験] が付与されます</li>}
+                {formData.isGuest && <li>• ゲスト予約はメモに自動で [ゲスト] が付与されます</li>}
               </>
             )}
           </ul>

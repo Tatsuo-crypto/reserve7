@@ -14,7 +14,7 @@ function getReservationSequence(targetReservation: any, allReservations: any[]):
   const clientReservations = allReservations
     .filter(r => r.client?.id === targetReservation.client?.id)
     .sort((a, b) => new Date(a.startTime || a.start_time).getTime() - new Date(b.startTime || b.start_time).getTime())
-  
+
   // Find the index of the target reservation and add 1 (1-based indexing)
   const index = clientReservations.findIndex(r => r.id === targetReservation.id)
   return index >= 0 ? index + 1 : 1
@@ -26,7 +26,7 @@ export default function AdminReservationsPage() {
   const [reservations, setReservations] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [monthlyUsage, setMonthlyUsage] = useState<{[key: string]: {currentCount: number, maxCount: number, planName: string}}>({})
+  const [monthlyUsage, setMonthlyUsage] = useState<{ [key: string]: { currentCount: number, maxCount: number, planName: string } }>({})
   const [editingReservation, setEditingReservation] = useState<any | null>(null)
   const [showEditModal, setShowEditModal] = useState(false)
   const [editFormData, setEditFormData] = useState({
@@ -58,7 +58,7 @@ export default function AdminReservationsPage() {
           const result = await response.json()
           const reservationsData = result.data?.reservations || []
           setReservations(reservationsData)
-          
+
           // Fetch monthly usage for each unique client
           const clientIds = reservationsData.map((r: any) => r.client?.id).filter(Boolean) as string[]
           const uniqueClients = Array.from(new Set(clientIds))
@@ -74,9 +74,9 @@ export default function AdminReservationsPage() {
             }
             return null
           })
-          
+
           const usageResults = await Promise.all(usagePromises)
-          const usageMap: {[key: string]: any} = {}
+          const usageMap: { [key: string]: any } = {}
           usageResults.forEach(result => {
             if (result) {
               usageMap[result.clientId] = result.usage
@@ -128,11 +128,11 @@ export default function AdminReservationsPage() {
   // Handle reservation edit
   const handleEdit = (reservation: any) => {
     setEditingReservation(reservation)
-    
+
     // Convert UTC time to local time for datetime-local input
     const startDate = new Date(reservation.startTime || reservation.start_time)
     const endDate = new Date(reservation.endTime || reservation.end_time)
-    
+
     // Format as YYYY-MM-DDTHH:MM for datetime-local input
     const formatForInput = (date: Date) => {
       const year = date.getFullYear()
@@ -142,7 +142,7 @@ export default function AdminReservationsPage() {
       const minutes = String(date.getMinutes()).padStart(2, '0')
       return `${year}-${month}-${day}T${hours}:${minutes}`
     }
-    
+
     setEditFormData({
       title: reservation.title || '',
       startTime: formatForInput(startDate),
@@ -174,16 +174,16 @@ export default function AdminReservationsPage() {
 
       if (response.ok) {
         // Update the reservation in the list
-        setReservations(prev => prev.map(r => 
-          r.id === editingReservation.id 
+        setReservations(prev => prev.map(r =>
+          r.id === editingReservation.id
             ? {
-                ...r,
-                title: editFormData.title,
-                startTime: new Date(editFormData.startTime).toISOString(),
-                endTime: new Date(editFormData.endTime).toISOString(),
-                notes: editFormData.notes,
-                memo: editFormData.notes
-              }
+              ...r,
+              title: editFormData.title,
+              startTime: new Date(editFormData.startTime).toISOString(),
+              endTime: new Date(editFormData.endTime).toISOString(),
+              notes: editFormData.notes,
+              memo: editFormData.notes
+            }
             : r
         ))
         setShowEditModal(false)
@@ -214,8 +214,8 @@ export default function AdminReservationsPage() {
     if (!timeString) return ''
     try {
       const date = new Date(timeString)
-      return date.toLocaleTimeString('ja-JP', { 
-        hour: '2-digit', 
+      return date.toLocaleTimeString('ja-JP', {
+        hour: '2-digit',
         minute: '2-digit',
         hour12: false
       })
@@ -351,10 +351,10 @@ export default function AdminReservationsPage() {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {reservations.map((reservation) => (
-                    <tr 
+                    <tr
                       key={reservation.id}
-                      className={isPastReservation(reservation.startTime || reservation.start_time, reservation.endTime || reservation.end_time) 
-                        ? 'bg-gray-50 text-gray-600' 
+                      className={isPastReservation(reservation.startTime || reservation.start_time, reservation.endTime || reservation.end_time)
+                        ? 'bg-gray-50 text-gray-600'
                         : ''
                       }
                     >
@@ -382,7 +382,13 @@ export default function AdminReservationsPage() {
                               {reservation.client?.id === 'blocked' ? '予約不可時間' : (reservation.client?.fullName || reservation.client?.full_name || reservation.client_name || '-')}
                             </div>
                             <div className="text-gray-500 text-xs">
-                              {reservation.client?.id === 'blocked' ? 'blocked@system' : (reservation.client?.email || '-')}
+                              {reservation.client?.id === 'blocked'
+                                ? 'blocked@system'
+                                : reservation.client?.email === 'trial@system'
+                                  ? '体験'
+                                  : reservation.client?.email === 'guest@system'
+                                    ? 'ゲスト'
+                                    : (reservation.client?.email || '-')}
                             </div>
                           </div>
                         </div>

@@ -63,7 +63,7 @@ export default function ReservationsPage() {
     try {
       setLoading(true)
       const response = await fetch('/api/reservations')
-      
+
       if (!response.ok) {
         throw new Error('予約の取得に失敗しました')
       }
@@ -129,22 +129,22 @@ export default function ReservationsPage() {
     if (reservation.client.id === 'blocked') {
       return '-'
     }
-    
+
     const reservationDate = new Date(reservation.startTime)
     const reservationMonth = reservationDate.getMonth()
     const reservationYear = reservationDate.getFullYear()
-    
+
     // Get all reservations for the same client in the same month, sorted by start time
     const clientReservationsInMonth = allReservations
       .filter(r => {
         const rDate = new Date(r.startTime)
         return r.client.id === reservation.client.id &&
-               rDate.getMonth() === reservationMonth &&
-               rDate.getFullYear() === reservationYear &&
-               new Date(r.startTime) <= reservationDate
+          rDate.getMonth() === reservationMonth &&
+          rDate.getFullYear() === reservationYear &&
+          new Date(r.startTime) <= reservationDate
       })
       .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
-    
+
     // Return the count (length of filtered array)
     return clientReservationsInMonth.length
   }
@@ -174,7 +174,7 @@ export default function ReservationsPage() {
       router.push('/login')
       return
     }
-    
+
     // Show custom confirm modal
     setReservationToCancel(reservationId)
     setShowConfirmModal(true)
@@ -185,7 +185,7 @@ export default function ReservationsPage() {
     if (!reservationToCancel) return
 
     setShowConfirmModal(false)
-    
+
     try {
       const response = await fetch(`/api/reservations/${reservationToCancel}`, {
         method: 'DELETE',
@@ -225,11 +225,11 @@ export default function ReservationsPage() {
   // Handle reservation edit
   const handleEdit = (reservation: Reservation) => {
     setEditingReservation(reservation)
-    
+
     // Convert UTC time to local time for datetime-local input
     const startDate = new Date(reservation.startTime)
     const endDate = new Date(reservation.endTime)
-    
+
     // Format as YYYY-MM-DDTHH:MM for datetime-local input
     const formatForInput = (date: Date) => {
       const year = date.getFullYear()
@@ -239,7 +239,7 @@ export default function ReservationsPage() {
       const minutes = String(date.getMinutes()).padStart(2, '0')
       return `${year}-${month}-${day}T${hours}:${minutes}`
     }
-    
+
     setEditFormData({
       title: reservation.title || '',
       startTime: formatForInput(startDate),
@@ -271,15 +271,15 @@ export default function ReservationsPage() {
 
       if (response.ok) {
         // Update the reservation in the list
-        setReservations(prev => prev.map(r => 
-          r.id === editingReservation.id 
+        setReservations(prev => prev.map(r =>
+          r.id === editingReservation.id
             ? {
-                ...r,
-                title: editFormData.title,
-                startTime: new Date(editFormData.startTime).toISOString(),
-                endTime: new Date(editFormData.endTime).toISOString(),
-                notes: editFormData.notes
-              }
+              ...r,
+              title: editFormData.title,
+              startTime: new Date(editFormData.startTime).toISOString(),
+              endTime: new Date(editFormData.endTime).toISOString(),
+              notes: editFormData.notes
+            }
             : r
         ))
         setShowEditModal(false)
@@ -304,7 +304,7 @@ export default function ReservationsPage() {
         </div>
       </div>
     )
-  }  
+  }
 
   if (status === 'unauthenticated') {
     return null // Will redirect
@@ -367,8 +367,8 @@ export default function ReservationsPage() {
               予約がありません
             </h3>
             <p className="text-gray-600">
-              {isAdmin 
-                ? '新規予約を作成してください' 
+              {isAdmin
+                ? '新規予約を作成してください'
                 : '予約が作成されると、ここに表示されます'
               }
             </p>
@@ -429,7 +429,13 @@ export default function ReservationsPage() {
                                 {reservation.client.id === 'blocked' ? '予約不可時間' : reservation.client.fullName}
                               </div>
                               <div className="text-gray-500 text-xs">
-                                {reservation.client.id === 'blocked' ? 'blocked@system' : reservation.client.email}
+                                {reservation.client.id === 'blocked'
+                                  ? 'blocked@system'
+                                  : reservation.client.email === 'trial@system'
+                                    ? '体験'
+                                    : reservation.client.email === 'guest@system'
+                                      ? 'ゲスト'
+                                      : reservation.client.email}
                               </div>
                             </div>
                           </div>

@@ -3,7 +3,7 @@ import { Inter } from 'next/font/google'
 import { Providers } from './providers'
 import Navigation from './components/Navigation'
 
-const inter = Inter({ 
+const inter = Inter({
   subsets: ['latin'],
   display: 'swap',
   preload: true,
@@ -43,7 +43,7 @@ export default function RootLayout({
     <html lang="ja">
       <body className={inter.className}>
         <Providers>
-          <div className="min-h-screen bg-gray-50">
+          <div className="min-h-screen bg-space-black text-white">
             <Navigation />
             <main className="py-[30px]">
               {children}

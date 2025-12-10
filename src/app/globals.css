@@ -2,40 +2,84 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --foreground-rgb: 255, 255, 255;
+  --background-start-rgb: 10, 10, 30;
+  --background-end-rgb: 0, 0, 0;
+  
+  /* Antigravity Palette */
+  --color-space-black: #050507;
+  --color-deep-cosmos: #0B0B15;
+  --color-nebula-purple: #7B2CBF;
+  --color-starlight-blue: #4CC9F0;
+  --color-plasma-pink: #F72585;
+  --color-gravity-indigo: #4361EE;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
+  min-height: 100vh;
+}
+
 @layer utilities {
+  .glass-panel {
+    @apply bg-white/5 backdrop-blur-lg border border-white/10 shadow-xl;
+  }
+  
+  .glass-button {
+    @apply bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 transition-all duration-300;
+  }
+
+  .text-glow {
+    text-shadow: 0 0 10px rgba(76, 201, 240, 0.5), 0 0 20px rgba(76, 201, 240, 0.3);
+  }
+
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .animate-pulse-glow {
+    animation: pulseGlow 4s ease-in-out infinite;
+  }
+  
   .animate-fadeIn {
-    animation: fadeIn 0.3s ease-out;
+    animation: fadeIn 0.5s ease-out forwards;
   }
   
-  .animate-scaleIn {
-    animation: scaleIn 0.3s ease-out;
+  .animate-slideUp {
+    animation: slideUp 0.5s ease-out forwards;
   }
-  
-  .animate-fadeInSlow {
-    animation: fadeIn 1.5s ease-in-out;
-  }
-  
-  .animate-scaleInSlow {
-    animation: scaleIn 0.6s ease-out;
-  }
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-20px); }
+  100% { transform: translateY(0px); }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 15px rgba(67, 97, 238, 0.2); }
+  50% { box-shadow: 0 0 30px rgba(67, 97, 238, 0.5); }
 }
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-@keyframes scaleIn {
-  from {
+@keyframes slideUp {
+  from { 
     opacity: 0;
-    transform: scale(0.8);
+    transform: translateY(20px);
   }
-  to {
+  to { 
     opacity: 1;
-    transform: scale(1);
+    transform: translateY(0);
   }
 }
