@@ -7,7 +7,7 @@ export default function NewMemberPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [stores, setStores] = useState<{id: string, name: string}[]>([])
+  const [stores, setStores] = useState<{ id: string, name: string }[]>([])
   const [formData, setFormData] = useState({
     lastName: '',
     firstName: '',
@@ -28,7 +28,7 @@ export default function NewMemberPage() {
     try {
       // Combine lastName and firstName with a space
       const fullName = `${formData.lastName} ${formData.firstName}`.trim()
-      
+
       const response = await fetch('/api/admin/members', {
         method: 'POST',
         headers: {
@@ -96,12 +96,24 @@ export default function NewMemberPage() {
 
   return (
     <div className="max-w-2xl mx-auto py-8 px-4">
-      <div className="bg-white shadow-sm border border-gray-200 rounded-lg p-6">
-        <div className="mb-6">
+      {/* Header */}
+      <div className="mb-8 relative flex items-center justify-center">
+        <button
+          onClick={() => router.back()}
+          className="absolute left-0 p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors"
+          aria-label="戻る"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900">新規会員追加</h1>
-          <p className="mt-2 text-sm text-gray-600">会員情報を入力してください</p>
+          <p className="mt-1 text-sm text-gray-600">会員情報を入力してください</p>
         </div>
+      </div>
 
+      <div className="bg-white shadow-sm border border-gray-200 rounded-lg p-6">
         {error && (
           <div className="mb-4 bg-red-50 border border-red-200 rounded-lg p-4">
             <p className="text-sm text-red-800">{error}</p>
@@ -113,7 +125,7 @@ export default function NewMemberPage() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-2">
-                苗字 <span className="text-red-500">*</span>
+                苗字（任意）
               </label>
               <input
                 type="text"
@@ -121,14 +133,13 @@ export default function NewMemberPage() {
                 name="lastName"
                 value={formData.lastName}
                 onChange={handleChange}
-                required
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="山田"
               />
             </div>
             <div>
               <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-2">
-                名前 <span className="text-red-500">*</span>
+                名前（任意）
               </label>
               <input
                 type="text"
@@ -136,7 +147,6 @@ export default function NewMemberPage() {
                 name="firstName"
                 value={formData.firstName}
                 onChange={handleChange}
-                required
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="太郎"
               />
@@ -146,7 +156,7 @@ export default function NewMemberPage() {
           {/* メールアドレス */}
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-              メールアドレス <span className="text-red-500">*</span>
+              メールアドレス（任意）
             </label>
             <input
               type="email"
@@ -154,11 +164,10 @@ export default function NewMemberPage() {
               name="email"
               value={formData.email}
               onChange={handleChange}
-              required
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               placeholder="example@email.com"
             />
-            <p className="mt-1 text-sm text-gray-500">会員専用URLの発行に使用されます</p>
+            <p className="mt-1 text-sm text-gray-500">会員専用URLの発行にはメールアドレスが必要ですが、空欄でも登録可能です（システムがダミーアドレスを生成します）</p>
           </div>
 
           {/* Googleカレンダー連携用メールアドレス */}
@@ -212,6 +221,7 @@ export default function NewMemberPage() {
               onChange={handleChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
+              <option value="都度">都度</option>
               <option value="月2回">月2回</option>
               <option value="月4回">月4回</option>
               <option value="月6回">月6回</option>

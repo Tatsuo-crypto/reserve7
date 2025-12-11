@@ -6,10 +6,10 @@ import { getAuthenticatedUser, createErrorResponse, createSuccessResponse } from
 export async function GET(request: NextRequest) {
   try {
     console.log('=== Members API GET started ===')
-    
+
     const user = await getAuthenticatedUser()
     console.log('User authenticated:', user ? 'Yes' : 'No', user?.email, user?.storeId)
-    
+
     if (!user) {
       console.error('No user found')
       return createErrorResponse('認証が必要です', 401)
@@ -48,19 +48,19 @@ export async function GET(request: NextRequest) {
       .neq('email', 'tandjgym2goutenn@gmail.com')
 
     // Apply store filter if needed
-    let query = allStores 
-      ? baseQuery 
+    let query = allStores
+      ? baseQuery
       : baseQuery.eq('store_id', user.storeId)
 
     console.log('Executing members query...')
     let { data: members, error } = await query.order('created_at', { ascending: false })
-    
+
     // If no members found and not all stores mode, try with calendarId
     const calendarId = (user as any).calendarId
     if (!allStores && !error && (!members || members.length === 0) && calendarId && calendarId !== user.storeId) {
       console.log('No members with storeId, trying calendarId:', calendarId)
       const result = await baseQuery.eq('store_id', calendarId).order('created_at', { ascending: false })
-      
+
       if (!result.error && result.data && result.data.length > 0) {
         members = result.data
         error = result.error
@@ -107,7 +107,7 @@ export async function GET(request: NextRequest) {
     console.error('Error message:', (error as Error)?.message)
     console.error('Error stack:', (error as Error)?.stack)
     console.error('Error name:', (error as Error)?.name)
-    
+
     // Return detailed error in development
     return NextResponse.json({
       error: 'Internal server error',
@@ -122,7 +122,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const user = await getAuthenticatedUser()
-    
+
     if (!user) {
       return createErrorResponse('認証が必要です', 401)
     }
@@ -134,9 +134,7 @@ export async function POST(request: NextRequest) {
     const { fullName, email, googleCalendarEmail, plan, status, memo, storeId, monthlyFee } = await request.json()
 
     // Validation
-    if (!fullName || !email) {
-      return createErrorResponse('名前とメールアドレスは必須です', 400)
-    }
+    // 名前とメールアドレスは任意（空欄の場合はダミー値を設定）
 
     if (!storeId) {
       return createErrorResponse('店舗の選択は必須です', 400)
@@ -148,25 +146,32 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate plan if provided
-    const validPlans = ['月2回', '月4回', '月6回', '月8回', 'ダイエットコース', 'ダイエットコース【2ヶ月】', 'ダイエットコース【3ヶ月】', 'ダイエットコース【6ヶ月】', 'カウンセリング']
+    const validPlans = ['都度', '月2回', '月4回', '月6回', '月8回', 'ダイエットコース', 'ダイエットコース【2ヶ月】', 'ダイエットコース【3ヶ月】', 'ダイエットコース【6ヶ月】', 'カウンセリング']
     if (plan && !validPlans.includes(plan)) {
       return createErrorResponse('無効なプランです', 400)
     }
 
-    // Check if email already exists
-    const { data: existingUser } = await supabaseAdmin
-      .from('users')
-      .select('id')
-      .eq('email', email)
-      .single()
+    // Check if email already exists (only if email is provided)
+    if (email) {
+      const { data: existingUser } = await supabaseAdmin
+        .from('users')
+        .select('id')
+        .eq('email', email)
+        .single()
 
-    if (existingUser) {
-      return createErrorResponse('このメールアドレスは既に登録されています', 400)
+      if (existingUser) {
+        return createErrorResponse('このメールアドレスは既に登録されています', 400)
+      }
     }
 
+    // Generate dummy email if not provided
+    const finalEmail = email || `no-email-${Date.now()}-${Math.random().toString(36).substring(7)}@example.com`
+    // Set default name if not provided
+    const finalFullName = fullName || '氏名未設定'
+
     const insertData = {
-      full_name: fullName,
-      email: email,
+      full_name: finalFullName,
+      email: finalEmail,
       google_calendar_email: googleCalendarEmail || null,
       password_hash: '', // トークンベース認証のためパスワードは不要
       plan: plan || '月4回',
@@ -199,7 +204,7 @@ export async function POST(request: NextRequest) {
         hint: error.hint
       })
       // 開発環境では詳細なエラーを返す
-      const errorMessage = process.env.NODE_ENV === 'development' 
+      const errorMessage = process.env.NODE_ENV === 'development'
         ? `会員の追加に失敗しました: ${error.message}`
         : '会員の追加に失敗しました'
       return createErrorResponse(errorMessage, 500)
@@ -212,9 +217,9 @@ export async function POST(request: NextRequest) {
     console.error('Error message:', errorMessage)
     console.error('Error stack:', error instanceof Error ? error.stack : 'No stack')
     return createErrorResponse(
-      process.env.NODE_ENV === 'development' 
+      process.env.NODE_ENV === 'development'
         ? `Internal server error: ${errorMessage}`
-        : 'Internal server error', 
+        : 'Internal server error',
       500
     )
   }
@@ -223,7 +228,7 @@ export async function POST(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   try {
     const user = await getAuthenticatedUser()
-    
+
     if (!user) {
       return createErrorResponse('認証が必要です', 401)
     }
@@ -291,7 +296,7 @@ export async function PATCH(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const user = await getAuthenticatedUser()
-    
+
     if (!user) {
       return createErrorResponse('認証が必要です', 401)
     }

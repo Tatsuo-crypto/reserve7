@@ -384,11 +384,9 @@ export default function AdminReservationsPage() {
                             <div className="text-gray-500 text-xs">
                               {reservation.client?.id === 'blocked'
                                 ? 'blocked@system'
-                                : reservation.client?.email === 'trial@system'
-                                  ? '体験'
-                                  : reservation.client?.email === 'guest@system'
-                                    ? 'ゲスト'
-                                    : (reservation.client?.email || '-')}
+                                : reservation.client?.email === 'guest@system'
+                                  ? 'Guest'
+                                  : (reservation.client?.email || '-')}
                             </div>
                           </div>
                         </div>

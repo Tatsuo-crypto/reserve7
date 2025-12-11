@@ -23,10 +23,10 @@ export default function DashboardPage() {
 
   if (status === 'loading') {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-space-black">
+      <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-nebula-blue/30 border-t-nebula-blue rounded-full animate-spin mx-auto"></div>
-          <p className="mt-4 text-gray-400">Loading...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">読み込み中...</p>
         </div>
       </div>
     )
@@ -40,96 +40,73 @@ export default function DashboardPage() {
   const isTrainer = session.user.role === 'TRAINER'
 
   return (
-    <div className="min-h-screen bg-space-black text-white pb-20">
-      {/* Header */}
-      <header className="bg-white/5 backdrop-blur-lg border-b border-white/10 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center">
-            <Link href="/dashboard" className="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
-              T&J GYM
-            </Link>
-            <span className="ml-4 px-3 py-1 rounded-full text-xs font-medium bg-white/10 text-gray-300 border border-white/10">
-              {isAdmin ? '管理者' : isTrainer ? 'トレーナー' : '会員'}
-            </span>
-          </div>
-          <button
-            onClick={handleLogout}
-            className="text-sm text-gray-400 hover:text-white transition-colors duration-200"
-          >
-            ログアウト
-          </button>
-        </div>
-      </header>
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Role-specific content */}
-        {isAdmin ? (
-          <AdminDashboard />
-        ) : isTrainer ? (
-          <TrainerDashboard />
-        ) : (
-          <ClientDashboard />
-        )}
-      </main>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* Role-specific content */}
+      {isAdmin ? (
+        <AdminDashboard />
+      ) : isTrainer ? (
+        <TrainerDashboard />
+      ) : (
+        <ClientDashboard />
+      )}
     </div>
-  )
-}
-
-function DashboardCard({ href, title, description, icon }: { href: string, title: string, description: string, icon: React.ReactNode }) {
-  return (
-    <Link
-      href={href}
-      className="group relative overflow-hidden glass-panel p-8 rounded-2xl transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(255,255,255,0.1)] hover:border-white/30"
-    >
-      <div className="relative z-10 flex items-start justify-between">
-        <div>
-          <h3 className="text-2xl font-bold text-white mb-2 group-hover:text-glow transition-all duration-300">{title}</h3>
-          <p className="text-gray-400 group-hover:text-gray-300 transition-colors duration-300">{description}</p>
-        </div>
-        <div className="p-3 rounded-xl bg-white/5 backdrop-blur-md group-hover:bg-white/10 transition-all duration-300 text-gray-300 group-hover:text-white">
-          {icon}
-        </div>
-      </div>
-      <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-gradient-to-br from-white/5 to-transparent rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500" />
-    </Link>
   )
 }
 
 function TrainerDashboard() {
   return (
-    <div className="space-y-8 animate-slideUp">
-      <h2 className="text-3xl font-bold text-white">トレーナーダッシュボード</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <DashboardCard
-          href="/admin/calendar"
-          title="予約管理"
-          description="スケジュールと予約状況を確認・管理します。"
-          icon={
-            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-          }
-        />
-        <DashboardCard
-          href="/admin/members"
-          title="会員管理"
-          description="会員のプロフィールと進捗を確認します。"
-          icon={
-            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-            </svg>
-          }
-        />
+    <div className="space-y-6">
+      <div className="bg-white shadow-sm border border-gray-200 rounded-xl p-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          {/* 予約管理 */}
+          <Link
+            href="/admin/calendar"
+            className="group bg-gradient-to-br from-white to-blue-50 hover:from-blue-50 hover:to-blue-100 border border-blue-200 p-8 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col min-h-[200px] transform hover:-translate-y-1"
+          >
+            <div className="flex items-center mb-6">
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl flex items-center justify-center group-hover:from-blue-200 group-hover:to-blue-300 transition-all duration-300 shadow-sm">
+                <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                </svg>
+              </div>
+            </div>
+            <div className="flex-1">
+              <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-blue-800 transition-colors duration-200">予約</h3>
+              <p className="text-base text-gray-600 leading-relaxed">すべての予約を確認・管理</p>
+            </div>
+          </Link>
+
+          {/* 会員管理 */}
+          <Link
+            href="/admin/members"
+            className="group bg-gradient-to-br from-white to-purple-50 hover:from-purple-50 hover:to-purple-100 border border-purple-200 p-8 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col min-h-[200px] transform hover:-translate-y-1"
+          >
+            <div className="flex items-center mb-6">
+              <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-purple-200 rounded-xl flex items-center justify-center group-hover:from-purple-200 group-hover:to-purple-300 transition-all duration-300 shadow-sm">
+                <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              </div>
+            </div>
+            <div className="flex-1">
+              <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-purple-800 transition-colors duration-200">会員管理</h3>
+              <p className="text-base text-gray-600 leading-relaxed">会員情報の管理</p>
+            </div>
+          </Link>
+        </div>
       </div>
     </div>
   )
 }
 
 function AdminDashboard() {
+  const router = useRouter()
   const [showIconBanner, setShowIconBanner] = useState(false)
 
   useEffect(() => {
+    // Check if iOS device
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+    // Check if not dismissed
     const dismissed = localStorage.getItem('icon-update-dismissed')
     if (isIOS && !dismissed) {
       setShowIconBanner(true)
@@ -142,22 +119,26 @@ function AdminDashboard() {
   }
 
   return (
-    <div className="space-y-8 animate-slideUp">
+    <div className="space-y-6">
+      {/* Icon Update Banner for iOS */}
       {showIconBanner && (
-        <div className="bg-white/5 border border-white/10 rounded-xl p-4 backdrop-blur-md">
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4 shadow-sm">
           <div className="flex items-start">
             <div className="flex-shrink-0">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
             <div className="ml-3 flex-1">
-              <h3 className="text-sm font-medium text-white">アプリアイコンの更新</h3>
-              <div className="mt-2 text-sm text-gray-300">
-                <p>ホーム画面のアイコンを更新するには、<Link href="/home-icon" className="text-white underline hover:text-gray-200">こちら</Link>から再度ホーム画面に追加してください。</p>
+              <h3 className="text-sm font-medium text-blue-900">アイコンが新しくなりました</h3>
+              <div className="mt-2 text-sm text-blue-700">
+                <p>ホーム画面のアイコンを更新するには、<Link href="/home-icon" className="font-semibold underline">こちら</Link>のページから再度「ホーム画面に追加」してください。</p>
               </div>
             </div>
-            <button onClick={dismissBanner} className="flex-shrink-0 ml-3 text-gray-400 hover:text-white">
+            <button
+              onClick={dismissBanner}
+              className="flex-shrink-0 ml-3 text-blue-400 hover:text-blue-600"
+            >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
@@ -166,69 +147,122 @@ function AdminDashboard() {
         </div>
       )}
 
-      <h2 className="text-3xl font-bold text-white">管理画面</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <DashboardCard
-          href="/admin/calendar"
-          title="予約管理"
-          description="すべての予約とスケジュールを管理します。"
-          icon={
-            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-          }
-        />
-        <DashboardCard
-          href="/admin/members"
-          title="会員管理"
-          description="会員アカウントとプランを管理します。"
-          icon={
-            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-            </svg>
-          }
-        />
-        <DashboardCard
-          href="/admin/sales"
-          title="売上管理"
-          description="売上と財務パフォーマンスを確認します。"
-          icon={
-            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          }
-        />
-        <DashboardCard
-          href="/admin/trainers"
-          title="トレーナー管理"
-          description="トレーナーのプロフィールと割り当てを管理します。"
-          icon={
-            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-            </svg>
-          }
-        />
-        <DashboardCard
-          href="/admin/stores"
-          title="店舗管理"
-          description="ジムの場所と設備を管理します。"
-          icon={
-            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-            </svg>
-          }
-        />
+      <div className="bg-white shadow-sm border border-gray-200 rounded-xl p-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          {/* 予約管理（上） */}
+          <Link
+            href="/admin/calendar"
+            className="group bg-gradient-to-br from-white to-blue-50 hover:from-blue-50 hover:to-blue-100 border border-blue-200 p-8 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col min-h-[200px] transform hover:-translate-y-1"
+          >
+            <div className="flex items-center mb-6">
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl flex items-center justify-center group-hover:from-blue-200 group-hover:to-blue-300 transition-all duration-300 shadow-sm">
+                <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                </svg>
+              </div>
+            </div>
+            <div className="flex-1">
+              <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-blue-800 transition-colors duration-200">予約</h3>
+              <p className="text-base text-gray-600 leading-relaxed">すべての予約を確認・管理</p>
+            </div>
+          </Link>
+
+          {/* 会員管理（下） */}
+          <Link
+            href="/admin/members"
+            className="group bg-gradient-to-br from-white to-purple-50 hover:from-purple-50 hover:to-purple-100 border border-purple-200 p-8 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col min-h-[200px] transform hover:-translate-y-1"
+          >
+            <div className="flex items-center mb-6">
+              <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-purple-200 rounded-xl flex items-center justify-center group-hover:from-purple-200 group-hover:to-purple-300 transition-all duration-300 shadow-sm">
+                <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              </div>
+            </div>
+            <div className="flex-1">
+              <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-purple-800 transition-colors duration-200">会員管理</h3>
+              <p className="text-base text-gray-600 leading-relaxed">会員情報の管理</p>
+            </div>
+          </Link>
+
+          {/* 売上管理（新規） */}
+          <Link
+            href="/admin/sales"
+            className="group bg-gradient-to-br from-white to-orange-50 hover:from-orange-50 hover:to-orange-100 border border-orange-200 p-8 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col min-h-[200px] transform hover:-translate-y-1"
+          >
+            <div className="flex items-center mb-6">
+              <div className="w-16 h-16 bg-gradient-to-br from-orange-100 to-orange-200 rounded-xl flex items-center justify-center group-hover:from-orange-200 group-hover:to-orange-300 transition-all duration-300 shadow-sm">
+                <svg className="w-8 h-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+            </div>
+            <div className="flex-1">
+              <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-orange-800 transition-colors duration-200">売上管理</h3>
+              <p className="text-base text-gray-600 leading-relaxed">売上データの確認</p>
+            </div>
+          </Link>
+
+          {/* トレーナー管理（新規） */}
+          <Link
+            href="/admin/trainers"
+            className="group bg-gradient-to-br from-white to-emerald-50 hover:from-emerald-50 hover:to-emerald-100 border border-emerald-200 p-8 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col min-h-[200px] transform hover:-translate-y-1"
+          >
+            <div className="flex items-center mb-6">
+              <div className="w-16 h-16 bg-gradient-to-br from-emerald-100 to-emerald-200 rounded-xl flex items-center justify-center group-hover:from-emerald-200 group-hover:to-emerald-300 transition-all duration-300 shadow-sm">
+                <svg className="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l6.16-3.422A12.083 12.083 0 0112 21.5 12.083 12.083 0 015.84 10.578L12 14z" />
+                </svg>
+              </div>
+            </div>
+            <div className="flex-1">
+              <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-emerald-800 transition-colors duration-200">トレーナー管理</h3>
+              <p className="text-base text-gray-600 leading-relaxed">トレーナー情報の管理</p>
+            </div>
+          </Link>
+
+          {/* 店舗管理（新規） */}
+          <Link
+            href="/admin/stores"
+            className="group bg-gradient-to-br from-white to-indigo-50 hover:from-indigo-50 hover:to-indigo-100 border border-indigo-200 p-8 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col min-h-[200px] transform hover:-translate-y-1"
+          >
+            <div className="flex items-center mb-6">
+              <div className="w-16 h-16 bg-gradient-to-br from-indigo-100 to-indigo-200 rounded-xl flex items-center justify-center group-hover:from-indigo-200 group-hover:to-indigo-300 transition-all duration-300 shadow-sm">
+                <svg className="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10l9-7 9 7v8a2 2 0 01-2 2H5a2 2 0 01-2-2v-8z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 22V12h6v10" />
+                </svg>
+              </div>
+            </div>
+            <div className="flex-1">
+              <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-indigo-800 transition-colors duration-200">店舗管理</h3>
+              <p className="text-base text-gray-600 leading-relaxed">店舗情報の管理</p>
+            </div>
+          </Link>
+        </div>
       </div>
     </div>
   )
 }
 
 function ClientDashboard() {
+  const router = useRouter()
   const { data: session } = useSession()
-  const [userInfo, setUserInfo] = useState<{ plan?: string, status?: string, monthlyUsage?: { currentCount: number, maxCount: number, planName: string } }>({})
+  const [userInfo, setUserInfo] = useState<{plan?: string, status?: string, monthlyUsage?: {currentCount: number, maxCount: number, planName: string}}>({})
   const [reservations, setReservations] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [reservationsLoading, setReservationsLoading] = useState(true)
+
+  // Helper: derive max count from plan string when API doesn't provide it
+  const getPlanMaxCount = (plan?: string, fallbackMax?: number) => {
+    if (typeof fallbackMax === 'number') return fallbackMax
+    if (!plan) return 4
+    if (plan.includes('8回')) return 8
+    if (plan.includes('6回')) return 6
+    if (plan.includes('2回')) return 2
+    return 4
+  }
 
   useEffect(() => {
     const fetchUserInfo = async () => {
@@ -238,11 +272,13 @@ function ClientDashboard() {
           const result = await response.json()
           setUserInfo(result.data || result)
         } else {
-          setUserInfo({ plan: 'Monthly 4', status: 'active' })
+          // If API fails, show default plan without usage info
+          setUserInfo({ plan: '月4回', status: 'active' })
         }
       } catch (error) {
         console.error('Failed to fetch user info:', error)
-        setUserInfo({ plan: 'Monthly 4', status: 'active' })
+        // Fallback to default values
+        setUserInfo({ plan: '月4回', status: 'active' })
       } finally {
         setLoading(false)
       }
@@ -272,124 +308,203 @@ function ClientDashboard() {
   }, [session])
 
   return (
-    <div className="space-y-8 animate-slideUp">
-      <h2 className="text-3xl font-bold text-white">マイページ</h2>
-
-      {/* User Info Card */}
-      <div className="glass-panel p-6 rounded-2xl">
-        <h3 className="text-xl font-semibold text-white mb-6">会員ステータス</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-white/5 border border-white/10 rounded-xl p-4 flex items-center">
-            <div className="bg-white/10 p-3 rounded-lg mr-4 text-white">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
+    <div className="space-y-6">
+      {/* ユーザー情報カード */}
+      <div className="bg-white shadow-sm border border-gray-200 rounded-lg">
+        <div className="px-6 py-5">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+            会員情報
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-center">
+                <div className="bg-blue-500 p-2 rounded-lg mr-3">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-blue-800">現在のプラン</p>
+                  <p className="text-lg font-semibold text-blue-900">
+                    {loading ? '読み込み中...' : (
+                      userInfo.monthlyUsage 
+                        ? `${userInfo.monthlyUsage.planName}`
+                        : (userInfo.plan || '月4回')
+                    )}
+                  </p>
+                </div>
+              </div>
             </div>
-            <div>
-              <p className="text-sm font-medium text-gray-400">現在のプラン</p>
-              <p className="text-lg font-bold text-white">
-                {loading ? '読み込み中...' : (
-                  userInfo.monthlyUsage
-                    ? `${userInfo.monthlyUsage.planName}`
-                    : (userInfo.plan || 'Monthly 4')
-                )}
-              </p>
-            </div>
-          </div>
-          <div className="bg-white/5 border border-white/10 rounded-xl p-4 flex items-center">
-            <div className="bg-white/10 p-3 rounded-lg mr-4 text-white">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-400">ステータス</p>
-              <p className="text-lg font-bold text-white">
-                {loading ? '読み込み中...' : (
-                  userInfo.status === 'active' ? '有効' :
-                    userInfo.status === 'suspended' ? '休会中' :
-                      userInfo.status === 'withdrawn' ? '退会済み' : '有効'
-                )}
-              </p>
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <div className="flex items-center">
+                <div className="bg-green-500 p-2 rounded-lg mr-3">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-green-800">ステータス</p>
+                  <p className="text-lg font-semibold text-green-900">
+                    {loading ? '読み込み中...' : (
+                      userInfo.status === 'active' ? '在籍' :
+                      userInfo.status === 'suspended' ? '休会' :
+                      userInfo.status === 'withdrawn' ? '退会' : '在籍'
+                    )}
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Reservations */}
-      <div className="glass-panel p-6 rounded-2xl">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-semibold text-white">予約一覧</h3>
-        </div>
-
-        {reservationsLoading ? (
-          <div className="text-center py-12">
-            <div className="w-8 h-8 border-4 border-white/30 border-t-white rounded-full animate-spin mx-auto"></div>
-            <p className="mt-4 text-gray-400">予約を読み込み中...</p>
+      {/* 予約一覧 */}
+      <div className="bg-white shadow-sm border border-gray-200 rounded-lg">
+        <div className="px-6 py-5">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-lg font-semibold text-gray-900">
+              マイ予約
+            </h2>
           </div>
-        ) : reservations.length === 0 ? (
-          <div className="text-center py-12 bg-white/5 rounded-xl border border-white/10">
-            <svg className="w-12 h-12 text-gray-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3a2 2 0 012-2h4a2 2 0 012 2v4m-6 0h6m-6 0a2 2 0 00-2-2v10a2 2 0 002 2h10a2 2 0 002-2V9a2 2 0 00-2-2h-4" />
-            </svg>
-            <p className="text-gray-400">予約はありません。</p>
-          </div>
-        ) : (
-          <div className="space-y-8">
-            {/* Reservation List Logic */}
-            {(() => {
-              const upcoming = [...reservations]
-                .filter(r => !r.isPast)
-                .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-              const completed = [...reservations]
-                .filter(r => r.isPast)
-                .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+          {reservationsLoading ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
+              <p className="mt-2 text-gray-600">読み込み中...</p>
+            </div>
+          ) : reservations.length === 0 ? (
+            <div className="text-center py-8">
+              <div className="bg-gray-100 p-3 rounded-lg inline-block mb-4">
+                <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3a2 2 0 012-2h4a2 2 0 012 2v4m-6 0h6m-6 0a2 2 0 00-2-2v10a2 2 0 002 2h10a2 2 0 002-2V9a2 2 0 00-2-2h-4" />
+                </svg>
+              </div>
+              <p className="text-gray-600">予約がありません</p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {(() => {
+                // helpers
+                const formatJPDate = (dateString: string) => {
+                  const date = new Date(dateString)
+                  const month = date.getMonth() + 1
+                  const day = date.getDate()
+                  const dayNames = ['日', '月', '火', '水', '木', '金', '土']
+                  const dayOfWeek = dayNames[date.getDay()]
+                  return `${month}月${day}日（${dayOfWeek}）`
+                }
 
-              const Section = ({ title, items, isUpcoming }: { title: string, items: any[], isUpcoming: boolean }) => (
-                <div>
-                  <h4 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">{title}</h4>
-                  {items.length === 0 ? (
-                    <p className="text-gray-500 text-sm italic">{title}の予約はありません。</p>
-                  ) : (
-                    <div className="space-y-4">
-                      {items.map(item => {
-                        const date = new Date(item.date)
-                        const month = date.getMonth() + 1
-                        const day = date.getDate()
+                // split reservations
+                const upcoming = [...reservations]
+                  .filter(r => !r.isPast)
+                  .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                const completed = [...reservations]
+                  .filter(r => r.isPast)
+                  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 
-                        return (
-                          <div key={item.id} className="flex items-stretch gap-4 group">
-                            <div className="w-20 flex-shrink-0 bg-white/5 border border-white/10 rounded-xl flex flex-col items-center justify-center p-2 group-hover:bg-white/10 transition-colors duration-300">
-                              <span className="text-xs text-gray-400">{date.getFullYear()}</span>
-                              <span className="text-xl font-bold text-white">{month}/{day}</span>
-                            </div>
-                            <div className={`flex-1 border rounded-xl p-4 flex items-center justify-between transition-all duration-300 ${isUpcoming ? 'bg-white/10 border-white/30 hover:bg-white/20' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}>
-                              <div>
-                                <div className="text-lg font-bold text-white">{item.time}</div>
-                                <div className="text-sm text-gray-400">予約番号 #{item.id.slice(0, 4)}</div>
+                // Build monthly counters to show idx/max per month
+                const monthlyCounters: Record<string, number> = {}
+                const monthlyIndexById: Record<string, { idx: number; month: number }> = {}
+                const sortedAll = [...reservations].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                sortedAll.forEach(r => {
+                  const d = new Date(r.date)
+                  const key = `${d.getFullYear()}-${d.getMonth()}`
+                  monthlyCounters[key] = (monthlyCounters[key] || 0) + 1
+                  monthlyIndexById[r.id] = { idx: monthlyCounters[key], month: d.getMonth() + 1 }
+                })
+
+                const monthMax = (() => {
+                  return (userInfo.monthlyUsage?.maxCount) ?? (() => {
+                    const plan = userInfo.monthlyUsage?.planName || userInfo.plan || ''
+                    if (plan.includes('8回')) return 8
+                    if (plan.includes('6回')) return 6
+                    if (plan.includes('2回')) return 2
+                    return 4
+                  })()
+                })()
+
+                // Render sections with card layout
+                const Section = ({ title, items }: { title: string; items: any[] }) => {
+                  // group items by year-month
+                  const groups: Record<string, { year: number; month: number; list: any[] }> = {}
+                  const sorted = [...items].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                  sorted.forEach(it => {
+                    const [y, m] = String(it.date).split('/')
+                    const key = `${y}-${m}`
+                    if (!groups[key]) groups[key] = { year: Number(y), month: Number(m), list: [] }
+                    groups[key].list.push(it)
+                  })
+
+                  const dayNames = ['日','月','火','水','木','金','土']
+
+                  return (
+                    <div>
+                      <h3 className="text-sm font-semibold text-gray-900 mb-2">{title}</h3>
+                      {items.length === 0 ? (
+                        <div className="text-gray-500 text-sm">該当の予約はありません</div>
+                      ) : (
+                        <div className="space-y-5">
+                          {Object.values(groups).map(group => (
+                            <div key={`${group.year}-${group.month}`} className="space-y-2">
+                              {/* monthly cards */}
+                              <div className="space-y-3">
+                                {group.list.map(item => {
+                                  const [yearStr, monthStr, dayStr] = String(item.date).split('/')
+                                  const year = Number(yearStr)
+                                  const month = Number(monthStr)
+                                  const day = Number(dayStr)
+                                  const dateObj = new Date(year, month - 1, day)
+                                  const dateLabel = `${month}月${day}日（${dayNames[dateObj.getDay()]}）`
+                                  const idxInfo = monthlyIndexById[item.id]
+
+                                  return (
+                                    <div key={item.id} className="flex items-stretch gap-3">
+                                      {/* Left month mini-card */}
+                                      <div className="w-16 sm:w-20 flex-shrink-0">
+                                        <div className="h-full rounded-lg border border-purple-200 bg-purple-50 text-purple-800 flex flex-col items-center justify-center py-2">
+                                          <div className="text-[10px] sm:text-xs opacity-70">{year}</div>
+                                          <div className="text-base sm:text-lg font-bold leading-tight">{month}月</div>
+                                        </div>
+                                      </div>
+
+                                      {/* Right detail card */}
+                                      <div className={`flex-1 border rounded-lg p-4 ${title === '予約済み' ? 'bg-blue-50 border-blue-200' : 'bg-white border-gray-200'}`}>
+                                        <div className="flex items-center justify-between">
+                                          <div className="flex-1 min-w-0">
+                                            <div className="font-semibold text-gray-900 text-lg">{`${idxInfo?.idx ?? '-'}回目（${idxInfo?.idx ?? '-'} / ${monthMax}）`}</div>
+                                            <div className="mt-1 text-gray-700">
+                                              <div className="font-medium">{dateLabel}</div>
+                                              <div className="font-medium">{item.time}</div>
+                                            </div>
+                                          </div>
+                                          <div className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ml-2 ${title === '予約済み' ? 'bg-blue-200 text-blue-800' : 'bg-gray-200 text-gray-700'}`}>
+                                            {title === '予約済み' ? '予約済' : '完了'}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  )
+                                })}
                               </div>
-                              <div className={`px-3 py-1 rounded-full text-xs font-bold ${isUpcoming ? 'bg-white text-black shadow-[0_0_10px_rgba(255,255,255,0.4)]' : 'bg-white/10 text-gray-400'}`}>
-                                {isUpcoming ? '予約中' : '完了'}
-                              </div>
                             </div>
-                          </div>
-                        )
-                      })}
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-              )
+                  )
+                }
 
-              return (
-                <>
-                  <Section title="今後の予約" items={upcoming} isUpcoming={true} />
-                  <Section title="過去の履歴" items={completed} isUpcoming={false} />
-                </>
-              )
-            })()}
-          </div>
-        )}
+                return (
+                  <>
+                    <Section title="予約済み" items={upcoming} />
+                    <Section title="完了" items={completed} />
+                  </>
+                )
+              })()}
+            </div>
+          )}
       </div>
     </div>
+  </div>
+
   )
 }

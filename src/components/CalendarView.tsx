@@ -133,7 +133,7 @@ export default function CalendarView({ onViewModeChange, onBackToMonth }: Calend
                 date: dateInJST,
                 time: `${startTime} - ${endTime}`,
                 type: isBlocked ? 'blocked' : (reservation.client.email === 'guest@system' ? 'guest' : 'reservation'),
-                clientName: isBlocked ? '予約不可' : isTrial ? '体験' : (reservation.client.email === 'guest@system' ? 'ゲスト' : extractLastName(reservation.client.fullName)),
+                clientName: isBlocked ? '予約不可' : isTrial ? '体験' : (reservation.client.email === 'guest@system' ? 'Guest' : extractLastName(reservation.client.fullName)),
                 notes: reservation.memo || reservation.notes || ''
               }
             })
@@ -222,7 +222,7 @@ export default function CalendarView({ onViewModeChange, onBackToMonth }: Calend
     // Empty cells for days before the first day of the month
     for (let i = 0; i < firstDay; i++) {
       days.push(
-        <div key={`empty-${i}`} className="h-[115px] bg-white/5 border border-white/10 backdrop-blur-sm"></div>
+        <div key={`empty-${i}`} className="h-[115px] bg-gray-50 border border-gray-100"></div>
       )
     }
 
@@ -237,38 +237,38 @@ export default function CalendarView({ onViewModeChange, onBackToMonth }: Calend
       days.push(
         <div
           key={day}
-          className="h-[115px] p-1 overflow-hidden cursor-pointer flex flex-col bg-white/5 hover:bg-white/10 border border-white/10 backdrop-blur-sm transition-colors duration-200"
+          className="h-[115px] p-1 overflow-hidden cursor-pointer flex flex-col bg-white hover:bg-gray-50 border border-gray-100"
           onClick={() => handleDateClick(dateStr)}
         >
           <div className="text-sm font-medium mb-1 flex-shrink-0 flex justify-start">
             {isToday ? (
-              <div className="w-6 h-6 bg-nebula-blue text-white rounded-full flex items-center justify-center text-xs font-bold shadow-[0_0_10px_rgba(76,201,240,0.5)]">
+              <div className="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
                 {day}
               </div>
             ) : (
-              <div className="w-6 h-6 flex items-center justify-center text-gray-300">
+              <div className="w-6 h-6 flex items-center justify-center text-gray-900">
                 {day}
               </div>
             )}
           </div>
-          <div className="flex-1 min-h-0 overflow-hidden space-y-1">
+          <div className="flex-1 min-h-0 overflow-hidden">
             {dayEvents.slice(0, 4).map(event => {
               // Determine color based on reservation type
               // Check trial BEFORE other types to ensure trial reservations are blue
               const isTrial = event.title.includes('体験')
               const isGuest = event.type === 'guest'
               const colorClass = isTrial
-                ? 'bg-nebula-blue/20 text-nebula-blue border border-nebula-blue/30'    // Trial = Blue
+                ? 'bg-blue-100 text-blue-800 border border-blue-200'    // Trial = Blue (highest priority)
                 : isGuest
-                  ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30'     // Guest = Purple
+                  ? 'bg-purple-100 text-purple-800 border border-purple-200'   // Guest = Purple
                   : event.type === 'reservation'
-                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'  // Regular = Green
-                    : 'bg-red-500/20 text-red-400 border border-red-500/30'        // Blocked = Red
+                    ? 'bg-green-100 text-green-800 border border-green-200'  // Regular = Green
+                    : 'bg-red-100 text-red-800 border border-red-200'        // Blocked = Red
 
               return (
                 <div
                   key={event.id}
-                  className={`h-[16px] text-[10px] px-1 flex items-center rounded truncate leading-none font-medium ${colorClass}`}
+                  className={`h-[14px] text-[10px] px-0.5 flex items-center rounded truncate leading-none mb-0.5 font-medium ${colorClass}`}
                   title={`${event.title} (${event.time})`}
                 >
                   {formatReservationTitle(event.title)}
@@ -276,8 +276,8 @@ export default function CalendarView({ onViewModeChange, onBackToMonth }: Calend
               )
             })}
             {dayEvents.length > 4 && (
-              <div className="text-[9px] text-gray-400 px-1">
-                +{dayEvents.length - 4} more
+              <div className="text-[8px] text-gray-500 px-0.5">
+                +{dayEvents.length - 4}
               </div>
             )}
           </div>
@@ -338,7 +338,7 @@ export default function CalendarView({ onViewModeChange, onBackToMonth }: Calend
                     date: dateInJST,
                     time: `${startTime} - ${endTime}`,
                     type: reservation.client.id === 'blocked' ? 'blocked' : (reservation.client.email === 'guest@system' ? 'guest' : 'reservation'),
-                    clientName: reservation.client.id === 'blocked' ? '予約不可' : (reservation.client.email === 'guest@system' ? 'ゲスト' : extractLastName(reservation.client.fullName)),
+                    clientName: reservation.client.id === 'blocked' ? '予約不可' : (reservation.client.email === 'guest@system' ? 'Guest' : extractLastName(reservation.client.fullName)),
                     notes: reservation.memo || reservation.notes || ''
                   }
                 })
@@ -357,25 +357,25 @@ export default function CalendarView({ onViewModeChange, onBackToMonth }: Calend
 
   return (
     <div className="w-full">
-      {/* Glass container: Month title -> Calendar grid -> Legend */}
-      <div className="glass-panel rounded-2xl overflow-hidden">
+      {/* White container: Month title -> Calendar grid -> Legend */}
+      <div className="bg-white p-0">
         {/* Month Navigation */}
-        <div className="p-6 border-b border-white/10">
-          <div className="flex items-center justify-center space-x-8">
+        <div className="p-4">
+          <div className="flex items-center justify-center space-x-6">
             <button
               onClick={() => navigateMonth('prev')}
-              className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-full transition-all duration-200"
+              className="p-3 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            <h3 className="text-2xl font-bold text-white min-w-[200px] text-center tracking-tight">
+            <h3 className="text-xl sm:text-lg font-medium text-gray-900 min-w-[160px] text-center">
               {formatMonth(currentDate)}
             </h3>
             <button
               onClick={() => navigateMonth('next')}
-              className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-full transition-all duration-200"
+              className="p-3 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -384,18 +384,18 @@ export default function CalendarView({ onViewModeChange, onBackToMonth }: Calend
           </div>
         </div>
         {/* Calendar Body */}
-        <div className="p-0">
+        <div className="px-0 pb-4">
           {loading ? (
-            <div className="flex items-center justify-center h-96">
-              <div className="w-12 h-12 border-4 border-nebula-blue/30 border-t-nebula-blue rounded-full animate-spin"></div>
-              <span className="ml-4 text-gray-400">カレンダーを読み込み中...</span>
+            <div className="flex items-center justify-center h-64">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+              <span className="ml-2 text-gray-600">読み込み中...</span>
             </div>
           ) : (
             <div className="">
-              {/* Days of week header */}
-              <div className="grid grid-cols-7 bg-white/5 border-b border-white/10">
+              {/* Days of week header (no divider line) */}
+              <div className="grid grid-cols-7 mb-1">
                 {['月', '火', '水', '木', '金', '土', '日'].map((day, index) => (
-                  <div key={day} className={`py-3 text-center text-sm font-bold ${index === 5 ? 'text-nebula-blue' : index === 6 ? 'text-red-400' : 'text-gray-400'
+                  <div key={day} className={`p-2 text-center text-sm font-medium ${index === 5 ? 'text-blue-500' : index === 6 ? 'text-red-500' : 'text-gray-700'
                     }`}>
                     {day}
                   </div>
@@ -403,40 +403,36 @@ export default function CalendarView({ onViewModeChange, onBackToMonth }: Calend
               </div>
 
               {/* Calendar grid */}
-              <div className="grid grid-cols-7 gap-px bg-white/10">
+              <div className="grid grid-cols-7 gap-0">
                 {renderCalendarDays()}
               </div>
             </div>
           )}
         </div>
 
-        {/* Legend */}
-        <div className="px-6 py-4 bg-white/5 border-t border-white/10">
-          <div className="flex items-center justify-center space-x-8 text-sm">
+        {/* Legend inside white container */}
+        <div className="px-4 py-3">
+          <div className="flex items-center justify-center space-x-6 text-sm">
             <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-emerald-500/20 border border-emerald-500/30 rounded"></div>
-              <span className="text-gray-400">予約</span>
+              <div className="w-3 h-3 bg-green-100 border border-green-200 rounded"></div>
+              <span className="text-gray-600">予約</span>
             </div>
             <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-nebula-blue/20 border border-nebula-blue/30 rounded"></div>
-              <span className="text-gray-400">体験</span>
+              <div className="w-3 h-3 bg-red-100 border border-red-200 rounded"></div>
+              <span className="text-gray-600">予約不可時間</span>
             </div>
             <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-purple-500/20 border border-purple-500/30 rounded"></div>
-              <span className="text-gray-400">ゲスト</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-red-500/20 border border-red-500/30 rounded"></div>
-              <span className="text-gray-400">不可</span>
+              <div className="w-3 h-3 bg-purple-100 border border-purple-200 rounded"></div>
+              <span className="text-gray-600">ゲスト</span>
             </div>
           </div>
         </div>
       </div>
       {/* Button to navigate to reservation list */}
-      <div className="mt-8 flex justify-center">
+      <div className="mt-4 flex justify-center">
         <Link
           href="/admin/reservations"
-          className="glass-button px-8 py-3 rounded-full text-white font-bold hover:bg-white/20 transition-all duration-300 shadow-[0_0_20px_rgba(255,255,255,0.1)]"
+          className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md shadow-sm hover:bg-indigo-700 transition-colors"
         >
           予約一覧を見る
         </Link>

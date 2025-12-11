@@ -38,14 +38,6 @@ export default function TimelineView({ selectedDate, events, onBack, onEventsUpd
   // スワイプ検出用
   const touchStartX = useRef<number | null>(null)
   const touchEndX = useRef<number | null>(null)
-
-  // 苗字のみを抽出
-  const extractLastName = (fullName: string) => {
-    if (!fullName) return ''
-    const nameParts = fullName.split(/\s|　/)
-    return nameParts[0] || fullName
-  }
-
   // Generate time slots (8:00 - 23:00, hourly)
   const generateTimeSlots = () => {
     const slots: string[] = []
@@ -426,13 +418,13 @@ export default function TimelineView({ selectedDate, events, onBack, onEventsUpd
                 const leftPercent = layoutInfo.column * widthPercent
 
                 // Determine color based on reservation type
-                // Check trial and guest BEFORE blocked/regular
+                // Check trial BEFORE blocked to ensure trial reservations are blue
                 const isTrial = event.title.includes('体験')
                 const isGuest = event.type === 'guest'
                 const colorClass = isTrial
                   ? 'bg-blue-100 border border-blue-200 text-blue-800'  // Trial = Blue (highest priority)
                   : isGuest
-                    ? 'bg-purple-100 border border-purple-200 text-purple-800'  // Guest = Purple
+                    ? 'bg-purple-100 border border-purple-200 text-purple-800'   // Guest = Purple
                     : event.type === 'blocked'
                       ? 'bg-red-100 border border-red-200 text-red-800'      // Blocked = Red
                       : 'bg-green-100 border border-green-200 text-green-800'  // Regular = Green
@@ -489,12 +481,12 @@ export default function TimelineView({ selectedDate, events, onBack, onEventsUpd
             <span className="text-gray-600">体験</span>
           </div>
           <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-purple-100 border border-purple-200 rounded"></div>
-            <span className="text-gray-600">ゲスト</span>
-          </div>
-          <div className="flex items-center space-x-2">
             <div className="w-3 h-3 bg-red-100 border border-red-200 rounded"></div>
             <span className="text-gray-600">予約不可時間</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <div className="w-3 h-3 bg-purple-100 border border-purple-200 rounded"></div>
+            <span className="text-gray-600">ゲスト</span>
           </div>
         </div>
       </div>
