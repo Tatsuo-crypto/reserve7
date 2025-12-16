@@ -204,9 +204,7 @@ export async function POST(request: NextRequest) {
         hint: error.hint
       })
       // 開発環境では詳細なエラーを返す
-      const errorMessage = process.env.NODE_ENV === 'development'
-        ? `会員の追加に失敗しました: ${error.message}`
-        : '会員の追加に失敗しました'
+      const errorMessage = `会員の追加に失敗しました: ${error.message}`
       return createErrorResponse(errorMessage, 500)
     }
 

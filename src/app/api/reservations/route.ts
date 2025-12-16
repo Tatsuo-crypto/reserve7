@@ -8,10 +8,10 @@ export async function GET(request: NextRequest) {
     // Check for token-based authentication (for member-specific URLs)
     const { searchParams } = new URL(request.url)
     const token = searchParams.get('token')
-    
+
     let user = null
     let tokenUser = null
-    
+
     if (token) {
       // Token-based authentication for members
       const { data: userData, error: tokenError } = await supabaseAdmin
@@ -19,11 +19,11 @@ export async function GET(request: NextRequest) {
         .select('id, email, full_name, store_id, access_token')
         .eq('access_token', token)
         .single()
-      
+
       if (tokenError || !userData) {
         return createErrorResponse('無効なアクセストークンです', 401)
       }
-      
+
       tokenUser = userData
       user = {
         id: userData.id,
@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
     } else {
       // Session-based authentication
       user = await getAuthenticatedUser()
-      
+
       if (!user) {
         return createErrorResponse('認証が必要です', 401)
       }
@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
 
     // Filter by store and user permissions
     query = query.eq('calendar_id', calendarId)
-    
+
     if (!user.isAdmin) {
       // Regular users can only see their own reservations
       if (token && tokenUser) {
@@ -81,11 +81,11 @@ export async function GET(request: NextRequest) {
           .select('id, store_id')
           .eq('email', user.email)
           .single()
-        
+
         if (!userData) {
           return createErrorResponse('ユーザーが見つかりません', 404)
         }
-        
+
         // Ensure user can only see reservations from their store
         query = query.eq('client_id', userData.id)
       }
@@ -113,6 +113,16 @@ export async function GET(request: NextRequest) {
         fullName: (reservation.users as any).full_name,
         email: (reservation.users as any).email,
         plan: (reservation.users as any).plan,
+      } : (reservation.title && reservation.title.includes('ゲスト')) ? {
+        id: 'guest',
+        fullName: 'ゲスト予約',
+        email: 'guest@system',
+        plan: '都度',
+      } : (reservation.title && reservation.title.includes('体験')) ? {
+        id: 'trial',
+        fullName: '体験予約',
+        email: 'trial@system',
+        plan: null,
       } : {
         id: 'blocked',
         fullName: '予約不可時間',

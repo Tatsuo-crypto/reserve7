@@ -8,6 +8,7 @@
 // ==============================
 
 export const PLANS = {
+  ONE_TIME: '都度',
   MONTHLY_2: '月2回',
   MONTHLY_4: '月4回',
   MONTHLY_6: '月6回',
@@ -20,6 +21,7 @@ export const PLANS = {
 } as const;
 
 export const PLAN_LIST = [
+  PLANS.ONE_TIME,
   PLANS.MONTHLY_2,
   PLANS.MONTHLY_4,
   PLANS.MONTHLY_6,
@@ -33,6 +35,7 @@ export const PLAN_LIST = [
 
 // Plan display order for sorting
 export const PLAN_RANK: Record<string, number> = {
+  [PLANS.ONE_TIME]: 0,
   [PLANS.COUNSELING]: 1,
   [PLANS.MONTHLY_2]: 2,
   [PLANS.MONTHLY_4]: 4,

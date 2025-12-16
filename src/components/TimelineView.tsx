@@ -11,6 +11,7 @@ interface CalendarEvent {
   time: string
   type: 'reservation' | 'blocked' | 'guest'
   clientName?: string
+  plan?: string
   notes?: string
 }
 
@@ -232,6 +233,28 @@ export default function TimelineView({ selectedDate, events, onBack, onEventsUpd
     }
   }
 
+  // 苗字のみを抽出
+  const extractLastName = (fullName: string) => {
+    if (!fullName) return ''
+    const nameParts = fullName.split(/\s|　/)
+    return nameParts[0] || fullName
+  }
+
+  // タイトルから苗字と回数を抽出
+  const formatReservationTitle = (title: string, plan?: string) => {
+    if (!title) return ''
+    if (!title.match(/\d+\/\d+/)) return title
+    const match = title.match(/^(.+?)(\d+\/\d+)$/)
+    if (match) {
+      const fullName = match[1].trim()
+      const count = match[2]
+      const lastName = extractLastName(fullName)
+      if (plan === '都度') return lastName
+      return `${lastName}${count}`
+    }
+    return title
+  }
+
   return (
     <div className="bg-white shadow-sm border border-gray-200 rounded-lg">
       {/* Header */}
@@ -420,7 +443,7 @@ export default function TimelineView({ selectedDate, events, onBack, onEventsUpd
                 // Determine color based on reservation type
                 // Check trial BEFORE blocked to ensure trial reservations are blue
                 const isTrial = event.title.includes('体験')
-                const isGuest = event.type === 'guest'
+                const isGuest = event.type === 'guest' || (event.title && event.title.includes('ゲスト'))
                 const colorClass = isTrial
                   ? 'bg-blue-100 border border-blue-200 text-blue-800'  // Trial = Blue (highest priority)
                   : isGuest
@@ -444,7 +467,7 @@ export default function TimelineView({ selectedDate, events, onBack, onEventsUpd
                     }}
                     onClick={(e) => openEditFromEvent(e, event)}
                   >
-                    <div className="truncate font-semibold">{event.title}</div>
+                    <div className="truncate font-semibold">{formatReservationTitle(event.title, event.plan)}</div>
                     {/* Hide notes for trial reservations */}
                     {event.notes && !isTrial && (
                       <div className="text-xs opacity-75 truncate">{event.notes}</div>

@@ -28,6 +28,7 @@ interface CalendarEvent {
   time: string
   type: 'reservation' | 'blocked' | 'guest'
   clientName?: string
+  plan?: string
   notes?: string
 }
 
@@ -56,7 +57,7 @@ export default function CalendarView({ onViewModeChange, onBackToMonth }: Calend
   }
 
   // タイトルから苗字と回数を抽出（例：「東條成美1/6」→「東條1/6」）
-  const formatReservationTitle = (title: string) => {
+  const formatReservationTitle = (title: string, plan?: string) => {
     if (!title) return ''
 
     // 「予約不可」などの特殊なタイトルはそのまま返す
@@ -68,6 +69,12 @@ export default function CalendarView({ onViewModeChange, onBackToMonth }: Calend
       const fullName = match[1].trim()
       const count = match[2]
       const lastName = extractLastName(fullName)
+
+      // 都度会員の場合は回数を表示しない
+      if (plan === '都度') {
+        return lastName
+      }
+
       return `${lastName}${count}`
     }
 
@@ -126,14 +133,16 @@ export default function CalendarView({ onViewModeChange, onBackToMonth }: Calend
               // Determine type based on title and client ID
               const isBlocked = reservation.client.id === 'blocked' || (reservation.title && reservation.title.includes('予約不可'))
               const isTrial = reservation.title && reservation.title.includes('体験')
+              const isGuest = reservation.client.id === 'guest' || (reservation.title && reservation.title.includes('ゲスト')) || reservation.client.email === 'guest@system'
 
               return {
                 id: reservation.id,
                 title: reservation.title,
                 date: dateInJST,
                 time: `${startTime} - ${endTime}`,
-                type: isBlocked ? 'blocked' : (reservation.client.email === 'guest@system' ? 'guest' : 'reservation'),
-                clientName: isBlocked ? '予約不可' : isTrial ? '体験' : (reservation.client.email === 'guest@system' ? 'Guest' : extractLastName(reservation.client.fullName)),
+                type: isBlocked ? 'blocked' : (isGuest ? 'guest' : 'reservation'),
+                clientName: isBlocked ? '予約不可' : isTrial ? '体験' : (isGuest ? 'Guest' : extractLastName(reservation.client.fullName)),
+                plan: reservation.client.plan,
                 notes: reservation.memo || reservation.notes || ''
               }
             })
@@ -271,7 +280,7 @@ export default function CalendarView({ onViewModeChange, onBackToMonth }: Calend
                   className={`h-[14px] text-[10px] px-0.5 flex items-center rounded truncate leading-none mb-0.5 font-medium ${colorClass}`}
                   title={`${event.title} (${event.time})`}
                 >
-                  {formatReservationTitle(event.title)}
+                  {formatReservationTitle(event.title, event.plan)}
                 </div>
               )
             })}
@@ -332,13 +341,18 @@ export default function CalendarView({ onViewModeChange, onBackToMonth }: Calend
                     timeZone: 'Asia/Tokyo'
                   }).split('/').map(part => part.padStart(2, '0')).join('-')
 
+                  const isBlocked = reservation.client.id === 'blocked' || (reservation.title && reservation.title.includes('予約不可'))
+                  const isTrial = reservation.title && reservation.title.includes('体験')
+                  const isGuest = reservation.client.id === 'guest' || (reservation.title && reservation.title.includes('ゲスト')) || reservation.client.email === 'guest@system'
+
                   return {
                     id: reservation.id,
                     title: reservation.title,
                     date: dateInJST,
                     time: `${startTime} - ${endTime}`,
-                    type: reservation.client.id === 'blocked' ? 'blocked' : (reservation.client.email === 'guest@system' ? 'guest' : 'reservation'),
-                    clientName: reservation.client.id === 'blocked' ? '予約不可' : (reservation.client.email === 'guest@system' ? 'Guest' : extractLastName(reservation.client.fullName)),
+                    type: isBlocked ? 'blocked' : (isGuest ? 'guest' : 'reservation'),
+                    clientName: isBlocked ? '予約不可' : isTrial ? '体験' : (isGuest ? 'Guest' : extractLastName(reservation.client.fullName)),
+                    plan: reservation.client.plan,
                     notes: reservation.memo || reservation.notes || ''
                   }
                 })
