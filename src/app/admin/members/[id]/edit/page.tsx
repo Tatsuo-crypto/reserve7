@@ -2,16 +2,17 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
+import { PLAN_LIST } from '@/lib/constants'
 
 export default function EditMemberPage() {
   const router = useRouter()
   const params = useParams()
   const memberId = params.id as string
-  
+
   const [loading, setLoading] = useState(false)
   const [fetchLoading, setFetchLoading] = useState(true)
   const [error, setError] = useState('')
-  const [stores, setStores] = useState<{id: string, name: string}[]>([])
+  const [stores, setStores] = useState<{ id: string, name: string }[]>([])
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -225,14 +226,10 @@ export default function EditMemberPage() {
               onChange={handleChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
-              <option value="月2回">月2回</option>
-              <option value="月4回">月4回</option>
-              <option value="月6回">月6回</option>
-              <option value="月8回">月8回</option>
-              <option value="ダイエットコース【2ヶ月】">ダイエットコース【2ヶ月】</option>
-              <option value="ダイエットコース【3ヶ月】">ダイエットコース【3ヶ月】</option>
-              <option value="ダイエットコース【6ヶ月】">ダイエットコース【6ヶ月】</option>
-              <option value="カウンセリング">カウンセリング</option>
+              {// @ts-ignore
+                PLAN_LIST.map(plan => (
+                  <option key={plan} value={plan}>{plan}</option>
+                ))}
             </select>
           </div>
 

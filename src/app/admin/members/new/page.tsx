@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { PLAN_LIST } from '@/lib/constants'
 
 export default function NewMemberPage() {
   const router = useRouter()
@@ -221,15 +222,10 @@ export default function NewMemberPage() {
               onChange={handleChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
-              <option value="都度">都度</option>
-              <option value="月2回">月2回</option>
-              <option value="月4回">月4回</option>
-              <option value="月6回">月6回</option>
-              <option value="月8回">月8回</option>
-              <option value="ダイエットコース【2ヶ月】">ダイエットコース【2ヶ月】</option>
-              <option value="ダイエットコース【3ヶ月】">ダイエットコース【3ヶ月】</option>
-              <option value="ダイエットコース【6ヶ月】">ダイエットコース【6ヶ月】</option>
-              <option value="カウンセリング">カウンセリング</option>
+              {// @ts-ignore
+                PLAN_LIST.map(plan => (
+                  <option key={plan} value={plan}>{plan}</option>
+                ))}
             </select>
           </div>
 
