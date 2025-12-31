@@ -6,17 +6,19 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import TrackingModal from './TrackingModal'
 import type { Member } from '@/types'
-import { 
-  getPlanRank, 
-  getStatusRank, 
-  getStatusText, 
-  getStatusColor, 
+import {
+  getPlanRank,
+  getStatusRank,
+  getStatusText,
+  getStatusColor,
   getStatusDotColor,
   generateMemberAccessUrl
 } from '@/lib/utils/member'
 import { PLAN_LIST } from '@/lib/constants'
+import { useStoreChange } from '@/hooks/useStoreChange'
 
 function MembersPageContent() {
+  const { count: storeChangeCount } = useStoreChange()
   const { data: session, status } = useSession()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -40,7 +42,7 @@ function MembersPageContent() {
         console.log('Fetching members...')
         const response = await fetch('/api/admin/members')
         console.log('Response status:', response.status)
-        
+
         if (response.ok) {
           const result = await response.json()
           console.log('Success result:', result)
@@ -66,15 +68,18 @@ function MembersPageContent() {
     if (status === 'authenticated') {
       fetchMembers()
     }
-  }, [status])
+    if (status === 'authenticated') {
+      fetchMembers()
+    }
+  }, [status, storeChangeCount])
 
-  const [selectedStatuses, setSelectedStatuses] = useState<{[key: string]: string}>({})
-  const [selectedPlans, setSelectedPlans] = useState<{[key: string]: string}>({})
-  const [memos, setMemos] = useState<{[key: string]: string}>({})
+  const [selectedStatuses, setSelectedStatuses] = useState<{ [key: string]: string }>({})
+  const [selectedPlans, setSelectedPlans] = useState<{ [key: string]: string }>({})
+  const [memos, setMemos] = useState<{ [key: string]: string }>({})
   const [showDeleteModal, setShowDeleteModal] = useState(false)
-  const [memberToDelete, setMemberToDelete] = useState<{id: string, name: string} | null>(null)
+  const [memberToDelete, setMemberToDelete] = useState<{ id: string, name: string } | null>(null)
   const [showTrackingModal, setShowTrackingModal] = useState(false)
-  const [selectedMember, setSelectedMember] = useState<{id: string, name: string} | null>(null)
+  const [selectedMember, setSelectedMember] = useState<{ id: string, name: string } | null>(null)
 
   // Sorting state
   const [sortKey, setSortKey] = useState<'plan' | 'status' | 'created' | null>(null)
@@ -121,10 +126,10 @@ function MembersPageContent() {
 
   const handleStatusChange = async (memberId: string, newStatus?: string) => {
     const statusToUpdate = newStatus || selectedStatuses[memberId] || 'active'
-    
+
     try {
       console.log('ステータス更新開始:', { memberId, statusToUpdate })
-      
+
       const response = await fetch('/api/admin/members', {
         method: 'PATCH',
         headers: {
@@ -141,19 +146,19 @@ function MembersPageContent() {
 
       if (response.ok) {
         // Update local state
-        setMembers(prev => prev.map(member => 
-          member.id === memberId 
+        setMembers(prev => prev.map(member =>
+          member.id === memberId
             ? { ...member, status: statusToUpdate as 'active' | 'suspended' | 'withdrawn' }
             : member
         ))
-        
+
         // Clear selected status for this member
         setSelectedStatuses(prev => {
           const updated = { ...prev }
           delete updated[memberId]
           return updated
         })
-        
+
         // Show success message if it was simulated
         if (result.message) {
           setError(`更新完了: ${result.message}`)
@@ -171,10 +176,10 @@ function MembersPageContent() {
 
   const handlePlanChange = async (memberId: string, newPlan?: string) => {
     const planToUpdate = newPlan || selectedPlans[memberId] || '月4回'
-    
+
     try {
       console.log('プラン更新開始:', { memberId, planToUpdate })
-      
+
       const response = await fetch('/api/admin/members', {
         method: 'PATCH',
         headers: {
@@ -191,21 +196,21 @@ function MembersPageContent() {
 
       if (response.ok) {
         // Update local state
-        setMembers(prev => prev.map(member => 
-          member.id === memberId 
+        setMembers(prev => prev.map(member =>
+          member.id === memberId
             ? { ...member, plan: planToUpdate }
             : member
         ))
-        
+
         // Clear selection
         setSelectedPlans(prev => {
           const newState = { ...prev }
           delete newState[memberId]
           return newState
         })
-        
+
         setError('プラン更新完了: ' + planToUpdate)
-        
+
         // Clear success message after 3 seconds
         setTimeout(() => {
           setError('')
@@ -236,12 +241,12 @@ function MembersPageContent() {
 
       if (response.ok) {
         // Update local state
-        setMembers(prev => prev.map(member => 
-          member.id === memberId 
+        setMembers(prev => prev.map(member =>
+          member.id === memberId
             ? { ...member, memo }
             : member
         ))
-        
+
         setError('メモ更新完了')
         setTimeout(() => setError(''), 2000)
       } else {
@@ -355,11 +360,10 @@ function MembersPageContent() {
         </div>
 
         {error && (
-          <div className={`mb-6 border rounded-md p-4 ${
-            error.includes('更新完了') 
-              ? 'bg-green-50 border-green-200' 
+          <div className={`mb-6 border rounded-md p-4 ${error.includes('更新完了')
+              ? 'bg-green-50 border-green-200'
               : 'bg-red-50 border-red-200'
-          }`}>
+            }`}>
             <p className={error.includes('更新完了') ? 'text-green-800' : 'text-red-800'}>
               {error}
             </p>
@@ -376,140 +380,140 @@ function MembersPageContent() {
             ) : (
               <div className="overflow-x-auto">
                 <table className="min-w-max divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px]">
-                      店舗
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px]">
-                      会員名
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[140px] cursor-pointer select-none"
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px]">
+                        店舗
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px]">
+                        会員名
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[140px] cursor-pointer select-none"
                         onClick={() => { setSortKey(prev => prev === 'plan' ? 'plan' : 'plan'); setSortAsc(prev => sortKey === 'plan' ? !prev : true) }}>
-                      プラン {sortKey === 'plan' ? (sortAsc ? '▲' : '▼') : ''}
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px] cursor-pointer select-none"
+                        プラン {sortKey === 'plan' ? (sortAsc ? '▲' : '▼') : ''}
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px] cursor-pointer select-none"
                         onClick={() => { setSortKey(prev => prev === 'status' ? 'status' : 'status'); setSortAsc(prev => sortKey === 'status' ? !prev : true) }}>
-                      ステータス {sortKey === 'status' ? (sortAsc ? '▲' : '▼') : ''}
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[200px]">
-                      メールアドレス
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[150px]">
-                      メモ
-                    </th>
-                    <th
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px] cursor-pointer select-none"
-                      onClick={() => { setSortKey('created'); setSortAsc(prev => sortKey === 'created' ? !prev : true) }}
-                    >
-                      登録日 {sortKey === 'created' ? (sortAsc ? '▲' : '▼') : ''}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {sortedMembers && (showOnlyActive ? sortedMembers.filter(m => (m.status || 'active') === 'active') : sortedMembers).map((member) => (
-                    <tr key={member.id}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 min-w-[120px]">
-                        {member.stores?.name || '-'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 min-w-[200px]">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center">
-                            <span className={`mr-2 inline-block w-2 h-2 rounded-full ${getStatusDotColor(member.status)}`} aria-hidden="true"></span>
-                            {member.access_token ? (
+                        ステータス {sortKey === 'status' ? (sortAsc ? '▲' : '▼') : ''}
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[200px]">
+                        メールアドレス
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[150px]">
+                        メモ
+                      </th>
+                      <th
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px] cursor-pointer select-none"
+                        onClick={() => { setSortKey('created'); setSortAsc(prev => sortKey === 'created' ? !prev : true) }}
+                      >
+                        登録日 {sortKey === 'created' ? (sortAsc ? '▲' : '▼') : ''}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {sortedMembers && (showOnlyActive ? sortedMembers.filter(m => (m.status || 'active') === 'active') : sortedMembers).map((member) => (
+                      <tr key={member.id}>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 min-w-[120px]">
+                          {member.stores?.name || '-'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 min-w-[200px]">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center">
+                              <span className={`mr-2 inline-block w-2 h-2 rounded-full ${getStatusDotColor(member.status)}`} aria-hidden="true"></span>
+                              {member.access_token ? (
+                                <Link
+                                  href={`/client/${member.access_token}?from=admin`}
+                                  className="text-indigo-600 hover:text-indigo-800 hover:underline font-semibold"
+                                >
+                                  {member.full_name}
+                                </Link>
+                              ) : (
+                                <span className="text-gray-900">{member.full_name}</span>
+                              )}
+                            </div>
+                            <div className="flex items-center space-x-1 ml-2">
                               <Link
-                                href={`/client/${member.access_token}?from=admin`}
-                                className="text-indigo-600 hover:text-indigo-800 hover:underline font-semibold"
-                              >
-                                {member.full_name}
-                              </Link>
-                            ) : (
-                              <span className="text-gray-900">{member.full_name}</span>
-                            )}
-                          </div>
-                          <div className="flex items-center space-x-1 ml-2">
-                            <Link
-                              href={`/admin/members/${member.id}/edit`}
-                              className="inline-flex items-center p-1 border border-gray-300 text-xs rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                              title="編集"
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                              </svg>
-                            </Link>
-                            {member.access_token && (
-                              <button
-                                onClick={() => {
-                                  const url = `${window.location.origin}/client/${member.access_token}`
-                                  navigator.clipboard.writeText(url)
-                                  setError('専用URLをコピーしました')
-                                  setTimeout(() => setError(''), 2000)
-                                }}
-                                className="inline-flex items-center p-1 border border-blue-300 text-xs rounded-md text-blue-700 bg-blue-50 hover:bg-blue-100"
-                                title="専用URLをコピー"
+                                href={`/admin/members/${member.id}/edit`}
+                                className="inline-flex items-center p-1 border border-gray-300 text-xs rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                                title="編集"
                               >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                 </svg>
-                              </button>
-                            )}
+                              </Link>
+                              {member.access_token && (
+                                <button
+                                  onClick={() => {
+                                    const url = `${window.location.origin}/client/${member.access_token}`
+                                    navigator.clipboard.writeText(url)
+                                    setError('専用URLをコピーしました')
+                                    setTimeout(() => setError(''), 2000)
+                                  }}
+                                  className="inline-flex items-center p-1 border border-blue-300 text-xs rounded-md text-blue-700 bg-blue-50 hover:bg-blue-100"
+                                  title="専用URLをコピー"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                  </svg>
+                                </button>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 min-w-[140px]">
-                        <select
-                          value={selectedPlans[member.id] || member.plan || '月4回'}
-                          onChange={(e) => {
-                            setSelectedPlans(prev => ({...prev, [member.id]: e.target.value}))
-                            handlePlanChange(member.id, e.target.value)
-                          }}
-                          className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 w-full min-w-[120px]"
-                        >
-                          {PLAN_LIST.map(plan => (
-                            <option key={plan} value={plan}>{plan}</option>
-                          ))}
-                        </select>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap min-w-[120px]">
-                        <select
-                          value={selectedStatuses[member.id] || member.status || 'active'}
-                          onChange={(e) => {
-                            setSelectedStatuses(prev => ({...prev, [member.id]: e.target.value}))
-                            handleStatusChange(member.id, e.target.value)
-                          }}
-                          className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 w-full min-w-[100px]"
-                        >
-                          <option value="active">在籍</option>
-                          <option value="suspended">休会</option>
-                          <option value="withdrawn">退会</option>
-                        </select>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 min-w-[200px]">
-                        {member.email}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 min-w-[150px]">
-                        <input
-                          type="text"
-                          value={memos[member.id] !== undefined ? memos[member.id] : (member.memo || '')}
-                          onChange={(e) => {
-                            setMemos(prev => ({...prev, [member.id]: e.target.value}))
-                          }}
-                          onBlur={(e) => {
-                            if (e.target.value !== (member.memo || '')) {
-                              handleMemoChange(member.id, e.target.value)
-                            }
-                          }}
-                          placeholder="メモを入力..."
-                          className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 w-full min-w-[130px]"
-                        />
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 min-w-[120px]">
-                        {new Date(member.created_at).toLocaleDateString('ja-JP')}
-                      </td>
-                  </tr>
-                  ))}
-                </tbody>
-              </table>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 min-w-[140px]">
+                          <select
+                            value={selectedPlans[member.id] || member.plan || '月4回'}
+                            onChange={(e) => {
+                              setSelectedPlans(prev => ({ ...prev, [member.id]: e.target.value }))
+                              handlePlanChange(member.id, e.target.value)
+                            }}
+                            className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 w-full min-w-[120px]"
+                          >
+                            {PLAN_LIST.map(plan => (
+                              <option key={plan} value={plan}>{plan}</option>
+                            ))}
+                          </select>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap min-w-[120px]">
+                          <select
+                            value={selectedStatuses[member.id] || member.status || 'active'}
+                            onChange={(e) => {
+                              setSelectedStatuses(prev => ({ ...prev, [member.id]: e.target.value }))
+                              handleStatusChange(member.id, e.target.value)
+                            }}
+                            className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 w-full min-w-[100px]"
+                          >
+                            <option value="active">在籍</option>
+                            <option value="suspended">休会</option>
+                            <option value="withdrawn">退会</option>
+                          </select>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 min-w-[200px]">
+                          {member.email}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 min-w-[150px]">
+                          <input
+                            type="text"
+                            value={memos[member.id] !== undefined ? memos[member.id] : (member.memo || '')}
+                            onChange={(e) => {
+                              setMemos(prev => ({ ...prev, [member.id]: e.target.value }))
+                            }}
+                            onBlur={(e) => {
+                              if (e.target.value !== (member.memo || '')) {
+                                handleMemoChange(member.id, e.target.value)
+                              }
+                            }}
+                            placeholder="メモを入力..."
+                            className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 w-full min-w-[130px]"
+                          />
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 min-w-[120px]">
+                          {new Date(member.created_at).toLocaleDateString('ja-JP')}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )}
             {/* Bottom Active-only Toggle */}

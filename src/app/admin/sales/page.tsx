@@ -7,8 +7,10 @@ import Link from 'next/link'
 import { getPlanRank, getStatusRank, formatMonthlyFee } from '@/lib/utils/member'
 import { fetchMembers } from '@/lib/api-client'
 import type { Member } from '@/types'
+import { useStoreChange } from '@/hooks/useStoreChange'
 
 export default function SalesPage() {
+  const { count: storeChangeCount } = useStoreChange()
   const { data: session, status } = useSession()
   const router = useRouter()
   const [members, setMembers] = useState<Member[]>([])
@@ -21,7 +23,7 @@ export default function SalesPage() {
     if (status === 'unauthenticated') {
       router.push('/login')
       return
-    } 
+    }
     if (status === 'authenticated' && session?.user?.role !== 'ADMIN') {
       router.push('/reservations')
       return
@@ -55,7 +57,7 @@ export default function SalesPage() {
         // Fetch all stores data for sales page
         const response = await fetchMembers(true)
         console.log('Sales: API response:', response)
-        
+
         if (response.error) {
           console.error('Sales: API error:', response.error)
           setError(`会員データの取得に失敗しました: ${response.error}`)
@@ -81,7 +83,7 @@ export default function SalesPage() {
       console.log('Sales: Not admin, skipping data fetch')
       setLoading(false)
     }
-  }, [session, status])
+  }, [session, status, storeChangeCount])
 
   // Sorting state
   const [sortKey, setSortKey] = useState<'plan' | 'status' | 'created' | null>(null)
@@ -92,16 +94,16 @@ export default function SalesPage() {
 
   // Store filter
   const [selectedStore, setSelectedStore] = useState<string>('all')
-  const [stores, setStores] = useState<{id: string, name: string}[]>([])
+  const [stores, setStores] = useState<{ id: string, name: string }[]>([])
 
   // Utility functions imported from @/lib/utils/member
 
   const sortedMembers = (() => {
     // Filter by store first
-    const filteredByStore = selectedStore === 'all' 
-      ? members 
+    const filteredByStore = selectedStore === 'all'
+      ? members
       : members.filter(m => m.store_id === selectedStore)
-    
+
     const arr = [...filteredByStore]
     if (!sortKey) return arr
     return arr.sort((a, b) => {
@@ -207,16 +209,16 @@ export default function SalesPage() {
         {/* Plan Summary */}
         {members && members.length > 0 && (() => {
           // Filter by store
-          const filteredByStore = selectedStore === 'all' 
-            ? members 
+          const filteredByStore = selectedStore === 'all'
+            ? members
             : members.filter(m => m.store_id === selectedStore)
-          
-          const activeMembersList = showOnlyActive 
-            ? filteredByStore.filter(m => (m.status || 'active') === 'active') 
+
+          const activeMembersList = showOnlyActive
+            ? filteredByStore.filter(m => (m.status || 'active') === 'active')
             : filteredByStore
-          
+
           const planStats: { [key: string]: { count: number; total: number } } = {}
-          
+
           activeMembersList.forEach(member => {
             const plan = member.plan || 'その他'
             if (!planStats[plan]) {
@@ -251,11 +253,10 @@ export default function SalesPage() {
         })()}
 
         {error && (
-          <div className={`mb-6 border rounded-md p-4 ${
-            error.includes('更新完了') 
-              ? 'bg-green-50 border-green-200' 
+          <div className={`mb-6 border rounded-md p-4 ${error.includes('更新完了')
+              ? 'bg-green-50 border-green-200'
               : 'bg-red-50 border-red-200'
-          }`}>
+            }`}>
             <p className={error.includes('更新完了') ? 'text-green-800' : 'text-red-800'}>
               {error}
             </p>
@@ -272,92 +273,91 @@ export default function SalesPage() {
             ) : (
               <div className="overflow-x-auto">
                 <table className="min-w-max divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px]">
-                      店舗
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px]">
-                      会員名
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[140px] cursor-pointer select-none"
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px]">
+                        店舗
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px]">
+                        会員名
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[140px] cursor-pointer select-none"
                         onClick={() => { setSortKey(prev => prev === 'plan' ? 'plan' : 'plan'); setSortAsc(prev => sortKey === 'plan' ? !prev : true) }}>
-                      プラン {sortKey === 'plan' ? (sortAsc ? '▲' : '▼') : ''}
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[100px]">
-                      月会費
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px] cursor-pointer select-none"
+                        プラン {sortKey === 'plan' ? (sortAsc ? '▲' : '▼') : ''}
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[100px]">
+                        月会費
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px] cursor-pointer select-none"
                         onClick={() => { setSortKey(prev => prev === 'status' ? 'status' : 'status'); setSortAsc(prev => sortKey === 'status' ? !prev : true) }}>
-                      ステータス {sortKey === 'status' ? (sortAsc ? '▲' : '▼') : ''}
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[200px]">
-                      メールアドレス
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[150px]">
-                      メモ
-                    </th>
-                    <th
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px] cursor-pointer select-none"
-                      onClick={() => { setSortKey('created'); setSortAsc(prev => sortKey === 'created' ? !prev : true) }}
-                    >
-                      登録日 {sortKey === 'created' ? (sortAsc ? '▲' : '▼') : ''}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {sortedMembers && (showOnlyActive ? sortedMembers.filter(m => (m.status || 'active') === 'active') : sortedMembers).map((member) => (
-                    <tr key={member.id}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 min-w-[120px]">
-                        {member.stores?.name || '-'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 min-w-[120px]">
-                        <div className="flex items-center">
-                          {member.access_token ? (
-                            <Link
-                              href={`/client/${member.access_token}`}
-                              className="text-indigo-600 hover:text-indigo-800 hover:underline"
-                              target="_blank"
-                            >
-                              {member.full_name}
-                            </Link>
-                          ) : (
-                            <span className="text-gray-900">{member.full_name}</span>
-                          )}
-                          <span className={`ml-2 inline-block w-2 h-2 rounded-full ${getStatusDotColor(member.status)}`} aria-hidden="true"></span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 min-w-[140px]">
-                        {member.plan || '月4回'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 min-w-[100px]">
-                        {member.monthly_fee ? `¥${member.monthly_fee.toLocaleString()}` : '-'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap min-w-[120px]">
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                          member.status === 'active' ? 'bg-green-100 text-green-800' :
-                          member.status === 'suspended' ? 'bg-yellow-100 text-yellow-800' :
-                          member.status === 'withdrawn' ? 'bg-red-100 text-red-800' :
-                          'bg-green-100 text-green-800'
-                        }`}>
-                          {member.status === 'active' ? '在籍' :
-                           member.status === 'suspended' ? '休会' :
-                           member.status === 'withdrawn' ? '退会' : '在籍'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 min-w-[200px]">
-                        {member.email}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 min-w-[150px]">
-                        {member.memo || '-'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 min-w-[120px]">
-                        {new Date(member.created_at).toLocaleDateString('ja-JP')}
-                      </td>
-                  </tr>
-                  ))}
-                </tbody>
-              </table>
+                        ステータス {sortKey === 'status' ? (sortAsc ? '▲' : '▼') : ''}
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[200px]">
+                        メールアドレス
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[150px]">
+                        メモ
+                      </th>
+                      <th
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px] cursor-pointer select-none"
+                        onClick={() => { setSortKey('created'); setSortAsc(prev => sortKey === 'created' ? !prev : true) }}
+                      >
+                        登録日 {sortKey === 'created' ? (sortAsc ? '▲' : '▼') : ''}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {sortedMembers && (showOnlyActive ? sortedMembers.filter(m => (m.status || 'active') === 'active') : sortedMembers).map((member) => (
+                      <tr key={member.id}>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 min-w-[120px]">
+                          {member.stores?.name || '-'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 min-w-[120px]">
+                          <div className="flex items-center">
+                            {member.access_token ? (
+                              <Link
+                                href={`/client/${member.access_token}`}
+                                className="text-indigo-600 hover:text-indigo-800 hover:underline"
+                                target="_blank"
+                              >
+                                {member.full_name}
+                              </Link>
+                            ) : (
+                              <span className="text-gray-900">{member.full_name}</span>
+                            )}
+                            <span className={`ml-2 inline-block w-2 h-2 rounded-full ${getStatusDotColor(member.status)}`} aria-hidden="true"></span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 min-w-[140px]">
+                          {member.plan || '月4回'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 min-w-[100px]">
+                          {member.monthly_fee ? `¥${member.monthly_fee.toLocaleString()}` : '-'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap min-w-[120px]">
+                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${member.status === 'active' ? 'bg-green-100 text-green-800' :
+                              member.status === 'suspended' ? 'bg-yellow-100 text-yellow-800' :
+                                member.status === 'withdrawn' ? 'bg-red-100 text-red-800' :
+                                  'bg-green-100 text-green-800'
+                            }`}>
+                            {member.status === 'active' ? '在籍' :
+                              member.status === 'suspended' ? '休会' :
+                                member.status === 'withdrawn' ? '退会' : '在籍'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 min-w-[200px]">
+                          {member.email}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 min-w-[150px]">
+                          {member.memo || '-'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 min-w-[120px]">
+                          {new Date(member.created_at).toLocaleDateString('ja-JP')}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )}
             {/* Bottom Active-only Toggle */}

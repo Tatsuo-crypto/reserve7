@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
+import { useStoreChange } from '@/hooks/useStoreChange'
 
 type Trainer = {
   id: string
@@ -27,7 +28,8 @@ type StoreOption = {
 export default function TrainersPage() {
   const router = useRouter()
   const { data: session } = useSession()
-  const adminStoreId = (session as any)?.user?.storeId || ''
+  const { currentStoreId } = useStoreChange()
+  const adminStoreId = currentStoreId || (session as any)?.user?.storeId || ''
 
   const [loading, setLoading] = useState(false)
   const [trainers, setTrainers] = useState<Trainer[]>([])
@@ -100,7 +102,7 @@ export default function TrainersPage() {
         if (!form.storeId && stores[0]?.calendar_id) {
           setForm(f => ({ ...f, storeId: stores[0].calendar_id }))
         }
-      } catch {}
+      } catch { }
     }
     fetchStores()
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -214,7 +216,7 @@ export default function TrainersPage() {
     }
     const baseUrl = window.location.origin
     const accessUrl = `${baseUrl}/trainer/${accessToken}`
-    
+
     try {
       await navigator.clipboard.writeText(accessUrl)
       alert(`「${trainerName}」様の専用URLをコピーしました`)
@@ -338,7 +340,7 @@ export default function TrainersPage() {
                       <td className="px-3 py-2 border-b text-right whitespace-nowrap">
                         <div className="inline-flex items-center gap-2">
                           {t.access_token && (
-                            <button 
+                            <button
                               className="px-2 py-1 text-xs rounded-md bg-indigo-600 text-white hover:bg-indigo-700"
                               onClick={() => handleCopyAccessUrl(t.access_token!, t.full_name)}
                               title="専用URLをコピー"

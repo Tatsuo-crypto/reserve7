@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react'
 import Link from 'next/link'
 import TimelineView from './TimelineView'
 import { useSession } from 'next-auth/react'
+import { useStoreChange } from '@/hooks/useStoreChange'
 
 interface Reservation {
   id: string
@@ -45,6 +46,7 @@ export default function CalendarView({ onViewModeChange, onBackToMonth }: Calend
   const [debugInfo, setDebugInfo] = useState<string>('')
   const [viewMode, setViewMode] = useState<'month' | 'timeline'>('month')
   const [selectedDate, setSelectedDate] = useState<string>('')
+  const { count: storeChangeCount } = useStoreChange()
 
   // Note: タイトルの採番はサーバ側で行うため、フロントでは変更しない
 
@@ -167,7 +169,7 @@ export default function CalendarView({ onViewModeChange, onBackToMonth }: Calend
     }
 
     fetchCalendarData()
-  }, [session])
+  }, [session, storeChangeCount])
 
   // Helper functions (memoized)
   const formatMonth = useCallback((date: Date) => {

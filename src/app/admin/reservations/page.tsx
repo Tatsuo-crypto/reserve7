@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useStoreChange } from '@/hooks/useStoreChange'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -35,6 +36,7 @@ export default function AdminReservationsPage() {
     endTime: '',
     notes: ''
   })
+  const { count: storeChangeCount } = useStoreChange()
 
   // Check admin access
   useEffect(() => {
@@ -100,7 +102,7 @@ export default function AdminReservationsPage() {
     } else if (status === 'authenticated' && session?.user?.role !== 'ADMIN') {
       setLoading(false)
     }
-  }, [session, status])
+  }, [session, status, storeChangeCount])
 
   const handleDeleteReservation = async (reservationId: string) => {
     if (!confirm('この予約を削除してもよろしいですか？')) {

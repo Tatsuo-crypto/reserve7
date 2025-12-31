@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
 import { getStoreDisplayName } from '@/lib/auth-utils'
 import { useState } from 'react'
+import StoreSwitcher from './StoreSwitcher'
 
 export default function Navigation() {
   const { data: session, status } = useSession()
@@ -29,104 +30,97 @@ export default function Navigation() {
           <Link href="/dashboard" className="text-xl sm:text-2xl font-bold text-gray-900 hover:text-gray-700">
             T&J GYM
           </Link>
-          
+
           {/* Right side: Admin info + Navigation */}
           <div className="flex items-center space-x-3">
             {session?.user?.role === 'ADMIN' && (
-              <div className="md:hidden flex items-center space-x-2 px-2 sm:px-3 py-1 sm:py-1.5 border border-green-200 rounded-lg">
-                <span className="text-[10px] sm:text-xs font-semibold text-gray-800">
-                  {getStoreDisplayName(session.user.email)}
-                </span>
-                <span className="px-1.5 sm:px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold bg-green-500 text-white">
-                  管理者
-                </span>
-              </div>
+              <StoreSwitcher defaultStoreName={getStoreDisplayName(session.user.email)} />
             )}
-          
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-4">
-            {status === 'loading' ? (
-              <div className="animate-pulse">
-                <div className="h-4 bg-gray-200 rounded w-20"></div>
-              </div>
-            ) : session ? (
-              <>
-                <Link href="/dashboard" className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors">ホーム</Link>
-                <Link href={session.user.role === 'ADMIN' ? '/admin/reservations' : '/reservations'} className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors">予約</Link>
-                {(session?.user?.role === 'ADMIN' || session?.user?.role === 'TRAINER') && (
-                  <Link href="/admin/members" className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors">会員管理</Link>
-                )}
-                {session?.user?.role === 'ADMIN' && (
-                  <>
-                    <Link href="/admin/trainers" className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors">トレーナー管理</Link>
-                    <Link href="/admin/stores" className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors">店舗管理</Link>
-                  </>
-                )}
-                <button
-                  onClick={handleLogout}
-                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm font-medium transition-colors border border-red-600"
-                >
-                  ログアウト
-                </button>
-              </>
-            ) : (
-              <>
-                <Link
-                  href="/login"
-                  className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
-                >
-                  ログイン
-                </Link>
-                <Link
-                  href="/register"
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium"
-                >
-                  会員登録
-                </Link>
-              </>
-            )}
-          </nav>
 
-          {/* Mobile menu button */}
-          <button
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="md:hidden inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500"
-            aria-expanded="false"
-          >
-            <span className="sr-only">メニューを開く</span>
-            {/* Hamburger icon */}
-            <svg
-              className={`${isMobileMenuOpen ? 'hidden' : 'block'} h-7 w-7`}
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              aria-hidden="true"
+            {/* Desktop Navigation */}
+            <nav className="hidden md:flex items-center space-x-4">
+              {status === 'loading' ? (
+                <div className="animate-pulse">
+                  <div className="h-4 bg-gray-200 rounded w-20"></div>
+                </div>
+              ) : session ? (
+                <>
+                  <Link href="/dashboard" className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors">ホーム</Link>
+                  <Link href={session.user.role === 'ADMIN' ? '/admin/reservations' : '/reservations'} className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors">予約</Link>
+                  {(session?.user?.role === 'ADMIN' || session?.user?.role === 'TRAINER') && (
+                    <Link href="/admin/members" className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors">会員管理</Link>
+                  )}
+                  {session?.user?.role === 'ADMIN' && (
+                    <>
+                      <Link href="/admin/trainers" className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors">トレーナー管理</Link>
+                      <Link href="/admin/stores" className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors">店舗管理</Link>
+                    </>
+                  )}
+                  <button
+                    onClick={handleLogout}
+                    className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm font-medium transition-colors border border-red-600"
+                  >
+                    ログアウト
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link
+                    href="/login"
+                    className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                  >
+                    ログイン
+                  </Link>
+                  <Link
+                    href="/register"
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+                  >
+                    会員登録
+                  </Link>
+                </>
+              )}
+            </nav>
+
+            {/* Mobile menu button */}
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="md:hidden inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500"
+              aria-expanded="false"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 6h16M4 12h16M4 18h16"
-              />
-            </svg>
-            {/* Close icon */}
-            <svg
-              className={`${isMobileMenuOpen ? 'block' : 'hidden'} h-7 w-7`}
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
+              <span className="sr-only">メニューを開く</span>
+              {/* Hamburger icon */}
+              <svg
+                className={`${isMobileMenuOpen ? 'hidden' : 'block'} h-7 w-7`}
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
+              </svg>
+              {/* Close icon */}
+              <svg
+                className={`${isMobileMenuOpen ? 'block' : 'hidden'} h-7 w-7`}
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
           </div>
         </div>
 
