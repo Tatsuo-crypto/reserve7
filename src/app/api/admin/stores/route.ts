@@ -27,23 +27,35 @@ export async function GET(request: NextRequest) {
     if (error) throw error
 
     const stores = data ?? []
-    const calendarIds = stores.map((s: any) => s.calendar_id)
+    const storeIds = stores.map((s: any) => s.id)
+    // Fetch user counts directly to avoid RPC issues
     let memberCounts: Record<string, number> = {}
-    if (calendarIds.length > 0) {
-      try {
-        const idsText = calendarIds.map((x: any) => String(x))
-        const { data: counts, error: rpcErr } = await supabase.rpc('members_count_by_store', { store_ids: idsText })
-        if (rpcErr) throw rpcErr
-        memberCounts = (counts || []).reduce((acc: any, row: any) => {
-          acc[row.store_id] = row.member_count
-          return acc
-        }, {})
-      } catch (e) {
-        console.error('members_count_by_store RPC failed:', e)
+    try {
+      const { data: users, error: usersError } = await supabase
+        .from('users')
+        .select('store_id, status, email')
+
+      if (usersError) throw usersError
+
+      const adminEmails = ['tandjgym@gmail.com', 'tandjgym2goutenn@gmail.com'] // 除外する管理者メール
+
+      if (users) {
+        users.forEach((u: any) => {
+          // 「現在在籍（active）」のみカウント。nullはレガシーデータとしてactive扱い
+          // 管理者アカウントは除外
+          if (u.store_id &&
+            (!u.status || u.status === 'active') &&
+            !adminEmails.includes(u.email)
+          ) {
+            memberCounts[u.store_id] = (memberCounts[u.store_id] || 0) + 1
+          }
+        })
       }
+    } catch (e) {
+      console.error('Failed to count members:', e)
     }
 
-    const result = stores.map((s: any) => ({ ...s, memberCount: memberCounts[s.calendar_id] || 0 }))
+    const result = stores.map((s: any) => ({ ...s, memberCount: memberCounts[s.id] || 0 }))
     return NextResponse.json({ stores: result })
   } catch (error) {
     return handleApiError(error, 'Admin stores GET')
