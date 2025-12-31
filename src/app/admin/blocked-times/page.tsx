@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import BlockedTimeModal from '@/components/BlockedTimeModal'
 import { isAdmin } from '@/lib/auth-utils'
+import { useStoreChange } from '@/hooks/useStoreChange'
 
 interface BlockedTime {
   id: string
@@ -21,6 +22,7 @@ interface BlockedTime {
 }
 
 export default function BlockedTimesPage() {
+  const { count: storeChangeCount } = useStoreChange()
   const { data: session, status } = useSession()
   const router = useRouter()
   const [blockedTimes, setBlockedTimes] = useState<BlockedTime[]>([])
@@ -43,7 +45,7 @@ export default function BlockedTimesPage() {
     try {
       setLoading(true)
       const response = await fetch('/api/blocked-times')
-      
+
       if (!response.ok) {
         throw new Error('Failed to fetch blocked times')
       }
@@ -63,7 +65,7 @@ export default function BlockedTimesPage() {
     if (session?.user?.email && isAdmin(session.user.email)) {
       fetchBlockedTimes()
     }
-  }, [session])
+  }, [session, storeChangeCount])
 
   const formatDateTime = (dateTimeString: string) => {
     const date = new Date(dateTimeString)
@@ -119,7 +121,7 @@ export default function BlockedTimesPage() {
               ダッシュボードに戻る
             </Link>
           </div>
-          
+
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
@@ -129,7 +131,7 @@ export default function BlockedTimesPage() {
                 営業時間外や休業日などの予約不可時間を管理できます
               </p>
             </div>
-            
+
             <button
               onClick={() => setIsModalOpen(true)}
               className="mt-4 sm:mt-0 bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200 flex items-center whitespace-nowrap"
@@ -211,11 +213,10 @@ export default function BlockedTimesPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          blockedTime.recurrence_type === 'none' 
-                            ? 'bg-gray-100 text-gray-800'
-                            : 'bg-blue-100 text-blue-800'
-                        }`}>
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${blockedTime.recurrence_type === 'none'
+                          ? 'bg-gray-100 text-gray-800'
+                          : 'bg-blue-100 text-blue-800'
+                          }`}>
                           {getRecurrenceLabel(blockedTime.recurrence_type)}
                         </span>
                       </td>
