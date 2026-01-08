@@ -38,6 +38,22 @@ export async function POST(request: NextRequest) {
     let generatedTitle = ''
 
     let trainerName: string | null = null
+    let trainerCalendarEmail: string | null = null
+
+    // Fetch trainer info if trainerId is provided
+    if (trainerId) {
+      const { data: trainer, error: trainerErr } = await supabaseAdmin
+        .from('trainers')
+        .select('id, full_name, google_calendar_id')
+        .eq('id', trainerId)
+        .single()
+      
+      if (!trainerErr && trainer) {
+        trainerName = trainer.full_name
+        trainerCalendarEmail = trainer.google_calendar_id || null
+      }
+    }
+
     if (clientId === 'BLOCKED') {
       // For blocked time, use special values
       generatedTitle = body.title || '予約不可'
@@ -188,6 +204,7 @@ export async function POST(request: NextRequest) {
           notes: notes || undefined,
           calendarId: calendarId,
           memberCalendarEmail, // 会員のカレンダーメールを渡す
+          trainerCalendarEmail, // トレーナーのカレンダーメールを渡す
         })
 
         console.log('✅ Google Calendar event created:', externalEventId)

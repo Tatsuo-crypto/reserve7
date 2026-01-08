@@ -28,7 +28,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       .from('trainers')
       .update(updates)
       .eq('id', params.id)
-      .select('id, full_name, email, store_id, status, phone, notes, created_at, updated_at')
+      .select('id, full_name, email, store_id, status, phone, notes, created_at, updated_at, google_calendar_id')
       .single()
 
     if (error) throw error

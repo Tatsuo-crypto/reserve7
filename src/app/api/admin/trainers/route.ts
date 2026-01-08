@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
 
     let q = supabaseAdmin
       .from('trainers')
-      .select('id, full_name, email, store_id, status, phone, notes, created_at, updated_at, access_token')
+      .select('id, full_name, email, store_id, status, phone, notes, created_at, updated_at, access_token, google_calendar_id')
       .order('full_name', { ascending: true })
 
     if (storeId) q = q.eq('store_id', storeId)

@@ -17,6 +17,7 @@ type Trainer = {
   created_at: string
   updated_at: string
   access_token?: string
+  google_calendar_id?: string | null
 }
 
 type StoreOption = {
@@ -61,13 +62,22 @@ export default function TrainersPage() {
   // modal state
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<Trainer | null>(null)
-  const [form, setForm] = useState<{ fullName: string; email: string; storeId: string; status: 'active' | 'inactive'; phone?: string; notes?: string }>({
+  const [form, setForm] = useState<{
+    fullName: string
+    email: string
+    storeId: string
+    status: 'active' | 'inactive'
+    phone?: string
+    notes?: string
+    googleCalendarId?: string
+  }>({
     fullName: '',
     email: '',
     storeId: adminStoreId || '',
     status: 'active',
     phone: '',
-    notes: ''
+    notes: '',
+    googleCalendarId: ''
   })
 
   const listUrl = useMemo(() => {
@@ -124,7 +134,7 @@ export default function TrainersPage() {
   const openCreate = () => {
     setEditing(null)
     const initialStoreId = adminStoreId || storeOptions[0]?.calendar_id || ''
-    setForm({ fullName: '', email: '', storeId: initialStoreId, status: 'active', phone: '', notes: '' })
+    setForm({ fullName: '', email: '', storeId: initialStoreId, status: 'active', phone: '', notes: '', googleCalendarId: '' })
     setModalOpen(true)
   }
 

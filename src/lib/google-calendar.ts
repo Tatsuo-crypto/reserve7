@@ -46,6 +46,7 @@ export class GoogleCalendarService {
     notes?: string
     calendarId: string
     memberCalendarEmail?: string | null
+    trainerCalendarEmail?: string | null
   }): Promise<string> {
     if (!this.calendar) {
       throw new Error('Google Calendar service not initialized')
@@ -114,6 +115,7 @@ export class GoogleCalendarService {
     notes?: string
     calendarId: string
     memberCalendarEmail?: string | null
+    trainerCalendarEmail?: string | null
   }): Promise<void> {
     if (!this.calendar) {
       throw new Error('Google Calendar service not initialized')
