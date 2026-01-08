@@ -11,14 +11,19 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
+    console.log('🗑️ DELETE request received for reservation:', params.id)
+
     // Check authentication
     const authResult = await requireAuth()
     if (authResult instanceof NextResponse) {
+      console.log('❌ Authentication failed')
       return authResult
     }
 
     const { user, isAdmin: isUserAdmin } = authResult
     const reservationId = params.id
+
+    console.log('✅ User authenticated:', user.email, 'Admin:', isUserAdmin)
 
     // Get the reservation first to check ownership
     const { data: reservation, error: fetchError } = await supabaseAdmin
@@ -29,6 +34,7 @@ export async function DELETE(
         start_time,
         external_event_id,
         calendar_id,
+        title,
         users!client_id (
           email,
           plan
@@ -37,7 +43,15 @@ export async function DELETE(
       .eq('id', reservationId)
       .single()
 
+    console.log('📋 Reservation fetch result:', {
+      found: !!reservation,
+      error: fetchError?.message,
+      title: reservation?.title,
+      external_event_id: reservation?.external_event_id
+    })
+
     if (fetchError || !reservation) {
+      console.log('❌ Reservation not found')
       return NextResponse.json(
         { error: '予約が見つかりません' },
         { status: 404 }
@@ -45,9 +59,12 @@ export async function DELETE(
     }
 
     // Check if user can delete this reservation
-    const canDelete = isUserAdmin || (reservation.users as any).email === user.email
+    const canDelete = isUserAdmin || (reservation.users as any)?.email === user.email
+
+    console.log('🔐 Permission check:', { canDelete, isAdmin: isUserAdmin })
 
     if (!canDelete) {
+      console.log('❌ Permission denied')
       return NextResponse.json(
         { error: 'この予約を削除する権限がありません' },
         { status: 403 }
@@ -56,60 +73,73 @@ export async function DELETE(
 
     // Delete from Google Calendar first (if event exists)
     if (reservation.external_event_id) {
+      console.log('📅 Attempting to delete from Google Calendar:', reservation.external_event_id)
       const calendarService = createGoogleCalendarService()
       if (calendarService) {
         try {
           await calendarService.deleteEvent(reservation.external_event_id, reservation.calendar_id)
-          console.log('Google Calendar event deleted:', reservation.external_event_id)
+          console.log('✅ Google Calendar event deleted:', reservation.external_event_id)
         } catch (calendarError) {
-          console.error('Calendar event deletion failed:', calendarError)
+          console.error('❌ Calendar event deletion failed:', calendarError)
           // Continue with reservation deletion even if calendar sync fails
         }
+      } else {
+        console.warn('⚠️ Calendar service not available')
       }
+    } else {
+      console.log('ℹ️ No external_event_id, skipping Google Calendar deletion')
     }
 
     // Delete the reservation
+    console.log('🗄️ Deleting from database...')
     const { error: deleteError } = await supabaseAdmin
       .from('reservations')
       .delete()
       .eq('id', reservationId)
 
     if (deleteError) {
-      console.error('Reservation deletion error:', deleteError)
+      console.error('❌ Reservation deletion error:', deleteError)
       return NextResponse.json(
-        { error: '予約の削除に失敗しました' },
+        { error: '予約の削除に失敗しました: ' + deleteError.message },
         { status: 500 }
       )
     }
+
+    console.log('✅ Database deletion successful')
 
     // After deletion, renumber titles for this client and update Google Calendar
     // For diet/counseling: use cumulative count (all time)
     // For personal training: use monthly count
     if (reservation.client_id && reservation.start_time) {
+      console.log('🔄 Updating titles for client:', reservation.client_id)
       try {
         const userRel: any = Array.isArray((reservation as any).users)
           ? (reservation as any).users[0]
           : (reservation as any).users
         const plan = userRel?.plan || ''
-        
+
         if (usesCumulativeCount(plan)) {
           // Diet/Counseling: cumulative count across all months
           await updateAllTitles(reservation.client_id as string)
+          console.log('✅ Cumulative titles updated')
         } else {
           // Personal training: monthly reset
           const d = new Date((reservation as any).start_time)
           await updateMonthlyTitles((reservation as any).client_id as string, d.getFullYear(), d.getMonth())
+          console.log('✅ Monthly titles updated')
         }
       } catch (e) {
-        console.error('Failed to update titles after deletion:', e)
+        console.error('❌ Failed to update titles after deletion:', e)
       }
     }
 
+    console.log('✅ DELETE completed successfully')
     return NextResponse.json({
       message: '予約が正常にキャンセルされました'
     })
 
   } catch (error) {
+    console.error('💥 DELETE route error:', error)
     return handleApiError(error, 'Reservation deletion DELETE')
   }
 }
@@ -266,7 +296,7 @@ export async function PUT(
           ? (reservation as any).users[0]
           : (reservation as any).users
         const plan = userRel?.plan || ''
-        
+
         if (usesCumulativeCount(plan)) {
           // Diet/Counseling: cumulative count across all months
           await updateAllTitles(clientId)

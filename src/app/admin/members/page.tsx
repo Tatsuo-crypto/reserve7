@@ -14,7 +14,6 @@ import {
   getStatusDotColor,
   generateMemberAccessUrl
 } from '@/lib/utils/member'
-import { PLAN_LIST } from '@/lib/constants'
 import { useStoreChange } from '@/hooks/useStoreChange'
 
 function MembersPageContent() {
@@ -32,33 +31,32 @@ function MembersPageContent() {
     if (status === 'loading') return
     if (status === 'unauthenticated') {
       router.push('/login')
+      return
     }
-  }, [status, router])
+    if (status === 'authenticated' && session?.user?.role !== 'ADMIN') {
+      router.push('/dashboard')
+      return
+    }
+  }, [status, session, router])
 
   // Fetch members
   useEffect(() => {
     const fetchMembers = async () => {
       try {
-        console.log('Fetching members...')
         const response = await fetch('/api/admin/members')
-        console.log('Response status:', response.status)
 
         if (response.ok) {
           const result = await response.json()
-          console.log('Success result:', result)
           const data = result.data || result
           setMembers(data.members || [])
         } else {
           const errorData = await response.json()
           console.error('API Error Response:', errorData)
-          console.error('Error details:', errorData.details)
-          setError(`会員データの取得に失敗しました: ${errorData.error || 'Unknown error'}${errorData.details?.message ? ' - ' + errorData.details.message : ''}`)
+          setError(`会員データの取得に失敗しました: ${errorData.error || 'Unknown error'}`)
         }
       } catch (error) {
         console.error('Fetch Error:', error)
-        console.error('Error type:', typeof error)
-        console.error('Error details:', error)
-        setError(`会員データの取得中にエラーが発生しました: ${error instanceof Error ? error.message : String(error)}`)
+        setError('会員データの取得中にエラーが発生しました')
       } finally {
         setLoading(false)
       }
@@ -73,8 +71,6 @@ function MembersPageContent() {
     }
   }, [status, storeChangeCount])
 
-  const [selectedStatuses, setSelectedStatuses] = useState<{ [key: string]: string }>({})
-  const [selectedPlans, setSelectedPlans] = useState<{ [key: string]: string }>({})
   const [memos, setMemos] = useState<{ [key: string]: string }>({})
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [memberToDelete, setMemberToDelete] = useState<{ id: string, name: string } | null>(null)
@@ -123,106 +119,6 @@ function MembersPageContent() {
       return sortAsc ? comp : -comp
     })
   })()
-
-  const handleStatusChange = async (memberId: string, newStatus?: string) => {
-    const statusToUpdate = newStatus || selectedStatuses[memberId] || 'active'
-
-    try {
-      console.log('ステータス更新開始:', { memberId, statusToUpdate })
-
-      const response = await fetch('/api/admin/members', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          memberId,
-          status: statusToUpdate,
-        }),
-      })
-
-      const result = await response.json()
-      console.log('ステータス更新レスポンス:', result)
-
-      if (response.ok) {
-        // Update local state
-        setMembers(prev => prev.map(member =>
-          member.id === memberId
-            ? { ...member, status: statusToUpdate as 'active' | 'suspended' | 'withdrawn' }
-            : member
-        ))
-
-        // Clear selected status for this member
-        setSelectedStatuses(prev => {
-          const updated = { ...prev }
-          delete updated[memberId]
-          return updated
-        })
-
-        // Show success message if it was simulated
-        if (result.message) {
-          setError(`更新完了: ${result.message}`)
-          setTimeout(() => setError(''), 3000) // Clear message after 3 seconds
-        }
-      } else {
-        console.error('ステータス更新エラー:', result)
-        setError(`ステータス更新に失敗しました: ${result.error || 'Unknown error'}`)
-      }
-    } catch (error) {
-      console.error('ステータス更新例外:', error)
-      setError('ステータス更新中にエラーが発生しました')
-    }
-  }
-
-  const handlePlanChange = async (memberId: string, newPlan?: string) => {
-    const planToUpdate = newPlan || selectedPlans[memberId] || '月4回'
-
-    try {
-      console.log('プラン更新開始:', { memberId, planToUpdate })
-
-      const response = await fetch('/api/admin/members', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          memberId,
-          plan: planToUpdate,
-        }),
-      })
-
-      const result = await response.json()
-      console.log('プラン更新レスポンス:', result)
-
-      if (response.ok) {
-        // Update local state
-        setMembers(prev => prev.map(member =>
-          member.id === memberId
-            ? { ...member, plan: planToUpdate }
-            : member
-        ))
-
-        // Clear selection
-        setSelectedPlans(prev => {
-          const newState = { ...prev }
-          delete newState[memberId]
-          return newState
-        })
-
-        setError('プラン更新完了: ' + planToUpdate)
-
-        // Clear success message after 3 seconds
-        setTimeout(() => {
-          setError('')
-        }, 3000)
-      } else {
-        setError('プラン更新に失敗しました: ' + (result.error || 'Unknown error'))
-      }
-    } catch (error) {
-      console.error('プラン更新エラー:', error)
-      setError('プラン更新中にエラーが発生しました')
-    }
-  }
 
   const handleMemoChange = async (memberId: string, memo: string) => {
     try {
@@ -325,6 +221,19 @@ function MembersPageContent() {
     )
   }
 
+  // Calculate stats
+  const activeMembers = members.filter(m => m.status === 'active')
+  const totalActive = activeMembers.length
+  
+  const planCounts = activeMembers.reduce((acc, member) => {
+    const plan = member.plan || '未設定'
+    acc[plan] = (acc[plan] || 0) + 1
+    return acc
+  }, {} as Record<string, number>)
+
+  // Sort plans for consistent display (optional: predefined order or alphabetical)
+  const sortedPlans = Object.keys(planCounts).sort()
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -341,7 +250,7 @@ function MembersPageContent() {
                 </svg>
               </button>
               <div className="text-center">
-                <h1 className="text-3xl font-bold text-gray-900">会員管理</h1>
+                <h1 className="text-3xl font-bold text-gray-900">会員一覧</h1>
                 <p className="mt-2 text-gray-600">会員のステータス管理</p>
               </div>
             </div>
@@ -359,10 +268,30 @@ function MembersPageContent() {
           </div>
         </div>
 
+        {/* Stats Summary */}
+        <div className="bg-white shadow rounded-lg p-6 mb-8">
+          <h2 className="text-lg font-medium text-gray-900 mb-4">在籍会員数集計</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Total Active */}
+            <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
+              <p className="text-sm text-blue-600 font-medium">在籍合計</p>
+              <p className="text-2xl font-bold text-blue-900 mt-1">{totalActive}名</p>
+            </div>
+            
+            {/* Breakdown by Plan */}
+            {sortedPlans.map(plan => (
+              <div key={plan} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <p className="text-sm text-gray-500 font-medium">{plan}</p>
+                <p className="text-xl font-bold text-gray-900 mt-1">{planCounts[plan]}名</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
         {error && (
           <div className={`mb-6 border rounded-md p-4 ${error.includes('更新完了')
-              ? 'bg-green-50 border-green-200'
-              : 'bg-red-50 border-red-200'
+            ? 'bg-green-50 border-green-200'
+            : 'bg-red-50 border-red-200'
             }`}>
             <p className={error.includes('更新完了') ? 'text-green-800' : 'text-red-800'}>
               {error}
@@ -461,35 +390,15 @@ function MembersPageContent() {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 min-w-[140px]">
-                          <select
-                            value={selectedPlans[member.id] || member.plan || '月4回'}
-                            onChange={(e) => {
-                              setSelectedPlans(prev => ({ ...prev, [member.id]: e.target.value }))
-                              handlePlanChange(member.id, e.target.value)
-                            }}
-                            className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 w-full min-w-[120px]"
-                          >
-                            {PLAN_LIST.map(plan => (
-                              <option key={plan} value={plan}>{plan}</option>
-                            ))}
-                          </select>
+                          {member.plan || '-'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap min-w-[120px]">
-                          <select
-                            value={selectedStatuses[member.id] || member.status || 'active'}
-                            onChange={(e) => {
-                              setSelectedStatuses(prev => ({ ...prev, [member.id]: e.target.value }))
-                              handleStatusChange(member.id, e.target.value)
-                            }}
-                            className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 w-full min-w-[100px]"
-                          >
-                            <option value="active">在籍</option>
-                            <option value="suspended">休会</option>
-                            <option value="withdrawn">退会</option>
-                          </select>
+                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(member.status)}`}>
+                            {getStatusText(member.status)}
+                          </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 min-w-[200px]">
-                          {member.email}
+                          {(member.email || '').trim().endsWith('-') ? '-' : member.email}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 min-w-[150px]">
                           <input

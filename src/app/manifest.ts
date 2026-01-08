@@ -5,7 +5,6 @@ export default function manifest(): MetadataRoute.Manifest {
     name: 'T&J GYM 予約システム',
     short_name: 'T&J GYM',
     description: 'T&J GYMの予約管理システム',
-    start_url: '/',
     display: 'standalone',
     background_color: '#111827',
     theme_color: '#111827',

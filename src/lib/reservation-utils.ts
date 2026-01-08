@@ -7,14 +7,21 @@ export interface MonthlyUsage {
 }
 
 export function getPlanMaxCount(plan: string): number {
-  switch (plan) {
-    case '月2回': return 2
-    case '月4回': return 4
-    case '月6回': return 6
-    case '月8回': return 8
-    case 'ダイエットコース': return 8 // ダイエットコースは月8回相当
-    default: return 4
+  if (!plan) return 4
+
+  if (plan.includes('ダイエット') || plan.toLowerCase().includes('diet')) return 8
+
+  const match = plan.match(/(\d+)\s*回/)
+  if (match) {
+    return parseInt(match[1], 10)
   }
+
+  if (plan.includes('8回')) return 8
+  if (plan.includes('6回')) return 6
+  if (plan.includes('4回')) return 4
+  if (plan.includes('2回')) return 2
+
+  return 4
 }
 
 export async function getMonthlyReservationCount(userId: string, year: number, month: number): Promise<number> {
@@ -22,7 +29,7 @@ export async function getMonthlyReservationCount(userId: string, year: number, m
   const nextMonth = month === 12 ? 1 : month + 1
   const nextYear = month === 12 ? year + 1 : year
   const endDate = `${nextYear}-${nextMonth.toString().padStart(2, '0')}-01T00:00:00+00:00`
-  
+
   const { data: reservations, error } = await supabase
     .from('reservations')
     .select('id')
@@ -52,7 +59,7 @@ export async function getUserMonthlyUsage(userId: string): Promise<MonthlyUsage>
 
   const planName = user.plan || '月4回'
   const maxCount = getPlanMaxCount(planName)
-  
+
   // Get current month's reservation count
   const now = new Date()
   const currentCount = await getMonthlyReservationCount(userId, now.getFullYear(), now.getMonth() + 1)

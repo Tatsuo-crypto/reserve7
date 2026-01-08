@@ -75,24 +75,6 @@ function TrainerDashboard() {
               <p className="text-base text-gray-600 leading-relaxed">すべての予約を確認・管理</p>
             </div>
           </Link>
-
-          {/* 会員管理 */}
-          <Link
-            href="/admin/members"
-            className="group bg-gradient-to-br from-white to-purple-50 hover:from-purple-50 hover:to-purple-100 border border-purple-200 p-8 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col min-h-[200px] transform hover:-translate-y-1"
-          >
-            <div className="flex items-center mb-6">
-              <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-purple-200 rounded-xl flex items-center justify-center group-hover:from-purple-200 group-hover:to-purple-300 transition-all duration-300 shadow-sm">
-                <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-              </div>
-            </div>
-            <div className="flex-1">
-              <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-purple-800 transition-colors duration-200">会員管理</h3>
-              <p className="text-base text-gray-600 leading-relaxed">会員情報の管理</p>
-            </div>
-          </Link>
         </div>
       </div>
     </div>
@@ -240,6 +222,24 @@ function AdminDashboard() {
               <p className="text-base text-gray-600 leading-relaxed">店舗情報の管理</p>
             </div>
           </Link>
+
+          {/* 分析（新規） */}
+          <Link
+            href="/admin/analytics"
+            className="group bg-gradient-to-br from-white to-cyan-50 hover:from-cyan-50 hover:to-cyan-100 border border-cyan-200 p-8 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col min-h-[200px] transform hover:-translate-y-1"
+          >
+            <div className="flex items-center mb-6">
+              <div className="w-16 h-16 bg-gradient-to-br from-cyan-100 to-cyan-200 rounded-xl flex items-center justify-center group-hover:from-cyan-200 group-hover:to-cyan-300 transition-all duration-300 shadow-sm">
+                <svg className="w-8 h-8 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+              </div>
+            </div>
+            <div className="flex-1">
+              <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-cyan-800 transition-colors duration-200">分析</h3>
+              <p className="text-base text-gray-600 leading-relaxed">会員数・売上推移の分析</p>
+            </div>
+          </Link>
         </div>
       </div>
     </div>
@@ -249,7 +249,7 @@ function AdminDashboard() {
 function ClientDashboard() {
   const router = useRouter()
   const { data: session } = useSession()
-  const [userInfo, setUserInfo] = useState<{plan?: string, status?: string, monthlyUsage?: {currentCount: number, maxCount: number, planName: string}}>({})
+  const [userInfo, setUserInfo] = useState<{ plan?: string, status?: string, monthlyUsage?: { currentCount: number, maxCount: number, planName: string } }>({})
   const [reservations, setReservations] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [reservationsLoading, setReservationsLoading] = useState(true)
@@ -327,7 +327,7 @@ function ClientDashboard() {
                   <p className="text-sm font-medium text-blue-800">現在のプラン</p>
                   <p className="text-lg font-semibold text-blue-900">
                     {loading ? '読み込み中...' : (
-                      userInfo.monthlyUsage 
+                      userInfo.monthlyUsage
                         ? `${userInfo.monthlyUsage.planName}`
                         : (userInfo.plan || '月4回')
                     )}
@@ -347,8 +347,8 @@ function ClientDashboard() {
                   <p className="text-lg font-semibold text-green-900">
                     {loading ? '読み込み中...' : (
                       userInfo.status === 'active' ? '在籍' :
-                      userInfo.status === 'suspended' ? '休会' :
-                      userInfo.status === 'withdrawn' ? '退会' : '在籍'
+                        userInfo.status === 'suspended' ? '休会' :
+                          userInfo.status === 'withdrawn' ? '退会' : '在籍'
                     )}
                   </p>
                 </div>
@@ -434,7 +434,7 @@ function ClientDashboard() {
                     groups[key].list.push(it)
                   })
 
-                  const dayNames = ['日','月','火','水','木','金','土']
+                  const dayNames = ['日', '月', '火', '水', '木', '金', '土']
 
                   return (
                     <div>
@@ -502,9 +502,9 @@ function ClientDashboard() {
               })()}
             </div>
           )}
+        </div>
       </div>
     </div>
-  </div>
 
   )
 }

@@ -105,25 +105,50 @@ export default function AdminReservationsPage() {
   }, [session, status, storeChangeCount])
 
   const handleDeleteReservation = async (reservationId: string) => {
+    console.log('🔴 [DEBUG] handleDeleteReservation called with ID:', reservationId);
+    alert(`[DEBUG] 削除処理開始\nID: ${reservationId}`);
+
     if (!confirm('この予約を削除してもよろしいですか？')) {
-      return
+      console.log('🔴 [DEBUG] User cancelled');
+      alert('[DEBUG] キャンセルされました');
+      return;
     }
 
+    console.log('🔴 [DEBUG] User confirmed deletion');
+    alert('[DEBUG] 削除を実行します');
+
     try {
+      console.log('🔴 [DEBUG] Sending DELETE request to:', `/api/reservations/${reservationId}`);
+
       const response = await fetch(`/api/reservations/${reservationId}`, {
         method: 'DELETE',
-      })
+        credentials: 'include'
+      });
+
+      console.log('🔴 [DEBUG] Response received:', {
+        status: response.status,
+        ok: response.ok,
+        statusText: response.statusText
+      });
+
+      alert(`[DEBUG] レスポンス受信\nステータス: ${response.status}\nOK: ${response.ok}`);
 
       if (response.ok) {
-        setReservations(prev => prev.filter(r => r.id !== reservationId))
-        alert('予約がキャンセルされました')
+        const result = await response.json();
+        console.log('🔴 [DEBUG] Delete success:', result);
+        alert(`[DEBUG] 削除成功\nメッセージ: ${result.message}`);
+
+        setReservations(prev => prev.filter(r => r.id !== reservationId));
+        alert('[DEBUG] リロードします');
+        window.location.reload();
       } else {
-        const errorData = await response.json()
-        setError(`予約削除に失敗しました: ${errorData.error || 'Unknown error'}`)
+        const errorData = await response.json();
+        console.error('🔴 [DEBUG] Delete error response:', errorData);
+        alert(`[DEBUG] 削除失敗\nエラー: ${errorData.error || 'Unknown error'}`);
       }
     } catch (error) {
-      console.error('Delete Error:', error)
-      setError('予約削除中にエラーが発生しました')
+      console.error('🔴 [DEBUG] Delete exception:', error);
+      alert(`[DEBUG] 例外発生\nエラー: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
@@ -152,6 +177,39 @@ export default function AdminReservationsPage() {
       notes: reservation.memo || reservation.notes || ''
     })
     setShowEditModal(true)
+  }
+
+  // Start time change handler to preserve duration
+  const handleStartTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newStartTime = e.target.value
+    
+    if (editFormData.startTime && editFormData.endTime && newStartTime) {
+      const currentStart = new Date(editFormData.startTime)
+      const currentEnd = new Date(editFormData.endTime)
+      const newStart = new Date(newStartTime)
+      
+      if (!isNaN(currentStart.getTime()) && !isNaN(currentEnd.getTime()) && !isNaN(newStart.getTime())) {
+        const duration = currentEnd.getTime() - currentStart.getTime()
+        const newEnd = new Date(newStart.getTime() + duration)
+        
+        // Format new end time as YYYY-MM-DDThh:mm
+        const year = newEnd.getFullYear()
+        const month = String(newEnd.getMonth() + 1).padStart(2, '0')
+        const day = String(newEnd.getDate()).padStart(2, '0')
+        const hours = String(newEnd.getHours()).padStart(2, '0')
+        const minutes = String(newEnd.getMinutes()).padStart(2, '0')
+        const newEndTime = `${year}-${month}-${day}T${hours}:${minutes}`
+        
+        setEditFormData(prev => ({
+          ...prev,
+          startTime: newStartTime,
+          endTime: newEndTime
+        }))
+        return
+      }
+    }
+    
+    setEditFormData(prev => ({ ...prev, startTime: newStartTime }))
   }
 
   // Handle edit form submission
@@ -410,13 +468,47 @@ export default function AdminReservationsPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium min-w-[120px]">
                         <div className="flex space-x-2">
                           <button
-                            onClick={() => handleEdit(reservation)}
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleEdit(reservation);
+                            }}
                             className="bg-blue-100 text-blue-600 hover:bg-blue-200 px-3 py-1 rounded-md transition-colors"
                           >
                             変更
                           </button>
                           <button
-                            onClick={() => handleDeleteReservation(reservation.id)}
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+
+                              const resId = reservation.id;
+                              console.log('INLINE DELETE CLICKED:', resId);
+
+                              if (!window.confirm('この予約を削除してもよろしいですか？')) {
+                                return;
+                              }
+
+                              fetch(`/api/reservations/${resId}`, {
+                                method: 'DELETE',
+                                credentials: 'include'
+                              })
+                                .then(res => {
+                                  console.log('Response status:', res.status);
+                                  return res.json();
+                                })
+                                .then(data => {
+                                  console.log('Response data:', data);
+                                  alert('削除しました');
+                                  window.location.reload();
+                                })
+                                .catch(err => {
+                                  console.error('Error:', err);
+                                  alert('エラー: ' + err.message);
+                                });
+                            }}
                             className="bg-red-100 text-red-600 hover:bg-red-200 px-3 py-1 rounded-md transition-colors"
                           >
                             キャンセル
@@ -475,10 +567,7 @@ export default function AdminReservationsPage() {
                   <input
                     type="datetime-local"
                     value={editFormData.startTime}
-                    onChange={(e) => setEditFormData(prev => ({
-                      ...prev,
-                      startTime: e.target.value
-                    }))}
+                    onChange={handleStartTimeChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     required
                   />
@@ -512,23 +601,42 @@ export default function AdminReservationsPage() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
-                <div className="flex justify-end space-x-3 pt-4">
+                <div className="flex justify-between space-x-3 pt-4">
                   <button
                     type="button"
-                    onClick={() => {
-                      setShowEditModal(false)
-                      setEditingReservation(null)
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if (editingReservation) {
+                        setShowEditModal(false);
+                        setEditingReservation(null);
+                        handleDeleteReservation(editingReservation.id);
+                      }
                     }}
-                    className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors"
+                    className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
                   >
-                    キャンセル
+                    削除
                   </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                  >
-                    更新
-                  </button>
+                  <div className="flex space-x-3">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setShowEditModal(false);
+                        setEditingReservation(null);
+                      }}
+                      className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors"
+                    >
+                      キャンセル
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                    >
+                      更新
+                    </button>
+                  </div>
                 </div>
               </form>
             </div>

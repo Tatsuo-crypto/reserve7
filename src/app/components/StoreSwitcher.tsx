@@ -48,6 +48,9 @@ export default function StoreSwitcher({ defaultStoreName }: StoreSwitcherProps) 
                         if (found) {
                             setCurrentStoreName(found.name)
                         }
+                    } else {
+                        // Default to 'all' if no cookie? Or keep defaultStoreName?
+                        // User might want specific default. Keeping defaultStoreName for now unless it's empty.
                     }
                 }
             } catch (e) {

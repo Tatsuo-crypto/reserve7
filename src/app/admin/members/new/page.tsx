@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import { PLAN_LIST } from '@/lib/constants'
 
 export default function NewMemberPage() {
+  const { data: session, status } = useSession()
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -20,6 +22,19 @@ export default function NewMemberPage() {
     status: 'active',
     memo: '',
   })
+
+  // Check admin access
+  useEffect(() => {
+    if (status === 'loading') return
+    if (status === 'unauthenticated') {
+      router.push('/login')
+      return
+    }
+    if (status === 'authenticated' && session?.user?.role !== 'ADMIN') {
+      router.push('/dashboard')
+      return
+    }
+  }, [status, session, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

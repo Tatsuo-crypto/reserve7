@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import { PLAN_LIST } from '@/lib/constants'
 
 export default function EditMemberPage() {
+  const { data: session, status } = useSession()
   const router = useRouter()
   const params = useParams()
   const memberId = params.id as string
@@ -13,6 +15,10 @@ export default function EditMemberPage() {
   const [fetchLoading, setFetchLoading] = useState(true)
   const [error, setError] = useState('')
   const [stores, setStores] = useState<{ id: string, name: string }[]>([])
+  const [initialStatus, setInitialStatus] = useState('')
+  const [initialPlan, setInitialPlan] = useState('')
+  const [initialMonthlyFee, setInitialMonthlyFee] = useState('')
+
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -22,7 +28,21 @@ export default function EditMemberPage() {
     monthlyFee: '',
     status: 'active',
     memo: '',
+    changeDate: new Date().toISOString().split('T')[0],
   })
+
+  // Check admin access
+  useEffect(() => {
+    if (status === 'loading') return
+    if (status === 'unauthenticated') {
+      router.push('/login')
+      return
+    }
+    if (status === 'authenticated' && session?.user?.role !== 'ADMIN') {
+      router.push('/dashboard')
+      return
+    }
+  }, [status, session, router])
 
   // Fetch member data
   useEffect(() => {
@@ -32,6 +52,10 @@ export default function EditMemberPage() {
         if (response.ok) {
           const result = await response.json()
           const member = result.data || result
+          setInitialStatus(member.status || 'active')
+          setInitialPlan(member.plan || '月4回')
+          setInitialMonthlyFee(member.monthly_fee ? member.monthly_fee.toString() : '')
+          
           setFormData({
             fullName: member.full_name || '',
             email: member.email || '',
@@ -41,6 +65,7 @@ export default function EditMemberPage() {
             monthlyFee: member.monthly_fee ? member.monthly_fee.toString() : '',
             status: member.status || 'active',
             memo: member.memo || '',
+            changeDate: new Date().toISOString().split('T')[0],
           })
         } else {
           setError('会員情報の取得に失敗しました')
@@ -94,6 +119,7 @@ export default function EditMemberPage() {
           monthlyFee: formData.monthlyFee,
           status: formData.status,
           memo: formData.memo,
+          changeDate: formData.changeDate,
         }),
       })
 
@@ -117,6 +143,12 @@ export default function EditMemberPage() {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
   }
+
+  // Check if any critical field has changed
+  const isStatusChanged = formData.status !== initialStatus
+  const isPlanChanged = formData.plan !== initialPlan
+  const isFeeChanged = formData.monthlyFee !== initialMonthlyFee
+  const isChanged = isStatusChanged || isPlanChanged || isFeeChanged
 
   if (fetchLoading) {
     return (
@@ -267,6 +299,28 @@ export default function EditMemberPage() {
               <option value="withdrawn">退会</option>
             </select>
           </div>
+
+          {/* 変更日 (ステータス・プラン・会費変更時のみ表示) */}
+          {isChanged && (
+            <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+              <label htmlFor="changeDate" className="block text-sm font-medium text-yellow-800 mb-2">
+                変更適用日
+              </label>
+              <input
+                type="date"
+                id="changeDate"
+                name="changeDate"
+                value={formData.changeDate}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-yellow-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+              />
+              <p className="mt-2 text-sm text-yellow-700">
+                ※ 指定した日付から新しいステータス・プラン・会費が適用されます。<br />
+                例: 1月末でプラン変更・退会 → 「2月1日」を指定<br />
+                売上見込みへの反映: 毎月1日時点での情報に基づいて算出されます。
+              </p>
+            </div>
+          )}
 
           {/* メモ */}
           <div>

@@ -34,7 +34,12 @@ export default function BlockedTimesPage() {
   useEffect(() => {
     if (status === 'loading') return
 
-    if (!session?.user?.email || !isAdmin(session.user.email)) {
+    if (status === 'unauthenticated') {
+      router.push('/login')
+      return
+    }
+
+    if (status === 'authenticated' && session?.user?.role !== 'ADMIN') {
       router.push('/dashboard')
       return
     }
@@ -62,10 +67,10 @@ export default function BlockedTimesPage() {
   }
 
   useEffect(() => {
-    if (session?.user?.email && isAdmin(session.user.email)) {
+    if (status === 'authenticated' && session?.user?.role === 'ADMIN') {
       fetchBlockedTimes()
     }
-  }, [session, storeChangeCount])
+  }, [status, session, storeChangeCount])
 
   const formatDateTime = (dateTimeString: string) => {
     const date = new Date(dateTimeString)

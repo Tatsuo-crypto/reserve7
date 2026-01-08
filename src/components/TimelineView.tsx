@@ -182,6 +182,39 @@ export default function TimelineView({ selectedDate, events, onBack, onEventsUpd
     setShowEditModal(true)
   }
 
+  // Start time change handler to preserve duration
+  const handleStartTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newStartTime = e.target.value
+    
+    if (editFormData.startTime && editFormData.endTime && newStartTime) {
+      const currentStart = new Date(editFormData.startTime)
+      const currentEnd = new Date(editFormData.endTime)
+      const newStart = new Date(newStartTime)
+      
+      if (!isNaN(currentStart.getTime()) && !isNaN(currentEnd.getTime()) && !isNaN(newStart.getTime())) {
+        const duration = currentEnd.getTime() - currentStart.getTime()
+        const newEnd = new Date(newStart.getTime() + duration)
+        
+        // Format new end time as YYYY-MM-DDThh:mm
+        const year = newEnd.getFullYear()
+        const month = String(newEnd.getMonth() + 1).padStart(2, '0')
+        const day = String(newEnd.getDate()).padStart(2, '0')
+        const hours = String(newEnd.getHours()).padStart(2, '0')
+        const minutes = String(newEnd.getMinutes()).padStart(2, '0')
+        const newEndTime = `${year}-${month}-${day}T${hours}:${minutes}`
+        
+        setEditFormData(prev => ({
+          ...prev,
+          startTime: newStartTime,
+          endTime: newEndTime
+        }))
+        return
+      }
+    }
+    
+    setEditFormData(prev => ({ ...prev, startTime: newStartTime }))
+  }
+
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!editingReservation) return
@@ -547,7 +580,7 @@ export default function TimelineView({ selectedDate, events, onBack, onEventsUpd
                   <input
                     type="datetime-local"
                     value={editFormData.startTime}
-                    onChange={(e) => setEditFormData(prev => ({ ...prev, startTime: e.target.value }))}
+                    onChange={handleStartTimeChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     required
                   />

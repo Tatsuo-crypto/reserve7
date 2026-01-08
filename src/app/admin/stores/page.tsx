@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 
 type Store = {
   id: string
@@ -17,11 +18,25 @@ type Store = {
 
 export default function StoresPage() {
   const router = useRouter()
+  const { data: session, status: sessionStatus } = useSession()
   const [loading, setLoading] = useState(false)
   const [stores, setStores] = useState<Store[]>([])
   const [query, setQuery] = useState('')
   const [status, setStatus] = useState<'all' | 'active' | 'inactive'>('all')
   const SHOW_FILTERS = false
+
+  // Check admin access
+  useEffect(() => {
+    if (sessionStatus === 'loading') return
+    if (sessionStatus === 'unauthenticated') {
+      router.push('/login')
+      return
+    }
+    if (sessionStatus === 'authenticated' && session?.user?.role !== 'ADMIN') {
+      router.push('/dashboard')
+      return
+    }
+  }, [sessionStatus, session, router])
 
   const listUrl = useMemo(() => {
     const params = new URLSearchParams()

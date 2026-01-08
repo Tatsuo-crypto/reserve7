@@ -20,6 +20,11 @@
   }
 }
 
+/* Suppress Recharts focus outline */
+.recharts-wrapper *:focus {
+  outline: none !important;
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;

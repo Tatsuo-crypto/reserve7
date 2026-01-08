@@ -7,7 +7,7 @@ import { supabase } from '@/lib/supabase'
 export async function GET(request: NextRequest) {
   try {
     const user = await getAuthenticatedUser()
-    
+
     if (!user) {
       return createErrorResponse('認証が必要です', 401)
     }
@@ -30,7 +30,6 @@ export async function GET(request: NextRequest) {
       .from('users')
       .select('plan')
       .eq('id', clientId)
-      .eq('store_id', user.storeId)
       .single()
 
     if (clientError || !client) {

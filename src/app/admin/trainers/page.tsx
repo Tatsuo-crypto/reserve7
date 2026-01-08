@@ -27,9 +27,22 @@ type StoreOption = {
 
 export default function TrainersPage() {
   const router = useRouter()
-  const { data: session } = useSession()
+  const { data: session, status: sessionStatus } = useSession()
   const { currentStoreId } = useStoreChange()
   const adminStoreId = currentStoreId || (session as any)?.user?.storeId || ''
+
+  // Check admin access
+  useEffect(() => {
+    if (sessionStatus === 'loading') return
+    if (sessionStatus === 'unauthenticated') {
+      router.push('/login')
+      return
+    }
+    if (sessionStatus === 'authenticated' && session?.user?.role !== 'ADMIN') {
+      router.push('/dashboard')
+      return
+    }
+  }, [sessionStatus, session, router])
 
   const [loading, setLoading] = useState(false)
   const [trainers, setTrainers] = useState<Trainer[]>([])

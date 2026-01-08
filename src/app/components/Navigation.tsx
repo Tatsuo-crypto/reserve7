@@ -47,13 +47,15 @@ export default function Navigation() {
                 <>
                   <Link href="/dashboard" className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors">ホーム</Link>
                   <Link href={session.user.role === 'ADMIN' ? '/admin/reservations' : '/reservations'} className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors">予約</Link>
-                  {(session?.user?.role === 'ADMIN' || session?.user?.role === 'TRAINER') && (
+                  {session?.user?.role === 'ADMIN' && (
                     <Link href="/admin/members" className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors">会員管理</Link>
                   )}
                   {session?.user?.role === 'ADMIN' && (
                     <>
+                      <Link href="/admin/sales" className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors">売上管理</Link>
                       <Link href="/admin/trainers" className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors">トレーナー管理</Link>
                       <Link href="/admin/stores" className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors">店舗管理</Link>
+                      <Link href="/admin/analytics" className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors">分析</Link>
                     </>
                   )}
                   <button
@@ -135,7 +137,7 @@ export default function Navigation() {
               <>
                 <Link href="/dashboard" className="text-gray-700 hover:text-gray-900 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium" onClick={() => setIsMobileMenuOpen(false)}>ホーム</Link>
                 <Link href={session.user.role === 'ADMIN' ? '/admin/reservations' : '/reservations'} className="text-gray-700 hover:text-gray-900 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium" onClick={() => setIsMobileMenuOpen(false)}>予約</Link>
-                {(session?.user?.role === 'ADMIN' || session?.user?.role === 'TRAINER') && (
+                {session?.user?.role === 'ADMIN' && (
                   <Link href="/admin/members" className="text-gray-700 hover:text-gray-900 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium" onClick={() => setIsMobileMenuOpen(false)}>会員管理</Link>
                 )}
                 {session?.user?.role === 'ADMIN' && (
@@ -143,6 +145,7 @@ export default function Navigation() {
                     <Link href="/admin/sales" className="text-gray-700 hover:text-gray-900 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium" onClick={() => setIsMobileMenuOpen(false)}>売上管理</Link>
                     <Link href="/admin/trainers" className="text-gray-700 hover:text-gray-900 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium" onClick={() => setIsMobileMenuOpen(false)}>トレーナー管理</Link>
                     <Link href="/admin/stores" className="text-gray-700 hover:text-gray-900 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium" onClick={() => setIsMobileMenuOpen(false)}>店舗管理</Link>
+                    <Link href="/admin/analytics" className="text-gray-700 hover:text-gray-900 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium" onClick={() => setIsMobileMenuOpen(false)}>分析</Link>
                   </>
                 )}
                 <button

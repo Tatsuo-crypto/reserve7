@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic'
 import { supabaseAdmin } from '@/lib/supabase'
 import { getAuthenticatedUser, createErrorResponse, createSuccessResponse } from '@/lib/api-utils'
 import { PLAN_LIST } from '@/lib/constants'
+import { recordStatusChange } from '@/lib/membership-utils'
 
 export async function GET(request: NextRequest) {
   try {
@@ -210,6 +211,10 @@ export async function POST(request: NextRequest) {
       return createErrorResponse(errorMessage, 500)
     }
 
+    // Record initial status
+    await recordStatusChange(newMember.id, insertData.status as any, insertData.store_id)
+      .catch(e => console.error('Failed to record initial status:', e))
+
     return createSuccessResponse({ member: newMember })
   } catch (error) {
     console.error('Members API error:', error)
@@ -237,7 +242,7 @@ export async function PATCH(request: NextRequest) {
       return createErrorResponse('管理者権限が必要です', 403)
     }
 
-    const { memberId, fullName, email, googleCalendarEmail, storeId, status, plan, monthlyFee, memo } = await request.json()
+    const { memberId, fullName, email, googleCalendarEmail, storeId, status, plan, monthlyFee, memo, statusChangeDate, changeDate } = await request.json()
 
     // Validate status if provided
     if (status && !['active', 'suspended', 'withdrawn'].includes(status)) {
@@ -254,7 +259,7 @@ export async function PATCH(request: NextRequest) {
     // First check if the member exists
     const { data: member, error: fetchError } = await supabaseAdmin
       .from('users')
-      .select('id, email, store_id')
+      .select('id, email, store_id, status, plan, monthly_fee')
       .eq('id', memberId)
       .neq('email', 'tandjgym@gmail.com')
       .neq('email', 'tandjgym2goutenn@gmail.com')
@@ -285,6 +290,32 @@ export async function PATCH(request: NextRequest) {
     if (error) {
       console.error('Database error:', error)
       return createErrorResponse('Failed to update member', 500)
+    }
+
+    // Record history if status, plan, or fee was updated
+    const isStatusChanged = updateData.status && updateData.status !== member.status
+    const isPlanChanged = updateData.plan && updateData.plan !== member.plan
+    const isFeeChanged = updateData.monthly_fee !== undefined && updateData.monthly_fee !== member.monthly_fee
+
+    if (isStatusChanged || isPlanChanged || isFeeChanged) {
+      // Use provided changeDate/statusChangeDate or default to today
+      const effectiveDateStr = changeDate || statusChangeDate
+      const effectiveDate = effectiveDateStr ? new Date(effectiveDateStr) : new Date()
+      
+      // Determine values to record (new value or existing value)
+      const statusToRecord = updateData.status || member.status
+      const planToRecord = updateData.plan || member.plan
+      const feeToRecord = updateData.monthly_fee !== undefined ? updateData.monthly_fee : member.monthly_fee
+      const storeToRecord = updateData.store_id || member.store_id
+
+      await recordStatusChange(
+        memberId, 
+        statusToRecord, 
+        storeToRecord,
+        effectiveDate,
+        planToRecord,
+        feeToRecord
+      ).catch(e => console.error('Failed to record history change:', e))
     }
 
     return createSuccessResponse({ success: true })
