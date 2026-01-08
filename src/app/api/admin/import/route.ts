@@ -146,7 +146,8 @@ export async function POST(request: NextRequest) {
         }
 
         // Process per user
-        for (const [userId, periods] of userPeriods.entries()) {
+        const userPeriodEntries = Array.from(userPeriods.entries())
+        for (const [userId, periods] of userPeriodEntries) {
             const user = users.find(u => u.id === userId)
 
             // Sort periods
