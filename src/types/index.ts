@@ -31,8 +31,10 @@ export interface Member {
 export interface Trainer {
   id: string;
   name: string;
+  full_name?: string; // Added to match DB column
   email: string;
   storeId: string;
+  store_id?: string; // Added to match DB column
   token?: string;
   created_at?: string;
 }
@@ -108,4 +110,31 @@ export interface ReservationFormData {
   endTime: string;
   clientId: string | null;
   calendarId: string;
+}
+
+// ==============================
+// Shift Management Types
+// ==============================
+
+export interface ShiftTemplate {
+  id: string;
+  trainer_id: string;
+  day_of_week: number; // 0=Sunday, 1=Monday, ...
+  start_time: string; // "HH:MM:SS"
+  end_time: string; // "HH:MM:SS"
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface Shift {
+  id: string;
+  trainer_id: string;
+  start_time: string; // ISO String
+  end_time: string; // ISO String
+  created_at?: string;
+  updated_at?: string;
+  trainer?: {
+    id: string;
+    full_name: string;
+  };
 }

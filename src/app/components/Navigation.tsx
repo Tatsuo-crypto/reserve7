@@ -53,6 +53,7 @@ export default function Navigation() {
                   {session?.user?.role === 'ADMIN' && (
                     <>
                       <Link href="/admin/sales" className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors">売上管理</Link>
+                      <Link href="/admin/shifts" className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors">シフト管理</Link>
                       <Link href="/admin/trainers" className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors">トレーナー管理</Link>
                       <Link href="/admin/stores" className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors">店舗管理</Link>
                       <Link href="/admin/analytics" className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors">分析</Link>
