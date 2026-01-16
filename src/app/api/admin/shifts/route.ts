@@ -12,20 +12,39 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const trainerId = searchParams.get('trainerId')
+    const storeId = searchParams.get('storeId')
     const start = searchParams.get('start')
     const end = searchParams.get('end')
 
-    if (!trainerId || !start || !end) {
-      return NextResponse.json({ error: 'Missing required parameters (trainerId, start, end)' }, { status: 400 })
+    if ((!trainerId && !storeId) || !start || !end) {
+      return NextResponse.json({ error: 'Missing required parameters (trainerId OR storeId, start, end)' }, { status: 400 })
     }
 
-    const { data, error } = await supabaseAdmin
+    let query = supabaseAdmin
       .from('trainer_shifts')
-      .select('*')
-      .eq('trainer_id', trainerId)
-      .gte('end_time', start) // Shifts ending after query start
-      .lte('start_time', end) // Shifts starting before query end
+      .select('*, trainer:trainers(id, full_name, store_id)')
+      .gte('end_time', start)
+      .lte('start_time', end)
       .order('start_time')
+
+    if (trainerId) {
+      query = query.eq('trainer_id', trainerId)
+    } else if (storeId) {
+      // First find all trainers in this store
+      const { data: trainers } = await supabaseAdmin
+        .from('trainers')
+        .select('id')
+        .eq('store_id', storeId)
+      
+      if (!trainers || trainers.length === 0) {
+        return NextResponse.json({ shifts: [] })
+      }
+      
+      const trainerIds = trainers.map(t => t.id)
+      query = query.in('trainer_id', trainerIds)
+    }
+
+    const { data, error } = await query
 
     if (error) throw error
 

@@ -1,48 +1,54 @@
 import { NextRequest, NextResponse } from 'next/server'
 export const dynamic = 'force-dynamic'
 import { supabaseAdmin } from '@/lib/supabase'
-import { requireAdminAuth, handleApiError } from '@/lib/api-utils'
 import { addDays, format, parseISO, getDay } from 'date-fns'
 
-// POST /api/admin/shifts/batch
-// Handle batch operations for shifts
+// Helper to verify trainer token
+async function verifyTrainerToken(token: string | null) {
+  if (!token) return null
+  
+  const { data: trainer, error } = await supabaseAdmin
+    .from('trainers')
+    .select('id, full_name, store_id')
+    .eq('access_token', token)
+    .eq('status', 'active')
+    .single()
+    
+  if (error || !trainer) return null
+  return trainer
+}
+
+// POST /api/trainer/shifts/batch
 export async function POST(request: NextRequest) {
   try {
-    const auth = await requireAdminAuth()
-    if (auth instanceof NextResponse) return auth
-
     const body = await request.json()
-    const { action, trainerId, startDate, endDate, sourceStartDate } = body
+    const { token, action, startDate, endDate, sourceStartDate } = body
 
-    if (!trainerId || !startDate || !endDate) {
+    if (!token || !startDate || !endDate) {
       return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 })
     }
+
+    const trainer = await verifyTrainerToken(token)
+    if (!trainer) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    
+    const trainerId = trainer.id
 
     const start = parseISO(startDate)
     const end = parseISO(endDate)
 
-    // Normalize to JST boundaries (Start of Day / End of Day in JST)
-    // This handles timezone differences where the client might send a time that is "Monday 00:00 Local"
-    // but we want "Monday 00:00 JST".
-    // JST is UTC+9.
-    
     // Helper to snap to JST Start of Day (00:00:00 JST)
     const toJstStart = (d: Date) => {
-      // Shift to JST reference
       const jst = new Date(d.getTime() + 9 * 60 * 60 * 1000)
-      // Snap to start of day
       jst.setUTCHours(0, 0, 0, 0)
-      // Shift back
       return new Date(jst.getTime() - 9 * 60 * 60 * 1000)
     }
 
     // Helper to snap to JST End of Day (23:59:59 JST)
     const toJstEnd = (d: Date) => {
-      // Shift to JST reference
       const jst = new Date(d.getTime() + 9 * 60 * 60 * 1000)
-      // Snap to end of day
       jst.setUTCHours(23, 59, 59, 999)
-      // Shift back
       return new Date(jst.getTime() - 9 * 60 * 60 * 1000)
     }
 
@@ -62,8 +68,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ message: 'No templates found', count: 0 })
       }
 
-      // 2. Delete existing shifts for this trainer in the range
-      // This allows "overwriting" the schedule with the template, fixing any previous errors
+      // 2. Delete existing shifts in range
       const { error: deleteError } = await supabaseAdmin
         .from('trainer_shifts')
         .delete()
@@ -73,54 +78,41 @@ export async function POST(request: NextRequest) {
 
       if (deleteError) throw deleteError
 
-      // 3. Generate shifts for each day in range
+      // 3. Generate shifts
       const newShifts = []
       let current = rangeStart
-      
-      // JST Offset in milliseconds (9 hours)
       const JST_OFFSET = 9 * 60 * 60 * 1000
 
       while (current <= rangeEnd) {
-        // Convert current (UTC/Server time) to JST to determine the correct day of week and date string
         const jstDate = new Date(current.getTime() + JST_OFFSET)
-        
-        const dayOfWeek = getDay(jstDate) // 0=Sunday
-        
-        // Find templates for this day of week
+        const dayOfWeek = getDay(jstDate)
         const dayTemplates = templates.filter(t => t.day_of_week === dayOfWeek)
         
         for (const tmpl of dayTemplates) {
           const dateStr = format(jstDate, 'yyyy-MM-dd')
-          
-          // Append +09:00 to specify JST
-          // This ensures 09:00 JST is stored as 00:00 UTC (not 09:00 UTC)
           newShifts.push({
             trainer_id: trainerId,
             start_time: `${dateStr}T${tmpl.start_time}+09:00`, 
             end_time: `${dateStr}T${tmpl.end_time}+09:00`
           })
         }
-        
         current = addDays(current, 1)
       }
 
-      // 3. Insert shifts (skipping collisions could be complex, for now we just insert)
-      // Ideally we should check for overlaps, but for MVP we might trust the user or DB constraints (if we added any)
       if (newShifts.length > 0) {
         const { error: insertError } = await supabaseAdmin
           .from('trainer_shifts')
           .insert(newShifts)
-        
         if (insertError) throw insertError
       }
 
       return NextResponse.json({ success: true, count: newShifts.length })
     }
 
-    // Action: Copy from Previous Week (or custom source range)
+    // Action: Copy from Previous Week
     if (action === 'copy_previous_week') {
       if (!sourceStartDate) {
-        return NextResponse.json({ error: 'Source start date required for copy' }, { status: 400 })
+        return NextResponse.json({ error: 'Source start date required' }, { status: 400 })
       }
       
       const sourceStartRaw = parseISO(sourceStartDate)
@@ -146,7 +138,6 @@ export async function POST(request: NextRequest) {
       }
 
       // 2. Map to new dates
-      // Calculate day difference
       const dayDiff = Math.round((rangeStart.getTime() - sourceStart.getTime()) / (1000 * 60 * 60 * 24))
       
       const newShifts = sourceShifts.map(shift => {
@@ -178,7 +169,6 @@ export async function POST(request: NextRequest) {
         const { error: insertError } = await supabaseAdmin
           .from('trainer_shifts')
           .insert(newShifts)
-        
         if (insertError) throw insertError
       }
 
@@ -192,17 +182,12 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Shift IDs required' }, { status: 400 })
       }
 
-      let query = supabaseAdmin
+      // Verify ownership implicitly by including trainer_id in the delete query
+      const { error: deleteError, count } = await supabaseAdmin
         .from('trainer_shifts')
         .delete({ count: 'exact' })
+        .eq('trainer_id', trainerId)
         .in('id', shiftIds)
-      
-      // If trainerId is provided, add it as a safety check
-      if (trainerId) {
-        query = query.eq('trainer_id', trainerId)
-      }
-
-      const { error: deleteError, count } = await query
 
       if (deleteError) throw deleteError
 
@@ -211,6 +196,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
   } catch (error) {
-    return handleApiError(error, 'Admin shifts batch POST')
+    console.error('Trainer shifts batch POST error:', error)
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
   }
 }

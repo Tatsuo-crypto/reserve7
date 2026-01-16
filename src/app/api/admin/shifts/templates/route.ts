@@ -11,15 +11,23 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const trainerId = searchParams.get('trainerId')
+    const storeId = searchParams.get('storeId')
 
-    if (!trainerId) {
-      return NextResponse.json({ error: 'Trainer ID is required' }, { status: 400 })
+    if (!trainerId && !storeId) {
+      return NextResponse.json({ error: 'Trainer ID or Store ID is required' }, { status: 400 })
     }
 
-    const { data, error } = await supabaseAdmin
+    let query = supabaseAdmin
       .from('trainer_shift_templates')
-      .select('*')
-      .eq('trainer_id', trainerId)
+      .select('*, trainers!inner(store_id)')
+
+    if (trainerId) {
+      query = query.eq('trainer_id', trainerId)
+    } else if (storeId) {
+      query = query.eq('trainers.store_id', storeId)
+    }
+
+    const { data, error } = await query
       .order('day_of_week')
       .order('start_time')
 

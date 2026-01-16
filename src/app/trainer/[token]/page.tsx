@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import Link from 'next/link'
 
 interface Trainer {
   id: string
@@ -116,7 +117,7 @@ export default function TrainerDashboardPage() {
         <div className="bg-white shadow-sm border border-gray-200 rounded-xl p-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             {/* 予約管理 */}
-            <a
+            <Link
               href={`/admin/calendar?trainerToken=${token}`}
               className="group bg-gradient-to-br from-white to-blue-50 hover:from-blue-50 hover:to-blue-100 border border-blue-200 p-8 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col min-h-[200px] transform hover:-translate-y-1"
             >
@@ -131,7 +132,25 @@ export default function TrainerDashboardPage() {
                 <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-blue-800 transition-colors duration-200">予約</h3>
                 <p className="text-base text-gray-600 leading-relaxed">すべての予約を確認・管理</p>
               </div>
-            </a>
+            </Link>
+
+            {/* シフト管理 */}
+            <Link
+              href={`/trainer/${token}/shifts`}
+              className="group bg-gradient-to-br from-white to-teal-50 hover:from-teal-50 hover:to-teal-100 border border-teal-200 p-8 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col min-h-[200px] transform hover:-translate-y-1"
+            >
+              <div className="flex items-center mb-6">
+                <div className="w-16 h-16 bg-gradient-to-br from-teal-100 to-teal-200 rounded-xl flex items-center justify-center group-hover:from-teal-200 group-hover:to-teal-300 transition-all duration-300 shadow-sm">
+                  <svg className="w-8 h-8 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-teal-800 transition-colors duration-200">シフト管理</h3>
+                <p className="text-base text-gray-600 leading-relaxed">勤務シフトの登録・確認</p>
+              </div>
+            </Link>
           </div>
         </div>
       </div>

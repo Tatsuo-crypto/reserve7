@@ -1,28 +1,45 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { format, addDays, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, setHours, setMinutes, differenceInMinutes, getDay, isAfter, isBefore } from 'date-fns'
+import { format, addDays, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, setHours, setMinutes, differenceInMinutes, getDay, isAfter, isBefore, parse } from 'date-fns'
 import { ja } from 'date-fns/locale'
-import { Shift } from '@/types'
+import { Shift, ShiftTemplate } from '@/types'
 
 interface ShiftCalendarProps {
   currentDate: Date
   shifts: Shift[]
+  templates?: ShiftTemplate[]
+  trainerName?: string
   onShiftCreate: (start: Date, end: Date) => Promise<void>
   onShiftUpdate: (shiftId: string, start: Date, end: Date) => Promise<void>
   onShiftDelete: (shiftId: string) => Promise<void>
   loading?: boolean
+  selectionMode?: boolean
+  selectedShiftIds?: string[]
+  onShiftSelect?: (shiftId: string) => void
 }
 
-export default function ShiftCalendar({ currentDate, shifts, onShiftCreate, onShiftUpdate, onShiftDelete, loading }: ShiftCalendarProps) {
+export default function ShiftCalendar({ 
+  currentDate, 
+  shifts, 
+  templates = [], 
+  trainerName, 
+  onShiftCreate, 
+  onShiftUpdate, 
+  onShiftDelete, 
+  loading,
+  selectionMode = false,
+  selectedShiftIds = [],
+  onShiftSelect
+}: ShiftCalendarProps) {
   const [selectedShift, setSelectedShift] = useState<Shift | null>(null)
   const [editModalOpen, setEditModalOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
 
   // Calendar constants
-  const START_HOUR = 8
+  const START_HOUR = 9
   const END_HOUR = 23
-  const HOUR_HEIGHT = 60 // px per hour
+  const HOUR_HEIGHT = 40 // px per hour
   const hours = Array.from({ length: END_HOUR - START_HOUR + 1 }, (_, i) => START_HOUR + i)
 
   // Generate days for the week view
@@ -33,10 +50,7 @@ export default function ShiftCalendar({ currentDate, shifts, onShiftCreate, onSh
   })
 
   // Helper to calculate position style for a shift
-  const getShiftStyle = (shift: Shift) => {
-    const start = new Date(shift.start_time)
-    const end = new Date(shift.end_time)
-    
+  const getShiftStyle = (start: Date, end: Date) => {
     // Calculate top offset
     const startHour = start.getHours()
     const startMin = start.getMinutes()
@@ -61,8 +75,21 @@ export default function ShiftCalendar({ currentDate, shifts, onShiftCreate, onSh
 
   const handleShiftClick = (e: React.MouseEvent, shift: Shift) => {
     e.stopPropagation()
-    setSelectedShift(shift)
-    setEditModalOpen(true)
+    if (selectionMode) {
+      onShiftSelect?.(shift.id)
+    } else {
+      setSelectedShift(shift)
+      setEditModalOpen(true)
+    }
+  }
+
+  // Helper to extract surname
+  const getSurname = (fullName?: string) => {
+    if (!fullName) return ''
+    const trimmed = fullName.trim()
+    if (!trimmed) return ''
+    const parts = trimmed.split(/[\s　]+/)
+    return parts[0] || trimmed
   }
 
   return (
@@ -89,8 +116,8 @@ export default function ShiftCalendar({ currentDate, shifts, onShiftCreate, onSh
           {/* Time axis */}
           <div className="border-r border-gray-200 bg-white sticky left-0 z-10 w-full">
             {hours.map(hour => (
-              <div key={hour} className="h-[60px] border-b border-gray-100 text-xs text-gray-400 text-center relative">
-                <span className="absolute -top-2 left-0 right-0">{hour}:00</span>
+              <div key={hour} className="h-[40px] border-b border-gray-100 text-xs text-gray-400 text-center relative">
+                <span className="absolute top-1 left-0 right-0">{hour}:00</span>
               </div>
             ))}
           </div>
@@ -99,30 +126,80 @@ export default function ShiftCalendar({ currentDate, shifts, onShiftCreate, onSh
           {weekDays.map(day => {
             const dayShifts = shifts.filter(s => isSameDay(new Date(s.start_time), day))
             
+            // Find templates for this day (0-6, matches date-fns getDay)
+            const dayTemplates = templates.filter(t => t.day_of_week === getDay(day))
+
             return (
               <div key={day.toString()} className="relative border-r border-gray-200 last:border-r-0 bg-white group">
                 {/* Background grid lines */}
                 {hours.map(hour => (
                   <div 
                     key={`${day}-${hour}`} 
-                    className="h-[60px] border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
+                    className="h-[40px] border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
                     onClick={() => handleTimeSlotClick(day, hour)}
                   />
                 ))}
 
-                {/* Shifts */}
-                {dayShifts.map(shift => (
-                  <div
-                    key={shift.id}
-                    className="absolute inset-x-1 rounded bg-indigo-100 border border-indigo-300 hover:bg-indigo-200 cursor-pointer z-10 shadow-sm transition-colors overflow-hidden"
-                    style={getShiftStyle(shift)}
-                    onClick={(e) => handleShiftClick(e, shift)}
-                  >
-                    <div className="px-1 py-0.5 text-xs text-indigo-800 font-medium truncate">
-                      {format(new Date(shift.start_time), 'HH:mm')} - {format(new Date(shift.end_time), 'HH:mm')}
+                {/* Templates (Ghost Shifts) */}
+                {dayTemplates.map((tmpl, idx) => {
+                  // Parse "HH:MM:SS" to Date objects on the current day
+                  const start = parse(tmpl.start_time, 'HH:mm:ss', day)
+                  const end = parse(tmpl.end_time, 'HH:mm:ss', day)
+                  const surname = getSurname(trainerName)
+                  
+                  // Check for overlap with actual shifts
+                  const hasOverlap = dayShifts.some(shift => {
+                    const shiftStart = new Date(shift.start_time)
+                    const shiftEnd = new Date(shift.end_time)
+                    return (start < shiftEnd && end > shiftStart)
+                  })
+
+                  if (hasOverlap) return null
+
+                  return (
+                    <div
+                      key={`tmpl-${idx}`}
+                      className="absolute inset-x-1 rounded bg-indigo-50 border border-indigo-200 pointer-events-none z-0 flex items-center justify-center overflow-hidden"
+                      style={getShiftStyle(start, end)}
+                    >
+                      <div className="w-full text-center px-0.5">
+                        <div className="text-[10px] text-indigo-900 leading-tight break-words font-medium">
+                          {surname}
+                        </div>
+                        {/* 
+                        <div className="text-[9px] text-indigo-700 font-medium leading-tight">
+                          (固定)
+                        </div>
+                        */}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
+
+                {/* Shifts */}
+                {dayShifts.map(shift => {
+                  const surname = getSurname(shift.trainer?.full_name || trainerName)
+                  const isSelected = selectedShiftIds.includes(shift.id)
+
+                  return (
+                    <div
+                      key={shift.id}
+                      className={`absolute inset-x-1 rounded border cursor-pointer z-10 shadow-sm transition-colors overflow-hidden flex items-center justify-center
+                        ${isSelected 
+                          ? 'bg-orange-100 border-orange-400 hover:bg-orange-200 ring-2 ring-orange-400 ring-opacity-50' 
+                          : 'bg-indigo-100 border-indigo-300 hover:bg-indigo-200'
+                        }`}
+                      style={getShiftStyle(new Date(shift.start_time), new Date(shift.end_time))}
+                      onClick={(e) => handleShiftClick(e, shift)}
+                    >
+                      <div className="w-full px-0.5 text-center">
+                        <span className={`relative z-50 text-[10px] leading-tight break-words block ${isSelected ? 'text-orange-900 font-medium' : 'text-indigo-900'}`}>
+                          {surname}
+                        </span>
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
             )
           })}
@@ -152,6 +229,17 @@ export default function ShiftCalendar({ currentDate, shifts, onShiftCreate, onSh
   )
 }
 
+// Helper to generate time options (30 min intervals)
+const generateTimeOptions = () => {
+  const options = []
+  for (let i = 0; i < 24; i++) {
+    const hour = i.toString().padStart(2, '0')
+    options.push(`${hour}:00`)
+    options.push(`${hour}:30`)
+  }
+  return options
+}
+
 // Sub-component for editing shift
 function ShiftEditModal({ shift, isOpen, onClose, onSave, onDelete }: { 
   shift: Shift, 
@@ -163,6 +251,7 @@ function ShiftEditModal({ shift, isOpen, onClose, onSave, onDelete }: {
   const [startTime, setStartTime] = useState(format(new Date(shift.start_time), 'HH:mm'))
   const [endTime, setEndTime] = useState(format(new Date(shift.end_time), 'HH:mm'))
   const [loading, setLoading] = useState(false)
+  const timeOptions = generateTimeOptions()
 
   const handleSave = async () => {
     setLoading(true)
@@ -174,6 +263,13 @@ function ShiftEditModal({ shift, isOpen, onClose, onSave, onDelete }: {
       const newStart = setMinutes(setHours(baseDate, sh), sm)
       const newEnd = setMinutes(setHours(baseDate, eh), em)
       
+      // Validation
+      if (isAfter(newStart, newEnd) || newStart.getTime() === newEnd.getTime()) {
+        alert('終了時間は開始時間より後に設定してください')
+        setLoading(false)
+        return
+      }
+
       await onSave(shift.id, newStart, newEnd)
       onClose()
     } catch (e) {
@@ -209,21 +305,27 @@ function ShiftEditModal({ shift, isOpen, onClose, onSave, onDelete }: {
         <div className="space-y-4 mb-6">
           <div>
             <label className="block text-xs text-gray-500 mb-1">開始</label>
-            <input 
-              type="time" 
+            <select
               className="w-full border rounded p-2"
               value={startTime}
               onChange={e => setStartTime(e.target.value)}
-            />
+            >
+              {timeOptions.map(t => (
+                <option key={`start-${t}`} value={t}>{t}</option>
+              ))}
+            </select>
           </div>
           <div>
             <label className="block text-xs text-gray-500 mb-1">終了</label>
-            <input 
-              type="time" 
+            <select
               className="w-full border rounded p-2"
               value={endTime}
               onChange={e => setEndTime(e.target.value)}
-            />
+            >
+              {timeOptions.map(t => (
+                <option key={`end-${t}`} value={t}>{t}</option>
+              ))}
+            </select>
           </div>
         </div>
 

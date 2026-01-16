@@ -3,10 +3,10 @@
 import { useState, useEffect } from 'react'
 import { ShiftTemplate } from '@/types'
 
-interface TemplateModalProps {
+interface TrainerTemplateModalProps {
   isOpen: boolean
   onClose: () => void
-  trainerId: string
+  token: string
   onSave: () => void
 }
 
@@ -20,21 +20,21 @@ const DAYS_OF_WEEK = [
   { id: 0, name: '日' },
 ]
 
-export default function TemplateModal({ isOpen, onClose, trainerId, onSave }: TemplateModalProps) {
+export default function TrainerTemplateModal({ isOpen, onClose, token, onSave }: TrainerTemplateModalProps) {
   const [loading, setLoading] = useState(false)
   const [templates, setTemplates] = useState<{ dayOfWeek: number; startTime: string; endTime: string; enabled: boolean }[]>([])
 
   // Initialize templates with empty values for all days
   useEffect(() => {
-    if (isOpen && trainerId) {
+    if (isOpen && token) {
       fetchTemplates()
     }
-  }, [isOpen, trainerId])
+  }, [isOpen, token])
 
   const fetchTemplates = async () => {
     try {
       setLoading(true)
-      const res = await fetch(`/api/admin/shifts/templates?trainerId=${trainerId}`)
+      const res = await fetch(`/api/trainer/shifts/templates?token=${token}`)
       if (res.ok) {
         const data = await res.json()
         const fetchedTemplates: ShiftTemplate[] = data.templates || []
@@ -44,8 +44,8 @@ export default function TemplateModal({ isOpen, onClose, trainerId, onSave }: Te
           const found = fetchedTemplates.find(t => t.day_of_week === day.id)
           return {
             dayOfWeek: day.id,
-            startTime: found ? found.start_time.slice(0, 5) : '10:00',
-            endTime: found ? found.end_time.slice(0, 5) : '19:00',
+            startTime: found ? found.start_time.slice(0, 5) : '09:00',
+            endTime: found ? found.end_time.slice(0, 5) : '21:00',
             enabled: !!found
           }
         })
@@ -75,11 +75,11 @@ export default function TemplateModal({ isOpen, onClose, trainerId, onSave }: Te
       setLoading(true)
       const activeTemplates = templates.filter(t => t.enabled)
       
-      const res = await fetch('/api/admin/shifts/templates', {
+      const res = await fetch('/api/trainer/shifts/templates', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          trainerId,
+          token,
           templates: activeTemplates
         })
       })
@@ -120,7 +120,7 @@ export default function TemplateModal({ isOpen, onClose, trainerId, onSave }: Te
           ) : (
             <div className="space-y-4">
               <p className="text-sm text-gray-500 mb-4">
-                曜日ごとの基本勤務時間を設定します。「反映」を行うまで実際のスケジュールには適用されません。
+                曜日ごとの基本勤務時間を設定します。設定した時間はカレンダーに固定シフトとして表示されます。
               </p>
               
               {templates.map((template, index) => {
