@@ -223,6 +223,24 @@ function AdminDashboard() {
             </div>
           </Link>
 
+          {/* シフト管理（新規） */}
+          <Link
+            href="/admin/shifts"
+            className="group bg-gradient-to-br from-white to-teal-50 hover:from-teal-50 hover:to-teal-100 border border-teal-200 p-8 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col min-h-[200px] transform hover:-translate-y-1"
+          >
+            <div className="flex items-center mb-6">
+              <div className="w-16 h-16 bg-gradient-to-br from-teal-100 to-teal-200 rounded-xl flex items-center justify-center group-hover:from-teal-200 group-hover:to-teal-300 transition-all duration-300 shadow-sm">
+                <svg className="w-8 h-8 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+            </div>
+            <div className="flex-1">
+              <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-teal-800 transition-colors duration-200">シフト管理</h3>
+              <p className="text-base text-gray-600 leading-relaxed">トレーナーシフトの管理</p>
+            </div>
+          </Link>
+
           {/* 分析（新規） */}
           <Link
             href="/admin/analytics"
