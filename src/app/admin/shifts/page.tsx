@@ -103,6 +103,8 @@ export default function ShiftManagementPage() {
   // Fetch templates and shifts
   // Combined effect to avoid race conditions or redundant fetches
   useEffect(() => {
+    let isCancelled = false
+
     const fetchData = async () => {
       // Determine effective storeId
       const storeId = (currentStoreId && currentStoreId !== 'all') 
@@ -115,6 +117,10 @@ export default function ShiftManagementPage() {
       }
 
       setLoading(true)
+      // Clear data immediately to prevent displaying stale data from previous trainer/week
+      setShifts([])
+      setTemplates([])
+
       try {
         const start = startOfWeek(currentDate, { weekStartsOn: 1 })
         const end = endOfWeek(currentDate, { weekStartsOn: 1 })
@@ -130,12 +136,10 @@ export default function ShiftManagementPage() {
         
         if (templatesUrl) {
           const tRes = await fetch(templatesUrl, { cache: 'no-store' })
-          if (tRes.ok) {
+          if (tRes.ok && !isCancelled) {
             const tData = await tRes.json()
             setTemplates(tData.templates || [])
           }
-        } else {
-          setTemplates([])
         }
 
         // 2. Fetch Shifts
@@ -156,18 +160,18 @@ export default function ShiftManagementPage() {
 
         if (shouldFetchShifts) {
           const sRes = await fetch(`/api/admin/shifts?${params}`, { cache: 'no-store' })
-          if (sRes.ok) {
+          if (sRes.ok && !isCancelled) {
             const sData = await sRes.json()
             setShifts(sData.shifts || [])
           }
-        } else {
-          setShifts([])
         }
 
       } catch (e) {
         console.error('Failed to fetch data', e)
       } finally {
-        setLoading(false)
+        if (!isCancelled) {
+          setLoading(false)
+        }
       }
     }
 
@@ -175,7 +179,11 @@ export default function ShiftManagementPage() {
     if (status === 'authenticated' && (allTrainers.length > 0 || (currentStoreId && currentStoreId !== 'all'))) {
       fetchData()
     }
-  }, [selectedTrainerId, currentDate, viewMode, allTrainers, session, currentStoreId, filteredTrainers.length]) // Added filteredTrainers.length to retry if list changes
+
+    return () => {
+      isCancelled = true
+    }
+  }, [selectedTrainerId, currentDate, viewMode, allTrainers, session, currentStoreId, filteredTrainers.length])
 
   // Handlers
   const handlePrevWeek = () => setCurrentDate(subDays(currentDate, 7))
