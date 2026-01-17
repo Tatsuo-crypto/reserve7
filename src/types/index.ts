@@ -37,6 +37,7 @@ export interface Trainer {
   store_id?: string; // Added to match DB column
   token?: string;
   created_at?: string;
+  google_calendar_id?: string; // Added for calendar sync
 }
 
 // ==============================
