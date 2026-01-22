@@ -18,6 +18,8 @@ export async function GET(request: NextRequest) {
         const storeId = searchParams.get('storeId') || user.storeId
         const period = searchParams.get('period') || '1y'
 
+        console.log('[Analytics Debug] Request params:', { storeId, period, userStoreId: user.storeId })
+
         // Determine date range based on period
         const today = new Date()
         let startDate: Date
@@ -67,17 +69,28 @@ export async function GET(request: NextRequest) {
         // Fetch history
         let query = supabaseAdmin
             .from('membership_history')
-            .select('user_id, start_date, end_date, status, store_id, monthly_fee, plan, users(full_name)')
-            .limit(100000)
-
+            .select('user_id, start_date, end_date, status, store_id, monthly_fee, plan, users:user_id(full_name, monthly_fee, plan)')
+            
         // Filter by store if provided (and not 'all' or empty)
         // Note: storeId might be null in DB for some records?
+
         if (storeId && storeId !== 'all') {
             // Logic: store_id in history represents snapshot.
             query = query.eq('store_id', storeId)
         }
 
-        const { data: history, error } = await query
+        let { data: historyData, error } = await query.limit(100000)
+        
+        let history = historyData || []
+
+        // Defensive In-Memory Filter for History
+        if (storeId && storeId !== 'all') {
+            const originalLength = history.length
+            history = history.filter(h => h.store_id === storeId)
+            if (history.length !== originalLength) {
+                console.warn(`[Analytics Warning] History DB filter leak detected! Filtered in-memory from ${originalLength} to ${history.length}`)
+            }
+        }
 
         if (error) throw error
 
@@ -152,12 +165,15 @@ export async function GET(request: NextRequest) {
                 // We ignore 'withdrawn' status records for the count now, 
                 // because we rely on the END of the active period to place the withdrawal.
                 return false
-            }).map((h: any) => ({
-                user_id: h.user_id,
-                full_name: h.users?.full_name || '不明',
-                plan: h.plan,
-                date: h.end_date
-            }))
+            }).map((h: any) => {
+                const user = Array.isArray(h.users) ? h.users[0] : h.users
+                return {
+                    user_id: h.user_id,
+                    full_name: user?.full_name || '不明',
+                    plan: h.plan,
+                    date: h.end_date
+                }
+            })
 
             // Suspended members in this month
             const suspendedMembers = history.filter(h => {
@@ -177,12 +193,15 @@ export async function GET(request: NextRequest) {
                 if (isWithdrawnInThisMonth) return false
 
                 return true
-            }).map((h: any) => ({
-                user_id: h.user_id,
-                full_name: h.users?.full_name || '不明',
-                plan: h.plan,
-                date: h.start_date
-            }))
+            }).map((h: any) => {
+                const user = Array.isArray(h.users) ? h.users[0] : h.users
+                return {
+                    user_id: h.user_id,
+                    full_name: user?.full_name || '不明',
+                    plan: h.plan,
+                    date: h.start_date
+                }
+            })
 
             const suspendedCount = suspendedMembers.length
 
@@ -221,12 +240,15 @@ export async function GET(request: NextRequest) {
                 if (isContinuation) return false
 
                 return true
-            }).map((h: any) => ({
-                user_id: h.user_id,
-                full_name: h.users?.full_name || '不明',
-                plan: h.plan,
-                date: h.start_date
-            }))
+            }).map((h: any) => {
+                const user = Array.isArray(h.users) ? h.users[0] : h.users
+                return {
+                    user_id: h.user_id,
+                    full_name: user?.full_name || '不明',
+                    plan: h.plan,
+                    date: h.start_date
+                }
+            })
 
             return {
                 month: format(date, 'yyyy-MM'),
@@ -243,17 +265,28 @@ export async function GET(request: NextRequest) {
         // Fetch sales
         let salesQuery = supabaseAdmin
             .from('sales')
-            .select('amount, target_date, store_id')
+            .select('amount, target_date, store_id, user_id, type')
             .gte('target_date', format(monthList[0], 'yyyy-MM-01'))
             .lte('target_date', format(endOfMonth(today), 'yyyy-MM-dd'))
-            .limit(100000)
-
+            
         if (storeId && storeId !== 'all') {
             salesQuery = salesQuery.eq('store_id', storeId)
         }
-
-        const { data: salesData, error: salesError } = await salesQuery
+        
+        // Apply limit at the end execution
+        let { data: salesDataResult, error: salesError } = await salesQuery.limit(100000)
         if (salesError) throw salesError
+
+        let salesData = salesDataResult || []
+
+        // Defensive In-Memory Filter for Sales
+        if (storeId && storeId !== 'all') {
+            const originalLength = salesData.length
+            salesData = salesData.filter(s => s.store_id === storeId)
+            if (salesData.length !== originalLength) {
+                console.warn(`[Analytics Warning] Sales DB filter leak detected! Filtered in-memory from ${originalLength} to ${salesData.length}`)
+            }
+        }
 
         const salesHistory = monthList.map(date => {
             const monthStr = format(date, 'yyyy-MM-01') // target_date is first of month
@@ -268,14 +301,60 @@ export async function GET(request: NextRequest) {
         })
 
         // Calculate Projected Sales for current month
-        // Logic: Sum of 'monthly_fee' for each currently active user from history
-        // 1. Get List of active records
-        const activeRecords = history.filter(h => {
+        // Logic aligned with Sales Management Page:
+        // Projected = (Actual Paid Sales) + (Estimated Unpaid Monthly Fees)
+        
+        const currentMonthStr = format(startOfMonth(today), 'yyyy-MM-01')
+        const currentMonthSales = (salesData || []).filter(s => s.target_date === currentMonthStr)
+        
+        // 1. Total Paid (Actual)
+        const totalPaid = currentMonthSales.reduce((sum, s) => sum + s.amount, 0)
+        
+        // 2. Identify users who have paid 'monthly_fee' globally
+        // This ensures users who paid in another store aren't counted as "Unpaid" here
+        const { data: globalPayments } = await supabaseAdmin
+            .from('sales')
+            .select('user_id')
+            .eq('target_date', currentMonthStr)
+            .eq('type', 'monthly_fee')
+
+        const paidUserIds = new Set(
+            (globalPayments || []).map(s => s.user_id)
+        )
+
+        // 3. Calculate Unpaid (Active members who haven't paid yet)
+        
+        // Step A: Get all active records for the month
+        const allActiveRecords = history.filter(h => {
             if (h.status !== 'active') return false
-            if (h.end_date && new Date(h.end_date) <= today) return false
+            const monthStart = startOfMonth(today)
+            const monthEnd = endOfMonth(today)
+            const start = new Date(h.start_date)
+            const end = h.end_date ? new Date(h.end_date) : null
+            // Match Sales API: Active at any point during the month
+            if (!(start <= monthEnd && (!end || end >= monthStart))) return false
+            return true
+        })
+
+        // Step B: Deduplicate (Keep latest record per user)
+        // Match Sales API behavior
+        allActiveRecords.sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime())
+        
+        const activeMembersMap = new Map()
+        for (const m of allActiveRecords) {
+            activeMembersMap.set(m.user_id, m)
+        }
+        const uniqueActiveMembers = Array.from(activeMembersMap.values())
+
+        // Step C: Filter for Unpaid & Recurring Plans
+        const unpaidActiveRecords = uniqueActiveMembers.filter((h: any) => {
+            // Exclude if already paid
+            if (paidUserIds.has(h.user_id)) return false
 
             // Exclude non-recurring plans
-            const planName = h.plan || ''
+            const user = Array.isArray(h.users) ? h.users[0] : h.users
+            const planName = h.plan || user?.plan || ''
+            
             if (planName.includes('ダイエット') || 
                 planName.includes('都度') || 
                 planName.includes('体験') || 
@@ -286,19 +365,76 @@ export async function GET(request: NextRequest) {
             
             return true
         })
+        
+        const unpaidUserIds = unpaidActiveRecords.map((m: any) => m.user_id)
 
-        // 2. Sum monthly_fee
-        // Since we filtered history by storeId above, this list is already filtered.
-        // And since we backfilled monthly_fee, we can use it directly.
-        const projectedSales = activeRecords.reduce((sum, record) => {
-            return sum + (record.monthly_fee || 0)
+        // Fetch recent sales for fallback estimation (matches Sales API)
+        const userLatestAmount = new Map<string, number>()
+        if (unpaidUserIds.length > 0) {
+            const { data: recentSales } = await supabaseAdmin
+                .from('sales')
+                .select('user_id, amount')
+                .eq('type', 'monthly_fee')
+                .in('user_id', unpaidUserIds)
+                .gte('target_date', format(subMonths(startOfMonth(today), 6), 'yyyy-MM-01'))
+                .order('payment_date', { ascending: false })
+
+            if (recentSales) {
+                for (const sale of recentSales) {
+                    if (!userLatestAmount.has(sale.user_id)) {
+                        userLatestAmount.set(sale.user_id, sale.amount)
+                    }
+                }
+            }
+        }
+
+        // 4. Sum unpaid fees
+        const totalUnpaid = unpaidActiveRecords.reduce((sum, record: any) => {
+            // Priority: History Snapshot -> Current User Settings (fallback) -> Recent Sales (last resort)
+            let fee = record.monthly_fee
+            
+            if (fee === null || fee === undefined) {
+                // users might be typed as array in some generated types, though it's 1:1
+                const user = Array.isArray(record.users) ? record.users[0] : record.users
+                fee = user?.monthly_fee
+            }
+            
+            if (fee === null || fee === undefined) {
+                fee = userLatestAmount.get(record.user_id) || 0
+            }
+
+            // Match Sales API: Only add if amount > 0
+            if (fee > 0) {
+                return sum + fee
+            }
+            return sum
         }, 0)
 
-        return NextResponse.json({
+        const projectedSales = totalPaid + totalUnpaid
+
+        // Update salesHistory for current month to use projectedSales
+        // This ensures the chart matches the "Projected Sales" display
+        const currentMonthKey = format(startOfMonth(today), 'yyyy-MM')
+        const finalSalesHistory = salesHistory.map(item => {
+            if (item.month === currentMonthKey) {
+                return {
+                    ...item,
+                    amount: projectedSales
+                }
+            }
+            return item
+        })
+
+        const response = NextResponse.json({
             memberHistory,
-            salesHistory,
+            salesHistory: finalSalesHistory,
             projectedSales
         })
+
+        // Prevent caching
+        response.headers.set('Cache-Control', 'no-store, max-age=0')
+
+        return response
 
     } catch (error: any) {
         console.error('Analytics API error:', error)

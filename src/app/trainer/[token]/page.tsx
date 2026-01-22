@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { getStoreDisplayName } from '@/lib/auth-utils'
 
 interface Trainer {
   id: string
@@ -68,10 +69,6 @@ export default function TrainerDashboardPage() {
         </div>
       </div>
     )
-  }
-
-  const getStoreDisplayName = (storeId: string) => {
-    return storeId === 'tandjgym@gmail.com' ? 'T&J GYM1号店' : 'T&J GYM2号店'
   }
 
   return (

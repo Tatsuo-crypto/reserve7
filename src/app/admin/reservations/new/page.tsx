@@ -6,12 +6,14 @@ import { useSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect } from 'react'
 import { getStoreDisplayName } from '@/lib/auth-utils'
+import { getPlanRank } from '@/lib/utils/member'
 
 interface Client {
   id: string
   name: string
   email: string
   displayName: string
+  plan?: string
 }
 
 type Trainer = {
@@ -33,6 +35,8 @@ function NewReservationContent() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const searchParams = useSearchParams()
+  const trainerToken = searchParams?.get('trainerToken')
+  
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
@@ -41,6 +45,7 @@ function NewReservationContent() {
   const [loadingClients, setLoadingClients] = useState(true)
   const [trainers, setTrainers] = useState<Trainer[]>([])
   const [loadingTrainers, setLoadingTrainers] = useState(true)
+  const [trainerInfo, setTrainerInfo] = useState<{ id: string, name: string, storeId: string } | null>(null)
 
   const [formData, setFormData] = useState({
     clientId: '',
@@ -60,12 +65,42 @@ function NewReservationContent() {
     trainerId: '',
   })
 
+  // Fetch trainer info if token is present
+  useEffect(() => {
+    const fetchTrainerInfo = async () => {
+      if (!trainerToken) return
+      try {
+        const res = await fetch(`/api/auth/trainer-token?token=${trainerToken}`)
+        if (res.ok) {
+          const data = await res.json()
+          setTrainerInfo(data.trainer)
+          // Set calendarId from trainer info - use storeId (UUID) for fetching trainers
+          setFormData(prev => ({
+            ...prev,
+            calendarId: data.trainer.storeId
+          }))
+        } else {
+          router.push('/login')
+        }
+      } catch (e) {
+        console.error('Failed to fetch trainer info', e)
+        router.push('/login')
+      }
+    }
+    fetchTrainerInfo()
+  }, [trainerToken, router])
+
   // Fetch clients and set default start time after component mounts
   useEffect(() => {
     const fetchClients = async () => {
       try {
         // Use API endpoint to fetch clients (works with RLS)
-        const response = await fetch('/api/admin/members')
+        // Add token if available
+        const url = trainerToken 
+          ? `/api/admin/members?token=${trainerToken}`
+          : '/api/admin/members'
+          
+        const response = await fetch(url)
 
         if (!response.ok) {
           throw new Error('Failed to fetch clients')
@@ -81,8 +116,15 @@ function NewReservationContent() {
             id: member.id,
             name: member.full_name,
             email: member.email,
-            displayName: member.full_name
+            displayName: member.full_name,
+            plan: member.plan
           }))
+          .sort((a: Client, b: Client) => {
+            const rankA = getPlanRank(a.plan)
+            const rankB = getPlanRank(b.plan)
+            if (rankA !== rankB) return rankA - rankB
+            return a.name.localeCompare(b.name, 'ja')
+          })
 
         setClients(formattedClients)
       } catch (error) {
@@ -92,10 +134,10 @@ function NewReservationContent() {
       }
     }
 
-    if (session) {
+    if (session || trainerToken) {
       fetchClients()
     }
-  }, [session])
+  }, [session, trainerToken])
 
   // Set default values based on user's store
   useEffect(() => {
@@ -106,6 +148,12 @@ function NewReservationContent() {
         startTime: prev.startTime || getDefaultDateTime(),
         calendarId: userStoreId
       }))
+    } else if (trainerInfo) {
+      setFormData(prev => ({
+        ...prev,
+        startTime: prev.startTime || getDefaultDateTime(),
+        calendarId: trainerInfo.storeId
+      }))
     } else {
       // Set default time even if no session
       setFormData(prev => ({
@@ -113,7 +161,7 @@ function NewReservationContent() {
         startTime: prev.startTime || getDefaultDateTime()
       }))
     }
-  }, [session])
+  }, [session, trainerInfo])
 
   // Load active trainers for current store when calendarId changes
   useEffect(() => {
@@ -121,7 +169,11 @@ function NewReservationContent() {
       if (!formData.calendarId) return
       try {
         setLoadingTrainers(true)
-        const res = await fetch(`/api/admin/trainers?status=active&storeId=${encodeURIComponent(formData.calendarId)}`, { credentials: 'include' })
+        const url = trainerToken
+          ? `/api/admin/trainers?status=active&storeId=${encodeURIComponent(formData.calendarId)}&token=${trainerToken}`
+          : `/api/admin/trainers?status=active&storeId=${encodeURIComponent(formData.calendarId)}`
+          
+        const res = await fetch(url, { credentials: 'include' })
         if (res.ok) {
           const data = await res.json()
           setTrainers(data.trainers || [])
@@ -140,6 +192,8 @@ function NewReservationContent() {
   // Prefill startTime from query param if provided (e.g., from Timeline click)
   useEffect(() => {
     const qsStartTime = searchParams?.get('startTime')
+    const qsTrainerId = searchParams?.get('trainerId') // Get trainerId from query params
+
     if (qsStartTime) {
       // Extract date and time from startTime (YYYY-MM-DDTHH:mm format)
       const [date, time] = qsStartTime.split('T') // Split to get YYYY-MM-DD and HH:mm
@@ -158,18 +212,32 @@ function NewReservationContent() {
         blockedDate: date, // Set blockedDate for when switching to blocked type
         blockedStartTime: time || prev.blockedStartTime, // Set blockedStartTime from clicked time
         blockedEndTime: blockedEndTime, // Set blockedEndTime as 1 hour after start
+        trainerId: qsTrainerId || prev.trainerId, // Set trainerId from query param
+      }))
+    } else if (qsTrainerId) {
+      // If only trainerId is provided
+      setFormData(prev => ({
+        ...prev,
+        trainerId: qsTrainerId
       }))
     }
   }, [searchParams])
 
   // Check admin access
   useEffect(() => {
-    if (status === 'unauthenticated') {
+    if (status === 'loading') return
+    
+    // Allow if session is admin OR valid trainer token exists
+    const isSessionAdmin = status === 'authenticated' && session?.user?.role === 'ADMIN'
+    const isTrainerAuth = !!trainerToken
+    
+    if (!isSessionAdmin && !isTrainerAuth) {
       router.push('/login')
-    } else if (status === 'authenticated' && session?.user?.role !== 'ADMIN') {
+    } else if (status === 'authenticated' && !isSessionAdmin && !isTrainerAuth) {
+      // Logged in but not admin and no token
       router.push('/reservations')
     }
-  }, [status, session, router])
+  }, [status, session, router, trainerToken])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target
@@ -225,13 +293,13 @@ function NewReservationContent() {
 
       // For blocked time, we don't need a client
       let selectedClient = null
-      if (!formData.isBlocked && !formData.isTrial && !formData.isGuest) {
+        if (!formData.isBlocked && !formData.isTrial && !formData.isGuest) {
         if (!formData.clientId.trim()) {
-          throw new Error('クライアントを選択してください')
+          throw new Error('会員を選択してください')
         }
         selectedClient = clients.find(client => client.id === formData.clientId)
         if (!selectedClient) {
-          throw new Error('有効なクライアントを選択してください')
+          throw new Error('有効な会員を選択してください')
         }
       }
 
@@ -300,6 +368,7 @@ function NewReservationContent() {
           calendarId: formData.calendarId,
           notes: trialNotes,
           title: `体験 - ${formData.trialClientName}`,
+          ...(formData.trainerId ? { trainerId: formData.trainerId } : {}),
         }
       } else if (formData.isGuest) {
         // For guest reservation - use special clientId and include name in notes
@@ -312,6 +381,7 @@ function NewReservationContent() {
           calendarId: formData.calendarId,
           notes: guestNotes,
           title: `ゲスト - ${formData.guestName}`,
+          ...(formData.trainerId ? { trainerId: formData.trainerId } : {}),
         }
       } else {
         // For regular client reservation
@@ -321,10 +391,15 @@ function NewReservationContent() {
           duration: formData.duration,
           calendarId: formData.calendarId,
           notes: formData.notes,
+          ...(formData.trainerId ? { trainerId: formData.trainerId } : {}),
         }
       }
 
-      const response = await fetch('/api/admin/reservations', {
+      const url = trainerToken 
+        ? `/api/admin/reservations?token=${trainerToken}`
+        : '/api/admin/reservations'
+
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -360,7 +435,10 @@ function NewReservationContent() {
 
       // Redirect to calendar after 1.5 seconds
       setTimeout(() => {
-        router.push('/admin/calendar')
+        const url = trainerToken 
+          ? `/admin/calendar?trainerToken=${trainerToken}`
+          : '/admin/calendar'
+        router.push(url)
       }, 1500)
 
     } catch (error) {
@@ -410,7 +488,7 @@ function NewReservationContent() {
               </button>
               <div className="text-center">
                 <h1 className="text-3xl font-bold text-gray-900">新規予約作成</h1>
-                <p className="mt-2 text-gray-600">クライアントの予約を作成します</p>
+                <p className="mt-2 text-gray-600">会員の予約を作成します</p>
               </div>
             </div>
           </div>
@@ -444,41 +522,75 @@ function NewReservationContent() {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 予約タイプ *
               </label>
-              <div className="space-y-2">
-                <label className="flex items-center">
+              <div className="grid grid-cols-2 gap-4">
+                <label className={`relative flex flex-col items-center justify-center p-4 border rounded-lg cursor-pointer transition-all ${
+                  !formData.isBlocked && !formData.isTrial && !formData.isGuest
+                    ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-500'
+                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                }`}>
                   <input
                     type="radio"
                     name="reservationType"
                     value="client"
                     checked={!formData.isBlocked && !formData.isTrial && !formData.isGuest}
                     onChange={() => setFormData(prev => ({ ...prev, isBlocked: false, isTrial: false, isGuest: false, clientId: '' }))}
-                    className="mr-2"
+                    className="sr-only"
                   />
-                  <span>予約</span>
+                  <div className="w-8 h-8 mb-2 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  </div>
+                  <span className="font-medium text-gray-900">予約</span>
                 </label>
-                <label className="flex items-center">
+
+                <label className={`relative flex flex-col items-center justify-center p-4 border rounded-lg cursor-pointer transition-all ${
+                  formData.isTrial
+                    ? 'border-green-500 bg-green-50 ring-2 ring-green-500'
+                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                }`}>
                   <input
                     type="radio"
                     name="reservationType"
                     value="trial"
                     checked={formData.isTrial}
                     onChange={() => setFormData(prev => ({ ...prev, isBlocked: false, isTrial: true, isGuest: false, clientId: '' }))}
-                    className="mr-2"
+                    className="sr-only"
                   />
-                  <span>体験</span>
+                  <div className="w-8 h-8 mb-2 rounded-full bg-green-100 text-green-600 flex items-center justify-center">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                    </svg>
+                  </div>
+                  <span className="font-medium text-gray-900">体験</span>
                 </label>
-                <label className="flex items-center">
+
+                <label className={`relative flex flex-col items-center justify-center p-4 border rounded-lg cursor-pointer transition-all ${
+                  formData.isGuest
+                    ? 'border-purple-500 bg-purple-50 ring-2 ring-purple-500'
+                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                }`}>
                   <input
                     type="radio"
                     name="reservationType"
                     value="guest"
                     checked={formData.isGuest}
                     onChange={() => setFormData(prev => ({ ...prev, isBlocked: false, isTrial: false, isGuest: true, clientId: '' }))}
-                    className="mr-2"
+                    className="sr-only"
                   />
-                  <span>ゲスト</span>
+                  <div className="w-8 h-8 mb-2 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                  </div>
+                  <span className="font-medium text-gray-900">ゲスト</span>
                 </label>
-                <label className="flex items-center">
+
+                <label className={`relative flex flex-col items-center justify-center p-4 border rounded-lg cursor-pointer transition-all ${
+                  formData.isBlocked
+                    ? 'border-red-500 bg-red-50 ring-2 ring-red-500'
+                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                }`}>
                   <input
                     type="radio"
                     name="reservationType"
@@ -507,9 +619,14 @@ function NewReservationContent() {
                         blockedEndTime: blockedEndTime, // Set as 1 hour after start
                       }))
                     }}
-                    className="mr-2"
+                    className="sr-only"
                   />
-                  <span>予約不可</span>
+                  <div className="w-8 h-8 mb-2 rounded-full bg-red-100 text-red-600 flex items-center justify-center">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                    </svg>
+                  </div>
+                  <span className="font-medium text-gray-900">予約不可</span>
                 </label>
               </div>
             </div>
@@ -518,11 +635,11 @@ function NewReservationContent() {
             {!formData.isBlocked && !formData.isTrial && !formData.isGuest && (
               <div>
                 <label htmlFor="clientId" className="block text-sm font-medium text-gray-700 mb-2">
-                  クライアント選択 *
+                  会員選択 *
                 </label>
                 {loadingClients ? (
                   <div className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500">
-                    クライアント情報を読み込み中...
+                    会員情報を読み込み中...
                   </div>
                 ) : clients.length === 0 ? (
                   <div className="w-full px-3 py-2 border border-yellow-300 rounded-lg bg-yellow-50 text-yellow-800">
@@ -538,17 +655,17 @@ function NewReservationContent() {
                       required
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
-                      <option value="">クライアントを選択してください</option>
+                      <option value="">会員を選択してください</option>
                       {clients && clients.map(client => (
                         <option key={client.id} value={client.id}>
-                          {client.name} ({client.email.startsWith('no-email-') ? '未登録' : client.email})
+                          {client.name} ({client.plan || 'プランなし'})
                         </option>
                       ))}
                     </select>
                   </>
                 )}
                 <p className="mt-1 text-sm text-gray-500">
-                  予約を作成するクライアントを選択してください
+                  予約を作成する会員を選択してください
                 </p>
               </div>
             )}
@@ -645,30 +762,6 @@ function NewReservationContent() {
                     />
                   </div>
                 </div>
-
-                {/* Trainer selection for blocked time */}
-                <div>
-                  <label htmlFor="trainerId" className="block text-sm font-medium text-gray-700 mb-2">対象トレーナー（任意）</label>
-                  {loadingTrainers ? (
-                    <div className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500">
-                      トレーナー情報を読み込み中...
-                    </div>
-                  ) : (
-                    <select
-                      id="trainerId"
-                      name="trainerId"
-                      value={formData.trainerId}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="">店舗全体（全トレーナー）</option>
-                      {trainers.map(tr => (
-                        <option key={tr.id} value={tr.id}>{tr.full_name}</option>
-                      ))}
-                    </select>
-                  )}
-                  <p className="mt-1 text-sm text-gray-500">指定すると、そのトレーナーの枠のみ予約不可にします。</p>
-                </div>
               </div>
             ) : (
               // Regular reservation: datetime-local only (no duration needed)
@@ -708,20 +801,6 @@ function NewReservationContent() {
               </div>
             )}
 
-            {/* Store Display (Read-only) */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                店舗
-              </label>
-              <div className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700">
-                {session?.user?.email ? getStoreDisplayName(session.user.email) : 'T&J GYM1号店'}
-              </div>
-              <p className="mt-1 text-sm text-gray-500">
-                ログインしている店舗での予約作成です
-              </p>
-            </div>
-
-
             {/* Notes */}
             <div>
               <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-2">
@@ -747,44 +826,19 @@ function NewReservationContent() {
               <button
                 type="button"
                 onClick={() => router.back()}
-                className="px-8 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors w-32 flex items-center justify-center whitespace-nowrap"
+                className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
               >
                 キャンセル
               </button>
               <button
                 type="submit"
                 disabled={loading}
-                className="px-8 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors w-32 flex items-center justify-center whitespace-nowrap"
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {loading ? '作成中...' : (formData.isBlocked ? '予約不可設定' : (formData.isTrial ? '体験予約作成' : (formData.isGuest ? 'ゲスト予約作成' : '予約作成')))}
+                {loading ? '作成中...' : '予約作成'}
               </button>
             </div>
           </form>
-        </div>
-
-        {/* Info Box */}
-        <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <h3 className="text-sm font-medium text-blue-900 mb-2">
-            {formData.isBlocked ? '予約不可時間について' : (formData.isTrial ? '体験予約について' : (formData.isGuest ? 'ゲスト予約について' : '予約作成について'))}
-          </h3>
-          <ul className="text-sm text-blue-800 space-y-1">
-            {formData.isBlocked ? (
-              <>
-                <li>• 予約不可時間は他の予約と重複できません</li>
-                <li>• 営業時間外、休業日、メンテナンス時間などに使用してください</li>
-                <li>• 理由を入力すると管理しやすくなります</li>
-                <li>• 予約一覧で「予約不可」として表示されます</li>
-              </>
-            ) : (
-              <>
-                <li>• セッション時間は30分、60分、90分、120分から選択できます</li>
-                <li>• 同じ時間帯に重複する予約は作成できません</li>
-                <li>• クライアントのメールアドレスは登録済みのものを使用してください</li>
-                {formData.isTrial && <li>• 体験予約はメモに自動で [体験] が付与されます</li>}
-                {formData.isGuest && <li>• ゲスト予約はメモに自動で [ゲスト] が付与されます</li>}
-              </>
-            )}
-          </ul>
         </div>
       </div>
     </div>
@@ -793,7 +847,14 @@ function NewReservationContent() {
 
 export default function NewReservationPage() {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">読み込み中...</p>
+        </div>
+      </div>
+    }>
       <NewReservationContent />
     </Suspense>
   )

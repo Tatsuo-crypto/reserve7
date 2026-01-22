@@ -38,6 +38,7 @@ export async function GET(request: NextRequest) {
         )
       `)
             .eq('target_date', targetDateStr)
+            .limit(100000)
 
         if (storeId && storeId !== 'all') {
             query = query.eq('store_id', storeId)
@@ -52,15 +53,25 @@ export async function GET(request: NextRequest) {
 
         // 2. Calculate Unpaid (Projected - Paid Monthly Fees)
         
+        // Fetch ALL monthly fee payments for this month to check payment status globally
+        // This ensures a user who paid in Store A isn't marked as unpaid in Store B
+        const { data: globalPayments } = await supabaseAdmin
+            .from('sales')
+            .select('user_id')
+            .eq('target_date', targetDateStr)
+            .eq('type', 'monthly_fee')
+            .limit(100000)
+
         // Fetch active members during this month
         // Condition: status = 'active' AND start_date <= monthEnd AND (end_date IS NULL OR end_date >= monthStart)
         let membershipQuery = supabaseAdmin
             .from('membership_history')
-            .select('user_id, start_date, end_date, status, store_id, plan, monthly_fee, users:user_id(full_name, plan, monthly_fee)')
+            .select('user_id, start_date, end_date, status, store_id, plan, monthly_fee, users:user_id(full_name, plan, monthly_fee, transfer_day, created_at)')
             .eq('status', 'active')
             .lte('start_date', format(targetDateEnd, 'yyyy-MM-dd'))
             .or(`end_date.is.null,end_date.gte.${format(targetDateStart, 'yyyy-MM-dd')}`)
             .order('start_date', { ascending: true })
+            .limit(100000)
 
         if (storeId && storeId !== 'all') {
             membershipQuery = membershipQuery.eq('store_id', storeId)
@@ -78,15 +89,32 @@ export async function GET(request: NextRequest) {
         }
         const activeMembers = Array.from(activeMembersMap.values())
 
-        // Identify users who have already paid 'monthly_fee'
+        // Identify users who have already paid 'monthly_fee' globally
         const paidUserIds = new Set(
-            sales
-                .filter((s: any) => s.type === 'monthly_fee')
+            (globalPayments || [])
                 .map((s: any) => s.user_id)
         )
 
         // Identify Unpaid Members
-        const unpaidMembersList = (activeMembers || []).filter((m: any) => !paidUserIds.has(m.user_id))
+        const unpaidMembersList = (activeMembers || []).filter((m: any) => {
+            if (paidUserIds.has(m.user_id)) return false
+
+            // Exclude non-recurring plans
+            // Check both history plan and current user plan
+            // Note: users might be an array if the join returns multiple, though users:user_id should be one-to-one
+            const user = Array.isArray(m.users) ? m.users[0] : m.users
+            const planName = m.plan || user?.plan || ''
+            
+            if (planName.includes('ダイエット') || 
+                planName.includes('都度') || 
+                planName.includes('体験') || 
+                planName.includes('カウンセリング') ||
+                planName.includes('回コース')) {
+                return false
+            }
+
+            return true
+        })
         const unpaidUserIds = unpaidMembersList.map((m: any) => m.user_id)
 
         let totalUnpaid = 0
@@ -116,31 +144,53 @@ export async function GET(request: NextRequest) {
             }
 
             // Calculate Total Unpaid
-            unpaidDetails = unpaidMembersList.map((m: any) => {
+            for (const m of unpaidMembersList) {
                 // Priority: 
                 // 1. History Snapshot (m.monthly_fee) - The fee at the time of status/plan validity
                 // 2. Current User Fee (m.users.monthly_fee) - Fallback
                 // 3. Recent Sales Amount - Last resort
                 
+                const user = Array.isArray(m.users) ? m.users[0] : m.users
+
                 let amount = m.monthly_fee
                 if (amount === null || amount === undefined) {
-                    amount = m.users?.monthly_fee
+                    amount = user?.monthly_fee
                 }
                 
                 // If still no amount (e.g. 0 is valid, but null/undefined is not), try recent sales
                 if (amount === null || amount === undefined) {
                     amount = userLatestAmount.get(m.user_id) || 0
                 }
-                
-                totalUnpaid += amount
-                return {
-                    user_id: m.user_id,
-                    full_name: m.users?.full_name,
-                    plan: m.plan || m.users?.plan, // Use history plan if available
-                    estimated_amount: amount
+
+                if (amount > 0) {
+                    // Determine Transfer Day
+                    // Priority: Explicit transfer_day -> Membership Start Date day -> Default 27
+                    let transferDay = 27
+                    if (user?.transfer_day) {
+                        transferDay = user.transfer_day
+                    } else if (m.start_date) {
+                        // Parse YYYY-MM-DD safely without timezone issues
+                        const dayPart = m.start_date.split('-')[2]
+                        if (dayPart) {
+                            transferDay = parseInt(dayPart)
+                        } else {
+                            // Fallback if format is unexpected
+                            transferDay = new Date(m.start_date).getDate()
+                        }
+                    }
+
+                    totalUnpaid += amount
+                    unpaidDetails.push({
+                        user_id: m.user_id,
+                        full_name: user?.full_name,
+                        plan: m.plan || user?.plan, // Use history plan if available
+                        estimated_amount: amount,
+                        transfer_day: transferDay
+                    })
                 }
-            }).filter((d: any) => d.estimated_amount > 0)
+            }
             
+            // Recalculate totalUnpaid
             totalUnpaid = unpaidDetails.reduce((sum, item) => sum + item.estimated_amount, 0)
         }
 
@@ -155,7 +205,7 @@ export async function GET(request: NextRequest) {
                 projectedSales,
                 unpaidCount: unpaidDetails.length
             },
-            unpaidDetails // Optional: if frontend wants to list them
+            unpaidDetails
         })
     } catch (error: any) {
         console.error('Sales API error:', error)

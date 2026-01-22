@@ -2,6 +2,7 @@ import './globals.css'
 import { Inter } from 'next/font/google'
 import { Providers } from './providers'
 import Navigation from './components/Navigation'
+import MainWrapper from './components/MainWrapper'
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -45,9 +46,9 @@ export default function RootLayout({
         <Providers>
           <div className="min-h-screen bg-gray-50">
             <Navigation />
-            <main className="py-[30px]">
+            <MainWrapper>
               {children}
-            </main>
+            </MainWrapper>
           </div>
         </Providers>
       </body>

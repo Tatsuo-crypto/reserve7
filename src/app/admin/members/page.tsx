@@ -349,43 +349,12 @@ function MembersPageContent() {
                           <div className="flex items-center justify-between">
                             <div className="flex items-center">
                               <span className={`mr-2 inline-block w-2 h-2 rounded-full ${getStatusDotColor(member.status)}`} aria-hidden="true"></span>
-                              {member.access_token ? (
-                                <Link
-                                  href={`/client/${member.access_token}?from=admin`}
-                                  className="text-indigo-600 hover:text-indigo-800 hover:underline font-semibold"
-                                >
-                                  {member.full_name}
-                                </Link>
-                              ) : (
-                                <span className="text-gray-900">{member.full_name}</span>
-                              )}
-                            </div>
-                            <div className="flex items-center space-x-1 ml-2">
                               <Link
-                                href={`/admin/members/${member.id}/edit`}
-                                className="inline-flex items-center p-1 border border-gray-300 text-xs rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                                title="編集"
+                                href={`/admin/members/${member.id}`}
+                                className="text-indigo-600 hover:text-indigo-800 hover:underline font-semibold"
                               >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                </svg>
+                                {member.full_name}
                               </Link>
-                              {member.access_token && (
-                                <button
-                                  onClick={() => {
-                                    const url = `${window.location.origin}/client/${member.access_token}`
-                                    navigator.clipboard.writeText(url)
-                                    setError('専用URLをコピーしました')
-                                    setTimeout(() => setError(''), 2000)
-                                  }}
-                                  className="inline-flex items-center p-1 border border-blue-300 text-xs rounded-md text-blue-700 bg-blue-50 hover:bg-blue-100"
-                                  title="専用URLをコピー"
-                                >
-                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                  </svg>
-                                </button>
-                              )}
                             </div>
                           </div>
                         </td>

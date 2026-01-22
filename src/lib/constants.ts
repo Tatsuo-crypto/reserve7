@@ -47,6 +47,21 @@ export const PLAN_RANK: Record<string, number> = {
   [PLANS.DIET_COURSE_6M]: 103,
 };
 
+// Standard Plan Fees (Tax included)
+// TODO: Update these values with the correct pricing
+export const PLAN_FEES: Record<string, number> = {
+  [PLANS.ONE_TIME]: 0,
+  [PLANS.MONTHLY_2]: 0,
+  [PLANS.MONTHLY_4]: 13200, // Based on placeholder
+  [PLANS.MONTHLY_6]: 0,
+  [PLANS.MONTHLY_8]: 0,
+  [PLANS.DIET_COURSE]: 0,
+  [PLANS.DIET_COURSE_2M]: 0,
+  [PLANS.DIET_COURSE_3M]: 0,
+  [PLANS.DIET_COURSE_6M]: 0,
+  [PLANS.COUNSELING]: 0,
+};
+
 // ==============================
 // Status Constants
 // ==============================

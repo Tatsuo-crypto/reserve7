@@ -7,13 +7,52 @@ import { generateReservationTitle, updateMonthlyTitles, updateAllTitles, usesCum
 
 export async function POST(request: NextRequest) {
   try {
-    // Check authentication and admin role
-    const authResult = await requireAdminAuth()
-    if (authResult instanceof NextResponse) {
-      return authResult
+    let user = null
+    const { searchParams } = new URL(request.url)
+    const token = searchParams.get('token')
+
+    if (token) {
+      // Trainer token authentication
+      const { data: trainer, error } = await supabaseAdmin
+        .from('trainers')
+        .select('id, full_name, email, store_id')
+        .eq('access_token', token)
+        .eq('status', 'active')
+        .single()
+
+      if (error || !trainer) {
+        return NextResponse.json({ error: '無効なトークンです' }, { status: 401 })
+      }
+
+      // Get store calendar_id
+      const { data: store, error: storeError } = await supabaseAdmin
+        .from('stores')
+        .select('calendar_id')
+        .eq('id', trainer.store_id)
+        .single()
+
+      if (storeError) {
+        console.error('Store lookup error:', storeError)
+      }
+
+      user = {
+        id: trainer.id,
+        email: trainer.email,
+        name: trainer.full_name,
+        isAdmin: false,
+        isTrainer: true,
+        storeId: trainer.store_id,
+        calendarId: store?.calendar_id // Use calendar_id from stores table (email format)
+      }
+    } else {
+      // Admin session authentication
+      const authResult = await requireAdminAuth()
+      if (authResult instanceof NextResponse) {
+        return authResult
+      }
+      user = authResult.user
     }
 
-    const { user } = authResult
     const body = await request.json()
 
     // Validate input
@@ -24,7 +63,7 @@ export async function POST(request: NextRequest) {
 
     if (!clientId || !startTime || !duration) {
       return NextResponse.json(
-        { error: 'クライアントID、開始時間、セッション時間は必須です' },
+        { error: '会員ID、開始時間、セッション時間は必須です' },
         { status: 400 }
       )
     }
@@ -84,7 +123,7 @@ export async function POST(request: NextRequest) {
 
       if (clientError || !fetchedUser) {
         return NextResponse.json(
-          { error: 'クライアントユーザーが見つかりません' },
+          { error: '会員が見つかりません' },
           { status: 404 }
         )
       }
@@ -163,6 +202,59 @@ export async function POST(request: NextRequest) {
       console.log('Error checking blocked times, continuing with reservation creation:', error)
     }
 
+    // Check for trainer shift availability
+    // Skip this check for BLOCKED type (we want to be able to block off-hours)
+    // Also skip for GUEST/TRIAL if we want to be flexible, but usually they should respect shifts too.
+    // Let's enforce for all "active" reservation types (Client, Trial, Guest)
+    if (clientId !== 'BLOCKED') {
+      try {
+        // 1. Get all active trainers for this store
+        const { data: trainers, error: trainersError } = await supabaseAdmin
+          .from('trainers')
+          .select('id')
+          .eq('store_id', calendarId)
+          .eq('status', 'active')
+        
+        if (trainersError) {
+          console.error('Error fetching trainers for shift check:', trainersError)
+          // Fail safe: allow if we can't check? Or block? 
+          // Let's log and allow, but this shouldn't happen.
+        } else if (trainers && trainers.length > 0) {
+          const trainerIds = trainers.map(t => t.id)
+          
+          // 2. Check if ANY trainer has a shift covering the requested duration
+          // A shift must start <= reservationStart AND end >= reservationEnd
+          const { data: shifts, error: shiftsError } = await supabaseAdmin
+            .from('trainer_shifts')
+            .select('id')
+            .in('trainer_id', trainerIds)
+            .lte('start_time', startDateTime.toISOString())
+            .gte('end_time', endDateTime.toISOString())
+            .limit(1)
+
+          if (shiftsError) {
+            console.error('Error checking shifts:', shiftsError)
+          } else if (!shifts || shifts.length === 0) {
+            // No matching shift found for any trainer
+            // But wait! We should only enforce this if there ARE shifts defined for this period.
+            // If the user hasn't set up shifts yet, we might lock them out.
+            // However, the user explicitly asked for this feature ("If I disable Sunday...").
+            // So we assume they are using the feature.
+            
+            // To be safe, let's check if there are ANY shifts for this day/week?
+            // Or just enforce strict mode. 
+            // "固定シフトで日曜を予約不可にしても予約画面で予約できてしまう" implies strict enforcement.
+            return NextResponse.json(
+              { error: 'この時間帯に出勤しているトレーナーがいません（シフト外）' },
+              { status: 409 }
+            )
+          }
+        }
+      } catch (error) {
+        console.error('Shift availability check failed:', error)
+      }
+    }
+
     // Try to create Google Calendar event first (if configured)
     let externalEventId: string | null = null
     const calendarService = createGoogleCalendarService()
@@ -234,6 +326,7 @@ export async function POST(request: NextRequest) {
       notes: mergedNotes || null,
       calendar_id: calendarId,
       external_event_id: externalEventId,
+      trainer_id: trainerId || null,
     }
 
     const { data: reservation, error } = await supabaseAdmin

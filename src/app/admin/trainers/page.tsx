@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { useStoreChange } from '@/hooks/useStoreChange'
@@ -55,9 +55,27 @@ export default function TrainersPage() {
   const [storeOptions, setStoreOptions] = useState<StoreOption[]>([])
   const storeNameById = useMemo(() => {
     const m: Record<string, string> = {}
-    for (const s of storeOptions) m[s.calendar_id] = s.name
+    for (const s of storeOptions) m[s.id] = s.name
     return m
   }, [storeOptions])
+
+  // Sync storeScope when adminStoreId changes (e.g. store switching in header)
+  // Use a ref to track the last TRUTHY store ID to avoid resetting on flickers (e.g. id -> null -> id)
+  const lastTruthyStoreId = useRef(adminStoreId)
+
+  useEffect(() => {
+    if (adminStoreId) {
+        // If we have a previous ID and the new one is the same, it might be a flicker recovery.
+        // In that case, we do NOT want to reset storeScope (preserve 'all' if user set it).
+        if (lastTruthyStoreId.current && adminStoreId === lastTruthyStoreId.current) {
+            return
+        }
+        
+        // Genuine store change (or initial load), reset scope to current store
+        setStoreScope('mine')
+        lastTruthyStoreId.current = adminStoreId
+    }
+  }, [adminStoreId])
 
   // modal state
   const [modalOpen, setModalOpen] = useState(false)
@@ -82,7 +100,14 @@ export default function TrainersPage() {
 
   const listUrl = useMemo(() => {
     const params = new URLSearchParams()
-    if (storeScope === 'mine' && adminStoreId) params.set('storeId', adminStoreId)
+    
+    if (storeScope === 'mine') {
+      // If filtering by 'mine', we MUST have an adminStoreId. 
+      // If it's missing (loading or not set), return null to skip fetch or handle empty.
+      if (!adminStoreId) return null
+      params.set('storeId', adminStoreId)
+    }
+    
     if (status !== 'all') params.set('status', status)
     if (query.trim()) params.set('query', query.trim())
     const qs = params.toString()
@@ -90,6 +115,12 @@ export default function TrainersPage() {
   }, [adminStoreId, storeScope, status, query])
 
   const fetchList = async () => {
+    if (storeScope === 'mine' && !adminStoreId) {
+      setTrainers([]) // Clear list if we want 'mine' but have no ID
+      return
+    }
+    if (!listUrl) return
+
     try {
       setLoading(true)
       const res = await fetch(listUrl, { credentials: 'include' })
@@ -122,8 +153,8 @@ export default function TrainersPage() {
         const stores: StoreOption[] = (data.stores || []).map((s: any) => ({ id: s.id, name: s.name, calendar_id: s.calendar_id }))
         setStoreOptions(stores)
         // If creating and no store selected, pick first
-        if (!form.storeId && stores[0]?.calendar_id) {
-          setForm(f => ({ ...f, storeId: stores[0].calendar_id }))
+        if (!form.storeId && stores[0]?.id) {
+          setForm(f => ({ ...f, storeId: stores[0].id }))
         }
       } catch { }
     }
@@ -133,7 +164,7 @@ export default function TrainersPage() {
 
   const openCreate = () => {
     setEditing(null)
-    const initialStoreId = adminStoreId || storeOptions[0]?.calendar_id || ''
+    const initialStoreId = adminStoreId || storeOptions[0]?.id || ''
     setForm({ fullName: '', email: '', storeId: initialStoreId, status: 'active', phone: '', notes: '', googleCalendarId: '' })
     setModalOpen(true)
   }
@@ -142,11 +173,12 @@ export default function TrainersPage() {
     setEditing(t)
     setForm({
       fullName: t.full_name,
-      email: t.email,
+      email: t.email || '',
       storeId: t.store_id,
       status: t.status,
       phone: t.phone || '',
-      notes: t.notes || ''
+      notes: t.notes || '',
+      googleCalendarId: t.google_calendar_id || ''
     })
     setModalOpen(true)
   }
@@ -156,9 +188,8 @@ export default function TrainersPage() {
       const fullName = form.fullName.trim()
       const email = form.email.trim()
       const storeId = form.storeId.trim()
-      if (!fullName || !email || !storeId) {
+      if (!fullName || !storeId) {
         if (!fullName) alert('氏名は必須です')
-        else if (!email) alert('メールは必須です')
         else alert('担当店舗は必須です')
         return
       }
@@ -174,7 +205,8 @@ export default function TrainersPage() {
           storeId,
           status: form.status,
           phone: form.phone || null,
-          notes: form.notes || null
+          notes: form.notes || null,
+          googleCalendarId: form.googleCalendarId || null
         })
       })
       if (!res.ok) {
@@ -336,7 +368,6 @@ export default function TrainersPage() {
                 <thead>
                   <tr className="bg-gray-50 text-gray-600">
                     <th className="text-left px-3 py-2 border-b whitespace-nowrap min-w-[160px]">名前</th>
-                    <th className="text-left px-3 py-2 border-b whitespace-nowrap min-w-[240px]">メール</th>
                     <th className="text-left px-3 py-2 border-b whitespace-nowrap min-w-[240px]">担当店舗</th>
                     <th className="text-left px-3 py-2 border-b whitespace-nowrap min-w-[100px]">ステータス</th>
                     <th className="text-right px-3 py-2 border-b whitespace-nowrap min-w-[120px]">操作</th>
@@ -348,9 +379,6 @@ export default function TrainersPage() {
                       <td className="px-3 py-2 border-b whitespace-nowrap">
                         <div className="font-medium text-gray-900">{t.full_name}</div>
                         {t.phone ? <div className="text-gray-500 text-xs">{t.phone}</div> : null}
-                      </td>
-                      <td className="px-3 py-2 border-b whitespace-nowrap">
-                        <div className="text-gray-800 truncate max-w-[260px]" title={t.email}>{t.email}</div>
                       </td>
                       <td className="px-3 py-2 border-b whitespace-nowrap">
                         <div className="text-gray-800 truncate max-w-[260px]" title={storeNameById[t.store_id] || t.store_id}>
@@ -396,7 +424,17 @@ export default function TrainersPage() {
               </div>
               <div className="md:col-span-2">
                 <label className="block text-xs text-gray-500 mb-1">メール</label>
-                <input className="w-full border rounded-md px-3 py-2 text-sm" type="email" required value={form.email} onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))} />
+                <input className="w-full border rounded-md px-3 py-2 text-sm" type="email" value={form.email} onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))} />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-xs text-gray-500 mb-1">GoogleカレンダーID（任意）</label>
+                <input 
+                  className="w-full border rounded-md px-3 py-2 text-sm" 
+                  placeholder="example@group.calendar.google.com"
+                  value={form.googleCalendarId} 
+                  onChange={(e) => setForm(f => ({ ...f, googleCalendarId: e.target.value }))} 
+                />
+                <p className="text-[10px] text-gray-400 mt-1">※設定すると、このトレーナーの予約が自動的にGoogleカレンダーに連携されます。</p>
               </div>
               <div>
                 <label className="block text-xs text-gray-500 mb-1">担当店舗</label>
@@ -412,7 +450,7 @@ export default function TrainersPage() {
                     <>
                       {(!form.storeId) && <option value="">店舗を選択してください</option>}
                       {storeOptions.map((s) => (
-                        <option key={s.id} value={s.calendar_id}>{s.name}</option>
+                        <option key={s.id} value={s.id}>{s.name}</option>
                       ))}
                     </>
                   )}
@@ -444,7 +482,7 @@ export default function TrainersPage() {
               <button
                 className="px-3 py-2 text-sm rounded-md bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed"
                 onClick={saveTrainer}
-                disabled={!form.fullName.trim() || !form.email.trim() || !form.storeId.trim()}
+                disabled={!form.fullName.trim() || !form.storeId.trim()}
               >保存</button>
             </div>
           </div>

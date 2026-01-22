@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import TrainerShiftPage from '../TrainerShiftPage'
+import { getStoreDisplayName } from '@/lib/auth-utils'
 
 interface Trainer {
   id: string
@@ -34,10 +35,6 @@ export default function ShiftsPage() {
     }
     if (token) fetchTrainer()
   }, [token])
-
-  const getStoreDisplayName = (storeId: string) => {
-    return storeId === 'tandjgym@gmail.com' ? 'T&J GYM1号店' : 'T&J GYM2号店'
-  }
 
   if (loading) {
     return (
@@ -74,16 +71,15 @@ export default function ShiftsPage() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="mb-6">
+        <div className="relative flex items-center justify-center mb-6">
           <Link
             href={`/trainer/${token}`}
-            className="inline-flex items-center text-gray-600 hover:text-gray-900 font-medium"
+            className="absolute left-0 inline-flex items-center text-gray-600 hover:text-gray-900 font-medium text-xl px-2 py-1"
+            aria-label="ホームへ戻る"
           >
-            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            ダッシュボードに戻る
+            ＜
           </Link>
+          <h1 className="text-2xl font-bold text-gray-900">シフト管理</h1>
         </div>
 
         <TrainerShiftPage token={token} trainerName={trainer?.name} />

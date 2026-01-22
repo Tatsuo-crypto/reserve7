@@ -23,6 +23,55 @@ export default function SalesPage() {
     const [month, setMonth] = useState(format(new Date(), 'yyyy-MM'))
     const [selectedStore, setSelectedStore] = useState('all')
 
+    // Client-side calculation for summary and status
+    const todayStr = format(new Date(), 'yyyy-MM-dd')
+    
+    // Calculate derived summary and combined list
+    const { combinedList, displaySummary } = (() => {
+        // Process unpaid list (monthly membership fees)
+        const safeUnpaidList = Array.isArray(unpaidList) ? unpaidList : []
+        const processedUnpaidList = safeUnpaidList.map(item => ({
+            ...item,
+            status: 'unpaid',
+            displayName: item.full_name || '-',
+            displayPlan: String(item.plan || '-'),
+            displayAmount: item.estimated_amount,
+            type: '月額'
+        }))
+
+        // Process actual sales list
+        const safeSales = Array.isArray(sales) ? sales : []
+        const processedSalesList = safeSales.map(item => ({
+            ...item,
+            status: 'paid',
+            displayName: item.users?.full_name || '-',
+            displayPlan: String(item.users?.plan || '-'),
+            displayAmount: item.amount,
+            type: (() => {
+                const plan = item.users?.plan || ''
+                if (plan.includes('都度') || plan.includes('ダイエット')) return '単発'
+                return '月額'
+            })()
+        }))
+
+        // Combine and sort by plan
+        const list = [...processedSalesList, ...processedUnpaidList].sort((a, b) => 
+            a.displayPlan.localeCompare(b.displayPlan, 'ja')
+        )
+
+        // Calculate total monthly membership fees
+        const totalMonthlyFees = safeUnpaidList.reduce((sum, item) => sum + (item.estimated_amount || 0), 0)
+        const memberCount = safeUnpaidList.length
+
+        return {
+            combinedList: list,
+            displaySummary: {
+                totalMonthlyFees,
+                memberCount
+            }
+        }
+    })()
+
     useEffect(() => {
         setIsClient(true)
     }, [])
@@ -119,53 +168,22 @@ export default function SalesPage() {
                 </div>
 
                 {/* Summary Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    {/* Projected Sales */}
-                    <div className="bg-white p-6 rounded-lg shadow border-l-4 border-blue-500">
-                        <h3 className="text-sm font-medium text-gray-500 mb-1">売上見込み (全体)</h3>
-                        <p className="text-2xl font-bold text-gray-900">
-                            ¥{summary.projectedSales.toLocaleString()}
-                        </p>
-                        <p className="text-xs text-gray-500 mt-1">
-                            振込済 + 未振込 (概算)
-                        </p>
-                    </div>
-
-                    {/* Paid Sales */}
+                <div className="mb-8">
+                    {/* Monthly Membership Fees */}
                     <div className="bg-white p-6 rounded-lg shadow border-l-4 border-indigo-500">
                         <div className="flex justify-between items-start">
                             <div>
-                                <h3 className="text-sm font-medium text-gray-500 mb-1">振込済み (実績)</h3>
+                                <h3 className="text-sm font-medium text-gray-500 mb-1">月会費合計</h3>
                                 <p className="text-2xl font-bold text-gray-900">
-                                    ¥{summary.totalPaid.toLocaleString()}
+                                    ¥{displaySummary.totalMonthlyFees.toLocaleString()}
                                 </p>
                             </div>
                             <div className="text-right">
                                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
-                                    {sales.length} 件
+                                    {displaySummary.memberCount} 名
                                 </span>
                             </div>
                         </div>
-                    </div>
-
-                    {/* Unpaid Sales */}
-                    <div className="bg-white p-6 rounded-lg shadow border-l-4 border-orange-500">
-                        <div className="flex justify-between items-start">
-                            <div>
-                                <h3 className="text-sm font-medium text-gray-500 mb-1">未振込 (見込み)</h3>
-                                <p className="text-2xl font-bold text-gray-900">
-                                    ¥{summary.totalUnpaid.toLocaleString()}
-                                </p>
-                            </div>
-                            <div className="text-right">
-                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                                    {summary.unpaidCount} 名
-                                </span>
-                            </div>
-                        </div>
-                        <p className="text-xs text-gray-500 mt-1">
-                            未払いの月会費会員
-                        </p>
                     </div>
                 </div>
 
@@ -174,93 +192,48 @@ export default function SalesPage() {
                     <div className="px-4 py-5 sm:p-6">
                         {loading ? (
                             <p className="text-center py-8 text-gray-500">読み込み中...</p>
-                        ) : sales.length === 0 ? (
-                            <p className="text-center py-8 text-gray-500">該当する売上データはありません</p>
                         ) : (
                             <div className="overflow-x-auto">
                                 <table className="min-w-full divide-y divide-gray-200">
                                     <thead className="bg-gray-50">
                                         <tr>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">支払日</th>
                                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">会員名</th>
                                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">プラン</th>
                                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">金額</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">種別</th>
                                         </tr>
                                     </thead>
                                     <tbody className="bg-white divide-y divide-gray-200">
-                                        {sales.map((item) => (
-                                            <tr key={item.id} className="hover:bg-gray-50 transition-colors">
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                    {item.payment_date}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                    {item.users?.full_name || '-'}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                    {item.users?.plan || '-'}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
-                                                    ¥{item.amount.toLocaleString()}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                    {(() => {
-                                                        const plan = item.users?.plan || ''
-                                                        if (plan.includes('都度') || plan.includes('ダイエット')) {
-                                                            return '単発'
-                                                        }
-                                                        return '月額'
-                                                    })()}
-                                                </td>
-                                            </tr>
-                                        ))}
+                                        {(() => {
+                                            if (combinedList.length === 0) {
+                                                return (
+                                                    <tr>
+                                                        <td colSpan={3} className="px-6 py-4 text-center text-sm text-gray-500">
+                                                            該当するデータはありません
+                                                        </td>
+                                                    </tr>
+                                                )
+                                            }
+
+                                            return combinedList.map((item, index) => (
+                                                <tr key={`${item.status}-${item.id || item.user_id}-${index}`} className="hover:bg-gray-50 transition-colors">
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                        {item.displayName}
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                        {item.displayPlan}
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
+                                                        ¥{item.displayAmount.toLocaleString()}
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        })()}
                                     </tbody>
                                 </table>
                             </div>
                         )}
                     </div>
                 </div>
-
-                {/* Unpaid List Table */}
-                {unpaidList.length > 0 && (
-                    <div className="mt-8">
-                        <h3 className="text-lg font-medium text-gray-900 mb-4">未振込（見込み）</h3>
-                        <div className="bg-white shadow overflow-hidden sm:rounded-lg">
-                            <div className="px-4 py-5 sm:p-6">
-                                <div className="overflow-x-auto">
-                                    <table className="min-w-full divide-y divide-gray-200">
-                                        <thead className="bg-orange-50">
-                                            <tr>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">会員名</th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">プラン</th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">見込み金額</th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ステータス</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="bg-white divide-y divide-gray-200">
-                                            {unpaidList.map((item) => (
-                                                <tr key={item.user_id} className="hover:bg-gray-50 transition-colors">
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                        {item.full_name || '-'}
-                                                    </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                        {item.plan || '-'}
-                                                    </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
-                                                        ¥{item.estimated_amount.toLocaleString()}
-                                                    </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-orange-600">
-                                                        未振込
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
             </div>
         </div>
     )

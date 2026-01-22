@@ -6,6 +6,11 @@ import { addMonths, startOfMonth, format, isBefore, isAfter, parse } from 'date-
 
 export const dynamic = 'force-dynamic'
 
+const STORE_MAP: Record<string, string> = {
+    '1号店': '77439c86-679a-409a-8000-2e5297e5c0e8',
+    '2号店': '43296d78-13f3-4061-8d75-d38dfe907a5d'
+}
+
 // Simple CSV parser
 function parseCSV(text: string): string[][] {
     const result: string[][] = []
@@ -60,226 +65,241 @@ const parsePrice = (s: string) => {
     return parseInt(s.replace(/[¥,"]/g, ''), 10) || 0
 }
 
+interface ImportRow {
+    storeName: string
+    name: string
+    email?: string
+    plan: string
+    price: number
+    start: Date
+    end: Date | null
+    status: 'active' | 'withdrawn' | 'suspended'
+}
+
 export async function POST(request: NextRequest) {
     try {
-        // New filename
-        const fileName = '顧客CSV.csv'
-        const filePath = path.join(process.cwd(), 'data', fileName)
+        const activeFile = path.join(process.cwd(), 'data', '会員管理', 'シート1-在籍.csv')
+        const withdrawnFile = path.join(process.cwd(), 'data', '会員管理', 'シート1-退会.csv')
 
-        if (!fs.existsSync(filePath)) {
-            return NextResponse.json({ error: 'File not found: ' + fileName }, { status: 404 })
+        const allRows: ImportRow[] = []
+
+        // Process Active File
+        // 店,顧客名,メールアドレス,サブスクリプション名,価格,開始日,終了日,備考
+        if (fs.existsSync(activeFile)) {
+            const content = fs.readFileSync(activeFile, 'utf-8')
+            const rows = parseCSV(content).slice(1) // skip header
+            for (const r of rows) {
+                if (r.length < 6) continue
+                const startStr = r[5]
+                if (!startStr) continue
+                
+                allRows.push({
+                    storeName: r[0],
+                    name: r[1],
+                    email: r[2], // Email column
+                    plan: r[3],
+                    price: parsePrice(r[4]),
+                    start: new Date(startStr),
+                    end: r[6] ? new Date(r[6]) : null,
+                    status: 'active'
+                })
+            }
         }
 
-        const fileContent = fs.readFileSync(filePath, 'utf-8')
-        const rows = parseCSV(fileContent)
+        // Process Withdrawn File
+        // 店,顧客名,サブスクリプション名,価格,開始日,終了日
+        if (fs.existsSync(withdrawnFile)) {
+            const content = fs.readFileSync(withdrawnFile, 'utf-8')
+            const rows = parseCSV(content).slice(1) // skip header
+            for (const r of rows) {
+                if (r.length < 6) continue
+                const startStr = r[4]
+                if (!startStr) continue
 
-        // Header: 顧客名,サブスクリプション名,価格,開始日,終了日
-        const dataRows = rows.slice(1)
+                allRows.push({
+                    storeName: r[0],
+                    name: r[1],
+                    // withdrawn file doesn't have email column in index 2 usually
+                    plan: r[2],
+                    price: parsePrice(r[3]),
+                    start: new Date(startStr),
+                    end: r[5] ? new Date(r[5]) : null,
+                    status: 'withdrawn'
+                })
+            }
+        }
 
         // 1. Fetch users
         const { data: users, error: usersError } = await supabaseAdmin
             .from('users')
-            .select('id, full_name, store_id')
+            .select('id, full_name, email, store_id')
 
         if (usersError) throw usersError
 
         const userMap = new Map<string, any>()
+        const emailMap = new Map<string, any>()
+        
         users.forEach(u => {
             userMap.set(normalize(u.full_name), u)
+            if (u.email) emailMap.set(u.email.toLowerCase(), u)
         })
 
         // Reset tables for full import
-        await supabaseAdmin.from('membership_history').delete().neq('status', 'ignore_all') // Delete all
-        await supabaseAdmin.from('sales').delete().neq('amount', -1) // Delete all
+        await supabaseAdmin.from('membership_history').delete().neq('status', 'ignore_all') 
+        await supabaseAdmin.from('sales').delete().neq('amount', -1) 
 
         const results = {
-            total: dataRows.length,
+            total: allRows.length,
             matched: 0,
             unmatched: 0,
             unmatchedNames: [] as string[],
             historyInserted: 0,
-            salesInserted: 0,
-            errors: [] as string[]
+            salesInserted: 0
         }
 
         const today = new Date()
 
-        // Build timeline for each user to merge continuous periods
-        const userPeriods = new Map<string, { start: Date, end: Date | null, price: number, plan: string }[]>()
+        // Group by User
+        const userPeriods = new Map<string, ImportRow[]>()
 
-        // dataRows loop
-        for (const row of dataRows) {
-            if (row.length < 4) continue
-            const name = row[0]
-            const plan = row[1]
-            const priceStr = row[2]
-            const startDateStr = row[3]
-            const endDateStr = row[4]
+        for (const row of allRows) {
+            let user = userMap.get(normalize(row.name))
+            
+            // Try matching by email if name match failed
+            // Case 1: Active file has explicit email column
+            if (!user && row.email) {
+                user = emailMap.get(row.email.toLowerCase())
+            }
+            
+            // Case 2: Name column might be an email (seen in withdrawn file)
+            if (!user && row.name.includes('@')) {
+                user = emailMap.get(row.name.trim().toLowerCase())
+            }
 
-            if (!name) continue
-
-            const user = userMap.get(normalize(name))
             if (!user) {
-                if (!results.unmatchedNames.includes(name)) {
-                    results.unmatchedNames.push(name)
+                if (!results.unmatchedNames.includes(row.name)) {
+                    results.unmatchedNames.push(`${row.name} (${row.email || 'no email'})`)
                 }
                 results.unmatched++
                 continue
             }
             results.matched++
 
-            const startDate = new Date(startDateStr)
-            // If endDateStr is empty, it means active/ongoing -> null
-            // If endDateStr is present, parse it
-            let endDate: Date | null = endDateStr ? new Date(endDateStr) : null
-
-            if (isNaN(startDate.getTime())) continue
-            if (endDate && isNaN(endDate.getTime())) endDate = null // Fallback
-
-            const price = parsePrice(priceStr)
-
-            // Store for processing
             if (!userPeriods.has(user.id)) {
                 userPeriods.set(user.id, [])
             }
-            userPeriods.get(user.id)?.push({ start: startDate, end: endDate, price, plan })
+            userPeriods.get(user.id)?.push(row)
         }
 
-        // Process per user
-        const userPeriodEntries = Array.from(userPeriods.entries())
-        for (const [userId, periods] of userPeriodEntries) {
+        // Process each user
+        for (const [userId, periods] of Array.from(userPeriods.entries())) {
             const user = users.find(u => u.id === userId)
-
-            // Sort periods
+            
+            // Sort by start date
             periods.sort((a, b) => a.start.getTime() - b.start.getTime())
 
-            // 1. Create Sales Records (Monthly)
-            // For each period, generate monthly sales from start to end (or now)
+            // 1. Generate Sales
             for (const p of periods) {
                 if (p.price <= 0) continue
 
                 let current = startOfMonth(p.start)
+                // Use today as limit for open-ended, or p.end
+                // If withdrawn, p.end should be the stop.
+                // If active, p.end might be null -> proceed until today.
                 const endLimit = p.end ? startOfMonth(p.end) : startOfMonth(today)
-
-                // Generate sales records for each month
+                
+                // If start date is day 20, first payment is day 20.
+                // Loop month by month.
                 while (isBefore(current, endLimit) || current.getTime() === endLimit.getTime()) {
-                    // If start date is in future relative to this month? 
-                    // Logic: "Monthly fee" usually charged on start date or 1st of month.
-                    // Let's assume charged on the 'start date day' of each month.
-
-                    // If this month is the start month, date is p.start.
-                    // Else, date is YYYY-MM-{p.start.getDate()}
-
                     let paymentDate = new Date(current.getFullYear(), current.getMonth(), p.start.getDate())
+                    
+                    // Don't generate future sales
+                    if (isAfter(paymentDate, today)) break
+                    
+                    // If p.end is specified and payment date is after p.end, skip
+                    if (p.end && isAfter(paymentDate, p.end)) break
 
-                    // If payment date > end date (and end date exists), stop?
-                    // If p.end is set, and payment date is after p.end, don't charge?
-                    // Usually if end date is 2/5, and payment is 2/20, no charge in Feb.
-                    // If payment is 2/1, charge.
+                    const storeId = STORE_MAP[p.storeName] || user?.store_id
 
-                    if (p.end && isAfter(paymentDate, p.end)) {
-                        // Skip this month if payment date is after end date
-                        break
-                    }
-
-                    // Don't generate future sales beyond "now" for analytics accuracy 
-                    // (or user might want projections? let's stick to past/now)
-                    if (isAfter(paymentDate, today)) {
-                        break
-                    }
-
-                    // Insert sale
-                    const { error } = await supabaseAdmin.from('sales').insert({
+                    await supabaseAdmin.from('sales').insert({
                         user_id: userId,
-                        store_id: user?.store_id,
+                        store_id: storeId,
                         amount: p.price,
                         type: 'monthly_fee',
                         target_date: format(current, 'yyyy-MM-01'),
-                        payment_date: format(paymentDate, 'yyyy-MM-dd')
+                        payment_date: format(paymentDate, 'yyyy-MM-dd'),
+                        status: 'paid'
                     })
-                    if (!error) results.salesInserted++
-
+                    results.salesInserted++
+                    
                     current = addMonths(current, 1)
                 }
             }
 
-            // 2. Create Membership History (Merge logic)
-            // Simple merge: if gap < 10 days, merge.
-            const merged: { start: Date, end: Date | null }[] = []
-            let currentP = { start: periods[0].start, end: periods[0].end }
-
-            for (let i = 1; i < periods.length; i++) {
-                const next = periods[i]
-
-                // Check overlap or proximity
-                // Effective end of current period
-                const currentEnd = currentP.end
-
-                if (!currentEnd) {
-                    // Current is open-ended.
-                    // If next starts after current start, it's either an upgrade or overlapping plan?
-                    // Depending on logic, usually means "New plan started".
-                    // If upgrade, old plan ends previous day?
-                    // Let's assume next.start replaces current.
-                    currentP.end = new Date(next.start.getTime() - 86400000) // day before
-                    merged.push(currentP)
-                    currentP = { start: next.start, end: next.end }
-                } else {
-                    // Gap check
-                    const gap = next.start.getTime() - currentEnd.getTime()
-                    const gapDays = gap / (1000 * 60 * 60 * 24)
-
-                    if (gapDays < 15 && gapDays > -100) { // Allow overlap and small gap
-                        // Merge
-                        // New end is whichever is later (or null)
-                        if (!next.end) {
-                            currentP.end = null
-                        } else if (next.end > currentEnd) {
-                            currentP.end = next.end
-                        }
-                    } else {
-                        // Seperate
-                        merged.push(currentP)
-                        currentP = { start: next.start, end: next.end }
-                    }
-                }
-            }
-            merged.push(currentP)
-
-            // Insert History
-            for (const m of merged) {
-                // If end date is future, set null
-                let dbEnd = m.end
-                if (m.end && isAfter(m.end, today)) {
-                    dbEnd = null
-                }
-
-                const { error } = await supabaseAdmin.from('membership_history').insert({
+            // 2. Generate History (Merge contiguous similar periods?)
+            // Actually, for history accuracy, let's keep them as imported segments first.
+            // But we need to handle "active" vs "withdrawn".
+            // If "withdrawn" file record, the status for THAT period was probably active, but they withdrew at the end.
+            // "Membership History" usually tracks "Active Period with Plan X".
+            
+            for (const p of periods) {
+                // Determine store ID
+                const storeId = STORE_MAP[p.storeName] || user?.store_id
+                
+                // Insert history
+                await supabaseAdmin.from('membership_history').insert({
                     user_id: userId,
-                    store_id: user?.store_id,
-                    status: 'active',
-                    start_date: format(m.start, 'yyyy-MM-dd'),
-                    end_date: dbEnd ? format(dbEnd, 'yyyy-MM-dd') : null
+                    store_id: storeId,
+                    status: 'active', // The period itself is an active subscription period
+                    plan: p.plan,
+                    monthly_fee: p.price,
+                    start_date: format(p.start, 'yyyy-MM-dd'),
+                    end_date: p.end ? format(p.end, 'yyyy-MM-dd') : null
                 })
-                if (!error) results.historyInserted++
+                results.historyInserted++
             }
 
-            // Update User Status in 'users' table
-            // Check the very last period of the user (chronologically)
+            // 3. Update User Current Status
+            // Check the very last period
             const lastPeriod = periods[periods.length - 1]
-            let newUserStatus = 'active'
+            let currentStatus = 'active'
+            let currentPlan = lastPeriod.plan
+            let currentFee = lastPeriod.price
 
-            // If last period has end date AND it's in the past -> withdrawn
-            if (lastPeriod.end && isBefore(lastPeriod.end, today)) {
-                newUserStatus = 'withdrawn'
+            // If last record comes from "withdrawn" file or has past end date...
+            if (lastPeriod.status === 'withdrawn') {
+                // If the end date is in the past, they are withdrawn.
+                if (lastPeriod.end && isBefore(lastPeriod.end, today)) {
+                    currentStatus = 'withdrawn'
+                    currentPlan = '退会' // Display as Withdrawn
+                }
+            } else {
+                 // From active file
+                 // If end date exists and is past -> suspended or withdrawn? 
+                 // Usually active file with end date means "plan ended", maybe switched to another?
+                 // But we are looking at the LAST period.
+                 if (lastPeriod.end && isBefore(lastPeriod.end, today)) {
+                     // Maybe suspended? Or just plan expired.
+                     // Default to 'active' (or 'suspended'?) if in Active file but ended.
+                     // Let's assume 'active' but no plan? 
+                     // Or maybe 'suspended'.
+                 }
             }
 
-            // Update user
-            // Note: Only update if changed? For now just update to ensure consistency.
-            await supabaseAdmin
-                .from('users')
-                .update({ status: newUserStatus })
-                .eq('id', userId)
+            // If specific plan name implies suspended?
+            if (lastPeriod.plan.includes('休会')) {
+                currentStatus = 'suspended'
+                currentPlan = '休会'
+            }
+
+            const storeId = STORE_MAP[lastPeriod.storeName] || user?.store_id
+
+            await supabaseAdmin.from('users').update({
+                status: currentStatus,
+                plan: currentPlan,
+                monthly_fee: currentFee,
+                store_id: storeId // Update store to latest
+            }).eq('id', userId)
         }
 
         return NextResponse.json(results)

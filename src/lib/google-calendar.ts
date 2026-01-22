@@ -11,13 +11,8 @@ export class GoogleCalendarService {
         this.calendar = null
         return
       }
-
-      // console.log('Initializing Google Calendar service...')
-      // console.log('Calendar ID:', env.GOOGLE_CALENDAR_ID)
-      // console.log('Service account key exists:', !!env.GOOGLE_SERVICE_ACCOUNT_KEY)
       
       const credentials = JSON.parse(env.GOOGLE_SERVICE_ACCOUNT_KEY)
-      // console.log('Service account email:', credentials.client_email)
       
       const auth = new google.auth.JWT(
         credentials.client_email,
@@ -55,7 +50,7 @@ export class GoogleCalendarService {
     const event: any = {
       summary: reservation.title,
       description: [
-        `クライアント: ${reservation.clientName} (${reservation.clientEmail})`,
+        `会員: ${reservation.clientName} (${reservation.clientEmail})`,
         reservation.notes ? `メモ: ${reservation.notes}` : '',
       ].filter(Boolean).join('\n'),
       start: {
@@ -66,13 +61,28 @@ export class GoogleCalendarService {
         dateTime: reservation.endTime,
         timeZone: 'Asia/Tokyo',
       },
+      attendees: [],
+      guestsCanModify: false,
+      guestsCanInviteOthers: false,
+    }
+
+    // 会員のGoogleカレンダーメールが設定されている場合、ゲストとして招待
+    if (reservation.memberCalendarEmail && reservation.memberCalendarEmail.trim() !== '') {
+      event.attendees.push({ email: reservation.memberCalendarEmail })
+    }
+
+    // トレーナーのGoogleカレンダーメールが設定されている場合、ゲストとして招待
+    if (reservation.trainerCalendarEmail && reservation.trainerCalendarEmail.trim() !== '') {
+      event.attendees.push({ email: reservation.trainerCalendarEmail })
     }
 
     try {
       // ジムのカレンダーにイベント作成
+      // sendUpdates: 'none' に設定してメール通知を抑制
       const response = await this.calendar.events.insert({
         calendarId: reservation.calendarId,
         requestBody: event,
+        sendUpdates: 'none',
       })
 
       if (!response.data.id) {
@@ -80,22 +90,8 @@ export class GoogleCalendarService {
       }
 
       const eventId = response.data.id
-
-      // 会員のGoogleカレンダーメールが設定されている場合、会員のカレンダーにも別イベントとして作成
-      if (reservation.memberCalendarEmail && reservation.memberCalendarEmail.trim() !== '') {
-        try {
-          console.log(`📅 Creating event in member calendar: ${reservation.memberCalendarEmail}`)
-          await this.calendar.events.insert({
-            calendarId: reservation.memberCalendarEmail,
-            requestBody: event,
-          })
-          console.log(`✅ Event created in member calendar`)
-        } catch (memberCalError) {
-          console.error(`⚠️ Failed to create event in member calendar:`, memberCalError)
-          // 会員カレンダーへの作成失敗はエラーとせず、ジムのカレンダーのイベントIDを返す
-        }
-      }
-
+      console.log(`✅ Google Calendar event created with attendees: ${eventId}`)
+      
       return eventId
     } catch (error) {
       console.error('Google Calendar event creation error:', error)
@@ -124,7 +120,7 @@ export class GoogleCalendarService {
     const event: any = {
       summary: reservation.title,
       description: [
-        `クライアント: ${reservation.clientName} (${reservation.clientEmail})`,
+        `会員: ${reservation.clientName} (${reservation.clientEmail})`,
         reservation.notes ? `メモ: ${reservation.notes}` : '',
       ].filter(Boolean).join('\n'),
       start: {
@@ -135,17 +131,32 @@ export class GoogleCalendarService {
         dateTime: reservation.endTime,
         timeZone: 'Asia/Tokyo',
       },
+      attendees: [],
+      guestsCanModify: false,
+      guestsCanInviteOthers: false,
+    }
+
+    // 会員のGoogleカレンダーメールが設定されている場合、ゲストとして追加
+    if (reservation.memberCalendarEmail && reservation.memberCalendarEmail.trim() !== '') {
+      event.attendees.push({ email: reservation.memberCalendarEmail })
+    }
+
+    // トレーナーのGoogleカレンダーメールが設定されている場合、ゲストとして追加
+    if (reservation.trainerCalendarEmail && reservation.trainerCalendarEmail.trim() !== '') {
+      event.attendees.push({ email: reservation.trainerCalendarEmail })
     }
 
     try {
-      // ジムのカレンダーのイベントを更新
+      // ジムのカレンダーのイベントを更新（ゲスト情報も含めて更新）
       await this.calendar.events.update({
         calendarId: reservation.calendarId,
         eventId: eventId,
         requestBody: event,
+        sendUpdates: 'none', // 通知抑制
       })
       
-      // Note: 会員カレンダーのイベントは title-utils.ts で削除→再作成する方式で対応
+      console.log(`✅ Google Calendar event updated: ${eventId}`)
+
     } catch (error) {
       console.error('Google Calendar event update error:', error)
       throw error
@@ -155,12 +166,19 @@ export class GoogleCalendarService {
   /**
    * Delete a calendar event
    */
-  async deleteEvent(eventId: string, calendarId: string): Promise<void> {
+  async deleteEvent(eventId: string, calendarId: string, options?: {
+    memberCalendarEmail?: string | null,
+    trainerCalendarEmail?: string | null
+  }): Promise<void> {
     try {
+      // Delete from main calendar - this automatically cancels for all attendees
       await this.calendar.events.delete({
         calendarId: calendarId,
         eventId: eventId,
+        sendUpdates: 'none', // キャンセル通知を送る
       })
+
+      console.log(`✅ Google Calendar event deleted: ${eventId}`)
     } catch (error) {
       console.error('Google Calendar event deletion error:', error)
       throw error

@@ -13,17 +13,60 @@ export async function DELETE(
   try {
     console.log('🗑️ DELETE request received for reservation:', params.id)
 
-    // Check authentication
-    const authResult = await requireAuth()
-    if (authResult instanceof NextResponse) {
-      console.log('❌ Authentication failed')
-      return authResult
+    // Check authentication (Session or Token)
+    const { searchParams } = new URL(request.url)
+    const token = searchParams.get('token')
+    
+    let user = null
+    let isUserAdmin = false
+    let isTrainer = false
+
+    if (token) {
+      // Trainer token authentication
+      const { data: trainer, error } = await supabaseAdmin
+        .from('trainers')
+        .select('id, full_name, email, store_id')
+        .eq('access_token', token)
+        .eq('status', 'active')
+        .single()
+
+      if (error || !trainer) {
+        return NextResponse.json({ error: '無効なトークンです' }, { status: 401 })
+      }
+
+      // Get store calendar_id
+      const { data: store, error: storeError } = await supabaseAdmin
+        .from('stores')
+        .select('calendar_id')
+        .eq('id', trainer.store_id)
+        .single()
+
+      if (storeError) {
+        console.error('Store lookup error:', storeError)
+      }
+
+      user = {
+        id: trainer.id,
+        email: trainer.email,
+        name: trainer.full_name,
+        storeId: trainer.store_id,
+        calendarId: store?.calendar_id
+      }
+      isTrainer = true
+    } else {
+      // Session authentication
+      const authResult = await requireAuth()
+      if (authResult instanceof NextResponse) {
+        console.log('❌ Authentication failed')
+        return authResult
+      }
+      user = authResult.user
+      isUserAdmin = authResult.isAdmin
     }
 
-    const { user, isAdmin: isUserAdmin } = authResult
     const reservationId = params.id
 
-    console.log('✅ User authenticated:', user.email, 'Admin:', isUserAdmin)
+    console.log('✅ User authenticated:', user.email, 'Admin:', isUserAdmin, 'Trainer:', isTrainer)
 
     // Get the reservation first to check ownership
     const { data: reservation, error: fetchError } = await supabaseAdmin
@@ -35,8 +78,10 @@ export async function DELETE(
         external_event_id,
         calendar_id,
         title,
+        trainer_id,
         users!client_id (
           email,
+          google_calendar_email,
           plan
         )
       `)
@@ -59,9 +104,11 @@ export async function DELETE(
     }
 
     // Check if user can delete this reservation
-    const canDelete = isUserAdmin || (reservation.users as any)?.email === user.email
+    const canDelete = isUserAdmin || 
+                      (reservation.users as any)?.email === user.email || 
+                      (isTrainer && reservation.calendar_id === user.calendarId)
 
-    console.log('🔐 Permission check:', { canDelete, isAdmin: isUserAdmin })
+    console.log('🔐 Permission check:', { canDelete, isAdmin: isUserAdmin, isTrainer })
 
     if (!canDelete) {
       console.log('❌ Permission denied')
@@ -74,10 +121,33 @@ export async function DELETE(
     // Delete from Google Calendar first (if event exists)
     if (reservation.external_event_id) {
       console.log('📅 Attempting to delete from Google Calendar:', reservation.external_event_id)
+      
+      // Prepare options for deletion from secondary calendars
+      const deleteOptions: any = {
+        memberCalendarEmail: (reservation.users as any)?.google_calendar_email
+      }
+
+      // If reservation has a trainer assigned, get their calendar ID
+      if (reservation.trainer_id) {
+        const { data: trainer } = await supabaseAdmin
+          .from('trainers')
+          .select('google_calendar_id')
+          .eq('id', reservation.trainer_id)
+          .single()
+        
+        if (trainer?.google_calendar_id) {
+            deleteOptions.trainerCalendarEmail = trainer.google_calendar_id
+        }
+      }
+
       const calendarService = createGoogleCalendarService()
       if (calendarService) {
         try {
-          await calendarService.deleteEvent(reservation.external_event_id, reservation.calendar_id)
+          await calendarService.deleteEvent(
+            reservation.external_event_id, 
+            reservation.calendar_id,
+            deleteOptions
+          )
           console.log('✅ Google Calendar event deleted:', reservation.external_event_id)
         } catch (calendarError) {
           console.error('❌ Calendar event deletion failed:', calendarError)
@@ -149,18 +219,61 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    // Check authentication
-    const authResult = await requireAuth()
-    if (authResult instanceof NextResponse) {
-      return authResult
+    // Check authentication (Session or Token)
+    const { searchParams } = new URL(request.url)
+    const token = searchParams.get('token')
+    
+    let user = null
+    let isUserAdmin = false
+    let isTrainer = false
+
+    if (token) {
+      // Trainer token authentication
+      const { data: trainer, error } = await supabaseAdmin
+        .from('trainers')
+        .select('id, full_name, email, store_id')
+        .eq('access_token', token)
+        .eq('status', 'active')
+        .single()
+
+      if (error || !trainer) {
+        return NextResponse.json({ error: '無効なトークンです' }, { status: 401 })
+      }
+
+      // Get store calendar_id
+      const { data: store, error: storeError } = await supabaseAdmin
+        .from('stores')
+        .select('calendar_id')
+        .eq('id', trainer.store_id)
+        .single()
+
+      if (storeError) {
+        console.error('Store lookup error:', storeError)
+      }
+
+      user = {
+        id: trainer.id,
+        email: trainer.email,
+        name: trainer.full_name,
+        storeId: trainer.store_id,
+        calendarId: store?.calendar_id
+      }
+      isTrainer = true
+    } else {
+      // Session authentication
+      const authResult = await requireAuth()
+      if (authResult instanceof NextResponse) {
+        return authResult
+      }
+      user = authResult.user
+      isUserAdmin = authResult.isAdmin
     }
 
-    const { user, isAdmin: isUserAdmin } = authResult
     const reservationId = params.id
 
     // Parse request body
     const body = await request.json()
-    const { title, startTime, endTime, notes } = body
+    const { title, startTime, endTime, notes, trainerId } = body
 
     if (!title || !startTime || !endTime) {
       return NextResponse.json(
@@ -178,9 +291,11 @@ export async function PUT(
         title,
         external_event_id,
         calendar_id,
+        trainer_id,
         users!client_id (
           email,
           full_name,
+          google_calendar_email,
           plan
         )
       `)
@@ -195,7 +310,9 @@ export async function PUT(
     }
 
     // Check if user can update this reservation
-    const canUpdate = isUserAdmin || (reservation.users as any).email === user.email
+    const canUpdate = isUserAdmin || 
+                      (reservation.users as any)?.email === user.email ||
+                      (isTrainer && reservation.calendar_id === user.calendarId)
 
     if (!canUpdate) {
       return NextResponse.json(
@@ -249,7 +366,7 @@ export async function PUT(
       const calendarService = createGoogleCalendarService()
       if (calendarService) {
         try {
-          await calendarService.updateEvent(reservation.external_event_id, {
+          const updateOptions: any = {
             title,
             startTime: startDateTime.toISOString(),
             endTime: endDateTime.toISOString(),
@@ -257,7 +374,24 @@ export async function PUT(
             clientEmail: (reservation.users as any).email,
             notes: notes || undefined,
             calendarId: reservation.calendar_id,
-          })
+            memberCalendarEmail: (reservation.users as any)?.google_calendar_email
+          }
+
+          // Handle trainer calendar
+          const targetTrainerId = trainerId !== undefined ? trainerId : reservation.trainer_id
+          if (targetTrainerId) {
+            const { data: trainer } = await supabaseAdmin
+              .from('trainers')
+              .select('google_calendar_id')
+              .eq('id', targetTrainerId)
+              .single()
+            
+            if (trainer?.google_calendar_id) {
+              updateOptions.trainerCalendarEmail = trainer.google_calendar_id
+            }
+          }
+
+          await calendarService.updateEvent(reservation.external_event_id, updateOptions)
           console.log('Google Calendar event updated:', reservation.external_event_id)
         } catch (calendarError) {
           console.error('Calendar event update failed:', calendarError)
@@ -267,14 +401,21 @@ export async function PUT(
     }
 
     // Update the reservation
+    const updateData: any = {
+      title: title,
+      start_time: startDateTime.toISOString(),
+      end_time: endDateTime.toISOString(),
+      notes: notes || null
+    }
+
+    // Only update trainer_id if it's provided in the request
+    if (trainerId !== undefined) {
+      updateData.trainer_id = trainerId || null
+    }
+
     const { error: updateError } = await supabaseAdmin
       .from('reservations')
-      .update({
-        title: title,
-        start_time: startDateTime.toISOString(),
-        end_time: endDateTime.toISOString(),
-        notes: notes || null
-      })
+      .update(updateData)
       .eq('id', reservationId)
 
     if (updateError) {

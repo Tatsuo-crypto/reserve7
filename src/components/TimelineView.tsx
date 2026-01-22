@@ -2,7 +2,6 @@
 
 import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import QuickReservationModal from './QuickReservationModal'
 
 interface CalendarEvent {
   id: string
@@ -13,19 +12,47 @@ interface CalendarEvent {
   clientName?: string
   plan?: string
   notes?: string
+  trainerId?: string
+}
+
+interface Shift {
+  id: string
+  trainerId: string
+  trainerName: string
+  startTime: string
+  endTime: string
+}
+
+interface ShiftTemplate {
+  id: string
+  trainerId: string
+  trainerName: string
+  dayOfWeek: number
+  startTime: string
+  endTime: string
+}
+
+interface Trainer {
+  id: string
+  name: string
+  email: string
 }
 
 interface TimelineViewProps {
   selectedDate: string
   events: CalendarEvent[]
+  shifts?: Shift[]
+  templates?: ShiftTemplate[]
+  trainers?: Trainer[]
   onBack: () => void
   onEventsUpdate: () => void
   onDateChange?: (date: string) => void
+  trainerToken?: string | null
 }
 
-export default function TimelineView({ selectedDate, events, onBack, onEventsUpdate, onDateChange }: TimelineViewProps) {
-  const [showQuickModal, setShowQuickModal] = useState(false)
+export default function TimelineView({ selectedDate, events, shifts = [], templates = [], trainers = [], onBack, onEventsUpdate, onDateChange, trainerToken }: TimelineViewProps) {
   const [selectedTimeSlot, setSelectedTimeSlot] = useState('')
+  const [selectedTrainerId, setSelectedTrainerId] = useState<string | null>(null)
   const router = useRouter()
   const [showEditModal, setShowEditModal] = useState(false)
   const [editingReservation, setEditingReservation] = useState<{ id: string; type?: 'reservation' | 'blocked' | 'guest' } | null>(null)
@@ -33,7 +60,8 @@ export default function TimelineView({ selectedDate, events, onBack, onEventsUpd
     title: '',
     startTime: '',
     endTime: '',
-    notes: ''
+    notes: '',
+    trainerId: ''
   })
 
   // スワイプ検出用
@@ -88,7 +116,10 @@ export default function TimelineView({ selectedDate, events, onBack, onEventsUpd
   }
 
   // Handle timeline click to create reservation - 8時スタート対応
-  const handleTimelineClick = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handleTimelineClick = (e: React.MouseEvent<HTMLDivElement>, trainerId?: string) => {
+    // If clicking on a specific event, don't trigger creation
+    if ((e.target as HTMLElement).closest('.event-item')) return
+
     const rect = e.currentTarget.getBoundingClientRect()
     const clickY = e.clientY - rect.top
     const hourHeight = 48
@@ -100,9 +131,15 @@ export default function TimelineView({ selectedDate, events, onBack, onEventsUpd
       const endTime = `${String(endHour).padStart(2, '0')}:00`
 
       setSelectedTimeSlot(`${startTime} - ${endTime}`)
+      if (trainerId) setSelectedTrainerId(trainerId)
+      
       // Navigate to New Reservation page with prefilled startTime
       const startDateTime = `${selectedDate}T${startTime}`
-      router.push(`/admin/reservations/new?startTime=${encodeURIComponent(startDateTime)}`)
+      let url = `/admin/reservations/new?startTime=${encodeURIComponent(startDateTime)}`
+      if (trainerToken) url += `&trainerToken=${trainerToken}`
+      if (trainerId) url += `&trainerId=${trainerId}`
+      
+      router.push(url)
     }
   }
 
@@ -177,7 +214,8 @@ export default function TimelineView({ selectedDate, events, onBack, onEventsUpd
       title: ev.title || '',
       startTime: startIso,
       endTime: endIso,
-      notes: ev.notes || ''
+      notes: ev.notes || '',
+      trainerId: ev.trainerId || ''
     })
     setShowEditModal(true)
   }
@@ -219,7 +257,11 @@ export default function TimelineView({ selectedDate, events, onBack, onEventsUpd
     e.preventDefault()
     if (!editingReservation) return
     try {
-      const res = await fetch(`/api/reservations/${editingReservation.id}`, {
+      const url = trainerToken 
+        ? `/api/reservations/${editingReservation.id}?token=${trainerToken}`
+        : `/api/reservations/${editingReservation.id}`
+
+      const res = await fetch(url, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -228,6 +270,7 @@ export default function TimelineView({ selectedDate, events, onBack, onEventsUpd
           startTime: new Date(editFormData.startTime).toISOString(),
           endTime: new Date(editFormData.endTime).toISOString(),
           notes: editFormData.notes,
+          trainerId: editFormData.trainerId,
         })
       })
       if (!res.ok) {
@@ -248,7 +291,11 @@ export default function TimelineView({ selectedDate, events, onBack, onEventsUpd
     if (!editingReservation) return
     if (!confirm('この予約を削除しますか？')) return
     try {
-      const res = await fetch(`/api/reservations/${editingReservation.id}`, {
+      const url = trainerToken 
+        ? `/api/reservations/${editingReservation.id}?token=${trainerToken}`
+        : `/api/reservations/${editingReservation.id}`
+
+      const res = await fetch(url, {
         method: 'DELETE',
         credentials: 'include',
       })
@@ -316,211 +363,308 @@ export default function TimelineView({ selectedDate, events, onBack, onEventsUpd
               </svg>
             </button>
           </div>
-          <span className="text-sm text-gray-500">
-            {dayEvents.length}件の予約
-          </span>
         </div>
       </div>
 
       {/* Timeline Body */}
-      <div className="px-2 py-4"
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-      >
-        <div className="flex">
-          {/* Time Labels */}
-          <div className="w-12 flex-shrink-0 relative">
-            {timeSlots.map((time, index) => (
-              <div
-                key={time}
-                className="absolute right-2 text-xs text-gray-500 transform -translate-y-2"
-                style={{ top: `${index * 48}px` }}
-              >
-                {time}
-              </div>
-            ))}
-            <div className="absolute right-0 top-0 bottom-0 w-px bg-gray-200"></div>
-          </div>
+      <div className="flex flex-col h-full">
+        {/* Trainer Headers */}
+        <div className="flex border-b border-gray-200 ml-12">
+          {trainers.map((trainer) => (
+            <div key={trainer.id} className="flex-1 text-center py-2 font-bold text-gray-700 border-l border-gray-200 bg-gray-50">
+              {trainer.name}
+            </div>
+          ))}
+          {/* Fallback column for unassigned if needed, or just hide? 
+              User requested specific layout. Let's stick to trainers. 
+          */}
+        </div>
 
-          {/* Timeline Content */}
-          <div
-            className="flex-1 relative ml-2 cursor-pointer"
-            style={{ height: `${timeSlots.length * 48}px` }}
-            onClick={handleTimelineClick}
-          >
-            {/* Hour Grid Lines */}
-            {timeSlots.map((time, index) => (
-              <div
-                key={`grid-${time}`}
-                className="absolute left-0 right-0 border-t border-gray-200"
-                style={{ top: `${index * 48}px` }}
-              />
-            ))}
-
-            {/* Current time indicator (only for today's timeline in JST) - 8時スタート対応 */}
-            {(() => {
-              // Build today's date string in JST to match selectedDate format (YYYY-MM-DD)
-              const todayStr = new Date().toLocaleDateString('ja-JP', {
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                timeZone: 'Asia/Tokyo',
-              }).split('/').map(part => part.padStart(2, '0')).join('-')
-
-              if (selectedDate !== todayStr) return null
-
-              const now = new Date()
-              const currentHour = now.getHours()
-              const currentMinute = now.getMinutes()
-
-              // 8時より前は表示しない
-              if (currentHour < 8) return null
-
-              const currentTimePosition = ((currentHour - 8) + currentMinute / 60) * 48 // 8時スタート対応
-
-              return (
+        <div className="flex-1 overflow-y-auto"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
+          <div className="flex relative min-h-[768px]"> {/* 16 hours * 48px */}
+            {/* Time Labels */}
+            <div className="w-12 flex-shrink-0 relative bg-white z-10">
+              {timeSlots.map((time, index) => (
                 <div
-                  className="absolute left-0 right-0 border-t-2 border-red-400 z-50 pointer-events-none"
-                  style={{ top: `${currentTimePosition}px` }}
+                  key={time}
+                  className="absolute right-2 text-xs text-gray-500 transform translate-y-1"
+                  style={{ top: `${index * 48}px` }}
                 >
-                  <div className="absolute -left-2 -top-1 w-2 h-2 bg-red-400 rounded-full"></div>
+                  {time}
                 </div>
-              )
-            })()}
+              ))}
+            </div>
 
-            {/* Events */}
-            {(() => {
-              const dayEventsFiltered = events.filter(event => event.date === selectedDate)
+            {/* Trainer Columns */}
+            <div className="flex flex-1 relative bg-gray-300">
+              {trainers.map((trainer, trainerIndex) => (
+                <div 
+                  key={trainer.id} 
+                  className="flex-1 relative border-l border-gray-200 transition-colors"
+                  style={{ height: `${timeSlots.length * 48}px` }}
+                  onClick={(e) => handleTimelineClick(e, trainer.id)}
+                >
+                  {/* Availability Blocks (Shifts & Templates) */}
+                  {(() => {
+                    // Filter shifts for this trainer
+                    const trainerShifts = shifts.filter(s => 
+                      s.trainerId === trainer.id && 
+                      new Date(s.startTime).toLocaleDateString('ja-JP', {
+                        year: 'numeric', month: '2-digit', day: '2-digit', timeZone: 'Asia/Tokyo'
+                      }).split('/').map(p => p.padStart(2, '0')).join('-') === selectedDate
+                    )
 
-              // Sort events by start time
-              const sortedEvents = [...dayEventsFiltered].sort((a, b) => {
-                const aStart = parseEventTime(a.time).startMinutes
-                const bStart = parseEventTime(b.time).startMinutes
-                return aStart - bStart
-              })
+                    // Filter templates for this trainer
+                    const jstDate = new Date(`${selectedDate}T00:00:00+09:00`)
+                    const dayOfWeek = jstDate.getDay()
+                    const trainerTemplates = templates.filter(t => 
+                      t.trainerId === trainer.id && t.dayOfWeek === dayOfWeek
+                    )
 
-              // Assign columns to events
-              const eventColumns = new Map<string, { column: number, totalColumns: number }>()
+                    // Merge and Deduplicate
+                    const availabilityItems: { start: Date, end: Date, type: 'shift' | 'template' }[] = []
 
-              sortedEvents.forEach((event) => {
-                const { startMinutes, endMinutes } = parseEventTime(event.time)
+                    // Add shifts
+                    trainerShifts.forEach(s => {
+                      availabilityItems.push({
+                        start: new Date(s.startTime),
+                        end: new Date(s.endTime),
+                        type: 'shift'
+                      })
+                    })
 
-                // Find all overlapping events that have already been assigned columns
-                const usedColumns = new Set<number>()
-                let maxOverlapColumns = 0
+                    // Add templates if no overlap with shifts
+                    trainerTemplates.forEach(t => {
+                      const start = new Date(`${selectedDate}T${t.startTime}+09:00`)
+                      const end = new Date(`${selectedDate}T${t.endTime}+09:00`)
+                      
+                      const hasOverlap = trainerShifts.some(s => {
+                        const sStart = new Date(s.startTime)
+                        const sEnd = new Date(s.endTime)
+                        return (start < sEnd && end > sStart)
+                      })
 
-                sortedEvents.forEach((otherEvent) => {
-                  if (otherEvent.id === event.id) return
+                      if (!hasOverlap) {
+                        availabilityItems.push({ start, end, type: 'template' })
+                      }
+                    })
 
-                  const { startMinutes: otherStart, endMinutes: otherEnd } = parseEventTime(otherEvent.time)
+                    return availabilityItems.map((item, idx) => {
+                      const timelineStartMinutes = 8 * 60
+                      const startMinutes = item.start.getHours() * 60 + item.start.getMinutes()
+                      const endMinutes = item.end.getHours() * 60 + item.end.getMinutes()
+                      
+                      // Handle crossing midnight or just clamp? Assuming 8-23 for now
+                      const top = ((startMinutes - timelineStartMinutes) / 60) * 48
+                      const height = ((endMinutes - startMinutes) / 60) * 48
 
-                  // Check if they overlap
-                  if (startMinutes < otherEnd && endMinutes > otherStart) {
-                    const otherColumn = eventColumns.get(otherEvent.id)
-                    if (otherColumn) {
-                      usedColumns.add(otherColumn.column)
-                      maxOverlapColumns = Math.max(maxOverlapColumns, otherColumn.totalColumns)
-                    }
-                  }
-                })
+                      return (
+                        <div
+                          key={`avail-${idx}`}
+                          className="absolute w-full bg-white z-0 pointer-events-none"
+                          style={{
+                            top: `${top}px`,
+                            height: `${height}px`,
+                          }}
+                        />
+                      )
+                    })
+                  })()}
 
-                // Find first available column
-                let column = 0
-                while (usedColumns.has(column)) {
-                  column++
-                }
+                  {/* Reservations */}
+                  {(() => {
+                    const trainerEvents = dayEvents.filter(event => {
+                      // 1. Explicit Assignment: If event has trainerId, match it strictly
+                      if (event.trainerId) {
+                        return event.trainerId === trainer.id
+                      }
+                      
+                      // 2. Store 1 Logic (Single Trainer): Show all unassigned events
+                      if (trainers.length === 1) {
+                        return true
+                      }
 
-                const totalColumns = Math.max(maxOverlapColumns, column + 1)
-                eventColumns.set(event.id, { column, totalColumns })
-              })
+                      // 3. Store 2 Logic (Multiple Trainers): Assign to first available trainer
+                      const { startMinutes, endMinutes } = parseEventTime(event.time)
+                      
+                      // Helper to check overlap with a specific trainer (reused logic)
+                      const checkOverlapWithTrainer = (tid: string) => {
+                        // Check shifts
+                        const tShifts = shifts.filter(s => s.trainerId === tid)
+                        const shiftOverlap = tShifts.some(s => {
+                           const sDate = new Date(s.startTime).toLocaleDateString('ja-JP', {
+                              year: 'numeric', month: '2-digit', day: '2-digit', timeZone: 'Asia/Tokyo'
+                           }).split('/').map(p => p.padStart(2, '0')).join('-')
+                           if (sDate !== selectedDate) return false
+                           
+                           const sStart = new Date(s.startTime)
+                           const sEnd = new Date(s.endTime)
+                           const sStartM = sStart.getHours() * 60 + sStart.getMinutes()
+                           const sEndM = sEnd.getHours() * 60 + sEnd.getMinutes()
+                           
+                           return (startMinutes < sEndM && endMinutes > sStartM)
+                        })
+                        if (shiftOverlap) return true
 
-              // Update totalColumns for all overlapping events
-              sortedEvents.forEach((event) => {
-                const { startMinutes, endMinutes } = parseEventTime(event.time)
-                let maxColumns = eventColumns.get(event.id)?.totalColumns || 1
+                        // Check templates
+                        const jstDate = new Date(`${selectedDate}T00:00:00+09:00`)
+                        const dayOfWeek = jstDate.getDay()
+                        const tTemplates = templates.filter(t => t.trainerId === tid && t.dayOfWeek === dayOfWeek)
+                        const templateOverlap = tTemplates.some(t => {
+                           const tStartH = parseInt(t.startTime.split(':')[0])
+                           const tStartM = parseInt(t.startTime.split(':')[1])
+                           const tEndH = parseInt(t.endTime.split(':')[0])
+                           const tEndM = parseInt(t.endTime.split(':')[1])
+                           const tStartTotal = tStartH * 60 + tStartM
+                           const tEndTotal = tEndH * 60 + tEndM
+                           
+                           return (startMinutes < tEndTotal && endMinutes > tStartTotal)
+                        })
+                        return templateOverlap
+                      }
 
-                sortedEvents.forEach((otherEvent) => {
-                  if (otherEvent.id === event.id) return
-                  const { startMinutes: otherStart, endMinutes: otherEnd } = parseEventTime(otherEvent.time)
+                      // Find the FIRST trainer who is available for this time slot
+                      const firstAvailableTrainer = trainers.find(t => checkOverlapWithTrainer(t.id))
 
-                  if (startMinutes < otherEnd && endMinutes > otherStart) {
-                    const otherInfo = eventColumns.get(otherEvent.id)
-                    if (otherInfo) {
-                      maxColumns = Math.max(maxColumns, otherInfo.totalColumns)
-                    }
-                  }
-                })
+                      if (firstAvailableTrainer) {
+                        // If we found an available trainer, show this event ONLY if this column belongs to them
+                        return trainer.id === firstAvailableTrainer.id
+                      } else {
+                        // If NO ONE is available (e.g. completely off-hours), fallback to the first trainer (index 0)
+                        return trainerIndex === 0
+                      }
+                    })
 
-                const current = eventColumns.get(event.id)
-                if (current) {
-                  eventColumns.set(event.id, { ...current, totalColumns: maxColumns })
-                }
-              })
+                    // We need to layout overlapping events WITHIN this column if any
+                    // Reuse the column logic but restricted to this container width
+                    // Actually, let's keep it simple: simpler width division if overlaps
+                    
+                    // Assign columns to events within this trainer column
+                    const sortedEvents = [...trainerEvents].sort((a, b) => {
+                       const aStart = parseEventTime(a.time).startMinutes
+                       const bStart = parseEventTime(b.time).startMinutes
+                       return aStart - bStart
+                    })
+                    
+                    const eventColumns = new Map<string, { column: number, totalColumns: number }>()
+                    // ... (Reuse the overlap logic) ...
+                    // For brevity, I will copy the logic but scoped here.
+                    
+                    sortedEvents.forEach((event) => {
+                        const { startMinutes, endMinutes } = parseEventTime(event.time)
+                        const usedColumns = new Set<number>()
+                        let maxOverlapColumns = 0
+                        sortedEvents.forEach((otherEvent) => {
+                            if (otherEvent.id === event.id) return
+                            const { startMinutes: otherStart, endMinutes: otherEnd } = parseEventTime(otherEvent.time)
+                            if (startMinutes < otherEnd && endMinutes > otherStart) {
+                                const otherColumn = eventColumns.get(otherEvent.id)
+                                if (otherColumn) {
+                                    usedColumns.add(otherColumn.column)
+                                    maxOverlapColumns = Math.max(maxOverlapColumns, otherColumn.totalColumns)
+                                }
+                            }
+                        })
+                        let column = 0
+                        while (usedColumns.has(column)) column++
+                        const totalColumns = Math.max(maxOverlapColumns, column + 1)
+                        eventColumns.set(event.id, { column, totalColumns })
+                    })
+                    
+                    // Second pass for totalColumns
+                     sortedEvents.forEach((event) => {
+                        const { startMinutes, endMinutes } = parseEventTime(event.time)
+                        let maxColumns = eventColumns.get(event.id)?.totalColumns || 1
+                        sortedEvents.forEach((otherEvent) => {
+                            if (otherEvent.id === event.id) return
+                            const { startMinutes: otherStart, endMinutes: otherEnd } = parseEventTime(otherEvent.time)
+                            if (startMinutes < otherEnd && endMinutes > otherStart) {
+                                const otherInfo = eventColumns.get(otherEvent.id)
+                                if (otherInfo) maxColumns = Math.max(maxColumns, otherInfo.totalColumns)
+                            }
+                        })
+                        const current = eventColumns.get(event.id)
+                        if (current) eventColumns.set(event.id, { ...current, totalColumns: maxColumns })
+                    })
 
-              return dayEventsFiltered.map((event, index) => {
-                const [startTime, endTime] = event.time.split(' - ')
-                const [startHours, startMinutes] = startTime.split(':').map(Number)
-                const [endHours, endMinutes] = endTime.split(':').map(Number)
 
-                const topPosition = ((startHours - 8) * 48) + (startMinutes * 48 / 60) // 8時スタート対応
+                    return trainerEvents.map((event, index) => {
+                       const { startMinutes, endMinutes, startTime: startStr, endTime: endStr } = parseEventTime(event.time)
+                       const top = ((startMinutes - (8 * 60)) / 60) * 48
+                       const height = ((endMinutes - startMinutes) / 60) * 48
+                       
+                       const layoutInfo = eventColumns.get(event.id) || { column: 0, totalColumns: 1 }
+                       const widthPercent = 100 / layoutInfo.totalColumns
+                       const leftPercent = layoutInfo.column * widthPercent
+                       
+                       const isTrial = event.title.includes('体験')
+                       const isGuest = event.type === 'guest' || (event.title && event.title.includes('ゲスト'))
+                       const colorClass = isTrial
+                          ? 'bg-blue-300 bg-opacity-50 border border-blue-500 text-blue-900'
+                          : isGuest
+                            ? 'bg-purple-300 bg-opacity-50 border border-purple-500 text-purple-900'
+                            : event.type === 'blocked'
+                              ? 'bg-red-300 bg-opacity-50 border border-red-500 text-red-900'
+                              : 'bg-green-300 bg-opacity-50 border border-green-500 text-green-900'
 
-                // Calculate actual duration in minutes and height
-                const durationMinutes = (endHours * 60 + endMinutes) - (startHours * 60 + startMinutes)
-                const heightPx = (durationMinutes / 60) * 48 // 1時間 = 48px
+                       return (
+                          <div
+                            key={`${event.id}-${trainer.id}`}
+                            className={`absolute px-1 py-1 rounded text-xs font-medium ${colorClass} z-10`}
+                            style={{
+                              top: `${top}px`,
+                              left: `${leftPercent}%`,
+                              width: `${widthPercent}%`,
+                              height: `${height}px`,
+                              borderLeftWidth: '4px'
+                            }}
+                            onClick={(e) => openEditFromEvent(e, event)}
+                          >
+                            <div className="truncate font-bold leading-tight">{formatReservationTitle(event.title, event.plan)}</div>
+                          </div>
+                       )
+                    })
+                  })()}
+                </div>
+              ))}
 
-                const layoutInfo = eventColumns.get(event.id) || { column: 0, totalColumns: 1 }
-                const widthPercent = 100 / layoutInfo.totalColumns
-                const leftPercent = layoutInfo.column * widthPercent
-
-                // Determine color based on reservation type
-                // Check trial BEFORE blocked to ensure trial reservations are blue
-                const isTrial = event.title.includes('体験')
-                const isGuest = event.type === 'guest' || (event.title && event.title.includes('ゲスト'))
-                const colorClass = isTrial
-                  ? 'bg-blue-100 border border-blue-200 text-blue-800'  // Trial = Blue (highest priority)
-                  : isGuest
-                    ? 'bg-purple-100 border border-purple-200 text-purple-800'   // Guest = Purple
-                    : event.type === 'blocked'
-                      ? 'bg-red-100 border border-red-200 text-red-800'      // Blocked = Red
-                      : 'bg-green-100 border border-green-200 text-green-800'  // Regular = Green
-
-                return (
+              {/* Hour Grid Lines (Background for all) - Moved after columns to be on top of availability */}
+              <div className="absolute inset-0 z-[5] pointer-events-none">
+                {timeSlots.map((time, index) => (
                   <div
-                    key={`${event.id}-${index}`}
-                    className={`absolute px-2 py-1 rounded text-xs font-medium ${colorClass}`}
-                    style={{
-                      top: `${topPosition}px`,
-                      left: `${leftPercent}%`,
-                      width: `${widthPercent}%`,
-                      height: `${heightPx}px`,
-                      zIndex: 10,
-                      paddingLeft: '4px',
-                      paddingRight: '4px'
-                    }}
-                    onClick={(e) => openEditFromEvent(e, event)}
-                  >
-                    <div className="truncate font-semibold">{formatReservationTitle(event.title, event.plan)}</div>
-                    {/* Hide notes for trial reservations */}
-                    {event.notes && !isTrial && (
-                      <div className="text-xs opacity-75 truncate">{event.notes}</div>
-                    )}
-                  </div>
-                )
-              })
-            })()}
-
-            {/* Empty State */}
-            {events.filter(event => event.date === selectedDate).length === 0 && (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-center text-gray-400">
-                  <svg className="mx-auto h-12 w-12 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                  <p className="text-sm">この日に予約はありません</p>
-                </div>
+                    key={`grid-${time}`}
+                    className="absolute left-0 right-0 border-t border-gray-500"
+                    style={{ top: `${index * 48}px` }}
+                  />
+                ))}
               </div>
-            )}
+              
+              {/* Current Time Indicator */}
+              {(() => {
+                  const todayStr = new Date().toLocaleDateString('ja-JP', {
+                    year: 'numeric', month: '2-digit', day: '2-digit', timeZone: 'Asia/Tokyo'
+                  }).split('/').map(part => part.padStart(2, '0')).join('-')
+                  if (selectedDate !== todayStr) return null
+                  const now = new Date()
+                  const currentHour = now.getHours()
+                  const currentMinute = now.getMinutes()
+                  if (currentHour < 8) return null
+                  const currentTimePosition = ((currentHour - 8) + currentMinute / 60) * 48
+                  return (
+                    <div
+                      className="absolute left-0 right-0 border-t-2 border-red-400 z-50 pointer-events-none"
+                      style={{ top: `${currentTimePosition}px` }}
+                    >
+                      <div className="absolute -left-2 -top-1 w-2 h-2 bg-red-400 rounded-full"></div>
+                    </div>
+                  )
+              })()}
+
+            </div>
           </div>
         </div>
       </div>
@@ -529,34 +673,23 @@ export default function TimelineView({ selectedDate, events, onBack, onEventsUpd
       <div className="px-6 py-3 border-t border-gray-200 bg-gray-50">
         <div className="flex items-center justify-center space-x-6 text-sm">
           <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-green-100 border border-green-200 rounded"></div>
+            <div className="w-3 h-3 bg-green-300 bg-opacity-50 border border-green-500 rounded"></div>
             <span className="text-gray-600">予約</span>
           </div>
           <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-blue-100 border border-blue-200 rounded"></div>
+            <div className="w-3 h-3 bg-blue-300 bg-opacity-50 border border-blue-500 rounded"></div>
             <span className="text-gray-600">体験</span>
           </div>
           <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-red-100 border border-red-200 rounded"></div>
+            <div className="w-3 h-3 bg-red-300 bg-opacity-50 border border-red-500 rounded"></div>
             <span className="text-gray-600">予約不可時間</span>
           </div>
           <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-purple-100 border border-purple-200 rounded"></div>
+            <div className="w-3 h-3 bg-purple-300 bg-opacity-50 border border-purple-500 rounded"></div>
             <span className="text-gray-600">ゲスト</span>
           </div>
         </div>
       </div>
-
-      {/* Quick Reservation Modal */}
-      {showQuickModal && (
-        <QuickReservationModal
-          isOpen={showQuickModal}
-          onClose={() => setShowQuickModal(false)}
-          selectedDate={selectedDate}
-          selectedTime={selectedTimeSlot}
-          onSuccess={handleModalSuccess}
-        />
-      )}
 
       {/* Edit Modal */}
       {showEditModal && editingReservation && (
@@ -574,6 +707,19 @@ export default function TimelineView({ selectedDate, events, onBack, onEventsUpd
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     required
                   />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">担当トレーナー</label>
+                  <select
+                    value={editFormData.trainerId || ''}
+                    onChange={(e) => setEditFormData(prev => ({ ...prev, trainerId: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">指定なし（フリー）</option>
+                    {trainers.map(tr => (
+                      <option key={tr.id} value={tr.id}>{tr.name}</option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">開始時刻</label>

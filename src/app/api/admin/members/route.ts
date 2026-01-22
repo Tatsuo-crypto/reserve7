@@ -9,21 +9,49 @@ export async function GET(request: NextRequest) {
   try {
     console.log('=== Members API GET started ===')
 
-    const user = await getAuthenticatedUser()
-    console.log('User authenticated:', user ? 'Yes' : 'No', user?.email, user?.storeId)
+    let user = null
+    const { searchParams } = new URL(request.url)
+    const token = searchParams.get('token')
 
-    if (!user) {
-      console.error('No user found')
-      return createErrorResponse('認証が必要です', 401)
-    }
+    if (token) {
+      // Trainer token authentication
+      const { data: trainer, error } = await supabaseAdmin
+        .from('trainers')
+        .select('id, full_name, email, store_id')
+        .eq('access_token', token)
+        .eq('status', 'active')
+        .single()
 
-    if (!user.isAdmin) {
-      console.error('User is not admin:', user.email)
-      return createErrorResponse('管理者権限が必要です', 403)
+      if (error || !trainer) {
+        return createErrorResponse('無効なトークンです', 401)
+      }
+
+      user = {
+        id: trainer.id,
+        email: trainer.email,
+        name: trainer.full_name,
+        isAdmin: false,
+        isTrainer: true,
+        storeId: trainer.store_id
+      }
+      console.log('Trainer authenticated via token:', user.email, user.storeId)
+    } else {
+      // Session authentication
+      user = await getAuthenticatedUser()
+      console.log('User authenticated:', user ? 'Yes' : 'No', user?.email, user?.storeId)
+
+      if (!user) {
+        console.error('No user found')
+        return createErrorResponse('認証が必要です', 401)
+      }
+
+      if (!user.isAdmin) {
+        console.error('User is not admin:', user.email)
+        return createErrorResponse('管理者権限が必要です', 403)
+      }
     }
 
     // Check if requesting all stores (for sales page)
-    const { searchParams } = new URL(request.url)
     const allStores = searchParams.get('all_stores') === 'true'
     console.log('All stores requested:', allStores)
 
@@ -42,6 +70,7 @@ export async function GET(request: NextRequest) {
         status, 
         store_id,
         monthly_fee,
+        transfer_day,
         created_at, 
         memo, 
         access_token
@@ -133,13 +162,18 @@ export async function POST(request: NextRequest) {
       return createErrorResponse('管理者権限が必要です', 403)
     }
 
-    const { fullName, email, googleCalendarEmail, plan, status, memo, storeId, monthlyFee } = await request.json()
+    const { fullName, email, googleCalendarEmail, plan, status, memo, storeId, monthlyFee, transferDay } = await request.json()
 
     // Validation
     // 名前とメールアドレスは任意（空欄の場合はダミー値を設定）
 
     if (!storeId) {
       return createErrorResponse('店舗の選択は必須です', 400)
+    }
+
+    // Validate transferDay
+    if (transferDay && (isNaN(transferDay) || transferDay < 1 || transferDay > 31)) {
+      return createErrorResponse('振込日は1〜31の間で指定してください', 400)
     }
 
     // Validate status if provided
@@ -181,6 +215,7 @@ export async function POST(request: NextRequest) {
       status: status || 'active',
       store_id: storeId,
       monthly_fee: monthlyFee ? parseInt(monthlyFee) : 0,
+      transfer_day: transferDay ? parseInt(transferDay) : null,
       memo: memo || null,
       role: 'CLIENT',
       // access_tokenはSupabaseがUUIDで自動生成
@@ -242,11 +277,16 @@ export async function PATCH(request: NextRequest) {
       return createErrorResponse('管理者権限が必要です', 403)
     }
 
-    const { memberId, fullName, email, googleCalendarEmail, storeId, status, plan, monthlyFee, memo, statusChangeDate, changeDate } = await request.json()
+    const { memberId, fullName, email, googleCalendarEmail, storeId, status, plan, monthlyFee, transferDay, memo, statusChangeDate, changeDate } = await request.json()
 
     // Validate status if provided
     if (status && !['active', 'suspended', 'withdrawn'].includes(status)) {
       return createErrorResponse('Invalid status', 400)
+    }
+
+    // Validate transferDay
+    if (transferDay && (isNaN(transferDay) || transferDay < 1 || transferDay > 31)) {
+      return createErrorResponse('振込日は1〜31の間で指定してください', 400)
     }
 
     // Validate plan if provided
@@ -259,7 +299,7 @@ export async function PATCH(request: NextRequest) {
     // First check if the member exists
     const { data: member, error: fetchError } = await supabaseAdmin
       .from('users')
-      .select('id, email, store_id, status, plan, monthly_fee')
+      .select('id, email, store_id, status, plan, monthly_fee, transfer_day')
       .eq('id', memberId)
       .neq('email', 'tandjgym@gmail.com')
       .neq('email', 'tandjgym2goutenn@gmail.com')
@@ -278,6 +318,7 @@ export async function PATCH(request: NextRequest) {
     if (status) updateData.status = status
     if (plan) updateData.plan = plan
     if (monthlyFee !== undefined) updateData.monthly_fee = monthlyFee ? parseInt(monthlyFee) : 0
+    if (transferDay !== undefined) updateData.transfer_day = transferDay ? parseInt(transferDay) : null
     if (memo !== undefined) updateData.memo = memo
 
     // Update member

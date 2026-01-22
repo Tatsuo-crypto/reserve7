@@ -26,6 +26,7 @@ export default function EditMemberPage() {
     storeId: '',
     plan: '月4回',
     monthlyFee: '',
+    transferDay: '',
     status: 'active',
     memo: '',
     changeDate: new Date().toISOString().split('T')[0],
@@ -63,6 +64,7 @@ export default function EditMemberPage() {
             storeId: member.store_id || '',
             plan: member.plan || '月4回',
             monthlyFee: member.monthly_fee ? member.monthly_fee.toString() : '',
+            transferDay: member.transfer_day ? member.transfer_day.toString() : '',
             status: member.status || 'active',
             memo: member.memo || '',
             changeDate: new Date().toISOString().split('T')[0],
@@ -117,6 +119,7 @@ export default function EditMemberPage() {
           storeId: formData.storeId,
           plan: formData.plan,
           monthlyFee: formData.monthlyFee,
+          transferDay: formData.transferDay,
           status: formData.status,
           memo: formData.memo,
           changeDate: formData.changeDate,
@@ -280,6 +283,28 @@ export default function EditMemberPage() {
               placeholder="13200"
             />
             <p className="mt-1 text-sm text-gray-500">空欄の場合は0円として登録されます</p>
+          </div>
+
+          {/* 振込日 */}
+          <div>
+            <label htmlFor="transferDay" className="block text-sm font-medium text-gray-700 mb-2">
+              振込日（1〜31）
+            </label>
+            <input
+              type="number"
+              id="transferDay"
+              name="transferDay"
+              value={formData.transferDay}
+              onChange={handleChange}
+              min="1"
+              max="31"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="27"
+            />
+            <p className="mt-1 text-sm text-gray-500">
+              指定した日付を過ぎても入金がない場合、売上管理で「未振込」と判定されます。<br />
+              空欄の場合はデフォルト（27日）として扱われます。
+            </p>
           </div>
 
           {/* ステータス */}

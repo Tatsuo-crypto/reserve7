@@ -235,9 +235,9 @@ export default function TrainerShiftPage({ token, trainerName }: TrainerShiftPag
     <div className="bg-white rounded-lg shadow-sm border border-gray-200">
       <div className="p-4 border-b border-gray-200 space-y-4">
         {/* Header Row */}
-        <div className="flex justify-between items-center">
+        {/* <div className="flex justify-between items-center">
           <h2 className="text-lg font-bold text-gray-900">シフト管理</h2>
-        </div>
+        </div> */}
 
         {/* Controls Row */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">

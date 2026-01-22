@@ -6,10 +6,32 @@ import { requireAdminAuth, handleApiError } from '@/lib/api-utils'
 // GET /api/admin/trainers?storeId=...&status=active|inactive&query=...
 export async function GET(request: NextRequest) {
   try {
-    const auth = await requireAdminAuth()
-    if (auth instanceof NextResponse) return auth
-
+    // Check authentication (Session or Token)
     const { searchParams } = new URL(request.url)
+    const token = searchParams.get('token')
+    
+    let user = null
+
+    if (token) {
+      // Trainer token authentication
+      const { data: trainer, error } = await supabaseAdmin
+        .from('trainers')
+        .select('id, full_name, email, store_id')
+        .eq('access_token', token)
+        .eq('status', 'active')
+        .single()
+
+      if (error || !trainer) {
+        return NextResponse.json({ error: '無効なトークンです' }, { status: 401 })
+      }
+      
+      // Valid trainer
+    } else {
+      // Admin session authentication
+      const auth = await requireAdminAuth()
+      if (auth instanceof NextResponse) return auth
+    }
+
     const storeId = searchParams.get('storeId')
     const status = searchParams.get('status') // active | inactive | all
     const query = searchParams.get('query') // name or email partial
@@ -48,14 +70,16 @@ export async function POST(request: NextRequest) {
     const status = body?.status ?? 'active'
     const phone = body?.phone
     const notes = body?.notes
+    const googleCalendarId = body?.googleCalendarId
 
     const fullName = typeof rawFullName === 'string' ? rawFullName.trim() : ''
-    const email = typeof rawEmail === 'string' ? rawEmail.trim() : ''
+    const emailStr = typeof rawEmail === 'string' ? rawEmail.trim() : ''
+    const email = emailStr === '' ? null : emailStr
     const storeId = typeof rawStoreId === 'string' ? rawStoreId.trim() : ''
 
     const missing: string[] = []
     if (!fullName) missing.push('氏名')
-    if (!email) missing.push('メール')
+    // if (!email) missing.push('メール') // Email is now optional
     if (!storeId) missing.push('担当店舗')
     if (missing.length > 0) {
       console.warn('Admin trainers POST missing fields:', { body, parsed: { fullName, email, storeId } })
@@ -64,8 +88,16 @@ export async function POST(request: NextRequest) {
 
     const { data, error } = await supabaseAdmin
       .from('trainers')
-      .insert({ full_name: fullName, email, store_id: storeId, status, phone, notes })
-      .select('id, full_name, email, store_id, status, phone, notes, created_at, updated_at, access_token')
+      .insert({ 
+        full_name: fullName, 
+        email, 
+        store_id: storeId, 
+        status, 
+        phone, 
+        notes,
+        google_calendar_id: googleCalendarId || null
+      })
+      .select('id, full_name, email, store_id, status, phone, notes, created_at, updated_at, access_token, google_calendar_id')
       .single()
 
     if (error) throw error

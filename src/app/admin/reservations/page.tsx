@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useStoreChange } from '@/hooks/useStoreChange'
 import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import ErrorMessage from '@/components/ui/ErrorMessage'
@@ -21,9 +21,11 @@ function getReservationSequence(targetReservation: any, allReservations: any[]):
   return index >= 0 ? index + 1 : 1
 }
 
-export default function AdminReservationsPage() {
+function AdminReservationsContent() {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const trainerToken = searchParams.get('trainerToken')
   const [reservations, setReservations] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -41,6 +43,10 @@ export default function AdminReservationsPage() {
   // Check admin access
   useEffect(() => {
     if (status === 'loading') return
+    
+    // Allow if valid trainer token exists
+    if (trainerToken) return
+
     if (status === 'unauthenticated') {
       router.push('/login')
       return
@@ -49,42 +55,64 @@ export default function AdminReservationsPage() {
       router.push('/reservations')
       return
     }
-  }, [status, session, router])
+  }, [status, session, router, trainerToken])
 
   // Fetch reservations and monthly usage
   useEffect(() => {
     const fetchReservations = async () => {
+      setLoading(true)
       try {
-        const response = await fetch('/api/reservations')
+        // Fetch reservations from the 1st day of the previous month
+        const now = new Date()
+        const startParams = new Date(now.getFullYear(), now.getMonth() - 1, 1) // 1st of previous month
+        
+        const timestamp = new Date().getTime()
+        const baseUrl = trainerToken 
+          ? `/api/reservations?token=${trainerToken}&_t=${timestamp}`
+          : `/api/reservations?_t=${timestamp}`
+        
+        const url = `${baseUrl}&start=${startParams.toISOString()}`
+        
+        const response = await fetch(url, { cache: 'no-store' })
         if (response.ok) {
           const result = await response.json()
           const reservationsData = result.data?.reservations || []
           setReservations(reservationsData)
 
-          // Fetch monthly usage for each unique client
-          const clientIds = reservationsData.map((r: any) => r.client?.id).filter(Boolean) as string[]
-          const uniqueClients = Array.from(new Set(clientIds))
-          const usagePromises = uniqueClients.map(async (clientId: string) => {
-            try {
-              const usageResponse = await fetch(`/api/reservations/monthly-count?clientId=${clientId}`)
-              if (usageResponse.ok) {
-                const usageData = await usageResponse.json()
-                return { clientId, usage: usageData.data }
-              }
-            } catch (error) {
-              console.error('Failed to fetch usage for client:', clientId, error)
-            }
-            return null
-          })
+          // Fetch monthly usage for unique clients in BATCH
+          const clientIds = reservationsData
+            .map((r: any) => r.client?.id)
+            .filter((id: string) => id && id !== 'blocked' && id !== 'trial' && id !== 'guest')
+          
+          const uniqueClients = Array.from(new Set(clientIds)) as string[]
 
-          const usageResults = await Promise.all(usagePromises)
-          const usageMap: { [key: string]: any } = {}
-          usageResults.forEach(result => {
-            if (result) {
-              usageMap[result.clientId] = result.usage
+          if (uniqueClients.length > 0) {
+            try {
+                const batchUrl = trainerToken
+                    ? `/api/reservations/batch-usage?token=${trainerToken}`
+                    : `/api/reservations/batch-usage`
+                
+                const batchRes = await fetch(batchUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        clientIds: uniqueClients,
+                        year: now.getFullYear(),
+                        month: now.getMonth() + 1
+                    })
+                })
+
+                if (batchRes.ok) {
+                    const batchData = await batchRes.json()
+                    setMonthlyUsage(batchData.data || {})
+                }
+            } catch (e) {
+                console.error('Failed to fetch batch usage:', e)
             }
-          })
-          setMonthlyUsage(usageMap)
+          } else {
+            setMonthlyUsage({})
+          }
+
         } else {
           const errorData = await response.json()
           setError(`予約データの取得に失敗しました: ${errorData.error || 'Unknown error'}`)
@@ -97,30 +125,31 @@ export default function AdminReservationsPage() {
       }
     }
 
-    if (status === 'authenticated' && session?.user?.role === 'ADMIN') {
+    if ((status === 'authenticated' && session?.user?.role === 'ADMIN') || trainerToken) {
       fetchReservations()
-    } else if (status === 'authenticated' && session?.user?.role !== 'ADMIN') {
+    } else if (status === 'authenticated' && session?.user?.role !== 'ADMIN' && !trainerToken) {
       setLoading(false)
     }
-  }, [session, status, storeChangeCount])
+  }, [session, status, storeChangeCount, trainerToken])
 
   const handleDeleteReservation = async (reservationId: string) => {
     console.log('🔴 [DEBUG] handleDeleteReservation called with ID:', reservationId);
-    alert(`[DEBUG] 削除処理開始\nID: ${reservationId}`);
+    // alert(`[DEBUG] 削除処理開始\nID: ${reservationId}`);
 
     if (!confirm('この予約を削除してもよろしいですか？')) {
       console.log('🔴 [DEBUG] User cancelled');
-      alert('[DEBUG] キャンセルされました');
       return;
     }
 
     console.log('🔴 [DEBUG] User confirmed deletion');
-    alert('[DEBUG] 削除を実行します');
 
     try {
-      console.log('🔴 [DEBUG] Sending DELETE request to:', `/api/reservations/${reservationId}`);
+      const url = trainerToken
+        ? `/api/reservations/${reservationId}?token=${trainerToken}`
+        : `/api/reservations/${reservationId}`
+      console.log('🔴 [DEBUG] Sending DELETE request to:', url);
 
-      const response = await fetch(`/api/reservations/${reservationId}`, {
+      const response = await fetch(url, {
         method: 'DELETE',
         credentials: 'include'
       });
@@ -131,24 +160,21 @@ export default function AdminReservationsPage() {
         statusText: response.statusText
       });
 
-      alert(`[DEBUG] レスポンス受信\nステータス: ${response.status}\nOK: ${response.ok}`);
-
       if (response.ok) {
         const result = await response.json();
         console.log('🔴 [DEBUG] Delete success:', result);
-        alert(`[DEBUG] 削除成功\nメッセージ: ${result.message}`);
+        alert('削除しました');
 
         setReservations(prev => prev.filter(r => r.id !== reservationId));
-        alert('[DEBUG] リロードします');
         window.location.reload();
       } else {
         const errorData = await response.json();
         console.error('🔴 [DEBUG] Delete error response:', errorData);
-        alert(`[DEBUG] 削除失敗\nエラー: ${errorData.error || 'Unknown error'}`);
+        alert(`削除失敗: ${errorData.error || 'Unknown error'}`);
       }
     } catch (error) {
       console.error('🔴 [DEBUG] Delete exception:', error);
-      alert(`[DEBUG] 例外発生\nエラー: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      alert(`エラーが発生しました: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
@@ -218,7 +244,11 @@ export default function AdminReservationsPage() {
     if (!editingReservation) return
 
     try {
-      const response = await fetch(`/api/reservations/${editingReservation.id}`, {
+      const url = trainerToken
+        ? `/api/reservations/${editingReservation.id}?token=${trainerToken}`
+        : `/api/reservations/${editingReservation.id}`
+
+      const response = await fetch(url, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -357,7 +387,7 @@ export default function AdminReservationsPage() {
             </h1>
             <div className="flex items-center justify-between w-full">
               <button
-                onClick={() => router.push('/dashboard')}
+                onClick={() => router.push(trainerToken ? `/trainer/${trainerToken}` : '/dashboard')}
                 className="p-2 hover:bg-gray-100 rounded-full transition-colors"
               >
                 <svg className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -370,7 +400,7 @@ export default function AdminReservationsPage() {
               <div className="w-10"></div>
             </div>
             <Link
-              href="/admin/reservations/new"
+              href={trainerToken ? `/admin/reservations/new?trainerToken=${trainerToken}` : '/admin/reservations/new'}
               className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors"
             >
               新規予約作成
@@ -443,10 +473,10 @@ export default function AdminReservationsPage() {
                             </div>
                             <div className="text-gray-500 text-xs">
                               {reservation.client?.id === 'blocked'
-                                ? 'blocked@system'
+                                ? 'システム'
                                 : reservation.client?.email === 'guest@system'
                                   ? 'Guest'
-                                  : (reservation.client?.email || '-')}
+                                  : (reservation.client?.plan || reservation.client?.email || '-')}
                             </div>
                           </div>
                         </div>
@@ -483,31 +513,7 @@ export default function AdminReservationsPage() {
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
-
-                              const resId = reservation.id;
-                              console.log('INLINE DELETE CLICKED:', resId);
-
-                              if (!window.confirm('この予約を削除してもよろしいですか？')) {
-                                return;
-                              }
-
-                              fetch(`/api/reservations/${resId}`, {
-                                method: 'DELETE',
-                                credentials: 'include'
-                              })
-                                .then(res => {
-                                  console.log('Response status:', res.status);
-                                  return res.json();
-                                })
-                                .then(data => {
-                                  console.log('Response data:', data);
-                                  alert('削除しました');
-                                  window.location.reload();
-                                })
-                                .catch(err => {
-                                  console.error('Error:', err);
-                                  alert('エラー: ' + err.message);
-                                });
+                              handleDeleteReservation(reservation.id);
                             }}
                             className="bg-red-100 text-red-600 hover:bg-red-200 px-3 py-1 rounded-md transition-colors"
                           >
@@ -527,7 +533,7 @@ export default function AdminReservationsPage() {
           <div className="text-center py-12">
             <p className="text-gray-500">予約が見つかりません</p>
             <Link
-              href="/admin/reservations/new"
+              href={trainerToken ? `/admin/reservations/new?trainerToken=${trainerToken}` : '/admin/reservations/new'}
               className="mt-4 inline-block bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700"
             >
               新規予約を作成
@@ -644,5 +650,18 @@ export default function AdminReservationsPage() {
         </div>
       )}
     </div>
+  )
+}
+
+export default function AdminReservationsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingSpinner size="lg" />
+        <span className="ml-3 text-lg">読み込み中...</span>
+      </div>
+    }>
+      <AdminReservationsContent />
+    </Suspense>
   )
 }

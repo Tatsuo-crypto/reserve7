@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useState, Suspense } from 'react'
 import CalendarView from '@/components/CalendarView'
 import Link from 'next/link'
+import { getStoreDisplayName } from '@/lib/auth-utils'
 
 function AdminCalendarPageContent() {
   const { data: session, status } = useSession()
@@ -13,15 +14,30 @@ function AdminCalendarPageContent() {
   const trainerToken = searchParams.get('trainerToken')
   const [viewMode, setViewMode] = useState<'month' | 'timeline'>('month')
   const [calendarKey, setCalendarKey] = useState(0)
+  const [trainer, setTrainer] = useState<{ name: string; storeId: string } | null>(null)
+
+  useEffect(() => {
+    if (trainerToken) {
+      fetch(`/api/auth/trainer-token?token=${trainerToken}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.trainer) setTrainer(data.trainer)
+        })
+        .catch(console.error)
+    }
+  }, [trainerToken])
 
   useEffect(() => {
     if (status === 'loading') return
+    // If we have a trainer token, we don't need session auth
+    if (trainerToken) return
+    
     if (status === 'unauthenticated') {
       router.push('/login')
     }
-  }, [status, router])
+  }, [status, router, trainerToken])
 
-  if (status === 'loading') {
+  if (status === 'loading' && !trainerToken) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -32,7 +48,8 @@ function AdminCalendarPageContent() {
     )
   }
 
-  if (status === 'unauthenticated') {
+  // If unauthenticated and no token, show nothing (will redirect)
+  if (status === 'unauthenticated' && !trainerToken) {
     return null
   }
 
@@ -49,6 +66,29 @@ function AdminCalendarPageContent() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Trainer Header */}
+      {trainerToken && (
+        <header className="bg-gradient-to-b from-white to-gray-50 border-b border-gray-100 shadow mb-6">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center h-16">
+              <div className="text-xl font-semibold text-gray-900">
+                T&J GYM
+              </div>
+              {trainer && (
+                <div className="bg-white border border-gray-300 px-4 py-2 rounded-lg shadow-sm text-sm flex items-center space-x-3">
+                  <span className="text-gray-700 font-medium">
+                    {getStoreDisplayName(trainer.storeId)}
+                  </span>
+                  <span className="px-3 py-1 rounded-full text-xs font-medium border bg-blue-100 text-blue-700 border-blue-300">
+                    トレーナー
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        </header>
+      )}
+
       <div className="w-full">
         {/* Header */}
         <div className="mb-4">
@@ -79,6 +119,7 @@ function AdminCalendarPageContent() {
           key={calendarKey}
           onViewModeChange={setViewMode}
           onBackToMonth={() => setViewMode('month')}
+          trainerToken={trainerToken}
         />
       </div>
     </div>

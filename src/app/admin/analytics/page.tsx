@@ -8,6 +8,7 @@ import {
     BarChart, Bar, ComposedChart, Area, ReferenceLine
 } from 'recharts'
 import { useStoreChange } from '@/hooks/useStoreChange'
+import MemberMovementModal from './MemberMovementModal'
 
 export default function AnalyticsPage() {
     const { data: session, status } = useSession()
@@ -16,6 +17,10 @@ export default function AnalyticsPage() {
     const [period, setPeriod] = useState<string>('all')
     const [filterStoreId, setFilterStoreId] = useState<string>(currentStoreId || 'all')
     const [stores, setStores] = useState<{ id: string, name: string }[]>([])
+    
+    // Modal state
+    const [selectedMonthData, setSelectedMonthData] = useState<any>(null)
+    const [isModalOpen, setIsModalOpen] = useState(false)
 
     // Check admin access
     useEffect(() => {
@@ -66,6 +71,7 @@ export default function AnalyticsPage() {
     }, [currentStoreId])
 
     useEffect(() => {
+        let ignore = false
         const fetchData = async () => {
             setLoading(true)
             try {
@@ -74,18 +80,36 @@ export default function AnalyticsPage() {
                 // If we don't send it, backend defaults to user.storeId which filters to single store
                 params.append('storeId', filterStoreId || 'all')
                 params.append('period', period)
+                // Add timestamp to prevent caching
+                params.append('_t', Date.now().toString())
 
-                const res = await fetch(`/api/admin/analytics?${params.toString()}`)
+                const res = await fetch(`/api/admin/analytics?${params.toString()}`, {
+                    cache: 'no-store',
+                    headers: {
+                        'Pragma': 'no-cache',
+                        'Cache-Control': 'no-cache'
+                    }
+                })
+                if (ignore) return // Check if effect was cleaned up
+
                 if (!res.ok) throw new Error('Failed to fetch data')
                 const json = await res.json()
                 setData(json)
             } catch (error) {
-                console.error(error)
+                if (!ignore) {
+                    console.error(error)
+                }
             } finally {
-                setLoading(false)
+                if (!ignore) {
+                    setLoading(false)
+                }
             }
         }
         fetchData()
+
+        return () => {
+            ignore = true
+        }
     }, [filterStoreId, period])
 
     if (loading && data.memberHistory.length === 0) {
@@ -109,37 +133,51 @@ export default function AnalyticsPage() {
         withdrawnDisplay: -(item.withdrawn || 0) // Make negative for plotting
     }))
 
+    // Handle bar click
+    const handleBarClick = (data: any) => {
+        if (data) {
+            setSelectedMonthData({
+                month: data.month,
+                newMembers: data.newMembers || [],
+                withdrawnMembers: data.withdrawnMembers || []
+            })
+            setIsModalOpen(true)
+        }
+    }
+
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div className="mb-8 flex items-center justify-between">
-                <div>
-                    <div className="flex items-center gap-4">
-                        <h1 className="text-3xl font-bold text-gray-900">分析・レポート</h1>
-                        <select
-                            value={filterStoreId}
-                            onChange={(e) => setFilterStoreId(e.target.value)}
-                            className="text-sm border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-1 pl-2 pr-8"
-                        >
-                            <option value="all">全店舗</option>
-                            {stores.map(store => (
-                                <option key={store.id} value={store.id}>{store.name}</option>
-                            ))}
-                        </select>
-                        
-                        {/* Global Period Selector */}
-                        <select
-                            value={period}
-                            onChange={(e) => setPeriod(e.target.value)}
-                            className="text-sm border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-1 pl-2 pr-8"
-                        >
-                            <option value="all">全期間 (2023/11~)</option>
-                            <option value="2023">2023年</option>
-                            <option value="2024">2024年</option>
-                            <option value="2025">2025年</option>
-                            <option value="2026">2026年</option>
-                            <option value="1y">直近1年</option>
-                            <option value="3m">直近3ヶ月</option>
-                        </select>
+            <div className="mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="w-full">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                        <h1 className="text-3xl font-bold text-gray-900 whitespace-nowrap">分析・レポート</h1>
+                        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+                            <select
+                                value={filterStoreId}
+                                onChange={(e) => setFilterStoreId(e.target.value)}
+                                className="text-sm border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-1 pl-2 pr-8 flex-1 sm:flex-none"
+                            >
+                                <option value="all">全店舗</option>
+                                {stores.map(store => (
+                                    <option key={store.id} value={store.id}>{store.name}</option>
+                                ))}
+                            </select>
+                            
+                            {/* Global Period Selector */}
+                            <select
+                                value={period}
+                                onChange={(e) => setPeriod(e.target.value)}
+                                className="text-sm border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-1 pl-2 pr-8 flex-1 sm:flex-none"
+                            >
+                                <option value="all">全期間 (2023/11~)</option>
+                                <option value="2023">2023年</option>
+                                <option value="2024">2024年</option>
+                                <option value="2025">2025年</option>
+                                <option value="2026">2026年</option>
+                                <option value="1y">直近1年</option>
+                                <option value="3m">直近3ヶ月</option>
+                            </select>
+                        </div>
                     </div>
                     <p className="text-gray-600 mt-2">会員数、売上の推移を確認できます</p>
                 </div>
@@ -167,7 +205,7 @@ export default function AnalyticsPage() {
             </div>
 
             {/* Charts Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8" key={`${filterStoreId}-${period}`}>
 
                 {/* Member Growth Chart */}
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
@@ -234,11 +272,6 @@ export default function AnalyticsPage() {
                                     style={{ fontSize: '12px' }}
                                     tickFormatter={(val) => Math.abs(val).toString()} // Show absolute numbers
                                 />
-                                <Tooltip
-                                    formatter={(value: any, name: any) => [`${Math.abs(Number(value))}名`, name]}
-                                    labelStyle={{ color: 'black' }}
-                                    cursor={{ fill: 'transparent' }}
-                                />
                                 <Legend />
                                 <ReferenceLine y={0} stroke="#000" />
                                 <Bar 
@@ -246,18 +279,28 @@ export default function AnalyticsPage() {
                                     name="新規入会" 
                                     fill="#ef4444" 
                                     stackId="a" 
+                                    cursor="pointer"
+                                    onClick={handleBarClick}
                                 />
                                 <Bar 
                                     dataKey="withdrawnDisplay" 
                                     name="退会" 
                                     fill="#3b82f6" 
                                     stackId="a" 
+                                    cursor="pointer"
+                                    onClick={handleBarClick}
                                 />
                             </BarChart>
                         </ResponsiveContainer>
                     </div>
                 </div>
             </div>
+
+            <MemberMovementModal 
+                isOpen={isModalOpen} 
+                onClose={() => setIsModalOpen(false)} 
+                data={selectedMonthData} 
+            />
         </div>
     )
 }

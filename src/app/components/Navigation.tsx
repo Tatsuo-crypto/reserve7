@@ -2,19 +2,45 @@
 
 import { useSession, signOut } from 'next-auth/react'
 import Link from 'next/link'
-import { useRouter, usePathname } from 'next/navigation'
+import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { getStoreDisplayName } from '@/lib/auth-utils'
-import { useState } from 'react'
+import { useState, Suspense, useEffect } from 'react'
 import StoreSwitcher from './StoreSwitcher'
 
-export default function Navigation() {
+function NavigationContent() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const pathname = usePathname()
+  const searchParams = useSearchParams()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [trainerInfo, setTrainerInfo] = useState<{ name: string; storeId: string } | null>(null)
 
-  // Don't show navigation on client pages and trainer pages
+  const trainerToken = searchParams.get('trainerToken')
+
+  // Fetch trainer info if token is present
+  useEffect(() => {
+    const fetchTrainerInfo = async () => {
+      if (!trainerToken) return
+      try {
+        const res = await fetch(`/api/auth/trainer-token?token=${trainerToken}`)
+        if (res.ok) {
+          const data = await res.json()
+          setTrainerInfo(data.trainer)
+        }
+      } catch (e) {
+        console.error('Failed to fetch trainer info', e)
+      }
+    }
+    fetchTrainerInfo()
+  }, [trainerToken])
+
+  // Don't show navigation on client pages or trainer standalone pages (which have their own headers)
   if (pathname && (pathname.startsWith('/client/') || pathname.startsWith('/trainer/'))) {
+    return null
+  }
+
+  // If accessing via trainer token, hide global navigation (page will handle header)
+  if (trainerToken) {
     return null
   }
 
@@ -196,5 +222,13 @@ export default function Navigation() {
         </div>
       </div>
     </header>
+  )
+}
+
+export default function Navigation() {
+  return (
+    <Suspense fallback={null}>
+      <NavigationContent />
+    </Suspense>
   )
 }

@@ -33,6 +33,17 @@ export async function GET(request: NextRequest) {
       )
     }
 
+    // Get store calendar_id
+    const { data: store, error: storeError } = await supabaseAdmin
+      .from('stores')
+      .select('calendar_id')
+      .eq('id', trainer.store_id)
+      .single()
+
+    if (storeError) {
+      console.error('Store lookup error:', storeError)
+    }
+
     // Return trainer info (excluding sensitive data)
     return NextResponse.json({
       trainer: {
@@ -40,6 +51,7 @@ export async function GET(request: NextRequest) {
         name: trainer.full_name,
         email: trainer.email,
         storeId: trainer.store_id,
+        calendarId: store?.calendar_id
       }
     })
 

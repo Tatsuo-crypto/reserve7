@@ -38,7 +38,7 @@ export default function ShiftCalendar({
 
   // Calendar constants
   const START_HOUR = 9
-  const END_HOUR = 23
+  const END_HOUR = 22
   const HOUR_HEIGHT = 40 // px per hour
   const hours = Array.from({ length: END_HOUR - START_HOUR + 1 }, (_, i) => START_HOUR + i)
 
@@ -93,7 +93,7 @@ export default function ShiftCalendar({
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-250px)] min-h-[600px] border border-gray-200 rounded-lg bg-white overflow-hidden">
+    <div className="flex flex-col border border-gray-200 rounded-lg bg-white overflow-hidden">
       {/* Header: Days of week */}
       <div className="grid grid-cols-8 border-b border-gray-200 bg-gray-50 flex-shrink-0">
         <div className="p-2 border-r border-gray-200 text-center text-xs font-medium text-gray-500 sticky left-0 bg-gray-50 z-10">

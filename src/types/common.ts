@@ -25,6 +25,7 @@ export interface Reservation {
   memo?: string
   calendar_id: number
   external_event_id?: string
+  trainer_id?: string
   created_at: string
   visit_count?: number
   client?: {

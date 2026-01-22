@@ -15,22 +15,31 @@ export function isAdmin(email: string): boolean {
 
 export function getUserStoreId(email: string): string {
   if (email === 'tandjgym@gmail.com') {
-    return '1'
+    return '77439c86-679a-409a-8000-2e5297e5c0e8'
   } else if (email === 'tandjgym2goutenn@gmail.com') {
-    return '2'
+    return '43296d78-13f3-4061-8d75-d38dfe907a5d'
   }
   // For regular users, extract store ID from their registration
   // This is a fallback - in practice, store_id should be stored in the user record
-  return '1' // Default to store 1
+  return '77439c86-679a-409a-8000-2e5297e5c0e8' // Default to store 1
 }
 
-export function getStoreDisplayName(email: string): string {
-  if (email === 'tandjgym@gmail.com') {
+export function getStoreDisplayName(identifier: string): string {
+  // Handle emails
+  if (identifier === 'tandjgym@gmail.com') {
     return 'T&J GYM1号店'
-  } else if (email === 'tandjgym2goutenn@gmail.com') {
+  } else if (identifier === 'tandjgym2goutenn@gmail.com') {
     return 'T&J GYM2号店'
   }
-  return email
+  
+  // Handle store UUIDs
+  if (identifier === '77439c86-679a-409a-8000-2e5297e5c0e8') {
+    return 'T&J GYM1号店'
+  } else if (identifier === '43296d78-13f3-4061-8d75-d38dfe907a5d') {
+    return 'T&J GYM2号店'
+  }
+
+  return identifier
 }
 
 /**

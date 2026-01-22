@@ -13,6 +13,7 @@ interface Reservation {
   endTime: string
   notes?: string
   memo?: string
+  trainerId?: string
   client: {
     id: string
     fullName: string
@@ -20,6 +21,23 @@ interface Reservation {
     plan?: string
     storeId?: string
   }
+}
+
+interface Shift {
+  id: string
+  trainerId: string
+  trainerName: string
+  startTime: string
+  endTime: string
+}
+
+interface ShiftTemplate {
+  id: string
+  trainerId: string
+  trainerName: string
+  dayOfWeek: number
+  startTime: string
+  endTime: string
 }
 
 interface CalendarEvent {
@@ -31,17 +49,28 @@ interface CalendarEvent {
   clientName?: string
   plan?: string
   notes?: string
+  trainerId?: string
 }
 
 interface CalendarViewProps {
   onViewModeChange?: (mode: 'month' | 'timeline') => void
   onBackToMonth?: () => void
+  trainerToken?: string | null
 }
 
-export default function CalendarView({ onViewModeChange, onBackToMonth }: CalendarViewProps = {}) {
+interface Trainer {
+  id: string
+  name: string
+  email: string
+}
+
+export default function CalendarView({ onViewModeChange, onBackToMonth, trainerToken }: CalendarViewProps = {}) {
   const { data: session } = useSession()
   const [currentDate, setCurrentDate] = useState(new Date())
   const [events, setEvents] = useState<CalendarEvent[]>([])
+  const [shifts, setShifts] = useState<Shift[]>([])
+  const [templates, setTemplates] = useState<ShiftTemplate[]>([])
+  const [trainers, setTrainers] = useState<Trainer[]>([])
   const [loading, setLoading] = useState(true)
   const [debugInfo, setDebugInfo] = useState<string>('')
   const [viewMode, setViewMode] = useState<'month' | 'timeline'>('month')
@@ -95,14 +124,27 @@ export default function CalendarView({ onViewModeChange, onBackToMonth }: Calend
       try {
         setLoading(true)
 
-        const response = await fetch('/api/reservations')
-        setDebugInfo(`API Status: ${response.status}`)
+        const timestamp = new Date().getTime()
+        const reservationsUrl = trainerToken 
+          ? `/api/reservations?token=${trainerToken}&_t=${timestamp}`
+          : `/api/reservations?_t=${timestamp}`
+          
+        const shiftsUrl = trainerToken
+          ? `/api/shifts?token=${trainerToken}&_t=${timestamp}`
+          : `/api/shifts?_t=${timestamp}`
 
-        if (response.ok) {
-          const result = await response.json()
+        const [resResponse, shiftsResponse] = await Promise.all([
+          fetch(reservationsUrl, { cache: 'no-store' }),
+          fetch(shiftsUrl, { cache: 'no-store' })
+        ])
+
+        setDebugInfo(`API Status: Res=${resResponse.status}, Shifts=${shiftsResponse.status}`)
+
+        if (resResponse.ok) {
+          const result = await resResponse.json()
           const data = result.data || result
           const reservations: Reservation[] = data.reservations || []
-          setDebugInfo(`API Status: ${response.status}, Count: ${reservations.length}`)
+          setDebugInfo(prev => `${prev}, ResCount=${reservations.length}`)
 
           if (reservations.length > 0) {
             // Transform reservations to calendar events (タイトルはサーバの値をそのまま使用)
@@ -145,21 +187,34 @@ export default function CalendarView({ onViewModeChange, onBackToMonth }: Calend
                 type: isBlocked ? 'blocked' : (isGuest ? 'guest' : 'reservation'),
                 clientName: isBlocked ? '予約不可' : isTrial ? '体験' : (isGuest ? 'Guest' : extractLastName(reservation.client.fullName)),
                 plan: reservation.client.plan,
-                notes: reservation.memo || reservation.notes || ''
+                notes: reservation.memo || reservation.notes || '',
+                trainerId: (reservation as any).trainerId
               }
             })
 
             setEvents(calendarEvents)
-            setDebugInfo(`API Status: ${response.status}, Count: ${reservations.length}, Events: ${calendarEvents.length}`)
           } else {
             setEvents([])
-            setDebugInfo(`API Status: ${response.status}, Count: 0, Events: 0`)
           }
         } else {
-          const errorText = await response.text()
-          console.error('Calendar API error:', response.status, errorText)
-          setDebugInfo(`API Error: ${response.status} - ${errorText}`)
+          const errorText = await resResponse.text()
+          console.error('Calendar API error:', resResponse.status, errorText)
         }
+
+        if (shiftsResponse.ok) {
+          const result = await shiftsResponse.json()
+          const data = result.data || result
+          const fetchedShifts: Shift[] = data.shifts || []
+          const fetchedTemplates: ShiftTemplate[] = data.templates || []
+          const fetchedTrainers: Trainer[] = data.trainers || []
+          setShifts(fetchedShifts)
+          setTemplates(fetchedTemplates)
+          setTrainers(fetchedTrainers)
+          setDebugInfo(prev => `${prev}, ShiftsCount=${fetchedShifts.length}, TemplatesCount=${fetchedTemplates.length}`)
+        } else {
+          console.error('Shifts API error:', shiftsResponse.status)
+        }
+
       } catch (error) {
         console.error('Failed to fetch calendar data:', error)
         setDebugInfo(`Fetch Error: ${error}`)
@@ -169,7 +224,7 @@ export default function CalendarView({ onViewModeChange, onBackToMonth }: Calend
     }
 
     fetchCalendarData()
-  }, [session, storeChangeCount])
+  }, [session, storeChangeCount, trainerToken])
 
   // Helper functions (memoized)
   const formatMonth = useCallback((date: Date) => {
@@ -305,7 +360,11 @@ export default function CalendarView({ onViewModeChange, onBackToMonth }: Calend
       <TimelineView
         selectedDate={selectedDate}
         events={events}
+        shifts={shifts}
+        templates={templates}
+        trainers={trainers}
         onBack={handleBackToMonth}
+        trainerToken={trainerToken}
         onDateChange={(newDate) => {
           setSelectedDate(newDate)
         }}
@@ -447,7 +506,7 @@ export default function CalendarView({ onViewModeChange, onBackToMonth }: Calend
       {/* Button to navigate to reservation list */}
       <div className="mt-4 flex justify-center">
         <Link
-          href="/admin/reservations"
+          href={trainerToken ? `/admin/reservations?trainerToken=${trainerToken}` : '/admin/reservations'}
           className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md shadow-sm hover:bg-indigo-700 transition-colors"
         >
           予約一覧を見る

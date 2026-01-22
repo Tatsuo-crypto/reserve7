@@ -13,24 +13,57 @@ export async function GET(request: NextRequest) {
     let tokenUser = null
 
     if (token) {
-      // Token-based authentication for members
-      const { data: userData, error: tokenError } = await supabaseAdmin
+      // Try finding user first
+      const { data: userData } = await supabaseAdmin
         .from('users')
         .select('id, email, full_name, store_id, access_token')
         .eq('access_token', token)
         .single()
 
-      if (tokenError || !userData) {
-        return createErrorResponse('無効なアクセストークンです', 401)
+      if (userData) {
+        tokenUser = userData
+        user = {
+          id: userData.id,
+          email: userData.email,
+          name: userData.full_name,
+          isAdmin: false,
+          storeId: userData.store_id
+        }
+      } else {
+        // Try finding trainer
+        const { data: trainerData } = await supabaseAdmin
+          .from('trainers')
+          .select('id, email, full_name, store_id')
+          .eq('access_token', token)
+          .eq('status', 'active')
+          .single()
+
+        if (trainerData) {
+          // Get store calendar_id
+          const { data: store, error: storeError } = await supabaseAdmin
+            .from('stores')
+            .select('calendar_id')
+            .eq('id', trainerData.store_id)
+            .single()
+
+          if (storeError) {
+            console.error('Store lookup error:', storeError)
+          }
+
+          user = {
+            id: trainerData.id,
+            email: trainerData.email,
+            name: trainerData.full_name,
+            isAdmin: false, // Trainers aren't full admins but have special privileges
+            isTrainer: true,
+            storeId: trainerData.store_id,
+            calendarId: store?.calendar_id
+          }
+        }
       }
 
-      tokenUser = userData
-      user = {
-        id: userData.id,
-        email: userData.email,
-        name: userData.full_name,
-        isAdmin: false,
-        storeId: userData.store_id
+      if (!user) {
+        return createErrorResponse('無効なアクセストークンです', 401)
       }
     } else {
       // Session-based authentication
@@ -43,7 +76,7 @@ export async function GET(request: NextRequest) {
 
     // Use calendarId for reservations (email format)
     const calendarId = (user as any).calendarId || user.storeId
-
+    
     let query = supabaseAdmin
       .from('reservations')
       .select(`
@@ -56,6 +89,7 @@ export async function GET(request: NextRequest) {
         created_at,
         external_event_id,
         client_id,
+        trainer_id,
         users!client_id (
           id,
           full_name,
@@ -66,10 +100,27 @@ export async function GET(request: NextRequest) {
       `)
       .order('start_time', { ascending: true })
 
-    // Filter by store and user permissions
+    // Filter by store/calendar
+    // If trainer, they should see their store's calendar
     query = query.eq('calendar_id', calendarId)
 
-    if (!user.isAdmin) {
+    // Optional date range filtering
+    const startParam = searchParams.get('start')
+    const endParam = searchParams.get('end')
+
+    if (startParam) {
+      query = query.gte('start_time', startParam)
+    }
+    if (endParam) {
+      query = query.lte('start_time', endParam)
+    }
+
+    // Permission filtering
+    // Admin: sees all (filtered by calendarId above if they have one, or maybe they want to see all?)
+    // Trainer: sees all in their store
+    // User: sees only their own
+    
+    if (!user.isAdmin && !(user as any).isTrainer) {
       // Regular users can only see their own reservations
       if (token && tokenUser) {
         // Token-based: use tokenUser.id directly
@@ -89,7 +140,6 @@ export async function GET(request: NextRequest) {
         // Ensure user can only see reservations from their store
         query = query.eq('client_id', userData.id)
       }
-      // calendar_id is already filtered above
     }
 
     const { data: reservations, error } = await query
@@ -108,6 +158,7 @@ export async function GET(request: NextRequest) {
       notes: reservation.notes,
       calendarId: reservation.calendar_id,
       createdAt: reservation.created_at,
+      trainerId: reservation.trainer_id,
       client: reservation.client_id ? {
         id: (reservation.users as any).id,
         fullName: (reservation.users as any).full_name,

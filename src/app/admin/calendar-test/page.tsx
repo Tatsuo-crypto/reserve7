@@ -37,7 +37,7 @@ export default function CalendarTestPage() {
           title: 'テスト予約',
           startTime: '2025-09-15T17:00:00.000Z',
           endTime: '2025-09-15T18:00:00.000Z',
-          clientName: 'テストクライアント',
+          clientName: 'テスト会員',
           clientEmail: 'test@example.com',
           notes: 'Googleカレンダー連携のテストイベントです'
         }),
