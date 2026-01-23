@@ -391,7 +391,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
               {timeSlots.map((time, index) => (
                 <div
                   key={time}
-                  className="absolute right-2 text-xs text-gray-500 transform translate-y-1"
+                  className="absolute right-2 text-xs text-gray-500 transform -translate-y-2"
                   style={{ top: `${index * 48}px` }}
                 >
                   {time}
@@ -637,7 +637,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
                 {timeSlots.map((time, index) => (
                   <div
                     key={`grid-${time}`}
-                    className="absolute left-0 right-0 border-t border-gray-500"
+                    className="absolute left-0 right-0 border-t border-gray-300"
                     style={{ top: `${index * 48}px` }}
                   />
                 ))}

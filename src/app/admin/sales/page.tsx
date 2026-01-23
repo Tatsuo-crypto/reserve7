@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { format } from 'date-fns'
 import { useStoreChange } from '@/hooks/useStoreChange'
 
@@ -36,7 +37,8 @@ export default function SalesPage() {
             displayName: item.full_name || '-',
             displayPlan: String(item.plan || '-'),
             displayAmount: item.estimated_amount,
-            type: '月額'
+            type: '月額',
+            userId: item.user_id
         }))
 
         // Process actual sales list
@@ -51,7 +53,8 @@ export default function SalesPage() {
                 const plan = item.users?.plan || ''
                 if (plan.includes('都度') || plan.includes('ダイエット')) return '単発'
                 return '月額'
-            })()
+            })(),
+            userId: item.user_id || item.users?.id
         }))
 
         // Combine and sort by plan
@@ -59,15 +62,21 @@ export default function SalesPage() {
             a.displayPlan.localeCompare(b.displayPlan, 'ja')
         )
 
-        // Calculate total monthly membership fees
-        const totalMonthlyFees = safeUnpaidList.reduce((sum, item) => sum + (item.estimated_amount || 0), 0)
-        const memberCount = safeUnpaidList.length
+        // Calculate totals
+        const totalPaid = safeSales.reduce((sum, item) => sum + (item.amount || 0), 0)
+        const totalUnpaid = safeUnpaidList.reduce((sum, item) => sum + (item.estimated_amount || 0), 0)
+        const totalSales = totalPaid + totalUnpaid
+        const paidCount = safeSales.length
+        const unpaidCount = safeUnpaidList.length
 
         return {
             combinedList: list,
             displaySummary: {
-                totalMonthlyFees,
-                memberCount
+                totalSales,
+                totalPaid,
+                totalUnpaid,
+                paidCount,
+                unpaidCount
             }
         }
     })()
@@ -121,21 +130,19 @@ export default function SalesPage() {
         <div className="min-h-screen bg-gray-50 py-8">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 {/* Header */}
-                <div className="mb-8">
-                    <div className="flex flex-col space-y-4">
-                        <div className="flex items-center justify-center relative">
-                            <button
-                                onClick={() => router.push('/dashboard')}
-                                className="absolute left-0 text-gray-600 hover:text-gray-900 transition-colors"
-                            >
-                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                                </svg>
-                            </button>
-                            <div className="text-center">
-                                <h1 className="text-3xl font-bold text-gray-900">売上管理</h1>
-                                <p className="mt-2 text-gray-600">入金実績・月次売上明細</p>
-                            </div>
+                <div className="mb-6">
+                    <div className="relative flex items-center justify-center">
+                        <button
+                            onClick={() => router.push('/dashboard')}
+                            className="absolute left-0 text-gray-400 hover:text-gray-600"
+                        >
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                            </svg>
+                        </button>
+                        <div className="text-center">
+                            <h1 className="text-2xl font-bold text-gray-900">売上管理</h1>
+                            <p className="mt-1 text-sm text-gray-500">入金実績・月次売上明細</p>
                         </div>
                     </div>
                 </div>
@@ -167,22 +174,14 @@ export default function SalesPage() {
                     </div>
                 </div>
 
-                {/* Summary Cards */}
+                {/* Summary Card */}
                 <div className="mb-8">
-                    {/* Monthly Membership Fees */}
                     <div className="bg-white p-6 rounded-lg shadow border-l-4 border-indigo-500">
-                        <div className="flex justify-between items-start">
-                            <div>
-                                <h3 className="text-sm font-medium text-gray-500 mb-1">月会費合計</h3>
-                                <p className="text-2xl font-bold text-gray-900">
-                                    ¥{displaySummary.totalMonthlyFees.toLocaleString()}
-                                </p>
-                            </div>
-                            <div className="text-right">
-                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
-                                    {displaySummary.memberCount} 名
-                                </span>
-                            </div>
+                        <div>
+                            <h3 className="text-sm font-medium text-gray-500 mb-1">売上総額</h3>
+                            <p className="text-3xl font-bold text-gray-900">
+                                ¥{displaySummary.totalSales.toLocaleString()}
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -217,7 +216,16 @@ export default function SalesPage() {
                                             return combinedList.map((item, index) => (
                                                 <tr key={`${item.status}-${item.id || item.user_id}-${index}`} className="hover:bg-gray-50 transition-colors">
                                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                        {item.displayName}
+                                                        {item.userId ? (
+                                                            <Link
+                                                                href={`/admin/members/${item.userId}?from=sales`}
+                                                                className="text-indigo-600 hover:text-indigo-800 hover:underline"
+                                                            >
+                                                                {item.displayName}
+                                                            </Link>
+                                                        ) : (
+                                                            item.displayName
+                                                        )}
                                                     </td>
                                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                         {item.displayPlan}

@@ -204,7 +204,7 @@ function AdminDashboard() {
             </div>
           </Link>
 
-          {/* 売上管理（新規） */}
+          {/* 売上管理 */}
           <Link
             href="/admin/sales"
             className="group bg-gradient-to-br from-white to-orange-50 hover:from-orange-50 hover:to-orange-100 border border-orange-200 p-8 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col min-h-[200px] transform hover:-translate-y-1"
@@ -218,7 +218,7 @@ function AdminDashboard() {
             </div>
             <div className="flex-1">
               <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-orange-800 transition-colors duration-200">売上管理</h3>
-              <p className="text-base text-gray-600 leading-relaxed">売上データの確認</p>
+              <p className="text-base text-gray-600 leading-relaxed">月会費の管理・確認</p>
             </div>
           </Link>
 

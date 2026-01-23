@@ -401,23 +401,26 @@ export default function ShiftManagementPage() {
 
   return (
     <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-      <div className="flex flex-col items-center md:flex-row md:items-center justify-between mb-6 gap-4">
-        <div className="w-full relative flex items-center justify-center md:w-auto md:justify-start">
-          <button 
-            type="button"
-            onClick={() => router.push('/dashboard')} 
-            className="absolute left-0 p-2 hover:bg-gray-100 rounded-full text-gray-600 transition-colors flex items-center justify-center md:static"
-            aria-label="ダッシュボードに戻る"
+      {/* Header */}
+      <div className="mb-6">
+        <div className="relative flex items-center justify-center">
+          <button
+            onClick={() => router.push('/dashboard')}
+            className="absolute left-0 text-gray-400 hover:text-gray-600"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.75 19.5L8.25 12l7.5-7.5" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
-          <div className="text-center md:text-left">
+          <div className="text-center">
             <h1 className="text-2xl font-bold text-gray-900">シフト管理</h1>
             <p className="mt-1 text-sm text-gray-500">トレーナーの勤務時間を管理します</p>
           </div>
         </div>
+      </div>
+
+      {/* View Mode and Trainer Selector */}
+      <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         
         {/* View Mode Switcher */}
         <div className="flex bg-gray-100 p-1 rounded-lg">

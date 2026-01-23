@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { PLAN_LIST, PLAN_FEES } from '@/lib/constants'
 
@@ -15,6 +15,7 @@ interface PaymentItem {
   paymentDate: string | null
   targetDate: string | null
   membershipStatus: string
+  memo?: string
 }
 
 interface MemberDetail {
@@ -23,11 +24,16 @@ interface MemberDetail {
   email: string
   plan?: string
   accessToken?: string
+  memo?: string
+  createdAt?: string
+  googleCalendarEmail?: string
 }
 
 export default function MemberDetailPage({ params }: { params: { id: string } }) {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const fromPage = searchParams.get('from') // 'sales' or null
   const memberId = params.id
 
   const [member, setMember] = useState<MemberDetail | null>(null)
@@ -42,7 +48,8 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
     plan: '',
     monthlyFee: 0,
     status: 'active',
-    paymentDate: ''
+    paymentDate: '',
+    memo: ''
   })
   const [saving, setSaving] = useState(false)
 
@@ -82,7 +89,10 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
           fullName: m.full_name, 
           email: m.email, 
           plan: m.plan,
-          accessToken: m.access_token 
+          accessToken: m.access_token,
+          memo: m.memo,
+          createdAt: m.created_at,
+          googleCalendarEmail: m.google_calendar_email
         })
 
         // Fetch payment history
@@ -113,7 +123,8 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
       plan: initialPlan,
       monthlyFee: item.expectedAmount,
       status: item.membershipStatus, // Use membershipStatus for form status
-      paymentDate: item.paymentDate ? item.paymentDate.split('T')[0] : ''
+      paymentDate: item.paymentDate ? item.paymentDate.split('T')[0] : '',
+      memo: item.memo || ''
     })
   }
 
@@ -130,16 +141,20 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
     }
 
     try {
+      const payload = {
+        month: editingItem.month,
+        plan: editForm.plan,
+        monthlyFee: editForm.monthlyFee,
+        status: newStatus,
+        paymentDate: editForm.paymentDate || null,
+        memo: editForm.memo || null
+      }
+      console.log('Saving monthly plan with memo:', payload)
+      
       const res = await fetch(`/api/admin/members/${memberId}/monthly-plan`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          month: editingItem.month,
-          plan: editForm.plan,
-          monthlyFee: editForm.monthlyFee,
-          status: newStatus,
-          paymentDate: editForm.paymentDate || null
-        })
+        body: JSON.stringify(payload)
       })
 
       if (!res.ok) {
@@ -200,11 +215,15 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
         {/* Header */}
         <div className="mb-6">
           <div className="relative flex items-center justify-center">
-            <Link href="/admin/members" className="absolute left-0 text-gray-400 hover:text-gray-600">
+            <button
+              onClick={() => router.push(fromPage === 'sales' ? '/admin/sales' : '/admin/members')}
+              className="absolute left-0 text-gray-400 hover:text-gray-600"
+            >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-            </Link>
+            </button>
             <div className="text-center">
-              <h1 className="text-3xl font-bold text-gray-900">{member.fullName}</h1>
+              <h1 className="text-2xl font-bold text-gray-900">{member.fullName}</h1>
+              <p className="mt-1 text-sm text-gray-500">会員詳細情報</p>
             </div>
           </div>
         </div>
@@ -286,6 +305,47 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
           )}
         </div>
         
+        {/* Member Details Section */}
+        <div className="bg-white shadow overflow-hidden sm:rounded-md mb-8">
+          <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
+            <h3 className="text-lg leading-6 font-medium text-gray-900">
+              会員詳細情報
+            </h3>
+          </div>
+          <div className="px-4 py-5 sm:p-6">
+            <dl className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
+              <div>
+                <dt className="text-sm font-medium text-gray-500">メールアドレス</dt>
+                <dd className="mt-1 text-sm text-gray-900">{member.email || '-'}</dd>
+              </div>
+              <div>
+                <dt className="text-sm font-medium text-gray-500">登録日</dt>
+                <dd className="mt-1 text-sm text-gray-900">
+                  {member.createdAt ? new Date(member.createdAt).toLocaleDateString('ja-JP') : '-'}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-sm font-medium text-gray-500">Googleカレンダー共有</dt>
+                <dd className="mt-1 text-sm text-gray-900">
+                  {member.googleCalendarEmail ? (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      有効 ({member.googleCalendarEmail})
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                      無効
+                    </span>
+                  )}
+                </dd>
+              </div>
+              <div className="sm:col-span-2">
+                <dt className="text-sm font-medium text-gray-500">メモ</dt>
+                <dd className="mt-1 text-sm text-gray-900">{member.memo || '-'}</dd>
+              </div>
+            </dl>
+          </div>
+        </div>
+        
         {/* Monthly Plan/Payment Settings */}
         <div className="bg-white shadow overflow-hidden sm:rounded-md mb-8">
           <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
@@ -298,20 +358,6 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
               <div className="text-center text-gray-500">データがありません</div>
             ) : (
               <>
-                {/* Summary */}
-                <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 mb-6">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">プラン合計金額</p>
-                      <p className="text-2xl font-bold text-gray-900">¥{totalAmount.toLocaleString()}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">継続月数</p>
-                      <p className="text-2xl font-bold text-gray-900">{duration}ヶ月</p>
-                    </div>
-                  </div>
-                </div>
-
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
@@ -319,6 +365,7 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">対象月</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">プラン</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">予定金額</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">メモ</th>
                         <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
                       </tr>
                     </thead>
@@ -328,11 +375,14 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                             {formatMonth(p.month)}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                             {p.plan || '-'}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                             {p.expectedAmount > 0 ? `¥${p.expectedAmount.toLocaleString()}` : '-'}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-500">
+                            {p.memo || '-'}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <button 
@@ -404,6 +454,17 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
                     className="w-full border rounded-md px-3 py-2 text-sm"
                     value={editForm.paymentDate}
                     onChange={(e) => setEditForm({ ...editForm, paymentDate: e.target.value })}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">メモ（任意）</label>
+                  <textarea
+                    className="w-full border rounded-md px-3 py-2 text-sm"
+                    rows={3}
+                    value={editForm.memo}
+                    onChange={(e) => setEditForm({ ...editForm, memo: e.target.value })}
+                    placeholder="この月に関するメモを入力"
                   />
                 </div>
                 

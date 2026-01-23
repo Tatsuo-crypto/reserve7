@@ -91,25 +91,19 @@ function AdminCalendarPageContent() {
 
       <div className="w-full">
         {/* Header */}
-        <div className="mb-4">
-          <div className="px-4 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <button
-                  onClick={handleBackClick}
-                  className="text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  <svg className="w-7 h-7 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                  </svg>
-                </button>
-              </div>
-              <div className="flex-1 text-center">
-                <h1 className="text-3xl sm:text-2xl font-bold text-gray-900">予約</h1>
-                <p className="mt-1 text-base sm:text-sm text-gray-600">予約のステータス管理</p>
-              </div>
-              <div className="w-7 sm:w-6" />
-              {/* Header actions removed as requested */}
+        <div className="mb-6 px-4">
+          <div className="relative flex items-center justify-center">
+            <button
+              onClick={handleBackClick}
+              className="absolute left-0 text-gray-400 hover:text-gray-600"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <div className="text-center">
+              <h1 className="text-2xl font-bold text-gray-900">予約</h1>
+              <p className="mt-1 text-sm text-gray-500">予約のステータス管理</p>
             </div>
           </div>
         </div>

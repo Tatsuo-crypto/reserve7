@@ -71,7 +71,6 @@ function MembersPageContent() {
     }
   }, [status, storeChangeCount])
 
-  const [memos, setMemos] = useState<{ [key: string]: string }>({})
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [memberToDelete, setMemberToDelete] = useState<{ id: string, name: string } | null>(null)
   const [showTrackingModal, setShowTrackingModal] = useState(false)
@@ -119,40 +118,6 @@ function MembersPageContent() {
       return sortAsc ? comp : -comp
     })
   })()
-
-  const handleMemoChange = async (memberId: string, memo: string) => {
-    try {
-      const response = await fetch('/api/admin/members', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          memberId,
-          memo,
-        }),
-      })
-
-      const result = await response.json()
-
-      if (response.ok) {
-        // Update local state
-        setMembers(prev => prev.map(member =>
-          member.id === memberId
-            ? { ...member, memo }
-            : member
-        ))
-
-        setError('メモ更新完了')
-        setTimeout(() => setError(''), 2000)
-      } else {
-        setError('メモ更新に失敗しました: ' + (result.error || 'Unknown error'))
-      }
-    } catch (error) {
-      console.error('メモ更新エラー:', error)
-      setError('メモ更新中にエラーが発生しました')
-    }
-  }
 
   const handleDeleteMember = (memberId: string, memberName: string) => {
     setMemberToDelete({ id: memberId, name: memberName })
@@ -238,34 +203,34 @@ function MembersPageContent() {
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex flex-col space-y-4">
-            <div className="flex items-center justify-center relative">
-              <button
-                onClick={() => router.push(trainerToken ? `/trainer/${trainerToken}` : '/dashboard')}
-                className="absolute left-0 text-gray-600 hover:text-gray-900 transition-colors"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-              <div className="text-center">
-                <h1 className="text-3xl font-bold text-gray-900">会員一覧</h1>
-                <p className="mt-2 text-gray-600">会員のステータス管理</p>
-              </div>
-            </div>
-            <div className="flex justify-center">
-              <Link
-                href="/admin/members/new"
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                <span>新規会員</span>
-              </Link>
+        <div className="mb-6">
+          <div className="relative flex items-center justify-center">
+            <button
+              onClick={() => router.push(trainerToken ? `/trainer/${trainerToken}` : '/dashboard')}
+              className="absolute left-0 text-gray-400 hover:text-gray-600"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <div className="text-center">
+              <h1 className="text-2xl font-bold text-gray-900">会員一覧</h1>
+              <p className="mt-1 text-sm text-gray-500">会員のステータス管理</p>
             </div>
           </div>
+        </div>
+
+        {/* Action Button */}
+        <div className="mb-6 flex justify-center">
+          <Link
+            href="/admin/members/new"
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            <span>新規会員</span>
+          </Link>
         </div>
 
         {/* Stats Summary */}
@@ -325,18 +290,6 @@ function MembersPageContent() {
                         onClick={() => { setSortKey(prev => prev === 'status' ? 'status' : 'status'); setSortAsc(prev => sortKey === 'status' ? !prev : true) }}>
                         ステータス {sortKey === 'status' ? (sortAsc ? '▲' : '▼') : ''}
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[200px]">
-                        メールアドレス
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[150px]">
-                        メモ
-                      </th>
-                      <th
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px] cursor-pointer select-none"
-                        onClick={() => { setSortKey('created'); setSortAsc(prev => sortKey === 'created' ? !prev : true) }}
-                      >
-                        登録日 {sortKey === 'created' ? (sortAsc ? '▲' : '▼') : ''}
-                      </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
@@ -365,28 +318,6 @@ function MembersPageContent() {
                           <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(member.status)}`}>
                             {getStatusText(member.status)}
                           </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 min-w-[200px]">
-                          {(member.email || '').trim().endsWith('-') ? '-' : member.email}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 min-w-[150px]">
-                          <input
-                            type="text"
-                            value={memos[member.id] !== undefined ? memos[member.id] : (member.memo || '')}
-                            onChange={(e) => {
-                              setMemos(prev => ({ ...prev, [member.id]: e.target.value }))
-                            }}
-                            onBlur={(e) => {
-                              if (e.target.value !== (member.memo || '')) {
-                                handleMemoChange(member.id, e.target.value)
-                              }
-                            }}
-                            placeholder="メモを入力..."
-                            className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 w-full min-w-[130px]"
-                          />
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 min-w-[120px]">
-                          {new Date(member.created_at).toLocaleDateString('ja-JP')}
                         </td>
                       </tr>
                     ))}

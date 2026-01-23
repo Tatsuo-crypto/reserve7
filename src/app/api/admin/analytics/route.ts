@@ -154,7 +154,23 @@ export async function GET(request: NextRequest) {
                         const nextStart = new Date(next.start_date)
                         const diffTime = Math.abs(nextStart.getTime() - end.getTime())
                         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-                        return diffDays <= 32
+                        
+                        if (diffDays > 32) return false
+                        
+                        // Check if there's a withdrawn status BETWEEN end and nextStart
+                        const hasWithdrawnBetween = history.some((between: any) => {
+                            if (between.user_id !== h.user_id) return false
+                            if (between.status !== 'withdrawn') return false
+                            
+                            const betweenStart = new Date(between.start_date)
+                            // If withdrawn period overlaps or is between the two active periods
+                            return betweenStart > end && betweenStart < nextStart
+                        })
+                        
+                        // If there's a withdrawn period in between, it's NOT a continuation
+                        if (hasWithdrawnBetween) return false
+                        
+                        return true
                     })
 
                     if (isContinued) return false
@@ -289,14 +305,53 @@ export async function GET(request: NextRequest) {
         }
 
         const salesHistory = monthList.map(date => {
-            const monthStr = format(date, 'yyyy-MM-01') // target_date is first of month
-            const monthSales = (salesData || [])
-                .filter(s => s.target_date === monthStr)
+            const monthStart = startOfMonth(date)
+            const monthEnd = endOfMonth(date)
+            const monthStartStr = format(monthStart, 'yyyy-MM-dd')
+            const monthEndStr = format(monthEnd, 'yyyy-MM-dd')
+            
+            // Check if there's actual sales data for this month
+            const actualSales = (salesData || [])
+                .filter(s => {
+                    return s.target_date >= monthStartStr && s.target_date <= monthEndStr
+                })
                 .reduce((sum, s) => sum + s.amount, 0)
+            
+            // If there's actual sales data, use it
+            if (actualSales > 0) {
+                return {
+                    month: format(date, 'yyyy-MM'),
+                    amount: actualSales
+                }
+            }
+            
+            // Otherwise, estimate from membership history
+            const estimatedSales = history.filter(h => {
+                if (h.status !== 'active') return false
+                
+                // Exclude non-recurring plans
+                const planName = h.plan || ''
+                if (planName.includes('ダイエット') || 
+                    planName.includes('都度') || 
+                    planName.includes('体験') || 
+                    planName.includes('カウンセリング') ||
+                    planName.includes('回コース')) {
+                    return false
+                }
+                
+                const start = new Date(h.start_date)
+                const end = h.end_date ? new Date(h.end_date) : null
+                
+                // Active during this month
+                return start <= monthEnd && (!end || end >= monthStart)
+            }).reduce((sum, h) => {
+                const fee = h.monthly_fee || 0
+                return sum + fee
+            }, 0)
 
             return {
                 month: format(date, 'yyyy-MM'),
-                amount: monthSales
+                amount: estimatedSales
             }
         })
 

@@ -147,40 +147,50 @@ export default function AnalyticsPage() {
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div className="mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div className="w-full">
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                        <h1 className="text-3xl font-bold text-gray-900 whitespace-nowrap">分析・レポート</h1>
-                        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
-                            <select
-                                value={filterStoreId}
-                                onChange={(e) => setFilterStoreId(e.target.value)}
-                                className="text-sm border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-1 pl-2 pr-8 flex-1 sm:flex-none"
-                            >
-                                <option value="all">全店舗</option>
-                                {stores.map(store => (
-                                    <option key={store.id} value={store.id}>{store.name}</option>
-                                ))}
-                            </select>
-                            
-                            {/* Global Period Selector */}
-                            <select
-                                value={period}
-                                onChange={(e) => setPeriod(e.target.value)}
-                                className="text-sm border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-1 pl-2 pr-8 flex-1 sm:flex-none"
-                            >
-                                <option value="all">全期間 (2023/11~)</option>
-                                <option value="2023">2023年</option>
-                                <option value="2024">2024年</option>
-                                <option value="2025">2025年</option>
-                                <option value="2026">2026年</option>
-                                <option value="1y">直近1年</option>
-                                <option value="3m">直近3ヶ月</option>
-                            </select>
-                        </div>
+            {/* Header */}
+            <div className="mb-6">
+                <div className="relative flex items-center justify-center">
+                    <button
+                        onClick={() => router.push('/dashboard')}
+                        className="absolute left-0 text-gray-400 hover:text-gray-600"
+                    >
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                        </svg>
+                    </button>
+                    <div className="text-center">
+                        <h1 className="text-2xl font-bold text-gray-900">分析・レポート</h1>
+                        <p className="mt-1 text-sm text-gray-500">会員数、売上の推移を確認できます</p>
                     </div>
-                    <p className="text-gray-600 mt-2">会員数、売上の推移を確認できます</p>
                 </div>
+            </div>
+
+            {/* Filters */}
+            <div className="mb-8 flex justify-center gap-2">
+                <select
+                    value={filterStoreId}
+                    onChange={(e) => setFilterStoreId(e.target.value)}
+                    className="text-sm border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-1 pl-2 pr-8"
+                >
+                    <option value="all">全店舗</option>
+                    {stores.map(store => (
+                        <option key={store.id} value={store.id}>{store.name}</option>
+                    ))}
+                </select>
+                
+                <select
+                    value={period}
+                    onChange={(e) => setPeriod(e.target.value)}
+                    className="text-sm border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-1 pl-2 pr-8"
+                >
+                    <option value="all">全期間 (2023/11~)</option>
+                    <option value="2023">2023年</option>
+                    <option value="2024">2024年</option>
+                    <option value="2025">2025年</option>
+                    <option value="2026">2026年</option>
+                    <option value="1y">直近1年</option>
+                    <option value="3m">直近3ヶ月</option>
+                </select>
             </div>
 
             {/* Summary Cards */}

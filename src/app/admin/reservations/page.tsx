@@ -380,32 +380,31 @@ function AdminReservationsContent() {
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex flex-col items-center space-y-3">
-            <h1 className="text-4xl font-bold text-gray-900">
-              予約管理
-            </h1>
-            <div className="flex items-center justify-between w-full">
-              <button
-                onClick={() => router.push(trainerToken ? `/trainer/${trainerToken}` : '/dashboard')}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-              >
-                <svg className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-              <p className="text-gray-600">
-                予約のステータス管理
-              </p>
-              <div className="w-10"></div>
-            </div>
-            <Link
-              href={trainerToken ? `/admin/reservations/new?trainerToken=${trainerToken}` : '/admin/reservations/new'}
-              className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+        <div className="mb-6">
+          <div className="relative flex items-center justify-center">
+            <button
+              onClick={() => router.push(trainerToken ? `/trainer/${trainerToken}` : '/dashboard')}
+              className="absolute left-0 text-gray-400 hover:text-gray-600"
             >
-              新規予約作成
-            </Link>
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <div className="text-center">
+              <h1 className="text-2xl font-bold text-gray-900">予約</h1>
+              <p className="mt-1 text-sm text-gray-500">予約のステータス管理</p>
+            </div>
           </div>
+        </div>
+
+        {/* Action Button */}
+        <div className="mb-6 flex justify-center">
+          <Link
+            href={trainerToken ? `/admin/reservations/new?trainerToken=${trainerToken}` : '/admin/reservations/new'}
+            className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+          >
+            新規予約作成
+          </Link>
         </div>
 
         {error && (

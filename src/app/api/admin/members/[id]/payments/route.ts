@@ -34,6 +34,8 @@ export async function GET(
       .order('payment_date', { ascending: false })
 
     if (salesError) throw salesError
+    
+    console.log('Sales data fetched:', sales?.map(s => ({ target_date: s.target_date, memo: s.memo })))
 
     // 3. Fetch Current User Info (fallback for current plan)
     const { data: member, error: memberError } = await supabaseAdmin
@@ -102,6 +104,10 @@ export async function GET(
           // Fallback: check payment_date if target_date is missing (unlikely for monthly_fee)
           return s.payment_date.startsWith(monthStr) && s.type === 'monthly_fee'
       })
+      
+      if (actualPayment) {
+        console.log(`Found payment for ${monthStr}, memo:`, actualPayment.memo)
+      }
 
       // C. Determine Status & Amount
       let planName = activeRecord?.plan || ''
@@ -144,7 +150,8 @@ export async function GET(
         status: status,
         paymentDate: actualPayment?.payment_date ?? null,
         targetDate: actualPayment?.target_date ?? null,
-        membershipStatus: activeRecord?.status ?? 'active'
+        membershipStatus: activeRecord?.status ?? 'active',
+        memo: actualPayment?.memo ?? null
       })
 
       current = addMonths(current, 1)
@@ -152,6 +159,8 @@ export async function GET(
     
     // Sort timeline descending (newest first)
     timeline.reverse()
+    
+    console.log('Timeline with memos:', timeline.map(t => ({ month: t.month, memo: t.memo })))
 
     return createSuccessResponse({
       member: {

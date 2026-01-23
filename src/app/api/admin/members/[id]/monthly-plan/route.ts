@@ -18,7 +18,9 @@ export async function POST(
 
     const memberId = params.id
     const body = await request.json()
-    const { month, plan, monthlyFee, status, paymentDate } = body
+    const { month, plan, monthlyFee, status, paymentDate, memo } = body
+    
+    console.log('Monthly plan API received:', { month, plan, monthlyFee, status, paymentDate, memo })
 
     if (!month || !isValid(new Date(month))) {
       return createErrorResponse('有効な年月を指定してください (yyyy-MM)', 400)
@@ -161,10 +163,11 @@ export async function POST(
         }).eq('id', memberId)
     }
 
-    // Handle Payment Date (Sales Record)
+    // Handle Payment Date and Memo (Sales Record)
     const targetDateStr = format(monthStart, 'yyyy-MM-01')
 
-    if (paymentDate) {
+    // Save if paymentDate or memo exists
+    if (paymentDate || memo) {
         // Upsert sales record
         // First check if exists
         const { data: existingSale } = await supabaseAdmin
@@ -176,34 +179,48 @@ export async function POST(
             .single()
 
         if (existingSale) {
-            await supabaseAdmin
+            console.log('Updating existing sale with memo:', memo)
+            const { error: updateError } = await supabaseAdmin
                 .from('sales')
                 .update({
-                    payment_date: paymentDate,
+                    payment_date: paymentDate || null,
                     amount: monthlyFee ?? 0,
-                    status: 'paid',
+                    status: paymentDate ? 'paid' : 'unpaid',
+                    memo: memo || null,
                     updated_at: new Date().toISOString()
                 })
                 .eq('id', existingSale.id)
+            
+            if (updateError) {
+                console.error('Failed to update sales record:', updateError)
+                throw updateError
+            }
+            console.log('Sales record updated successfully')
         } else {
-            await supabaseAdmin
+            console.log('Inserting new sale with memo:', memo)
+            const { error: insertSaleError } = await supabaseAdmin
                 .from('sales')
                 .insert({
                     user_id: memberId,
                     store_id: storeId, // derived earlier
                     amount: monthlyFee ?? 0,
                     type: 'monthly_fee',
-                    status: 'paid',
-                    payment_date: paymentDate,
+                    status: paymentDate ? 'paid' : 'unpaid',
+                    payment_date: paymentDate || null,
                     target_date: targetDateStr,
+                    memo: memo || null,
                     created_at: new Date().toISOString(),
                     updated_at: new Date().toISOString()
                 })
+            
+            if (insertSaleError) {
+                console.error('Failed to insert sales record:', insertSaleError)
+                throw insertSaleError
+            }
+            console.log('Sales record inserted successfully')
         }
     } else {
-        // If paymentDate is null/empty, usually means "not paid" or "clear payment info"
-        // Delete existing sales record for this month if it exists (assuming manual management)
-        // Only delete if it matches monthly_fee type to avoid deleting ad-hoc items if any (though logic above is specific)
+        // If both paymentDate and memo are null/empty, delete the record
         await supabaseAdmin
             .from('sales')
             .delete()
