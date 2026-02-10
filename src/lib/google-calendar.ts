@@ -61,24 +61,10 @@ export class GoogleCalendarService {
         dateTime: reservation.endTime,
         timeZone: 'Asia/Tokyo',
       },
-      attendees: [],
-      guestsCanModify: false,
-      guestsCanInviteOthers: false,
-    }
-
-    // 会員のGoogleカレンダーメールが設定されている場合、ゲストとして招待
-    if (reservation.memberCalendarEmail && reservation.memberCalendarEmail.trim() !== '') {
-      event.attendees.push({ email: reservation.memberCalendarEmail })
-    }
-
-    // トレーナーのGoogleカレンダーメールが設定されている場合、ゲストとして招待
-    if (reservation.trainerCalendarEmail && reservation.trainerCalendarEmail.trim() !== '') {
-      event.attendees.push({ email: reservation.trainerCalendarEmail })
     }
 
     try {
-      // ジムのカレンダーにイベント作成
-      // sendUpdates: 'none' に設定してメール通知を抑制
+      // ジムのカレンダーにイベント作成（attendeesなし）
       const response = await this.calendar.events.insert({
         calendarId: reservation.calendarId,
         requestBody: event,
@@ -90,11 +76,79 @@ export class GoogleCalendarService {
       }
 
       const eventId = response.data.id
-      console.log(`✅ Google Calendar event created with attendees: ${eventId}`)
-      
+      console.log(`✅ Google Calendar event created: ${eventId}`)
+
+      // トレーナーのカレンダーにも直接イベントを作成
+      if (reservation.trainerCalendarEmail && reservation.trainerCalendarEmail.trim() !== '') {
+        try {
+          await this.calendar.events.insert({
+            calendarId: reservation.trainerCalendarEmail,
+            requestBody: event,
+            sendUpdates: 'none',
+          })
+          console.log(`✅ Trainer calendar event created: ${reservation.trainerCalendarEmail}`)
+        } catch (trainerError) {
+          console.error(`⚠️ Failed to create event on trainer calendar (${reservation.trainerCalendarEmail}):`, trainerError instanceof Error ? trainerError.message : trainerError)
+        }
+      }
+
       return eventId
     } catch (error) {
       console.error('Google Calendar event creation error:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Create an event on the service account's primary calendar with attendees
+   * This sends a Google Calendar invitation to the attendee
+   */
+  async createEventWithAttendees(params: {
+    title: string
+    startTime: string
+    endTime: string
+    clientName: string
+    clientEmail: string
+    notes?: string
+    attendeeEmails: string[]
+    calendarId: string
+  }): Promise<string> {
+    if (!this.calendar) {
+      throw new Error('Google Calendar service not initialized')
+    }
+
+    const event: any = {
+      summary: params.title,
+      description: [
+        `会員: ${params.clientName} (${params.clientEmail})`,
+        params.notes ? `メモ: ${params.notes}` : '',
+      ].filter(Boolean).join('\n'),
+      start: {
+        dateTime: params.startTime,
+        timeZone: 'Asia/Tokyo',
+      },
+      end: {
+        dateTime: params.endTime,
+        timeZone: 'Asia/Tokyo',
+      },
+      attendees: params.attendeeEmails.map(email => ({ email })),
+    }
+
+    try {
+      const response = await this.calendar.events.insert({
+        calendarId: params.calendarId,
+        requestBody: event,
+        sendUpdates: 'all',
+      })
+
+      if (!response.data.id) {
+        throw new Error('Event creation failed - no event ID returned')
+      }
+
+      console.log(`✅ Invitation event created for ${params.attendeeEmails.join(', ')}: ${response.data.id}`)
+      return response.data.id
+    } catch (error) {
+      console.error(`Google Calendar invitation error for ${params.attendeeEmails.join(', ')}:`, error instanceof Error ? error.message : error)
       throw error
     }
   }
@@ -131,28 +185,14 @@ export class GoogleCalendarService {
         dateTime: reservation.endTime,
         timeZone: 'Asia/Tokyo',
       },
-      attendees: [],
-      guestsCanModify: false,
-      guestsCanInviteOthers: false,
-    }
-
-    // 会員のGoogleカレンダーメールが設定されている場合、ゲストとして追加
-    if (reservation.memberCalendarEmail && reservation.memberCalendarEmail.trim() !== '') {
-      event.attendees.push({ email: reservation.memberCalendarEmail })
-    }
-
-    // トレーナーのGoogleカレンダーメールが設定されている場合、ゲストとして追加
-    if (reservation.trainerCalendarEmail && reservation.trainerCalendarEmail.trim() !== '') {
-      event.attendees.push({ email: reservation.trainerCalendarEmail })
     }
 
     try {
-      // ジムのカレンダーのイベントを更新（ゲスト情報も含めて更新）
       await this.calendar.events.update({
         calendarId: reservation.calendarId,
         eventId: eventId,
         requestBody: event,
-        sendUpdates: 'none', // 通知抑制
+        sendUpdates: 'none',
       })
       
       console.log(`✅ Google Calendar event updated: ${eventId}`)

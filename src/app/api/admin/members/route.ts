@@ -71,6 +71,7 @@ export async function GET(request: NextRequest) {
         store_id,
         monthly_fee,
         transfer_day,
+        billing_start_month,
         created_at, 
         memo, 
         access_token
@@ -162,7 +163,7 @@ export async function POST(request: NextRequest) {
       return createErrorResponse('管理者権限が必要です', 403)
     }
 
-    const { fullName, email, googleCalendarEmail, plan, status, memo, storeId, monthlyFee, transferDay } = await request.json()
+    const { fullName, email, googleCalendarEmail, plan, status, memo, storeId, monthlyFee, transferDay, billingStartMonth } = await request.json()
 
     // Validation
     // 名前とメールアドレスは任意（空欄の場合はダミー値を設定）
@@ -216,6 +217,7 @@ export async function POST(request: NextRequest) {
       store_id: storeId,
       monthly_fee: monthlyFee ? parseInt(monthlyFee) : 0,
       transfer_day: transferDay ? parseInt(transferDay) : null,
+      billing_start_month: billingStartMonth ? `${billingStartMonth}-01` : null,
       memo: memo || null,
       role: 'CLIENT',
       // access_tokenはSupabaseがUUIDで自動生成
@@ -277,7 +279,7 @@ export async function PATCH(request: NextRequest) {
       return createErrorResponse('管理者権限が必要です', 403)
     }
 
-    const { memberId, fullName, email, googleCalendarEmail, storeId, status, plan, monthlyFee, transferDay, memo, statusChangeDate, changeDate } = await request.json()
+    const { memberId, fullName, email, googleCalendarEmail, storeId, status, plan, monthlyFee, transferDay, memo, statusChangeDate, changeDate, billingStartMonth } = await request.json()
 
     // Validate status if provided
     if (status && !['active', 'suspended', 'withdrawn'].includes(status)) {
@@ -299,7 +301,7 @@ export async function PATCH(request: NextRequest) {
     // First check if the member exists
     const { data: member, error: fetchError } = await supabaseAdmin
       .from('users')
-      .select('id, email, store_id, status, plan, monthly_fee, transfer_day')
+      .select('id, email, store_id, status, plan, monthly_fee, transfer_day, billing_start_month')
       .eq('id', memberId)
       .neq('email', 'tandjgym@gmail.com')
       .neq('email', 'tandjgym2goutenn@gmail.com')
@@ -319,6 +321,7 @@ export async function PATCH(request: NextRequest) {
     if (plan) updateData.plan = plan
     if (monthlyFee !== undefined) updateData.monthly_fee = monthlyFee ? parseInt(monthlyFee) : 0
     if (transferDay !== undefined) updateData.transfer_day = transferDay ? parseInt(transferDay) : null
+    if (billingStartMonth !== undefined) updateData.billing_start_month = billingStartMonth ? `${billingStartMonth}-01` : null
     if (memo !== undefined) updateData.memo = memo
 
     // Update member

@@ -1,6 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
 export const dynamic = 'force-dynamic'
 import { createGoogleCalendarService } from '@/lib/google-calendar'
+import { env } from '@/lib/env'
+
+// GET: サービスアカウント情報を返す
+export async function GET() {
+  try {
+    if (!env.GOOGLE_SERVICE_ACCOUNT_KEY) {
+      return NextResponse.json({ error: 'GOOGLE_SERVICE_ACCOUNT_KEY not set' })
+    }
+    const creds = JSON.parse(env.GOOGLE_SERVICE_ACCOUNT_KEY)
+    return NextResponse.json({ serviceAccountEmail: creds.client_email })
+  } catch (e) {
+    return NextResponse.json({ error: String(e) })
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -27,7 +41,12 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // テスト: ジムのカレンダーにイベント作成後、attendeesなしで作成→PATCHでattendees追加
+    const trainerEmail = body.trainerEmail || null
+    const calendarId = body.calendarId || 'tandjgym@gmail.com'
+
     try {
+      // Step 1: ジムのカレンダーにattendeesなしでイベント作成
       const eventId = await calendarService.createEvent({
         title,
         startTime,
@@ -35,18 +54,39 @@ export async function POST(request: NextRequest) {
         clientName,
         clientEmail,
         notes,
-        calendarId: 'primary'
+        calendarId,
       })
+
+      // Step 2: trainerEmailがあれば、ジムのカレンダー上でattendees付きイベントを作成して招待
+      let trainerResult = null
+      if (trainerEmail) {
+        try {
+          const trainerEventId = await calendarService.createEventWithAttendees({
+            title: title + '（招待テスト）',
+            startTime,
+            endTime,
+            clientName,
+            clientEmail,
+            notes,
+            attendeeEmails: [trainerEmail],
+            calendarId,
+          })
+          trainerResult = { success: true, eventId: trainerEventId, method: 'attendees on gym calendar' }
+        } catch (trainerError) {
+          trainerResult = { success: false, error: trainerError instanceof Error ? trainerError.message : String(trainerError) }
+        }
+      }
 
       return NextResponse.json({
         success: true,
         eventId,
-        message: 'Googleカレンダーにテストイベントが正常に作成されました'
+        trainerResult,
+        message: 'Googleカレンダーにイベントが作成されました'
       })
     } catch (calendarError) {
       console.error('Calendar test error:', calendarError)
       return NextResponse.json(
-        { error: `Googleカレンダーエラー: ${calendarError}` },
+        { error: `Googleカレンダーエラー: ${calendarError instanceof Error ? calendarError.message : calendarError}` },
         { status: 500 }
       )
     }

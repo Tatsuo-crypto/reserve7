@@ -20,6 +20,7 @@ export default function NewMemberPage() {
     plan: '月4回',
     monthlyFee: '',
     transferDay: '',
+    billingStartMonth: '',
     status: 'active',
     memo: '',
   })
@@ -281,6 +282,24 @@ export default function NewMemberPage() {
             <p className="mt-1 text-sm text-gray-500">
               指定した日付を過ぎても入金がない場合、売上管理で「未振込」と判定されます。<br />
               空欄の場合はデフォルト（27日）として扱われます。
+            </p>
+          </div>
+
+          {/* 売上計上開始月 */}
+          <div>
+            <label htmlFor="billingStartMonth" className="block text-sm font-medium text-gray-700 mb-2">
+              売上計上開始月（任意）
+            </label>
+            <input
+              type="month"
+              id="billingStartMonth"
+              name="billingStartMonth"
+              value={formData.billingStartMonth}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+            <p className="mt-1 text-sm text-gray-500">
+              指定した月より前の月次売上（見込み/未振込）には含めません。空欄の場合は従来通り在籍開始月ベースで計算します。
             </p>
           </div>
 

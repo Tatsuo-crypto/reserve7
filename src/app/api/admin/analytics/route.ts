@@ -69,7 +69,7 @@ export async function GET(request: NextRequest) {
         // Fetch history
         let query = supabaseAdmin
             .from('membership_history')
-            .select('user_id, start_date, end_date, status, store_id, monthly_fee, plan, users:user_id(full_name, monthly_fee, plan)')
+            .select('user_id, start_date, end_date, status, store_id, monthly_fee, plan, users:user_id(full_name, monthly_fee, plan, billing_start_month)')
             
         // Filter by store if provided (and not 'all' or empty)
         // Note: storeId might be null in DB for some records?
@@ -338,6 +338,13 @@ export async function GET(request: NextRequest) {
                     planName.includes('回コース')) {
                     return false
                 }
+
+                // Exclude months before billing start month (if configured)
+                const user = Array.isArray((h as any).users) ? (h as any).users[0] : (h as any).users
+                if (user?.billing_start_month) {
+                    const billingStart = startOfMonth(new Date(user.billing_start_month))
+                    if (monthStart < billingStart) return false
+                }
                 
                 const start = new Date(h.start_date)
                 const end = h.end_date ? new Date(h.end_date) : null
@@ -406,8 +413,14 @@ export async function GET(request: NextRequest) {
             // Exclude if already paid
             if (paidUserIds.has(h.user_id)) return false
 
-            // Exclude non-recurring plans
+            // Exclude months before billing start month (if configured)
             const user = Array.isArray(h.users) ? h.users[0] : h.users
+            if (user?.billing_start_month) {
+                const billingStart = startOfMonth(new Date(user.billing_start_month))
+                if (startOfMonth(today) < billingStart) return false
+            }
+
+            // Exclude non-recurring plans
             const planName = h.plan || user?.plan || ''
             
             if (planName.includes('ダイエット') || 

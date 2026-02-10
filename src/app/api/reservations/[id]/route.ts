@@ -289,6 +289,8 @@ export async function PUT(
         id,
         client_id,
         title,
+        start_time,
+        end_time,
         external_event_id,
         calendar_id,
         trainer_id,
@@ -339,26 +341,32 @@ export async function PUT(
       )
     }
 
-    // Check for time conflicts with other reservations
-    const { data: conflicts, error: conflictError } = await supabaseAdmin
-      .from('reservations')
-      .select('id')
-      .neq('id', reservationId) // Exclude current reservation
-      .or(`and(start_time.lt.${endDateTime.toISOString()},end_time.gt.${startDateTime.toISOString()})`)
+    // Check for time conflicts with other reservations (same store only)
+    // Skip conflict check for BLOCKED reservations (予約不可 can overlap with other reservations)
+    const isBlocked = !reservation.client_id
+    if (!isBlocked) {
+      const { data: conflicts, error: conflictError } = await supabaseAdmin
+        .from('reservations')
+        .select('id')
+        .eq('calendar_id', reservation.calendar_id)
+        .neq('id', reservationId)
+        .lt('start_time', endDateTime.toISOString())
+        .gt('end_time', startDateTime.toISOString())
 
-    if (conflictError) {
-      console.error('Conflict check error:', conflictError)
-      return NextResponse.json(
-        { error: '時間の重複チェックに失敗しました' },
-        { status: 500 }
-      )
-    }
+      if (conflictError) {
+        console.error('Conflict check error:', conflictError)
+        return NextResponse.json(
+          { error: '時間の重複チェックに失敗しました' },
+          { status: 500 }
+        )
+      }
 
-    if (conflicts && conflicts.length > 0) {
-      return NextResponse.json(
-        { error: '指定された時間は他の予約と重複しています' },
-        { status: 409 }
-      )
+      if (conflicts && conflicts.length > 0) {
+        return NextResponse.json(
+          { error: '指定された時間は他の予約と重複しています' },
+          { status: 409 }
+        )
+      }
     }
 
     // Update Google Calendar event first (if event exists)
@@ -366,15 +374,16 @@ export async function PUT(
       const calendarService = createGoogleCalendarService()
       if (calendarService) {
         try {
+          const userRel: any = reservation.users
           const updateOptions: any = {
             title,
             startTime: startDateTime.toISOString(),
             endTime: endDateTime.toISOString(),
-            clientName: (reservation.users as any).full_name,
-            clientEmail: (reservation.users as any).email,
+            clientName: userRel?.full_name || '予約不可時間',
+            clientEmail: userRel?.email || 'blocked@system',
             notes: notes || undefined,
             calendarId: reservation.calendar_id,
-            memberCalendarEmail: (reservation.users as any)?.google_calendar_email
+            memberCalendarEmail: userRel?.google_calendar_email || null
           }
 
           // Handle trainer calendar
@@ -408,22 +417,50 @@ export async function PUT(
       notes: notes || null
     }
 
-    // Only update trainer_id if it's provided in the request
-    if (trainerId !== undefined) {
+    // Only update trainer_id if it's provided in the request (not for training)
+    const isTrainingReservation = reservation.title === '研修' && !reservation.client_id
+    if (trainerId !== undefined && !isTrainingReservation) {
       updateData.trainer_id = trainerId || null
     }
 
-    const { error: updateError } = await supabaseAdmin
-      .from('reservations')
-      .update(updateData)
-      .eq('id', reservationId)
+    // For training reservations: update ALL sibling records (same title, same original time)
+    if (isTrainingReservation) {
+      const trainingUpdateData = {
+        start_time: startDateTime.toISOString(),
+        end_time: endDateTime.toISOString(),
+        notes: notes || null,
+      }
 
-    if (updateError) {
-      console.error('Reservation update error:', updateError)
-      return NextResponse.json(
-        { error: '予約の更新に失敗しました' },
-        { status: 500 }
-      )
+      const { error: trainingUpdateError } = await supabaseAdmin
+        .from('reservations')
+        .update(trainingUpdateData)
+        .eq('title', '研修')
+        .eq('start_time', reservation.start_time)
+        .eq('end_time', reservation.end_time)
+        .is('client_id', null)
+
+      if (trainingUpdateError) {
+        console.error('Training reservation group update error:', trainingUpdateError)
+        return NextResponse.json(
+          { error: '研修予約の一括更新に失敗しました' },
+          { status: 500 }
+        )
+      }
+
+      console.log(`✅ Updated all training reservation records (original time: ${reservation.start_time} - ${reservation.end_time})`)
+    } else {
+      const { error: updateError } = await supabaseAdmin
+        .from('reservations')
+        .update(updateData)
+        .eq('id', reservationId)
+
+      if (updateError) {
+        console.error('Reservation update error:', updateError)
+        return NextResponse.json(
+          { error: '予約の更新に失敗しました' },
+          { status: 500 }
+        )
+      }
     }
 
     // After update, renumber titles for this client and update Google Calendar as needed

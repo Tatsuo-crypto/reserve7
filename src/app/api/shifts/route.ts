@@ -10,6 +10,7 @@ export async function GET(request: NextRequest) {
     const token = searchParams.get('token')
     const start = searchParams.get('start')
     const end = searchParams.get('end')
+    const queryTrainerId = searchParams.get('trainerId') // Optional: check specific trainer's shift
 
     let user = null
     let storeId = null
@@ -71,22 +72,32 @@ export async function GET(request: NextRequest) {
        return createErrorResponse('店舗情報が見つかりません', 400)
     }
 
-    // Fetch shifts for the store
-    // We need to find all trainers in the store first, then their shifts
-    // Or just join.
-    // supabase doesn't support deep joins for filtering in one go easily without view, 
-    // but we can filter by trainer_id in (select id from trainers where store_id = ...)
-    
-    // Get trainers for the store with full details
-    const { data: trainers, error: trainerError } = await supabaseAdmin
-      .from('trainers')
-      .select('id, full_name, email')
-      .eq('store_id', storeId)
-      .eq('status', 'active')
-    
-    if (trainerError) {
-      console.error('Trainer fetch error:', trainerError)
-      return createErrorResponse('トレーナー情報の取得に失敗しました', 500)
+    // If trainerId is specified, check that specific trainer's shifts (cross-store)
+    // Otherwise, fetch shifts for the current store's trainers
+    let trainers: { id: string; full_name: string; email: string }[] = []
+
+    if (queryTrainerId) {
+      const { data: trainerData, error: trainerError } = await supabaseAdmin
+        .from('trainers')
+        .select('id, full_name, email')
+        .eq('id', queryTrainerId)
+        .eq('status', 'active')
+      if (trainerError) {
+        console.error('Trainer fetch error:', trainerError)
+        return createErrorResponse('トレーナー情報の取得に失敗しました', 500)
+      }
+      trainers = trainerData || []
+    } else {
+      const { data: trainerData, error: trainerError } = await supabaseAdmin
+        .from('trainers')
+        .select('id, full_name, email')
+        .eq('store_id', storeId)
+        .eq('status', 'active')
+      if (trainerError) {
+        console.error('Trainer fetch error:', trainerError)
+        return createErrorResponse('トレーナー情報の取得に失敗しました', 500)
+      }
+      trainers = trainerData || []
     }
 
     const trainerIds = trainers.map(t => t.id)

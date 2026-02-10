@@ -32,6 +32,7 @@ export async function GET(
         status,
         store_id,
         monthly_fee,
+        billing_start_month,
         created_at,
         memo,
         access_token

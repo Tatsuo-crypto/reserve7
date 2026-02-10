@@ -56,7 +56,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
 
     // Validate input
-    const { clientId, startTime, duration, notes, trainerId } = body
+    const { clientId, startTime, duration, notes } = body
+    let trainerId = body.trainerId || null
 
     // Use calendarId for reservations (email format)
     const calendarId = (user as any).calendarId || user.storeId
@@ -79,20 +80,6 @@ export async function POST(request: NextRequest) {
     let trainerName: string | null = null
     let trainerCalendarEmail: string | null = null
 
-    // Fetch trainer info if trainerId is provided
-    if (trainerId) {
-      const { data: trainer, error: trainerErr } = await supabaseAdmin
-        .from('trainers')
-        .select('id, full_name, google_calendar_id')
-        .eq('id', trainerId)
-        .single()
-      
-      if (!trainerErr && trainer) {
-        trainerName = trainer.full_name
-        trainerCalendarEmail = trainer.google_calendar_id || null
-      }
-    }
-
     if (clientId === 'BLOCKED') {
       // For blocked time, use special values
       generatedTitle = body.title || '予約不可'
@@ -113,6 +100,9 @@ export async function POST(request: NextRequest) {
     } else if (clientId === 'GUEST') {
       // For guest reservation, use provided title from request
       generatedTitle = body.title || 'ゲスト予約'
+    } else if (clientId === 'TRAINING') {
+      // For training reservation
+      generatedTitle = body.title || '研修'
     } else {
       // Get client user by ID for regular reservations
       const { data: fetchedUser, error: clientError } = await supabaseAdmin
@@ -139,8 +129,8 @@ export async function POST(request: NextRequest) {
 
 
     // Check for overlapping reservations in the same calendar (excluding adjacent times)
-    // Skip overlap check for 2nd store (tandjgym2goutenn@gmail.com) to allow multiple concurrent reservations
-    if (calendarId !== 'tandjgym2goutenn@gmail.com') {
+    // Skip overlap check for 2nd store, BLOCKED, and TRAINING types
+    if (calendarId !== 'tandjgym2goutenn@gmail.com' && clientId !== 'BLOCKED' && clientId !== 'TRAINING') {
       const { data: existingReservations, error: overlapError } = await supabaseAdmin
         .from('reservations')
         .select('id')
@@ -206,27 +196,28 @@ export async function POST(request: NextRequest) {
     // Skip this check for BLOCKED type (we want to be able to block off-hours)
     // Also skip for GUEST/TRIAL if we want to be flexible, but usually they should respect shifts too.
     // Let's enforce for all "active" reservation types (Client, Trial, Guest)
-    if (clientId !== 'BLOCKED') {
+    if (clientId !== 'BLOCKED' && clientId !== 'TRAINING') {
       try {
-        // 1. Get all active trainers for this store
+        // 1. Get all active trainers for this store (use UUID storeId, not email calendarId)
+        const storeUUID = user.storeId
+        console.log('🔍 Shift check - storeUUID:', storeUUID)
         const { data: trainers, error: trainersError } = await supabaseAdmin
           .from('trainers')
           .select('id')
-          .eq('store_id', calendarId)
+          .eq('store_id', storeUUID)
           .eq('status', 'active')
         
+        const isTrainerAuth = !!(user as any).isTrainer
+
         if (trainersError) {
           console.error('Error fetching trainers for shift check:', trainersError)
-          // Fail safe: allow if we can't check? Or block? 
-          // Let's log and allow, but this shouldn't happen.
         } else if (trainers && trainers.length > 0) {
           const trainerIds = trainers.map(t => t.id)
           
           // 2. Check if ANY trainer has a shift covering the requested duration
-          // A shift must start <= reservationStart AND end >= reservationEnd
           const { data: shifts, error: shiftsError } = await supabaseAdmin
             .from('trainer_shifts')
-            .select('id')
+            .select('id, trainer_id')
             .in('trainer_id', trainerIds)
             .lte('start_time', startDateTime.toISOString())
             .gte('end_time', endDateTime.toISOString())
@@ -235,19 +226,18 @@ export async function POST(request: NextRequest) {
           if (shiftsError) {
             console.error('Error checking shifts:', shiftsError)
           } else if (!shifts || shifts.length === 0) {
-            // No matching shift found for any trainer
-            // But wait! We should only enforce this if there ARE shifts defined for this period.
-            // If the user hasn't set up shifts yet, we might lock them out.
-            // However, the user explicitly asked for this feature ("If I disable Sunday...").
-            // So we assume they are using the feature.
-            
-            // To be safe, let's check if there are ANY shifts for this day/week?
-            // Or just enforce strict mode. 
-            // "固定シフトで日曜を予約不可にしても予約画面で予約できてしまう" implies strict enforcement.
-            return NextResponse.json(
-              { error: 'この時間帯に出勤しているトレーナーがいません（シフト外）' },
-              { status: 409 }
-            )
+            // Only block if trainer is creating the reservation (not admin)
+            if (isTrainerAuth) {
+              return NextResponse.json(
+                { error: 'この時間帯に出勤しているトレーナーがいません（シフト外）' },
+                { status: 409 }
+              )
+            }
+            console.log('No shift found but admin is creating - allowing reservation')
+          } else if (shifts.length > 0 && !trainerId) {
+            // Auto-assign trainer from the matching shift
+            trainerId = shifts[0].trainer_id
+            console.log('Auto-assigned trainerId from shift:', trainerId)
           }
         }
       } catch (error) {
@@ -255,8 +245,24 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Fetch trainer info after shift auto-assignment
+    if (trainerId) {
+      const { data: trainerInfo, error: trainerErr } = await supabaseAdmin
+        .from('trainers')
+        .select('id, full_name, google_calendar_id')
+        .eq('id', trainerId)
+        .single()
+      
+      if (!trainerErr && trainerInfo) {
+        trainerName = trainerInfo.full_name
+        trainerCalendarEmail = trainerInfo.google_calendar_id || null
+        console.log('Trainer info resolved:', { trainerName, trainerCalendarEmail })
+      }
+    }
+
     // Try to create Google Calendar event first (if configured)
     let externalEventId: string | null = null
+    let calendarDebug: string = 'not attempted'
     const calendarService = createGoogleCalendarService()
 
     console.log('📅 Google Calendar Service:', calendarService ? 'Initialized' : 'Not configured')
@@ -269,14 +275,18 @@ export async function POST(request: NextRequest) {
             ? generatedTitle
             : clientId === 'GUEST'
               ? generatedTitle
-              : clientUser!.full_name
+              : clientId === 'TRAINING'
+                ? generatedTitle
+                : clientUser!.full_name
         const clientEmail = clientId === 'BLOCKED'
           ? 'blocked@system'
           : clientId === 'TRIAL'
             ? 'trial@system'
             : clientId === 'GUEST'
               ? 'guest@system'
-              : clientUser!.email
+              : clientId === 'TRAINING'
+                ? 'training@system'
+                : clientUser!.email
 
         // 会員のGoogleカレンダーメールが設定されている場合、出席者として追加
         const memberCalendarEmail = clientUser?.google_calendar_email || null
@@ -299,31 +309,146 @@ export async function POST(request: NextRequest) {
           trainerCalendarEmail, // トレーナーのカレンダーメールを渡す
         })
 
-        console.log('✅ Google Calendar event created:', externalEventId)
-      } catch (calendarError) {
-        console.error('❌ Calendar event creation failed:', calendarError)
-        if (calendarError instanceof Error) {
-          console.error('Error message:', calendarError.message)
-          console.error('Error stack:', calendarError.stack)
+        calendarDebug = 'success: ' + externalEventId
+
+        // For TRAINING type: create events on each participating trainer's calendar
+        // AND on each trainer's store calendar (so the event shows on all relevant store calendars)
+        if (clientId === 'TRAINING' && body.trainingTrainerIds && body.trainingTrainerIds.length > 0) {
+          const { data: trainingTrainers } = await supabaseAdmin
+            .from('trainers')
+            .select('id, full_name, google_calendar_id, store_id')
+            .in('id', body.trainingTrainerIds)
+          
+          if (trainingTrainers) {
+            // Collect unique store calendar_ids that differ from the main calendarId
+            const otherStoreIds = Array.from(new Set(trainingTrainers.map(t => t.store_id).filter(sid => sid)))
+            const { data: otherStores } = await supabaseAdmin
+              .from('stores')
+              .select('id, calendar_id')
+              .in('id', otherStoreIds)
+            
+            // Create event on other store calendars (skip the one we already created on)
+            if (otherStores) {
+              for (const store of otherStores) {
+                if (store.calendar_id && store.calendar_id !== calendarId) {
+                  try {
+                    await calendarService.createEvent({
+                      title: generatedTitle,
+                      startTime: startDateTime.toISOString(),
+                      endTime: endDateTime.toISOString(),
+                      clientName: generatedTitle,
+                      clientEmail: 'training@system',
+                      notes: notes || undefined,
+                      calendarId: store.calendar_id,
+                    })
+                    console.log(`✅ Training event created on store calendar: ${store.calendar_id}`)
+                  } catch (storeCalErr) {
+                    console.error(`⚠️ Failed to create training event on store calendar ${store.calendar_id}:`, storeCalErr instanceof Error ? storeCalErr.message : storeCalErr)
+                  }
+                }
+              }
+            }
+
+            // Create event on each trainer's personal Google Calendar
+            for (const t of trainingTrainers) {
+              if (t.google_calendar_id) {
+                try {
+                  await calendarService.createEvent({
+                    title: generatedTitle,
+                    startTime: startDateTime.toISOString(),
+                    endTime: endDateTime.toISOString(),
+                    clientName: generatedTitle,
+                    clientEmail: 'training@system',
+                    notes: notes || undefined,
+                    calendarId: t.google_calendar_id,
+                  })
+                  console.log(`✅ Training event created on ${t.full_name}'s calendar (${t.google_calendar_id})`)
+                } catch (trainerCalErr) {
+                  console.error(`⚠️ Failed to create training event on ${t.full_name}'s calendar:`, trainerCalErr instanceof Error ? trainerCalErr.message : trainerCalErr)
+                }
+              }
+            }
+          }
         }
-        // Continue with reservation creation even if calendar sync fails
+      } catch (calendarError) {
+        calendarDebug = 'error: ' + (calendarError instanceof Error ? calendarError.message : String(calendarError))
+        console.error('❌ Calendar event creation failed:', calendarDebug)
       }
     } else {
-      console.warn('⚠️ Calendar service not available - skipping Google Calendar sync')
+      calendarDebug = 'service not configured'
     }
 
     // Create reservation
-    // For trial/guest reservations, don't include notes
-    const mergedNotes = (clientId === 'TRIAL' || clientId === 'GUEST') ? null : [
-      notes || null,
-      trainerName ? `担当: ${trainerName}` : null,
-    ].filter(Boolean).join(' / ')
+    // Store notes as-is from user input. If empty, store null.
+    const mergedNotes = notes || null
+
+    // For TRAINING type: create a reservation per trainer per store calendar
+    // Each store calendar gets a record for every participating trainer
+    if (clientId === 'TRAINING' && body.trainingTrainerIds && body.trainingTrainerIds.length > 0) {
+      const { data: trainingTrainers } = await supabaseAdmin
+        .from('trainers')
+        .select('id, full_name, store_id')
+        .in('id', body.trainingTrainerIds)
+
+      // Collect all unique store calendar_ids (main + trainers' stores)
+      const trainerStoreIds = Array.from(new Set((trainingTrainers || []).map(t => t.store_id).filter(Boolean)))
+      const { data: allStores } = await supabaseAdmin
+        .from('stores')
+        .select('id, calendar_id')
+        .in('id', trainerStoreIds)
+
+      const calendarIds = new Set<string>([calendarId])
+      if (allStores) {
+        for (const s of allStores) {
+          if (s.calendar_id) calendarIds.add(s.calendar_id)
+        }
+      }
+
+      // Create: each calendar × each trainer = one record
+      const reservationRows: any[] = []
+      calendarIds.forEach(calId => {
+        for (const t of (trainingTrainers || [])) {
+          reservationRows.push({
+            client_id: null,
+            title: generatedTitle,
+            start_time: startDateTime.toISOString(),
+            end_time: endDateTime.toISOString(),
+            notes: mergedNotes,
+            calendar_id: calId,
+            external_event_id: null,
+            trainer_id: t.id,
+          })
+        }
+      })
+
+      const { data: reservations, error } = await supabaseAdmin
+        .from('reservations')
+        .insert(reservationRows)
+        .select('id, title, start_time, end_time, notes, created_at, trainer_id')
+
+      if (error) {
+        console.error('Training reservation creation error:', error)
+        return NextResponse.json(
+          { error: '研修予約の作成に失敗しました', details: (error as any)?.message },
+          { status: 500 }
+        )
+      }
+
+      console.log(`✅ Created ${reservations?.length} training reservation records (${calendarIds.size} calendars × ${trainingTrainers?.length} trainers)`)
+
+      return NextResponse.json({
+        reservation: reservations?.[0],
+        totalRecords: reservations?.length,
+        calendarDebug,
+      }, { status: 201 })
+    }
+
     const reservationData = {
       client_id: (clientId === 'BLOCKED' || clientId === 'TRIAL' || clientId === 'GUEST') ? null : clientUser!.id,
       title: generatedTitle,
       start_time: startDateTime.toISOString(),
       end_time: endDateTime.toISOString(),
-      notes: mergedNotes || null,
+      notes: mergedNotes,
       calendar_id: calendarId,
       external_event_id: externalEventId,
       trainer_id: trainerId || null,
@@ -394,6 +519,16 @@ export async function POST(request: NextRequest) {
         await updateMonthlyTitles(clientUser.id, startYear, startMonth)
       }
     }
+
+    console.log('=== RESERVATION CREATED ===', JSON.stringify({
+      trainerId,
+      trainerName,
+      trainerCalendarEmail,
+      externalEventId,
+      calendarId,
+      calendarDebug,
+      title: reservation.title,
+    }))
 
     return NextResponse.json({
       message: '予約が作成されました',

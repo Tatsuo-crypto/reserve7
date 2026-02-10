@@ -22,6 +22,7 @@ export interface Member {
   status?: UserStatus;
   store_id: string;
   monthly_fee?: number;
+  billing_start_month?: string;
   created_at: string;
   memo?: string;
   access_token?: string;

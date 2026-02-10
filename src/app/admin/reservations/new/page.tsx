@@ -46,6 +46,7 @@ function NewReservationContent() {
   const [trainers, setTrainers] = useState<Trainer[]>([])
   const [loadingTrainers, setLoadingTrainers] = useState(true)
   const [trainerInfo, setTrainerInfo] = useState<{ id: string, name: string, storeId: string } | null>(null)
+  const [detectedTrainer, setDetectedTrainer] = useState<{ id: string, name: string } | null>(null)
 
   const [formData, setFormData] = useState({
     clientId: '',
@@ -56,6 +57,7 @@ function NewReservationContent() {
     isBlocked: false, // New field for blocked time
     isTrial: false,   // New field for trial reservation
     isGuest: false,   // New field for guest reservation
+    isTraining: false, // New field for training reservation
     trialClientName: '', // For trial: manual client name input
     guestName: '',       // For guest: manual client name input
     // For blocked time - separate date and time fields
@@ -63,6 +65,10 @@ function NewReservationContent() {
     blockedStartTime: '09:00',
     blockedEndTime: '12:00',
     trainerId: '',
+    trainingTrainerIds: [] as string[],
+    trainingDate: '',
+    trainingStartTime: '15:00',
+    trainingEndTime: '16:00',
   })
 
   // Fetch trainer info if token is present
@@ -163,15 +169,16 @@ function NewReservationContent() {
     }
   }, [session, trainerInfo])
 
-  // Load active trainers for current store when calendarId changes
+  // Load active trainers - for training type load all stores, otherwise current store only
   useEffect(() => {
     const loadTrainers = async () => {
       if (!formData.calendarId) return
       try {
         setLoadingTrainers(true)
+        const storeParam = formData.isTraining ? '' : `&storeId=${encodeURIComponent(formData.calendarId)}`
         const url = trainerToken
-          ? `/api/admin/trainers?status=active&storeId=${encodeURIComponent(formData.calendarId)}&token=${trainerToken}`
-          : `/api/admin/trainers?status=active&storeId=${encodeURIComponent(formData.calendarId)}`
+          ? `/api/admin/trainers?status=active${storeParam}&token=${trainerToken}`
+          : `/api/admin/trainers?status=active${storeParam}`
           
         const res = await fetch(url, { credentials: 'include' })
         if (res.ok) {
@@ -187,7 +194,54 @@ function NewReservationContent() {
       }
     }
     loadTrainers()
-  }, [formData.calendarId])
+  }, [formData.calendarId, formData.isTraining])
+
+  // Auto-detect on-duty trainer from shifts when startTime/duration changes
+  useEffect(() => {
+    const detectTrainer = async () => {
+      if (!formData.startTime || !formData.calendarId || formData.isBlocked || formData.isTraining) {
+        setDetectedTrainer(null)
+        return
+      }
+      try {
+        const start = new Date(formData.startTime + ':00+09:00')
+        const end = new Date(start.getTime() + formData.duration * 60 * 1000)
+        if (isNaN(start.getTime())) return
+
+        const url = trainerToken
+          ? `/api/shifts?start=${start.toISOString()}&end=${end.toISOString()}&token=${trainerToken}`
+          : `/api/shifts?start=${start.toISOString()}&end=${end.toISOString()}`
+
+        const res = await fetch(url, { credentials: 'include' })
+        if (res.ok) {
+          const result = await res.json()
+          const shifts = result.data?.shifts || result.shifts || []
+          // Find a shift that covers the entire reservation time
+          const covering = shifts.find((s: any) => {
+            const shiftStart = new Date(s.startTime || s.start_time)
+            const shiftEnd = new Date(s.endTime || s.end_time)
+            return shiftStart <= start && shiftEnd >= end
+          })
+          if (covering) {
+            const name = covering.trainerName || covering.trainer?.full_name
+            const id = covering.trainerId || covering.trainer_id || covering.trainer?.id
+            if (name && id) {
+              setDetectedTrainer({ id, name })
+            } else {
+              setDetectedTrainer(null)
+            }
+          } else {
+            setDetectedTrainer(null)
+          }
+        } else {
+          setDetectedTrainer(null)
+        }
+      } catch {
+        setDetectedTrainer(null)
+      }
+    }
+    detectTrainer()
+  }, [formData.startTime, formData.duration, formData.calendarId, formData.isBlocked, trainerToken])
 
   // Prefill startTime from query param if provided (e.g., from Timeline click)
   useEffect(() => {
@@ -206,6 +260,14 @@ function NewReservationContent() {
         blockedEndTime = `${String(endHours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
       }
 
+      // Calculate end time as 1 hour after start time for training too
+      let trainingEndTime = '16:00'
+      if (time) {
+        const [hours, minutes] = time.split(':').map(Number)
+        const endHours = (hours + 1) % 24
+        trainingEndTime = `${String(endHours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
+      }
+
       setFormData(prev => ({
         ...prev,
         startTime: qsStartTime,
@@ -213,6 +275,9 @@ function NewReservationContent() {
         blockedStartTime: time || prev.blockedStartTime, // Set blockedStartTime from clicked time
         blockedEndTime: blockedEndTime, // Set blockedEndTime as 1 hour after start
         trainerId: qsTrainerId || prev.trainerId, // Set trainerId from query param
+        trainingDate: date, // Set trainingDate from clicked date
+        trainingStartTime: time || prev.trainingStartTime, // Set trainingStartTime from clicked time
+        trainingEndTime: trainingEndTime, // Default 1 hour after start
       }))
     } else if (qsTrainerId) {
       // If only trainerId is provided
@@ -293,7 +358,7 @@ function NewReservationContent() {
 
       // For blocked time, we don't need a client
       let selectedClient = null
-        if (!formData.isBlocked && !formData.isTrial && !formData.isGuest) {
+        if (!formData.isBlocked && !formData.isTrial && !formData.isGuest && !formData.isTraining) {
         if (!formData.clientId.trim()) {
           throw new Error('会員を選択してください')
         }
@@ -383,6 +448,29 @@ function NewReservationContent() {
           title: `ゲスト - ${formData.guestName}`,
           ...(formData.trainerId ? { trainerId: formData.trainerId } : {}),
         }
+      } else if (formData.isTraining) {
+        // For training reservation
+        if (formData.trainingTrainerIds.length === 0) {
+          throw new Error('参加トレーナーを選択してください')
+        }
+        if (!formData.trainingDate || !formData.trainingStartTime || !formData.trainingEndTime) {
+          throw new Error('研修の日付・開始時刻・終了時刻を設定してください')
+        }
+        if (formData.trainingEndTime <= formData.trainingStartTime) {
+          throw new Error('終了時刻は開始時刻より後に設定してください')
+        }
+        const trainingStart = new Date(`${formData.trainingDate}T${formData.trainingStartTime}:00+09:00`)
+        const trainingEnd = new Date(`${formData.trainingDate}T${formData.trainingEndTime}:00+09:00`)
+        const trainingDuration = Math.round((trainingEnd.getTime() - trainingStart.getTime()) / (1000 * 60))
+        requestData = {
+          clientId: 'TRAINING',
+          startTime: trainingStart.toISOString(),
+          duration: trainingDuration,
+          calendarId: formData.calendarId,
+          notes: formData.notes || '',
+          title: '研修',
+          trainingTrainerIds: formData.trainingTrainerIds,
+        }
       } else {
         // For regular client reservation
         requestData = {
@@ -413,7 +501,7 @@ function NewReservationContent() {
         throw new Error(data.error || '予約の作成に失敗しました')
       }
 
-      setSuccess(formData.isTrial ? '体験予約が正常に作成されました' : '予約が正常に作成されました')
+      setSuccess(formData.isTrial ? '体験予約が正常に作成されました' : formData.isTraining ? '研修予約が正常に作成されました' : '予約が正常に作成されました')
 
       // Reset form
       setFormData({
@@ -425,12 +513,17 @@ function NewReservationContent() {
         isBlocked: false,
         isTrial: false,
         isGuest: false,
+        isTraining: false,
         trialClientName: '',
         guestName: '',
         blockedDate: '',
         blockedStartTime: '09:00',
         blockedEndTime: '12:00',
         trainerId: '',
+        trainingTrainerIds: [],
+        trainingDate: '',
+        trainingStartTime: '15:00',
+        trainingEndTime: '16:00',
       })
 
       // Redirect to calendar after 1.5 seconds
@@ -524,7 +617,7 @@ function NewReservationContent() {
               </label>
               <div className="grid grid-cols-2 gap-4">
                 <label className={`relative flex flex-col items-center justify-center p-4 border rounded-lg cursor-pointer transition-all ${
-                  !formData.isBlocked && !formData.isTrial && !formData.isGuest
+                  !formData.isBlocked && !formData.isTrial && !formData.isGuest && !formData.isTraining
                     ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-500'
                     : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                 }`}>
@@ -532,8 +625,8 @@ function NewReservationContent() {
                     type="radio"
                     name="reservationType"
                     value="client"
-                    checked={!formData.isBlocked && !formData.isTrial && !formData.isGuest}
-                    onChange={() => setFormData(prev => ({ ...prev, isBlocked: false, isTrial: false, isGuest: false, clientId: '' }))}
+                    checked={!formData.isBlocked && !formData.isTrial && !formData.isGuest && !formData.isTraining}
+                    onChange={() => setFormData(prev => ({ ...prev, isBlocked: false, isTrial: false, isGuest: false, isTraining: false, clientId: '' }))}
                     className="sr-only"
                   />
                   <div className="w-8 h-8 mb-2 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
@@ -554,7 +647,7 @@ function NewReservationContent() {
                     name="reservationType"
                     value="trial"
                     checked={formData.isTrial}
-                    onChange={() => setFormData(prev => ({ ...prev, isBlocked: false, isTrial: true, isGuest: false, clientId: '' }))}
+                    onChange={() => setFormData(prev => ({ ...prev, isBlocked: false, isTrial: true, isGuest: false, isTraining: false, clientId: '' }))}
                     className="sr-only"
                   />
                   <div className="w-8 h-8 mb-2 rounded-full bg-green-100 text-green-600 flex items-center justify-center">
@@ -575,7 +668,7 @@ function NewReservationContent() {
                     name="reservationType"
                     value="guest"
                     checked={formData.isGuest}
-                    onChange={() => setFormData(prev => ({ ...prev, isBlocked: false, isTrial: false, isGuest: true, clientId: '' }))}
+                    onChange={() => setFormData(prev => ({ ...prev, isBlocked: false, isTrial: false, isGuest: true, isTraining: false, clientId: '' }))}
                     className="sr-only"
                   />
                   <div className="w-8 h-8 mb-2 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center">
@@ -628,11 +721,121 @@ function NewReservationContent() {
                   </div>
                   <span className="font-medium text-gray-900">予約不可</span>
                 </label>
+
+                <label className={`relative flex flex-col items-center justify-center p-4 border rounded-lg cursor-pointer transition-all ${
+                  formData.isTraining
+                    ? 'border-orange-500 bg-orange-50 ring-2 ring-orange-500'
+                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                }`}>
+                  <input
+                    type="radio"
+                    name="reservationType"
+                    value="training"
+                    checked={formData.isTraining}
+                    onChange={() => setFormData(prev => ({ ...prev, isBlocked: false, isTrial: false, isGuest: false, isTraining: true, clientId: '' }))}
+                    className="sr-only"
+                  />
+                  <div className="w-8 h-8 mb-2 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
+                  </div>
+                  <span className="font-medium text-gray-900">研修</span>
+                </label>
               </div>
             </div>
 
+            {/* Training Trainer Selection - Multi-select */}
+            {formData.isTraining && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  参加トレーナー *
+                </label>
+                {loadingTrainers ? (
+                  <div className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500">
+                    トレーナー情報を読み込み中...
+                  </div>
+                ) : trainers.length === 0 ? (
+                  <div className="w-full px-3 py-2 border border-yellow-300 rounded-lg bg-yellow-50 text-yellow-800">
+                    ⚠️ アクティブなトレーナーが見つかりません
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {trainers.map(trainer => (
+                      <label key={trainer.id} className={`flex items-center p-3 border rounded-lg cursor-pointer transition-all ${
+                        formData.trainingTrainerIds.includes(trainer.id)
+                          ? 'border-orange-500 bg-orange-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}>
+                        <input
+                          type="checkbox"
+                          checked={formData.trainingTrainerIds.includes(trainer.id)}
+                          onChange={async (e) => {
+                            if (e.target.checked) {
+                              // Check if this specific trainer has a shift or template covering the selected time
+                              let hasShift = true
+                              const trainingTimeAvailable = formData.trainingDate && formData.trainingStartTime && formData.trainingEndTime
+                              if (trainingTimeAvailable) {
+                                try {
+                                  const start = new Date(`${formData.trainingDate}T${formData.trainingStartTime}:00+09:00`)
+                                  const end = new Date(`${formData.trainingDate}T${formData.trainingEndTime}:00+09:00`)
+                                  if (!isNaN(start.getTime())) {
+                                    const shiftUrl = trainerToken
+                                      ? `/api/shifts?trainerId=${trainer.id}&start=${start.toISOString()}&end=${end.toISOString()}&token=${trainerToken}`
+                                      : `/api/shifts?trainerId=${trainer.id}&start=${start.toISOString()}&end=${end.toISOString()}`
+                                    const res = await fetch(shiftUrl, { credentials: 'include' })
+                                    if (res.ok) {
+                                      const result = await res.json()
+                                      const shifts = result.data?.shifts || result.shifts || []
+                                      const templates = result.data?.templates || result.templates || []
+                                      // Check actual shifts first
+                                      const coveringShift = shifts.find((s: any) => {
+                                        const shiftStart = new Date(s.startTime || s.start_time)
+                                        const shiftEnd = new Date(s.endTime || s.end_time)
+                                        return shiftStart <= start && shiftEnd >= end
+                                      })
+                                      // If no actual shift, check templates by day of week
+                                      let coveringTemplate = false
+                                      if (!coveringShift && templates.length > 0) {
+                                        const dayOfWeek = start.getDay() // 0=Sun, 1=Mon, ...
+                                        const startHHMM = `${String(start.getHours()).padStart(2,'0')}:${String(start.getMinutes()).padStart(2,'0')}`
+                                        const endHHMM = `${String(end.getHours()).padStart(2,'0')}:${String(end.getMinutes()).padStart(2,'0')}`
+                                        coveringTemplate = templates.some((t: any) => {
+                                          const tDay = t.dayOfWeek ?? t.day_of_week
+                                          const tStart = (t.startTime || t.start_time || '').substring(0, 5)
+                                          const tEnd = (t.endTime || t.end_time || '').substring(0, 5)
+                                          return tDay === dayOfWeek && tStart <= startHHMM && tEnd >= endHHMM
+                                        })
+                                      }
+                                      hasShift = !!(coveringShift || coveringTemplate)
+                                    }
+                                  }
+                                } catch { /* ignore shift check errors */ }
+                              }
+                              if (!hasShift) {
+                                const ok = window.confirm(`${trainer.full_name}はこの時間帯にシフトがありません。\n研修に追加しますか？`)
+                                if (!ok) return
+                              }
+                              setFormData(prev => ({ ...prev, trainingTrainerIds: [...prev.trainingTrainerIds, trainer.id] }))
+                            } else {
+                              setFormData(prev => ({ ...prev, trainingTrainerIds: prev.trainingTrainerIds.filter(id => id !== trainer.id) }))
+                            }
+                          }}
+                          className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
+                        />
+                        <span className="ml-3 text-gray-900">{trainer.full_name}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+                <p className="mt-1 text-sm text-gray-500">
+                  研修に参加するトレーナーを選択してください（複数選択可）
+                </p>
+              </div>
+            )}
+
             {/* Client Selection - Only show when not blocked */}
-            {!formData.isBlocked && !formData.isTrial && !formData.isGuest && (
+            {!formData.isBlocked && !formData.isTrial && !formData.isGuest && !formData.isTraining && (
               <div>
                 <label htmlFor="clientId" className="block text-sm font-medium text-gray-700 mb-2">
                   会員選択 *
@@ -715,8 +918,70 @@ function NewReservationContent() {
             )}
 
 
+            {/* On-duty Trainer Display */}
+            {!formData.isBlocked && !formData.isTraining && detectedTrainer && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  担当トレーナー
+                </label>
+                <div className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-blue-50 text-blue-800 font-medium">
+                  {detectedTrainer.name}
+                </div>
+                <p className="mt-1 text-sm text-gray-500">
+                  シフトから自動判定されます
+                </p>
+              </div>
+            )}
+
             {/* Date and Time Selection */}
-            {formData.isBlocked ? (
+            {formData.isTraining ? (
+              // Training: separate date, start time, end time
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="trainingDate" className="block text-sm font-medium text-gray-700 mb-2">
+                    日付 *
+                  </label>
+                  <input
+                    type="date"
+                    id="trainingDate"
+                    value={formData.trainingDate}
+                    onChange={(e) => setFormData({ ...formData, trainingDate: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label htmlFor="trainingStartTime" className="block text-sm font-medium text-gray-700 mb-2">
+                      開始時刻 *
+                    </label>
+                    <input
+                      type="time"
+                      id="trainingStartTime"
+                      value={formData.trainingStartTime}
+                      onChange={(e) => setFormData({ ...formData, trainingStartTime: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="trainingEndTime" className="block text-sm font-medium text-gray-700 mb-2">
+                      終了時刻 *
+                    </label>
+                    <input
+                      type="time"
+                      id="trainingEndTime"
+                      value={formData.trainingEndTime}
+                      onChange={(e) => setFormData({ ...formData, trainingEndTime: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+            ) : formData.isBlocked ? (
               // Blocked time: separate date and time inputs
               <div className="space-y-4">
                 <div>
@@ -780,8 +1045,8 @@ function NewReservationContent() {
               </div>
             )}
 
-            {/* Session Duration - Only show for regular reservations (client/trial) */}
-            {!formData.isBlocked && (
+            {/* Session Duration - Only show for regular reservations (client/trial/guest) */}
+            {!formData.isBlocked && !formData.isTraining && (
               <div>
                 <label htmlFor="duration" className="block text-sm font-medium text-gray-700 mb-2">
                   セッション時間 *

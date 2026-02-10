@@ -174,6 +174,11 @@ export async function GET(request: NextRequest) {
         fullName: '体験予約',
         email: 'trial@system',
         plan: null,
+      } : (reservation.title && reservation.title === '研修') ? {
+        id: 'training',
+        fullName: '研修',
+        email: 'training@system',
+        plan: null,
       } : {
         id: 'blocked',
         fullName: '予約不可時間',

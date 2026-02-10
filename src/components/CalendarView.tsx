@@ -45,7 +45,7 @@ interface CalendarEvent {
   title: string
   date: string
   time: string
-  type: 'reservation' | 'blocked' | 'guest'
+  type: 'reservation' | 'blocked' | 'guest' | 'training'
   clientName?: string
   plan?: string
   notes?: string
@@ -178,14 +178,15 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
               const isBlocked = reservation.client.id === 'blocked' || (reservation.title && reservation.title.includes('予約不可'))
               const isTrial = reservation.title && reservation.title.includes('体験')
               const isGuest = reservation.client.id === 'guest' || (reservation.title && reservation.title.includes('ゲスト')) || reservation.client.email === 'guest@system'
+              const isTraining = reservation.client.id === 'training' || reservation.title === '研修'
 
               return {
                 id: reservation.id,
                 title: reservation.title,
                 date: dateInJST,
                 time: `${startTime} - ${endTime}`,
-                type: isBlocked ? 'blocked' : (isGuest ? 'guest' : 'reservation'),
-                clientName: isBlocked ? '予約不可' : isTrial ? '体験' : (isGuest ? 'Guest' : extractLastName(reservation.client.fullName)),
+                type: isTraining ? 'training' : isBlocked ? 'blocked' : (isGuest ? 'guest' : 'reservation'),
+                clientName: isTraining ? '研修' : isBlocked ? '予約不可' : isTrial ? '体験' : (isGuest ? 'Guest' : extractLastName(reservation.client.fullName)),
                 plan: reservation.client.plan,
                 notes: reservation.memo || reservation.notes || '',
                 trainerId: (reservation as any).trainerId
@@ -246,7 +247,17 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
   }, [])
 
   const getEventsForDate = useCallback((dateStr: string) => {
-    return events.filter(event => event.date === dateStr)
+    const dayEvents = events.filter(event => event.date === dateStr)
+    // Deduplicate training events: show only one per time slot
+    const seen = new Set<string>()
+    return dayEvents.filter(event => {
+      if (event.type === 'training') {
+        const key = `training-${event.time}`
+        if (seen.has(key)) return false
+        seen.add(key)
+      }
+      return true
+    })
   }, [events])
 
   const navigateMonth = useCallback((direction: 'prev' | 'next') => {
@@ -323,13 +334,16 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
               // Check trial BEFORE other types to ensure trial reservations are blue
               const isTrial = event.title.includes('体験')
               const isGuest = event.type === 'guest'
+              const isTraining = event.type === 'training'
               const colorClass = isTrial
                 ? 'bg-blue-100 text-blue-800 border border-blue-200'    // Trial = Blue (highest priority)
                 : isGuest
                   ? 'bg-purple-100 text-purple-800 border border-purple-200'   // Guest = Purple
-                  : event.type === 'reservation'
-                    ? 'bg-green-100 text-green-800 border border-green-200'  // Regular = Green
-                    : 'bg-red-100 text-red-800 border border-red-200'        // Blocked = Red
+                  : isTraining
+                    ? 'bg-orange-100 text-orange-800 border border-orange-200' // Training = Orange
+                    : event.type === 'reservation'
+                      ? 'bg-green-100 text-green-800 border border-green-200'  // Regular = Green
+                      : 'bg-red-100 text-red-800 border border-red-200'        // Blocked = Red
 
               return (
                 <div
@@ -405,16 +419,18 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
                   const isBlocked = reservation.client.id === 'blocked' || (reservation.title && reservation.title.includes('予約不可'))
                   const isTrial = reservation.title && reservation.title.includes('体験')
                   const isGuest = reservation.client.id === 'guest' || (reservation.title && reservation.title.includes('ゲスト')) || reservation.client.email === 'guest@system'
+                  const isTraining = reservation.client.id === 'training' || reservation.title === '研修'
 
                   return {
                     id: reservation.id,
                     title: reservation.title,
                     date: dateInJST,
                     time: `${startTime} - ${endTime}`,
-                    type: isBlocked ? 'blocked' : (isGuest ? 'guest' : 'reservation'),
-                    clientName: isBlocked ? '予約不可' : isTrial ? '体験' : (isGuest ? 'Guest' : extractLastName(reservation.client.fullName)),
+                    type: isTraining ? 'training' : isBlocked ? 'blocked' : (isGuest ? 'guest' : 'reservation'),
+                    clientName: isTraining ? '研修' : isBlocked ? '予約不可' : isTrial ? '体験' : (isGuest ? 'Guest' : extractLastName(reservation.client.fullName)),
                     plan: reservation.client.plan,
-                    notes: reservation.memo || reservation.notes || ''
+                    notes: reservation.memo || reservation.notes || '',
+                    trainerId: (reservation as any).trainerId
                   }
                 })
 

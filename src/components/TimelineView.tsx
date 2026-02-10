@@ -8,7 +8,7 @@ interface CalendarEvent {
   title: string
   date: string
   time: string
-  type: 'reservation' | 'blocked' | 'guest'
+  type: 'reservation' | 'blocked' | 'guest' | 'training'
   clientName?: string
   plan?: string
   notes?: string
@@ -55,7 +55,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
   const [selectedTrainerId, setSelectedTrainerId] = useState<string | null>(null)
   const router = useRouter()
   const [showEditModal, setShowEditModal] = useState(false)
-  const [editingReservation, setEditingReservation] = useState<{ id: string; type?: 'reservation' | 'blocked' | 'guest' } | null>(null)
+  const [editingReservation, setEditingReservation] = useState<{ id: string; type?: 'reservation' | 'blocked' | 'guest' | 'training' } | null>(null)
   const [editFormData, setEditFormData] = useState({
     title: '',
     startTime: '',
@@ -603,13 +603,16 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
                        
                        const isTrial = event.title.includes('体験')
                        const isGuest = event.type === 'guest' || (event.title && event.title.includes('ゲスト'))
+                       const isTraining = event.type === 'training'
                        const colorClass = isTrial
                           ? 'bg-blue-300 bg-opacity-50 border border-blue-500 text-blue-900'
                           : isGuest
                             ? 'bg-purple-300 bg-opacity-50 border border-purple-500 text-purple-900'
-                            : event.type === 'blocked'
-                              ? 'bg-red-300 bg-opacity-50 border border-red-500 text-red-900'
-                              : 'bg-green-300 bg-opacity-50 border border-green-500 text-green-900'
+                            : isTraining
+                              ? 'bg-orange-300 bg-opacity-50 border border-orange-500 text-orange-900'
+                              : event.type === 'blocked'
+                                ? 'bg-red-300 bg-opacity-50 border border-red-500 text-red-900'
+                                : 'bg-green-300 bg-opacity-50 border border-green-500 text-green-900'
 
                        return (
                           <div

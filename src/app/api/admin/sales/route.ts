@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
         // Condition: status = 'active' AND start_date <= monthEnd AND (end_date IS NULL OR end_date >= monthStart)
         let membershipQuery = supabaseAdmin
             .from('membership_history')
-            .select('user_id, start_date, end_date, status, store_id, plan, monthly_fee, users:user_id(full_name, plan, monthly_fee, transfer_day, created_at)')
+            .select('user_id, start_date, end_date, status, store_id, plan, monthly_fee, users:user_id(full_name, plan, monthly_fee, transfer_day, created_at, billing_start_month)')
             .eq('status', 'active')
             .lte('start_date', format(targetDateEnd, 'yyyy-MM-dd'))
             .or(`end_date.is.null,end_date.gte.${format(targetDateStart, 'yyyy-MM-dd')}`)
@@ -104,6 +104,13 @@ export async function GET(request: NextRequest) {
             // Note: users might be an array if the join returns multiple, though users:user_id should be one-to-one
             const user = Array.isArray(m.users) ? m.users[0] : m.users
             const planName = m.plan || user?.plan || ''
+
+            // Exclude months before billing start month (if configured)
+            // billing_start_month is stored as a date (YYYY-MM-01)
+            if (user?.billing_start_month) {
+                const billingStart = startOfMonth(new Date(user.billing_start_month))
+                if (targetDateStart < billingStart) return false
+            }
             
             if (planName.includes('ダイエット') || 
                 planName.includes('都度') || 

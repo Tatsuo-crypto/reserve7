@@ -53,6 +53,13 @@ export async function GET(
       const firstHistory = new Date(history[0].start_date)
       if (firstHistory < startDate) startDate = firstHistory
     }
+
+    // If billing start month is configured, do not show months before it
+    if (member.billing_start_month) {
+      const billingStart = startOfMonth(new Date(member.billing_start_month))
+      if (billingStart > startDate) startDate = billingStart
+    }
+
     // Normalize to start of month
     startDate = startOfMonth(startDate)
 

@@ -41,7 +41,25 @@ export async function GET(request: NextRequest) {
       .select('id, full_name, email, store_id, status, phone, notes, created_at, updated_at, access_token, google_calendar_id')
       .order('full_name', { ascending: true })
 
-    if (storeId) q = q.eq('store_id', storeId)
+    if (storeId) {
+      // storeId could be a UUID or a calendar email - resolve to UUID if needed
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(storeId)
+      if (isUUID) {
+        q = q.eq('store_id', storeId)
+      } else {
+        // Assume it's a calendar_id (email), resolve to store UUID
+        const { data: store } = await supabaseAdmin
+          .from('stores')
+          .select('id')
+          .eq('calendar_id', storeId)
+          .single()
+        if (store) {
+          q = q.eq('store_id', store.id)
+        } else {
+          q = q.eq('store_id', storeId) // fallback
+        }
+      }
+    }
     if (status && status !== 'all') q = q.eq('status', status)
     if (query && query.trim()) {
       // simple ilike on name OR email
