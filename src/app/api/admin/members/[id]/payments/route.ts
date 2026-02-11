@@ -75,18 +75,14 @@ export async function GET(
       const monthEnd = endOfMonth(current)
 
       // A. Determine Plan & Fee for this month from History
-      // Find the history record active at the END of the month (or start)
-      // Rule: If active at any point in the month? Usually monthly fee is based on status at start of month or majority.
-      // Let's use the status as of the 1st of the month, or if started mid-month, that record.
-      
+      // Find the history record active for this month
       let activeRecord = history?.find(h => {
         const hStart = new Date(h.start_date)
         const hEnd = h.end_date ? new Date(h.end_date) : null
         return hStart <= monthEnd && (!hEnd || hEnd >= monthStart)
       })
 
-      // If multiple records in a month (e.g. plan change), which one takes precedence?
-      // Usually the latest one that started before or in this month.
+      // If multiple records in a month, use the latest one
       const monthlyRecords = history?.filter(h => {
          const hStart = new Date(h.start_date)
          const hEnd = h.end_date ? new Date(h.end_date) : null
@@ -94,14 +90,21 @@ export async function GET(
       })
       
       if (monthlyRecords && monthlyRecords.length > 0) {
-          // Sort by start_date desc to get latest
           monthlyRecords.sort((a, b) => new Date(b.start_date).getTime() - new Date(a.start_date).getTime())
           activeRecord = monthlyRecords[0]
       }
 
-      // If no history found (maybe before history tracking started), fallback to current user info if it's recent?
-      // Or just assume no plan.
-      
+      // If no history record covers this month, inherit from the most recent previous record
+      if (!activeRecord && history && history.length > 0) {
+        const previousRecord = history
+          .filter(h => new Date(h.start_date) < monthStart)
+          .sort((a, b) => new Date(b.start_date).getTime() - new Date(a.start_date).getTime())[0]
+        
+        if (previousRecord) {
+          activeRecord = previousRecord
+        }
+      }
+
       // B. Find actual payment
       const actualPayment = sales?.find(s => {
           // target_date is typically 'yyyy-MM-01'

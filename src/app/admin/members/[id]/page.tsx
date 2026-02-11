@@ -46,7 +46,7 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
   const [editingItem, setEditingItem] = useState<PaymentItem | null>(null)
   const [editForm, setEditForm] = useState({
     plan: '',
-    monthlyFee: 0,
+    monthlyFee: '',
     status: 'active',
     paymentDate: '',
     memo: ''
@@ -78,11 +78,11 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
 
     const fetchData = async () => {
       try {
-        // Fetch members list then filter one (reuse existing API)
-        const memberRes = await fetch('/api/admin/members')
+        // Fetch member by ID directly
+        const memberRes = await fetch(`/api/admin/members/${memberId}`)
         if (!memberRes.ok) throw new Error('会員情報の取得に失敗しました')
         const memberJson = await memberRes.json()
-        const m = (memberJson.data?.members || []).find((x: any) => x.id === memberId)
+        const m = memberJson.data
         if (!m) throw new Error('会員が見つかりません')
         setMember({ 
           id: m.id, 
@@ -121,7 +121,7 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
 
     setEditForm({
       plan: initialPlan,
-      monthlyFee: item.expectedAmount,
+      monthlyFee: item.expectedAmount ? String(item.expectedAmount) : '',
       status: item.membershipStatus, // Use membershipStatus for form status
       paymentDate: item.paymentDate ? item.paymentDate.split('T')[0] : '',
       memo: item.memo || ''
@@ -144,7 +144,7 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
       const payload = {
         month: editingItem.month,
         plan: editForm.plan,
-        monthlyFee: editForm.monthlyFee,
+        monthlyFee: parseInt(editForm.monthlyFee) || 0,
         status: newStatus,
         paymentDate: editForm.paymentDate || null,
         memo: editForm.memo || null
@@ -324,20 +324,6 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
                   {member.createdAt ? new Date(member.createdAt).toLocaleDateString('ja-JP') : '-'}
                 </dd>
               </div>
-              <div>
-                <dt className="text-sm font-medium text-gray-500">Googleカレンダー共有</dt>
-                <dd className="mt-1 text-sm text-gray-900">
-                  {member.googleCalendarEmail ? (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                      有効 ({member.googleCalendarEmail})
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                      無効
-                    </span>
-                  )}
-                </dd>
-              </div>
               <div className="sm:col-span-2">
                 <dt className="text-sm font-medium text-gray-500">メモ</dt>
                 <dd className="mt-1 text-sm text-gray-900">{member.memo || '-'}</dd>
@@ -362,29 +348,29 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">対象月</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">プラン</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">予定金額</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">メモ</th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                        <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">対象月</th>
+                        <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">プラン</th>
+                        <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">予定金額</th>
+                        <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" style={{minWidth: '100px'}}>メモ</th>
+                        <th className="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">操作</th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                       {payments.map((p, idx) => (
                         <tr key={`${p.month}-${idx}`} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          <td className="px-3 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                             {formatMonth(p.month)}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          <td className="px-3 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                             {p.plan || '-'}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900">
                             {p.expectedAmount > 0 ? `¥${p.expectedAmount.toLocaleString()}` : '-'}
                           </td>
-                          <td className="px-6 py-4 text-sm text-gray-500">
+                          <td className="px-3 py-4 text-sm text-gray-500" style={{minWidth: '100px'}}>
                             {p.memo || '-'}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <td className="px-3 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <button 
                               className="text-indigo-600 hover:text-indigo-900"
                               onClick={() => handleEditClick(p)}
@@ -420,9 +406,9 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
                       let newFee = editForm.monthlyFee
                       
                       if (newPlan === '休会' || newPlan === '退会') {
-                        newFee = 0
+                        newFee = '0'
                       } else if (PLAN_FEES[newPlan] !== undefined) {
-                        newFee = PLAN_FEES[newPlan]
+                        newFee = String(PLAN_FEES[newPlan])
                       }
                       
                       setEditForm({ ...editForm, plan: newPlan, monthlyFee: newFee })
@@ -440,10 +426,15 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">月額費用</label>
                   <input
-                    type="number"
+                    type="text"
+                    inputMode="numeric"
                     className="w-full border rounded-md px-3 py-2 text-sm"
                     value={editForm.monthlyFee}
-                    onChange={(e) => setEditForm({ ...editForm, monthlyFee: parseInt(e.target.value) || 0 })}
+                    onChange={(e) => {
+                      const v = e.target.value.replace(/[^0-9]/g, '')
+                      setEditForm({ ...editForm, monthlyFee: v })
+                    }}
+                    placeholder="例: 13200"
                   />
                 </div>
 

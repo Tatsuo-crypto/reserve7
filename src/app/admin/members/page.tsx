@@ -217,124 +217,85 @@ function MembersPageContent() {
               <h1 className="text-2xl font-bold text-gray-900">会員一覧</h1>
               <p className="mt-1 text-sm text-gray-500">会員のステータス管理</p>
             </div>
+            {!trainerToken && (
+              <Link
+                href={`/admin/sales${(session as any)?.user?.storeId ? `?store=${(session as any).user.storeId}` : ''}`}
+                className="absolute right-0 px-3 py-1.5 bg-orange-500 text-white text-xs font-bold rounded-full hover:bg-orange-600 transition-colors flex items-center gap-1"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                売上管理
+              </Link>
+            )}
           </div>
         </div>
 
-        {/* Action Button */}
-        <div className="mb-6 flex justify-center">
-          <Link
-            href="/admin/members/new"
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            <span>新規会員</span>
-          </Link>
-        </div>
-
-        {/* Stats Summary */}
-        <div className="bg-white shadow rounded-lg p-6 mb-8">
-          <h2 className="text-lg font-medium text-gray-900 mb-4">在籍会員数集計</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Total Active */}
-            <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
-              <p className="text-sm text-blue-600 font-medium">在籍合計</p>
-              <p className="text-2xl font-bold text-blue-900 mt-1">{totalActive}名</p>
+        {/* Compact toolbar: Stats + Filter + New button */}
+        <div className="bg-white shadow rounded-lg p-3 mb-4">
+          <div className="flex items-center justify-between mb-3">
+            <span className="font-bold text-blue-700 text-lg">{totalActive}<span className="text-xs font-normal text-gray-500 ml-0.5">名</span></span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowOnlyActive(prev => !prev)}
+                className={`px-2.5 py-1 text-[11px] font-medium rounded-full border whitespace-nowrap transition-colors ${showOnlyActive ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : 'bg-gray-50 text-gray-600 border-gray-200'}`}
+              >
+                {showOnlyActive ? '在籍のみ' : '全員'}
+              </button>
+              <Link
+                href="/admin/members/new"
+                className="px-2.5 py-1 bg-blue-600 text-white text-[11px] font-medium rounded-full hover:bg-blue-700 transition-colors flex items-center gap-0.5 whitespace-nowrap"
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                新規
+              </Link>
             </div>
-            
-            {/* Breakdown by Plan */}
+          </div>
+          <div className="grid grid-cols-3 gap-2">
             {sortedPlans.map(plan => (
-              <div key={plan} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                <p className="text-sm text-gray-500 font-medium">{plan}</p>
-                <p className="text-xl font-bold text-gray-900 mt-1">{planCounts[plan]}名</p>
+              <div key={plan} className="bg-gray-50 rounded-md px-2 py-1.5 text-center">
+                <div className="text-[10px] text-gray-500 leading-tight truncate">{plan}</div>
+                <div className="text-sm font-bold text-gray-800">{planCounts[plan]}</div>
               </div>
             ))}
           </div>
         </div>
 
         {error && (
-          <div className={`mb-6 border rounded-md p-4 ${error.includes('更新完了')
-            ? 'bg-green-50 border-green-200'
-            : 'bg-red-50 border-red-200'
+          <div className={`mb-4 border rounded-md p-3 text-sm ${error.includes('更新完了') || error.includes('コピー')
+            ? 'bg-green-50 border-green-200 text-green-800'
+            : 'bg-red-50 border-red-200 text-red-800'
             }`}>
-            <p className={error.includes('更新完了') ? 'text-green-800' : 'text-red-800'}>
-              {error}
-            </p>
+            {error}
           </div>
         )}
 
-        {/* Members Table */}
-        <div className="bg-white shadow overflow-hidden sm:rounded-md">
-          <div className="px-4 py-5 sm:p-6">
-            {!members || members.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-gray-500">会員データがありません</p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-max divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px]">
-                        店舗
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px]">
-                        会員名
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[140px] cursor-pointer select-none"
-                        onClick={() => { setSortKey(prev => prev === 'plan' ? 'plan' : 'plan'); setSortAsc(prev => sortKey === 'plan' ? !prev : true) }}>
-                        プラン {sortKey === 'plan' ? (sortAsc ? '▲' : '▼') : ''}
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px] cursor-pointer select-none"
-                        onClick={() => { setSortKey(prev => prev === 'status' ? 'status' : 'status'); setSortAsc(prev => sortKey === 'status' ? !prev : true) }}>
-                        ステータス {sortKey === 'status' ? (sortAsc ? '▲' : '▼') : ''}
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {sortedMembers && (showOnlyActive ? sortedMembers.filter(m => (m.status || 'active') === 'active') : sortedMembers).map((member) => (
-                      <tr key={member.id}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 min-w-[120px]">
-                          {member.stores?.name || '-'}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 min-w-[200px]">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center">
-                              <span className={`mr-2 inline-block w-2 h-2 rounded-full ${getStatusDotColor(member.status)}`} aria-hidden="true"></span>
-                              <Link
-                                href={`/admin/members/${member.id}`}
-                                className="text-indigo-600 hover:text-indigo-800 hover:underline font-semibold"
-                              >
-                                {member.full_name}
-                              </Link>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 min-w-[140px]">
-                          {member.plan || '-'}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap min-w-[120px]">
-                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(member.status)}`}>
-                            {getStatusText(member.status)}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-            {/* Bottom Active-only Toggle */}
-            <div className="mt-6 flex items-center justify-center">
-              <button
-                onClick={() => setShowOnlyActive(prev => !prev)}
-                className={`px-4 py-2 text-sm font-medium rounded-md border ${showOnlyActive ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}`}
-              >
-                {showOnlyActive ? 'すべて表示' : '在籍のみ表示'}
-              </button>
+        {/* Members List */}
+        <div className="bg-white shadow rounded-lg overflow-hidden">
+          {!members || members.length === 0 ? (
+            <div className="text-center py-8 text-gray-500 text-sm">会員データがありません</div>
+          ) : (
+            <div className="divide-y divide-gray-100">
+              {sortedMembers && (showOnlyActive ? sortedMembers.filter(m => (m.status || 'active') === 'active') : sortedMembers).map((member) => (
+                <Link
+                  key={member.id}
+                  href={`/admin/members/${member.id}`}
+                  className="flex items-center px-3 py-2.5 hover:bg-gray-50 transition-colors"
+                >
+                  <span className="flex items-center gap-2 truncate" style={{flex: '0 0 40%'}}>
+                    <span className={`flex-shrink-0 w-1.5 h-1.5 rounded-full ${getStatusDotColor(member.status)}`} />
+                    <span className="font-medium text-[13px] text-gray-900 truncate">{member.full_name}</span>
+                  </span>
+                  <span className="text-[11px] text-gray-500 whitespace-nowrap text-left" style={{flex: '1 1 auto', textAlign: 'left'}}>{member.plan || '-'}</span>
+                  <span className={`px-1.5 py-0.5 text-[10px] font-semibold rounded-full whitespace-nowrap flex-shrink-0 ${getStatusColor(member.status)}`}>
+                    {getStatusText(member.status)}
+                  </span>
+                </Link>
+              ))}
             </div>
-          </div>
+          )}
         </div>
       </div>
 

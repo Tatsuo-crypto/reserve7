@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
             query = query.eq('store_id', storeId)
         }
 
-        let { data: historyData, error } = await query.limit(100000)
+        let { data: historyData, error } = await query.order('start_date', { ascending: true }).limit(100000)
         
         let history = historyData || []
 
@@ -307,26 +307,9 @@ export async function GET(request: NextRequest) {
         const salesHistory = monthList.map(date => {
             const monthStart = startOfMonth(date)
             const monthEnd = endOfMonth(date)
-            const monthStartStr = format(monthStart, 'yyyy-MM-dd')
-            const monthEndStr = format(monthEnd, 'yyyy-MM-dd')
             
-            // Check if there's actual sales data for this month
-            const actualSales = (salesData || [])
-                .filter(s => {
-                    return s.target_date >= monthStartStr && s.target_date <= monthEndStr
-                })
-                .reduce((sum, s) => sum + s.amount, 0)
-            
-            // If there's actual sales data, use it
-            if (actualSales > 0) {
-                return {
-                    month: format(date, 'yyyy-MM'),
-                    amount: actualSales
-                }
-            }
-            
-            // Otherwise, estimate from membership history
-            const estimatedSales = history.filter(h => {
+            // Estimate from membership history (all active members' monthly fees)
+            const activeRecords = history.filter(h => {
                 if (h.status !== 'active') return false
                 
                 // Exclude non-recurring plans
@@ -351,7 +334,17 @@ export async function GET(request: NextRequest) {
                 
                 // Active during this month
                 return start <= monthEnd && (!end || end >= monthStart)
-            }).reduce((sum, h) => {
+            })
+
+            // Deduplicate: keep the record with the highest monthly_fee per user
+            const userMap = new Map()
+            for (const h of activeRecords) {
+                const existing = userMap.get(h.user_id)
+                if (!existing || (h.monthly_fee || 0) > (existing.monthly_fee || 0)) {
+                    userMap.set(h.user_id, h)
+                }
+            }
+            const estimatedSales = Array.from(userMap.values()).reduce((sum, h) => {
                 const fee = h.monthly_fee || 0
                 return sum + fee
             }, 0)
@@ -480,22 +473,9 @@ export async function GET(request: NextRequest) {
 
         const projectedSales = totalPaid + totalUnpaid
 
-        // Update salesHistory for current month to use projectedSales
-        // This ensures the chart matches the "Projected Sales" display
-        const currentMonthKey = format(startOfMonth(today), 'yyyy-MM')
-        const finalSalesHistory = salesHistory.map(item => {
-            if (item.month === currentMonthKey) {
-                return {
-                    ...item,
-                    amount: projectedSales
-                }
-            }
-            return item
-        })
-
         const response = NextResponse.json({
             memberHistory,
-            salesHistory: finalSalesHistory,
+            salesHistory,
             projectedSales
         })
 

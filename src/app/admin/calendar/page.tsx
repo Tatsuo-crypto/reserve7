@@ -105,6 +105,17 @@ function AdminCalendarPageContent() {
               <h1 className="text-2xl font-bold text-gray-900">予約</h1>
               <p className="mt-1 text-sm text-gray-500">予約のステータス管理</p>
             </div>
+            {!trainerToken && (
+              <Link
+                href="/admin/shifts"
+                className="absolute right-0 flex items-center text-sm text-gray-500 hover:text-indigo-600 transition-colors"
+              >
+                <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                シフト
+              </Link>
+            )}
           </div>
         </div>
 

@@ -82,15 +82,16 @@ export async function POST(
             .eq('id', record.id)
           
           // Create Right (continuation) from monthEnd + 1
+          // Use the NEW plan for continuation (not the old one), since the user is changing the plan
           const rightStart = addDays(monthEnd, 1)
           await supabaseAdmin.from('membership_history').insert({
               user_id: memberId,
               store_id: record.store_id,
-              status: record.status,
-              plan: record.plan,
-              monthly_fee: record.monthly_fee,
+              status: status || record.status,
+              plan: plan,
+              monthly_fee: monthlyFee !== undefined ? monthlyFee : record.monthly_fee,
               start_date: format(rightStart, 'yyyy-MM-dd'),
-              end_date: null // Original was null/indefinite, so new tail is too
+              end_date: null
           })
           continue
       }

@@ -168,7 +168,7 @@ function AdminDashboard() {
 
       <div className="bg-white shadow-sm border border-gray-200 rounded-xl p-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          {/* 予約管理（上） */}
+          {/* 予約（シフト管理を統合） */}
           <Link
             href="/admin/calendar"
             className="group bg-gradient-to-br from-white to-blue-50 hover:from-blue-50 hover:to-blue-100 border border-blue-200 p-8 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col min-h-[200px] transform hover:-translate-y-1"
@@ -176,17 +176,17 @@ function AdminDashboard() {
             <div className="flex items-center mb-6">
               <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl flex items-center justify-center group-hover:from-blue-200 group-hover:to-blue-300 transition-all duration-300 shadow-sm">
                 <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
               </div>
             </div>
             <div className="flex-1">
               <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-blue-800 transition-colors duration-200">予約</h3>
-              <p className="text-base text-gray-600 leading-relaxed">すべての予約を確認・管理</p>
+              <p className="text-base text-gray-600 leading-relaxed">予約・シフトの確認・管理</p>
             </div>
           </Link>
 
-          {/* 会員管理（下） */}
+          {/* 会員管理（売上管理を統合） */}
           <Link
             href="/admin/members"
             className="group bg-gradient-to-br from-white to-purple-50 hover:from-purple-50 hover:to-purple-100 border border-purple-200 p-8 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col min-h-[200px] transform hover:-translate-y-1"
@@ -200,29 +200,11 @@ function AdminDashboard() {
             </div>
             <div className="flex-1">
               <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-purple-800 transition-colors duration-200">会員管理</h3>
-              <p className="text-base text-gray-600 leading-relaxed">会員情報の管理</p>
+              <p className="text-base text-gray-600 leading-relaxed">会員情報・売上の管理</p>
             </div>
           </Link>
 
-          {/* 売上管理 */}
-          <Link
-            href="/admin/sales"
-            className="group bg-gradient-to-br from-white to-orange-50 hover:from-orange-50 hover:to-orange-100 border border-orange-200 p-8 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col min-h-[200px] transform hover:-translate-y-1"
-          >
-            <div className="flex items-center mb-6">
-              <div className="w-16 h-16 bg-gradient-to-br from-orange-100 to-orange-200 rounded-xl flex items-center justify-center group-hover:from-orange-200 group-hover:to-orange-300 transition-all duration-300 shadow-sm">
-                <svg className="w-8 h-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-            </div>
-            <div className="flex-1">
-              <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-orange-800 transition-colors duration-200">売上管理</h3>
-              <p className="text-base text-gray-600 leading-relaxed">月会費の管理・確認</p>
-            </div>
-          </Link>
-
-          {/* トレーナー管理（新規） */}
+          {/* スタッフ管理（トレーナー管理+店舗管理を統合） */}
           <Link
             href="/admin/trainers"
             className="group bg-gradient-to-br from-white to-emerald-50 hover:from-emerald-50 hover:to-emerald-100 border border-emerald-200 p-8 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col min-h-[200px] transform hover:-translate-y-1"
@@ -236,49 +218,12 @@ function AdminDashboard() {
               </div>
             </div>
             <div className="flex-1">
-              <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-emerald-800 transition-colors duration-200">トレーナー管理</h3>
-              <p className="text-base text-gray-600 leading-relaxed">トレーナー情報の管理</p>
+              <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-emerald-800 transition-colors duration-200">スタッフ管理</h3>
+              <p className="text-base text-gray-600 leading-relaxed">トレーナー・店舗の管理</p>
             </div>
           </Link>
 
-          {/* 店舗管理（新規） */}
-          <Link
-            href="/admin/stores"
-            className="group bg-gradient-to-br from-white to-indigo-50 hover:from-indigo-50 hover:to-indigo-100 border border-indigo-200 p-8 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col min-h-[200px] transform hover:-translate-y-1"
-          >
-            <div className="flex items-center mb-6">
-              <div className="w-16 h-16 bg-gradient-to-br from-indigo-100 to-indigo-200 rounded-xl flex items-center justify-center group-hover:from-indigo-200 group-hover:to-indigo-300 transition-all duration-300 shadow-sm">
-                <svg className="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10l9-7 9 7v8a2 2 0 01-2 2H5a2 2 0 01-2-2v-8z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 22V12h6v10" />
-                </svg>
-              </div>
-            </div>
-            <div className="flex-1">
-              <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-indigo-800 transition-colors duration-200">店舗管理</h3>
-              <p className="text-base text-gray-600 leading-relaxed">店舗情報の管理</p>
-            </div>
-          </Link>
-
-          {/* シフト管理（新規） */}
-          <Link
-            href="/admin/shifts"
-            className="group bg-gradient-to-br from-white to-teal-50 hover:from-teal-50 hover:to-teal-100 border border-teal-200 p-8 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col min-h-[200px] transform hover:-translate-y-1"
-          >
-            <div className="flex items-center mb-6">
-              <div className="w-16 h-16 bg-gradient-to-br from-teal-100 to-teal-200 rounded-xl flex items-center justify-center group-hover:from-teal-200 group-hover:to-teal-300 transition-all duration-300 shadow-sm">
-                <svg className="w-8 h-8 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-            </div>
-            <div className="flex-1">
-              <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-teal-800 transition-colors duration-200">シフト管理</h3>
-              <p className="text-base text-gray-600 leading-relaxed">トレーナーシフトの管理</p>
-            </div>
-          </Link>
-
-          {/* 分析（新規） */}
+          {/* 分析 */}
           <Link
             href="/admin/analytics"
             className="group bg-gradient-to-br from-white to-cyan-50 hover:from-cyan-50 hover:to-cyan-100 border border-cyan-200 p-8 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col min-h-[200px] transform hover:-translate-y-1"

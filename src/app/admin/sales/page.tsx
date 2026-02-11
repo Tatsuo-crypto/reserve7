@@ -1,16 +1,18 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { format } from 'date-fns'
 import { useStoreChange } from '@/hooks/useStoreChange'
 
-export default function SalesPage() {
-    const { count: storeChangeCount } = useStoreChange()
+function SalesPageContent() {
+    const { count: storeChangeCount, currentStoreId } = useStoreChange()
     const { data: session, status } = useSession()
     const router = useRouter()
+    const searchParams = useSearchParams()
+    const storeParam = searchParams.get('store')
     const [isClient, setIsClient] = useState(false)
     const [sales, setSales] = useState<any[]>([])
     const [unpaidList, setUnpaidList] = useState<any[]>([])
@@ -22,7 +24,16 @@ export default function SalesPage() {
     })
     const [loading, setLoading] = useState(true)
     const [month, setMonth] = useState(format(new Date(), 'yyyy-MM'))
-    const [selectedStore, setSelectedStore] = useState('all')
+    const [selectedStore, setSelectedStore] = useState(storeParam || currentStoreId || 'all')
+    const [storeInitialized, setStoreInitialized] = useState(false)
+
+    // Sync selectedStore when currentStoreId becomes available from cookie
+    useEffect(() => {
+        if (!storeInitialized && currentStoreId && !storeParam) {
+            setSelectedStore(currentStoreId)
+            setStoreInitialized(true)
+        }
+    }, [currentStoreId, storeParam, storeInitialized])
 
     // Client-side calculation for summary and status
     const todayStr = format(new Date(), 'yyyy-MM-dd')
@@ -142,107 +153,74 @@ export default function SalesPage() {
                         </button>
                         <div className="text-center">
                             <h1 className="text-2xl font-bold text-gray-900">売上管理</h1>
-                            <p className="mt-1 text-sm text-gray-500">入金実績・月次売上明細</p>
+                            <p className="mt-1 text-sm text-gray-500">月会費の管理・確認</p>
                         </div>
                     </div>
                 </div>
 
-                {/* Filters */}
-                <div className="bg-white shadow rounded-lg mb-8 p-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">対象月</label>
+                {/* Compact filters + summary in one bar */}
+                <div className="bg-white shadow rounded-lg p-4 mb-4">
+                    <div className="flex items-center justify-between flex-wrap gap-3">
+                        <div className="flex items-center gap-3">
                             <input
                                 type="month"
                                 value={month}
                                 onChange={(e) => setMonth(e.target.value)}
-                                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                className="border border-gray-300 rounded-md px-2 py-1.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                             />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">店舗</label>
                             <select
                                 value={selectedStore}
                                 onChange={(e) => setSelectedStore(e.target.value)}
-                                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                className="border border-gray-300 rounded-md px-2 py-1.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                             >
                                 <option value="all">全店舗</option>
-                                <option value="77439c86-679a-409a-8000-2e5297e5c0e8">Store 1</option>
-                                <option value="43296d78-13f3-4061-8d75-d38dfe907a5d">Store 2</option>
+                                <option value="77439c86-679a-409a-8000-2e5297e5c0e8">1号店</option>
+                                <option value="43296d78-13f3-4061-8d75-d38dfe907a5d">2号店</option>
                             </select>
                         </div>
-                    </div>
-                </div>
-
-                {/* Summary Card */}
-                <div className="mb-8">
-                    <div className="bg-white p-6 rounded-lg shadow border-l-4 border-indigo-500">
-                        <div>
-                            <h3 className="text-sm font-medium text-gray-500 mb-1">売上総額</h3>
-                            <p className="text-3xl font-bold text-gray-900">
-                                ¥{displaySummary.totalSales.toLocaleString()}
-                            </p>
+                        <div className="text-right">
+                            <span className="text-xs text-gray-500">売上総額</span>
+                            <span className="ml-2 text-lg font-bold text-gray-900">¥{displaySummary.totalSales.toLocaleString()}</span>
                         </div>
                     </div>
                 </div>
 
-                {/* Table */}
-                <div className="bg-white shadow overflow-hidden sm:rounded-lg">
-                    <div className="px-4 py-5 sm:p-6">
-                        {loading ? (
-                            <p className="text-center py-8 text-gray-500">読み込み中...</p>
-                        ) : (
-                            <div className="overflow-x-auto">
-                                <table className="min-w-full divide-y divide-gray-200">
-                                    <thead className="bg-gray-50">
-                                        <tr>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">会員名</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">プラン</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">金額</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="bg-white divide-y divide-gray-200">
-                                        {(() => {
-                                            if (combinedList.length === 0) {
-                                                return (
-                                                    <tr>
-                                                        <td colSpan={3} className="px-6 py-4 text-center text-sm text-gray-500">
-                                                            該当するデータはありません
-                                                        </td>
-                                                    </tr>
-                                                )
-                                            }
-
-                                            return combinedList.map((item, index) => (
-                                                <tr key={`${item.status}-${item.id || item.user_id}-${index}`} className="hover:bg-gray-50 transition-colors">
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                        {item.userId ? (
-                                                            <Link
-                                                                href={`/admin/members/${item.userId}?from=sales`}
-                                                                className="text-indigo-600 hover:text-indigo-800 hover:underline"
-                                                            >
-                                                                {item.displayName}
-                                                            </Link>
-                                                        ) : (
-                                                            item.displayName
-                                                        )}
-                                                    </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                        {item.displayPlan}
-                                                    </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
-                                                        ¥{item.displayAmount.toLocaleString()}
-                                                    </td>
-                                                </tr>
-                                            ))
-                                        })()}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
-                    </div>
+                {/* List */}
+                <div className="bg-white shadow rounded-lg overflow-hidden">
+                    {loading ? (
+                        <p className="text-center py-8 text-gray-500 text-sm">読み込み中...</p>
+                    ) : combinedList.length === 0 ? (
+                        <p className="text-center py-8 text-gray-500 text-sm">該当するデータはありません</p>
+                    ) : (
+                        <div className="divide-y divide-gray-100">
+                            {combinedList.map((item, index) => (
+                                <Link
+                                    key={`${item.status}-${item.id || item.user_id}-${index}`}
+                                    href={item.userId ? `/admin/members/${item.userId}?from=sales` : '#'}
+                                    className="flex items-center px-3 py-2.5 hover:bg-gray-50 transition-colors"
+                                >
+                                    <span className={`flex-shrink-0 w-1.5 h-1.5 rounded-full mr-2 ${item.status === 'paid' ? 'bg-green-500' : 'bg-yellow-500'}`} />
+                                    <span className="font-medium text-[13px] text-gray-900 truncate" style={{flex: '1 1 35%'}}>{item.displayName}</span>
+                                    <span className="text-[11px] text-gray-500 whitespace-nowrap text-left" style={{flex: '1 1 35%'}}>{item.displayPlan}</span>
+                                    <span className="text-[13px] font-bold text-gray-900 whitespace-nowrap text-right" style={{flex: '0 0 auto'}}>¥{item.displayAmount.toLocaleString()}</span>
+                                </Link>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
+    )
+}
+
+export default function SalesPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="text-lg">読み込み中...</div>
+            </div>
+        }>
+            <SalesPageContent />
+        </Suspense>
     )
 }

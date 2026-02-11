@@ -172,7 +172,9 @@ function NewReservationContent() {
   // Load active trainers - for training type load all stores, otherwise current store only
   useEffect(() => {
     const loadTrainers = async () => {
-      if (!formData.calendarId) return
+      // For training type, load all trainers regardless of store
+      // For other types, require calendarId
+      if (!formData.isTraining && !formData.calendarId) return
       try {
         setLoadingTrainers(true)
         const storeParam = formData.isTraining ? '' : `&storeId=${encodeURIComponent(formData.calendarId)}`
@@ -194,7 +196,7 @@ function NewReservationContent() {
       }
     }
     loadTrainers()
-  }, [formData.calendarId, formData.isTraining])
+  }, [formData.calendarId, formData.isTraining, trainerToken])
 
   // Auto-detect on-duty trainer from shifts when startTime/duration changes
   useEffect(() => {

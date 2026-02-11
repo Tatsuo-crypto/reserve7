@@ -15,12 +15,10 @@ export default function NewMemberPage() {
     lastName: '',
     firstName: '',
     email: '',
-    googleCalendarEmail: '',
     storeId: '',
     plan: '月4回',
     monthlyFee: '',
     transferDay: '',
-    billingStartMonth: '',
     status: 'active',
     memo: '',
   })
@@ -188,25 +186,6 @@ export default function NewMemberPage() {
             <p className="mt-1 text-sm text-gray-500">会員専用URLの発行にはメールアドレスが必要ですが、空欄でも登録可能です（システムがダミーアドレスを生成します）</p>
           </div>
 
-          {/* Googleカレンダー連携用メールアドレス */}
-          <div>
-            <label htmlFor="googleCalendarEmail" className="block text-sm font-medium text-gray-700 mb-2">
-              Googleカレンダー連携用メールアドレス（任意）
-            </label>
-            <input
-              type="email"
-              id="googleCalendarEmail"
-              name="googleCalendarEmail"
-              value={formData.googleCalendarEmail}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="calendar@gmail.com"
-            />
-            <p className="mt-1 text-sm text-gray-500">
-              設定すると、予約時に会員のGoogleカレンダーにもイベントが追加されます
-            </p>
-          </div>
-
           {/* 店舗 */}
           <div>
             <label htmlFor="storeId" className="block text-sm font-medium text-gray-700 mb-2">
@@ -227,10 +206,10 @@ export default function NewMemberPage() {
             </select>
           </div>
 
-          {/* プラン */}
+          {/* 入会時プラン */}
           <div>
             <label htmlFor="plan" className="block text-sm font-medium text-gray-700 mb-2">
-              プラン
+              入会時プラン
             </label>
             <select
               id="plan"
@@ -246,10 +225,10 @@ export default function NewMemberPage() {
             </select>
           </div>
 
-          {/* 月会費 */}
+          {/* 入会時月会費 */}
           <div>
             <label htmlFor="monthlyFee" className="block text-sm font-medium text-gray-700 mb-2">
-              月会費（円）
+              入会時月会費（円）
             </label>
             <input
               type="number"
@@ -283,42 +262,6 @@ export default function NewMemberPage() {
               指定した日付を過ぎても入金がない場合、売上管理で「未振込」と判定されます。<br />
               空欄の場合はデフォルト（27日）として扱われます。
             </p>
-          </div>
-
-          {/* 売上計上開始月 */}
-          <div>
-            <label htmlFor="billingStartMonth" className="block text-sm font-medium text-gray-700 mb-2">
-              売上計上開始月（任意）
-            </label>
-            <input
-              type="month"
-              id="billingStartMonth"
-              name="billingStartMonth"
-              value={formData.billingStartMonth}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-            <p className="mt-1 text-sm text-gray-500">
-              指定した月より前の月次売上（見込み/未振込）には含めません。空欄の場合は従来通り在籍開始月ベースで計算します。
-            </p>
-          </div>
-
-          {/* ステータス */}
-          <div>
-            <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-2">
-              ステータス
-            </label>
-            <select
-              id="status"
-              name="status"
-              value={formData.status}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="active">在籍</option>
-              <option value="suspended">休会</option>
-              <option value="withdrawn">退会</option>
-            </select>
           </div>
 
           {/* メモ */}

@@ -382,44 +382,42 @@ export async function POST(request: NextRequest) {
     // Store notes as-is from user input. If empty, store null.
     const mergedNotes = notes || null
 
-    // For TRAINING type: create a reservation per trainer per store calendar
-    // Each store calendar gets a record for every participating trainer
+    // For TRAINING type: create one reservation per trainer on their store's calendar
     if (clientId === 'TRAINING' && body.trainingTrainerIds && body.trainingTrainerIds.length > 0) {
       const { data: trainingTrainers } = await supabaseAdmin
         .from('trainers')
         .select('id, full_name, store_id')
         .in('id', body.trainingTrainerIds)
 
-      // Collect all unique store calendar_ids (main + trainers' stores)
+      // Build a map from store UUID to calendar_id
       const trainerStoreIds = Array.from(new Set((trainingTrainers || []).map(t => t.store_id).filter(Boolean)))
       const { data: allStores } = await supabaseAdmin
         .from('stores')
         .select('id, calendar_id')
         .in('id', trainerStoreIds)
 
-      const calendarIds = new Set<string>([calendarId])
+      const storeCalendarMap = new Map<string, string>()
       if (allStores) {
         for (const s of allStores) {
-          if (s.calendar_id) calendarIds.add(s.calendar_id)
+          if (s.calendar_id) storeCalendarMap.set(s.id, s.calendar_id)
         }
       }
 
-      // Create: each calendar × each trainer = one record
+      // Create one record per trainer, using their store's calendar_id
       const reservationRows: any[] = []
-      calendarIds.forEach(calId => {
-        for (const t of (trainingTrainers || [])) {
-          reservationRows.push({
-            client_id: null,
-            title: generatedTitle,
-            start_time: startDateTime.toISOString(),
-            end_time: endDateTime.toISOString(),
-            notes: mergedNotes,
-            calendar_id: calId,
-            external_event_id: null,
-            trainer_id: t.id,
-          })
-        }
-      })
+      for (const t of (trainingTrainers || [])) {
+        const trainerCalId = storeCalendarMap.get(t.store_id) || calendarId
+        reservationRows.push({
+          client_id: null,
+          title: generatedTitle,
+          start_time: startDateTime.toISOString(),
+          end_time: endDateTime.toISOString(),
+          notes: mergedNotes,
+          calendar_id: trainerCalId,
+          external_event_id: null,
+          trainer_id: t.id,
+        })
+      }
 
       const { data: reservations, error } = await supabaseAdmin
         .from('reservations')
@@ -434,7 +432,7 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      console.log(`✅ Created ${reservations?.length} training reservation records (${calendarIds.size} calendars × ${trainingTrainers?.length} trainers)`)
+      console.log(`✅ Created ${reservations?.length} training reservation records (1 per trainer)`)
 
       return NextResponse.json({
         reservation: reservations?.[0],

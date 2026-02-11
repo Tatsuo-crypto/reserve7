@@ -298,114 +298,91 @@ export default function TrainersPage() {
             <h1 className="text-2xl font-bold text-gray-900">トレーナー管理</h1>
             <p className="mt-1 text-sm text-gray-500">トレーナー情報の閲覧・管理</p>
           </div>
+          <Link
+            href="/admin/stores"
+            className="absolute right-0 flex items-center text-sm text-gray-500 hover:text-indigo-600 transition-colors"
+          >
+            <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10l9-7 9 7v8a2 2 0 01-2 2H5a2 2 0 01-2-2v-8z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 22V12h6v10" />
+            </svg>
+            店舗
+          </Link>
         </div>
       </div>
 
-      {/* Action Button */}
-      <div className="flex justify-center mb-6">
-        <button
-          className="inline-flex items-center px-4 py-2 rounded-md bg-emerald-600 text-white hover:bg-emerald-700"
-          onClick={openCreate}
-        >
-          新規トレーナー
-        </button>
-      </div>
-
-      {/* Filters */}
-      <div className="bg-white shadow-sm border border-gray-200 rounded-lg mb-3">
-        <div className="px-6 py-4 grid grid-cols-1 md:grid-cols-4 gap-3">
-          <div>
-            <label className="block text-xs text-gray-500 mb-1">店舗</label>
+      {/* Compact toolbar: Filters + New button */}
+      <div className="bg-white shadow rounded-lg p-4 mb-4">
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div className="flex items-center gap-2">
             <select
-              className="w-full border rounded-md px-2 py-2 text-sm"
+              className="border border-gray-300 rounded-md px-2 py-1.5 text-sm"
               value={storeScope}
               onChange={(e) => setStoreScope(e.target.value as 'mine' | 'all')}
             >
-              <option value="mine" disabled={!adminStoreId}>自店舗のみ{!adminStoreId ? '（未設定）' : ''}</option>
+              <option value="mine" disabled={!adminStoreId}>自店舗</option>
               <option value="all">全店舗</option>
             </select>
-          </div>
-          <div>
-            <label className="block text-xs text-gray-500 mb-1">在籍状況</label>
             <select
-              className="w-full border rounded-md px-2 py-2 text-sm"
+              className="border border-gray-300 rounded-md px-2 py-1.5 text-sm"
               value={status}
               onChange={(e) => setStatus(e.target.value as any)}
             >
-              <option value="all">すべて</option>
-              <option value="active">在籍（active）</option>
-              <option value="inactive">無効（inactive）</option>
+              <option value="all">全ステータス</option>
+              <option value="active">在籍</option>
+              <option value="inactive">無効</option>
             </select>
           </div>
-          <div className="md:col-span-2">
-            <label className="block text-xs text-gray-500 mb-1">検索（名前・メール）</label>
-            <div className="flex gap-2">
-              <input
-                className="flex-1 border rounded-md px-3 py-2 text-sm"
-                placeholder="例: 田中 or tanaka@example.com"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-              />
-              <button onClick={fetchList} className="px-3 py-2 text-sm rounded-md border bg-gray-50 hover:bg-gray-100">検索</button>
-            </div>
-          </div>
+          <button
+            className="px-3 py-1.5 bg-emerald-600 text-white text-xs font-medium rounded-full hover:bg-emerald-700 transition-colors flex items-center gap-1"
+            onClick={openCreate}
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            新規
+          </button>
         </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-white shadow-sm border border-gray-200 rounded-lg">
-        <div className="px-6 py-4">
-          {loading ? (
-            <div className="text-center py-12 text-gray-500 text-sm">読み込み中...</div>
-          ) : trainers.length === 0 ? (
-            <div className="text-center py-12 text-gray-500 text-sm">該当のトレーナーがいません</div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-[960px] sm:min-w-[1100px] text-sm">
-                <thead>
-                  <tr className="bg-gray-50 text-gray-600">
-                    <th className="text-left px-3 py-2 border-b whitespace-nowrap min-w-[160px]">名前</th>
-                    <th className="text-left px-3 py-2 border-b whitespace-nowrap min-w-[240px]">担当店舗</th>
-                    <th className="text-left px-3 py-2 border-b whitespace-nowrap min-w-[100px]">ステータス</th>
-                    <th className="text-right px-3 py-2 border-b whitespace-nowrap min-w-[120px]">操作</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {trainers.map(t => (
-                    <tr key={t.id} className="hover:bg-gray-50">
-                      <td className="px-3 py-2 border-b whitespace-nowrap">
-                        <div className="font-medium text-gray-900">{t.full_name}</div>
-                        {t.phone ? <div className="text-gray-500 text-xs">{t.phone}</div> : null}
-                      </td>
-                      <td className="px-3 py-2 border-b whitespace-nowrap">
-                        <div className="text-gray-800 truncate max-w-[260px]" title={storeNameById[t.store_id] || t.store_id}>
-                          {storeNameById[t.store_id] || t.store_id}
-                        </div>
-                      </td>
-                      <td className="px-3 py-2 border-b whitespace-nowrap">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${t.status === 'active' ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-200 text-gray-700'}`}>{t.status === 'active' ? '在籍' : '無効'}</span>
-                      </td>
-                      <td className="px-3 py-2 border-b text-right whitespace-nowrap">
-                        <div className="inline-flex items-center gap-2">
-                          {t.access_token && (
-                            <button
-                              className="px-2 py-1 text-xs rounded-md bg-indigo-600 text-white hover:bg-indigo-700"
-                              onClick={() => handleCopyAccessUrl(t.access_token!, t.full_name)}
-                              title="専用URLをコピー"
-                            >
-                              URL
-                            </button>
-                          )}
-                          <button className="px-2 py-1 text-xs rounded-md border hover:bg-gray-50" onClick={() => openEdit(t)}>編集</button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
+      {/* Trainer List */}
+      <div className="bg-white shadow rounded-lg overflow-hidden">
+        {loading ? (
+          <div className="text-center py-8 text-gray-500 text-sm">読み込み中...</div>
+        ) : trainers.length === 0 ? (
+          <div className="text-center py-8 text-gray-500 text-sm">該当のトレーナーがいません</div>
+        ) : (
+          <div className="divide-y divide-gray-100">
+            {trainers.map(t => (
+              <div
+                key={t.id}
+                className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <span className={`flex-shrink-0 w-2 h-2 rounded-full ${t.status === 'active' ? 'bg-emerald-500' : 'bg-gray-400'}`} />
+                  <span className="font-medium text-sm text-gray-900 truncate">{t.full_name}</span>
+                  <span className="text-xs text-gray-400 flex-shrink-0">{storeNameById[t.store_id] || ''}</span>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0 ml-3">
+                  {t.access_token && (
+                    <button
+                      className="px-2 py-1 text-[10px] font-semibold rounded-full bg-indigo-100 text-indigo-700 hover:bg-indigo-200 transition-colors"
+                      onClick={() => handleCopyAccessUrl(t.access_token!, t.full_name)}
+                    >
+                      URL
+                    </button>
+                  )}
+                  <button
+                    className="px-2 py-1 text-[10px] font-semibold rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
+                    onClick={() => openEdit(t)}
+                  >
+                    編集
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Modal */}

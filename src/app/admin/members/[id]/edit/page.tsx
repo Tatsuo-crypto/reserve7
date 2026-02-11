@@ -22,11 +22,9 @@ export default function EditMemberPage() {
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
-    googleCalendarEmail: '',
     storeId: '',
     plan: '月4回',
     monthlyFee: '',
-    billingStartMonth: '',
     status: 'active',
     memo: '',
     changeDate: new Date().toISOString().split('T')[0],
@@ -60,11 +58,9 @@ export default function EditMemberPage() {
           setFormData({
             fullName: member.full_name || '',
             email: member.email || '',
-            googleCalendarEmail: member.google_calendar_email || '',
             storeId: member.store_id || '',
             plan: member.plan || '月4回',
             monthlyFee: member.monthly_fee ? member.monthly_fee.toString() : '',
-            billingStartMonth: member.billing_start_month ? String(member.billing_start_month).slice(0, 7) : '',
             status: member.status || 'active',
             memo: member.memo || '',
             changeDate: new Date().toISOString().split('T')[0],
@@ -115,11 +111,9 @@ export default function EditMemberPage() {
           memberId,
           fullName: formData.fullName,
           email: formData.email,
-          googleCalendarEmail: formData.googleCalendarEmail,
           storeId: formData.storeId,
           plan: formData.plan,
           monthlyFee: formData.monthlyFee,
-          billingStartMonth: formData.billingStartMonth,
           status: formData.status,
           memo: formData.memo,
           changeDate: formData.changeDate,
@@ -148,10 +142,9 @@ export default function EditMemberPage() {
   }
 
   // Check if any critical field has changed
-  const isStatusChanged = formData.status !== initialStatus
   const isPlanChanged = formData.plan !== initialPlan
   const isFeeChanged = formData.monthlyFee !== initialMonthlyFee
-  const isChanged = isStatusChanged || isPlanChanged || isFeeChanged
+  const isChanged = isPlanChanged || isFeeChanged
 
   if (fetchLoading) {
     return (
@@ -210,25 +203,6 @@ export default function EditMemberPage() {
             />
           </div>
 
-          {/* Googleカレンダー連携用メールアドレス */}
-          <div>
-            <label htmlFor="googleCalendarEmail" className="block text-sm font-medium text-gray-700 mb-2">
-              Googleカレンダー連携用メールアドレス（任意）
-            </label>
-            <input
-              type="email"
-              id="googleCalendarEmail"
-              name="googleCalendarEmail"
-              value={formData.googleCalendarEmail}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="calendar@gmail.com"
-            />
-            <p className="mt-1 text-sm text-gray-500">
-              設定すると、予約時に会員のGoogleカレンダーにもイベントが追加されます
-            </p>
-          </div>
-
           {/* 店舗 */}
           <div>
             <label htmlFor="storeId" className="block text-sm font-medium text-gray-700 mb-2">
@@ -249,10 +223,10 @@ export default function EditMemberPage() {
             </select>
           </div>
 
-          {/* プラン */}
+          {/* 入会時プラン */}
           <div>
             <label htmlFor="plan" className="block text-sm font-medium text-gray-700 mb-2">
-              プラン
+              入会時プラン
             </label>
             <select
               id="plan"
@@ -268,10 +242,10 @@ export default function EditMemberPage() {
             </select>
           </div>
 
-          {/* 月会費 */}
+          {/* 入会時月会費 */}
           <div>
             <label htmlFor="monthlyFee" className="block text-sm font-medium text-gray-700 mb-2">
-              月会費（円）
+              入会時月会費（円）
             </label>
             <input
               type="number"
@@ -285,43 +259,7 @@ export default function EditMemberPage() {
             <p className="mt-1 text-sm text-gray-500">空欄の場合は0円として登録されます</p>
           </div>
 
-          {/* 売上計上開始月 */}
-          <div>
-            <label htmlFor="billingStartMonth" className="block text-sm font-medium text-gray-700 mb-2">
-              売上計上開始月（任意）
-            </label>
-            <input
-              type="month"
-              id="billingStartMonth"
-              name="billingStartMonth"
-              value={formData.billingStartMonth}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-            <p className="mt-1 text-sm text-gray-500">
-              指定した月より前の月次売上（見込み/未振込）には含めません。空欄の場合は従来通り在籍開始月ベースで計算します。
-            </p>
-          </div>
-
-          {/* ステータス */}
-          <div>
-            <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-2">
-              ステータス
-            </label>
-            <select
-              id="status"
-              name="status"
-              value={formData.status}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="active">在籍</option>
-              <option value="suspended">休会</option>
-              <option value="withdrawn">退会</option>
-            </select>
-          </div>
-
-          {/* 変更日 (ステータス・プラン・会費変更時のみ表示) */}
+          {/* 変更日 (プラン・会費変更時のみ表示) */}
           {isChanged && (
             <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
               <label htmlFor="changeDate" className="block text-sm font-medium text-yellow-800 mb-2">
@@ -336,8 +274,8 @@ export default function EditMemberPage() {
                 className="w-full px-3 py-2 border border-yellow-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
               />
               <p className="mt-2 text-sm text-yellow-700">
-                ※ 指定した日付から新しいステータス・プラン・会費が適用されます。<br />
-                例: 1月末でプラン変更・退会 → 「2月1日」を指定<br />
+                ※ 指定した日付から新しいプラン・会費が適用されます。<br />
+                例: 1月末でプラン変更 → 「2月1日」を指定<br />
                 売上見込みへの反映: 毎月1日時点での情報に基づいて算出されます。
               </p>
             </div>
