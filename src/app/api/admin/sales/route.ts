@@ -15,6 +15,7 @@ export async function GET(request: NextRequest) {
         const { searchParams } = new URL(request.url)
         const storeId = searchParams.get('storeId')
         const monthStr = searchParams.get('month') || format(new Date(), 'yyyy-MM')
+        console.log('🔍 Sales API called with storeId:', JSON.stringify(storeId), 'month:', monthStr)
         
         // Parse month string (yyyy-MM)
         const targetDateStart = new Date(`${monthStr}-01`)

@@ -24,25 +24,27 @@ function SalesPageContent() {
     })
     const [loading, setLoading] = useState(true)
     const [month, setMonth] = useState(format(new Date(), 'yyyy-MM'))
-    const [selectedStore, setSelectedStore] = useState(storeParam || currentStoreId || 'all')
-    const [storeInitialized, setStoreInitialized] = useState(false)
+    const getStoreFromCookie = () => {
+        if (typeof document === 'undefined') return 'all'
+        const match = document.cookie.match(/(^|;)\s*admin_store_preference=([^;]+)/)
+        return match ? match[2] : 'all'
+    }
+    const [selectedStore, setSelectedStore] = useState('all')
+    const [storeReady, setStoreReady] = useState(false)
 
-    // Once currentStoreId is available from cookie (after hydration), sync selectedStore
+    // Initialize selectedStore from cookie on client mount
     useEffect(() => {
-        if (!storeInitialized) {
-            if (storeParam) {
-                // URL param takes priority
-                setStoreInitialized(true)
-            } else if (currentStoreId) {
-                // Cookie value available
-                setSelectedStore(currentStoreId)
-                setStoreInitialized(true)
-            } else if (isClient) {
-                // Client-side, no cookie set - use 'all'
-                setStoreInitialized(true)
-            }
+        const cookieStore = storeParam || getStoreFromCookie()
+        setSelectedStore(cookieStore)
+        setStoreReady(true)
+    }, [])
+
+    // Sync when store switcher changes
+    useEffect(() => {
+        if (storeReady && currentStoreId && !storeParam) {
+            setSelectedStore(currentStoreId)
         }
-    }, [currentStoreId, storeParam, storeInitialized, isClient])
+    }, [currentStoreId, storeReady])
 
     // Client-side calculation for summary and status
     const todayStr = format(new Date(), 'yyyy-MM-dd')
@@ -119,7 +121,7 @@ function SalesPageContent() {
 
     useEffect(() => {
         const fetchSales = async () => {
-            if (!isClient || status !== 'authenticated' || !storeInitialized) return
+            if (!isClient || status !== 'authenticated' || !storeReady) return
             setLoading(true)
             try {
                 const res = await fetch(`/api/admin/sales?month=${month}&storeId=${selectedStore}`)
@@ -136,7 +138,7 @@ function SalesPageContent() {
             }
         }
         fetchSales()
-    }, [isClient, status, month, selectedStore, storeChangeCount, storeInitialized])
+    }, [isClient, status, month, selectedStore, storeChangeCount, storeReady])
 
     if (!isClient || status === 'loading') {
         return (
