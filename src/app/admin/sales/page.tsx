@@ -25,6 +25,24 @@ function SalesPageContent() {
     const [loading, setLoading] = useState(true)
     const [month, setMonth] = useState(format(new Date(), 'yyyy-MM'))
     const [selectedStore, setSelectedStore] = useState(storeParam || currentStoreId || 'all')
+    const [storeInitialized, setStoreInitialized] = useState(false)
+
+    // Once currentStoreId is available from cookie (after hydration), sync selectedStore
+    useEffect(() => {
+        if (!storeInitialized) {
+            if (storeParam) {
+                // URL param takes priority
+                setStoreInitialized(true)
+            } else if (currentStoreId) {
+                // Cookie value available
+                setSelectedStore(currentStoreId)
+                setStoreInitialized(true)
+            } else if (isClient) {
+                // Client-side, no cookie set - use 'all'
+                setStoreInitialized(true)
+            }
+        }
+    }, [currentStoreId, storeParam, storeInitialized, isClient])
 
     // Client-side calculation for summary and status
     const todayStr = format(new Date(), 'yyyy-MM-dd')
@@ -101,7 +119,7 @@ function SalesPageContent() {
 
     useEffect(() => {
         const fetchSales = async () => {
-            if (!isClient || status !== 'authenticated') return
+            if (!isClient || status !== 'authenticated' || !storeInitialized) return
             setLoading(true)
             try {
                 const res = await fetch(`/api/admin/sales?month=${month}&storeId=${selectedStore}`)
@@ -118,7 +136,7 @@ function SalesPageContent() {
             }
         }
         fetchSales()
-    }, [isClient, status, month, selectedStore, storeChangeCount])
+    }, [isClient, status, month, selectedStore, storeChangeCount, storeInitialized])
 
     if (!isClient || status === 'loading') {
         return (
