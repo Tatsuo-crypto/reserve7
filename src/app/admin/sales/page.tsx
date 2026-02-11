@@ -25,15 +25,6 @@ function SalesPageContent() {
     const [loading, setLoading] = useState(true)
     const [month, setMonth] = useState(format(new Date(), 'yyyy-MM'))
     const [selectedStore, setSelectedStore] = useState(storeParam || currentStoreId || 'all')
-    const [storeInitialized, setStoreInitialized] = useState(false)
-
-    // Sync selectedStore when currentStoreId becomes available from cookie
-    useEffect(() => {
-        if (!storeInitialized && currentStoreId && !storeParam) {
-            setSelectedStore(currentStoreId)
-            setStoreInitialized(true)
-        }
-    }, [currentStoreId, storeParam, storeInitialized])
 
     // Client-side calculation for summary and status
     const todayStr = format(new Date(), 'yyyy-MM-dd')

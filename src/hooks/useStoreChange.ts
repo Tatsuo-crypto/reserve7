@@ -9,7 +9,6 @@ import { useState, useEffect } from 'react'
  */
 export function useStoreChange() {
     const [count, setCount] = useState(0)
-    const [currentStoreId, setCurrentStoreId] = useState<string | null>(null)
 
     const checkCookie = () => {
         if (typeof document === 'undefined') return null
@@ -17,8 +16,11 @@ export function useStoreChange() {
         return match ? match[2] : null
     }
 
+    // Read cookie synchronously on init so it's available immediately
+    const [currentStoreId, setCurrentStoreId] = useState<string | null>(() => checkCookie())
+
     useEffect(() => {
-        // Initial check
+        // Re-check on mount (in case SSR value differs)
         setCurrentStoreId(checkCookie())
 
         const handler = () => {
