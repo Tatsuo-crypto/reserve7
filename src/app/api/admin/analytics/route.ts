@@ -107,16 +107,6 @@ export async function GET(request: NextRequest) {
 
             const activeCount = history.filter(h => {
                 if (h.status !== 'active') return false
-                
-                // Exclude non-recurring plans from active count to match new/withdrawn logic
-                const planName = h.plan || ''
-                if (planName.includes('ダイエット') || 
-                    planName.includes('都度') || 
-                    planName.includes('体験') || 
-                    planName.includes('カウンセリング') ||
-                    planName.includes('回コース')) {
-                    return false
-                }
 
                 const start = new Date(h.start_date)
                 const end = h.end_date ? new Date(h.end_date) : null
@@ -129,16 +119,6 @@ export async function GET(request: NextRequest) {
             // Focus on ACTIVE records ending in this month.
             // If a user ends Jan 31, they are a Jan withdrawal (unless they renew).
             const withdrawnMembers = history.filter((h: any) => {
-                // Exclude non-recurring plans
-                const planName = h.plan || ''
-                if (planName.includes('ダイエット') || 
-                    planName.includes('都度') || 
-                    planName.includes('体験') || 
-                    planName.includes('カウンセリング') ||
-                    planName.includes('回コース')) {
-                    return false
-                }
-
                 // Only look at ACTIVE records that have an end date
                 if (h.status === 'active') {
                     if (!h.end_date) return false
@@ -227,16 +207,6 @@ export async function GET(request: NextRequest) {
                 // Must be active to be a "new member"
                 if (h.status !== 'active') return false
 
-                // Exclude non-recurring plans
-                const planName = h.plan || ''
-                if (planName.includes('ダイエット') || 
-                    planName.includes('都度') || 
-                    planName.includes('体験') || 
-                    planName.includes('カウンセリング') ||
-                    planName.includes('回コース')) {
-                    return false
-                }
-
                 const start = new Date(h.start_date)
                 if (start < monthStart || start > monthEnd) return false
 
@@ -278,32 +248,6 @@ export async function GET(request: NextRequest) {
             }
         })
 
-        // Fetch sales
-        let salesQuery = supabaseAdmin
-            .from('sales')
-            .select('amount, target_date, store_id, user_id, type')
-            .gte('target_date', format(monthList[0], 'yyyy-MM-01'))
-            .lte('target_date', format(endOfMonth(today), 'yyyy-MM-dd'))
-            
-        if (storeId && storeId !== 'all') {
-            salesQuery = salesQuery.eq('store_id', storeId)
-        }
-        
-        // Apply limit at the end execution
-        let { data: salesDataResult, error: salesError } = await salesQuery.limit(100000)
-        if (salesError) throw salesError
-
-        let salesData = salesDataResult || []
-
-        // Defensive In-Memory Filter for Sales
-        if (storeId && storeId !== 'all') {
-            const originalLength = salesData.length
-            salesData = salesData.filter(s => s.store_id === storeId)
-            if (salesData.length !== originalLength) {
-                console.warn(`[Analytics Warning] Sales DB filter leak detected! Filtered in-memory from ${originalLength} to ${salesData.length}`)
-            }
-        }
-
         const salesHistory = monthList.map(date => {
             const monthStart = startOfMonth(date)
             const monthEnd = endOfMonth(date)
@@ -311,16 +255,6 @@ export async function GET(request: NextRequest) {
             // Estimate from membership history (all active members' monthly fees)
             const activeRecords = history.filter(h => {
                 if (h.status !== 'active') return false
-                
-                // Exclude non-recurring plans
-                const planName = h.plan || ''
-                if (planName.includes('ダイエット') || 
-                    planName.includes('都度') || 
-                    planName.includes('体験') || 
-                    planName.includes('カウンセリング') ||
-                    planName.includes('回コース')) {
-                    return false
-                }
 
                 // Exclude months before billing start month (if configured)
                 const user = Array.isArray((h as any).users) ? (h as any).users[0] : (h as any).users
@@ -356,122 +290,9 @@ export async function GET(request: NextRequest) {
         })
 
         // Calculate Projected Sales for current month
-        // Logic aligned with Sales Management Page:
-        // Projected = (Actual Paid Sales) + (Estimated Unpaid Monthly Fees)
-        
-        const currentMonthStr = format(startOfMonth(today), 'yyyy-MM-01')
-        const currentMonthSales = (salesData || []).filter(s => s.target_date === currentMonthStr)
-        
-        // 1. Total Paid (Actual)
-        const totalPaid = currentMonthSales.reduce((sum, s) => sum + s.amount, 0)
-        
-        // 2. Identify users who have paid 'monthly_fee' globally
-        // This ensures users who paid in another store aren't counted as "Unpaid" here
-        const { data: globalPayments } = await supabaseAdmin
-            .from('sales')
-            .select('user_id')
-            .eq('target_date', currentMonthStr)
-            .eq('type', 'monthly_fee')
-
-        const paidUserIds = new Set(
-            (globalPayments || []).map(s => s.user_id)
-        )
-
-        // 3. Calculate Unpaid (Active members who haven't paid yet)
-        
-        // Step A: Get all active records for the month
-        const allActiveRecords = history.filter(h => {
-            if (h.status !== 'active') return false
-            const monthStart = startOfMonth(today)
-            const monthEnd = endOfMonth(today)
-            const start = new Date(h.start_date)
-            const end = h.end_date ? new Date(h.end_date) : null
-            // Match Sales API: Active at any point during the month
-            if (!(start <= monthEnd && (!end || end >= monthStart))) return false
-            return true
-        })
-
-        // Step B: Deduplicate (Keep latest record per user)
-        // Match Sales API behavior
-        allActiveRecords.sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime())
-        
-        const activeMembersMap = new Map()
-        for (const m of allActiveRecords) {
-            activeMembersMap.set(m.user_id, m)
-        }
-        const uniqueActiveMembers = Array.from(activeMembersMap.values())
-
-        // Step C: Filter for Unpaid & Recurring Plans
-        const unpaidActiveRecords = uniqueActiveMembers.filter((h: any) => {
-            // Exclude if already paid
-            if (paidUserIds.has(h.user_id)) return false
-
-            // Exclude months before billing start month (if configured)
-            const user = Array.isArray(h.users) ? h.users[0] : h.users
-            if (user?.billing_start_month) {
-                const billingStart = startOfMonth(new Date(user.billing_start_month))
-                if (startOfMonth(today) < billingStart) return false
-            }
-
-            // Exclude non-recurring plans
-            const planName = h.plan || user?.plan || ''
-            
-            if (planName.includes('ダイエット') || 
-                planName.includes('都度') || 
-                planName.includes('体験') || 
-                planName.includes('カウンセリング') ||
-                planName.includes('回コース')) {
-                return false
-            }
-            
-            return true
-        })
-        
-        const unpaidUserIds = unpaidActiveRecords.map((m: any) => m.user_id)
-
-        // Fetch recent sales for fallback estimation (matches Sales API)
-        const userLatestAmount = new Map<string, number>()
-        if (unpaidUserIds.length > 0) {
-            const { data: recentSales } = await supabaseAdmin
-                .from('sales')
-                .select('user_id, amount')
-                .eq('type', 'monthly_fee')
-                .in('user_id', unpaidUserIds)
-                .gte('target_date', format(subMonths(startOfMonth(today), 6), 'yyyy-MM-01'))
-                .order('payment_date', { ascending: false })
-
-            if (recentSales) {
-                for (const sale of recentSales) {
-                    if (!userLatestAmount.has(sale.user_id)) {
-                        userLatestAmount.set(sale.user_id, sale.amount)
-                    }
-                }
-            }
-        }
-
-        // 4. Sum unpaid fees
-        const totalUnpaid = unpaidActiveRecords.reduce((sum, record: any) => {
-            // Priority: History Snapshot -> Current User Settings (fallback) -> Recent Sales (last resort)
-            let fee = record.monthly_fee
-            
-            if (fee === null || fee === undefined) {
-                // users might be typed as array in some generated types, though it's 1:1
-                const user = Array.isArray(record.users) ? record.users[0] : record.users
-                fee = user?.monthly_fee
-            }
-            
-            if (fee === null || fee === undefined) {
-                fee = userLatestAmount.get(record.user_id) || 0
-            }
-
-            // Match Sales API: Only add if amount > 0
-            if (fee > 0) {
-                return sum + fee
-            }
-            return sum
-        }, 0)
-
-        const projectedSales = totalPaid + totalUnpaid
+        // Simply sum all active members' monthly_fee (matches Sales API)
+        const currentMonthSalesEntry = salesHistory.find(s => s.month === format(today, 'yyyy-MM'))
+        const projectedSales = currentMonthSalesEntry?.amount || 0
 
         const response = NextResponse.json({
             memberHistory,

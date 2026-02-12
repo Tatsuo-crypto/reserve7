@@ -4,11 +4,11 @@ import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import {
-    LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-    BarChart, Bar, ComposedChart, Area, ReferenceLine
+    Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+    BarChart, Bar, ComposedChart, Area
 } from 'recharts'
 import { useStoreChange } from '@/hooks/useStoreChange'
-import MemberMovementModal from './MemberMovementModal'
+
 
 export default function AnalyticsPage() {
     const { data: session, status } = useSession()
@@ -17,10 +17,7 @@ export default function AnalyticsPage() {
     const [period, setPeriod] = useState<string>('all')
     const [filterStoreId, setFilterStoreId] = useState<string>(currentStoreId || 'all')
     const [stores, setStores] = useState<{ id: string, name: string }[]>([])
-    
-    // Modal state
-    const [selectedMonthData, setSelectedMonthData] = useState<any>(null)
-    const [isModalOpen, setIsModalOpen] = useState(false)
+
 
     // Check admin access
     useEffect(() => {
@@ -127,23 +124,6 @@ export default function AnalyticsPage() {
     // Avoid division by zero
     const growth = prevActive > 0 ? ((activeCount - prevActive) / prevActive * 100).toFixed(1) : 0
 
-    // Transform data for Join/Withdraw chart (Withdrawal as negative)
-    const movementData = memberHistory.map(item => ({
-        ...item,
-        withdrawnDisplay: -(item.withdrawn || 0) // Make negative for plotting
-    }))
-
-    // Handle bar click
-    const handleBarClick = (data: any) => {
-        if (data) {
-            setSelectedMonthData({
-                month: data.month,
-                newMembers: data.newMembers || [],
-                withdrawnMembers: data.withdrawnMembers || []
-            })
-            setIsModalOpen(true)
-        }
-    }
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -269,48 +249,56 @@ export default function AnalyticsPage() {
                             <h3 className="text-lg font-bold text-gray-900">入会・退会推移</h3>
                         </div>
                     </div>
-                    <div className="h-[300px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart 
-                                data={movementData} 
-                                stackOffset="sign" 
-                                className="outline-none focus:outline-none"
-                            >
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                <XAxis dataKey="month" style={{ fontSize: '12px' }} />
-                                <YAxis
-                                    style={{ fontSize: '12px' }}
-                                    tickFormatter={(val) => Math.abs(val).toString()} // Show absolute numbers
-                                />
-                                <Legend />
-                                <ReferenceLine y={0} stroke="#000" />
-                                <Bar 
-                                    dataKey="new" 
-                                    name="新規入会" 
-                                    fill="#ef4444" 
-                                    stackId="a" 
-                                    cursor="pointer"
-                                    onClick={handleBarClick}
-                                />
-                                <Bar 
-                                    dataKey="withdrawnDisplay" 
-                                    name="退会" 
-                                    fill="#3b82f6" 
-                                    stackId="a" 
-                                    cursor="pointer"
-                                    onClick={handleBarClick}
-                                />
-                            </BarChart>
-                        </ResponsiveContainer>
+                    <div className="overflow-x-auto">
+                        <div className="flex gap-0 min-w-max">
+                            {memberHistory.map((item) => {
+                                const newMembers = item.newMembers || []
+                                const withdrawnMembers = item.withdrawnMembers || []
+                                const hasData = newMembers.length > 0 || withdrawnMembers.length > 0
+                                const monthLabel = item.month?.substring(5) || ''
+                                return (
+                                    <div 
+                                        key={item.month} 
+                                        className="flex flex-col items-center border-r border-gray-100 last:border-r-0"
+                                        style={{ minWidth: '70px' }}
+                                    >
+                                        {/* New members blocks (top, growing upward) */}
+                                        <div className="flex flex-col-reverse gap-0.5 mb-1 min-h-[20px]">
+                                            {newMembers.map((m: any, i: number) => (
+                                                <div 
+                                                    key={`new-${i}`} 
+                                                    className="bg-red-100 text-red-700 text-[10px] font-medium px-1.5 py-0.5 rounded text-center whitespace-nowrap"
+                                                >
+                                                    {m.full_name?.split(' ')[0] || '?'}
+                                                </div>
+                                            ))}
+                                        </div>
+                                        {/* Month label */}
+                                        <div className={`text-[11px] py-1 px-2 rounded ${hasData ? 'font-bold text-gray-900 bg-gray-100' : 'text-gray-400'}`}>
+                                            {monthLabel}
+                                        </div>
+                                        {/* Withdrawn members blocks (bottom, growing downward) */}
+                                        <div className="flex flex-col gap-0.5 mt-1 min-h-[20px]">
+                                            {withdrawnMembers.map((m: any, i: number) => (
+                                                <div 
+                                                    key={`wd-${i}`} 
+                                                    className="bg-blue-100 text-blue-700 text-[10px] font-medium px-1.5 py-0.5 rounded text-center whitespace-nowrap"
+                                                >
+                                                    {m.full_name?.split(' ')[0] || '?'}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )
+                            })}
+                        </div>
+                        <div className="flex items-center gap-4 mt-3 text-xs text-gray-500">
+                            <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 bg-red-100 rounded"></span>新規入会</span>
+                            <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 bg-blue-100 rounded"></span>退会</span>
+                        </div>
                     </div>
                 </div>
             </div>
-
-            <MemberMovementModal 
-                isOpen={isModalOpen} 
-                onClose={() => setIsModalOpen(false)} 
-                data={selectedMonthData} 
-            />
         </div>
     )
 }
