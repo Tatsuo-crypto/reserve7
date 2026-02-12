@@ -14,14 +14,8 @@ function SalesPageContent() {
     const searchParams = useSearchParams()
     const storeParam = searchParams.get('store')
     const [isClient, setIsClient] = useState(false)
-    const [sales, setSales] = useState<any[]>([])
-    const [unpaidList, setUnpaidList] = useState<any[]>([])
-    const [summary, setSummary] = useState({
-        totalPaid: 0,
-        totalUnpaid: 0,
-        projectedSales: 0,
-        unpaidCount: 0
-    })
+    const [members, setMembers] = useState<any[]>([])
+    const [totalAmount, setTotalAmount] = useState(0)
     const [loading, setLoading] = useState(true)
     const [month, setMonth] = useState(format(new Date(), 'yyyy-MM'))
     const getStoreFromCookie = () => {
@@ -46,63 +40,6 @@ function SalesPageContent() {
         }
     }, [currentStoreId, storeReady])
 
-    // Client-side calculation for summary and status
-    const todayStr = format(new Date(), 'yyyy-MM-dd')
-    
-    // Calculate derived summary and combined list
-    const { combinedList, displaySummary } = (() => {
-        // Process unpaid list (monthly membership fees)
-        const safeUnpaidList = Array.isArray(unpaidList) ? unpaidList : []
-        const processedUnpaidList = safeUnpaidList.map(item => ({
-            ...item,
-            status: 'unpaid',
-            displayName: item.full_name || '-',
-            displayPlan: String(item.plan || '-'),
-            displayAmount: item.estimated_amount,
-            type: '月額',
-            userId: item.user_id
-        }))
-
-        // Process actual sales list
-        const safeSales = Array.isArray(sales) ? sales : []
-        const processedSalesList = safeSales.map(item => ({
-            ...item,
-            status: 'paid',
-            displayName: item.users?.full_name || '-',
-            displayPlan: String(item.users?.plan || '-'),
-            displayAmount: item.amount,
-            type: (() => {
-                const plan = item.users?.plan || ''
-                if (plan.includes('都度') || plan.includes('ダイエット')) return '単発'
-                return '月額'
-            })(),
-            userId: item.user_id || item.users?.id
-        }))
-
-        // Combine and sort by plan
-        const list = [...processedSalesList, ...processedUnpaidList].sort((a, b) => 
-            a.displayPlan.localeCompare(b.displayPlan, 'ja')
-        )
-
-        // Calculate totals
-        const totalPaid = safeSales.reduce((sum, item) => sum + (item.amount || 0), 0)
-        const totalUnpaid = safeUnpaidList.reduce((sum, item) => sum + (item.estimated_amount || 0), 0)
-        const totalSales = totalPaid + totalUnpaid
-        const paidCount = safeSales.length
-        const unpaidCount = safeUnpaidList.length
-
-        return {
-            combinedList: list,
-            displaySummary: {
-                totalSales,
-                totalPaid,
-                totalUnpaid,
-                paidCount,
-                unpaidCount
-            }
-        }
-    })()
-
     useEffect(() => {
         setIsClient(true)
     }, [])
@@ -126,11 +63,8 @@ function SalesPageContent() {
             try {
                 const res = await fetch(`/api/admin/sales?month=${month}&storeId=${selectedStore}`)
                 const result = await res.json()
-                setSales(result.data?.sales || [])
-                setUnpaidList(result.data?.unpaidDetails || [])
-                if (result.data?.summary) {
-                    setSummary(result.data.summary)
-                }
+                setMembers(result.data?.members || [])
+                setTotalAmount(result.data?.totalAmount || 0)
             } catch (error) {
                 console.error('Failed to fetch sales:', error)
             } finally {
@@ -191,7 +125,7 @@ function SalesPageContent() {
                         </div>
                         <div className="text-right">
                             <span className="text-xs text-gray-500">売上総額</span>
-                            <span className="ml-2 text-lg font-bold text-gray-900">¥{displaySummary.totalSales.toLocaleString()}</span>
+                            <span className="ml-2 text-lg font-bold text-gray-900">¥{totalAmount.toLocaleString()}</span>
                         </div>
                     </div>
                 </div>
@@ -200,20 +134,20 @@ function SalesPageContent() {
                 <div className="bg-white shadow rounded-lg overflow-hidden">
                     {loading ? (
                         <p className="text-center py-8 text-gray-500 text-sm">読み込み中...</p>
-                    ) : combinedList.length === 0 ? (
+                    ) : members.length === 0 ? (
                         <p className="text-center py-8 text-gray-500 text-sm">該当するデータはありません</p>
                     ) : (
                         <div className="divide-y divide-gray-100">
-                            {combinedList.map((item, index) => (
+                            {members.map((item, index) => (
                                 <Link
-                                    key={`${item.status}-${item.id || item.user_id}-${index}`}
-                                    href={item.userId ? `/admin/members/${item.userId}?from=sales` : '#'}
+                                    key={`${item.user_id}-${index}`}
+                                    href={`/admin/members/${item.user_id}?from=sales`}
                                     className="flex items-center px-3 py-2.5 hover:bg-gray-50 transition-colors"
                                 >
-                                    <span className={`flex-shrink-0 w-1.5 h-1.5 rounded-full mr-2 ${item.status === 'paid' ? 'bg-green-500' : 'bg-yellow-500'}`} />
-                                    <span className="font-medium text-[13px] text-gray-900 truncate" style={{flex: '1 1 35%'}}>{item.displayName}</span>
-                                    <span className="text-[11px] text-gray-500 whitespace-nowrap text-left" style={{flex: '1 1 35%'}}>{item.displayPlan}</span>
-                                    <span className="text-[13px] font-bold text-gray-900 whitespace-nowrap text-right" style={{flex: '0 0 auto'}}>¥{item.displayAmount.toLocaleString()}</span>
+                                    <span className="flex-shrink-0 w-1.5 h-1.5 rounded-full mr-2 bg-gray-400" />
+                                    <span className="font-medium text-[13px] text-gray-900 truncate" style={{flex: '1 1 35%'}}>{item.full_name}</span>
+                                    <span className="text-[11px] text-gray-500 whitespace-nowrap text-left" style={{flex: '1 1 35%'}}>{item.plan}</span>
+                                    <span className="text-[13px] font-bold text-gray-900 whitespace-nowrap text-right" style={{flex: '0 0 auto'}}>¥{item.amount.toLocaleString()}</span>
                                 </Link>
                             ))}
                         </div>
