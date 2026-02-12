@@ -224,6 +224,28 @@ export default function AnalyticsPage() {
             {/* Charts Section */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8" key={`${filterStoreId}-${period}`}>
 
+                {/* Sales Chart */}
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <div className="flex items-center justify-between mb-6">
+                        <h3 className="text-lg font-bold text-gray-900">売上推移</h3>
+                    </div>
+                    <div className="h-[300px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={salesHistory}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                <XAxis dataKey="month" style={{ fontSize: '12px' }} />
+                                <YAxis
+                                    style={{ fontSize: '12px' }}
+                                    tickFormatter={(value) => `¥${value / 10000}万`}
+                                />
+                                <Tooltip formatter={(value: any) => `¥${Number(value).toLocaleString()}`} />
+                                <Legend />
+                                <Bar dataKey="amount" name="月会費売上" fill="#34d399" radius={[4, 4, 0, 0]} />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+
                 {/* Member Growth Chart */}
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                     <div className="flex items-center justify-between mb-6">
@@ -243,28 +265,6 @@ export default function AnalyticsPage() {
                                 <Area type="monotone" dataKey="active" name="在籍会員" fill="#818cf8" stroke="#4f46e5" fillOpacity={0.1} />
                                 <Line type="monotone" dataKey="suspended" name="休会" stroke="#94a3b8" strokeDasharray="5 5" />
                             </ComposedChart>
-                        </ResponsiveContainer>
-                    </div>
-                </div>
-
-                {/* Sales Chart */}
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                    <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-lg font-bold text-gray-900">売上推移</h3>
-                    </div>
-                    <div className="h-[300px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={salesHistory}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                <XAxis dataKey="month" style={{ fontSize: '12px' }} />
-                                <YAxis
-                                    style={{ fontSize: '12px' }}
-                                    tickFormatter={(value) => `¥${value / 10000}万`}
-                                />
-                                <Tooltip formatter={(value: any) => `¥${Number(value).toLocaleString()}`} />
-                                <Legend />
-                                <Bar dataKey="amount" name="月会費売上" fill="#34d399" radius={[4, 4, 0, 0]} />
-                            </BarChart>
                         </ResponsiveContainer>
                     </div>
                 </div>
@@ -295,14 +295,23 @@ export default function AnalyticsPage() {
                                 const prevYear = prevItem ? prevItem.month?.split('-')[0] : null
                                 const showYear = !prevYear || prevYear !== yearStr
                                 return (
-                                    <div key={item.month} className="flex flex-col items-center">
-                                        {/* Year label at top when year changes */}
-                                        {showYear && (
+                                    <div key={item.month} className="flex">
+                                        {/* Vertical year divider */}
+                                        {showYear && idx > 0 && (
+                                            <div className="flex flex-col items-center mr-1">
+                                                <div className="text-[9px] font-bold text-gray-400 whitespace-nowrap mb-1">{yearStr}</div>
+                                                <div className="w-px bg-gray-300 flex-1" />
+                                            </div>
+                                        )}
+                                        <div className="flex flex-col items-center">
+                                        {/* Year label at top for first item */}
+                                        {showYear && idx === 0 && (
                                             <div className="text-[10px] font-bold text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded-full mb-1 whitespace-nowrap">
                                                 {yearStr}
                                             </div>
                                         )}
-                                        {!showYear && <div className="h-[22px]" />}
+                                        {(!showYear || idx === 0) && !showYear && <div className="h-[22px]" />}
+                                        {showYear && idx > 0 && <div className="h-[22px]" />}
                                         <div
                                             className="flex flex-col items-center cursor-pointer hover:bg-gray-50 rounded-lg transition-colors px-1"
                                             style={{ minWidth: `${Math.max(40, 600 / memberHistory.length)}px` }}
@@ -332,6 +341,7 @@ export default function AnalyticsPage() {
                                                     />
                                                 ))}
                                             </div>
+                                        </div>
                                         </div>
                                     </div>
                                 )
