@@ -203,7 +203,7 @@ export default function AnalyticsPage() {
             {/* Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                    <h3 className="text-sm font-medium text-gray-500">現在の会員数</h3>
+                    <h3 className="text-sm font-medium text-gray-500">現在の月額会員数</h3>
                     <div className="mt-2 flex items-baseline">
                         <span className="text-3xl font-bold text-gray-900">{activeCount}</span>
                         <span className="ml-1 text-sm text-gray-500">名</span>
