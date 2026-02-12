@@ -5,10 +5,10 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import {
     Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-    BarChart, Bar, ComposedChart, Area, ReferenceLine, Cell
+    BarChart, Bar, ComposedChart, Area
 } from 'recharts'
 import { useStoreChange } from '@/hooks/useStoreChange'
-
+import MemberMovementModal from './MemberMovementModal'
 
 export default function AnalyticsPage() {
     const { data: session, status } = useSession()
@@ -17,6 +17,8 @@ export default function AnalyticsPage() {
     const [period, setPeriod] = useState<string>('all')
     const [filterStoreId, setFilterStoreId] = useState<string>(currentStoreId || 'all')
     const [stores, setStores] = useState<{ id: string, name: string }[]>([])
+    const [selectedMonthData, setSelectedMonthData] = useState<any>(null)
+    const [isModalOpen, setIsModalOpen] = useState(false)
 
 
     // Check admin access
@@ -124,12 +126,19 @@ export default function AnalyticsPage() {
     // Avoid division by zero
     const growth = prevActive > 0 ? ((activeCount - prevActive) / prevActive * 100).toFixed(1) : 0
 
-    // Transform data for Join/Withdraw chart
-    const movementData = memberHistory.map(item => ({
-        month: item.month,
-        new: item.new || 0,
-        withdrawn: -(item.withdrawn || 0),
-    }))
+    // Calculate max for Y-axis scaling of block chart
+    const maxNew = Math.max(...memberHistory.map(m => (m.new || 0)), 1)
+    const maxWithdrawn = Math.max(...memberHistory.map(m => (m.withdrawn || 0)), 1)
+    const maxBlocks = Math.max(maxNew, maxWithdrawn)
+
+    const handleMonthClick = (item: any) => {
+        setSelectedMonthData({
+            month: item.month,
+            newMembers: item.newMembers || [],
+            withdrawnMembers: item.withdrawnMembers || [],
+        })
+        setIsModalOpen(true)
+    }
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -248,55 +257,72 @@ export default function AnalyticsPage() {
                     </div>
                 </div>
 
-                {/* Member Movement (Join/Withdraw) */}
+                {/* Member Movement (Join/Withdraw) - Custom Block Chart */}
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 lg:col-span-2">
-                    <div className="flex items-center justify-between mb-6">
-                        <div>
-                            <h3 className="text-lg font-bold text-gray-900">入会・退会推移</h3>
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-bold text-gray-900">入会・退会推移</h3>
+                        <div className="flex items-center gap-4 text-xs text-gray-500">
+                            <span className="flex items-center gap-1.5">
+                                <span className="inline-block w-3 h-3 rounded-sm bg-red-400"></span>
+                                新規入会
+                            </span>
+                            <span className="flex items-center gap-1.5">
+                                <span className="inline-block w-3 h-3 rounded-sm bg-blue-400"></span>
+                                退会
+                            </span>
                         </div>
                     </div>
-                    <div className="h-[300px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart
-                                data={movementData}
-                                stackOffset="sign"
-                            >
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                <XAxis dataKey="month" style={{ fontSize: '11px' }} />
-                                <YAxis
-                                    style={{ fontSize: '12px' }}
-                                    tickFormatter={(val) => `${Math.abs(val)}人`}
-                                    allowDecimals={false}
-                                />
-                                <Tooltip
-                                    formatter={(value: any, name: any) => [
-                                        `${Math.abs(Number(value))}人`,
-                                        name
-                                    ]}
-                                />
-                                <Legend />
-                                <ReferenceLine y={0} stroke="#d1d5db" />
-                                <Bar
-                                    dataKey="new"
-                                    name="新規入会"
-                                    fill="#ef4444"
-                                    stackId="a"
-                                    radius={[2, 2, 0, 0]}
-                                    maxBarSize={40}
-                                />
-                                <Bar
-                                    dataKey="withdrawn"
-                                    name="退会"
-                                    fill="#3b82f6"
-                                    stackId="a"
-                                    radius={[0, 0, 2, 2]}
-                                    maxBarSize={40}
-                                />
-                            </BarChart>
-                        </ResponsiveContainer>
+                    <div className="overflow-x-auto">
+                        <div className="flex items-end min-w-max" style={{ minHeight: `${(maxBlocks * 20) + 60 + (maxBlocks * 20)}px` }}>
+                            {memberHistory.map((item) => {
+                                const newCount = item.new || 0
+                                const withdrawnCount = item.withdrawn || 0
+                                const monthLabel = item.month?.substring(5) || ''
+                                return (
+                                    <div
+                                        key={item.month}
+                                        className="flex flex-col items-center cursor-pointer hover:bg-gray-50 rounded-lg transition-colors px-1"
+                                        style={{ minWidth: `${Math.max(36, 600 / memberHistory.length)}px` }}
+                                        onClick={() => handleMonthClick(item)}
+                                    >
+                                        {/* New members blocks (above center line) */}
+                                        <div className="flex flex-col-reverse items-center gap-[2px]" style={{ minHeight: `${maxBlocks * 20}px`, justifyContent: 'flex-start' }}>
+                                            {Array.from({ length: newCount }).map((_, i) => (
+                                                <div
+                                                    key={`n-${i}`}
+                                                    className="w-5 h-4 rounded-sm bg-red-400"
+                                                />
+                                            ))}
+                                        </div>
+                                        {/* Center line + month label */}
+                                        <div className="w-full border-t border-gray-200 my-1" />
+                                        <div className="text-[10px] text-gray-500 leading-none mb-1 font-medium">
+                                            {monthLabel}
+                                        </div>
+                                        <div className="w-full border-t border-gray-200 mb-1" />
+                                        {/* Withdrawn blocks (below center line) */}
+                                        <div className="flex flex-col items-center gap-[2px]" style={{ minHeight: `${maxBlocks * 20}px`, justifyContent: 'flex-start' }}>
+                                            {Array.from({ length: withdrawnCount }).map((_, i) => (
+                                                <div
+                                                    key={`w-${i}`}
+                                                    className="w-5 h-4 rounded-sm bg-blue-400"
+                                                />
+                                            ))}
+                                        </div>
+                                    </div>
+                                )
+                            })}
+                        </div>
                     </div>
+                    <p className="text-[11px] text-gray-400 mt-2 text-center">※ 月をタップすると詳細を表示します</p>
                 </div>
             </div>
+
+            <MemberMovementModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                data={selectedMonthData}
+            />
         </div>
     )
 }
