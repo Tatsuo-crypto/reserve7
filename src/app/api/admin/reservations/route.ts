@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
 
     // Validate input
-    const { clientId, startTime, duration, notes } = body
+    const { clientId, startTime, duration, notes, skipShiftCheck } = body
     let trainerId = body.trainerId || null
 
     // Use calendarId for reservations (email format)
@@ -226,14 +226,17 @@ export async function POST(request: NextRequest) {
           if (shiftsError) {
             console.error('Error checking shifts:', shiftsError)
           } else if (!shifts || shifts.length === 0) {
-            // Only block if trainer is creating the reservation (not admin)
-            if (isTrainerAuth) {
+            // If skipShiftCheck is set, allow the reservation (user confirmed the warning)
+            if (skipShiftCheck) {
+              console.log('No shift found but user confirmed skip - allowing reservation')
+            } else if (isTrainerAuth) {
               return NextResponse.json(
-                { error: 'この時間帯に出勤しているトレーナーがいません（シフト外）' },
+                { error: 'この時間帯に出勤しているトレーナーがいません（シフト外）', code: 'NO_SHIFT' },
                 { status: 409 }
               )
+            } else {
+              console.log('No shift found but admin is creating - allowing reservation')
             }
-            console.log('No shift found but admin is creating - allowing reservation')
           } else if (shifts.length > 0 && !trainerId) {
             // Auto-assign trainer from the matching shift
             trainerId = shifts[0].trainer_id

@@ -489,7 +489,7 @@ function NewReservationContent() {
         ? `/api/admin/reservations?token=${trainerToken}`
         : '/api/admin/reservations'
 
-      const response = await fetch(url, {
+      let response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -497,10 +497,29 @@ function NewReservationContent() {
         body: JSON.stringify(requestData),
       })
 
-      const data = await response.json()
+      let data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || '予約の作成に失敗しました')
+        // If shift warning, show confirm dialog and retry with skipShiftCheck
+        if (data.code === 'NO_SHIFT') {
+          const ok = window.confirm('この時間帯に出勤しているトレーナーがいません（シフト外）\n\nそれでも予約を作成しますか？')
+          if (!ok) {
+            setLoading(false)
+            return
+          }
+          // Retry with skipShiftCheck
+          response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...requestData, skipShiftCheck: true }),
+          })
+          data = await response.json()
+          if (!response.ok) {
+            throw new Error(data.error || '予約の作成に失敗しました')
+          }
+        } else {
+          throw new Error(data.error || '予約の作成に失敗しました')
+        }
       }
 
       setSuccess(formData.isTrial ? '体験予約が正常に作成されました' : formData.isTraining ? '研修予約が正常に作成されました' : '予約が正常に作成されました')
