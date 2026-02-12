@@ -105,14 +105,27 @@ export async function GET(request: NextRequest) {
             // 2. start_date <= monthEnd
             // 3. (end_date is null OR end_date > monthEnd)
 
-            const activeCount = history.filter(h => {
+            // Filter active records for this month, then deduplicate by user_id
+            const activeRecordsThisMonth = history.filter(h => {
                 if (h.status !== 'active') return false
 
                 const start = new Date(h.start_date)
                 const end = h.end_date ? new Date(h.end_date) : null
 
-                return start <= monthEnd && (!end || end > monthEnd)
-            }).length
+                if (!(start <= monthEnd && (!end || end > monthEnd))) return false
+
+                // Exclude months before billing start month
+                const user = Array.isArray((h as any).users) ? (h as any).users[0] : (h as any).users
+                if (user?.billing_start_month) {
+                    const billingStart = startOfMonth(new Date(user.billing_start_month))
+                    if (monthStart < billingStart) return false
+                }
+
+                return true
+            })
+            // Deduplicate: count unique users only
+            const activeUserIds = new Set(activeRecordsThisMonth.map(h => h.user_id))
+            const activeCount = activeUserIds.size
 
             // Withdrawn in this month
             // Logic:
