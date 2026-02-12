@@ -66,9 +66,6 @@ function MembersPageContent() {
     if (status === 'authenticated') {
       fetchMembers()
     }
-    if (status === 'authenticated') {
-      fetchMembers()
-    }
   }, [status, storeChangeCount])
 
   const [showDeleteModal, setShowDeleteModal] = useState(false)
