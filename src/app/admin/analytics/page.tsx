@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import {
@@ -19,6 +19,7 @@ export default function AnalyticsPage() {
     const [stores, setStores] = useState<{ id: string, name: string }[]>([])
     const [selectedMonthData, setSelectedMonthData] = useState<any>(null)
     const [isModalOpen, setIsModalOpen] = useState(false)
+    const movementScrollRef = useRef<HTMLDivElement>(null)
 
 
     // Check admin access
@@ -110,6 +111,17 @@ export default function AnalyticsPage() {
             ignore = true
         }
     }, [filterStoreId, period])
+
+    // Auto-scroll movement chart to the right (show latest month)
+    useEffect(() => {
+        if (movementScrollRef.current && data.memberHistory.length > 0) {
+            setTimeout(() => {
+                if (movementScrollRef.current) {
+                    movementScrollRef.current.scrollLeft = movementScrollRef.current.scrollWidth
+                }
+            }, 100)
+        }
+    }, [data.memberHistory])
 
     if (loading && data.memberHistory.length === 0) {
         return <div className="p-8 text-center text-gray-500">データを読み込み中...</div>
@@ -272,42 +284,54 @@ export default function AnalyticsPage() {
                             </span>
                         </div>
                     </div>
-                    <div className="overflow-x-auto">
+                    <div className="overflow-x-auto" ref={movementScrollRef}>
                         <div className="flex items-end min-w-max" style={{ minHeight: `${(maxBlocks * 20) + 60 + (maxBlocks * 20)}px` }}>
-                            {memberHistory.map((item) => {
+                            {memberHistory.map((item, idx) => {
                                 const newCount = item.new || 0
                                 const withdrawnCount = item.withdrawn || 0
-                                const monthLabel = item.month?.substring(5) || ''
+                                const [yearStr, monthNum] = (item.month || '').split('-')
+                                const monthLabel = `${parseInt(monthNum || '0')}月`
+                                const prevItem = idx > 0 ? memberHistory[idx - 1] : null
+                                const prevYear = prevItem ? prevItem.month?.split('-')[0] : null
+                                const showYear = !prevYear || prevYear !== yearStr
                                 return (
-                                    <div
-                                        key={item.month}
-                                        className="flex flex-col items-center cursor-pointer hover:bg-gray-50 rounded-lg transition-colors px-1"
-                                        style={{ minWidth: `${Math.max(36, 600 / memberHistory.length)}px` }}
-                                        onClick={() => handleMonthClick(item)}
-                                    >
-                                        {/* New members blocks (above center line) */}
-                                        <div className="flex flex-col-reverse items-center gap-[2px]" style={{ minHeight: `${maxBlocks * 20}px`, justifyContent: 'flex-start' }}>
-                                            {Array.from({ length: newCount }).map((_, i) => (
-                                                <div
-                                                    key={`n-${i}`}
-                                                    className="w-5 h-4 rounded-sm bg-red-400"
-                                                />
-                                            ))}
-                                        </div>
-                                        {/* Center line + month label */}
-                                        <div className="w-full border-t border-gray-200 my-1" />
-                                        <div className="text-[10px] text-gray-500 leading-none mb-1 font-medium">
-                                            {monthLabel}
-                                        </div>
-                                        <div className="w-full border-t border-gray-200 mb-1" />
-                                        {/* Withdrawn blocks (below center line) */}
-                                        <div className="flex flex-col items-center gap-[2px]" style={{ minHeight: `${maxBlocks * 20}px`, justifyContent: 'flex-start' }}>
-                                            {Array.from({ length: withdrawnCount }).map((_, i) => (
-                                                <div
-                                                    key={`w-${i}`}
-                                                    className="w-5 h-4 rounded-sm bg-blue-400"
-                                                />
-                                            ))}
+                                    <div key={item.month} className="flex flex-col items-center">
+                                        {/* Year label at top when year changes */}
+                                        {showYear && (
+                                            <div className="text-[10px] font-bold text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded-full mb-1 whitespace-nowrap">
+                                                {yearStr}
+                                            </div>
+                                        )}
+                                        {!showYear && <div className="h-[22px]" />}
+                                        <div
+                                            className="flex flex-col items-center cursor-pointer hover:bg-gray-50 rounded-lg transition-colors px-1"
+                                            style={{ minWidth: `${Math.max(40, 600 / memberHistory.length)}px` }}
+                                            onClick={() => handleMonthClick(item)}
+                                        >
+                                            {/* New members blocks (above center line) */}
+                                            <div className="flex flex-col-reverse items-center gap-[2px]" style={{ minHeight: `${maxBlocks * 20}px`, justifyContent: 'flex-start' }}>
+                                                {Array.from({ length: newCount }).map((_, i) => (
+                                                    <div
+                                                        key={`n-${i}`}
+                                                        className="w-5 h-4 rounded-sm bg-red-400"
+                                                    />
+                                                ))}
+                                            </div>
+                                            {/* Center line + month label */}
+                                            <div className="w-full border-t border-gray-200 my-1" />
+                                            <div className="text-[10px] text-gray-500 leading-none mb-1 font-medium">
+                                                {monthLabel}
+                                            </div>
+                                            <div className="w-full border-t border-gray-200 mb-1" />
+                                            {/* Withdrawn blocks (below center line) */}
+                                            <div className="flex flex-col items-center gap-[2px]" style={{ minHeight: `${maxBlocks * 20}px`, justifyContent: 'flex-start' }}>
+                                                {Array.from({ length: withdrawnCount }).map((_, i) => (
+                                                    <div
+                                                        key={`w-${i}`}
+                                                        className="w-5 h-4 rounded-sm bg-blue-400"
+                                                    />
+                                                ))}
+                                            </div>
                                         </div>
                                     </div>
                                 )
