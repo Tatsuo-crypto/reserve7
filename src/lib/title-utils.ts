@@ -115,7 +115,7 @@ export async function updateMonthlyTitles(clientId: string, year: number, month:
           }
 
           // Create new event with updated title
-          const newEventId = await calendarService.createEvent({
+          const calResult = await calendarService.createEvent({
             title: newTitle,
             startTime: reservation.start_time,
             endTime: reservation.end_time,
@@ -128,7 +128,7 @@ export async function updateMonthlyTitles(clientId: string, year: number, month:
           // Update DB: title and external_event_id
           await supabaseAdmin
             .from('reservations')
-            .update({ title: newTitle, external_event_id: newEventId })
+            .update({ title: newTitle, external_event_id: calResult.eventId })
             .eq('id', reservation.id)
 
           return true
@@ -343,7 +343,7 @@ export async function updateAllTitles(clientId: string) {
           if (reservation.external_event_id) {
             try { await calendarService.deleteEvent(reservation.external_event_id, reservation.calendar_id) } catch {}
           }
-          const newEventId = await calendarService.createEvent({
+          const calResult = await calendarService.createEvent({
             title: newTitle,
             startTime: reservation.start_time,
             endTime: reservation.end_time,
@@ -352,7 +352,7 @@ export async function updateAllTitles(clientId: string) {
             notes: reservation.notes || undefined,
             calendarId: reservation.calendar_id,
           })
-          await supabaseAdmin.from('reservations').update({ title: newTitle, external_event_id: newEventId }).eq('id', reservation.id)
+          await supabaseAdmin.from('reservations').update({ title: newTitle, external_event_id: calResult.eventId }).eq('id', reservation.id)
           return true
         } catch (err) {
           console.error('Calendar sync failed while updating titles:', err)

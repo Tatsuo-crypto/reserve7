@@ -42,7 +42,7 @@ export class GoogleCalendarService {
     calendarId: string
     memberCalendarEmail?: string | null
     trainerCalendarEmail?: string | null
-  }): Promise<string> {
+  }): Promise<{ eventId: string; trainerEventId?: string }> {
     if (!this.calendar) {
       throw new Error('Google Calendar service not initialized')
     }
@@ -76,23 +76,25 @@ export class GoogleCalendarService {
       }
 
       const eventId = response.data.id
+      let trainerEventId: string | undefined
       console.log(`✅ Google Calendar event created: ${eventId}`)
 
       // トレーナーのカレンダーにも直接イベントを作成
       if (reservation.trainerCalendarEmail && reservation.trainerCalendarEmail.trim() !== '') {
         try {
-          await this.calendar.events.insert({
+          const trainerResponse = await this.calendar.events.insert({
             calendarId: reservation.trainerCalendarEmail,
             requestBody: event,
             sendUpdates: 'none',
           })
-          console.log(`✅ Trainer calendar event created: ${reservation.trainerCalendarEmail}`)
+          trainerEventId = trainerResponse.data.id || undefined
+          console.log(`✅ Trainer calendar event created: ${reservation.trainerCalendarEmail} (${trainerEventId})`)
         } catch (trainerError) {
           console.error(`⚠️ Failed to create event on trainer calendar (${reservation.trainerCalendarEmail}):`, trainerError instanceof Error ? trainerError.message : trainerError)
         }
       }
 
-      return eventId
+      return { eventId, trainerEventId }
     } catch (error) {
       console.error('Google Calendar event creation error:', error)
       throw error
@@ -208,20 +210,38 @@ export class GoogleCalendarService {
    */
   async deleteEvent(eventId: string, calendarId: string, options?: {
     memberCalendarEmail?: string | null,
-    trainerCalendarEmail?: string | null
+    trainerCalendarEmail?: string | null,
+    trainerExternalEventId?: string | null,
   }): Promise<void> {
     try {
       // Delete from main calendar - this automatically cancels for all attendees
       await this.calendar.events.delete({
         calendarId: calendarId,
         eventId: eventId,
-        sendUpdates: 'none', // キャンセル通知を送る
+        sendUpdates: 'none',
       })
 
       console.log(`✅ Google Calendar event deleted: ${eventId}`)
     } catch (error) {
       console.error('Google Calendar event deletion error:', error)
       throw error
+    }
+
+    // Delete from trainer's personal calendar if we have the event ID
+    if (options?.trainerExternalEventId && options?.trainerCalendarEmail) {
+      try {
+        await this.calendar.events.delete({
+          calendarId: options.trainerCalendarEmail,
+          eventId: options.trainerExternalEventId,
+          sendUpdates: 'none',
+        })
+        console.log(`✅ Trainer calendar event deleted: ${options.trainerExternalEventId} from ${options.trainerCalendarEmail}`)
+      } catch (trainerError: any) {
+        // 404 is ok - event may already be deleted
+        if (trainerError?.code !== 404 && trainerError?.response?.status !== 404) {
+          console.error(`⚠️ Failed to delete trainer calendar event:`, trainerError instanceof Error ? trainerError.message : trainerError)
+        }
+      }
     }
   }
 

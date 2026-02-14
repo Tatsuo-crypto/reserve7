@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
     const now = new Date()
     const { data: reservations, error } = await supabaseAdmin
       .from('reservations')
-      .select('id, external_event_id, calendar_id, title, start_time')
+      .select('id, external_event_id, trainer_external_event_id, calendar_id, title, start_time, trainer_id')
       .eq('calendar_id', calendarId)
       .gte('start_time', now.toISOString())
       .not('external_event_id', 'is', null)
@@ -94,6 +94,25 @@ export async function POST(request: NextRequest) {
       for (const { reservation, exists } of results) {
         if (!exists) {
           console.log(`🗑️ Sync: Event deleted from Google Calendar: ${reservation.title} (${reservation.external_event_id})`)
+
+          // Also delete from trainer's personal calendar if we have the event ID
+          if (reservation.trainer_external_event_id && reservation.trainer_id) {
+            try {
+              const { data: trainer } = await supabaseAdmin
+                .from('trainers')
+                .select('google_calendar_id')
+                .eq('id', reservation.trainer_id)
+                .single()
+              if (trainer?.google_calendar_id) {
+                await calendarService.deleteEvent(
+                  reservation.trainer_external_event_id,
+                  trainer.google_calendar_id
+                ).catch(() => {}) // Ignore errors (may already be deleted)
+                console.log(`🗑️ Sync: Trainer calendar event also deleted`)
+              }
+            } catch { /* ignore */ }
+          }
+
           const { error: delError } = await supabaseAdmin
             .from('reservations')
             .delete()

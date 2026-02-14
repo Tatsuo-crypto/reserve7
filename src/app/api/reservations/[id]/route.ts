@@ -76,6 +76,7 @@ export async function DELETE(
         client_id,
         start_time,
         external_event_id,
+        trainer_external_event_id,
         calendar_id,
         title,
         trainer_id,
@@ -124,7 +125,8 @@ export async function DELETE(
       
       // Prepare options for deletion from secondary calendars
       const deleteOptions: any = {
-        memberCalendarEmail: (reservation.users as any)?.google_calendar_email
+        memberCalendarEmail: (reservation.users as any)?.google_calendar_email,
+        trainerExternalEventId: (reservation as any).trainer_external_event_id || null,
       }
 
       // If reservation has a trainer assigned, get their calendar ID

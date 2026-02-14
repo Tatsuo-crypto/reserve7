@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
 
     try {
       // Step 1: ジムのカレンダーにattendeesなしでイベント作成
-      const eventId = await calendarService.createEvent({
+      const calResult = await calendarService.createEvent({
         title,
         startTime,
         endTime,
@@ -56,6 +56,7 @@ export async function POST(request: NextRequest) {
         notes,
         calendarId,
       })
+      const eventId = calResult.eventId
 
       // Step 2: trainerEmailがあれば、ジムのカレンダー上でattendees付きイベントを作成して招待
       let trainerResult = null

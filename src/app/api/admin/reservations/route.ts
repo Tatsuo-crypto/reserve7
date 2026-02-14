@@ -265,6 +265,7 @@ export async function POST(request: NextRequest) {
 
     // Try to create Google Calendar event first (if configured)
     let externalEventId: string | null = null
+    let trainerExternalEventId: string | null = null
     let calendarDebug: string = 'not attempted'
     const calendarService = createGoogleCalendarService()
 
@@ -300,7 +301,7 @@ export async function POST(request: NextRequest) {
           memberCalendarEmail: memberCalendarEmail || '(not set)',
         })
 
-        externalEventId = await calendarService.createEvent({
+        const calResult = await calendarService.createEvent({
           title: generatedTitle,
           startTime: startDateTime.toISOString(),
           endTime: endDateTime.toISOString(),
@@ -311,6 +312,8 @@ export async function POST(request: NextRequest) {
           memberCalendarEmail, // 会員のカレンダーメールを渡す
           trainerCalendarEmail, // トレーナーのカレンダーメールを渡す
         })
+        externalEventId = calResult.eventId
+        trainerExternalEventId = calResult.trainerEventId || null
 
         calendarDebug = 'success: ' + externalEventId
 
@@ -343,7 +346,7 @@ export async function POST(request: NextRequest) {
                       clientEmail: 'training@system',
                       notes: notes || undefined,
                       calendarId: store.calendar_id,
-                    })
+                    }).then(r => r.eventId)
                     console.log(`✅ Training event created on store calendar: ${store.calendar_id}`)
                   } catch (storeCalErr) {
                     console.error(`⚠️ Failed to create training event on store calendar ${store.calendar_id}:`, storeCalErr instanceof Error ? storeCalErr.message : storeCalErr)
@@ -364,7 +367,7 @@ export async function POST(request: NextRequest) {
                     clientEmail: 'training@system',
                     notes: notes || undefined,
                     calendarId: t.google_calendar_id,
-                  })
+                  }).then(r => r.eventId)
                   console.log(`✅ Training event created on ${t.full_name}'s calendar (${t.google_calendar_id})`)
                 } catch (trainerCalErr) {
                   console.error(`⚠️ Failed to create training event on ${t.full_name}'s calendar:`, trainerCalErr instanceof Error ? trainerCalErr.message : trainerCalErr)
@@ -452,6 +455,7 @@ export async function POST(request: NextRequest) {
       notes: mergedNotes,
       calendar_id: calendarId,
       external_event_id: externalEventId,
+      trainer_external_event_id: trainerExternalEventId,
       trainer_id: trainerId || null,
     }
 
