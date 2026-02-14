@@ -44,8 +44,8 @@ export async function updateMonthlyTitles(clientId: string, year: number, month:
         )
       `)
       .eq('client_id', clientId)
-      .gte('start_time', new Date(year, month, 1).toISOString())
-      .lt('start_time', new Date(year, month + 1, 1).toISOString())
+      .gte('start_time', new Date(Date.UTC(year, month, 1) - 9 * 60 * 60 * 1000).toISOString())
+      .lt('start_time', new Date(Date.UTC(year, month + 1, 1) - 9 * 60 * 60 * 1000).toISOString())
       .order('start_time', { ascending: true })
 
     if (error) {
@@ -226,39 +226,51 @@ export async function generateReservationTitle(
 
   const maxCount = getPlanMaxCount(clientData?.plan)
   
-  // Get existing reservations for this client across all time (cumulative)
-  const { data: existingReservations, error } = await supabaseAdmin
-    .from('reservations')
-    .select('id, start_time')
-    .eq('client_id', clientId)
-    .order('start_time', { ascending: true })
-
-  if (error) {
-    console.error('Error fetching existing reservations:', error)
-    // Extract last name for fallback
-    const lastName = extractLastName(clientName)
-    return `${lastName}1/${maxCount}` // Fallback
-  }
-
-  // Calculate cumulative count for this reservation (chronological order)
-  const reservationsBeforeThis = existingReservations?.filter(r => 
-    new Date(r.start_time) < startDateTime
-  ) || []
-  
-  const monthlyCount = reservationsBeforeThis.length + 1
-  // Use only last name in the title
-  const lastName = extractLastName(clientName)
-  
-  // Check if plan uses cumulative count
   const plan = clientData?.plan || ''
   const isCumulative = usesCumulativeCount(plan)
-  
+  const lastName = extractLastName(clientName)
+
   if (isCumulative) {
-    // For diet/counseling: show only count (e.g., "山口1")
-    return `${lastName}${monthlyCount}`
+    // Diet/Counseling: cumulative count across all time
+    const { data: existingReservations, error } = await supabaseAdmin
+      .from('reservations')
+      .select('id, start_time')
+      .eq('client_id', clientId)
+      .order('start_time', { ascending: true })
+
+    if (error) {
+      console.error('Error fetching existing reservations:', error)
+      return `${lastName}1`
+    }
+
+    const reservationsBeforeThis = existingReservations?.filter(r => 
+      new Date(r.start_time) < startDateTime
+    ) || []
+    
+    return `${lastName}${reservationsBeforeThis.length + 1}`
   } else {
-    // For personal training: show full format (e.g., "山口1/4")
-    return `${lastName}${monthlyCount}/${maxCount}`
+    // Personal training: monthly count
+    const monthStart = new Date(Date.UTC(startDateTime.getFullYear(), startDateTime.getMonth(), 1) - 9 * 60 * 60 * 1000)
+    const monthEnd = new Date(Date.UTC(startDateTime.getFullYear(), startDateTime.getMonth() + 1, 1) - 9 * 60 * 60 * 1000)
+
+    const { data: monthReservations, error } = await supabaseAdmin
+      .from('reservations')
+      .select('id, start_time')
+      .eq('client_id', clientId)
+      .gte('start_time', monthStart.toISOString())
+      .lt('start_time', monthEnd.toISOString())
+      .order('start_time', { ascending: true })
+
+    if (error) {
+      console.error('Error fetching monthly reservations:', error)
+      return `${lastName}1/${maxCount}`
+    }
+
+    const reservationsBeforeThis = monthReservations?.filter(r => 
+      new Date(r.start_time) < startDateTime
+    ) || []
+    
+    return `${lastName}${reservationsBeforeThis.length + 1}/${maxCount}`
   }
 }
 

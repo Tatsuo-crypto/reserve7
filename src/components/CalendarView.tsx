@@ -124,6 +124,21 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
       try {
         setLoading(true)
 
+        // Run Google Calendar sync in background (detect events deleted from app)
+        const syncUrl = trainerToken
+          ? `/api/reservations/sync?token=${trainerToken}`
+          : `/api/reservations/sync`
+        fetch(syncUrl, { method: 'POST', cache: 'no-store' })
+          .then(r => r.ok ? r.json() : null)
+          .then(result => {
+            if (result?.deleted > 0) {
+              console.log(`🔄 Sync: ${result.deleted} reservations removed (deleted from Google Calendar)`)
+              // Re-fetch reservations after sync
+              fetchCalendarData()
+            }
+          })
+          .catch(() => {}) // Ignore sync errors silently
+
         const timestamp = new Date().getTime()
         const reservationsUrl = trainerToken 
           ? `/api/reservations?token=${trainerToken}&_t=${timestamp}`

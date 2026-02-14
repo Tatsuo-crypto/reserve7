@@ -226,6 +226,28 @@ export class GoogleCalendarService {
   }
 
   /**
+   * Check if a calendar event exists (returns true if exists, false if deleted/not found)
+   */
+  async eventExists(eventId: string, calendarId: string): Promise<boolean> {
+    if (!this.calendar) return true // Assume exists if service not available
+    try {
+      const response = await this.calendar.events.get({
+        calendarId: calendarId,
+        eventId: eventId,
+      })
+      // Event exists but may be cancelled
+      return response.data.status !== 'cancelled'
+    } catch (error: any) {
+      if (error?.code === 404 || error?.response?.status === 404) {
+        return false
+      }
+      // For other errors (network, auth), assume event exists to avoid accidental deletion
+      console.error('Error checking event existence:', error?.message || error)
+      return true
+    }
+  }
+
+  /**
    * Check if Google Calendar is properly configured
    */
   static isConfigured(): boolean {
