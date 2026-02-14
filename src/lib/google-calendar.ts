@@ -64,18 +64,12 @@ export class GoogleCalendarService {
       },
     }
 
-    // トレーナーのメールアドレスが設定されている場合、attendeeとして追加（招待メール送信）
-    if (reservation.trainerNotifyEmail && reservation.trainerNotifyEmail.trim() !== '') {
-      event.attendees = [{ email: reservation.trainerNotifyEmail }]
-    }
-
     try {
-      // ジムのカレンダーにイベント作成
-      const sendUpdates = event.attendees ? 'all' : 'none'
+      // ジムのカレンダーにイベント作成（attendeesなしで確実に作成）
       const response = await this.calendar.events.insert({
         calendarId: reservation.calendarId,
         requestBody: event,
-        sendUpdates,
+        sendUpdates: 'none',
       })
 
       if (!response.data.id) {
@@ -98,6 +92,23 @@ export class GoogleCalendarService {
           console.log(`✅ Trainer calendar event created: ${reservation.trainerCalendarEmail} (${trainerEventId})`)
         } catch (trainerError) {
           console.error(`⚠️ Failed to create event on trainer calendar (${reservation.trainerCalendarEmail}):`, trainerError instanceof Error ? trainerError.message : trainerError)
+        }
+      }
+
+      // トレーナーのメールに招待メールを送信（PATCHでattendee追加）
+      if (reservation.trainerNotifyEmail && reservation.trainerNotifyEmail.trim() !== '') {
+        try {
+          await this.calendar.events.patch({
+            calendarId: reservation.calendarId,
+            eventId: eventId,
+            requestBody: {
+              attendees: [{ email: reservation.trainerNotifyEmail }],
+            },
+            sendUpdates: 'all',
+          })
+          console.log(`✅ Trainer invite sent to: ${reservation.trainerNotifyEmail}`)
+        } catch (inviteError: any) {
+          console.error(`⚠️ Failed to send trainer invite (${reservation.trainerNotifyEmail}):`, inviteError instanceof Error ? inviteError.message : inviteError)
         }
       }
 
