@@ -79,6 +79,7 @@ export async function POST(request: NextRequest) {
 
     let trainerName: string | null = null
     let trainerCalendarEmail: string | null = null
+    let trainerNotifyEmail: string | null = null
 
     if (clientId === 'BLOCKED') {
       // For blocked time, use special values
@@ -263,14 +264,15 @@ export async function POST(request: NextRequest) {
     if (trainerId) {
       const { data: trainerInfo, error: trainerErr } = await supabaseAdmin
         .from('trainers')
-        .select('id, full_name, google_calendar_id')
+        .select('id, full_name, email, google_calendar_id')
         .eq('id', trainerId)
         .single()
       
       if (!trainerErr && trainerInfo) {
         trainerName = trainerInfo.full_name
         trainerCalendarEmail = trainerInfo.google_calendar_id || null
-        console.log('Trainer info resolved:', { trainerName, trainerCalendarEmail })
+        trainerNotifyEmail = trainerInfo.email || null
+        console.log('Trainer info resolved:', { trainerName, trainerCalendarEmail, trainerNotifyEmail })
       }
     }
 
@@ -322,6 +324,7 @@ export async function POST(request: NextRequest) {
           calendarId: calendarId,
           memberCalendarEmail, // 会員のカレンダーメールを渡す
           trainerCalendarEmail, // トレーナーのカレンダーメールを渡す
+          trainerNotifyEmail, // トレーナーへの招待メール送信用
         })
         externalEventId = calResult.eventId
         trainerExternalEventId = calResult.trainerEventId || null

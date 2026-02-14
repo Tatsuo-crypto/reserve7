@@ -42,6 +42,7 @@ export class GoogleCalendarService {
     calendarId: string
     memberCalendarEmail?: string | null
     trainerCalendarEmail?: string | null
+    trainerNotifyEmail?: string | null
   }): Promise<{ eventId: string; trainerEventId?: string }> {
     if (!this.calendar) {
       throw new Error('Google Calendar service not initialized')
@@ -63,12 +64,18 @@ export class GoogleCalendarService {
       },
     }
 
+    // トレーナーのメールアドレスが設定されている場合、attendeeとして追加（招待メール送信）
+    if (reservation.trainerNotifyEmail && reservation.trainerNotifyEmail.trim() !== '') {
+      event.attendees = [{ email: reservation.trainerNotifyEmail }]
+    }
+
     try {
-      // ジムのカレンダーにイベント作成（attendeesなし）
+      // ジムのカレンダーにイベント作成
+      const sendUpdates = event.attendees ? 'all' : 'none'
       const response = await this.calendar.events.insert({
         calendarId: reservation.calendarId,
         requestBody: event,
-        sendUpdates: 'none',
+        sendUpdates,
       })
 
       if (!response.data.id) {
