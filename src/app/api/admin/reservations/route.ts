@@ -271,7 +271,8 @@ export async function POST(request: NextRequest) {
       if (!trainerErr && trainerInfo) {
         trainerName = trainerInfo.full_name
         trainerCalendarEmail = trainerInfo.google_calendar_id || null
-        trainerNotifyEmail = trainerInfo.email || null
+        // 招待メール送信先: google_calendar_id（Gmail）を優先、なければemailを使用
+        trainerNotifyEmail = trainerInfo.google_calendar_id || trainerInfo.email || null
         console.log('Trainer info resolved:', { trainerName, trainerCalendarEmail, trainerNotifyEmail })
       }
     }
