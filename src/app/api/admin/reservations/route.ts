@@ -4,6 +4,7 @@ import { supabaseAdmin } from '@/lib/supabase'
 import { requireAdminAuth, handleApiError } from '@/lib/api-utils'
 import { createGoogleCalendarService } from '@/lib/google-calendar'
 import { generateReservationTitle, updateMonthlyTitles, updateAllTitles, usesCumulativeCount } from '@/lib/title-utils'
+import { sendTrainerNotification } from '@/lib/email'
 
 export async function POST(request: NextRequest) {
   try {
@@ -549,6 +550,28 @@ export async function POST(request: NextRequest) {
       calendarDebug,
       title: reservation.title,
     }))
+
+    // トレーナーにメール通知を送信（バックグラウンド、失敗しても予約作成には影響しない）
+    if (trainerNotifyEmail && trainerName && clientId !== 'BLOCKED' && clientId !== 'TRAINING') {
+      const clientName = clientId === 'TRIAL'
+        ? generatedTitle
+        : clientId === 'GUEST'
+          ? generatedTitle
+          : clientUser?.full_name || '不明'
+      
+      const storeName = calendarId === 'tandjgym@gmail.com' ? 'T&J GYM 1号店' : 'T&J GYM 2号店'
+
+      sendTrainerNotification({
+        trainerEmail: trainerNotifyEmail,
+        trainerName,
+        clientName,
+        title: reservation.title,
+        startTime: reservation.start_time,
+        endTime: reservation.end_time,
+        storeName,
+        notes: reservation.notes || undefined,
+      }).catch(err => console.error('Email notification error:', err))
+    }
 
     return NextResponse.json({
       message: '予約が作成されました',
