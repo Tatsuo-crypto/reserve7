@@ -12,7 +12,9 @@ function getTransporter(): nodemailer.Transporter | null {
   }
   if (!transporter) {
     transporter = nodemailer.createTransport({
-      service: 'gmail',
+      host: 'smtp.gmail.com',
+      port: 465,
+      secure: true,
       auth: {
         user: GMAIL_USER,
         pass: GMAIL_APP_PASSWORD,
@@ -95,16 +97,16 @@ export async function sendTrainerNotification(params: {
   `
 
   try {
-    await t.sendMail({
+    const info = await t.sendMail({
       from: `"T&J GYM" <${GMAIL_USER}>`,
       to: params.trainerEmail,
       subject,
       html,
     })
-    console.log(`✅ Notification email sent to ${params.trainerEmail}`)
+    console.log(`✅ Notification email sent to ${params.trainerEmail}, messageId: ${info.messageId}`)
     return true
   } catch (error) {
-    console.error(`❌ Failed to send notification email to ${params.trainerEmail}:`, error instanceof Error ? error.message : error)
-    return false
+    console.error(`❌ Failed to send notification email to ${params.trainerEmail}:`, error)
+    throw error // re-throw so caller can see the actual error
   }
 }
