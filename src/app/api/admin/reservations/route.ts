@@ -213,34 +213,45 @@ export async function POST(request: NextRequest) {
           console.error('Error fetching trainers for shift check:', trainersError)
         } else if (trainers && trainers.length > 0) {
           const trainerIds = trainers.map(t => t.id)
-          
-          // 2. Check if ANY trainer has a shift covering the requested duration
-          const { data: shifts, error: shiftsError } = await supabaseAdmin
-            .from('trainer_shifts')
-            .select('id, trainer_id')
-            .in('trainer_id', trainerIds)
-            .lte('start_time', startDateTime.toISOString())
-            .gte('end_time', endDateTime.toISOString())
-            .limit(1)
 
-          if (shiftsError) {
-            console.error('Error checking shifts:', shiftsError)
-          } else if (!shifts || shifts.length === 0) {
-            // If skipShiftCheck is set, allow the reservation (user confirmed the warning)
-            if (skipShiftCheck) {
-              console.log('No shift found but user confirmed skip - allowing reservation')
-            } else if (isTrainerAuth) {
-              return NextResponse.json(
-                { error: 'この時間帯に出勤しているトレーナーがいません（シフト外）', code: 'NO_SHIFT' },
-                { status: 409 }
-              )
-            } else {
-              console.log('No shift found but admin is creating - allowing reservation')
+          // First check if this store has ANY shifts registered at all
+          const { count: totalShifts } = await supabaseAdmin
+            .from('trainer_shifts')
+            .select('id', { count: 'exact', head: true })
+            .in('trainer_id', trainerIds)
+
+          if (!totalShifts || totalShifts === 0) {
+            // No shifts registered for this store at all - skip shift check
+            console.log('No shifts registered for this store - skipping shift check')
+          } else {
+            // 2. Check if ANY trainer has a shift covering the requested duration
+            const { data: shifts, error: shiftsError } = await supabaseAdmin
+              .from('trainer_shifts')
+              .select('id, trainer_id')
+              .in('trainer_id', trainerIds)
+              .lte('start_time', startDateTime.toISOString())
+              .gte('end_time', endDateTime.toISOString())
+              .limit(1)
+
+            if (shiftsError) {
+              console.error('Error checking shifts:', shiftsError)
+            } else if (!shifts || shifts.length === 0) {
+              // If skipShiftCheck is set, allow the reservation (user confirmed the warning)
+              if (skipShiftCheck) {
+                console.log('No shift found but user confirmed skip - allowing reservation')
+              } else if (isTrainerAuth) {
+                return NextResponse.json(
+                  { error: 'この時間帯に出勤しているトレーナーがいません（シフト外）', code: 'NO_SHIFT' },
+                  { status: 409 }
+                )
+              } else {
+                console.log('No shift found but admin is creating - allowing reservation')
+              }
+            } else if (shifts.length > 0 && !trainerId) {
+              // Auto-assign trainer from the matching shift
+              trainerId = shifts[0].trainer_id
+              console.log('Auto-assigned trainerId from shift:', trainerId)
             }
-          } else if (shifts.length > 0 && !trainerId) {
-            // Auto-assign trainer from the matching shift
-            trainerId = shifts[0].trainer_id
-            console.log('Auto-assigned trainerId from shift:', trainerId)
           }
         }
       } catch (error) {
