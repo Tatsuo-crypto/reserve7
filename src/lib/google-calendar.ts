@@ -95,23 +95,6 @@ export class GoogleCalendarService {
         }
       }
 
-      // トレーナーのメールに招待メールを送信（PATCHでattendee追加）
-      if (reservation.trainerNotifyEmail && reservation.trainerNotifyEmail.trim() !== '') {
-        try {
-          await this.calendar.events.patch({
-            calendarId: reservation.calendarId,
-            eventId: eventId,
-            requestBody: {
-              attendees: [{ email: reservation.trainerNotifyEmail }],
-            },
-            sendUpdates: 'all',
-          })
-          console.log(`✅ Trainer invite sent to: ${reservation.trainerNotifyEmail}`)
-        } catch (inviteError: any) {
-          console.error(`⚠️ Failed to send trainer invite (${reservation.trainerNotifyEmail}):`, inviteError instanceof Error ? inviteError.message : inviteError)
-        }
-      }
-
       return { eventId, trainerEventId }
     } catch (error) {
       console.error('Google Calendar event creation error:', error)
