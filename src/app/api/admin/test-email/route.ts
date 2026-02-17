@@ -8,8 +8,7 @@ export async function GET(request: NextRequest) {
     const authResult = await requireAdminAuth()
     if (authResult instanceof NextResponse) return authResult
 
-    const gmailUser = process.env.GMAIL_USER || 'NOT SET'
-    const gmailPass = process.env.GMAIL_APP_PASSWORD ? `SET (${process.env.GMAIL_APP_PASSWORD.length} chars)` : 'NOT SET'
+    const resendKey = process.env.RESEND_API_KEY ? `SET (${process.env.RESEND_API_KEY.length} chars)` : 'NOT SET'
 
     // テスト送信
     const testEmail = request.nextUrl.searchParams.get('to') || 'diet.30.40.50@gmail.com'
@@ -35,8 +34,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       config: {
-        GMAIL_USER: gmailUser,
-        GMAIL_APP_PASSWORD: gmailPass,
+        RESEND_API_KEY: resendKey,
       },
       test: {
         to: testEmail,

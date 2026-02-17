@@ -1,27 +1,13 @@
-import nodemailer from 'nodemailer'
+import { Resend } from 'resend'
 
-const GMAIL_USER = process.env.GMAIL_USER || ''
-const GMAIL_APP_PASSWORD = process.env.GMAIL_APP_PASSWORD || ''
+const RESEND_API_KEY = process.env.RESEND_API_KEY || ''
 
-let transporter: nodemailer.Transporter | null = null
-
-function getTransporter(): nodemailer.Transporter | null {
-  if (!GMAIL_USER || !GMAIL_APP_PASSWORD) {
-    console.warn('⚠️ Email not configured: GMAIL_USER or GMAIL_APP_PASSWORD missing')
+function getResend(): Resend | null {
+  if (!RESEND_API_KEY) {
+    console.warn('⚠️ Email not configured: RESEND_API_KEY missing')
     return null
   }
-  if (!transporter) {
-    transporter = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
-      port: 465,
-      secure: true,
-      auth: {
-        user: GMAIL_USER,
-        pass: GMAIL_APP_PASSWORD,
-      },
-    })
-  }
-  return transporter
+  return new Resend(RESEND_API_KEY)
 }
 
 export async function sendTrainerNotification(params: {
@@ -34,8 +20,8 @@ export async function sendTrainerNotification(params: {
   storeName: string
   notes?: string
 }): Promise<boolean> {
-  const t = getTransporter()
-  if (!t) return false
+  const resend = getResend()
+  if (!resend) return false
 
   const startDate = new Date(params.startTime)
   const endDate = new Date(params.endTime)
@@ -97,16 +83,20 @@ export async function sendTrainerNotification(params: {
   `
 
   try {
-    const info = await t.sendMail({
-      from: `"T&J GYM" <${GMAIL_USER}>`,
+    const { data, error } = await resend.emails.send({
+      from: 'T&J GYM <onboarding@resend.dev>',
       to: params.trainerEmail,
       subject,
       html,
     })
-    console.log(`✅ Notification email sent to ${params.trainerEmail}, messageId: ${info.messageId}`)
+    if (error) {
+      console.error(`❌ Resend error for ${params.trainerEmail}:`, error)
+      throw new Error(error.message)
+    }
+    console.log(`✅ Notification email sent to ${params.trainerEmail}, id: ${data?.id}`)
     return true
   } catch (error) {
     console.error(`❌ Failed to send notification email to ${params.trainerEmail}:`, error)
-    throw error // re-throw so caller can see the actual error
+    throw error
   }
 }
