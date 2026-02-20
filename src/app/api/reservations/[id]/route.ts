@@ -371,10 +371,62 @@ export async function PUT(
       }
     }
 
-    // Update Google Calendar event first (if event exists)
-    if (reservation.external_event_id) {
-      const calendarService = createGoogleCalendarService()
-      if (calendarService) {
+    // Check if this is a training reservation
+    const isTrainingReservation = reservation.title === '研修' && !reservation.client_id
+
+    // Update Google Calendar event(s)
+    const calendarService = createGoogleCalendarService()
+    if (calendarService) {
+      if (isTrainingReservation) {
+        // 研修予約の場合: 兄弟レコード（同じタイトル・同じ時間）をすべて取得してカレンダーも一括更新
+        const { data: siblingReservations, error: siblingError } = await supabaseAdmin
+          .from('reservations')
+          .select('id, external_event_id, calendar_id, trainer_id')
+          .eq('title', '研修')
+          .eq('start_time', reservation.start_time)
+          .eq('end_time', reservation.end_time)
+          .is('client_id', null)
+
+        if (siblingError) {
+          console.error('Failed to fetch sibling training reservations:', siblingError)
+        } else if (siblingReservations && siblingReservations.length > 0) {
+          console.log(`🔄 Updating Google Calendar for ${siblingReservations.length} training reservation(s)`)
+          for (const sibling of siblingReservations) {
+            if (!sibling.external_event_id) continue
+            try {
+              const siblingUpdateOptions: any = {
+                title,
+                startTime: startDateTime.toISOString(),
+                endTime: endDateTime.toISOString(),
+                clientName: '研修',
+                clientEmail: 'training@system',
+                notes: notes || undefined,
+                calendarId: sibling.calendar_id,
+              }
+
+              // トレーナーカレンダーも更新
+              const targetTrainerId = sibling.trainer_id
+              if (targetTrainerId) {
+                const { data: trainerData } = await supabaseAdmin
+                  .from('trainers')
+                  .select('google_calendar_id')
+                  .eq('id', targetTrainerId)
+                  .single()
+                if (trainerData?.google_calendar_id) {
+                  siblingUpdateOptions.trainerCalendarEmail = trainerData.google_calendar_id
+                }
+              }
+
+              await calendarService.updateEvent(sibling.external_event_id, siblingUpdateOptions)
+              console.log(`✅ Google Calendar event updated for sibling reservation (${sibling.id}):`, sibling.external_event_id)
+            } catch (calendarError) {
+              console.error(`⚠️ Calendar update failed for sibling reservation (${sibling.id}):`, calendarError)
+              // Continue with remaining siblings
+            }
+          }
+        }
+      } else if (reservation.external_event_id) {
+        // 通常予約: 1件のみ更新
         try {
           const userRel: any = reservation.users
           const updateOptions: any = {
@@ -411,7 +463,7 @@ export async function PUT(
       }
     }
 
-    // Update the reservation
+    // Update the reservation in DB
     const updateData: any = {
       title: title,
       start_time: startDateTime.toISOString(),
@@ -420,7 +472,6 @@ export async function PUT(
     }
 
     // Only update trainer_id if it's provided in the request (not for training)
-    const isTrainingReservation = reservation.title === '研修' && !reservation.client_id
     if (trainerId !== undefined && !isTrainingReservation) {
       updateData.trainer_id = trainerId || null
     }
