@@ -338,37 +338,8 @@ export async function POST(request: NextRequest) {
           calendarDebug = 'training: handled per-trainer below'
         }
 
-        // For TRAINING type: create events on each participating trainer's personal calendar
-        // NOTE: Store calendar events are now created per-trainer in the DB insert block below
-        //       to properly track each event ID for future updates.
-        if (clientId === 'TRAINING' && body.trainingTrainerIds && body.trainingTrainerIds.length > 0) {
-          const { data: trainingTrainers } = await supabaseAdmin
-            .from('trainers')
-            .select('id, full_name, google_calendar_id, store_id')
-            .in('id', body.trainingTrainerIds)
-
-          if (trainingTrainers) {
-            // Create event on each trainer's personal Google Calendar (separate from store calendar)
-            for (const t of trainingTrainers) {
-              if (t.google_calendar_id) {
-                try {
-                  await calendarService.createEvent({
-                    title: generatedTitle,
-                    startTime: startDateTime.toISOString(),
-                    endTime: endDateTime.toISOString(),
-                    clientName: generatedTitle,
-                    clientEmail: 'training@system',
-                    notes: notes || undefined,
-                    calendarId: t.google_calendar_id,
-                  }).then(r => r.eventId)
-                  console.log(`✅ Training event created on ${t.full_name}'s personal calendar (${t.google_calendar_id})`)
-                } catch (trainerCalErr) {
-                  console.error(`⚠️ Failed to create training event on ${t.full_name}'s calendar:`, trainerCalErr instanceof Error ? trainerCalErr.message : trainerCalErr)
-                }
-              }
-            }
-          }
-        }
+        // TRAINING type: store calendar events are created per-store in the DB insert block below.
+        // No separate personal calendar events needed to avoid duplication.
       } catch (calendarError) {
         calendarDebug = 'error: ' + (calendarError instanceof Error ? calendarError.message : String(calendarError))
         console.error('❌ Calendar event creation failed:', calendarDebug)
@@ -402,15 +373,13 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // Create one record per trainer, using their store's calendar_id
-      // Also create a Google Calendar event per store and save the event ID for future updates
-      const reservationRows: any[] = []
-      for (const t of (trainingTrainers || [])) {
-        const trainerCalId = storeCalendarMap.get(t.store_id) || calendarId
+      // Googleカレンダーには「店舗ごとに1イベントのみ」作成する
+      // 同じ店舗に複数トレーナーがいても、カレンダーへの登録は1件に止める
+      const storeEventIdMap = new Map<string, string | null>() // storeId -> eventId
 
-        // Create a Google Calendar event for this trainer's store calendar and save the ID
-        let trainingEventId: string | null = null
-        if (calendarService) {
+      if (calendarService) {
+        for (const storeId of trainerStoreIds) {
+          const trainerCalId = storeCalendarMap.get(storeId) || calendarId
           try {
             const calResult = await calendarService.createEvent({
               title: generatedTitle,
@@ -421,12 +390,20 @@ export async function POST(request: NextRequest) {
               notes: notes || undefined,
               calendarId: trainerCalId,
             })
-            trainingEventId = calResult.eventId
-            console.log(`✅ Training calendar event created for trainer ${t.full_name} on ${trainerCalId}: ${trainingEventId}`)
+            storeEventIdMap.set(storeId, calResult.eventId)
+            console.log(`✅ Training calendar event created for store ${storeId} on ${trainerCalId}: ${calResult.eventId}`)
           } catch (calErr) {
-            console.error(`⚠️ Failed to create training calendar event for trainer ${t.full_name}:`, calErr instanceof Error ? calErr.message : calErr)
+            storeEventIdMap.set(storeId, null)
+            console.error(`⚠️ Failed to create training calendar event for store ${storeId}:`, calErr instanceof Error ? calErr.message : calErr)
           }
         }
+      }
+
+      // Create one DB record per trainer, all sharing the same store-level event ID
+      const reservationRows: any[] = []
+      for (const t of (trainingTrainers || [])) {
+        const trainerCalId = storeCalendarMap.get(t.store_id) || calendarId
+        const trainingEventId = storeEventIdMap.get(t.store_id) || null
 
         reservationRows.push({
           client_id: null,
@@ -435,7 +412,7 @@ export async function POST(request: NextRequest) {
           end_time: endDateTime.toISOString(),
           notes: mergedNotes,
           calendar_id: trainerCalId,
-          external_event_id: trainingEventId,  // ← イベントIDを保存することで後から更新可能に
+          external_event_id: trainingEventId,  // ← 店舗単位のイベントIDを全トレーナーで共有
           trainer_id: t.id,
         })
       }
