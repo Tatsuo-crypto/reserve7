@@ -208,7 +208,7 @@ export async function POST(request: NextRequest) {
           .select('id')
           .eq('store_id', storeUUID)
           .eq('status', 'active')
-        
+
         const isTrainerAuth = !!(user as any).isTrainer
 
         if (trainersError) {
@@ -268,7 +268,7 @@ export async function POST(request: NextRequest) {
         .select('id, full_name, email, google_calendar_id')
         .eq('id', trainerId)
         .single()
-      
+
       if (!trainerErr && trainerInfo) {
         trainerName = trainerInfo.full_name
         trainerCalendarEmail = trainerInfo.google_calendar_id || null
@@ -310,68 +310,45 @@ export async function POST(request: NextRequest) {
         // 会員のGoogleカレンダーメールが設定されている場合、出席者として追加
         const memberCalendarEmail = clientUser?.google_calendar_email || null
 
-        console.log('📅 Creating calendar event:', {
-          title: generatedTitle,
-          calendarId: calendarId,
-          memberCalendarEmail: memberCalendarEmail || '(not set)',
-        })
+        // TRAINING タイプは後のループで各トレーナーの店舗カレンダーにイベントを個別作成するためここではスキップ
+        if (clientId !== 'TRAINING') {
+          console.log('📅 Creating calendar event:', {
+            title: generatedTitle,
+            calendarId: calendarId,
+            memberCalendarEmail: memberCalendarEmail || '(not set)',
+          })
 
-        const calResult = await calendarService.createEvent({
-          title: generatedTitle,
-          startTime: startDateTime.toISOString(),
-          endTime: endDateTime.toISOString(),
-          clientName,
-          clientEmail,
-          notes: notes || undefined,
-          calendarId: calendarId,
-          memberCalendarEmail, // 会員のカレンダーメールを渡す
-          trainerCalendarEmail, // トレーナーのカレンダーメールを渡す
-          trainerNotifyEmail, // トレーナーへの招待メール送信用
-        })
-        externalEventId = calResult.eventId
-        trainerExternalEventId = calResult.trainerEventId || null
+          const calResult = await calendarService.createEvent({
+            title: generatedTitle,
+            startTime: startDateTime.toISOString(),
+            endTime: endDateTime.toISOString(),
+            clientName,
+            clientEmail,
+            notes: notes || undefined,
+            calendarId: calendarId,
+            memberCalendarEmail, // 会員のカレンダーメールを渡す
+            trainerCalendarEmail, // トレーナーのカレンダーメールを渡す
+            trainerNotifyEmail, // トレーナーへの招待メール送信用
+          })
+          externalEventId = calResult.eventId
+          trainerExternalEventId = calResult.trainerEventId || null
 
-        calendarDebug = 'success: ' + externalEventId
+          calendarDebug = 'success: ' + externalEventId
+        } else {
+          calendarDebug = 'training: handled per-trainer below'
+        }
 
-        // For TRAINING type: create events on each participating trainer's calendar
-        // AND on each trainer's store calendar (so the event shows on all relevant store calendars)
+        // For TRAINING type: create events on each participating trainer's personal calendar
+        // NOTE: Store calendar events are now created per-trainer in the DB insert block below
+        //       to properly track each event ID for future updates.
         if (clientId === 'TRAINING' && body.trainingTrainerIds && body.trainingTrainerIds.length > 0) {
           const { data: trainingTrainers } = await supabaseAdmin
             .from('trainers')
             .select('id, full_name, google_calendar_id, store_id')
             .in('id', body.trainingTrainerIds)
-          
-          if (trainingTrainers) {
-            // Collect unique store calendar_ids that differ from the main calendarId
-            const otherStoreIds = Array.from(new Set(trainingTrainers.map(t => t.store_id).filter(sid => sid)))
-            const { data: otherStores } = await supabaseAdmin
-              .from('stores')
-              .select('id, calendar_id')
-              .in('id', otherStoreIds)
-            
-            // Create event on other store calendars (skip the one we already created on)
-            if (otherStores) {
-              for (const store of otherStores) {
-                if (store.calendar_id && store.calendar_id !== calendarId) {
-                  try {
-                    await calendarService.createEvent({
-                      title: generatedTitle,
-                      startTime: startDateTime.toISOString(),
-                      endTime: endDateTime.toISOString(),
-                      clientName: generatedTitle,
-                      clientEmail: 'training@system',
-                      notes: notes || undefined,
-                      calendarId: store.calendar_id,
-                    }).then(r => r.eventId)
-                    console.log(`✅ Training event created on store calendar: ${store.calendar_id}`)
-                  } catch (storeCalErr) {
-                    console.error(`⚠️ Failed to create training event on store calendar ${store.calendar_id}:`, storeCalErr instanceof Error ? storeCalErr.message : storeCalErr)
-                  }
-                }
-              }
-            }
 
-            // Create event on each trainer's personal Google Calendar
+          if (trainingTrainers) {
+            // Create event on each trainer's personal Google Calendar (separate from store calendar)
             for (const t of trainingTrainers) {
               if (t.google_calendar_id) {
                 try {
@@ -384,7 +361,7 @@ export async function POST(request: NextRequest) {
                     notes: notes || undefined,
                     calendarId: t.google_calendar_id,
                   }).then(r => r.eventId)
-                  console.log(`✅ Training event created on ${t.full_name}'s calendar (${t.google_calendar_id})`)
+                  console.log(`✅ Training event created on ${t.full_name}'s personal calendar (${t.google_calendar_id})`)
                 } catch (trainerCalErr) {
                   console.error(`⚠️ Failed to create training event on ${t.full_name}'s calendar:`, trainerCalErr instanceof Error ? trainerCalErr.message : trainerCalErr)
                 }
@@ -426,9 +403,31 @@ export async function POST(request: NextRequest) {
       }
 
       // Create one record per trainer, using their store's calendar_id
+      // Also create a Google Calendar event per store and save the event ID for future updates
       const reservationRows: any[] = []
       for (const t of (trainingTrainers || [])) {
         const trainerCalId = storeCalendarMap.get(t.store_id) || calendarId
+
+        // Create a Google Calendar event for this trainer's store calendar and save the ID
+        let trainingEventId: string | null = null
+        if (calendarService) {
+          try {
+            const calResult = await calendarService.createEvent({
+              title: generatedTitle,
+              startTime: startDateTime.toISOString(),
+              endTime: endDateTime.toISOString(),
+              clientName: generatedTitle,
+              clientEmail: 'training@system',
+              notes: notes || undefined,
+              calendarId: trainerCalId,
+            })
+            trainingEventId = calResult.eventId
+            console.log(`✅ Training calendar event created for trainer ${t.full_name} on ${trainerCalId}: ${trainingEventId}`)
+          } catch (calErr) {
+            console.error(`⚠️ Failed to create training calendar event for trainer ${t.full_name}:`, calErr instanceof Error ? calErr.message : calErr)
+          }
+        }
+
         reservationRows.push({
           client_id: null,
           title: generatedTitle,
@@ -436,7 +435,7 @@ export async function POST(request: NextRequest) {
           end_time: endDateTime.toISOString(),
           notes: mergedNotes,
           calendar_id: trainerCalId,
-          external_event_id: null,
+          external_event_id: trainingEventId,  // ← イベントIDを保存することで後から更新可能に
           trainer_id: t.id,
         })
       }
@@ -558,7 +557,7 @@ export async function POST(request: NextRequest) {
         : clientId === 'GUEST'
           ? generatedTitle
           : clientUser?.full_name || '不明'
-      
+
       const storeName = calendarId === 'tandjgym@gmail.com' ? 'T&J GYM 1号店' : 'T&J GYM 2号店'
 
       sendTrainerNotification({
