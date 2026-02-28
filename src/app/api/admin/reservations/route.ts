@@ -216,77 +216,71 @@ export async function POST(request: NextRequest) {
         } else if (trainers && trainers.length > 0) {
           const trainerIds = trainers.map(t => t.id)
 
-          // First check if this store has ANY shifts registered at all
-          const { count: totalShifts } = await supabaseAdmin
+          // --- Compute JST-based day of week and time strings for template comparison ---
+          const jstOffset = 9 * 60 * 60 * 1000
+          const startJst = new Date(startDateTime.getTime() + jstOffset)
+          const endJst = new Date(endDateTime.getTime() + jstOffset)
+          // Use JST date's day of week (UTC on JST-shifted date = JST local day)
+          const dayOfWeekJst = startJst.getUTCDay() // 0=Sun, 1=Mon, ...6=Sat
+          const startHHMM = `${String(startJst.getUTCHours()).padStart(2, '0')}:${String(startJst.getUTCMinutes()).padStart(2, '0')}`
+          const endHHMM = `${String(endJst.getUTCHours()).padStart(2, '0')}:${String(endJst.getUTCMinutes()).padStart(2, '0')}`
+
+          console.log(`🔍 Shift check - JST day: ${dayOfWeekJst}, time: ${startHHMM}-${endHHMM}, trainerIds: ${trainerIds.join(',')}`)
+
+          // Check 1: Actual trainer_shifts record covering the full reservation time
+          const { data: shifts, error: shiftsError } = await supabaseAdmin
             .from('trainer_shifts')
-            .select('id', { count: 'exact', head: true })
+            .select('id, trainer_id')
             .in('trainer_id', trainerIds)
+            .lte('start_time', startDateTime.toISOString())
+            .gte('end_time', endDateTime.toISOString())
+            .limit(1)
 
-          if (!totalShifts || totalShifts === 0) {
-            // No shifts registered for this store at all - skip shift check
-            console.log('No shifts registered for this store - skipping shift check')
-          } else {
-            // 2. Check if ANY trainer has a shift covering the requested duration
-            const { data: shifts, error: shiftsError } = await supabaseAdmin
-              .from('trainer_shifts')
-              .select('id, trainer_id')
-              .in('trainer_id', trainerIds)
-              .lte('start_time', startDateTime.toISOString())
-              .gte('end_time', endDateTime.toISOString())
-              .limit(1)
+          if (shiftsError) {
+            console.error('Error checking shifts:', shiftsError)
+          }
 
-            if (shiftsError) {
-              console.error('Error checking shifts:', shiftsError)
-            } else if (!shifts || shifts.length === 0) {
-              // No actual shift found - also check shift templates (recurring/template-based shifts)
-              const dayOfWeek = startDateTime.getDay() // 0=Sun, 1=Mon, ...6=Sat (JST)
-              // Convert start/end to JST HH:MM for template comparison
-              const jstOffset = 9 * 60 * 60 * 1000
-              const startJst = new Date(startDateTime.getTime() + jstOffset)
-              const endJst = new Date(endDateTime.getTime() + jstOffset)
-              const startHHMM = `${String(startJst.getUTCHours()).padStart(2, '0')}:${String(startJst.getUTCMinutes()).padStart(2, '0')}`
-              const endHHMM = `${String(endJst.getUTCHours()).padStart(2, '0')}:${String(endJst.getUTCMinutes()).padStart(2, '0')}`
+          const hasActualShift = !shiftsError && shifts && shifts.length > 0
 
-              const { data: templates } = await supabaseAdmin
-                .from('trainer_shift_templates')
-                .select('id, trainer_id, day_of_week, start_time, end_time')
-                .in('trainer_id', trainerIds)
-                .eq('day_of_week', dayOfWeek)
-
-              const coveringTemplate = templates && templates.some(t =>
-                t.start_time <= startHHMM && t.end_time >= endHHMM
-              )
-
-              if (coveringTemplate) {
-                // Template-based shift covers this time - allow the reservation
-                console.log('Template shift covers this time - allowing reservation')
-                // Auto-assign trainer from matching template
-                if (!trainerId && templates) {
-                  const matchingTemplate = templates.find(t =>
-                    t.start_time <= startHHMM && t.end_time >= endHHMM
-                  )
-                  if (matchingTemplate) {
-                    trainerId = matchingTemplate.trainer_id
-                    console.log('Auto-assigned trainerId from template shift:', trainerId)
-                  }
-                }
-              } else {
-                // If skipShiftCheck is set, allow the reservation (user confirmed the warning)
-                if (skipShiftCheck) {
-                  console.log('No shift found but user confirmed skip - allowing reservation')
-                } else if (isTrainerAuth) {
-                  return NextResponse.json(
-                    { error: 'この時間帯に出勤しているトレーナーがいません（シフト外）', code: 'NO_SHIFT' },
-                    { status: 409 }
-                  )
-                } else {
-                  console.log('No shift found but admin is creating - allowing reservation')
-                }
-              }
-            } else if (shifts.length > 0 && !trainerId) {
-              // Auto-assign trainer from the matching shift
-              trainerId = shifts[0].trainer_id
+          if (hasActualShift) {
+            // Auto-assign trainer from the matching shift
+            if (!trainerId) {
+              trainerId = shifts![0].trainer_id
               console.log('Auto-assigned trainerId from shift:', trainerId)
+            }
+          } else {
+            // Check 2: trainer_shift_templates (recurring schedule) for this day/time
+            const { data: templates } = await supabaseAdmin
+              .from('trainer_shift_templates')
+              .select('id, trainer_id, day_of_week, start_time, end_time')
+              .in('trainer_id', trainerIds)
+              .eq('day_of_week', dayOfWeekJst)
+
+            console.log(`🔍 Templates found for day ${dayOfWeekJst}:`, templates?.length ?? 0)
+
+            const matchingTemplate = templates && templates.find(t =>
+              t.start_time <= startHHMM && t.end_time >= endHHMM
+            )
+
+            if (matchingTemplate) {
+              // Template covers this time - treat as if a shift exists
+              console.log('Template shift covers this time - allowing reservation. Template:', matchingTemplate)
+              if (!trainerId) {
+                trainerId = matchingTemplate.trainer_id
+                console.log('Auto-assigned trainerId from template:', trainerId)
+              }
+            } else {
+              // No actual shift AND no template - consider this outside of shift hours
+              if (skipShiftCheck) {
+                console.log('No shift/template found but user confirmed skip - allowing reservation')
+              } else {
+                // Both admin and trainer get NO_SHIFT code - frontend shows modal for confirmation
+                console.log(`No shift found. isTrainerAuth: ${isTrainerAuth}. Returning NO_SHIFT.`)
+                return NextResponse.json(
+                  { error: 'この時間帯に出勤しているトレーナーがいません（シフト外）', code: 'NO_SHIFT' },
+                  { status: 409 }
+                )
+              }
             }
           }
         }
