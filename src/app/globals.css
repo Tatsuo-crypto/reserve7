@@ -25,6 +25,14 @@
   outline: none !important;
 }
 
+/* 
+  Prevent iOS Safari from briefly flashing gray/white on elements 
+  when user touches them to scroll or tap.
+*/
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;
