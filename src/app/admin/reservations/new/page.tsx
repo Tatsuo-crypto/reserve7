@@ -44,6 +44,11 @@ function NewReservationContent() {
   const [showShiftConfirmModal, setShowShiftConfirmModal] = useState(false)
   const [pendingRequest, setPendingRequest] = useState<{ url: string, requestData: any } | null>(null)
 
+  // Training trainer shift confirm modal
+  const [showTrainingShiftModal, setShowTrainingShiftModal] = useState(false)
+  const [pendingTrainerId, setPendingTrainerId] = useState<string | null>(null)
+  const [pendingTrainerName, setPendingTrainerName] = useState<string>('')
+
   const [clients, setClients] = useState<Client[]>([])
   const [loadingClients, setLoadingClients] = useState(true)
   const [trainers, setTrainers] = useState<Trainer[]>([])
@@ -860,8 +865,11 @@ function NewReservationContent() {
                                 } catch { /* ignore shift check errors */ }
                               }
                               if (!hasShift) {
-                                const ok = window.confirm(`${trainer.full_name}はこの時間帯にシフトがありません。\n研修に追加しますか？`)
-                                if (!ok) return
+                                // Show custom modal instead of window.confirm (fixes iOS PWA freeze)
+                                setPendingTrainerId(trainer.id)
+                                setPendingTrainerName(trainer.full_name)
+                                setShowTrainingShiftModal(true)
+                                return
                               }
                               setFormData(prev => ({ ...prev, trainingTrainerIds: [...prev.trainingTrainerIds, trainer.id] }))
                             } else {
@@ -1184,6 +1192,54 @@ function NewReservationContent() {
                   className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium shadow-sm"
                 >
                   OK (作成)
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Confirm Modal for Training Trainer Shift Warning */}
+      {showTrainingShiftModal && (
+        <div className="fixed inset-0 bg-gray-900 bg-opacity-50 overflow-y-auto h-full w-full z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="relative p-6 w-full max-w-sm shadow-2xl rounded-2xl bg-white">
+            <div className="text-center">
+              <div className="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-orange-100 mb-4">
+                <svg className="h-7 w-7 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">
+                シフト外のトレーナー
+              </h3>
+              <p className="text-sm text-gray-600 mb-6 leading-relaxed">
+                <span className="font-semibold">{pendingTrainerName}</span> はこの時間帯にシフトがありません。<br /><br />それでも研修に追加しますか？
+              </p>
+              <div className="flex justify-center space-x-3 w-full">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowTrainingShiftModal(false)
+                    setPendingTrainerId(null)
+                    setPendingTrainerName('')
+                  }}
+                  className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 bg-white rounded-xl hover:bg-gray-50 transition-colors font-medium shadow-sm"
+                >
+                  キャンセル
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (pendingTrainerId) {
+                      setFormData(prev => ({ ...prev, trainingTrainerIds: [...prev.trainingTrainerIds, pendingTrainerId] }))
+                    }
+                    setShowTrainingShiftModal(false)
+                    setPendingTrainerId(null)
+                    setPendingTrainerName('')
+                  }}
+                  className="flex-1 px-4 py-3 bg-orange-600 text-white rounded-xl hover:bg-orange-700 transition-colors font-medium shadow-sm"
+                >
+                  OK (追加)
                 </button>
               </div>
             </div>
