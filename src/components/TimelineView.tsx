@@ -63,6 +63,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
     notes: '',
     trainerId: ''
   })
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false)
 
   // Generate time slots (8:00 - 23:00, hourly)
   const generateTimeSlots = () => {
@@ -263,7 +264,13 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
 
   const handleDeleteReservation = async () => {
     if (!editingReservation) return
-    if (!confirm('この予約を削除しますか？')) return
+    // Show custom confirm modal instead of window.confirm (fixes iOS PWA freeze)
+    setShowDeleteConfirmModal(true)
+  }
+
+  const executeDeleteReservation = async () => {
+    if (!editingReservation) return
+    setShowDeleteConfirmModal(false)
     try {
       const url = trainerToken
         ? `/api/reservations/${editingReservation.id}?token=${trainerToken}`
@@ -783,6 +790,39 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
                   </div>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Delete Confirmation Modal */}
+      {showDeleteConfirmModal && (
+        <div className="fixed inset-0 bg-gray-900 bg-opacity-60 overflow-y-auto h-full w-full z-[200] flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="relative p-6 w-full max-w-sm shadow-2xl rounded-2xl bg-white">
+            <div className="text-center">
+              <div className="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-red-100 mb-4">
+                <svg className="h-7 w-7 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">予約を削除しますか？</h3>
+              <p className="text-sm text-gray-600 mb-6">この操作は取り消せません。</p>
+              <div className="flex justify-center space-x-3 w-full">
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteConfirmModal(false)}
+                  className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 bg-white rounded-xl hover:bg-gray-50 transition-colors font-medium shadow-sm"
+                >
+                  キャンセル
+                </button>
+                <button
+                  type="button"
+                  onClick={executeDeleteReservation}
+                  className="flex-1 px-4 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors font-medium shadow-sm"
+                >
+                  削除する
+                </button>
+              </div>
             </div>
           </div>
         </div>

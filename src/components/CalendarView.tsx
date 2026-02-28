@@ -137,13 +137,13 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
               fetchCalendarData()
             }
           })
-          .catch(() => {}) // Ignore sync errors silently
+          .catch(() => { }) // Ignore sync errors silently
 
         const timestamp = new Date().getTime()
-        const reservationsUrl = trainerToken 
+        const reservationsUrl = trainerToken
           ? `/api/reservations?token=${trainerToken}&_t=${timestamp}`
           : `/api/reservations?_t=${timestamp}`
-          
+
         const shiftsUrl = trainerToken
           ? `/api/shifts?token=${trainerToken}&_t=${timestamp}`
           : `/api/shifts?_t=${timestamp}`
@@ -398,10 +398,14 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
           setSelectedDate(newDate)
         }}
         onEventsUpdate={() => {
-          // Refresh events when new reservation is created
+          // Refresh events when reservation is created/deleted
           const fetchCalendarData = async () => {
             try {
-              const response = await fetch('/api/reservations')
+              const timestamp = new Date().getTime()
+              const reservationsUrl = trainerToken
+                ? `/api/reservations?token=${trainerToken}&_t=${timestamp}`
+                : `/api/reservations?_t=${timestamp}`
+              const response = await fetch(reservationsUrl, { cache: 'no-store' })
               if (response.ok) {
                 const result = await response.json()
                 const data = result.data || result
