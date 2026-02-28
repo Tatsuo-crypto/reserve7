@@ -220,14 +220,13 @@ export async function POST(request: NextRequest) {
           const jstOffset = 9 * 60 * 60 * 1000
           const startJst = new Date(startDateTime.getTime() + jstOffset)
           const endJst = new Date(endDateTime.getTime() + jstOffset)
-          // Use JST date's day of week (UTC on JST-shifted date = JST local day)
           const dayOfWeekJst = startJst.getUTCDay() // 0=Sun, 1=Mon, ...6=Sat
           const startHHMM = `${String(startJst.getUTCHours()).padStart(2, '0')}:${String(startJst.getUTCMinutes()).padStart(2, '0')}`
           const endHHMM = `${String(endJst.getUTCHours()).padStart(2, '0')}:${String(endJst.getUTCMinutes()).padStart(2, '0')}`
 
-          console.log(`🔍 Shift check - JST day: ${dayOfWeekJst}, time: ${startHHMM}-${endHHMM}, trainerIds: ${trainerIds.join(',')}`)
+          console.log(`🔍 Shift check - JST day: ${dayOfWeekJst}, time: ${startHHMM}-${endHHMM}`)
 
-          // Check 1: Actual trainer_shifts record covering the full reservation time
+          // Check 1: Actual trainer_shifts record - auto-assign trainer if found
           const { data: shifts, error: shiftsError } = await supabaseAdmin
             .from('trainer_shifts')
             .select('id, trainer_id')
@@ -236,51 +235,33 @@ export async function POST(request: NextRequest) {
             .gte('end_time', endDateTime.toISOString())
             .limit(1)
 
-          if (shiftsError) {
-            console.error('Error checking shifts:', shiftsError)
-          }
-
-          const hasActualShift = !shiftsError && shifts && shifts.length > 0
-
-          if (hasActualShift) {
-            // Auto-assign trainer from the matching shift
+          if (!shiftsError && shifts && shifts.length > 0) {
             if (!trainerId) {
-              trainerId = shifts![0].trainer_id
+              trainerId = shifts[0].trainer_id
               console.log('Auto-assigned trainerId from shift:', trainerId)
             }
           } else {
-            // Check 2: trainer_shift_templates (recurring schedule) for this day/time
+            // Check 2: trainer_shift_templates for auto-assignment
             const { data: templates } = await supabaseAdmin
               .from('trainer_shift_templates')
               .select('id, trainer_id, day_of_week, start_time, end_time')
               .in('trainer_id', trainerIds)
               .eq('day_of_week', dayOfWeekJst)
 
-            console.log(`🔍 Templates found for day ${dayOfWeekJst}:`, templates?.length ?? 0)
-
             const matchingTemplate = templates && templates.find(t =>
               t.start_time <= startHHMM && t.end_time >= endHHMM
             )
 
             if (matchingTemplate) {
-              // Template covers this time - treat as if a shift exists
-              console.log('Template shift covers this time - allowing reservation. Template:', matchingTemplate)
+              console.log('Template shift covers this time. Template:', matchingTemplate)
               if (!trainerId) {
                 trainerId = matchingTemplate.trainer_id
                 console.log('Auto-assigned trainerId from template:', trainerId)
               }
             } else {
-              // No actual shift AND no template - consider this outside of shift hours
-              if (skipShiftCheck) {
-                console.log('No shift/template found but user confirmed skip - allowing reservation')
-              } else {
-                // Both admin and trainer get NO_SHIFT code - frontend shows modal for confirmation
-                console.log(`No shift found. isTrainerAuth: ${isTrainerAuth}. Returning NO_SHIFT.`)
-                return NextResponse.json(
-                  { error: 'この時間帯に出勤しているトレーナーがいません（シフト外）', code: 'NO_SHIFT' },
-                  { status: 409 }
-                )
-              }
+              // シフトもテンプレートも見つからない場合でも予約は通過させる
+              // (タイムライン上での視覚的なシフト表示で制御する方針)
+              console.log(`No shift/template found for this time - allowing reservation anyway (isTrainerAuth: ${isTrainerAuth})`)
             }
           }
         }
