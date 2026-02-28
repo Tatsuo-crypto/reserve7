@@ -1,14 +1,192 @@
 'use client'
 
 import { useParams, useRouter } from 'next/navigation'
-import { useState, useEffect } from 'react'
-import Link from 'next/link'
+import { useState, useEffect, useRef } from 'react'
+
+const DAYS_JA = ['日', '月', '火', '水', '木', '金', '土']
+const DAYS_FULL = ['日曜日', '月曜日', '火曜日', '水曜日', '木曜日', '金曜日', '土曜日']
 
 interface OnlineLesson {
+    id: string
+    title: string
     meet_url: string
     schedule_text: string
     description: string
     is_active: boolean
+    day_of_week: number[] | null
+    start_time: string | null
+    end_time: string | null
+}
+
+function getJstNow() {
+    const now = new Date()
+    // Add 9 hours offset to get JST
+    return new Date(now.getTime() + 9 * 60 * 60 * 1000)
+}
+
+function timeToMinutes(t: string): number {
+    const parts = t.split(':')
+    return parseInt(parts[0]) * 60 + parseInt(parts[1])
+}
+
+function formatSchedule(lesson: OnlineLesson): string {
+    if (lesson.schedule_text) return lesson.schedule_text
+    const days = lesson.day_of_week?.map(d => DAYS_JA[d]).join('・') ?? ''
+    const start = lesson.start_time ? lesson.start_time.substring(0, 5) : ''
+    const end = lesson.end_time ? lesson.end_time.substring(0, 5) : ''
+    if (!days && !start) return ''
+    return `毎週${days} ${start}${end ? `〜${end}` : ''}`
+}
+
+function getJoinStatus(lesson: OnlineLesson): {
+    canJoin: boolean
+    statusLabel: string
+    minutesUntil: number | null
+    isOngoing: boolean
+} {
+    const jstNow = getJstNow()
+    const todayDow = jstNow.getUTCDay()
+    const currentMinutes = jstNow.getUTCHours() * 60 + jstNow.getUTCMinutes()
+
+    const days = lesson.day_of_week
+    const startTime = lesson.start_time
+    const endTime = lesson.end_time
+
+    // If no schedule set, always allow
+    if (!days || days.length === 0 || !startTime) {
+        return { canJoin: true, statusLabel: '参加可能', minutesUntil: null, isOngoing: true }
+    }
+
+    const startMin = timeToMinutes(startTime)
+    const endMin = endTime ? timeToMinutes(endTime) : startMin + 60
+
+    const isCorrectDay = days.includes(todayDow)
+
+    if (!isCorrectDay) {
+        // Find next occurrence
+        const daysUntilNext = days.map(d => {
+            const diff = (d - todayDow + 7) % 7
+            return diff === 0 ? 7 : diff
+        })
+        const minDays = Math.min(...daysUntilNext)
+        const nextDay = days.find(d => (d - todayDow + 7) % 7 === minDays) ?? days[0]
+        return {
+            canJoin: false,
+            statusLabel: `次回: ${DAYS_FULL[nextDay]} ${startTime.substring(0, 5)}`,
+            minutesUntil: null,
+            isOngoing: false,
+        }
+    }
+
+    // Today is correct day
+    const isOngoing = currentMinutes >= startMin && currentMinutes < endMin
+    const minutesUntilStart = startMin - currentMinutes
+    const canJoin = minutesUntilStart <= 5 && currentMinutes < endMin // 5分前から
+
+    if (currentMinutes >= endMin) {
+        // Find next week occurrence
+        const nextDay = days[0]
+        return {
+            canJoin: false,
+            statusLabel: `次回: 来週${DAYS_JA[nextDay]}曜日 ${startTime.substring(0, 5)}`,
+            minutesUntil: null,
+            isOngoing: false,
+        }
+    }
+
+    if (isOngoing) {
+        return { canJoin: true, statusLabel: '開催中！', minutesUntil: 0, isOngoing: true }
+    }
+
+    if (canJoin) {
+        return { canJoin: true, statusLabel: 'まもなく開始', minutesUntil: minutesUntilStart, isOngoing: false }
+    }
+
+    return {
+        canJoin: false,
+        statusLabel: `${minutesUntilStart}分後に開始`,
+        minutesUntil: minutesUntilStart,
+        isOngoing: false,
+    }
+}
+
+function LessonCard({ lesson, onJoin }: { lesson: OnlineLesson; onJoin: (url: string) => void }) {
+    const [status, setStatus] = useState(() => getJoinStatus(lesson))
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setStatus(getJoinStatus(lesson))
+        }, 10000) // update every 10 seconds
+        return () => clearInterval(interval)
+    }, [lesson])
+
+    const schedule = formatSchedule(lesson)
+
+    return (
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            {/* Card header */}
+            <div className={`p-5 ${status.isOngoing ? 'bg-gradient-to-r from-blue-500 to-indigo-600' : 'bg-gradient-to-r from-gray-100 to-gray-50'}`}>
+                <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                        <h3 className={`font-bold text-lg ${status.isOngoing ? 'text-white' : 'text-gray-800'}`}>
+                            {lesson.title}
+                        </h3>
+                        {schedule && (
+                            <p className={`text-sm mt-1 ${status.isOngoing ? 'text-blue-100' : 'text-gray-500'}`}>
+                                📅 {schedule}
+                            </p>
+                        )}
+                    </div>
+                    {status.isOngoing && (
+                        <span className="ml-3 flex-shrink-0 px-2 py-1 bg-white bg-opacity-20 text-white text-xs font-bold rounded-full animate-pulse">
+                            LIVE
+                        </span>
+                    )}
+                </div>
+            </div>
+
+            {/* Card body */}
+            <div className="p-5">
+                {lesson.description && (
+                    <p className="text-sm text-gray-600 mb-4 leading-relaxed">{lesson.description}</p>
+                )}
+
+                {/* Status */}
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                        <div className={`w-2.5 h-2.5 rounded-full ${status.canJoin ? 'bg-green-500 animate-pulse' : 'bg-gray-300'}`} />
+                        <span className={`text-sm font-medium ${status.canJoin ? 'text-green-700' : 'text-gray-500'}`}>
+                            {status.statusLabel}
+                        </span>
+                    </div>
+
+                    {/* Join Button */}
+                    <button
+                        onClick={() => onJoin(lesson.meet_url)}
+                        disabled={!status.canJoin}
+                        className={`flex items-center space-x-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all ${status.canJoin
+                                ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-md hover:shadow-lg transform hover:scale-105 active:scale-95'
+                                : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                            }`}
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.069A1 1 0 0121 8.845v6.309a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                        <span>参加する</span>
+                    </button>
+                </div>
+
+                {/* Countdown when close */}
+                {!status.canJoin && status.minutesUntil !== null && status.minutesUntil <= 30 && (
+                    <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-xl">
+                        <p className="text-xs text-yellow-700 text-center">
+                            ⏱ 開始 {status.minutesUntil} 分前にボタンが有効になります
+                        </p>
+                    </div>
+                )}
+            </div>
+        </div>
+    )
 }
 
 export default function OnlineLessonPage() {
@@ -16,35 +194,31 @@ export default function OnlineLessonPage() {
     const token = params?.token as string
     const router = useRouter()
 
-    const [lesson, setLesson] = useState<OnlineLesson | null>(null)
+    const [lessons, setLessons] = useState<OnlineLesson[]>([])
     const [loading, setLoading] = useState(true)
-    const [joining, setJoining] = useState(false)
+    const [joining, setJoining] = useState<string | null>(null)
 
     useEffect(() => {
         if (!token) return
-        fetchLesson()
+        fetchLessons()
     }, [token])
 
-    const fetchLesson = async () => {
+    const fetchLessons = async () => {
         setLoading(true)
         try {
             const res = await fetch(`/api/client/online-lesson?token=${token}`)
             if (res.ok) {
                 const data = await res.json()
-                setLesson(data.lesson)
+                setLessons(data.lessons || [])
             }
-        } catch (e) {
-            console.error(e)
-        } finally {
-            setLoading(false)
-        }
+        } catch (e) { console.error(e) }
+        finally { setLoading(false) }
     }
 
-    const handleJoin = () => {
-        if (!lesson?.meet_url) return
-        setJoining(true)
-        window.open(lesson.meet_url, '_blank', 'noopener,noreferrer')
-        setTimeout(() => setJoining(false), 2000)
+    const handleJoin = (url: string) => {
+        setJoining(url)
+        window.open(url, '_blank', 'noopener,noreferrer')
+        setTimeout(() => setJoining(null), 2000)
     }
 
     if (loading) {
@@ -71,13 +245,15 @@ export default function OnlineLessonPage() {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                         </svg>
                     </button>
-                    <h1 className="text-lg font-bold text-gray-900">オンラインレッスン</h1>
+                    <div>
+                        <h1 className="text-lg font-bold text-gray-900">オンラインレッスン</h1>
+                        <p className="text-xs text-gray-400">開始5分前から参加できます</p>
+                    </div>
                 </div>
             </div>
 
-            <div className="max-w-lg mx-auto px-4 py-8">
-                {!lesson ? (
-                    /* No lesson configured */
+            <div className="max-w-lg mx-auto px-4 py-6">
+                {lessons.length === 0 ? (
                     <div className="text-center py-16">
                         <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
                             <svg className="w-12 h-12 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -88,91 +264,30 @@ export default function OnlineLessonPage() {
                         <p className="text-gray-500 text-sm">オンラインレッスンの詳細は<br />もうしばらくお待ちください</p>
                     </div>
                 ) : (
-                    <>
-                        {/* Hero Card */}
-                        <div className="relative overflow-hidden bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-700 rounded-3xl p-8 mb-6 shadow-2xl">
-                            {/* Decorative circles */}
-                            <div className="absolute -top-10 -right-10 w-40 h-40 bg-white bg-opacity-10 rounded-full" />
-                            <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-white bg-opacity-5 rounded-full" />
+                    <div className="space-y-4">
+                        {lessons.map(lesson => (
+                            <LessonCard key={lesson.id} lesson={lesson} onJoin={handleJoin} />
+                        ))}
 
-                            <div className="relative">
-                                <div className="flex items-center space-x-3 mb-6">
-                                    <div className="w-14 h-14 bg-white bg-opacity-20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
-                                        <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.069A1 1 0 0121 8.845v6.309a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                        </svg>
-                                    </div>
-                                    <div>
-                                        <h2 className="text-white font-bold text-xl">グループレッスン</h2>
-                                        <p className="text-blue-100 text-sm">Google Meet でみんなと一緒に！</p>
-                                    </div>
-                                </div>
-
-                                {/* Schedule */}
-                                {lesson.schedule_text && (
-                                    <div className="bg-white bg-opacity-15 rounded-2xl p-4 mb-4 backdrop-blur-sm">
-                                        <div className="flex items-start space-x-3">
-                                            <div className="mt-0.5">
-                                                <svg className="w-5 h-5 text-blue-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                </svg>
-                                            </div>
-                                            <div>
-                                                <p className="text-blue-100 text-xs font-medium mb-1">開催スケジュール</p>
-                                                <p className="text-white font-semibold">{lesson.schedule_text}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Join Button */}
-                                <button
-                                    onClick={handleJoin}
-                                    disabled={joining}
-                                    className="w-full py-4 bg-white hover:bg-blue-50 text-blue-700 font-bold rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-70"
-                                >
-                                    <span className="flex items-center justify-center space-x-2">
-                                        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                                            <path d="M15 10l4.553-2.069A1 1 0 0121 8.845v6.309a1 1 0 01-1.447.894L15 14v-4z M3 8a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z" />
-                                        </svg>
-                                        <span>{joining ? '起動中...' : 'Google Meet で参加する'}</span>
-                                    </span>
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Description */}
-                        {lesson.description && (
-                            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
-                                <h3 className="font-semibold text-gray-800 mb-3 flex items-center space-x-2">
-                                    <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                    <span>ご参加について</span>
-                                </h3>
-                                <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-line">{lesson.description}</p>
-                            </div>
-                        )}
-
-                        {/* How to Join */}
-                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                            <h3 className="font-semibold text-gray-800 mb-4">参加方法</h3>
-                            <div className="space-y-4">
+                        {/* How to join */}
+                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mt-2">
+                            <h3 className="font-semibold text-gray-800 mb-3">参加方法</h3>
+                            <div className="space-y-3">
                                 {[
-                                    { step: '1', text: 'スケジュールの時間になったら「Google Meet で参加する」をタップ' },
-                                    { step: '2', text: 'Google Meetが開きます。カメラとマイクの設定を確認して参加してください' },
-                                    { step: '3', text: 'みんなと一緒に楽しくレッスンを受けましょう！' },
+                                    { step: '1', text: '開始5分前になると「参加する」ボタンが青くなります' },
+                                    { step: '2', text: 'ボタンをタップするとGoogle Meetが開きます' },
+                                    { step: '3', text: 'カメラとマイクを確認して「参加」を押してください' },
                                 ].map(item => (
-                                    <div key={item.step} className="flex items-start space-x-4">
-                                        <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                                            <span className="text-blue-600 font-bold text-sm">{item.step}</span>
+                                    <div key={item.step} className="flex items-start space-x-3">
+                                        <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                                            <span className="text-blue-600 font-bold text-xs">{item.step}</span>
                                         </div>
                                         <p className="text-gray-600 text-sm leading-relaxed pt-0.5">{item.text}</p>
                                     </div>
                                 ))}
                             </div>
                         </div>
-                    </>
+                    </div>
                 )}
             </div>
         </div>
