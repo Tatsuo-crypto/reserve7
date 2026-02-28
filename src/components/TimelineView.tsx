@@ -148,7 +148,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
       if (trainerId) url += `&trainerId=${trainerId}`
 
       setIsNavigating(true)
-      router.push(url)
+      window.location.href = url
     }
   }
 
@@ -688,10 +688,11 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
 
       {/* Loading Overlay for Navigation */}
       {isNavigating && (
-        <div className="fixed inset-0 bg-white bg-opacity-70 z-[100] flex items-center justify-center">
-          <div className="flex flex-col items-center">
+        <div className="fixed inset-0 bg-gray-900 bg-opacity-50 z-[100] flex items-center justify-center backdrop-blur-sm">
+          <div className="bg-white p-6 rounded-xl shadow-2xl flex flex-col items-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4"></div>
-            <p className="text-gray-600 font-medium">予約画面へ移動中...</p>
+            <p className="text-gray-800 font-bold">予約画面へ移動中...</p>
+            <p className="text-gray-500 text-xs mt-2">少々お待ちください</p>
           </div>
         </div>
       )}
