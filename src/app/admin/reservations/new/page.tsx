@@ -36,7 +36,7 @@ function NewReservationContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const trainerToken = searchParams?.get('trainerToken')
-  
+
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
@@ -102,10 +102,10 @@ function NewReservationContent() {
       try {
         // Use API endpoint to fetch clients (works with RLS)
         // Add token if available
-        const url = trainerToken 
+        const url = trainerToken
           ? `/api/admin/members?token=${trainerToken}`
           : '/api/admin/members'
-          
+
         const response = await fetch(url)
 
         if (!response.ok) {
@@ -129,7 +129,7 @@ function NewReservationContent() {
             const rankA = getPlanRank(a.plan)
             const rankB = getPlanRank(b.plan)
             if (rankA !== rankB) return rankA - rankB
-            return a.name.localeCompare(b.name, 'ja')
+            return (a.name || '').localeCompare(b.name || '', 'ja')
           })
 
         setClients(formattedClients)
@@ -181,7 +181,7 @@ function NewReservationContent() {
         const url = trainerToken
           ? `/api/admin/trainers?status=active${storeParam}&token=${trainerToken}`
           : `/api/admin/trainers?status=active${storeParam}`
-          
+
         const res = await fetch(url, { credentials: 'include' })
         if (res.ok) {
           const data = await res.json()
@@ -293,11 +293,11 @@ function NewReservationContent() {
   // Check admin access
   useEffect(() => {
     if (status === 'loading') return
-    
+
     // Allow if session is admin OR valid trainer token exists
     const isSessionAdmin = status === 'authenticated' && session?.user?.role === 'ADMIN'
     const isTrainerAuth = !!trainerToken
-    
+
     if (!isSessionAdmin && !isTrainerAuth) {
       router.push('/login')
     } else if (status === 'authenticated' && !isSessionAdmin && !isTrainerAuth) {
@@ -360,7 +360,7 @@ function NewReservationContent() {
 
       // For blocked time, we don't need a client
       let selectedClient = null
-        if (!formData.isBlocked && !formData.isTrial && !formData.isGuest && !formData.isTraining) {
+      if (!formData.isBlocked && !formData.isTrial && !formData.isGuest && !formData.isTraining) {
         if (!formData.clientId.trim()) {
           throw new Error('会員を選択してください')
         }
@@ -485,7 +485,7 @@ function NewReservationContent() {
         }
       }
 
-      const url = trainerToken 
+      const url = trainerToken
         ? `/api/admin/reservations?token=${trainerToken}`
         : '/api/admin/reservations'
 
@@ -549,7 +549,7 @@ function NewReservationContent() {
 
       // Redirect to calendar after 1.5 seconds
       setTimeout(() => {
-        const url = trainerToken 
+        const url = trainerToken
           ? `/admin/calendar?trainerToken=${trainerToken}`
           : '/admin/calendar'
         router.push(url)
@@ -581,7 +581,10 @@ function NewReservationContent() {
     )
   }
 
-  if (status === 'unauthenticated' || session?.user?.role !== 'ADMIN') {
+  const isSessionAdmin = status === 'authenticated' && session?.user?.role === 'ADMIN'
+  const isTrainerAuth = !!trainerToken
+
+  if (!isSessionAdmin && !isTrainerAuth) {
     return null // Will redirect
   }
 
@@ -637,11 +640,10 @@ function NewReservationContent() {
                 予約タイプ *
               </label>
               <div className="grid grid-cols-2 gap-4">
-                <label className={`relative flex flex-col items-center justify-center p-4 border rounded-lg cursor-pointer transition-all ${
-                  !formData.isBlocked && !formData.isTrial && !formData.isGuest && !formData.isTraining
-                    ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-500'
-                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                }`}>
+                <label className={`relative flex flex-col items-center justify-center p-4 border rounded-lg cursor-pointer transition-all ${!formData.isBlocked && !formData.isTrial && !formData.isGuest && !formData.isTraining
+                  ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-500'
+                  : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                  }`}>
                   <input
                     type="radio"
                     name="reservationType"
@@ -658,11 +660,10 @@ function NewReservationContent() {
                   <span className="font-medium text-gray-900">予約</span>
                 </label>
 
-                <label className={`relative flex flex-col items-center justify-center p-4 border rounded-lg cursor-pointer transition-all ${
-                  formData.isTrial
-                    ? 'border-green-500 bg-green-50 ring-2 ring-green-500'
-                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                }`}>
+                <label className={`relative flex flex-col items-center justify-center p-4 border rounded-lg cursor-pointer transition-all ${formData.isTrial
+                  ? 'border-green-500 bg-green-50 ring-2 ring-green-500'
+                  : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                  }`}>
                   <input
                     type="radio"
                     name="reservationType"
@@ -679,11 +680,10 @@ function NewReservationContent() {
                   <span className="font-medium text-gray-900">体験</span>
                 </label>
 
-                <label className={`relative flex flex-col items-center justify-center p-4 border rounded-lg cursor-pointer transition-all ${
-                  formData.isGuest
-                    ? 'border-purple-500 bg-purple-50 ring-2 ring-purple-500'
-                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                }`}>
+                <label className={`relative flex flex-col items-center justify-center p-4 border rounded-lg cursor-pointer transition-all ${formData.isGuest
+                  ? 'border-purple-500 bg-purple-50 ring-2 ring-purple-500'
+                  : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                  }`}>
                   <input
                     type="radio"
                     name="reservationType"
@@ -700,11 +700,10 @@ function NewReservationContent() {
                   <span className="font-medium text-gray-900">ゲスト</span>
                 </label>
 
-                <label className={`relative flex flex-col items-center justify-center p-4 border rounded-lg cursor-pointer transition-all ${
-                  formData.isBlocked
-                    ? 'border-red-500 bg-red-50 ring-2 ring-red-500'
-                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                }`}>
+                <label className={`relative flex flex-col items-center justify-center p-4 border rounded-lg cursor-pointer transition-all ${formData.isBlocked
+                  ? 'border-red-500 bg-red-50 ring-2 ring-red-500'
+                  : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                  }`}>
                   <input
                     type="radio"
                     name="reservationType"
@@ -743,11 +742,10 @@ function NewReservationContent() {
                   <span className="font-medium text-gray-900">予約不可</span>
                 </label>
 
-                <label className={`relative flex flex-col items-center justify-center p-4 border rounded-lg cursor-pointer transition-all ${
-                  formData.isTraining
-                    ? 'border-orange-500 bg-orange-50 ring-2 ring-orange-500'
-                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                }`}>
+                <label className={`relative flex flex-col items-center justify-center p-4 border rounded-lg cursor-pointer transition-all ${formData.isTraining
+                  ? 'border-orange-500 bg-orange-50 ring-2 ring-orange-500'
+                  : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                  }`}>
                   <input
                     type="radio"
                     name="reservationType"
@@ -783,11 +781,10 @@ function NewReservationContent() {
                 ) : (
                   <div className="space-y-2">
                     {trainers.map(trainer => (
-                      <label key={trainer.id} className={`flex items-center p-3 border rounded-lg cursor-pointer transition-all ${
-                        formData.trainingTrainerIds.includes(trainer.id)
-                          ? 'border-orange-500 bg-orange-50'
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}>
+                      <label key={trainer.id} className={`flex items-center p-3 border rounded-lg cursor-pointer transition-all ${formData.trainingTrainerIds.includes(trainer.id)
+                        ? 'border-orange-500 bg-orange-50'
+                        : 'border-gray-200 hover:border-gray-300'
+                        }`}>
                         <input
                           type="checkbox"
                           checked={formData.trainingTrainerIds.includes(trainer.id)}
@@ -819,8 +816,8 @@ function NewReservationContent() {
                                       let coveringTemplate = false
                                       if (!coveringShift && templates.length > 0) {
                                         const dayOfWeek = start.getDay() // 0=Sun, 1=Mon, ...
-                                        const startHHMM = `${String(start.getHours()).padStart(2,'0')}:${String(start.getMinutes()).padStart(2,'0')}`
-                                        const endHHMM = `${String(end.getHours()).padStart(2,'0')}:${String(end.getMinutes()).padStart(2,'0')}`
+                                        const startHHMM = `${String(start.getHours()).padStart(2, '0')}:${String(start.getMinutes()).padStart(2, '0')}`
+                                        const endHHMM = `${String(end.getHours()).padStart(2, '0')}:${String(end.getMinutes()).padStart(2, '0')}`
                                         coveringTemplate = templates.some((t: any) => {
                                           const tDay = t.dayOfWeek ?? t.day_of_week
                                           const tStart = (t.startTime || t.start_time || '').substring(0, 5)
