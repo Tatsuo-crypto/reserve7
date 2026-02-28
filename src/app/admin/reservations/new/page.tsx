@@ -41,6 +41,9 @@ function NewReservationContent() {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
 
+  const [showShiftConfirmModal, setShowShiftConfirmModal] = useState(false)
+  const [pendingRequest, setPendingRequest] = useState<{ url: string, requestData: any } | null>(null)
+
   const [clients, setClients] = useState<Client[]>([])
   const [loadingClients, setLoadingClients] = useState(true)
   const [trainers, setTrainers] = useState<Trainer[]>([])
@@ -346,6 +349,74 @@ function NewReservationContent() {
     return `${client.name}1`
   }
 
+  const processSuccess = () => {
+    setSuccess(formData.isTrial ? '体験予約が正常に作成されました' : formData.isTraining ? '研修予約が正常に作成されました' : '予約が正常に作成されました')
+
+    // Reset form
+    setFormData({
+      clientId: '',
+      startTime: getDefaultDateTime(),
+      duration: 60,
+      calendarId: 'tandjgym@gmail.com',
+      notes: '',
+      isBlocked: false,
+      isTrial: false,
+      isGuest: false,
+      isTraining: false,
+      trialClientName: '',
+      guestName: '',
+      blockedDate: '',
+      blockedStartTime: '09:00',
+      blockedEndTime: '12:00',
+      trainerId: '',
+      trainingTrainerIds: [],
+      trainingDate: '',
+      trainingStartTime: '15:00',
+      trainingEndTime: '16:00',
+    })
+
+    // Redirect to calendar after 1.5 seconds
+    setTimeout(() => {
+      const url = trainerToken
+        ? `/admin/calendar?trainerToken=${trainerToken}`
+        : '/admin/calendar'
+      router.push(url)
+    }, 1500)
+  }
+
+  const handleConfirmShift = async () => {
+    if (!pendingRequest) return
+    setShowShiftConfirmModal(false)
+    setLoading(true)
+    setError(null)
+    setSuccess(null)
+
+    try {
+      const { url, requestData } = pendingRequest
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...requestData, skipShiftCheck: true }),
+      })
+      const data = await response.json()
+      if (!response.ok) {
+        throw new Error(data.error || '予約の作成に失敗しました')
+      }
+      processSuccess()
+    } catch (error) {
+      console.error('Create reservation retry error:', error)
+      setError(error instanceof Error ? error.message : '予約の作成に失敗しました')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const cancelShiftConfirm = () => {
+    setShowShiftConfirmModal(false)
+    setPendingRequest(null)
+    setLoading(false)
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -502,58 +573,16 @@ function NewReservationContent() {
       if (!response.ok) {
         // If shift warning, show confirm dialog and retry with skipShiftCheck
         if (data.code === 'NO_SHIFT') {
-          const ok = window.confirm('この時間帯に出勤しているトレーナーがいません（シフト外）\n\nそれでも予約を作成しますか？')
-          if (!ok) {
-            setLoading(false)
-            return
-          }
-          // Retry with skipShiftCheck
-          response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ...requestData, skipShiftCheck: true }),
-          })
-          data = await response.json()
-          if (!response.ok) {
-            throw new Error(data.error || '予約の作成に失敗しました')
-          }
+          setPendingRequest({ url, requestData })
+          setShowShiftConfirmModal(true)
+          // Do not setLoading(false) here yet, the modal will handle it if cancelled
+          return
         } else {
           throw new Error(data.error || '予約の作成に失敗しました')
         }
       }
 
-      setSuccess(formData.isTrial ? '体験予約が正常に作成されました' : formData.isTraining ? '研修予約が正常に作成されました' : '予約が正常に作成されました')
-
-      // Reset form
-      setFormData({
-        clientId: '',
-        startTime: getDefaultDateTime(),
-        duration: 60,
-        calendarId: 'tandjgym@gmail.com',
-        notes: '',
-        isBlocked: false,
-        isTrial: false,
-        isGuest: false,
-        isTraining: false,
-        trialClientName: '',
-        guestName: '',
-        blockedDate: '',
-        blockedStartTime: '09:00',
-        blockedEndTime: '12:00',
-        trainerId: '',
-        trainingTrainerIds: [],
-        trainingDate: '',
-        trainingStartTime: '15:00',
-        trainingEndTime: '16:00',
-      })
-
-      // Redirect to calendar after 1.5 seconds
-      setTimeout(() => {
-        const url = trainerToken
-          ? `/admin/calendar?trainerToken=${trainerToken}`
-          : '/admin/calendar'
-        router.push(url)
-      }, 1500)
+      processSuccess()
 
     } catch (error) {
       console.error('Create reservation error:', error)
@@ -1124,6 +1153,43 @@ function NewReservationContent() {
           </form>
         </div>
       </div>
+
+      {/* Custom Confirm Modal for Mobile PWA Support */}
+      {showShiftConfirmModal && (
+        <div className="fixed inset-0 bg-gray-900 bg-opacity-50 overflow-y-auto h-full w-full z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="relative p-6 w-full max-w-sm shadow-2xl rounded-2xl bg-white scale-100 transition-transform">
+            <div className="text-center">
+              <div className="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-yellow-100 mb-4">
+                <svg className="h-7 w-7 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">
+                シフト外の予約
+              </h3>
+              <p className="text-sm text-gray-600 mb-6 leading-relaxed">
+                この時間帯に出勤しているトレーナーがいません（シフト外）。<br /><br />それでも予約を作成しますか？
+              </p>
+              <div className="flex justify-center space-x-3 w-full">
+                <button
+                  type="button"
+                  onClick={cancelShiftConfirm}
+                  className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 bg-white rounded-xl hover:bg-gray-50 transition-colors font-medium shadow-sm"
+                >
+                  キャンセル
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmShift}
+                  className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium shadow-sm"
+                >
+                  OK (作成)
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
