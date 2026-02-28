@@ -101,6 +101,8 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
     return { top, height }
   }
 
+  const [isNavigating, setIsNavigating] = useState(false)
+
   // Format selected date
   const formatSelectedDate = (dateStr: string) => {
     const date = new Date(dateStr + 'T00:00:00')
@@ -116,6 +118,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
   const handleTimelineClick = (e: React.MouseEvent<HTMLDivElement>, trainerId?: string) => {
     // If clicking on a specific event, don't trigger creation
     if ((e.target as HTMLElement).closest('.event-item')) return
+    if (isNavigating) return
 
     const rect = e.currentTarget.getBoundingClientRect()
     const clickY = e.clientY - rect.top
@@ -136,6 +139,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
       if (trainerToken) url += `&trainerToken=${trainerToken}`
       if (trainerId) url += `&trainerId=${trainerId}`
 
+      setIsNavigating(true)
       router.push(url)
     }
   }
@@ -342,7 +346,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
           */}
         </div>
 
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto touch-pan-y" style={{ WebkitOverflowScrolling: 'touch' }}>
           <div className="flex relative min-h-[768px]"> {/* 16 hours * 48px */}
             {/* Time Labels */}
             <div className="w-12 flex-shrink-0 relative bg-white z-10">
@@ -651,6 +655,16 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
           </div>
         </div>
       </div>
+
+      {/* Loading Overlay for Navigation */}
+      {isNavigating && (
+        <div className="fixed inset-0 bg-white bg-opacity-70 z-[100] flex items-center justify-center">
+          <div className="flex flex-col items-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4"></div>
+            <p className="text-gray-600 font-medium">予約画面へ移動中...</p>
+          </div>
+        </div>
+      )}
 
       {/* Edit Modal */}
       {showEditModal && editingReservation && (

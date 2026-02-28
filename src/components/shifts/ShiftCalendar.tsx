@@ -19,14 +19,14 @@ interface ShiftCalendarProps {
   onShiftSelect?: (shiftId: string) => void
 }
 
-export default function ShiftCalendar({ 
-  currentDate, 
-  shifts, 
-  templates = [], 
-  trainerName, 
-  onShiftCreate, 
-  onShiftUpdate, 
-  onShiftDelete, 
+export default function ShiftCalendar({
+  currentDate,
+  shifts,
+  templates = [],
+  trainerName,
+  onShiftCreate,
+  onShiftUpdate,
+  onShiftDelete,
   loading,
   selectionMode = false,
   selectedShiftIds = [],
@@ -110,9 +110,9 @@ export default function ShiftCalendar({
       </div>
 
       {/* Body: Scrollable time grid */}
-      <div ref={containerRef} className="flex-1 overflow-y-auto relative">
+      <div ref={containerRef} className="flex-1 overflow-y-auto touch-pan-y relative" style={{ WebkitOverflowScrolling: 'touch' }}>
         <div className="grid grid-cols-8 relative min-h-full">
-          
+
           {/* Time axis */}
           <div className="border-r border-gray-200 bg-white sticky left-0 z-10 w-full">
             {hours.map(hour => (
@@ -125,7 +125,7 @@ export default function ShiftCalendar({
           {/* Days columns */}
           {weekDays.map(day => {
             const dayShifts = shifts.filter(s => isSameDay(new Date(s.start_time), day))
-            
+
             // Find templates for this day (0-6, matches date-fns getDay)
             const dayTemplates = templates.filter(t => t.day_of_week === getDay(day))
 
@@ -133,8 +133,8 @@ export default function ShiftCalendar({
               <div key={day.toString()} className="relative border-r border-gray-200 last:border-r-0 bg-white group">
                 {/* Background grid lines */}
                 {hours.map(hour => (
-                  <div 
-                    key={`${day}-${hour}`} 
+                  <div
+                    key={`${day}-${hour}`}
                     className="h-[40px] border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
                     onClick={() => handleTimeSlotClick(day, hour)}
                   />
@@ -146,7 +146,7 @@ export default function ShiftCalendar({
                   const start = parse(tmpl.start_time, 'HH:mm:ss', day)
                   const end = parse(tmpl.end_time, 'HH:mm:ss', day)
                   const surname = getSurname(trainerName)
-                  
+
                   // Check for overlap with actual shifts
                   const hasOverlap = dayShifts.some(shift => {
                     const shiftStart = new Date(shift.start_time)
@@ -185,8 +185,8 @@ export default function ShiftCalendar({
                     <div
                       key={shift.id}
                       className={`absolute inset-x-1 rounded border cursor-pointer z-10 shadow-sm transition-colors overflow-hidden flex items-center justify-center
-                        ${isSelected 
-                          ? 'bg-orange-100 border-orange-400 hover:bg-orange-200 ring-2 ring-orange-400 ring-opacity-50' 
+                        ${isSelected
+                          ? 'bg-orange-100 border-orange-400 hover:bg-orange-200 ring-2 ring-orange-400 ring-opacity-50'
                           : 'bg-indigo-100 border-indigo-300 hover:bg-indigo-200'
                         }`}
                       style={getShiftStyle(new Date(shift.start_time), new Date(shift.end_time))}
@@ -241,10 +241,10 @@ const generateTimeOptions = () => {
 }
 
 // Sub-component for editing shift
-function ShiftEditModal({ shift, isOpen, onClose, onSave, onDelete }: { 
-  shift: Shift, 
-  isOpen: boolean, 
-  onClose: () => void, 
+function ShiftEditModal({ shift, isOpen, onClose, onSave, onDelete }: {
+  shift: Shift,
+  isOpen: boolean,
+  onClose: () => void,
   onSave: (id: string, s: Date, e: Date) => Promise<void>,
   onDelete: (id: string) => Promise<void>
 }) {
@@ -259,10 +259,10 @@ function ShiftEditModal({ shift, isOpen, onClose, onSave, onDelete }: {
       const baseDate = new Date(shift.start_time)
       const [sh, sm] = startTime.split(':').map(Number)
       const [eh, em] = endTime.split(':').map(Number)
-      
+
       const newStart = setMinutes(setHours(baseDate, sh), sm)
       const newEnd = setMinutes(setHours(baseDate, eh), em)
-      
+
       // Validation
       if (isAfter(newStart, newEnd) || newStart.getTime() === newEnd.getTime()) {
         alert('終了時間は開始時間より後に設定してください')
@@ -301,7 +301,7 @@ function ShiftEditModal({ shift, isOpen, onClose, onSave, onDelete }: {
       <div className="bg-white rounded-lg shadow-xl p-6 w-80">
         <h3 className="text-lg font-medium mb-4">シフト編集</h3>
         <p className="text-sm text-gray-500 mb-4">{format(new Date(shift.start_time), 'yyyy/MM/dd (E)', { locale: ja })}</p>
-        
+
         <div className="space-y-4 mb-6">
           <div>
             <label className="block text-xs text-gray-500 mb-1">開始</label>
@@ -330,7 +330,7 @@ function ShiftEditModal({ shift, isOpen, onClose, onSave, onDelete }: {
         </div>
 
         <div className="flex justify-between">
-          <button 
+          <button
             onClick={handleDelete}
             className="px-3 py-2 text-red-600 text-sm hover:bg-red-50 rounded"
             disabled={loading}
@@ -338,14 +338,14 @@ function ShiftEditModal({ shift, isOpen, onClose, onSave, onDelete }: {
             削除
           </button>
           <div className="flex gap-2">
-            <button 
+            <button
               onClick={onClose}
               className="px-3 py-2 text-gray-600 text-sm hover:bg-gray-100 rounded"
               disabled={loading}
             >
               キャンセル
             </button>
-            <button 
+            <button
               onClick={handleSave}
               className="px-3 py-2 bg-indigo-600 text-white text-sm rounded hover:bg-indigo-700"
               disabled={loading}
