@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 interface CalendarEvent {
@@ -64,9 +64,6 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
     trainerId: ''
   })
 
-  // スワイプ検出用
-  const touchStartX = useRef<number | null>(null)
-  const touchEndX = useRef<number | null>(null)
   // Generate time slots (8:00 - 23:00, hourly)
   const generateTimeSlots = () => {
     const slots: string[] = []
@@ -132,13 +129,13 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
 
       setSelectedTimeSlot(`${startTime} - ${endTime}`)
       if (trainerId) setSelectedTrainerId(trainerId)
-      
+
       // Navigate to New Reservation page with prefilled startTime
       const startDateTime = `${selectedDate}T${startTime}`
       let url = `/admin/reservations/new?startTime=${encodeURIComponent(startDateTime)}`
       if (trainerToken) url += `&trainerToken=${trainerToken}`
       if (trainerId) url += `&trainerId=${trainerId}`
-      
+
       router.push(url)
     }
   }
@@ -161,41 +158,6 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
     } catch (error) {
       console.error('Date change error:', error)
     }
-  }
-
-  // スワイプイベントハンドラー
-  const handleTouchStart = (e: React.TouchEvent) => {
-    touchStartX.current = e.touches[0].clientX
-    touchEndX.current = e.touches[0].clientX
-  }
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    touchEndX.current = e.touches[0].clientX
-  }
-
-  const handleTouchEnd = () => {
-    if (touchStartX.current === null || touchEndX.current === null) {
-      touchStartX.current = null
-      touchEndX.current = null
-      return
-    }
-
-    const diff = touchStartX.current - touchEndX.current
-    const threshold = 80 // 最小スワイプ距離（増やして誤操作を防ぐ）
-
-    if (Math.abs(diff) > threshold) {
-      if (diff > 0) {
-        // 左スワイプ → 次の日
-        changeDate(1)
-      } else {
-        // 右スワイプ → 前の日
-        changeDate(-1)
-      }
-    }
-
-    // 必ずリセット
-    touchStartX.current = null
-    touchEndX.current = null
   }
 
   const handleModalSuccess = () => {
@@ -223,16 +185,16 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
   // Start time change handler to preserve duration
   const handleStartTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newStartTime = e.target.value
-    
+
     if (editFormData.startTime && editFormData.endTime && newStartTime) {
       const currentStart = new Date(editFormData.startTime)
       const currentEnd = new Date(editFormData.endTime)
       const newStart = new Date(newStartTime)
-      
+
       if (!isNaN(currentStart.getTime()) && !isNaN(currentEnd.getTime()) && !isNaN(newStart.getTime())) {
         const duration = currentEnd.getTime() - currentStart.getTime()
         const newEnd = new Date(newStart.getTime() + duration)
-        
+
         // Format new end time as YYYY-MM-DDThh:mm
         const year = newEnd.getFullYear()
         const month = String(newEnd.getMonth() + 1).padStart(2, '0')
@@ -240,7 +202,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
         const hours = String(newEnd.getHours()).padStart(2, '0')
         const minutes = String(newEnd.getMinutes()).padStart(2, '0')
         const newEndTime = `${year}-${month}-${day}T${hours}:${minutes}`
-        
+
         setEditFormData(prev => ({
           ...prev,
           startTime: newStartTime,
@@ -249,7 +211,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
         return
       }
     }
-    
+
     setEditFormData(prev => ({ ...prev, startTime: newStartTime }))
   }
 
@@ -257,7 +219,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
     e.preventDefault()
     if (!editingReservation) return
     try {
-      const url = trainerToken 
+      const url = trainerToken
         ? `/api/reservations/${editingReservation.id}?token=${trainerToken}`
         : `/api/reservations/${editingReservation.id}`
 
@@ -291,7 +253,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
     if (!editingReservation) return
     if (!confirm('この予約を削除しますか？')) return
     try {
-      const url = trainerToken 
+      const url = trainerToken
         ? `/api/reservations/${editingReservation.id}?token=${trainerToken}`
         : `/api/reservations/${editingReservation.id}`
 
@@ -380,11 +342,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
           */}
         </div>
 
-        <div className="flex-1 overflow-y-auto"
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-        >
+        <div className="flex-1 overflow-y-auto">
           <div className="flex relative min-h-[768px]"> {/* 16 hours * 48px */}
             {/* Time Labels */}
             <div className="w-12 flex-shrink-0 relative bg-white z-10">
@@ -402,8 +360,8 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
             {/* Trainer Columns */}
             <div className="flex flex-1 relative bg-gray-300">
               {trainers.map((trainer, trainerIndex) => (
-                <div 
-                  key={trainer.id} 
+                <div
+                  key={trainer.id}
                   className="flex-1 relative border-l border-gray-200 transition-colors"
                   style={{ height: `${timeSlots.length * 48}px` }}
                   onClick={(e) => handleTimelineClick(e, trainer.id)}
@@ -411,8 +369,8 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
                   {/* Availability Blocks (Shifts & Templates) */}
                   {(() => {
                     // Filter shifts for this trainer
-                    const trainerShifts = shifts.filter(s => 
-                      s.trainerId === trainer.id && 
+                    const trainerShifts = shifts.filter(s =>
+                      s.trainerId === trainer.id &&
                       new Date(s.startTime).toLocaleDateString('ja-JP', {
                         year: 'numeric', month: '2-digit', day: '2-digit', timeZone: 'Asia/Tokyo'
                       }).split('/').map(p => p.padStart(2, '0')).join('-') === selectedDate
@@ -421,7 +379,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
                     // Filter templates for this trainer
                     const jstDate = new Date(`${selectedDate}T00:00:00+09:00`)
                     const dayOfWeek = jstDate.getDay()
-                    const trainerTemplates = templates.filter(t => 
+                    const trainerTemplates = templates.filter(t =>
                       t.trainerId === trainer.id && t.dayOfWeek === dayOfWeek
                     )
 
@@ -441,7 +399,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
                     trainerTemplates.forEach(t => {
                       const start = new Date(`${selectedDate}T${t.startTime}+09:00`)
                       const end = new Date(`${selectedDate}T${t.endTime}+09:00`)
-                      
+
                       const hasOverlap = trainerShifts.some(s => {
                         const sStart = new Date(s.startTime)
                         const sEnd = new Date(s.endTime)
@@ -457,7 +415,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
                       const timelineStartMinutes = 8 * 60
                       const startMinutes = item.start.getHours() * 60 + item.start.getMinutes()
                       const endMinutes = item.end.getHours() * 60 + item.end.getMinutes()
-                      
+
                       // Handle crossing midnight or just clamp? Assuming 8-23 for now
                       const top = ((startMinutes - timelineStartMinutes) / 60) * 48
                       const height = ((endMinutes - startMinutes) / 60) * 48
@@ -482,7 +440,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
                       if (event.trainerId) {
                         return event.trainerId === trainer.id
                       }
-                      
+
                       // 2. Store 1 Logic (Single Trainer): Show all unassigned events
                       if (trainers.length === 1) {
                         return true
@@ -490,23 +448,23 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
 
                       // 3. Store 2 Logic (Multiple Trainers): Assign to first available trainer
                       const { startMinutes, endMinutes } = parseEventTime(event.time)
-                      
+
                       // Helper to check overlap with a specific trainer (reused logic)
                       const checkOverlapWithTrainer = (tid: string) => {
                         // Check shifts
                         const tShifts = shifts.filter(s => s.trainerId === tid)
                         const shiftOverlap = tShifts.some(s => {
-                           const sDate = new Date(s.startTime).toLocaleDateString('ja-JP', {
-                              year: 'numeric', month: '2-digit', day: '2-digit', timeZone: 'Asia/Tokyo'
-                           }).split('/').map(p => p.padStart(2, '0')).join('-')
-                           if (sDate !== selectedDate) return false
-                           
-                           const sStart = new Date(s.startTime)
-                           const sEnd = new Date(s.endTime)
-                           const sStartM = sStart.getHours() * 60 + sStart.getMinutes()
-                           const sEndM = sEnd.getHours() * 60 + sEnd.getMinutes()
-                           
-                           return (startMinutes < sEndM && endMinutes > sStartM)
+                          const sDate = new Date(s.startTime).toLocaleDateString('ja-JP', {
+                            year: 'numeric', month: '2-digit', day: '2-digit', timeZone: 'Asia/Tokyo'
+                          }).split('/').map(p => p.padStart(2, '0')).join('-')
+                          if (sDate !== selectedDate) return false
+
+                          const sStart = new Date(s.startTime)
+                          const sEnd = new Date(s.endTime)
+                          const sStartM = sStart.getHours() * 60 + sStart.getMinutes()
+                          const sEndM = sEnd.getHours() * 60 + sEnd.getMinutes()
+
+                          return (startMinutes < sEndM && endMinutes > sStartM)
                         })
                         if (shiftOverlap) return true
 
@@ -515,14 +473,14 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
                         const dayOfWeek = jstDate.getDay()
                         const tTemplates = templates.filter(t => t.trainerId === tid && t.dayOfWeek === dayOfWeek)
                         const templateOverlap = tTemplates.some(t => {
-                           const tStartH = parseInt(t.startTime.split(':')[0])
-                           const tStartM = parseInt(t.startTime.split(':')[1])
-                           const tEndH = parseInt(t.endTime.split(':')[0])
-                           const tEndM = parseInt(t.endTime.split(':')[1])
-                           const tStartTotal = tStartH * 60 + tStartM
-                           const tEndTotal = tEndH * 60 + tEndM
-                           
-                           return (startMinutes < tEndTotal && endMinutes > tStartTotal)
+                          const tStartH = parseInt(t.startTime.split(':')[0])
+                          const tStartM = parseInt(t.startTime.split(':')[1])
+                          const tEndH = parseInt(t.endTime.split(':')[0])
+                          const tEndM = parseInt(t.endTime.split(':')[1])
+                          const tStartTotal = tStartH * 60 + tStartM
+                          const tEndTotal = tEndH * 60 + tEndM
+
+                          return (startMinutes < tEndTotal && endMinutes > tStartTotal)
                         })
                         return templateOverlap
                       }
@@ -542,94 +500,94 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
                     // We need to layout overlapping events WITHIN this column if any
                     // Reuse the column logic but restricted to this container width
                     // Actually, let's keep it simple: simpler width division if overlaps
-                    
+
                     // Assign columns to events within this trainer column
                     const sortedEvents = [...trainerEvents].sort((a, b) => {
-                       const aStart = parseEventTime(a.time).startMinutes
-                       const bStart = parseEventTime(b.time).startMinutes
-                       return aStart - bStart
+                      const aStart = parseEventTime(a.time).startMinutes
+                      const bStart = parseEventTime(b.time).startMinutes
+                      return aStart - bStart
                     })
-                    
+
                     const eventColumns = new Map<string, { column: number, totalColumns: number }>()
                     // ... (Reuse the overlap logic) ...
                     // For brevity, I will copy the logic but scoped here.
-                    
+
                     sortedEvents.forEach((event) => {
-                        const { startMinutes, endMinutes } = parseEventTime(event.time)
-                        const usedColumns = new Set<number>()
-                        let maxOverlapColumns = 0
-                        sortedEvents.forEach((otherEvent) => {
-                            if (otherEvent.id === event.id) return
-                            const { startMinutes: otherStart, endMinutes: otherEnd } = parseEventTime(otherEvent.time)
-                            if (startMinutes < otherEnd && endMinutes > otherStart) {
-                                const otherColumn = eventColumns.get(otherEvent.id)
-                                if (otherColumn) {
-                                    usedColumns.add(otherColumn.column)
-                                    maxOverlapColumns = Math.max(maxOverlapColumns, otherColumn.totalColumns)
-                                }
-                            }
-                        })
-                        let column = 0
-                        while (usedColumns.has(column)) column++
-                        const totalColumns = Math.max(maxOverlapColumns, column + 1)
-                        eventColumns.set(event.id, { column, totalColumns })
+                      const { startMinutes, endMinutes } = parseEventTime(event.time)
+                      const usedColumns = new Set<number>()
+                      let maxOverlapColumns = 0
+                      sortedEvents.forEach((otherEvent) => {
+                        if (otherEvent.id === event.id) return
+                        const { startMinutes: otherStart, endMinutes: otherEnd } = parseEventTime(otherEvent.time)
+                        if (startMinutes < otherEnd && endMinutes > otherStart) {
+                          const otherColumn = eventColumns.get(otherEvent.id)
+                          if (otherColumn) {
+                            usedColumns.add(otherColumn.column)
+                            maxOverlapColumns = Math.max(maxOverlapColumns, otherColumn.totalColumns)
+                          }
+                        }
+                      })
+                      let column = 0
+                      while (usedColumns.has(column)) column++
+                      const totalColumns = Math.max(maxOverlapColumns, column + 1)
+                      eventColumns.set(event.id, { column, totalColumns })
                     })
-                    
+
                     // Second pass for totalColumns
-                     sortedEvents.forEach((event) => {
-                        const { startMinutes, endMinutes } = parseEventTime(event.time)
-                        let maxColumns = eventColumns.get(event.id)?.totalColumns || 1
-                        sortedEvents.forEach((otherEvent) => {
-                            if (otherEvent.id === event.id) return
-                            const { startMinutes: otherStart, endMinutes: otherEnd } = parseEventTime(otherEvent.time)
-                            if (startMinutes < otherEnd && endMinutes > otherStart) {
-                                const otherInfo = eventColumns.get(otherEvent.id)
-                                if (otherInfo) maxColumns = Math.max(maxColumns, otherInfo.totalColumns)
-                            }
-                        })
-                        const current = eventColumns.get(event.id)
-                        if (current) eventColumns.set(event.id, { ...current, totalColumns: maxColumns })
+                    sortedEvents.forEach((event) => {
+                      const { startMinutes, endMinutes } = parseEventTime(event.time)
+                      let maxColumns = eventColumns.get(event.id)?.totalColumns || 1
+                      sortedEvents.forEach((otherEvent) => {
+                        if (otherEvent.id === event.id) return
+                        const { startMinutes: otherStart, endMinutes: otherEnd } = parseEventTime(otherEvent.time)
+                        if (startMinutes < otherEnd && endMinutes > otherStart) {
+                          const otherInfo = eventColumns.get(otherEvent.id)
+                          if (otherInfo) maxColumns = Math.max(maxColumns, otherInfo.totalColumns)
+                        }
+                      })
+                      const current = eventColumns.get(event.id)
+                      if (current) eventColumns.set(event.id, { ...current, totalColumns: maxColumns })
                     })
 
 
                     return trainerEvents.map((event, index) => {
-                       const { startMinutes, endMinutes, startTime: startStr, endTime: endStr } = parseEventTime(event.time)
-                       const top = ((startMinutes - (8 * 60)) / 60) * 48
-                       const height = ((endMinutes - startMinutes) / 60) * 48
-                       
-                       const layoutInfo = eventColumns.get(event.id) || { column: 0, totalColumns: 1 }
-                       const widthPercent = 100 / layoutInfo.totalColumns
-                       const leftPercent = layoutInfo.column * widthPercent
-                       
-                       const isTrial = event.title.includes('体験')
-                       const isGuest = event.type === 'guest' || (event.title && event.title.includes('ゲスト'))
-                       const isTraining = event.type === 'training'
-                       const colorClass = isTrial
-                          ? 'bg-blue-300 bg-opacity-50 border border-blue-500 text-blue-900'
-                          : isGuest
-                            ? 'bg-purple-300 bg-opacity-50 border border-purple-500 text-purple-900'
-                            : isTraining
-                              ? 'bg-orange-300 bg-opacity-50 border border-orange-500 text-orange-900'
-                              : event.type === 'blocked'
-                                ? 'bg-red-300 bg-opacity-50 border border-red-500 text-red-900'
-                                : 'bg-green-300 bg-opacity-50 border border-green-500 text-green-900'
+                      const { startMinutes, endMinutes, startTime: startStr, endTime: endStr } = parseEventTime(event.time)
+                      const top = ((startMinutes - (8 * 60)) / 60) * 48
+                      const height = ((endMinutes - startMinutes) / 60) * 48
 
-                       return (
-                          <div
-                            key={`${event.id}-${trainer.id}`}
-                            className={`absolute px-1 py-1 rounded text-xs font-medium ${colorClass} z-10`}
-                            style={{
-                              top: `${top}px`,
-                              left: `${leftPercent}%`,
-                              width: `${widthPercent}%`,
-                              height: `${height}px`,
-                              borderLeftWidth: '4px'
-                            }}
-                            onClick={(e) => openEditFromEvent(e, event)}
-                          >
-                            <div className="truncate font-bold leading-tight">{formatReservationTitle(event.title, event.plan)}</div>
-                          </div>
-                       )
+                      const layoutInfo = eventColumns.get(event.id) || { column: 0, totalColumns: 1 }
+                      const widthPercent = 100 / layoutInfo.totalColumns
+                      const leftPercent = layoutInfo.column * widthPercent
+
+                      const isTrial = event.title.includes('体験')
+                      const isGuest = event.type === 'guest' || (event.title && event.title.includes('ゲスト'))
+                      const isTraining = event.type === 'training'
+                      const colorClass = isTrial
+                        ? 'bg-blue-300 bg-opacity-50 border border-blue-500 text-blue-900'
+                        : isGuest
+                          ? 'bg-purple-300 bg-opacity-50 border border-purple-500 text-purple-900'
+                          : isTraining
+                            ? 'bg-orange-300 bg-opacity-50 border border-orange-500 text-orange-900'
+                            : event.type === 'blocked'
+                              ? 'bg-red-300 bg-opacity-50 border border-red-500 text-red-900'
+                              : 'bg-green-300 bg-opacity-50 border border-green-500 text-green-900'
+
+                      return (
+                        <div
+                          key={`${event.id}-${trainer.id}`}
+                          className={`absolute px-1 py-1 rounded text-xs font-medium ${colorClass} z-10`}
+                          style={{
+                            top: `${top}px`,
+                            left: `${leftPercent}%`,
+                            width: `${widthPercent}%`,
+                            height: `${height}px`,
+                            borderLeftWidth: '4px'
+                          }}
+                          onClick={(e) => openEditFromEvent(e, event)}
+                        >
+                          <div className="truncate font-bold leading-tight">{formatReservationTitle(event.title, event.plan)}</div>
+                        </div>
+                      )
                     })
                   })()}
                 </div>
@@ -645,26 +603,26 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
                   />
                 ))}
               </div>
-              
+
               {/* Current Time Indicator */}
               {(() => {
-                  const todayStr = new Date().toLocaleDateString('ja-JP', {
-                    year: 'numeric', month: '2-digit', day: '2-digit', timeZone: 'Asia/Tokyo'
-                  }).split('/').map(part => part.padStart(2, '0')).join('-')
-                  if (selectedDate !== todayStr) return null
-                  const now = new Date()
-                  const currentHour = now.getHours()
-                  const currentMinute = now.getMinutes()
-                  if (currentHour < 8) return null
-                  const currentTimePosition = ((currentHour - 8) + currentMinute / 60) * 48
-                  return (
-                    <div
-                      className="absolute left-0 right-0 border-t-2 border-red-400 z-50 pointer-events-none"
-                      style={{ top: `${currentTimePosition}px` }}
-                    >
-                      <div className="absolute -left-2 -top-1 w-2 h-2 bg-red-400 rounded-full"></div>
-                    </div>
-                  )
+                const todayStr = new Date().toLocaleDateString('ja-JP', {
+                  year: 'numeric', month: '2-digit', day: '2-digit', timeZone: 'Asia/Tokyo'
+                }).split('/').map(part => part.padStart(2, '0')).join('-')
+                if (selectedDate !== todayStr) return null
+                const now = new Date()
+                const currentHour = now.getHours()
+                const currentMinute = now.getMinutes()
+                if (currentHour < 8) return null
+                const currentTimePosition = ((currentHour - 8) + currentMinute / 60) * 48
+                return (
+                  <div
+                    className="absolute left-0 right-0 border-t-2 border-red-400 z-50 pointer-events-none"
+                    style={{ top: `${currentTimePosition}px` }}
+                  >
+                    <div className="absolute -left-2 -top-1 w-2 h-2 bg-red-400 rounded-full"></div>
+                  </div>
+                )
               })()}
 
             </div>
