@@ -124,8 +124,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
 
     // iOS Safari scroll vs tap heuristic: abort click if a scroll was detected
     if (isScrollingRef.current) {
-      // It was a scroll, reset and abort tap
-      isScrollingRef.current = false
+      // It was a scroll, abort tap
       return
     }
 
@@ -380,19 +379,24 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
                   onTouchStart={(e) => {
                     touchStartYRef.current = e.touches[0].clientY
                   }}
-                  onTouchEnd={(e) => {
-                    // TouchEnd might not give clientY directly via touches, use changedTouches
-                    if (touchStartYRef.current !== null && e.changedTouches.length > 0) {
-                      const touchEndY = e.changedTouches[0].clientY
-                      if (Math.abs(touchEndY - touchStartYRef.current) > 10) {
+                  onTouchMove={(e) => {
+                    // If we move enough, it's definitely a scroll
+                    if (touchStartYRef.current !== null && e.touches.length > 0) {
+                      const touchCurrentY = e.touches[0].clientY
+                      if (Math.abs(touchCurrentY - touchStartYRef.current) > 5) {
                         isScrollingRef.current = true
                       }
                     }
                   }}
+                  onTouchEnd={(e) => {
+                    if (isScrollingRef.current) {
+                      // Reset the scrolling flag after a short delay (after click event fires)
+                      setTimeout(() => {
+                        isScrollingRef.current = false
+                      }, 300)
+                    }
+                  }}
                   onClick={(e) => {
-                    // Check if there was a recent touch start where Y moved a lot (if we stored it)
-                    // But actually, just relying on React's default tap resolution is usually fine 
-                    // Let's keep it simple and just do the click handler
                     handleTimelineClick(e, trainer.id)
                   }}
                 >
