@@ -78,7 +78,7 @@ interface SquatRecord {
 export default function ClientReservationsPage() {
   const params = useParams()
   const token = params?.token as string
-  
+
   const [fromAdmin, setFromAdmin] = useState(false)
   const [user, setUser] = useState<User | null>(null)
   const [futureReservations, setFutureReservations] = useState<Reservation[]>([])
@@ -176,7 +176,7 @@ export default function ClientReservationsPage() {
             const goals = checkData.data.monthlyGoals || []
             setGoalChecks(goals)
             setStreak(checkData.data.streak)
-            
+
             // 全てチェック済みか判定
             const allChecked = goals.length > 0 && goals.every((g: GoalCheckData) => g.checked)
             setIsTodayCompleted(allChecked)
@@ -220,7 +220,7 @@ export default function ClientReservationsPage() {
 
     // 楽観的更新：UIを先に更新
     const previousGoalChecks = goalChecks
-    setGoalChecks(prev => prev.map(goal => 
+    setGoalChecks(prev => prev.map(goal =>
       goal.id === goalId ? { ...goal, checked: true } : goal
     ))
 
@@ -237,9 +237,9 @@ export default function ClientReservationsPage() {
       }
 
       const result = await response.json()
-      
+
       // サーバーからの結果でチェック状況を確認（楽観的更新の検証）
-      setGoalChecks(prev => prev.map(goal => 
+      setGoalChecks(prev => prev.map(goal =>
         goal.id === goalId ? { ...goal, checked: true } : goal
       ))
 
@@ -254,7 +254,7 @@ export default function ClientReservationsPage() {
         setRewardAmount(result.data.reward)
         setShowReward(true)
         setTimeout(() => setShowReward(false), 5000)
-        
+
         // マイルストーン達成チェック
         if (result.data.streak?.milestoneReached) {
           setTimeout(() => {
@@ -269,10 +269,10 @@ export default function ClientReservationsPage() {
       setCheckingGoalId(null)
     } catch (error) {
       console.error('チェック処理エラー:', error)
-      
+
       // エラーの場合、楽観的更新をロールバック
       setGoalChecks(previousGoalChecks)
-      
+
       // リトライロジック（最大2回まで）
       if (retryCount < 2) {
         console.log(`リトライ ${retryCount + 1}/2 回目...`)
@@ -285,10 +285,10 @@ export default function ClientReservationsPage() {
         const errorMessage = error instanceof Error && error.name === 'TimeoutError'
           ? '通信がタイムアウトしました。ネットワーク接続を確認してください。'
           : 'チェックの保存に失敗しました。もう一度お試しください。'
-        
+
         setCheckError(errorMessage)
         setCheckingGoalId(null)
-        
+
         // 5秒後にエラーメッセージを自動で消す
         setTimeout(() => setCheckError(null), 5000)
       }
@@ -309,7 +309,7 @@ export default function ClientReservationsPage() {
     // Match both formats: "山口1/4" and "山口12" (cumulative count)
     const matchWithSlash = title.match(/(\d+)\/(\d+)$/)
     const matchWithoutSlash = title.match(/(\d+)$/)
-    
+
     if (matchWithSlash) {
       // Format: "山口1/4" -> "パーソナル1回目"
       const currentCount = matchWithSlash[1]
@@ -319,7 +319,7 @@ export default function ClientReservationsPage() {
       const currentCount = matchWithoutSlash[1]
       return `パーソナル${currentCount}回目`
     }
-    
+
     return title
   }
 
@@ -383,7 +383,7 @@ export default function ClientReservationsPage() {
           </div>
         </div>
       )}
-      
+
       {/* マイルストーン達成通知 */}
       {showMilestone && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 animate-fadeInSlow">
@@ -441,6 +441,27 @@ export default function ClientReservationsPage() {
           </div>
         </div>
 
+        {/* オンラインレッスンバナー */}
+        <a
+          href={`/client/${token}/online`}
+          className="flex items-center justify-between bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl p-4 mb-6 shadow-md hover:shadow-lg transition-all hover:scale-[1.01] active:scale-[0.99]"
+        >
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.069A1 1 0 0121 8.845v6.309a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-white font-bold text-sm">オンラインレッスン</p>
+              <p className="text-blue-100 text-xs">グループレッスンに参加する</p>
+            </div>
+          </div>
+          <svg className="w-5 h-5 text-blue-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </a>
+
         {/* トラッキング情報 */}
         {(yearlyGoals.length > 0 || monthlyGoals.length > 0 || weightRecords.length > 0 || squatRecords.length > 0) && (
           <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6 mb-6">
@@ -450,7 +471,7 @@ export default function ClientReservationsPage() {
               </svg>
               <h2 className="text-xl font-bold text-gray-900">トレーニング記録</h2>
             </div>
-            
+
             {/* 年次目標 */}
             {yearlyGoals.length > 0 && (
               <div className="mb-8">
@@ -478,7 +499,7 @@ export default function ClientReservationsPage() {
               const currentYear = now.getFullYear()
               const currentMonth = now.getMonth() + 1
               const currentKey = `${currentYear}-${currentMonth}`
-              
+
               // 年月でグループ化
               const groupedGoals = monthlyGoals.reduce((acc, goal) => {
                 const key = `${goal.year}-${goal.month}`
@@ -486,23 +507,23 @@ export default function ClientReservationsPage() {
                 acc[key].push(goal)
                 return acc
               }, {} as Record<string, typeof monthlyGoals>)
-              
+
               const sortedKeys = Object.keys(groupedGoals).sort((a, b) => {
                 const [yearA, monthA] = a.split('-').map(Number)
                 const [yearB, monthB] = b.split('-').map(Number)
                 return yearB * 12 + monthB - (yearA * 12 + monthA)
               })
-              
+
               // 今月の目標があればそれを、なければ最新の目標を表示
               const hasCurrentMonth = groupedGoals[currentKey]
               const displayKey = hasCurrentMonth ? currentKey : sortedKeys[0]
               const displayGoals = groupedGoals[displayKey]
               const [goalYear, goalMonth] = displayKey.split('-').map(Number)
               const isInherited = !hasCurrentMonth && (goalYear !== currentYear || goalMonth !== currentMonth)
-              
+
               // 表示中の月以外の古い目標
               const olderKeys = sortedKeys.filter(key => key !== displayKey)
-              
+
               return (
                 <div className="mb-6">
                   {/* タイトルを最上部に表示 */}
@@ -536,7 +557,7 @@ export default function ClientReservationsPage() {
                       </div>
                     </div>
                   )}
-                  
+
                   {/* 今月の目標（３つまで横並び） - チェック機能付き */}
                   <div className="grid grid-cols-3 gap-3 mb-3">
                     {displayGoals.slice(0, 3).map((goal) => {
@@ -546,23 +567,20 @@ export default function ClientReservationsPage() {
                       return (
                         <div
                           key={goal.id}
-                          className={`${
-                            isChecked 
-                              ? 'bg-gray-100 border-2 border-gray-300 shadow-none' 
+                          className={`${isChecked
+                              ? 'bg-gray-100 border-2 border-gray-300 shadow-none'
                               : 'bg-blue-50 border-2 border-blue-400 shadow-md'
-                          } w-full p-4 rounded-lg flex flex-col items-center justify-center min-h-[100px] transition-all relative`}
+                            } w-full p-4 rounded-lg flex flex-col items-center justify-center min-h-[100px] transition-all relative`}
                         >
                           {/* 左上角のチェックボタン */}
                           <button
                             onClick={() => handleGoalCheck(goal.id, isChecked)}
                             disabled={isDisabled}
-                            className={`absolute -top-2 -left-2 w-8 h-8 rounded-full flex items-center justify-center transition-all ${
-                              isChecked 
-                                ? 'bg-gray-500 border-2 border-gray-600' 
+                            className={`absolute -top-2 -left-2 w-8 h-8 rounded-full flex items-center justify-center transition-all ${isChecked
+                                ? 'bg-gray-500 border-2 border-gray-600'
                                 : 'bg-white border-2 border-blue-400 hover:border-blue-500 hover:shadow-md'
-                            } ${
-                              !isDisabled ? 'cursor-pointer hover:scale-110 active:scale-95' : 'cursor-not-allowed opacity-70'
-                            }`}
+                              } ${!isDisabled ? 'cursor-pointer hover:scale-110 active:scale-95' : 'cursor-not-allowed opacity-70'
+                              }`}
                           >
                             {isChecked && (
                               <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
@@ -572,16 +590,15 @@ export default function ClientReservationsPage() {
                           </button>
 
                           {/* 目標テキスト */}
-                          <div className={`text-base font-bold text-center ${
-                            isChecked ? 'text-gray-500' : 'text-blue-700'
-                          }`}>
+                          <div className={`text-base font-bold text-center ${isChecked ? 'text-gray-500' : 'text-blue-700'
+                            }`}>
                             {goal.goal_text}
                           </div>
                         </div>
                       )
                     })}
                   </div>
-                  
+
                   {/* 古い月の目標（折りたたみ） */}
                   {olderKeys.length > 0 && (
                     <div>
@@ -594,7 +611,7 @@ export default function ClientReservationsPage() {
                         </svg>
                         過去の目標を表示 ({olderKeys.length}ヶ月)
                       </button>
-                      
+
                       {showMonthlyGoals && (
                         <div className="mt-2 space-y-2">
                           {olderKeys.map(key => {
@@ -758,13 +775,13 @@ export default function ClientReservationsPage() {
             const currentYear = now.getFullYear()
             const currentMonth = now.getMonth() + 1
             const currentMonthKey = `${currentYear}年${currentMonth}月`
-            
+
             const sortedMonths = Object.entries(pastByMonth)
               .sort((a, b) => new Date(b[1][0].start_time).getTime() - new Date(a[1][0].start_time).getTime())
-            
+
             const currentMonthData = sortedMonths.filter(([monthKey]) => monthKey === currentMonthKey)
             const olderMonthsData = sortedMonths.filter(([monthKey]) => monthKey !== currentMonthKey)
-            
+
             return (
               <div className="space-y-6">
                 {/* 当月の予約 */}
@@ -803,7 +820,7 @@ export default function ClientReservationsPage() {
                       ))}
                   </div>
                 ))}
-                
+
                 {/* それ以前の月（折りたたみ） */}
                 {olderMonthsData.length > 0 && (
                   <div>
@@ -816,7 +833,7 @@ export default function ClientReservationsPage() {
                       </svg>
                       {showOlderMonths ? 'それ以前の予約を隠す' : `それ以前の予約を表示 (${olderMonthsData.length}ヶ月)`}
                     </button>
-                    
+
                     {showOlderMonths && (
                       <div className="mt-4 space-y-6">
                         {olderMonthsData.map(([monthKey, reservations]) => (
