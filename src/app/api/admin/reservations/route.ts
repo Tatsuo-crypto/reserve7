@@ -238,16 +238,50 @@ export async function POST(request: NextRequest) {
             if (shiftsError) {
               console.error('Error checking shifts:', shiftsError)
             } else if (!shifts || shifts.length === 0) {
-              // If skipShiftCheck is set, allow the reservation (user confirmed the warning)
-              if (skipShiftCheck) {
-                console.log('No shift found but user confirmed skip - allowing reservation')
-              } else if (isTrainerAuth) {
-                return NextResponse.json(
-                  { error: 'この時間帯に出勤しているトレーナーがいません（シフト外）', code: 'NO_SHIFT' },
-                  { status: 409 }
-                )
+              // No actual shift found - also check shift templates (recurring/template-based shifts)
+              const dayOfWeek = startDateTime.getDay() // 0=Sun, 1=Mon, ...6=Sat (JST)
+              // Convert start/end to JST HH:MM for template comparison
+              const jstOffset = 9 * 60 * 60 * 1000
+              const startJst = new Date(startDateTime.getTime() + jstOffset)
+              const endJst = new Date(endDateTime.getTime() + jstOffset)
+              const startHHMM = `${String(startJst.getUTCHours()).padStart(2, '0')}:${String(startJst.getUTCMinutes()).padStart(2, '0')}`
+              const endHHMM = `${String(endJst.getUTCHours()).padStart(2, '0')}:${String(endJst.getUTCMinutes()).padStart(2, '0')}`
+
+              const { data: templates } = await supabaseAdmin
+                .from('trainer_shift_templates')
+                .select('id, trainer_id, day_of_week, start_time, end_time')
+                .in('trainer_id', trainerIds)
+                .eq('day_of_week', dayOfWeek)
+
+              const coveringTemplate = templates && templates.some(t =>
+                t.start_time <= startHHMM && t.end_time >= endHHMM
+              )
+
+              if (coveringTemplate) {
+                // Template-based shift covers this time - allow the reservation
+                console.log('Template shift covers this time - allowing reservation')
+                // Auto-assign trainer from matching template
+                if (!trainerId && templates) {
+                  const matchingTemplate = templates.find(t =>
+                    t.start_time <= startHHMM && t.end_time >= endHHMM
+                  )
+                  if (matchingTemplate) {
+                    trainerId = matchingTemplate.trainer_id
+                    console.log('Auto-assigned trainerId from template shift:', trainerId)
+                  }
+                }
               } else {
-                console.log('No shift found but admin is creating - allowing reservation')
+                // If skipShiftCheck is set, allow the reservation (user confirmed the warning)
+                if (skipShiftCheck) {
+                  console.log('No shift found but user confirmed skip - allowing reservation')
+                } else if (isTrainerAuth) {
+                  return NextResponse.json(
+                    { error: 'この時間帯に出勤しているトレーナーがいません（シフト外）', code: 'NO_SHIFT' },
+                    { status: 409 }
+                  )
+                } else {
+                  console.log('No shift found but admin is creating - allowing reservation')
+                }
               }
             } else if (shifts.length > 0 && !trainerId) {
               // Auto-assign trainer from the matching shift
