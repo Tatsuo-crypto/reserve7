@@ -25,6 +25,7 @@ export default function EditMemberPage() {
     storeId: '',
     plan: '月4回',
     monthlyFee: '',
+    billingStartMonth: '',
     status: 'active',
     memo: '',
     changeDate: new Date().toISOString().split('T')[0],
@@ -54,13 +55,16 @@ export default function EditMemberPage() {
           setInitialStatus(member.status || 'active')
           setInitialPlan(member.plan || '月4回')
           setInitialMonthlyFee(member.monthly_fee ? member.monthly_fee.toString() : '')
-          
+
+          const startMonth = member.billing_start_month ? member.billing_start_month.substring(0, 7) : ''
+
           setFormData({
             fullName: member.full_name || '',
             email: member.email || '',
             storeId: member.store_id || '',
             plan: member.plan || '月4回',
             monthlyFee: member.monthly_fee ? member.monthly_fee.toString() : '',
+            billingStartMonth: startMonth,
             status: member.status || 'active',
             memo: member.memo || '',
             changeDate: new Date().toISOString().split('T')[0],
@@ -114,6 +118,7 @@ export default function EditMemberPage() {
           storeId: formData.storeId,
           plan: formData.plan,
           monthlyFee: formData.monthlyFee,
+          billingStartMonth: formData.billingStartMonth,
           status: formData.status,
           memo: formData.memo,
           changeDate: formData.changeDate,
@@ -257,6 +262,24 @@ export default function EditMemberPage() {
               placeholder="13200"
             />
             <p className="mt-1 text-sm text-gray-500">空欄の場合は0円として登録されます</p>
+          </div>
+
+          {/* 課金開始月 (売上計上開始月) */}
+          <div>
+            <label htmlFor="billingStartMonth" className="block text-sm font-medium text-gray-700 mb-2">
+              売上計上開始月
+            </label>
+            <input
+              type="month"
+              id="billingStartMonth"
+              name="billingStartMonth"
+              value={formData.billingStartMonth}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+            <p className="mt-1 text-sm text-gray-500">
+              指定した月から売上に計上されます（空欄の場合は入金された月から即時計上されます）。
+            </p>
           </div>
 
           {/* 変更日 (プラン・会費変更時のみ表示) */}

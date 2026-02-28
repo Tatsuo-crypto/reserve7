@@ -18,6 +18,7 @@ export default function NewMemberPage() {
     storeId: '',
     plan: '月4回',
     monthlyFee: '',
+    billingStartMonth: '',
     transferDay: '',
     status: 'active',
     memo: '',
@@ -240,6 +241,24 @@ export default function NewMemberPage() {
               placeholder="13200"
             />
             <p className="mt-1 text-sm text-gray-500">空欄の場合は0円として登録されます</p>
+          </div>
+
+          {/* 課金開始月 (売上計上開始月) */}
+          <div>
+            <label htmlFor="billingStartMonth" className="block text-sm font-medium text-gray-700 mb-2">
+              売上計上開始月
+            </label>
+            <input
+              type="month"
+              id="billingStartMonth"
+              name="billingStartMonth"
+              value={formData.billingStartMonth}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+            <p className="mt-1 text-sm text-gray-500">
+              指定した月から売上に計上されます（例: 2月に入会し、3月から課金開始の場合は「2026年3月」を選択）。指定しない場合は入金された月から即時計上されます。
+            </p>
           </div>
 
           {/* 振込日 */}
