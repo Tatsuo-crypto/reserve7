@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 
 interface CalendarEvent {
@@ -102,6 +102,8 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
   }
 
   const [isNavigating, setIsNavigating] = useState(false)
+  const isScrollingRef = useRef(false)
+  const touchStartYRef = useRef<number | null>(null)
 
   // Format selected date
   const formatSelectedDate = (dateStr: string) => {
@@ -119,6 +121,13 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
     // If clicking on a specific event, don't trigger creation
     if ((e.target as HTMLElement).closest('.event-item')) return
     if (isNavigating) return
+
+    // iOS Safari scroll vs tap heuristic: abort click if a scroll was detected
+    if (isScrollingRef.current) {
+      // It was a scroll, reset and abort tap
+      isScrollingRef.current = false
+      return
+    }
 
     const rect = e.currentTarget.getBoundingClientRect()
     const clickY = e.clientY - rect.top
@@ -368,7 +377,24 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
                   key={trainer.id}
                   className="flex-1 relative border-l border-gray-200 transition-colors"
                   style={{ height: `${timeSlots.length * 48}px` }}
-                  onClick={(e) => handleTimelineClick(e, trainer.id)}
+                  onTouchStart={(e) => {
+                    touchStartYRef.current = e.touches[0].clientY
+                  }}
+                  onTouchEnd={(e) => {
+                    // TouchEnd might not give clientY directly via touches, use changedTouches
+                    if (touchStartYRef.current !== null && e.changedTouches.length > 0) {
+                      const touchEndY = e.changedTouches[0].clientY
+                      if (Math.abs(touchEndY - touchStartYRef.current) > 10) {
+                        isScrollingRef.current = true
+                      }
+                    }
+                  }}
+                  onClick={(e) => {
+                    // Check if there was a recent touch start where Y moved a lot (if we stored it)
+                    // But actually, just relying on React's default tap resolution is usually fine 
+                    // Let's keep it simple and just do the click handler
+                    handleTimelineClick(e, trainer.id)
+                  }}
                 >
                   {/* Availability Blocks (Shifts & Templates) */}
                   {(() => {
