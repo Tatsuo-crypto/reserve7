@@ -10,7 +10,6 @@ interface OnlineLesson {
     id: string
     title: string
     meet_url: string
-    schedule_text: string
     description: string
     is_active: boolean
     day_of_week: number[] | null
@@ -30,7 +29,6 @@ function timeToMinutes(t: string): number {
 }
 
 function formatSchedule(lesson: OnlineLesson): string {
-    if (lesson.schedule_text) return lesson.schedule_text
     const days = lesson.day_of_week?.map(d => DAYS_JA[d]).join('・') ?? ''
     const start = lesson.start_time ? lesson.start_time.substring(0, 5) : ''
     const end = lesson.end_time ? lesson.end_time.substring(0, 5) : ''
@@ -41,7 +39,6 @@ function formatSchedule(lesson: OnlineLesson): string {
 function getJoinStatus(lesson: OnlineLesson): {
     canJoin: boolean
     statusLabel: string
-    minutesUntil: number | null
     isOngoing: boolean
 } {
     const jstNow = getJstNow()
@@ -54,58 +51,26 @@ function getJoinStatus(lesson: OnlineLesson): {
 
     // If no schedule set, always allow
     if (!days || days.length === 0 || !startTime) {
-        return { canJoin: true, statusLabel: '参加可能', minutesUntil: null, isOngoing: true }
+        return { canJoin: true, statusLabel: '開催中', isOngoing: true }
     }
 
     const startMin = timeToMinutes(startTime)
     const endMin = endTime ? timeToMinutes(endTime) : startMin + 60
 
-    const isCorrectDay = days.includes(todayDow)
-
-    if (!isCorrectDay) {
-        // Find next occurrence
-        const daysUntilNext = days.map(d => {
-            const diff = (d - todayDow + 7) % 7
-            return diff === 0 ? 7 : diff
-        })
-        const minDays = Math.min(...daysUntilNext)
-        const nextDay = days.find(d => (d - todayDow + 7) % 7 === minDays) ?? days[0]
-        return {
-            canJoin: false,
-            statusLabel: `次回: ${DAYS_FULL[nextDay]} ${startTime.substring(0, 5)}`,
-            minutesUntil: null,
-            isOngoing: false,
-        }
+    if (!days.includes(todayDow)) {
+        return { canJoin: false, statusLabel: '時間外', isOngoing: false }
     }
 
     // Today is correct day
-    const isOngoing = currentMinutes >= startMin && currentMinutes < endMin
-    const minutesUntilStart = startMin - currentMinutes
-    const canJoin = minutesUntilStart <= 5 && currentMinutes < endMin // 5分前から
-
-    if (currentMinutes >= endMin) {
-        // Find next week occurrence
-        const nextDay = days[0]
-        return {
-            canJoin: false,
-            statusLabel: `次回: 来週${DAYS_JA[nextDay]}曜日 ${startTime.substring(0, 5)}`,
-            minutesUntil: null,
-            isOngoing: false,
-        }
-    }
+    const isOngoing = currentMinutes >= startMin && currentMinutes <= endMin
 
     if (isOngoing) {
-        return { canJoin: true, statusLabel: '開催中！', minutesUntil: 0, isOngoing: true }
-    }
-
-    if (canJoin) {
-        return { canJoin: true, statusLabel: 'まもなく開始', minutesUntil: minutesUntilStart, isOngoing: false }
+        return { canJoin: true, statusLabel: '開催中', isOngoing: true }
     }
 
     return {
         canJoin: false,
-        statusLabel: `${minutesUntilStart}分後に開始`,
-        minutesUntil: minutesUntilStart,
+        statusLabel: '時間外',
         isOngoing: false,
     }
 }
@@ -165,8 +130,8 @@ function LessonCard({ lesson, onJoin }: { lesson: OnlineLesson; onJoin: (url: st
                         onClick={() => onJoin(lesson.meet_url)}
                         disabled={!status.canJoin}
                         className={`flex items-center space-x-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all ${status.canJoin
-                                ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-md hover:shadow-lg transform hover:scale-105 active:scale-95'
-                                : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                            ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-md hover:shadow-lg transform hover:scale-105 active:scale-95'
+                            : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                             }`}
                     >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -176,14 +141,6 @@ function LessonCard({ lesson, onJoin }: { lesson: OnlineLesson; onJoin: (url: st
                     </button>
                 </div>
 
-                {/* Countdown when close */}
-                {!status.canJoin && status.minutesUntil !== null && status.minutesUntil <= 30 && (
-                    <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-xl">
-                        <p className="text-xs text-yellow-700 text-center">
-                            ⏱ 開始 {status.minutesUntil} 分前にボタンが有効になります
-                        </p>
-                    </div>
-                )}
             </div>
         </div>
     )
@@ -247,7 +204,7 @@ export default function OnlineLessonPage() {
                     </button>
                     <div>
                         <h1 className="text-lg font-bold text-gray-900">オンラインレッスン</h1>
-                        <p className="text-xs text-gray-400">開始5分前から参加できます</p>
+                        <p className="text-xs text-gray-400">開始時間から参加できます</p>
                     </div>
                 </div>
             </div>
@@ -274,7 +231,7 @@ export default function OnlineLessonPage() {
                             <h3 className="font-semibold text-gray-800 mb-3">参加方法</h3>
                             <div className="space-y-3">
                                 {[
-                                    { step: '1', text: '開始5分前になると「参加する」ボタンが青くなります' },
+                                    { step: '1', text: '開始時間になると「参加する」ボタンが青くなります' },
                                     { step: '2', text: 'ボタンをタップするとGoogle Meetが開きます' },
                                     { step: '3', text: 'カメラとマイクを確認して「参加」を押してください' },
                                 ].map(item => (

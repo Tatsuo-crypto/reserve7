@@ -12,7 +12,6 @@ interface OnlineLesson {
     id: string
     title: string
     meet_url: string
-    schedule_text: string
     description: string
     is_active: boolean
     day_of_week: number[] | null
@@ -23,7 +22,6 @@ interface OnlineLesson {
 const emptyLesson = (): Omit<OnlineLesson, 'id'> => ({
     title: '',
     meet_url: '',
-    schedule_text: '',
     description: '',
     is_active: true,
     day_of_week: [],
@@ -32,7 +30,6 @@ const emptyLesson = (): Omit<OnlineLesson, 'id'> => ({
 })
 
 function formatSchedule(lesson: OnlineLesson | Omit<OnlineLesson, 'id'>): string {
-    if ('schedule_text' in lesson && lesson.schedule_text) return lesson.schedule_text
     const days = lesson.day_of_week?.map(d => DAYS_JA[d]).join('・') ?? ''
     const start = lesson.start_time ? lesson.start_time.substring(0, 5) : ''
     const end = lesson.end_time ? lesson.end_time.substring(0, 5) : ''
@@ -76,7 +73,6 @@ export default function AdminOnlineLessonPage() {
             setForm({
                 title: lesson.title,
                 meet_url: lesson.meet_url,
-                schedule_text: lesson.schedule_text,
                 description: lesson.description,
                 is_active: lesson.is_active,
                 day_of_week: lesson.day_of_week || [],
@@ -115,7 +111,6 @@ export default function AdminOnlineLessonPage() {
             const body = {
                 title: form.title,
                 meetUrl: form.meet_url,
-                scheduleText: form.schedule_text,
                 description: form.description,
                 isActive: form.is_active,
                 dayOfWeek: form.day_of_week,
