@@ -175,24 +175,24 @@ export default function AdminOnlineLessonPage() {
         <div className="min-h-screen bg-gray-50">
             <div className="max-w-2xl mx-auto px-4 py-8">
                 {/* Header */}
-                <div className="flex items-center justify-between mb-8">
-                    <div className="flex items-center">
-                        <Link href="/dashboard" className="mr-4 text-gray-400 hover:text-gray-600">
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="flex items-center justify-between mb-8 gap-2">
+                    <div className="flex items-center min-w-0">
+                        <Link href="/dashboard" className="mr-2 sm:mr-4 flex-shrink-0 text-gray-400 hover:text-gray-600">
+                            <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                             </svg>
                         </Link>
-                        <div>
-                            <h1 className="text-2xl font-bold text-gray-900">オンラインレッスン設定</h1>
-                            <p className="text-sm text-gray-500 mt-0.5">複数のレッスンを登録できます</p>
+                        <div className="min-w-0">
+                            <h1 className="text-lg sm:text-2xl font-bold text-gray-900 whitespace-nowrap overflow-hidden text-ellipsis">オンラインレッスン設定</h1>
+                            <p className="text-xs sm:text-sm text-gray-500 mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">複数のレッスンを登録できます</p>
                         </div>
                     </div>
                     {editingId === null && (
                         <button
                             onClick={() => startEdit()}
-                            className="flex items-center space-x-1 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors text-sm font-medium shadow-sm"
+                            className="flex-shrink-0 flex items-center space-x-1 px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors text-sm font-medium shadow-sm whitespace-nowrap"
                         >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-4 h-4 hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                             </svg>
                             <span>追加</span>
