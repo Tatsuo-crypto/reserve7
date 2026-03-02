@@ -186,9 +186,9 @@ export default function AdminOnlineLessonPage() {
                     </div>
 
                     {/* Center: Title & Subtitle */}
-                    <div className="absolute inset-x-0 flex flex-col items-center pointer-events-none">
-                        <h1 className="text-lg sm:text-2xl font-bold text-gray-900 pointer-events-auto">オンラインレッスン</h1>
-                        <p className="text-xs sm:text-sm text-gray-500 mt-0.5 pointer-events-auto text-center hidden sm:block">複数のレッスンを登録できます</p>
+                    <div className="absolute inset-x-0 flex flex-col items-center pointer-events-none mt-1 sm:mt-0">
+                        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 pointer-events-auto">オンラインレッスン</h1>
+                        <p className="text-[10px] sm:text-sm text-gray-500 mt-1 sm:mt-0.5 pointer-events-auto text-center">複数のレッスンを登録できます</p>
                     </div>
 
                     {/* Right: Add button */}
