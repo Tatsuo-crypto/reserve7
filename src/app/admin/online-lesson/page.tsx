@@ -176,16 +176,16 @@ export default function AdminOnlineLessonPage() {
             <div className="max-w-2xl mx-auto px-4 py-8">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-8 gap-2">
-                    <div className="flex items-center min-w-0">
-                        <Link href="/dashboard" className="mr-2 sm:mr-4 flex-shrink-0 text-gray-400 hover:text-gray-600">
-                            <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                            </svg>
-                        </Link>
-                        <div className="min-w-0">
+                    <div className="flex-1 min-w-0 mr-4">
+                        <div className="flex items-center mb-0.5">
+                            <Link href="/dashboard" className="mr-2 sm:mr-3 flex-shrink-0 text-gray-400 hover:text-gray-600">
+                                <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                                </svg>
+                            </Link>
                             <h1 className="text-lg sm:text-2xl font-bold text-gray-900 whitespace-nowrap overflow-hidden text-ellipsis">オンラインレッスン設定</h1>
-                            <p className="text-xs sm:text-sm text-gray-500 mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">複数のレッスンを登録できます</p>
                         </div>
+                        <p className="text-xs sm:text-sm text-gray-500 whitespace-nowrap overflow-hidden text-ellipsis ml-7 sm:ml-9">複数のレッスンを登録できます</p>
                     </div>
                     {editingId === null && (
                         <button
