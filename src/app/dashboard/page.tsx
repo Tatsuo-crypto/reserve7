@@ -240,6 +240,24 @@ function AdminDashboard() {
               <p className="text-base text-gray-600 leading-relaxed">会員数・売上推移の分析</p>
             </div>
           </Link>
+
+          {/* オンラインレッスン */}
+          <Link
+            href="/admin/online-lesson"
+            className="group bg-gradient-to-br from-white to-orange-50 hover:from-orange-50 hover:to-orange-100 border border-orange-200 p-8 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col min-h-[200px] transform hover:-translate-y-1"
+          >
+            <div className="flex items-center mb-6">
+              <div className="w-16 h-16 bg-gradient-to-br from-orange-100 to-orange-200 rounded-xl flex items-center justify-center group-hover:from-orange-200 group-hover:to-orange-300 transition-all duration-300 shadow-sm">
+                <svg className="w-8 h-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.069A1 1 0 0121 8.845v6.309a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+              </div>
+            </div>
+            <div className="flex-1">
+              <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-orange-800 transition-colors duration-200">オンラインレッスン</h3>
+              <p className="text-base text-gray-600 leading-relaxed">スケジュールとURLの管理</p>
+            </div>
+          </Link>
         </div>
       </div>
     </div>
