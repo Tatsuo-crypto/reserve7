@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
 
         const { data: lessons, error: lessonError } = await supabaseAdmin
             .from('online_lessons')
-            .select('id, title, meet_url, schedule_text, description, is_active, day_of_week, start_time, end_time')
+            .select('id, title, meet_url, description, day_of_week, start_time, end_time, difficulty')
             .eq('store_id', user.store_id)
             .eq('is_active', true)
             .order('created_at', { ascending: true })

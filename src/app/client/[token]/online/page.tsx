@@ -15,6 +15,7 @@ interface OnlineLesson {
     day_of_week: number[] | null
     start_time: string | null
     end_time: string | null
+    difficulty: string
 }
 
 function getJstNow() {
@@ -93,9 +94,14 @@ function LessonCard({ lesson, onJoin }: { lesson: OnlineLesson; onJoin: (url: st
             <div className={`p-5 ${status.isOngoing ? 'bg-gradient-to-r from-blue-500 to-indigo-600' : 'bg-gradient-to-r from-gray-100 to-gray-50'}`}>
                 <div className="flex items-start justify-between">
                     <div className="flex-1">
-                        <h3 className={`font-bold text-lg ${status.isOngoing ? 'text-white' : 'text-gray-800'}`}>
-                            {lesson.title}
-                        </h3>
+                        <div className="flex items-center space-x-2">
+                            <h3 className={`font-bold text-lg ${status.isOngoing ? 'text-white' : 'text-gray-800'}`}>
+                                {lesson.title}
+                            </h3>
+                            <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-blue-100 text-blue-700">
+                                {lesson.difficulty || '初心者'}
+                            </span>
+                        </div>
                         {schedule && (
                             <p className={`text-sm mt-1 ${status.isOngoing ? 'text-blue-100' : 'text-gray-500'}`}>
                                 📅 {schedule}

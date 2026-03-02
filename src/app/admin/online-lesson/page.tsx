@@ -13,20 +13,22 @@ interface OnlineLesson {
     title: string
     meet_url: string
     description: string
-    is_active: boolean
     day_of_week: number[] | null
     start_time: string | null
     end_time: string | null
+    difficulty: string
+    url_expires_at: string | null
 }
 
 const emptyLesson = (): Omit<OnlineLesson, 'id'> => ({
     title: '',
     meet_url: '',
     description: '',
-    is_active: true,
     day_of_week: [],
     start_time: '',
     end_time: '',
+    difficulty: '初心者',
+    url_expires_at: '',
 })
 
 function formatSchedule(lesson: OnlineLesson | Omit<OnlineLesson, 'id'>): string {
@@ -74,10 +76,11 @@ export default function AdminOnlineLessonPage() {
                 title: lesson.title,
                 meet_url: lesson.meet_url,
                 description: lesson.description,
-                is_active: lesson.is_active,
                 day_of_week: lesson.day_of_week || [],
                 start_time: lesson.start_time ? lesson.start_time.substring(0, 5) : '',
                 end_time: lesson.end_time ? lesson.end_time.substring(0, 5) : '',
+                difficulty: lesson.difficulty || '初心者',
+                url_expires_at: lesson.url_expires_at ? lesson.url_expires_at.substring(0, 10) : '',
             })
             setEditingId(lesson.id)
         } else {
@@ -112,10 +115,11 @@ export default function AdminOnlineLessonPage() {
                 title: form.title,
                 meetUrl: form.meet_url,
                 description: form.description,
-                isActive: form.is_active,
                 dayOfWeek: form.day_of_week,
                 startTime: form.start_time || null,
                 endTime: form.end_time || null,
+                difficulty: form.difficulty,
+                urlExpiresAt: form.url_expires_at || null,
             }
 
             let res: Response
@@ -298,19 +302,36 @@ export default function AdminOnlineLessonPage() {
                                 />
                             </div>
 
-                            {/* Active Toggle */}
-                            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-                                <div>
-                                    <p className="text-sm font-semibold text-gray-700">公開する</p>
-                                    <p className="text-xs text-gray-400">OFFにすると会員に表示されません</p>
+                            {/* Difficulty */}
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">難易度</label>
+                                <div className="flex space-x-4">
+                                    {['初心者', '中級', '上級'].map(diff => (
+                                        <label key={diff} className="flex items-center space-x-2 cursor-pointer">
+                                            <input
+                                                type="radio"
+                                                name="difficulty"
+                                                value={diff}
+                                                checked={form.difficulty === diff}
+                                                onChange={e => setForm(p => ({ ...p, difficulty: e.target.value }))}
+                                                className="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                                            />
+                                            <span className="text-sm text-gray-700">{diff}</span>
+                                        </label>
+                                    ))}
                                 </div>
-                                <button
-                                    type="button"
-                                    onClick={() => setForm(p => ({ ...p, is_active: !p.is_active }))}
-                                    className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${form.is_active ? 'bg-blue-600' : 'bg-gray-300'}`}
-                                >
-                                    <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition-transform ${form.is_active ? 'translate-x-6' : 'translate-x-1'}`} />
-                                </button>
+                            </div>
+
+                            {/* URL Expiration */}
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-1.5">URL有効期限</label>
+                                <input
+                                    type="date"
+                                    value={form.url_expires_at || ''}
+                                    onChange={e => setForm(p => ({ ...p, url_expires_at: e.target.value }))}
+                                    className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                />
+                                <p className="text-xs text-gray-500 mt-1">※設定した期限の1週間前からアラートが表示されます</p>
                             </div>
 
                             {error && (
@@ -350,13 +371,13 @@ export default function AdminOnlineLessonPage() {
                 ) : (
                     <div className="space-y-4">
                         {lessons.map(lesson => (
-                            <div key={lesson.id} className={`bg-white rounded-2xl shadow-sm border p-5 ${lesson.is_active ? 'border-gray-100' : 'border-gray-200 opacity-60'}`}>
+                            <div key={lesson.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
                                 <div className="flex items-start justify-between">
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center space-x-2 mb-1">
                                             <h3 className="font-bold text-gray-900 text-lg">{lesson.title}</h3>
-                                            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${lesson.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                                                {lesson.is_active ? '公開中' : '非公開'}
+                                            <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-blue-100 text-blue-700">
+                                                {lesson.difficulty || '初心者'}
                                             </span>
                                         </div>
                                         <p className="text-sm text-blue-600 mb-1">
@@ -365,6 +386,12 @@ export default function AdminOnlineLessonPage() {
                                         <p className="text-xs text-gray-400 truncate">{lesson.meet_url}</p>
                                         {lesson.description && (
                                             <p className="text-xs text-gray-500 mt-1 line-clamp-2">{lesson.description}</p>
+                                        )}
+                                        {lesson.url_expires_at && new Date(lesson.url_expires_at).getTime() - new Date().getTime() <= 7 * 24 * 60 * 60 * 1000 && (
+                                            <div className="mt-3 p-2 bg-red-50 border border-red-200 rounded-lg text-red-700 text-xs flex items-center">
+                                                <svg className="w-4 h-4 mr-1.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                                                URLの有効期限が近づいています（{lesson.url_expires_at.substring(0, 10)}）
+                                            </div>
                                         )}
                                     </div>
                                     <div className="flex items-center space-x-2 ml-3 flex-shrink-0">

@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
         const { user } = auth
 
         const body = await request.json()
-        const { title, meetUrl, scheduleText, description, isActive, dayOfWeek, startTime, endTime } = body
+        const { title, meetUrl, description, dayOfWeek, startTime, endTime, difficulty, urlExpiresAt } = body
 
         if (!meetUrl) {
             return NextResponse.json({ error: 'Google Meetリンクは必須です' }, { status: 400 })
@@ -47,12 +47,13 @@ export async function POST(request: NextRequest) {
                 store_id: user.storeId,
                 title: title || 'オンラインレッスン',
                 meet_url: meetUrl,
-                schedule_text: scheduleText || '',
                 description: description || '',
-                is_active: isActive !== false,
+                is_active: true,
                 day_of_week: dayOfWeek || null,
                 start_time: startTime || null,
                 end_time: endTime || null,
+                difficulty: difficulty || '初心者',
+                url_expires_at: urlExpiresAt || null,
             })
             .select()
             .single()
@@ -76,19 +77,20 @@ export async function PUT(request: NextRequest) {
         if (!id) return NextResponse.json({ error: 'IDが必要です' }, { status: 400 })
 
         const body = await request.json()
-        const { title, meetUrl, scheduleText, description, isActive, dayOfWeek, startTime, endTime } = body
+        const { title, meetUrl, description, dayOfWeek, startTime, endTime, difficulty, urlExpiresAt } = body
 
         const { data, error } = await supabaseAdmin
             .from('online_lessons')
             .update({
                 title: title || 'オンラインレッスン',
                 meet_url: meetUrl,
-                schedule_text: scheduleText || '',
                 description: description || '',
-                is_active: isActive !== false,
+                is_active: true,
                 day_of_week: dayOfWeek || null,
                 start_time: startTime || null,
                 end_time: endTime || null,
+                difficulty: difficulty || '初心者',
+                url_expires_at: urlExpiresAt || null,
                 updated_at: new Date().toISOString(),
             })
             .eq('id', id)
