@@ -160,6 +160,14 @@ export default function OnlineLessonPage() {
     const [lessons, setLessons] = useState<OnlineLesson[]>([])
     const [loading, setLoading] = useState(true)
     const [joining, setJoining] = useState<string | null>(null)
+    const [isIOS, setIsIOS] = useState(false)
+    const [showIOSBanner, setShowIOSBanner] = useState(true)
+
+    useEffect(() => {
+        const ua = navigator.userAgent
+        const ios = /iPhone|iPad|iPod/.test(ua)
+        setIsIOS(ios)
+    }, [])
 
     useEffect(() => {
         if (!token) return
@@ -215,6 +223,46 @@ export default function OnlineLessonPage() {
                 </div>
             </div>
 
+            {/* iOS App Banner */}
+            {isIOS && showIOSBanner && (
+                <div className="bg-blue-600 text-white">
+                    <div className="max-w-lg mx-auto px-4 py-3">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-3">
+                                <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center flex-shrink-0">
+                                    <svg className="w-6 h-6 text-blue-600" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M15 10l4.553-2.069A1 1 0 0121 8.845v6.309a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <p className="text-sm font-bold">アプリのダウンロードが必要です</p>
+                                    <p className="text-xs text-blue-100">iPhoneではGoogle Meetアプリから参加します</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <a
+                                    href="https://apps.apple.com/jp/app/google-meet/id1270665395"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="bg-white text-blue-600 text-xs font-bold px-3 py-1.5 rounded-lg whitespace-nowrap"
+                                >
+                                    App Store
+                                </a>
+                                <button
+                                    onClick={() => setShowIOSBanner(false)}
+                                    className="text-blue-200 hover:text-white ml-1"
+                                    aria-label="閉じる"
+                                >
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <div className="max-w-lg mx-auto px-4 py-6">
                 {lessons.length === 0 ? (
                     <div className="text-center py-16">
@@ -236,11 +284,16 @@ export default function OnlineLessonPage() {
                         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mt-2">
                             <h3 className="font-semibold text-gray-800 mb-3">参加方法</h3>
                             <div className="space-y-3">
-                                {[
+                                {(isIOS ? [
+                                    { step: '1', text: 'App StoreからGoogle Meetアプリをダウンロードしておいてください' },
+                                    { step: '2', text: '開始時間になると「参加する」ボタンが青くなります' },
+                                    { step: '3', text: 'ボタンをタップするとGoogle Meetアプリが開きます' },
+                                    { step: '4', text: 'カメラとマイクを確認して「参加」を押してください' },
+                                ] : [
                                     { step: '1', text: '開始時間になると「参加する」ボタンが青くなります' },
                                     { step: '2', text: 'ボタンをタップするとGoogle Meetが開きます' },
                                     { step: '3', text: 'カメラとマイクを確認して「参加」を押してください' },
-                                ].map(item => (
+                                ]).map(item => (
                                     <div key={item.step} className="flex items-start space-x-3">
                                         <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
                                             <span className="text-blue-600 font-bold text-xs">{item.step}</span>
@@ -248,6 +301,19 @@ export default function OnlineLessonPage() {
                                         <p className="text-gray-600 text-sm leading-relaxed pt-0.5">{item.text}</p>
                                     </div>
                                 ))}
+                                {isIOS && (
+                                    <a
+                                        href="https://apps.apple.com/jp/app/google-meet/id1270665395"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="mt-2 flex items-center justify-center w-full py-3 bg-blue-600 text-white rounded-xl font-medium text-sm space-x-2 hover:bg-blue-700 transition-colors"
+                                    >
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                                        </svg>
+                                        <span>App StoreでGoogle Meetをダウンロード</span>
+                                    </a>
+                                )}
                             </div>
                         </div>
                     </div>
