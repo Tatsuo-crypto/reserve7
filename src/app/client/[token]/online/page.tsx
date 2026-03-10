@@ -20,8 +20,9 @@ interface OnlineLesson {
 
 function getJstNow() {
     const now = new Date()
-    // Add 9 hours offset to get JST
-    return new Date(now.getTime() + 9 * 60 * 60 * 1000)
+    // Get UTC time and add 9 hours for JST
+    const utc = now.getTime() + (now.getTimezoneOffset() * 60000)
+    return new Date(utc + (9 * 60 * 60 * 1000))
 }
 
 function timeToMinutes(t: string): number {
@@ -43,8 +44,8 @@ function getJoinStatus(lesson: OnlineLesson): {
     isOngoing: boolean
 } {
     const jstNow = getJstNow()
-    const todayDow = jstNow.getUTCDay()
-    const currentMinutes = jstNow.getUTCHours() * 60 + jstNow.getUTCMinutes()
+    const todayDow = jstNow.getDay() // Use getDay() on JST instance
+    const currentMinutes = jstNow.getHours() * 60 + jstNow.getMinutes()
 
     const days = lesson.day_of_week
     const startTime = lesson.start_time
@@ -59,19 +60,30 @@ function getJoinStatus(lesson: OnlineLesson): {
     const endMin = endTime ? timeToMinutes(endTime) : startMin + 60
 
     if (!days.includes(todayDow)) {
-        return { canJoin: false, statusLabel: '時間外', isOngoing: false }
+        return { canJoin: false, statusLabel: '準備中', isOngoing: false }
     }
 
     // Today is correct day
+    // Allow join from 5 mins before start until end
+    const canJoinNow = currentMinutes >= (startMin - 5) && currentMinutes <= endMin
     const isOngoing = currentMinutes >= startMin && currentMinutes <= endMin
 
-    if (isOngoing) {
-        return { canJoin: true, statusLabel: '開催中', isOngoing: true }
+    if (canJoinNow) {
+        return {
+            canJoin: true,
+            statusLabel: isOngoing ? '開催中' : 'まもなく開始',
+            isOngoing: true // treat as active UI-wise
+        }
+    }
+
+    // Correct day but more than 5 mins before
+    if (currentMinutes < startMin) {
+        return { canJoin: false, statusLabel: 'まもなく開始', isOngoing: false }
     }
 
     return {
         canJoin: false,
-        statusLabel: '時間外',
+        statusLabel: '終了',
         isOngoing: false,
     }
 }
@@ -159,6 +171,7 @@ export default function OnlineLessonPage() {
 
     const [lessons, setLessons] = useState<OnlineLesson[]>([])
     const [loading, setLoading] = useState(true)
+    const [error, setError] = useState<string | null>(null)
     const [joining, setJoining] = useState<string | null>(null)
     const [isIOS, setIsIOS] = useState(false)
     const [showIOSBanner, setShowIOSBanner] = useState(true)
@@ -176,13 +189,24 @@ export default function OnlineLessonPage() {
 
     const fetchLessons = async () => {
         setLoading(true)
+        setError(null)
         try {
-            const res = await fetch(`/api/client/online-lesson?token=${token}`)
+            const url = `/api/client/online-lesson?token=${token}`
+            console.log('Fetching lessons from:', url)
+            const res = await fetch(url)
+            console.log('Response status:', res.status)
             if (res.ok) {
                 const data = await res.json()
+                console.log('Lessons data:', data)
                 setLessons(data.lessons || [])
+            } else {
+                const data = await res.json().catch(() => ({}))
+                setError(data.error || 'レッスンの取得に失敗しました')
             }
-        } catch (e) { console.error(e) }
+        } catch (e) {
+            console.error('Fetch error:', e)
+            setError('通信エラーが発生しました')
+        }
         finally { setLoading(false) }
     }
 
@@ -218,7 +242,7 @@ export default function OnlineLessonPage() {
                     </button>
                     <div>
                         <h1 className="text-lg font-bold text-gray-900">オンラインレッスン</h1>
-                        <p className="text-xs text-gray-400">開始時間から参加できます</p>
+                        <p className="text-xs text-blue-600 font-medium">開始5分前から参加できます</p>
                     </div>
                 </div>
             </div>
@@ -264,7 +288,22 @@ export default function OnlineLessonPage() {
             )}
 
             <div className="max-w-lg mx-auto px-4 py-6">
-                {lessons.length === 0 ? (
+                {error ? (
+                    <div className="text-center py-16">
+                        <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                        <p className="text-gray-700 font-medium">{error}</p>
+                        <button
+                            onClick={fetchLessons}
+                            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm"
+                        >
+                            再試行
+                        </button>
+                    </div>
+                ) : lessons.length === 0 ? (
                     <div className="text-center py-16">
                         <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
                             <svg className="w-12 h-12 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
