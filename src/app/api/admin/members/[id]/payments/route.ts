@@ -34,7 +34,7 @@ export async function GET(
       .order('payment_date', { ascending: false })
 
     if (salesError) throw salesError
-    
+
     console.log('Sales data fetched:', sales?.map(s => ({ target_date: s.target_date, memo: s.memo })))
 
     // 3. Fetch Current User Info (fallback for current plan)
@@ -43,7 +43,7 @@ export async function GET(
       .select('*')
       .eq('id', memberId)
       .single()
-    
+
     if (memberError) throw memberError
 
     // Generate a timeline of months
@@ -54,17 +54,34 @@ export async function GET(
       if (firstHistory < startDate) startDate = firstHistory
     }
 
-    // If billing start month is configured, do not show months before it
-    if (member.billing_start_month) {
-      const billingStart = startOfMonth(new Date(member.billing_start_month))
-      if (billingStart > startDate) startDate = billingStart
-    }
-
-    // Normalize to start of month
+    // Normalized registration/history start
     startDate = startOfMonth(startDate)
 
-    // End date: current month (do not show future months)
-    const endDate = endOfMonth(today)
+    // If billing start month is configured, it overrides the start date
+    if (member.billing_start_month) {
+      const billingStart = startOfMonth(parseISO(member.billing_start_month))
+      startDate = billingStart
+    }
+
+    console.log('Timeline range calculated:', {
+      member_created_at: member.created_at,
+      billing_start_month: member.billing_start_month,
+      final_startDate: format(startDate, 'yyyy-MM-dd')
+    })
+
+    // End date determination
+    let endDate = endOfMonth(addMonths(today, 3))
+
+    // If user has withdrawn or suspended in the latest history, stop the timeline there
+    if (history && history.length > 0) {
+      const latestRect = history[history.length - 1] // sorted ASC
+      if (latestRect.status === 'withdrawn' || latestRect.status === 'suspended') {
+        const hEnd = latestRect.end_date ? endOfMonth(parseISO(latestRect.end_date)) : endOfMonth(parseISO(latestRect.start_date))
+        if (hEnd < endDate) {
+          endDate = hEnd
+        }
+      }
+    }
 
     const timeline = []
     let current = startDate
@@ -75,81 +92,63 @@ export async function GET(
       const monthEnd = endOfMonth(current)
 
       // A. Determine Plan & Fee for this month from History
-      // Find the history record active for this month
-      let activeRecord = history?.find(h => {
-        const hStart = new Date(h.start_date)
-        const hEnd = h.end_date ? new Date(h.end_date) : null
-        return hStart <= monthEnd && (!hEnd || hEnd >= monthStart)
-      })
-
-      // If multiple records in a month, use the latest one
+      // Find history records that overlap with this month
       const monthlyRecords = history?.filter(h => {
-         const hStart = new Date(h.start_date)
-         const hEnd = h.end_date ? new Date(h.end_date) : null
-         return hStart <= monthEnd && (!hEnd || hEnd >= monthStart)
-      })
-      
-      if (monthlyRecords && monthlyRecords.length > 0) {
-          monthlyRecords.sort((a, b) => new Date(b.start_date).getTime() - new Date(a.start_date).getTime())
-          activeRecord = monthlyRecords[0]
+        const hStart = startOfMonth(parseISO(h.start_date))
+        const hEnd = h.end_date ? endOfMonth(parseISO(h.end_date)) : null
+        return hStart <= monthEnd && (!hEnd || hEnd >= monthStart)
+      }) || []
+
+      let activeRecord = null
+      if (monthlyRecords.length > 0) {
+        // Sort by start_date descending to get the latest change in that month
+        monthlyRecords.sort((a, b) => new Date(b.start_date).getTime() - new Date(a.start_date).getTime())
+        activeRecord = monthlyRecords[0]
       }
 
-      // If no history record covers this month, inherit from the most recent previous record
+      // If no history record covers this month, look for the most recent one BEFORE this month
       if (!activeRecord && history && history.length > 0) {
-        const previousRecord = history
-          .filter(h => new Date(h.start_date) < monthStart)
+        activeRecord = history
+          .filter(h => startOfMonth(parseISO(h.start_date)) < monthStart)
           .sort((a, b) => new Date(b.start_date).getTime() - new Date(a.start_date).getTime())[0]
-        
-        if (previousRecord) {
-          activeRecord = previousRecord
+      }
+
+      // Find actual payment
+      const actualPayment = sales?.find(s => {
+        if (s.target_date) {
+          return s.target_date.startsWith(monthStr) && s.type === 'monthly_fee'
+        }
+        return s.payment_date.startsWith(monthStr) && s.type === 'monthly_fee'
+      })
+
+      // C. Determine Status & Amount
+      let planName = activeRecord?.plan || member.plan || ''
+      let fee = activeRecord?.monthly_fee ?? member.monthly_fee ?? 0
+      let mStatus = activeRecord?.status ?? member.status ?? 'active'
+
+      // If status is suspended or withdrawn, expected fee should be 0
+      if (mStatus === 'suspended' || mStatus === 'withdrawn') {
+        fee = 0
+        if (!planName) {
+          planName = mStatus === 'suspended' ? '休会' : '退会'
         }
       }
 
-      // B. Find actual payment
-      const actualPayment = sales?.find(s => {
-          // target_date is typically 'yyyy-MM-01'
-          if (s.target_date) {
-              return s.target_date.startsWith(monthStr) && s.type === 'monthly_fee'
-          }
-          // Fallback: check payment_date if target_date is missing (unlikely for monthly_fee)
-          return s.payment_date.startsWith(monthStr) && s.type === 'monthly_fee'
-      })
-      
-      if (actualPayment) {
-        console.log(`Found payment for ${monthStr}, memo:`, actualPayment.memo)
-      }
-
-      // C. Determine Status & Amount
-      let planName = activeRecord?.plan || ''
-      let fee = activeRecord?.monthly_fee ?? 0
       let status = 'unpaid' // default
 
-      // If no active record in history, but we have member.created_at...
-      // Maybe use current member info if date > created_at and no history? 
-      // (For old data compatibility)
-      if (!activeRecord && current >= startOfMonth(new Date(member.created_at))) {
-         // This logic might be flawed if they quit. 
-         // But if they are active now, and we lack history, maybe assume current plan?
-         // Safer to just show 'Unknown' or empty if no history.
-      }
-
-      // Check if "Recess" (recess / 休会)
-      // Usually represented by a specific plan name or status='recess' (if that existed)
-      // Or simply fee is 0.
-      
       // Override fee if actual payment exists (actual is truth)
       if (actualPayment) {
-          status = 'paid'
-          // If actual payment amount differs from plan fee, show actual?
+        status = 'paid'
+        // If actual payment amount differs from plan fee, show actual?
       } else {
-          // Future or Unpaid
-          if (current > today) {
-              status = 'future'
-          } else {
-              // Past or Current Month
-              // If fee is 0, it's "free" or "recess", so effectively "paid" (nothing to pay)
-              if (fee === 0) status = 'n/a'
-          }
+        // Future or Unpaid
+        if (current > today) {
+          status = 'future'
+        } else {
+          // Past or Current Month
+          // If fee is 0, it's "free" or "recess", so effectively "paid" (nothing to pay)
+          if (fee === 0) status = 'n/a'
+        }
       }
 
       timeline.push({
@@ -160,16 +159,26 @@ export async function GET(
         status: status,
         paymentDate: actualPayment?.payment_date ?? null,
         targetDate: actualPayment?.target_date ?? null,
-        membershipStatus: activeRecord?.status ?? 'active',
+        membershipStatus: mStatus,
         memo: actualPayment?.memo ?? null
       })
 
+      // If this month is suspended or withdrawn, and there are no ACTIVE history records after this month,
+      // stop generating the timeline.
+      const hasLaterActiveHistory = history?.some(h => {
+        const hStart = startOfMonth(parseISO(h.start_date))
+        return hStart > monthEnd && h.status === 'active'
+      })
+      if ((mStatus === 'suspended' || mStatus === 'withdrawn') && !hasLaterActiveHistory) {
+        break
+      }
+
       current = addMonths(current, 1)
     }
-    
+
     // Sort timeline descending (newest first)
     timeline.reverse()
-    
+
     console.log('Timeline with memos:', timeline.map(t => ({ month: t.month, memo: t.memo })))
 
     return createSuccessResponse({

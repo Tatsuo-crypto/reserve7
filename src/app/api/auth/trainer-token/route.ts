@@ -8,7 +8,14 @@ export const dynamic = 'force-dynamic'
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
-    const token = searchParams.get('token')
+    const rawToken = searchParams.get('token')
+    const token = rawToken?.trim()
+
+    console.log('[Trainer Token Auth] Received token request:', {
+      hasToken: !!token,
+      tokenLength: token?.length,
+      tokenStart: token ? `${token.substring(0, 5)}...` : 'N/A'
+    })
 
     if (!token) {
       return NextResponse.json(

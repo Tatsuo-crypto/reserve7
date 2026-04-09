@@ -18,7 +18,8 @@ export default function StaffPage() {
         // トークンで認証
         const response = await fetch(`/api/auth/trainer-token?token=${token}`)
         if (!response.ok) {
-          setError('無効なURLです')
+          const errorData = await response.json().catch(() => ({}))
+          setError(errorData.error || '無効なURLです')
           return
         }
         const data = await response.json()

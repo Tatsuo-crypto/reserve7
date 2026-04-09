@@ -18,8 +18,8 @@ export default function NewMemberPage() {
     storeId: '',
     plan: '月4回',
     monthlyFee: '',
-    billingStartMonth: '',
-    transferDay: '',
+    startMonth: '',
+    registrationDate: new Date().toISOString().split('T')[0],
     status: 'active',
     memo: '',
   })
@@ -108,7 +108,14 @@ export default function NewMemberPage() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
+    setFormData(prev => {
+      const newData = { ...prev, [name]: value }
+      // If status changed to suspended or withdrawn, set fee to 0
+      if (name === 'status' && (value === 'suspended' || value === 'withdrawn')) {
+        newData.monthlyFee = '0'
+      }
+      return newData
+    })
   }
 
   return (
@@ -243,44 +250,55 @@ export default function NewMemberPage() {
             <p className="mt-1 text-sm text-gray-500">空欄の場合は0円として登録されます</p>
           </div>
 
-          {/* 課金開始月 (売上計上開始月) */}
+          {/* 開始月 */}
           <div>
-            <label htmlFor="billingStartMonth" className="block text-sm font-medium text-gray-700 mb-2">
-              売上計上開始月
+            <label htmlFor="startMonth" className="block text-sm font-medium text-gray-700 mb-2">
+              開始月
             </label>
             <input
               type="month"
-              id="billingStartMonth"
-              name="billingStartMonth"
-              value={formData.billingStartMonth}
+              id="startMonth"
+              name="startMonth"
+              value={formData.startMonth}
               onChange={handleChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
             <p className="mt-1 text-sm text-gray-500">
-              指定した月から売上に計上されます（例: 2月に入会し、3月から課金開始の場合は「2026年3月」を選択）。指定しない場合は入金された月から即時計上されます。
+              指定した月から売上に計上されます。
             </p>
           </div>
 
-          {/* 振込日 */}
+          {/* 登録日 */}
           <div>
-            <label htmlFor="transferDay" className="block text-sm font-medium text-gray-700 mb-2">
-              振込日（1〜31）
+            <label htmlFor="registrationDate" className="block text-sm font-medium text-gray-700 mb-2">
+              登録日
             </label>
             <input
-              type="number"
-              id="transferDay"
-              name="transferDay"
-              value={formData.transferDay}
+              type="date"
+              id="registrationDate"
+              name="registrationDate"
+              value={formData.registrationDate}
               onChange={handleChange}
-              min="1"
-              max="31"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="27"
             />
-            <p className="mt-1 text-sm text-gray-500">
-              指定した日付を過ぎても入金がない場合、売上管理で「未振込」と判定されます。<br />
-              空欄の場合はデフォルト（27日）として扱われます。
-            </p>
+          </div>
+
+          {/* ステータス */}
+          <div>
+            <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-2">
+              ステータス
+            </label>
+            <select
+              id="status"
+              name="status"
+              value={formData.status}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="active">有効</option>
+              <option value="suspended">休会</option>
+              <option value="withdrawn">退会</option>
+            </select>
           </div>
 
           {/* メモ */}

@@ -39,7 +39,7 @@ interface SquatRecord {
 }
 
 export default function TrackingModal({ isOpen, onClose, memberId, memberName }: TrackingModalProps) {
-  const [activeTab, setActiveTab] = useState<'yearly' | 'monthly' | 'weight' | 'squat'>('yearly')
+  const [activeTab, setActiveTab] = useState<'yearly' | 'monthly' | 'weight' | 'squat' | 'settings'>('yearly')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
 
@@ -47,6 +47,11 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
   const [monthlyGoals, setMonthlyGoals] = useState<MonthlyGoal[]>([])
   const [weightRecords, setWeightRecords] = useState<WeightRecord[]>([])
   const [squatRecords, setSquatRecords] = useState<SquatRecord[]>([])
+  
+  const [settings, setSettings] = useState({
+    visible_items: { steps: false, sleep: false, water: false, alcohol: false },
+    visible_tabs: { input: false, analyze: false, progress: false }
+  })
 
   // フォーム入力
   const [yearlyForm, setYearlyForm] = useState({ year: new Date().getFullYear(), goal_text: '' })
@@ -74,15 +79,27 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
   const fetchData = async () => {
     setLoading(true)
     try {
-      const response = await fetch(`/api/admin/tracking?userId=${memberId}`)
-      if (response.ok) {
-        const data = await response.json()
+      const [trackingRes, settingsRes] = await Promise.all([
+        fetch(`/api/admin/tracking?userId=${memberId}`),
+        fetch(`/api/lifestyle/settings?userId=${memberId}`) // This API needs to handle userId from admin side
+      ])
+
+      if (trackingRes.ok) {
+        const data = await trackingRes.json()
         setYearlyGoals(data.yearlyGoals || [])
         setMonthlyGoals(data.monthlyGoals || [])
         setWeightRecords(data.weightRecords || [])
         setSquatRecords(data.squatRecords || [])
-      } else {
-        setMessage('データの取得に失敗しました')
+      }
+
+      if (settingsRes.ok) {
+        const { data } = await settingsRes.json()
+        if (data) {
+          setSettings({
+            visible_items: data.visible_items || { steps: true, sleep: true, water: true, alcohol: true },
+            visible_tabs: data.visible_tabs || { input: true, analyze: true, progress: true }
+          })
+        }
       }
     } catch (error) {
       console.error('Fetch error:', error)
@@ -170,6 +187,33 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
     }
   }
 
+  const handleSettingsSave = async () => {
+    setLoading(true)
+    try {
+      const response = await fetch('/api/lifestyle/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: memberId, // backend needs to handle userId for admin
+          visibleItems: settings.visible_items,
+          visibleTabs: settings.visible_tabs
+        })
+      })
+
+      if (response.ok) {
+        setMessage('設定を保存しました')
+      } else {
+        throw new Error('保存に失敗しました')
+      }
+    } catch (error) {
+      console.error('Settings save error:', error)
+      setMessage('保存に失敗しました')
+    } finally {
+      setLoading(false)
+      setTimeout(() => setMessage(''), 3000)
+    }
+  }
+
   const resetForm = (type: string) => {
     switch (type) {
       case 'yearly_goal':
@@ -245,6 +289,11 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                 key: 'squat', 
                 label: 'SQ記録',
                 icon: <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+              },
+              { 
+                key: 'settings', 
+                label: '表示設定',
+                icon: <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><circle cx="12" cy="12" r="3" strokeWidth={2} /></svg>
               },
             ].map((tab) => (
               <button
@@ -850,6 +899,47 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                     ))}
                   </div>
                 )}
+              </div>
+            </div>
+          )}
+          {/* 表示設定 */}
+          {activeTab === 'settings' && (
+            <div className="space-y-8">
+              <div>
+                <h3 className="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <span className="w-1 h-4 bg-blue-600 rounded-full"></span>
+                  食事管理機能の設定
+                </h3>
+                <p className="text-xs text-gray-500 mb-4">会員用アプリに食事管理に関連する全機能（入力・分析・進捗・各項目）を表示します</p>
+                
+                <label className="flex items-center gap-4 p-6 bg-blue-50/50 border border-blue-100 rounded-2xl cursor-pointer hover:bg-blue-50 transition-all active:scale-[0.98]">
+                  <input
+                    type="checkbox"
+                    checked={settings.visible_tabs.input && settings.visible_tabs.analyze && settings.visible_tabs.progress}
+                    onChange={(e) => {
+                      const isChecked = e.target.checked;
+                      setSettings({
+                        visible_tabs: { input: isChecked, analyze: isChecked, progress: isChecked },
+                        visible_items: { steps: isChecked, sleep: isChecked, water: isChecked, alcohol: isChecked }
+                      });
+                    }}
+                    className="w-8 h-8 text-blue-600 border-gray-300 rounded-lg focus:ring-blue-500 transition-all"
+                  />
+                  <div>
+                    <div className="text-lg font-black text-gray-900">食事管理機能を表示する <span className="text-blue-600 ml-1">(ダイエットプラン限定)</span></div>
+                    <div className="text-sm text-gray-600 mt-1 italic">チェックを入れると全ての管理機能（入力・分析・進捗）が会員アプリに表示されます</div>
+                  </div>
+                </label>
+              </div>
+
+              <div className="pt-4">
+                <button
+                  onClick={handleSettingsSave}
+                  disabled={loading}
+                  className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black shadow-lg hover:bg-blue-700 transition-all active:scale-95 disabled:opacity-50 text-lg"
+                >
+                  {loading ? '保存中...' : '設定を保存する'}
+                </button>
               </div>
             </div>
           )}

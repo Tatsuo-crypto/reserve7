@@ -42,7 +42,8 @@ export default function ClientReservationsContent() {
         // Verify token and get user info
         const userResponse = await fetch(`/api/auth/token?token=${token}`)
         if (!userResponse.ok) {
-          setError('無効なURLです')
+          const errorData = await userResponse.json().catch(() => ({}))
+          setError(errorData.error || '無効なURLです')
           return
         }
         const userData = await userResponse.json()
@@ -51,7 +52,8 @@ export default function ClientReservationsContent() {
         // Get reservations
         const reservationsResponse = await fetch(`/api/client/reservations?token=${token}`)
         if (!reservationsResponse.ok) {
-          setError('予約の取得に失敗しました')
+          const errorData = await reservationsResponse.json().catch(() => ({}))
+          setError(errorData.error || '予約の取得に失敗しました')
           return
         }
         const reservationsData = await reservationsResponse.json()

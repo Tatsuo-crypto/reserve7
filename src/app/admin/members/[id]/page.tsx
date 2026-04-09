@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import { format, addMonths, startOfMonth, parseISO } from 'date-fns'
 import { PLAN_LIST, PLAN_FEES } from '@/lib/constants'
 
 interface PaymentItem {
@@ -27,6 +28,7 @@ interface MemberDetail {
   memo?: string
   createdAt?: string
   googleCalendarEmail?: string
+  status?: string
 }
 
 export default function MemberDetailPage({ params }: { params: { id: string } }) {
@@ -92,7 +94,8 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
           accessToken: m.access_token,
           memo: m.memo,
           createdAt: m.created_at,
-          googleCalendarEmail: m.google_calendar_email
+          googleCalendarEmail: m.google_calendar_email,
+          status: m.status
         })
 
         // Fetch payment history
@@ -174,6 +177,44 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
     }
   }
 
+  const handleAddMonth = () => {
+    // Default to the month after the latest one in payments (highest month since it's reversed)
+    let nextMonth: Date
+    if (payments.length > 0) {
+      // payment.month is 'yyyy-MM', so sort by string comparison or use index 0 as highest if sorted
+      // In the table it's newest first, but the underlying data might be anything.
+      // Filter out 'future' status if needed, but let's just take the max month.
+      const months = payments.map(p => p.month).sort()
+      const latestMonthStr = months[months.length - 1]
+      nextMonth = addMonths(parseISO(`${latestMonthStr}-01`), 1)
+    } else {
+      nextMonth = startOfMonth(new Date())
+    }
+
+    const monthStr = format(nextMonth, 'yyyy-MM')
+    
+    // Create a new item object
+    const newItem: PaymentItem = {
+      month: monthStr,
+      plan: member?.plan || '月4回',
+      expectedAmount: member?.plan ? (PLAN_FEES[member.plan] || 0) : (PLAN_FEES['月4回'] || 13200),
+      actualAmount: null,
+      status: 'future',
+      paymentDate: null,
+      targetDate: null,
+      membershipStatus: 'active'
+    }
+
+    setEditingItem(newItem)
+    setEditForm({
+      plan: newItem.plan,
+      monthlyFee: String(newItem.expectedAmount),
+      status: 'active',
+      paymentDate: '',
+      memo: ''
+    })
+  }
+
   const formatDate = (iso?: string) => {
     if (!iso) return ''
     const d = new Date(iso)
@@ -223,7 +264,22 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
             </button>
             <div className="text-center">
               <h1 className="text-2xl font-bold text-gray-900">{member.fullName}</h1>
-              <p className="mt-1 text-sm text-gray-500">会員詳細情報</p>
+              <div className="mt-1 flex items-center justify-center gap-2">
+                {member.status === 'suspended' ? (
+                  <span className="inline-flex items-center p-1 rounded-full bg-yellow-100 border border-yellow-200" title="休会">
+                    <span className="w-2 h-2 rounded-full bg-yellow-400"></span>
+                  </span>
+                ) : member.status === 'withdrawn' ? (
+                  <span className="inline-flex items-center p-1 rounded-full bg-red-100 border border-red-200" title="退会">
+                    <span className="w-2 h-2 rounded-full bg-red-400"></span>
+                  </span>
+                ) : null}
+                {member.plan && (
+                  <span className="text-sm text-gray-500 ml-1">
+                    {member.plan}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -305,28 +361,39 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
           )}
         </div>
         
-        {/* Member Details Section */}
-        <div className="bg-white shadow overflow-hidden sm:rounded-md mb-8">
-          <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
-            <h3 className="text-lg leading-6 font-medium text-gray-900">
-              会員詳細情報
+        {/* Member Details Section (Hidden as per request) */}
+        <div className="hidden bg-white shadow overflow-hidden sm:rounded-md mb-8 border border-gray-200">
+          <div className="px-4 py-3 sm:px-6 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
+            <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
+              <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+              会員基本情報
             </h3>
           </div>
-          <div className="px-4 py-5 sm:p-6">
-            <dl className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
-              <div>
-                <dt className="text-sm font-medium text-gray-500">メールアドレス</dt>
-                <dd className="mt-1 text-sm text-gray-900">{member.email || '-'}</dd>
+          <div className="px-4 py-4 sm:px-6">
+            <dl className="grid grid-cols-1 gap-x-4 gap-y-4 sm:grid-cols-2">
+              <div className="sm:col-span-1">
+                <dt className="text-xs font-medium text-gray-500 mb-1">メールアドレス</dt>
+                <dd className="text-sm text-gray-900 font-medium">{member.email || '-'}</dd>
               </div>
-              <div>
-                <dt className="text-sm font-medium text-gray-500">登録日</dt>
-                <dd className="mt-1 text-sm text-gray-900">
+              <div className="sm:col-span-1">
+                <dt className="text-xs font-medium text-gray-500 mb-1">現在のプラン</dt>
+                <dd className="text-sm text-gray-900 font-medium">
+                  {member.plan ? (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
+                      {member.plan}
+                    </span>
+                  ) : '-'}
+                </dd>
+              </div>
+              <div className="sm:col-span-1">
+                <dt className="text-xs font-medium text-gray-500 mb-1">登録日</dt>
+                <dd className="text-sm text-gray-900">
                   {member.createdAt ? new Date(member.createdAt).toLocaleDateString('ja-JP') : '-'}
                 </dd>
               </div>
-              <div className="sm:col-span-2">
-                <dt className="text-sm font-medium text-gray-500">メモ</dt>
-                <dd className="mt-1 text-sm text-gray-900">{member.memo || '-'}</dd>
+              <div className="sm:col-span-1">
+                <dt className="text-xs font-medium text-gray-500 mb-1">メモ</dt>
+                <dd className="text-sm text-gray-900">{member.memo || '-'}</dd>
               </div>
             </dl>
           </div>
@@ -335,9 +402,18 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
         {/* Monthly Plan/Payment Settings */}
         <div className="bg-white shadow overflow-hidden sm:rounded-md mb-8">
           <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
-            <h3 className="text-lg leading-6 font-medium text-gray-900">
-              月額プラン設定
-            </h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg leading-6 font-medium text-gray-900">月額プラン設定</h3>
+              <button
+                onClick={handleAddMonth}
+                title="プランを追加・復帰"
+                className="inline-flex items-center justify-center p-2 border border-transparent rounded-full shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+                </svg>
+              </button>
+            </div>
           </div>
           <div className="px-4 py-5 sm:p-6">
             {payments.length === 0 ? (
@@ -356,30 +432,45 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {payments.map((p, idx) => (
-                        <tr key={`${p.month}-${idx}`} className="hover:bg-gray-50">
-                          <td className="px-3 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            {formatMonth(p.month)}
-                          </td>
-                          <td className="px-3 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            {p.plan || '-'}
-                          </td>
-                          <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {p.expectedAmount > 0 ? `¥${p.expectedAmount.toLocaleString()}` : '-'}
-                          </td>
-                          <td className="px-3 py-4 text-sm text-gray-500" style={{minWidth: '100px'}}>
-                            {p.memo || '-'}
-                          </td>
-                          <td className="px-3 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <button 
-                              className="text-indigo-600 hover:text-indigo-900"
-                              onClick={() => handleEditClick(p)}
-                            >
-                              編集
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
+                      {payments.map((p, idx) => {
+                        const isFutureMonth = p.status === 'future'
+                        const isCurrentMonth = p.month === new Date().toISOString().slice(0, 7)
+                        return (
+                          <tr
+                            key={`${p.month}-${idx}`}
+                            className={isFutureMonth ? 'bg-blue-50 hover:bg-blue-100' : 'hover:bg-gray-50'}
+                          >
+                            <td className="px-3 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                              <div className="flex items-center gap-2">
+                                {formatMonth(p.month)}
+                                {isFutureMonth && (
+                                  <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-medium">予定</span>
+                                )}
+                                {isCurrentMonth && (
+                                  <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-medium">今月</span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-3 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                              {p.plan || <span className="text-gray-400 italic text-xs">未設定</span>}
+                            </td>
+                            <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {p.expectedAmount > 0 ? `¥${p.expectedAmount.toLocaleString()}` : (isFutureMonth ? <span className="text-gray-400 italic text-xs">未設定</span> : '-')}
+                            </td>
+                            <td className="px-3 py-4 text-sm text-gray-500" style={{minWidth: '100px'}}>
+                              {p.memo || '-'}
+                            </td>
+                            <td className="px-3 py-4 whitespace-nowrap text-right text-sm font-medium">
+                              <button
+                                className={`${isFutureMonth ? 'text-blue-600 hover:text-blue-900' : 'text-indigo-600 hover:text-indigo-900'}`}
+                                onClick={() => handleEditClick(p)}
+                              >
+                                {isFutureMonth ? '予定を設定' : '編集'}
+                              </button>
+                            </td>
+                          </tr>
+                        )
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -393,7 +484,19 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
           <div className="fixed inset-0 z-50 flex items-center justify-center">
             <div className="absolute inset-0 bg-black/30" onClick={() => setEditingItem(null)} />
             <div className="relative bg-white rounded-lg shadow-lg w-full max-w-md p-6">
-              <h3 className="text-lg font-bold mb-4">{formatMonth(editingItem.month)} の設定変更</h3>
+              <div className="flex items-center gap-2 mb-4">
+                <h3 className="text-lg font-bold">{formatMonth(editingItem.month)} の設定</h3>
+                {editingItem.status === 'future' && (
+                  <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded font-medium">翌月以降の予定</span>
+                )}
+              </div>
+
+              {editingItem.status === 'future' && (
+                <div className="mb-4 bg-blue-50 border border-blue-200 rounded-md p-3 text-sm text-blue-800">
+                  📅 <strong>{formatMonth(editingItem.month)}</strong> からのプラン変更予定を設定します。<br />
+                  <span className="text-xs text-blue-600 mt-1 block">現在のプランは今月末まで継続されます。</span>
+                </div>
+              )}
               
               <div className="space-y-4">
                 <div>
@@ -438,15 +541,17 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">入金日（任意）</label>
-                  <input
-                    type="date"
-                    className="w-full border rounded-md px-3 py-2 text-sm"
-                    value={editForm.paymentDate}
-                    onChange={(e) => setEditForm({ ...editForm, paymentDate: e.target.value })}
-                  />
-                </div>
+                {editingItem.status !== 'future' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">入金日（任意）</label>
+                    <input
+                      type="date"
+                      className="w-full border rounded-md px-3 py-2 text-sm"
+                      value={editForm.paymentDate}
+                      onChange={(e) => setEditForm({ ...editForm, paymentDate: e.target.value })}
+                    />
+                  </div>
+                )}
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">メモ（任意）</label>
@@ -473,11 +578,15 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
                   キャンセル
                 </button>
                 <button
-                  className="px-4 py-2 text-sm rounded-md bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50"
+                  className={`px-4 py-2 text-sm rounded-md text-white disabled:opacity-50 ${
+                    editingItem.status === 'future'
+                      ? 'bg-blue-600 hover:bg-blue-700'
+                      : 'bg-indigo-600 hover:bg-indigo-700'
+                  }`}
                   onClick={handleSaveMonth}
                   disabled={saving}
                 >
-                  {saving ? '保存中...' : '保存'}
+                  {saving ? '保存中...' : (editingItem.status === 'future' ? '予定を保存' : '保存')}
                 </button>
               </div>
             </div>

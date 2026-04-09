@@ -25,10 +25,16 @@ export default function EditMemberPage() {
     storeId: '',
     plan: '月4回',
     monthlyFee: '',
-    billingStartMonth: '',
+    startMonth: '',
+    registrationDate: '',
     status: 'active',
     memo: '',
     changeDate: new Date().toISOString().split('T')[0],
+  })
+
+  const [settings, setSettings] = useState({
+    visible_items: { steps: false, sleep: false, water: false, alcohol: false },
+    visible_tabs: { input: false, analyze: false, progress: false }
   })
 
   // Check admin access
@@ -48,9 +54,13 @@ export default function EditMemberPage() {
   useEffect(() => {
     const fetchMember = async () => {
       try {
-        const response = await fetch(`/api/admin/members/${memberId}`)
-        if (response.ok) {
-          const result = await response.json()
+        const [memberRes, settingsRes] = await Promise.all([
+          fetch(`/api/admin/members/${memberId}`),
+          fetch(`/api/lifestyle/settings?userId=${memberId}`)
+        ])
+
+        if (memberRes.ok) {
+          const result = await memberRes.json()
           const member = result.data || result
           setInitialStatus(member.status || 'active')
           setInitialPlan(member.plan || '月4回')
@@ -64,17 +74,26 @@ export default function EditMemberPage() {
             storeId: member.store_id || '',
             plan: member.plan || '月4回',
             monthlyFee: member.monthly_fee ? member.monthly_fee.toString() : '',
-            billingStartMonth: startMonth,
+            startMonth: startMonth,
+            registrationDate: member.created_at ? member.created_at.split('T')[0] : '',
             status: member.status || 'active',
             memo: member.memo || '',
             changeDate: new Date().toISOString().split('T')[0],
           })
-        } else {
-          setError('会員情報の取得に失敗しました')
+        }
+
+        if (settingsRes.ok) {
+          const { data } = await settingsRes.json()
+          if (data) {
+            setSettings({
+              visible_items: data.visible_items || { steps: true, sleep: true, water: true, alcohol: true },
+              visible_tabs: data.visible_tabs || { input: true, analyze: true, progress: true }
+            })
+          }
         }
       } catch (error) {
-        console.error('Failed to fetch member:', error)
-        setError('会員情報の取得中にエラーが発生しました')
+        console.error('Failed to fetch:', error)
+        setError('情報の取得中にエラーが発生しました')
       } finally {
         setFetchLoading(false)
       }
@@ -106,36 +125,50 @@ export default function EditMemberPage() {
     setError('')
 
     try {
-      const response = await fetch('/api/admin/members', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          memberId,
-          fullName: formData.fullName,
-          email: formData.email,
-          storeId: formData.storeId,
-          plan: formData.plan,
-          monthlyFee: formData.monthlyFee,
-          billingStartMonth: formData.billingStartMonth,
-          status: formData.status,
-          memo: formData.memo,
-          changeDate: formData.changeDate,
+      const [memberRes, settingsRes] = await Promise.all([
+        fetch('/api/admin/members', {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            memberId,
+            fullName: formData.fullName,
+            email: formData.email,
+            storeId: formData.storeId,
+            plan: formData.plan,
+            monthlyFee: formData.monthlyFee,
+            startMonth: formData.startMonth,
+            registrationDate: formData.registrationDate,
+            status: formData.status,
+            memo: formData.memo,
+            changeDate: formData.changeDate,
+          }),
         }),
-      })
+        fetch('/api/lifestyle/settings', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            userId: memberId,
+            visibleItems: settings.visible_items,
+            visibleTabs: settings.visible_tabs
+          })
+        })
+      ])
 
-      const result = await response.json()
+      const result = await memberRes.json()
 
-      if (response.ok) {
+      if (memberRes.ok && settingsRes.ok) {
         alert('会員情報を更新しました')
         router.push('/admin/members')
       } else {
-        setError(result.error || '会員情報の更新に失敗しました')
+        setError(result.error || '情報の更新に失敗しました')
       }
     } catch (error) {
       console.error('Error:', error)
-      setError('会員情報の更新中にエラーが発生しました')
+      setError('情報の更新中にエラーが発生しました')
     } finally {
       setLoading(false)
     }
@@ -143,13 +176,21 @@ export default function EditMemberPage() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
+    setFormData(prev => {
+      const newData = { ...prev, [name]: value }
+      // If status changed to suspended or withdrawn, set fee to 0
+      if (name === 'status' && (value === 'suspended' || value === 'withdrawn')) {
+        newData.monthlyFee = '0'
+      }
+      return newData
+    })
   }
 
   // Check if any critical field has changed
   const isPlanChanged = formData.plan !== initialPlan
   const isFeeChanged = formData.monthlyFee !== initialMonthlyFee
-  const isChanged = isPlanChanged || isFeeChanged
+  const isStatusChanged = formData.status !== initialStatus
+  const isChanged = isPlanChanged || isFeeChanged || isStatusChanged
 
   if (fetchLoading) {
     return (
@@ -264,22 +305,52 @@ export default function EditMemberPage() {
             <p className="mt-1 text-sm text-gray-500">空欄の場合は0円として登録されます</p>
           </div>
 
-          {/* 課金開始月 (売上計上開始月) */}
+          {/* 開始月 */}
           <div>
-            <label htmlFor="billingStartMonth" className="block text-sm font-medium text-gray-700 mb-2">
-              売上計上開始月
+            <label htmlFor="startMonth" className="block text-sm font-medium text-gray-700 mb-2">
+              開始月
             </label>
             <input
               type="month"
-              id="billingStartMonth"
-              name="billingStartMonth"
-              value={formData.billingStartMonth}
+              id="startMonth"
+              name="startMonth"
+              value={formData.startMonth}
               onChange={handleChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
-            <p className="mt-1 text-sm text-gray-500">
-              指定した月から売上に計上されます（空欄の場合は入金された月から即時計上されます）。
-            </p>
+          </div>
+
+          {/* 登録日 */}
+          <div>
+            <label htmlFor="registrationDate" className="block text-sm font-medium text-gray-700 mb-2">
+              登録日
+            </label>
+            <input
+              type="date"
+              id="registrationDate"
+              name="registrationDate"
+              value={formData.registrationDate}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+
+          {/* ステータス */}
+          <div>
+            <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-2">
+              ステータス
+            </label>
+            <select
+              id="status"
+              name="status"
+              value={formData.status}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="active">有効</option>
+              <option value="suspended">休会</option>
+              <option value="withdrawn">退会</option>
+            </select>
           </div>
 
           {/* 変更日 (プラン・会費変更時のみ表示) */}
@@ -303,6 +374,32 @@ export default function EditMemberPage() {
               </p>
             </div>
           )}
+
+          {/* 表示設定 */}
+          <div className="pt-6 border-t border-gray-100">
+            <h3 className="text-lg font-bold text-gray-900 mb-4">機能表示設定</h3>
+            
+            <div className="space-y-4">
+              <label className="flex items-center gap-4 p-4 bg-blue-50/50 border border-blue-100 rounded-xl cursor-pointer hover:bg-blue-50 transition-colors">
+                <input
+                  type="checkbox"
+                  checked={settings.visible_tabs.input && settings.visible_tabs.analyze && settings.visible_tabs.progress}
+                  onChange={(e) => {
+                    const isChecked = e.target.checked;
+                    setSettings({
+                      visible_tabs: { input: isChecked, analyze: isChecked, progress: isChecked },
+                      visible_items: { steps: isChecked, sleep: isChecked, water: isChecked, alcohol: isChecked }
+                    });
+                  }}
+                  className="w-6 h-6 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                />
+                <div>
+                  <div className="font-black text-gray-900">食事管理機能を表示する <span className="text-blue-600 ml-1 text-xs">(ダイエットプラン限定)</span></div>
+                  <div className="text-xs text-gray-500 mt-1">「入力・分析・進捗」の全タブと生活記録項目が有効になります</div>
+                </div>
+              </label>
+            </div>
+          </div>
 
           {/* メモ */}
           <div>

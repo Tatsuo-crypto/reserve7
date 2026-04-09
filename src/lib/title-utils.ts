@@ -213,20 +213,19 @@ export async function generateReservationTitle(
   clientName: string, 
   startDateTime: Date
 ): Promise<string> {
-  // Get client plan information
-  const { data: clientData, error: clientError } = await supabaseAdmin
-    .from('users')
+  // Fetch membership history for that specific date to determine the plan
+  const { data: historyRecord } = await supabaseAdmin
+    .from('membership_history')
     .select('plan')
-    .eq('id', clientId)
+    .eq('user_id', clientId)
+    .lte('start_date', startDateTime.toISOString().split('T')[0])
+    .or(`end_date.is.null,end_date.gte.${startDateTime.toISOString().split('T')[0]}`)
+    .order('start_date', { ascending: false })
+    .limit(1)
     .single()
 
-  if (clientError) {
-    console.error('Error fetching client plan:', clientError)
-  }
-
-  const maxCount = getPlanMaxCount(clientData?.plan)
-  
-  const plan = clientData?.plan || ''
+  const plan = historyRecord?.plan || clientData?.plan || ''
+  const maxCount = getPlanMaxCount(plan)
   const isCumulative = usesCumulativeCount(plan)
   const lastName = extractLastName(clientName)
 

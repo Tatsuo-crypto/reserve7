@@ -1,11 +1,16 @@
 'use client'
 
-import { useParams } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useParams, useSearchParams } from 'next/navigation'
+import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import dynamic from 'next/dynamic'
+import InputTab from '@/components/diet/InputTab'
+import AnalyzeTab from '@/components/diet/AnalyzeTab'
+import ProgressTab from '@/components/diet/ProgressTab'
+import ReservationTab from '@/components/diet/ReservationTab'
+import OnlineTab from '@/components/diet/OnlineTab'
 
-// TrackingModalを遅延読み込み（パフォーマンス向上）
+// TrackingModalをアドミン専用に遅延読み込み
 const TrackingModal = dynamic(() => import('@/app/admin/members/TrackingModal'), {
   ssr: false,
   loading: () => (
@@ -18,911 +23,200 @@ const TrackingModal = dynamic(() => import('@/app/admin/members/TrackingModal'),
   )
 })
 
-interface User {
-  id: string
-  name: string
-  email: string
-  plan: string
-}
-
-interface Reservation {
-  id: string
-  title: string
-  start_time: string
-  end_time: string
-  notes: string | null
-  created_at: string
-}
-
-interface YearlyGoal {
-  id: string
-  year: number
-  goal_text: string
-}
-
-interface MonthlyGoal {
-  id: string
-  year: number
-  month: number
-  goal_text: string
-}
-
-interface GoalCheckData {
-  id: string
-  text: string
-  checked: boolean
-}
-
-interface Streak {
-  current_streak: number
-  max_streak: number
-  total_rewards: number
-}
-
-interface WeightRecord {
-  id: string
-  recorded_date: string
-  weight_kg: number
-  notes: string | null
-}
-
-interface SquatRecord {
-  id: string
-  recorded_date: string
-  weight_kg: number
-  reps: number | null
-  sets: number | null
-  notes: string | null
-}
+type TabType = 'res' | 'online' | 'input' | 'analyze' | 'progress'
 
 export default function ClientReservationsPage() {
   const params = useParams()
+  const searchParams = useSearchParams()
   const token = params?.token as string
+  const fromAdmin = searchParams?.get('from') === 'admin'
 
-  const [fromAdmin, setFromAdmin] = useState(false)
-  const [user, setUser] = useState<User | null>(null)
-  const [futureReservations, setFutureReservations] = useState<Reservation[]>([])
-  const [pastReservations, setPastReservations] = useState<Reservation[]>([])
-  const [yearlyGoals, setYearlyGoals] = useState<YearlyGoal[]>([])
-  const [monthlyGoals, setMonthlyGoals] = useState<MonthlyGoal[]>([])
-  const [weightRecords, setWeightRecords] = useState<WeightRecord[]>([])
-  const [squatRecords, setSquatRecords] = useState<SquatRecord[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [showAllWeight, setShowAllWeight] = useState(false)
-  const [showAllSquat, setShowAllSquat] = useState(false)
-  const [showMonthlyGoals, setShowMonthlyGoals] = useState(false)
-  const [showOlderMonths, setShowOlderMonths] = useState(false)
-  const [showTrackingModal, setShowTrackingModal] = useState(false)
-  const [goalChecks, setGoalChecks] = useState<GoalCheckData[]>([])
-  const [streak, setStreak] = useState<Streak | null>(null)
-  const [showReward, setShowReward] = useState(false)
-  const [rewardAmount, setRewardAmount] = useState(0)
-  const [checkingGoalId, setCheckingGoalId] = useState<string | null>(null)
-  const [checkError, setCheckError] = useState<string | null>(null)
-  const [isTodayCompleted, setIsTodayCompleted] = useState(false)
-  const [showMilestone, setShowMilestone] = useState(false)
-  const [milestoneAmount, setMilestoneAmount] = useState(0)
   const { data: session, status: sessionStatus } = useSession()
   const isAdmin = sessionStatus === 'authenticated' && session?.user?.role === 'ADMIN'
 
-  // クエリパラメータを取得（Safari対応）
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const urlParams = new URLSearchParams(window.location.search)
-      setFromAdmin(urlParams.get('from') === 'admin')
-    }
-  }, [])
+  const [activeTab, setActiveTab] = useState<TabType>('input')
+  const [userId, setUserId] = useState<string | null>(null)
+  const [userName, setUserName] = useState<string>('')
+  const [loading, setLoading] = useState(true)
+  const [showTrackingModal, setShowTrackingModal] = useState(false)
+  const [visibleTabs, setVisibleTabs] = useState({ input: false, analyze: false, progress: false })
 
   useEffect(() => {
-    const fetchData = async () => {
+    console.log('[Client Page] Mounted, token:', token)
+    const fetchUser = async () => {
       try {
-        console.log('[Client Page] Fetching user data with token')
-        // ユーザー情報を最初に取得（これが失敗したら他は実行しない）
-        const userResponse = await fetch(`/api/auth/token?token=${token}`)
-        if (!userResponse.ok) {
-          const errorData = await userResponse.json().catch(() => ({}))
-          const errorMsg = errorData.error || '無効なURLです'
-          console.error('[Client Page] Token validation failed:', userResponse.status, errorMsg)
-          setError(errorMsg)
-          setLoading(false)
-          return
+        const res = await fetch(`/api/auth/token?token=${token}`)
+        if (res.ok) {
+          const data = await res.json()
+          setUserId(data.user.id)
+          setUserName(data.user.name)
         }
-        const userData = await userResponse.json()
-        console.log('[Client Page] User data fetched successfully')
-        setUser(userData.user)
-
-        // 予約とトラッキングデータを並列で取得（高速化）
-        const [reservationsResult, trackingResult] = await Promise.allSettled([
-          fetch(`/api/client/reservations?token=${token}`).then(async (res) => {
-            if (res.ok) {
-              const data = await res.json()
-              return data
-            }
-            throw new Error('予約の取得に失敗')
-          }),
-          fetch(`/api/client/tracking?token=${token}`).then(async (res) => {
-            if (res.ok) {
-              const data = await res.json()
-              return data
-            }
-            throw new Error('トラッキングの取得に失敗')
-          })
-        ])
-
-        // 予約データの処理
-        if (reservationsResult.status === 'fulfilled') {
-          setFutureReservations(reservationsResult.value.data.futureReservations || [])
-          setPastReservations(reservationsResult.value.data.pastReservations || [])
-        } else {
-          console.error('予約データ取得エラー:', reservationsResult.reason)
-        }
-
-        // トラッキングデータの処理
-        if (trackingResult.status === 'fulfilled') {
-          setYearlyGoals(trackingResult.value.data.yearlyGoals || [])
-          setMonthlyGoals(trackingResult.value.data.monthlyGoals || [])
-          setWeightRecords(trackingResult.value.data.weightRecords || [])
-          setSquatRecords(trackingResult.value.data.squatRecords || [])
-        } else {
-          console.error('トラッキングデータ取得エラー:', trackingResult.reason)
-        }
-
-        // チェック情報とストリークを取得
-        try {
-          const checkResponse = await fetch(`/api/client/goal-check?token=${token}`)
-          if (checkResponse.ok) {
-            const checkData = await checkResponse.json()
-            const goals = checkData.data.monthlyGoals || []
-            setGoalChecks(goals)
-            setStreak(checkData.data.streak)
-
-            // 全てチェック済みか判定
-            const allChecked = goals.length > 0 && goals.every((g: GoalCheckData) => g.checked)
-            setIsTodayCompleted(allChecked)
-          }
-        } catch (err) {
-          console.error('チェック情報取得エラー:', err)
-        }
-      } catch (err) {
-        console.error('Error:', err)
-        setError('データの取得に失敗しました')
+      } catch (error) {
+        console.error('Failed to fetch user:', error)
       } finally {
         setLoading(false)
       }
     }
-
+    const fetchSettings = async () => {
+      try {
+        const res = await fetch(`/api/lifestyle/settings?token=${token}`)
+        if (res.ok) {
+          const { data } = await res.json()
+          if (data && data.visible_tabs) {
+            setVisibleTabs(data.visible_tabs)
+            
+            // If current tab is input but it's hidden, switch to res
+            if (!data.visible_tabs.input && activeTab === 'input') {
+              setActiveTab('res')
+            }
+          }
+        }
+      } catch (e) { console.error(e) }
+    }
     if (token) {
-      fetchData()
+      fetchUser()
+      fetchSettings()
     }
   }, [token])
 
-  // 目標チェックのハンドラー（リトライ機能付き）
-  const handleGoalCheck = async (goalId: string, currentlyChecked: boolean, retryCount = 0) => {
-    // 本日達成済みの場合は変更不可
-    if (isTodayCompleted) {
-      return
-    }
-
-    // 既にチェック済みの場合はアンチェック不可
-    if (currentlyChecked) {
-      return
-    }
-
-    // 既にチェック処理中の場合は何もしない（連続クリック防止）
-    if (checkingGoalId) {
-      return
-    }
-
-    // ローディング状態を設定
-    setCheckingGoalId(goalId)
-    setCheckError(null)
-
-    // 楽観的更新：UIを先に更新
-    const previousGoalChecks = goalChecks
-    setGoalChecks(prev => prev.map(goal =>
-      goal.id === goalId ? { ...goal, checked: true } : goal
-    ))
-
-    try {
-      const response = await fetch(`/api/client/goal-check?token=${token}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ goalId, checked: true }),
-        signal: AbortSignal.timeout(10000) // 10秒でタイムアウト
-      })
-
-      if (!response.ok) {
-        throw new Error(`サーバーエラー: ${response.status}`)
-      }
-
-      const result = await response.json()
-
-      // サーバーからの結果でチェック状況を確認（楽観的更新の検証）
-      setGoalChecks(prev => prev.map(goal =>
-        goal.id === goalId ? { ...goal, checked: true } : goal
-      ))
-
-      // ストリーク情報を更新
-      if (result.data.streak) {
-        setStreak(result.data.streak)
-      }
-
-      // 全てチェックされた場合、報酬を表示
-      if (result.data.isCompleted && result.data.reward > 0) {
-        setIsTodayCompleted(true)
-        setRewardAmount(result.data.reward)
-        setShowReward(true)
-        setTimeout(() => setShowReward(false), 5000)
-
-        // マイルストーン達成チェック
-        if (result.data.streak?.milestoneReached) {
-          setTimeout(() => {
-            setMilestoneAmount(result.data.streak.milestoneReached)
-            setShowMilestone(true)
-            setTimeout(() => setShowMilestone(false), 5000)
-          }, 5500) // 通常の報酬表示後に表示
-        }
-      }
-
-      // 成功したのでローディング状態を解除
-      setCheckingGoalId(null)
-    } catch (error) {
-      console.error('チェック処理エラー:', error)
-
-      // エラーの場合、楽観的更新をロールバック
-      setGoalChecks(previousGoalChecks)
-
-      // リトライロジック（最大2回まで）
-      if (retryCount < 2) {
-        console.log(`リトライ ${retryCount + 1}/2 回目...`)
-        setTimeout(() => {
-          setCheckingGoalId(null)
-          handleGoalCheck(goalId, currentlyChecked, retryCount + 1)
-        }, 1000 * (retryCount + 1)) // 1秒、2秒と待機時間を増やす
-      } else {
-        // リトライ上限に達した場合、エラーメッセージを表示
-        const errorMessage = error instanceof Error && error.name === 'TimeoutError'
-          ? '通信がタイムアウトしました。ネットワーク接続を確認してください。'
-          : 'チェックの保存に失敗しました。もう一度お試しください。'
-
-        setCheckError(errorMessage)
-        setCheckingGoalId(null)
-
-        // 5秒後にエラーメッセージを自動で消す
-        setTimeout(() => setCheckError(null), 5000)
-      }
-    }
-  }
-
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr)
-    const year = date.getFullYear()
-    const month = date.getMonth() + 1
-    const day = date.getDate()
-    const hours = String(date.getHours()).padStart(2, '0')
-    const minutes = String(date.getMinutes()).padStart(2, '0')
-    return `${year}年${month}月${day}日 ${hours}:${minutes}`
-  }
-
-  const formatTitle = (title: string, userPlan: string) => {
-    // Match both formats: "山口1/4" and "山口12" (cumulative count)
-    const matchWithSlash = title.match(/(\d+)\/(\d+)$/)
-    const matchWithoutSlash = title.match(/(\d+)$/)
-
-    if (matchWithSlash) {
-      // Format: "山口1/4" -> "パーソナル1回目"
-      const currentCount = matchWithSlash[1]
-      return `パーソナル${currentCount}回目`
-    } else if (matchWithoutSlash) {
-      // Format: "山口12" -> "パーソナル12回目" (cumulative count)
-      const currentCount = matchWithoutSlash[1]
-      return `パーソナル${currentCount}回目`
-    }
-
-    return title
-  }
-
-  const getMonthKey = (dateStr: string) => {
-    const date = new Date(dateStr)
-    const year = date.getFullYear()
-    const month = date.getMonth() + 1
-    return `${year}年${month}月`
-  }
-
-  const groupByMonth = (reservations: Reservation[]) => {
-    const grouped: { [key: string]: Reservation[] } = {}
-    reservations.forEach(reservation => {
-      const monthKey = getMonthKey(reservation.start_time)
-      if (!grouped[monthKey]) {
-        grouped[monthKey] = []
-      }
-      grouped[monthKey].push(reservation)
-    })
-    return grouped
-  }
-
-  if (loading) {
+  if (loading || !userId) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">読み込み中...</p>
+          {loading ? (
+            <p className="mt-4 text-gray-600">読み込み中...</p>
+          ) : (
+            <p className="mt-4 text-red-600">ユーザー情報の取得に失敗しました。再読み込みしてください。</p>
+          )}
         </div>
       </div>
     )
   }
-
-  if (error || !user) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-red-500 text-6xl mb-4">⚠️</div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">アクセスエラー</h1>
-          <p className="text-gray-600">{error || '無効なURLです'}</p>
-        </div>
-      </div>
-    )
-  }
-
-  const futureByMonth = groupByMonth(futureReservations)
-  const pastByMonth = groupByMonth(pastReservations)
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* 報酬通知 */}
-      {showReward && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30 animate-fadeInSlow">
-          <div className="bg-gradient-to-br from-yellow-400 via-orange-400 to-orange-500 text-white px-12 py-8 rounded-3xl shadow-2xl flex flex-col items-center gap-3 animate-scaleInSlow">
-            <svg className="w-10 h-10" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-            </svg>
-            <div className="font-bold text-xl">全目標達成！</div>
-            <div className="text-6xl font-black animate-pulse">+{rewardAmount}pt</div>
-            <div className="text-base opacity-90">獲得！</div>
-          </div>
-        </div>
-      )}
-
-      {/* マイルストーン達成通知 */}
-      {showMilestone && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 animate-fadeInSlow">
-          <div className="bg-gradient-to-br from-pink-400 via-purple-500 to-indigo-600 text-white px-16 py-10 rounded-3xl shadow-2xl flex flex-col items-center gap-4 animate-scaleInSlow">
-            <div className="text-6xl">🎉</div>
-            <div className="font-bold text-2xl">おめでとうございます！</div>
-            <div className="text-7xl font-black animate-pulse">{milestoneAmount}pt</div>
-            <div className="text-xl font-bold">達成！</div>
-            <div className="text-lg opacity-90">ご褒美ゲット！</div>
-          </div>
-        </div>
-      )}
-
-      <header className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-3">
-            <div className="flex items-center gap-2">
-              {fromAdmin && isAdmin && (
-                <a
-                  href="/admin/members"
-                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md"
-                  title="会員管理に戻る"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                  </svg>
-                </a>
-              )}
-              <h1 className="text-lg sm:text-xl font-bold text-gray-900 whitespace-nowrap">T&J GYM</h1>
-            </div>
-            <div className="flex items-center gap-1 flex-shrink min-w-0">
-              <div className="px-2 sm:px-3 py-1 sm:py-1.5 bg-blue-50 rounded-lg border border-blue-100">
-                <span className="text-xs sm:text-sm font-semibold text-gray-900 truncate">{user.name}　様</span>
-              </div>
-              <button className="p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100 flex-shrink-0" aria-label="メニュー">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      {/* Header */}
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-30 px-4 py-3 shadow-sm">
+        <div className="flex items-center justify-between max-w-lg mx-auto">
+          <div className="flex items-center gap-2">
+            {fromAdmin && isAdmin && (
+              <a
+                href="/admin/members"
+                className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md"
+                title="会員管理に戻る"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
-              </button>
-            </div>
+              </a>
+            )}
+            <h1 className="text-lg font-black text-gray-900">
+              {activeTab === 'res' && '予約確認'}
+              {activeTab === 'online' && 'オンライン'}
+              {activeTab === 'input' && '記録入力'}
+              {activeTab === 'analyze' && 'データ分析'}
+              {activeTab === 'progress' && '今週の進捗'}
+            </h1>
           </div>
+          <div className="text-xs font-bold text-gray-500 bg-gray-100 px-3 py-1 rounded-full">{userName} 様</div>
         </div>
       </header>
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-4">
+      {/* Main Content */}
+      <main className="flex-1 max-w-lg mx-auto w-full p-4 overflow-x-hidden pb-24">
+        {activeTab === 'res' && <ReservationTab token={token} />}
+        {activeTab === 'online' && <OnlineTab token={token} />}
+        {activeTab === 'input' && <InputTab userId={userId!} token={token} isAdmin={isAdmin} />}
+        {activeTab === 'analyze' && <AnalyzeTab userId={userId!} token={token} isAdmin={isAdmin} />}
+        {activeTab === 'progress' && <ProgressTab userId={userId!} token={token} />}
 
-        {/* プラン名表示 */}
-        <div className="bg-white rounded-lg shadow-md border border-gray-200 p-4 mb-6">
-          <div className="flex items-center gap-2">
-            <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
-              <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd" />
-            </svg>
-            <h2 className="text-lg font-bold text-gray-900">{user.plan}</h2>
-          </div>
-        </div>
-
-        {/* オンラインレッスンバナー */}
-        <a
-          href={`/client/${token}/online`}
-          className="flex items-center justify-between bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl p-4 mb-6 shadow-md hover:shadow-lg transition-all hover:scale-[1.01] active:scale-[0.99]"
-        >
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.069A1 1 0 0121 8.845v6.309a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-              </svg>
-            </div>
-            <div>
-              <p className="text-white font-bold text-sm">オンラインレッスン</p>
-              <p className="text-blue-100 text-xs">グループレッスンに参加する</p>
-            </div>
-          </div>
-          <svg className="w-5 h-5 text-blue-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
-        </a>
-
-        {/* トラッキング情報 */}
-        {(yearlyGoals.length > 0 || monthlyGoals.length > 0 || weightRecords.length > 0 || squatRecords.length > 0) && (
-          <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6 mb-6">
-            <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-200">
-              <svg className="w-6 h-6 text-yellow-600" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
-              </svg>
-              <h2 className="text-xl font-bold text-gray-900">トレーニング記録</h2>
-            </div>
-
-            {/* 年次目標 */}
-            {yearlyGoals.length > 0 && (
-              <div className="mb-8">
-                <div className="bg-gradient-to-br from-yellow-100 via-orange-100 to-yellow-50 border-4 border-orange-400 rounded-2xl p-5 shadow-lg">
-                  <div className="flex items-center justify-center gap-2 mb-4">
-                    <svg className="w-5 h-5 text-orange-600" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                    </svg>
-                    <h3 className="text-base font-bold text-gray-900">{yearlyGoals[0].year}年の目標</h3>
-                    <svg className="w-5 h-5 text-orange-600" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                    </svg>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-2xl font-extrabold text-orange-600 leading-relaxed">{yearlyGoals[0].goal_text}</p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* 月次目標 */}
-            {monthlyGoals.length > 0 && (() => {
-              // 現在の年月を取得
-              const now = new Date()
-              const currentYear = now.getFullYear()
-              const currentMonth = now.getMonth() + 1
-              const currentKey = `${currentYear}-${currentMonth}`
-
-              // 年月でグループ化
-              const groupedGoals = monthlyGoals.reduce((acc, goal) => {
-                const key = `${goal.year}-${goal.month}`
-                if (!acc[key]) acc[key] = []
-                acc[key].push(goal)
-                return acc
-              }, {} as Record<string, typeof monthlyGoals>)
-
-              const sortedKeys = Object.keys(groupedGoals).sort((a, b) => {
-                const [yearA, monthA] = a.split('-').map(Number)
-                const [yearB, monthB] = b.split('-').map(Number)
-                return yearB * 12 + monthB - (yearA * 12 + monthA)
-              })
-
-              // 今月の目標があればそれを、なければ最新の目標を表示
-              const hasCurrentMonth = groupedGoals[currentKey]
-              const displayKey = hasCurrentMonth ? currentKey : sortedKeys[0]
-              const displayGoals = groupedGoals[displayKey]
-              const [goalYear, goalMonth] = displayKey.split('-').map(Number)
-              const isInherited = !hasCurrentMonth && (goalYear !== currentYear || goalMonth !== currentMonth)
-
-              // 表示中の月以外の古い目標
-              const olderKeys = sortedKeys.filter(key => key !== displayKey)
-
-              return (
-                <div className="mb-6">
-                  {/* タイトルを最上部に表示 */}
-                  <div className="flex items-center gap-2 mb-3">
-                    <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    <h3 className="text-base font-bold text-gray-700">
-                      {currentYear}年{currentMonth}月の目標
-                      {isInherited && <span className="text-xs text-gray-500 ml-2">({goalYear}年{goalMonth}月から引き継ぎ)</span>}
-                    </h3>
-                  </div>
-
-                  {/* ストリーク表示 */}
-                  {streak && streak.current_streak > 0 && (
-                    <div className="mb-3 p-3 bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-400 rounded-lg">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <svg className="w-5 h-5 text-orange-600" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                          </svg>
-                          <div>
-                            <div className="text-lg font-bold text-orange-700">{streak.current_streak}日連続達成！</div>
-                            <div className="text-xs text-gray-600">最高記録: {streak.max_streak}日</div>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-xs text-gray-500">累計報酬</div>
-                          <div className="text-xl font-bold text-orange-600">{streak.total_rewards}pt</div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* 今月の目標（３つまで横並び） - チェック機能付き */}
-                  <div className="grid grid-cols-3 gap-3 mb-3">
-                    {displayGoals.slice(0, 3).map((goal) => {
-                      const checkData = goalChecks.find(g => g.id === goal.id)
-                      const isChecked = checkData?.checked || false
-                      const isDisabled = isTodayCompleted || isChecked
-                      return (
-                        <div
-                          key={goal.id}
-                          className={`${isChecked
-                              ? 'bg-gray-100 border-2 border-gray-300 shadow-none'
-                              : 'bg-blue-50 border-2 border-blue-400 shadow-md'
-                            } w-full p-4 rounded-lg flex flex-col items-center justify-center min-h-[100px] transition-all relative`}
-                        >
-                          {/* 左上角のチェックボタン */}
-                          <button
-                            onClick={() => handleGoalCheck(goal.id, isChecked)}
-                            disabled={isDisabled}
-                            className={`absolute -top-2 -left-2 w-8 h-8 rounded-full flex items-center justify-center transition-all ${isChecked
-                                ? 'bg-gray-500 border-2 border-gray-600'
-                                : 'bg-white border-2 border-blue-400 hover:border-blue-500 hover:shadow-md'
-                              } ${!isDisabled ? 'cursor-pointer hover:scale-110 active:scale-95' : 'cursor-not-allowed opacity-70'
-                              }`}
-                          >
-                            {isChecked && (
-                              <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                              </svg>
-                            )}
-                          </button>
-
-                          {/* 目標テキスト */}
-                          <div className={`text-base font-bold text-center ${isChecked ? 'text-gray-500' : 'text-blue-700'
-                            }`}>
-                            {goal.goal_text}
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-
-                  {/* 古い月の目標（折りたたみ） */}
-                  {olderKeys.length > 0 && (
-                    <div>
-                      <button
-                        onClick={() => setShowMonthlyGoals(!showMonthlyGoals)}
-                        className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700"
-                      >
-                        <svg className={`w-3 h-3 transition-transform ${showMonthlyGoals ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                        </svg>
-                        過去の目標を表示 ({olderKeys.length}ヶ月)
-                      </button>
-
-                      {showMonthlyGoals && (
-                        <div className="mt-2 space-y-2">
-                          {olderKeys.map(key => {
-                            const goals = groupedGoals[key]
-                            const [year, month] = key.split('-').map(Number)
-                            return (
-                              <div key={key} className="border-l-2 border-gray-300 pl-3">
-                                <div className="text-xs text-gray-600 font-bold mb-1">{year}年{month}月</div>
-                                <div className="space-y-1">
-                                  {goals.map(goal => (
-                                    <div key={goal.id} className="text-xs text-gray-700">• {goal.goal_text}</div>
-                                  ))}
-                                </div>
-                              </div>
-                            )
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )
-            })()}
-
-            {/* 体重推移とSQ推移を横並び */}
-            {(weightRecords.length > 0 || squatRecords.length > 0) && (
-              <div className="grid grid-cols-2 gap-3 mb-6">
-                {/* 体重推移 */}
-                {weightRecords.length > 0 && (() => {
-                  const latestWeight = weightRecords[0]
-                  const initialWeight = weightRecords[weightRecords.length - 1]
-                  const weightDiff = weightRecords.length > 1 ? initialWeight.weight_kg - latestWeight.weight_kg : 0
-                  return (
-                    <div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
-                        <h3 className="text-sm font-bold text-gray-700">体重</h3>
-                      </div>
-                      <div className="space-y-2">
-                        <div className="pt-3 pb-4 px-4 bg-green-50 rounded-lg border border-green-200 h-[90px] flex flex-col gap-1 overflow-hidden">
-                          <div className="flex items-center justify-between">
-                            <div className="text-base text-gray-900">{new Date(latestWeight.recorded_date).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}</div>
-                            <div className="text-base font-bold text-green-600">{latestWeight.weight_kg}kg</div>
-                          </div>
-                          {weightRecords.length > 1 && weightDiff !== 0 && (
-                            <div className="text-xs text-green-700 font-semibold">
-                              {weightDiff > 0 ? `-${weightDiff.toFixed(1)}kg` : `+${Math.abs(weightDiff).toFixed(1)}kg`} (初期から)
-                            </div>
-                          )}
-                          {latestWeight.notes && (
-                            <div className="text-xs text-gray-500 break-words leading-tight">{latestWeight.notes}</div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })()}
-
-                {/* SQ推移 */}
-                {squatRecords.length > 0 && (() => {
-                  const latestSquat = squatRecords[0]
-                  const initialSquat = squatRecords[squatRecords.length - 1]
-                  const squatDiff = squatRecords.length > 1 ? latestSquat.weight_kg - initialSquat.weight_kg : 0
-                  return (
-                    <div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z" />
-                        </svg>
-                        <h3 className="text-sm font-bold text-gray-700">スクワット重量</h3>
-                      </div>
-                      <div className="space-y-2">
-                        <div className="pt-3 pb-4 px-4 bg-purple-50 rounded-lg border border-purple-200 h-[90px] flex flex-col gap-1 overflow-hidden">
-                          <div className="flex items-center justify-between">
-                            <div className="text-base text-gray-900">{new Date(latestSquat.recorded_date).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}</div>
-                            <div className="text-base font-bold text-purple-600">{latestSquat.weight_kg}kg</div>
-                          </div>
-                          <div className="flex flex-col gap-0.5">
-                            {squatRecords.length > 1 && squatDiff !== 0 && (
-                              <div className="text-xs text-purple-700 font-semibold">
-                                {squatDiff > 0 ? `+${squatDiff.toFixed(1)}kg` : `-${Math.abs(squatDiff).toFixed(1)}kg`} (初期から)
-                              </div>
-                            )}
-                            {(latestSquat.reps || latestSquat.sets) && (
-                              <div className="text-xs text-gray-500 leading-tight">
-                                {latestSquat.reps && latestSquat.sets && `${latestSquat.reps}回 × ${latestSquat.sets}セット`}
-                                {latestSquat.reps && !latestSquat.sets && `${latestSquat.reps}回`}
-                                {!latestSquat.reps && latestSquat.sets && `${latestSquat.sets}セット`}
-                              </div>
-                            )}
-                            {latestSquat.notes && (
-                              <div className="text-xs text-gray-500 break-words leading-tight">{latestSquat.notes}</div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })()}
-              </div>
-            )}
-          </div>
-        )}
-
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">今後の予約</h2>
-          {futureReservations.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">今後の予約はありません</div>
-          ) : (
-            <div className="space-y-6">
-              {Object.entries(futureByMonth)
-                .sort((a, b) => new Date(a[1][0].start_time).getTime() - new Date(b[1][0].start_time).getTime())
-                .map(([monthKey, reservations]) => (
-                  <div key={monthKey} className="space-y-3">
-                    <div className="bg-gradient-to-r from-blue-50 to-blue-100 border-l-4 border-blue-500 px-4 py-2 rounded">
-                      <h3 className="text-lg font-bold text-blue-900">{monthKey}</h3>
-                    </div>
-                    {reservations
-                      .sort((a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime())
-                      .map((reservation) => (
-                        <div key={reservation.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow ml-4">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <h3 className="text-lg font-semibold text-gray-900 mb-1">{formatTitle(reservation.title, user.plan)}</h3>
-                              <div className="flex items-center gap-1 text-gray-600 mb-2">
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
-                                <p>{formatDate(reservation.start_time)}</p>
-                              </div>
-                              {reservation.notes && (
-                                <div className="flex items-center gap-1 text-sm text-gray-500 mt-2">
-                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                                  </svg>
-                                  <p>{reservation.notes}</p>
-                                </div>
-                              )}
-                            </div>
-                            <div className="ml-4">
-                              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">予約済み</span>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                  </div>
-                ))}
-            </div>
-          )}
-        </div>
-
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">過去の予約</h2>
-          {pastReservations.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">過去の予約はありません</div>
-          ) : (() => {
-            const now = new Date()
-            const currentYear = now.getFullYear()
-            const currentMonth = now.getMonth() + 1
-            const currentMonthKey = `${currentYear}年${currentMonth}月`
-
-            const sortedMonths = Object.entries(pastByMonth)
-              .sort((a, b) => new Date(b[1][0].start_time).getTime() - new Date(a[1][0].start_time).getTime())
-
-            const currentMonthData = sortedMonths.filter(([monthKey]) => monthKey === currentMonthKey)
-            const olderMonthsData = sortedMonths.filter(([monthKey]) => monthKey !== currentMonthKey)
-
-            return (
-              <div className="space-y-6">
-                {/* 当月の予約 */}
-                {currentMonthData.map(([monthKey, reservations]) => (
-                  <div key={monthKey} className="space-y-3">
-                    <div className="bg-gradient-to-r from-gray-50 to-gray-100 border-l-4 border-gray-400 px-4 py-2 rounded">
-                      <h3 className="text-lg font-bold text-gray-700">{monthKey}</h3>
-                    </div>
-                    {reservations
-                      .sort((a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime())
-                      .map((reservation) => (
-                        <div key={reservation.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50 ml-4">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <h3 className="text-lg font-semibold text-gray-700 mb-1">{formatTitle(reservation.title, user.plan)}</h3>
-                              <div className="flex items-center gap-1 text-gray-500 mb-2">
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
-                                <p>{formatDate(reservation.start_time)}</p>
-                              </div>
-                              {reservation.notes && (
-                                <div className="flex items-center gap-1 text-sm text-gray-400 mt-2">
-                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                                  </svg>
-                                  <p>{reservation.notes}</p>
-                                </div>
-                              )}
-                            </div>
-                            <div className="ml-4">
-                              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-200 text-gray-600">完了</span>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                  </div>
-                ))}
-
-                {/* それ以前の月（折りたたみ） */}
-                {olderMonthsData.length > 0 && (
-                  <div>
-                    <button
-                      onClick={() => setShowOlderMonths(!showOlderMonths)}
-                      className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-800"
-                    >
-                      <svg className={`w-4 h-4 transition-transform ${showOlderMonths ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                      {showOlderMonths ? 'それ以前の予約を隠す' : `それ以前の予約を表示 (${olderMonthsData.length}ヶ月)`}
-                    </button>
-
-                    {showOlderMonths && (
-                      <div className="mt-4 space-y-6">
-                        {olderMonthsData.map(([monthKey, reservations]) => (
-                          <div key={monthKey} className="space-y-3">
-                            <div className="bg-gradient-to-r from-gray-50 to-gray-100 border-l-4 border-gray-400 px-4 py-2 rounded">
-                              <h3 className="text-lg font-bold text-gray-700">{monthKey}</h3>
-                            </div>
-                            {reservations
-                              .sort((a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime())
-                              .map((reservation) => (
-                                <div key={reservation.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50 ml-4">
-                                  <div className="flex items-start justify-between">
-                                    <div className="flex-1">
-                                      <h3 className="text-lg font-semibold text-gray-700 mb-1">{formatTitle(reservation.title, user.plan)}</h3>
-                                      <div className="flex items-center gap-1 text-gray-500 mb-2">
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                        </svg>
-                                        <p>{formatDate(reservation.start_time)}</p>
-                                      </div>
-                                      {reservation.notes && (
-                                        <div className="flex items-center gap-1 text-sm text-gray-400 mt-2">
-                                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                                          </svg>
-                                          <p>{reservation.notes}</p>
-                                        </div>
-                                      )}
-                                    </div>
-                                    <div className="ml-4">
-                                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-200 text-gray-600">完了</span>
-                                    </div>
-                                  </div>
-                                </div>
-                              ))}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )
-          })()}
-        </div>
-
-        {/* 管理者用編集ボタン */}
-        {fromAdmin && isAdmin && user && (
-          <div className="mt-6 flex justify-center">
+        {/* 管理者用編集ボタン (記録入力タブのみ表示) */}
+        {fromAdmin && isAdmin && userId && activeTab === 'input' && (
+          <div className="mt-8 flex justify-center">
             <button
               onClick={() => setShowTrackingModal(true)}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors shadow-md"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg active:scale-95"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
               </svg>
-              編集
+              管理者としてデータを編集
             </button>
           </div>
         )}
+      </main>
 
-        {/* TrackingModal */}
-        {fromAdmin && isAdmin && user && showTrackingModal && (
-          <TrackingModal
-            isOpen={showTrackingModal}
-            onClose={() => {
-              setShowTrackingModal(false)
-              // データを再読み込み
-              const fetchData = async () => {
-                try {
-                  const trackingResponse = await fetch(`/api/client/tracking?token=${token}`)
-                  if (trackingResponse.ok) {
-                    const trackingData = await trackingResponse.json()
-                    setYearlyGoals(trackingData.data.yearlyGoals || [])
-                    setMonthlyGoals(trackingData.data.monthlyGoals || [])
-                    setWeightRecords(trackingData.data.weightRecords || [])
-                    setSquatRecords(trackingData.data.squatRecords || [])
-                  }
-                } catch (error) {
-                  console.error('データ再読み込みエラー:', error)
-                }
-              }
-              fetchData()
-            }}
-            memberId={user.id}
-            memberName={user.name}
+      {/* TrackingModal */}
+      {fromAdmin && isAdmin && userId && showTrackingModal && (
+        <TrackingModal
+          isOpen={showTrackingModal}
+          onClose={() => {
+            setShowTrackingModal(false)
+            // リロードなしで最新データを反映するために画面全体を再読み込みするか、
+            // または各情報の再取得が必要ですが、ここではシンプルに閉じます
+          }}
+          memberId={userId}
+          memberName={userName}
+        />
+      )}
+
+      {/* Bottom Navigation */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-[0_-2px_15px_rgba(0,0,0,0.08)] z-40">
+        <div className="flex justify-around items-center max-w-lg mx-auto h-16">
+          <NavBtn
+            active={activeTab === 'res'}
+            onClick={() => setActiveTab('res')}
+            icon={<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />}
+            label="予約"
           />
-        )}
-      </div>
+          <NavBtn
+            active={activeTab === 'online'}
+            onClick={() => setActiveTab('online')}
+            icon={<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.069A1 1 0 0121 8.845v6.309a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />}
+            label="オンライン"
+          />
+          {visibleTabs.input && (
+            <NavBtn
+              active={activeTab === 'input'}
+              onClick={() => setActiveTab('input')}
+              icon={<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />}
+              label="入力"
+            />
+          )}
+          {visibleTabs.analyze && (
+            <NavBtn
+              active={activeTab === 'analyze'}
+              onClick={() => setActiveTab('analyze')}
+              icon={<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />}
+              label="分析"
+            />
+          )}
+          {visibleTabs.progress && (
+            <NavBtn
+              active={activeTab === 'progress'}
+              onClick={() => setActiveTab('progress')}
+              icon={<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />}
+              label="進捗"
+            />
+          )}
+        </div>
+      </nav>
     </div>
+  )
+}
+
+function NavBtn({ active, onClick, icon, label }: { active: boolean, onClick: () => void, icon: React.ReactNode, label: string }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`flex flex-col items-center justify-center w-full h-full space-y-1 transition-all ${active ? 'text-blue-600 scale-105' : 'text-gray-400'
+        }`}
+    >
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        {icon}
+      </svg>
+      <span className={`text-[9px] font-black ${active ? 'opacity-100' : 'opacity-70'}`}>{label}</span>
+    </button>
   )
 }

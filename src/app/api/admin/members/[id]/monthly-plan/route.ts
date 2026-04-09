@@ -145,6 +145,20 @@ export async function POST(
 
     if (insertError) throw insertError
 
+    // If setting to suspended or withdrawn, remove any history records that start AFTER this month.
+    // This stops automatic continuation into future months.
+    if (status === 'suspended' || status === 'withdrawn') {
+        const { error: cleanFutureError } = await supabaseAdmin
+            .from('membership_history')
+            .delete()
+            .eq('user_id', memberId)
+            .gt('start_date', monthEndStr)
+        
+        if (cleanFutureError) {
+            console.error('Failed to clean future records after suspension:', cleanFutureError)
+        }
+    }
+
     // Optimization: Merge adjacent records if identical?
     // If the new record matches the Left or Right neighbor exactly in (status, plan, fee, store), 
     // we could merge them to keep the table clean. 
@@ -155,8 +169,24 @@ export async function POST(
     // But our system seems to rely on history now?
     // `users.plan` and `users.status` are often used as "Current".
     // Let's update `users` table if the edited month is the CURRENT month.
+    // Update users table if:
+    // 1. The edited month is the current month (immediate change), OR
+    // 2. The edited month is in the future and represents the NEWEST scheduled plan
+    //    (i.e., there are no history records starting after this month's end)
     const today = new Date()
-    if (today >= monthStart && today <= monthEnd) {
+    
+    // Check if there are any history records beyond this month
+    const { data: futureRecords } = await supabaseAdmin
+      .from('membership_history')
+      .select('id')
+      .eq('user_id', memberId)
+      .gt('start_date', monthEndStr)
+    
+    const isCurrentMonth = today >= monthStart && today <= monthEnd
+    const isFutureChange = monthStart > today
+    const isLatestFutureChange = isFutureChange && (!futureRecords || futureRecords.length === 0)
+    
+    if (isCurrentMonth || isLatestFutureChange) {
         await supabaseAdmin.from('users').update({
             plan: plan,
             status: status || 'active',

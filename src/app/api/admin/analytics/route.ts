@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { getAuthenticatedUser, createErrorResponse } from '@/lib/api-utils'
-import { format, subMonths, startOfMonth, endOfMonth, eachMonthOfInterval } from 'date-fns'
+import { format, subMonths, startOfMonth, endOfMonth, eachMonthOfInterval, addMonths } from 'date-fns'
 
 export const dynamic = 'force-dynamic'
 
@@ -27,16 +27,16 @@ export async function GET(request: NextRequest) {
         // For charts, usually we want up to "this month".
         // Let's use startOfMonth(today) as the last point if we want completed months, or just use current month.
         // The previous code used `end: startOfMonth(today)` which gives up to current month (inclusive start of month).
-        
+
         // Let's stick to "up to current month" logic for relative periods, and specific years for absolute periods.
-        
+
         if (period === 'all') {
             startDate = new Date('2023-11-01') // Start of service
             endDate = startOfMonth(today)
         } else if (['2023', '2024', '2025', '2026'].includes(period)) {
             startDate = new Date(`${period}-01-01`)
             endDate = new Date(`${period}-12-01`)
-            
+
             // If the year is in the future, maybe limit to today? 
             // But for "2025" chart when it's Jan 2025, we might want to show empty months?
             // Existing logic iterates over `monthList`. If we provide future months, it will try to fetch data.
@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
         let query = supabaseAdmin
             .from('membership_history')
             .select('user_id, start_date, end_date, status, store_id, monthly_fee, plan, users:user_id(full_name, monthly_fee, plan, billing_start_month)')
-            
+
         // Filter by store if provided (and not 'all' or empty)
         // Note: storeId might be null in DB for some records?
 
@@ -80,7 +80,7 @@ export async function GET(request: NextRequest) {
         }
 
         let { data: historyData, error } = await query.order('start_date', { ascending: true }).limit(100000)
-        
+
         let history = historyData || []
 
         // Defensive In-Memory Filter for History
@@ -98,7 +98,7 @@ export async function GET(request: NextRequest) {
         const memberHistory = monthList.map(date => {
             const monthStart = startOfMonth(date)
             const monthEnd = endOfMonth(date)
-            
+
             // Count active members at the end of this month
             // Active condition: 
             // 1. status == 'active'
@@ -110,7 +110,17 @@ export async function GET(request: NextRequest) {
                 if (h.status !== 'active') return false
 
                 const start = new Date(h.start_date)
-                const end = h.end_date ? new Date(h.end_date) : null
+                let endStr = h.end_date
+
+                // AUTO-EXPIRY FOR DIET COURSE:
+                // If it's a Diet Course, it automatically ends after 3 months unless a specific end_date is earlier
+                if (h.plan?.includes('ダイエット')) {
+                    const autoEnd = endOfMonth(addMonths(start, 2))
+                    if (!endStr || new Date(endStr) > autoEnd) {
+                        endStr = format(autoEnd, 'yyyy-MM-dd')
+                    }
+                }
+                const end = endStr ? new Date(endStr) : null
 
                 if (!(start <= monthEnd && (!end || end > monthEnd))) return false
 
@@ -134,35 +144,47 @@ export async function GET(request: NextRequest) {
             const withdrawnMembers = history.filter((h: any) => {
                 // Only look at ACTIVE records that have an end date
                 if (h.status === 'active') {
-                    if (!h.end_date) return false
-                    const end = new Date(h.end_date)
+                    const start = new Date(h.start_date)
+                    let endStr = h.end_date
+                    
+                    // AUTO-EXPIRY FOR DIET COURSE:
+                    // If it's a Diet Course, it automatically ends after 3 months unless a specific end_date is earlier
+                    if (h.plan?.includes('ダイエット')) {
+                        const autoEnd = endOfMonth(addMonths(start, 2))
+                        if (!endStr || new Date(endStr) > autoEnd) {
+                            endStr = format(autoEnd, 'yyyy-MM-dd')
+                        }
+                    }
+
+                    if (!endStr) return false
+                    const end = new Date(endStr)
                     if (end < monthStart || end > monthEnd) return false
 
-                    // Check for continuity (Renewal / Plan Change)
-                    // Look for any OTHER record (active) that starts within 32 days
+                    // Check for continuity (Renewal / Plan Change / Suspension)
+                    // Look for any OTHER record that starts within 32 days
                     const isContinued = history.some((next: any) => {
                         if (next.user_id !== h.user_id || next === h) return false
-                        if (next.status !== 'active') return false // Only active renewal counts as continuity
                         
+                        // Transition to 'active' or 'suspended' (Pay-as-you-go / On Leave) is NOT a gym withdrawal
+                        if (next.status !== 'active' && next.status !== 'suspended') return false
+
                         const nextStart = new Date(next.start_date)
                         const diffTime = Math.abs(nextStart.getTime() - end.getTime())
                         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-                        
+
                         if (diffDays > 32) return false
-                        
+
                         // Check if there's a withdrawn status BETWEEN end and nextStart
                         const hasWithdrawnBetween = history.some((between: any) => {
                             if (between.user_id !== h.user_id) return false
                             if (between.status !== 'withdrawn') return false
-                            
+
                             const betweenStart = new Date(between.start_date)
-                            // If withdrawn period overlaps or is between the two active periods
                             return betweenStart > end && betweenStart < nextStart
                         })
-                        
-                        // If there's a withdrawn period in between, it's NOT a continuation
+
                         if (hasWithdrawnBetween) return false
-                        
+
                         return true
                     })
 
@@ -170,9 +192,13 @@ export async function GET(request: NextRequest) {
 
                     return true
                 }
-                
-                // We ignore 'withdrawn' status records for the count now, 
-                // because we rely on the END of the active period to place the withdrawal.
+
+                // Explicit withdrawal record also counts
+                if (h.status === 'withdrawn') {
+                    const wDate = new Date(h.start_date)
+                    if (wDate >= monthStart && wDate <= monthEnd) return true
+                }
+
                 return false
             }).map((h: any) => {
                 const user = Array.isArray(h.users) ? h.users[0] : h.users
@@ -180,7 +206,7 @@ export async function GET(request: NextRequest) {
                     user_id: h.user_id,
                     full_name: user?.full_name || '不明',
                     plan: h.plan,
-                    date: h.end_date
+                    date: h.status === 'withdrawn' ? h.start_date : (h.end_date || h.start_date)
                 }
             })
 
@@ -189,7 +215,7 @@ export async function GET(request: NextRequest) {
                 if (h.status !== 'suspended') return false
                 const start = new Date(h.start_date)
                 const end = h.end_date ? new Date(h.end_date) : null
-                
+
                 // Base condition: Overlaps with this month
                 if (!(start <= monthEnd && (!end || end > monthEnd))) {
                     return false
@@ -229,10 +255,10 @@ export async function GET(request: NextRequest) {
                 const isContinuation = history.some(prev => {
                     if (prev.user_id !== h.user_id || prev === h) return false
                     if (!prev.end_date) return false // Active ongoing record doesn't explain a new start
-                    
+
                     const prevEnd = new Date(prev.end_date)
                     const diffTime = Math.abs(start.getTime() - prevEnd.getTime())
-                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) 
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
                     return diffDays <= 32 // Starts within 32 days of previous end
                 })
 
@@ -264,7 +290,7 @@ export async function GET(request: NextRequest) {
         const salesHistory = monthList.map(date => {
             const monthStart = startOfMonth(date)
             const monthEnd = endOfMonth(date)
-            
+
             // Estimate from membership history (all active members' monthly fees)
             const activeRecords = history.filter(h => {
                 if (h.status !== 'active') return false
@@ -275,10 +301,10 @@ export async function GET(request: NextRequest) {
                     const billingStart = startOfMonth(new Date(user.billing_start_month))
                     if (monthStart < billingStart) return false
                 }
-                
+
                 const start = new Date(h.start_date)
                 const end = h.end_date ? new Date(h.end_date) : null
-                
+
                 // Active during this month
                 return start <= monthEnd && (!end || end >= monthStart)
             })
@@ -291,8 +317,12 @@ export async function GET(request: NextRequest) {
                     userMap.set(h.user_id, h)
                 }
             }
-            const estimatedSales = Array.from(userMap.values()).reduce((sum, h) => {
-                const fee = h.monthly_fee || 0
+            const estimatedSales = Array.from(userMap.values()).reduce((sum, h: any) => {
+                const user = Array.isArray(h.users) ? h.users[0] : h.users
+                let fee = h.monthly_fee
+                if (fee === null || fee === undefined) {
+                    fee = user?.monthly_fee ?? 0
+                }
                 return sum + fee
             }, 0)
 

@@ -550,28 +550,44 @@ export async function PUT(
     }
 
     // After update, renumber titles for this client and update Google Calendar as needed
-    // For diet/counseling: use cumulative count (all time)
-    // For personal training: use monthly count
     try {
-      const d = new Date(startDateTime)
       const clientId = (reservation as any).client_id as string | null
-      if (clientId) {
-        const userRel: any = Array.isArray((reservation as any).users)
-          ? (reservation as any).users[0]
-          : (reservation as any).users
-        const plan = userRel?.plan || ''
-
+      const targetClientId = body.clientId !== undefined ? body.clientId : clientId
+      
+      const oldStartTime = reservation.start_time
+      const newStartTime = startDateTime.toISOString()
+      
+      // Helper function to re-number titles for a client at a specific time
+      const refreshTitles = async (cid: string, time: string) => {
+        const d = new Date(time)
+        // Check current plan for that client (TODO: ideally check historical plan)
+        const { data: userData } = await supabaseAdmin.from('users').select('plan').eq('id', cid).single()
+        const plan = userData?.plan || ''
+        
         if (usesCumulativeCount(plan)) {
-          // Diet/Counseling: cumulative count across all months
-          await updateAllTitles(clientId)
+          await updateAllTitles(cid)
         } else {
-          // Personal training: monthly reset
-          await updateMonthlyTitles(clientId, d.getFullYear(), d.getMonth())
+          await updateMonthlyTitles(cid, d.getFullYear(), d.getMonth())
         }
       }
+
+      // 1. Refresh titles for the NEW client/time
+      if (targetClientId) {
+        await refreshTitles(targetClientId, newStartTime)
+        console.log('✅ New period/client titles refreshed')
+      }
+
+      // 2. Refresh titles for the OLD client/time if it changed
+      const timeChanged = new Date(oldStartTime).toISOString().slice(0, 7) !== new Date(newStartTime).toISOString().slice(0, 7)
+      const clientChanged = targetClientId !== clientId
+
+      if (clientId && (timeChanged || clientChanged)) {
+        await refreshTitles(clientId, oldStartTime)
+        console.log('✅ Old period/client titles refreshed')
+      }
+
     } catch (e) {
-      console.error('Failed to update titles after PUT:', e)
-      // Do not fail the request; return success for the update itself
+      console.error('❌ Failed to update titles after PUT:', e)
     }
 
     return NextResponse.json({

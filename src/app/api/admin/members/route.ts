@@ -163,7 +163,7 @@ export async function POST(request: NextRequest) {
       return createErrorResponse('管理者権限が必要です', 403)
     }
 
-    const { fullName, email, googleCalendarEmail, plan, status, memo, storeId, monthlyFee, transferDay, billingStartMonth } = await request.json()
+    const { fullName, email, googleCalendarEmail, plan, status, memo, storeId, monthlyFee, startMonth, registrationDate } = await request.json()
 
     // Validation
     // 名前とメールアドレスは任意（空欄の場合はダミー値を設定）
@@ -172,10 +172,6 @@ export async function POST(request: NextRequest) {
       return createErrorResponse('店舗の選択は必須です', 400)
     }
 
-    // Validate transferDay
-    if (transferDay && (isNaN(transferDay) || transferDay < 1 || transferDay > 31)) {
-      return createErrorResponse('振込日は1〜31の間で指定してください', 400)
-    }
 
     // Validate status if provided
     if (status && !['active', 'suspended', 'withdrawn'].includes(status)) {
@@ -216,8 +212,8 @@ export async function POST(request: NextRequest) {
       status: status || 'active',
       store_id: storeId,
       monthly_fee: monthlyFee ? parseInt(monthlyFee) : 0,
-      transfer_day: transferDay ? parseInt(transferDay) : null,
-      billing_start_month: billingStartMonth ? `${billingStartMonth}-01` : null,
+      billing_start_month: startMonth ? `${startMonth}-01` : null,
+      created_at: registrationDate || new Date().toISOString(),
       memo: memo || null,
       role: 'CLIENT',
       // access_tokenはSupabaseがUUIDで自動生成
@@ -248,9 +244,15 @@ export async function POST(request: NextRequest) {
       return createErrorResponse(errorMessage, 500)
     }
 
-    // Record initial status
-    await recordStatusChange(newMember.id, insertData.status as any, insertData.store_id)
-      .catch(e => console.error('Failed to record initial status:', e))
+    // Record initial status in history
+    await recordStatusChange(
+      newMember.id,
+      insertData.status as any,
+      insertData.store_id,
+      insertData.created_at,
+      insertData.plan,
+      insertData.monthly_fee
+    ).catch(e => console.error('Failed to record initial status:', e))
 
     return createSuccessResponse({ member: newMember })
   } catch (error) {
@@ -279,17 +281,13 @@ export async function PATCH(request: NextRequest) {
       return createErrorResponse('管理者権限が必要です', 403)
     }
 
-    const { memberId, fullName, email, googleCalendarEmail, storeId, status, plan, monthlyFee, transferDay, memo, statusChangeDate, changeDate, billingStartMonth } = await request.json()
+    const { memberId, fullName, email, googleCalendarEmail, storeId, status, plan, monthlyFee, memo, statusChangeDate, changeDate, startMonth, registrationDate } = await request.json()
 
     // Validate status if provided
     if (status && !['active', 'suspended', 'withdrawn'].includes(status)) {
       return createErrorResponse('Invalid status', 400)
     }
 
-    // Validate transferDay
-    if (transferDay && (isNaN(transferDay) || transferDay < 1 || transferDay > 31)) {
-      return createErrorResponse('振込日は1〜31の間で指定してください', 400)
-    }
 
     // Validate plan if provided
     // @ts-ignore
@@ -320,8 +318,8 @@ export async function PATCH(request: NextRequest) {
     if (status) updateData.status = status
     if (plan) updateData.plan = plan
     if (monthlyFee !== undefined) updateData.monthly_fee = monthlyFee ? parseInt(monthlyFee) : 0
-    if (transferDay !== undefined) updateData.transfer_day = transferDay ? parseInt(transferDay) : null
-    if (billingStartMonth !== undefined) updateData.billing_start_month = billingStartMonth ? `${billingStartMonth}-01` : null
+    if (startMonth !== undefined) updateData.billing_start_month = startMonth ? `${startMonth}-01` : null
+    if (registrationDate !== undefined) updateData.created_at = registrationDate
     if (memo !== undefined) updateData.memo = memo
 
     // Update member
@@ -345,7 +343,7 @@ export async function PATCH(request: NextRequest) {
       // Use provided changeDate/statusChangeDate or default to today
       const effectiveDateStr = changeDate || statusChangeDate
       const effectiveDate = effectiveDateStr ? new Date(effectiveDateStr) : new Date()
-      
+
       // Determine values to record (new value or existing value)
       const statusToRecord = updateData.status || member.status
       const planToRecord = updateData.plan || member.plan
@@ -353,8 +351,8 @@ export async function PATCH(request: NextRequest) {
       const storeToRecord = updateData.store_id || member.store_id
 
       await recordStatusChange(
-        memberId, 
-        statusToRecord, 
+        memberId,
+        statusToRecord,
         storeToRecord,
         effectiveDate,
         planToRecord,
