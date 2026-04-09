@@ -222,9 +222,17 @@ export async function generateReservationTitle(
     .or(`end_date.is.null,end_date.gte.${startDateTime.toISOString().split('T')[0]}`)
     .order('start_date', { ascending: false })
     .limit(1)
-    .single()
+    .maybeSingle()
 
-  const plan = historyRecord?.plan || clientData?.plan || ''
+  let plan = (historyRecord as any)?.plan || ''
+  if (!plan) {
+    const { data: userData } = await supabaseAdmin
+      .from('users')
+      .select('plan')
+      .eq('id', clientId)
+      .single()
+    plan = userData?.plan || ''
+  }
   const maxCount = getPlanMaxCount(plan)
   const isCumulative = usesCumulativeCount(plan)
   const lastName = extractLastName(clientName)
