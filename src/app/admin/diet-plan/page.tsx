@@ -221,7 +221,7 @@ function DietPlanPageContent() {
 
             if (dietRes.ok && lifestyleRes.ok) {
                 setMessage('ダイエットプランを保存しました')
-                fetchMemberData(selectedMember.id, selectedMember.access_token)
+                fetchMemberData(selectedMember.id, selectedMember.access_token || '')
                 setTimeout(() => setMessage(''), 3000)
             } else {
                 setMessage('保存に一部失敗しました')
@@ -243,7 +243,7 @@ function DietPlanPageContent() {
             salt: record.salt || 6,
             startDate: record.start_date
         })
-        setActiveTab('settings')
+        setActiveTab('goals')
         window.scrollTo({ top: 0, behavior: 'smooth' })
     }
 
@@ -255,7 +255,7 @@ function DietPlanPageContent() {
             })
             if (response.ok) {
                 setMessage('履歴を削除しました')
-                fetchMemberData(selectedMember!.id, selectedMember!.access_token)
+                fetchMemberData(selectedMember!.id, selectedMember!.access_token || '')
                 setTimeout(() => setMessage(''), 3000)
             }
         } catch (error) {
