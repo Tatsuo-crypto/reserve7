@@ -258,6 +258,24 @@ function AdminDashboard() {
               <p className="text-base text-gray-600 leading-relaxed">スケジュールとURLの管理</p>
             </div>
           </Link>
+
+          {/* ダイエットプラン */}
+          <Link
+            href="/admin/diet-plan"
+            className="group bg-gradient-to-br from-white to-rose-50 hover:from-rose-50 hover:to-rose-100 border border-rose-200 p-8 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col min-h-[200px] transform hover:-translate-y-1"
+          >
+            <div className="flex items-center mb-6">
+              <div className="w-16 h-16 bg-gradient-to-br from-rose-100 to-rose-200 rounded-xl flex items-center justify-center group-hover:from-rose-200 group-hover:to-rose-300 transition-all duration-300 shadow-sm">
+                <svg className="w-8 h-8 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04M12 21.5a11.955 11.955 0 01-8.618-3.04M12 21.5a11.955 11.955 0 008.618-3.04M12 21.5V14.5" />
+                </svg>
+              </div>
+            </div>
+            <div className="flex-1">
+              <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-rose-800 transition-colors duration-200">ダイエットプラン</h3>
+              <p className="text-base text-gray-600 leading-relaxed">目標設定・習慣管理・プラン作成</p>
+            </div>
+          </Link>
         </div>
       </div>
     </div>

@@ -131,20 +131,6 @@ export default function ClientReservationsPage() {
         {activeTab === 'analyze' && <AnalyzeTab userId={userId!} token={token} isAdmin={isAdmin} />}
         {activeTab === 'progress' && <ProgressTab userId={userId!} token={token} />}
 
-        {/* 管理者用編集ボタン (記録入力タブのみ表示) */}
-        {fromAdmin && isAdmin && userId && activeTab === 'input' && (
-          <div className="mt-8 flex justify-center">
-            <button
-              onClick={() => setShowTrackingModal(true)}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg active:scale-95"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-              </svg>
-              管理者としてデータを編集
-            </button>
-          </div>
-        )}
       </main>
 
       {/* TrackingModal */}

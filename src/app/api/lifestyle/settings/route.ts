@@ -49,8 +49,10 @@ export async function GET(req: NextRequest) {
         if (!settings) {
             return NextResponse.json({
                 data: {
-                    visible_items: { steps: false, sleep: false, water: false, alcohol: false },
-                    visible_tabs: { input: false, analyze: false, progress: false }
+                    visible_items: { steps: false, sleep: false, water: false },
+                    visible_tabs: { input: false, analyze: false, progress: false },
+                    quit_goals: [],
+                    habit_targets: { steps: 8000, sleep: 7, water: 2 }
                 }
             });
         }
@@ -58,8 +60,10 @@ export async function GET(req: NextRequest) {
         // Merge defaults for missing fields
         const mergedSettings = {
             ...settings,
-            visible_items: settings.visible_items || { steps: false, sleep: false, water: false, alcohol: false },
-            visible_tabs: settings.visible_tabs || { input: false, analyze: false, progress: false }
+            visible_items: settings.visible_items || { steps: false, sleep: false, water: false },
+            visible_tabs: settings.visible_tabs || { input: false, analyze: false, progress: false },
+            quit_goals: settings.quit_goals || [],
+            habit_targets: settings.habit_targets || { steps: 8000, sleep: 7, water: 2 }
         };
 
         return NextResponse.json({ data: mergedSettings });
@@ -75,7 +79,7 @@ export async function POST(req: NextRequest) {
         const tokenFromQuery = searchParams.get('token');
 
         const body = await req.json();
-        const { visibleItems, visibleTabs, userId: bodyUserId, token: tokenFromBody } = body;
+        const { visibleItems, visibleTabs, quit_goals, habit_targets, userId: bodyUserId, token: tokenFromBody } = body;
         const token = tokenFromQuery || tokenFromBody;
 
         let userId: string;
@@ -111,6 +115,8 @@ export async function POST(req: NextRequest) {
                 user_id: userId,
                 visible_items: visibleItems,
                 visible_tabs: visibleTabs,
+                quit_goals: quit_goals,
+                habit_targets: habit_targets,
                 updated_at: new Date().toISOString(),
             })
             .select()

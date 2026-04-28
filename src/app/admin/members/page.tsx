@@ -74,7 +74,7 @@ function MembersPageContent() {
   const [selectedMember, setSelectedMember] = useState<{ id: string, name: string } | null>(null)
 
   // Sorting state
-  const [sortKey, setSortKey] = useState<'plan' | 'status' | 'created' | null>(null)
+  const [sortKey, setSortKey] = useState<'plan' | 'status' | 'created' | null>('plan')
   const [sortAsc, setSortAsc] = useState(true)
 
   // Show only active filter (UI button below table)
@@ -200,116 +200,182 @@ function MembersPageContent() {
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="mb-6">
-          <div className="relative flex items-center justify-center">
+        <div className="mb-10 text-center">
+          <div className="relative mb-6">
             <button
               onClick={() => router.push(trainerToken ? `/trainer/${trainerToken}` : '/dashboard')}
-              className="absolute left-0 text-gray-400 hover:text-gray-600"
+              className="absolute left-0 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600 bg-white rounded-full shadow-sm border border-gray-100 transition-all hover:shadow-md"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            <div className="text-center">
-              <h1 className="text-2xl font-bold text-gray-900">会員一覧</h1>
-              <p className="mt-1 text-sm text-gray-500">会員のステータス管理</p>
-            </div>
+            <h1 className="text-3xl font-black text-gray-900 tracking-tight">会員管理</h1>
+            <p className="mt-1 text-sm font-medium text-gray-500 italic">会員ステータスと情報の管理</p>
+          </div>
+          
+          <div className="flex items-center justify-center gap-4">
             {!trainerToken && (
               <Link
                 href={`/admin/sales${(session as any)?.user?.storeId ? `?store=${(session as any).user.storeId}` : ''}`}
-                className="absolute right-0 px-3 py-1.5 bg-orange-500 text-white text-xs font-bold rounded-full hover:bg-orange-600 transition-colors flex items-center gap-1"
+                className="px-6 py-2.5 bg-rose-500 text-white text-sm font-black rounded-xl hover:bg-rose-600 transition-all shadow-md flex items-center gap-2"
               >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 売上管理
               </Link>
             )}
+            <Link
+              href="/admin/members/new"
+              className="px-6 py-2.5 bg-blue-600 text-white text-sm font-black rounded-xl hover:bg-blue-700 transition-all shadow-md flex items-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              新規登録
+            </Link>
           </div>
         </div>
 
-        {/* Compact toolbar: Stats + Filter + New button */}
-        <div className="bg-white shadow rounded-lg p-3 mb-4">
-          <div className="flex items-center justify-between mb-3">
-            <span className="font-bold text-blue-700 text-lg">{totalActive}<span className="text-xs font-normal text-gray-500 ml-0.5">名</span></span>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setShowOnlyActive(prev => !prev)}
-                className={`px-2.5 py-1 text-[11px] font-medium rounded-full border whitespace-nowrap transition-colors ${showOnlyActive ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : 'bg-gray-50 text-gray-600 border-gray-200'}`}
-              >
-                {showOnlyActive ? '在籍のみ' : '全員'}
-              </button>
-              <Link
-                href="/admin/members/new"
-                className="px-2.5 py-1 bg-blue-600 text-white text-[11px] font-medium rounded-full hover:bg-blue-700 transition-colors flex items-center gap-0.5 whitespace-nowrap"
-              >
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                新規
-              </Link>
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+            <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">現在の在籍者</div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-4xl font-black text-blue-600 tracking-tight">{totalActive}</span>
+              <span className="text-sm font-bold text-gray-400">名</span>
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-2">
-            {sortedPlans.map(plan => (
-              <div key={plan} className="bg-gray-50 rounded-md px-2 py-1.5 text-center">
-                <div className="text-[10px] text-gray-500 leading-tight truncate">{plan}</div>
-                <div className="text-sm font-bold text-gray-800">{planCounts[plan]}</div>
-              </div>
-            ))}
+          <div className="md:col-span-3 bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+            <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">プラン別内訳</div>
+            <div className="flex flex-wrap gap-2">
+              {sortedPlans.map(plan => (
+                <div key={plan} className="bg-gray-50 rounded-lg px-3 py-1.5 border border-gray-100 flex items-center gap-2">
+                  <span className="text-[10px] font-black text-gray-500">{plan}</span>
+                  <span className="text-sm font-black text-gray-800 tabular-nums">{planCounts[plan]}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Toolbar */}
+        <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 mb-6 flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-2 bg-gray-50 p-1 rounded-xl border border-gray-100">
+            <button
+              onClick={() => setShowOnlyActive(true)}
+              className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${showOnlyActive ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+            >
+              在籍のみ
+            </button>
+            <button
+              onClick={() => setShowOnlyActive(false)}
+              className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${!showOnlyActive ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+            >
+              全員表示
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <select
+              value={sortKey || ''}
+              onChange={(e) => setSortKey(e.target.value as any || null)}
+              className="bg-gray-50 border border-gray-100 rounded-xl px-4 py-2 text-xs font-bold text-gray-600 focus:ring-2 focus:ring-blue-500 outline-none"
+            >
+              <option value="">標準並び替え</option>
+              <option value="plan">プラン順</option>
+              <option value="status">ステータス順</option>
+              <option value="created">登録日順</option>
+            </select>
+            <button
+              onClick={() => setSortAsc(!sortAsc)}
+              className="p-2 bg-gray-50 text-gray-400 hover:text-blue-600 rounded-xl border border-gray-100 transition-all"
+            >
+              <svg className={`w-4 h-4 transition-transform ${sortAsc ? '' : 'rotate-180'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
           </div>
         </div>
 
         {error && (
-          <div className={`mb-4 border rounded-md p-3 text-sm ${error.includes('更新完了') || error.includes('コピー')
-            ? 'bg-green-50 border-green-200 text-green-800'
-            : 'bg-red-50 border-red-200 text-red-800'
-            }`}>
+          <div className="mb-6 p-4 rounded-2xl bg-gray-900 text-white font-black text-sm shadow-xl flex items-center gap-3 animate-fadeIn">
+            <div className="w-1.5 h-4 bg-rose-500 rounded-full"></div>
             {error}
           </div>
         )}
 
-        {/* Members List */}
-        <div className="bg-white shadow rounded-lg overflow-hidden">
+        {/* Member List (Simple Table Format) */}
+        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
           {!members || members.length === 0 ? (
-            <div className="text-center py-8 text-gray-500 text-sm">会員データがありません</div>
+            <div className="p-20 text-center">
+              <p className="text-gray-400 font-bold italic">会員データが見つかりません</p>
+            </div>
           ) : (
-            <div className="divide-y divide-gray-100">
-              {sortedMembers && (showOnlyActive ? sortedMembers.filter(m => (m.status || 'active') === 'active') : sortedMembers).map((member) => (
-                <Link
-                  key={member.id}
-                  href={`/admin/members/${member.id}`}
-                  className="flex items-center px-3 py-2.5 hover:bg-gray-50 transition-colors"
-                >
-                  <span className="flex items-center gap-2 truncate" style={{flex: '0 0 40%'}}>
-                    <span className={`flex-shrink-0 w-1.5 h-1.5 rounded-full ${getStatusDotColor(member.status)}`} />
-                    <span className="font-medium text-[13px] text-gray-900 truncate">{member.full_name}</span>
-                  </span>
-                  <span className="text-[11px] text-gray-500 whitespace-nowrap text-left" style={{flex: '1 1 auto', textAlign: 'left'}}>{member.plan || '-'}</span>
-                  <span className={`px-1.5 py-0.5 text-[10px] font-semibold rounded-full whitespace-nowrap flex-shrink-0 ${getStatusColor(member.status)}`}>
-                    {getStatusText(member.status)}
-                  </span>
-                </Link>
-              ))}
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-gray-50/50 border-b border-gray-100">
+                    <th className="px-4 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">氏名</th>
+                    <th className="px-4 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">プラン</th>
+                    <th className="px-4 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">ステータス</th>
+                    <th className="px-4 py-4 text-right"></th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {(showOnlyActive ? sortedMembers.filter(m => (m.status || 'active') === 'active') : sortedMembers).map((member) => (
+                    <tr 
+                      key={member.id}
+                      onClick={() => router.push(`/admin/members/${member.id}`)}
+                      className="hover:bg-blue-50/30 transition-colors cursor-pointer group"
+                    >
+                      <td className="px-4 py-4">
+                        <div className="flex items-center gap-2">
+                          <div className={`flex-shrink-0 w-2 h-2 rounded-full ${getStatusDotColor(member.status)} shadow-sm`}></div>
+                          <div className="text-sm font-black text-gray-900 group-hover:text-blue-600 transition-colors truncate max-w-[120px] sm:max-w-none">
+                            {member.full_name}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-4">
+                        <span className="text-[10px] font-black text-gray-600 bg-gray-100 px-2 py-0.5 rounded-md whitespace-nowrap">
+                          {member.plan || '-'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-4 text-center">
+                        <span className={`px-2 py-0.5 text-[10px] font-black rounded-full shadow-sm whitespace-nowrap ${getStatusColor(member.status)}`}>
+                          {getStatusText(member.status)}
+                        </span>
+                      </td>
+                      <td className="px-4 py-4 text-right">
+                        <div className="inline-flex items-center text-gray-200 group-hover:text-blue-500 transition-colors">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </div>
+
+        {/* トラッキングモーダル */}
+        {selectedMember && (
+          <TrackingModal
+            isOpen={showTrackingModal}
+            onClose={() => {
+              setShowTrackingModal(false)
+              setSelectedMember(null)
+            }}
+            memberId={selectedMember.id}
+            memberName={selectedMember.name}
+          />
+        )}
       </div>
-
-      {/* 削除モーダルは使用しない（非表示運用に変更） */}
-
-      {/* トラッキングモーダル */}
-      {selectedMember && (
-        <TrackingModal
-          isOpen={showTrackingModal}
-          onClose={() => {
-            setShowTrackingModal(false)
-            setSelectedMember(null)
-          }}
-          memberId={selectedMember.id}
-          memberName={selectedMember.name}
-        />
-      )}
     </div>
   )
 }

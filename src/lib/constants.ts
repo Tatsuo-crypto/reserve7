@@ -35,12 +35,12 @@ export const PLAN_LIST = [
 
 // Plan display order for sorting
 export const PLAN_RANK: Record<string, number> = {
-  [PLANS.ONE_TIME]: 0,
-  [PLANS.COUNSELING]: 1,
+  [PLANS.COUNSELING]: 0,
+  [PLANS.ONE_TIME]: 1,
   [PLANS.MONTHLY_2]: 2,
-  [PLANS.MONTHLY_4]: 4,
-  [PLANS.MONTHLY_6]: 6,
-  [PLANS.MONTHLY_8]: 8,
+  [PLANS.MONTHLY_4]: 3,
+  [PLANS.MONTHLY_6]: 4,
+  [PLANS.MONTHLY_8]: 5,
   [PLANS.DIET_COURSE]: 100,
   [PLANS.DIET_COURSE_2M]: 101,
   [PLANS.DIET_COURSE_3M]: 102,

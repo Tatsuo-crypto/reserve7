@@ -53,14 +53,15 @@ export async function GET(request: NextRequest) {
 
     // Check if requesting all stores (for sales page)
     const allStores = searchParams.get('all_stores') === 'true'
-    console.log('All stores requested:', allStores)
+    const dietOnly = searchParams.get('diet_only') === 'true'
+    console.log('All stores requested:', allStores, 'Diet only:', dietOnly)
 
     console.log('Building query...')
     console.log('User storeId for filtering:', user.storeId)
     console.log('All stores mode:', allStores)
 
     // Build base query
-    const baseQuery = supabaseAdmin
+    let baseQuery = supabaseAdmin
       .from('users')
       .select(`
         id, 
@@ -74,10 +75,20 @@ export async function GET(request: NextRequest) {
         billing_start_month,
         created_at, 
         memo, 
-        access_token
+        access_token,
+        lifestyle_settings!left(visible_tabs)
       `)
       .neq('email', 'tandjgym@gmail.com')
       .neq('email', 'tandjgym2goutenn@gmail.com')
+
+    // Filter by diet management if requested
+    if (dietOnly) {
+      // Members where visible_tabs->input is true
+      // Note: We use !inner or filter manually after fetch if RLS/joins are complex
+      // For now, let's fetch and filter in code or use a sub-query if possible
+      // Actually, Supabase can filter on joined tables:
+      baseQuery = baseQuery.not('lifestyle_settings', 'is', null)
+    }
 
     // Apply store filter if needed
     let query = allStores
@@ -86,6 +97,15 @@ export async function GET(request: NextRequest) {
 
     console.log('Executing members query...')
     let { data: members, error } = await query.order('created_at', { ascending: false })
+
+    // If dietOnly, further filter in JS to be safe with JSON nested fields
+    if (dietOnly && members) {
+      members = members.filter((m: any) => 
+        m.lifestyle_settings && 
+        m.lifestyle_settings.visible_tabs && 
+        m.lifestyle_settings.visible_tabs.input === true
+      )
+    }
 
     // If no members found and not all stores mode, try with calendarId
     const calendarId = (user as any).calendarId

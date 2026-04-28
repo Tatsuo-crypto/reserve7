@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 export const dynamic = 'force-dynamic'
-import { supabase } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabase'
 import { getAuthenticatedUser, createErrorResponse, createSuccessResponse } from '@/lib/api-utils'
 
 // GET: 特定会員のトラッキングデータを取得
@@ -22,7 +22,7 @@ export async function GET(
     const { userId } = params
 
     // 年次目標を取得
-    const { data: yearlyGoals, error: yearlyError } = await supabase
+    const { data: yearlyGoals, error: yearlyError } = await supabaseAdmin
       .from('yearly_goals')
       .select('*')
       .eq('user_id', userId)
@@ -31,7 +31,7 @@ export async function GET(
     if (yearlyError) throw yearlyError
 
     // 月次目標を取得
-    const { data: monthlyGoals, error: monthlyError } = await supabase
+    const { data: monthlyGoals, error: monthlyError } = await supabaseAdmin
       .from('monthly_goals')
       .select('*')
       .eq('user_id', userId)
@@ -41,7 +41,7 @@ export async function GET(
     if (monthlyError) throw monthlyError
 
     // 体重記録を取得
-    const { data: weightRecords, error: weightError } = await supabase
+    const { data: weightRecords, error: weightError } = await supabaseAdmin
       .from('weight_records')
       .select('*')
       .eq('user_id', userId)
@@ -49,8 +49,17 @@ export async function GET(
 
     if (weightError) throw weightError
 
+    // 生活習慣ログを取得 (歩数などを含む)
+    const { data: lifestyleLogs, error: lifestyleError } = await supabaseAdmin
+      .from('lifestyle_logs')
+      .select('*')
+      .eq('user_id', userId)
+      .order('date', { ascending: false })
+
+    if (lifestyleError) throw lifestyleError
+
     // SQ記録を取得
-    const { data: squatRecords, error: squatError } = await supabase
+    const { data: squatRecords, error: squatError } = await supabaseAdmin
       .from('squat_records')
       .select('*')
       .eq('user_id', userId)
@@ -62,6 +71,7 @@ export async function GET(
       yearlyGoals: yearlyGoals || [],
       monthlyGoals: monthlyGoals || [],
       weightRecords: weightRecords || [],
+      lifestyleLogs: lifestyleLogs || [],
       squatRecords: squatRecords || []
     })
   } catch (error) {
