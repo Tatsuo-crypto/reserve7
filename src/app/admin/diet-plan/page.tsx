@@ -173,7 +173,7 @@ function DietPlanPageContent() {
     // Fetch member specific data when selected
     useEffect(() => {
         if (selectedMember) {
-            fetchMemberData(selectedMember.id, selectedMember.access_token)
+            fetchMemberData(selectedMember.id, selectedMember.access_token || '')
         }
     }, [selectedMember, fetchMemberData])
 
