@@ -290,7 +290,7 @@ function DietPlanPageContent() {
         const weightDates = weightHistory.map(r => r.recorded_date);
         const lifestyleDates = lifestyleHistory.map(r => r.date);
         const intakeDates = intakeHistory.map(r => r.date);
-        const allDates = [...new Set([...weightDates, ...lifestyleDates, ...intakeDates])].sort();
+        const allDates = Array.from(new Set([...weightDates, ...lifestyleDates, ...intakeDates])).sort();
         
         if (allDates.length === 0) return [];
 
