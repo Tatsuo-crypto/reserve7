@@ -696,9 +696,20 @@ function DietPlanPageContent() {
                                                     <ResponsiveContainer width="100%" height="100%">
                                                         <ComposedChart data={dietChartData}>
                                                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                                            <XAxis dataKey="start_date" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} />
+                                                            <XAxis dataKey="start_date" axisLine={{ stroke: '#000000', strokeWidth: 0.3 }} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} tickFormatter={(val) => {
+                                                                if (!val) return '';
+                                                                const parts = val.split('-');
+                                                                if (parts.length === 3) return `${parseInt(parts[1], 10)}/${parseInt(parts[2], 10)}`;
+                                                                return val;
+                                                            }} />
                                                             <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} />
                                                             <Tooltip 
+                                                                labelFormatter={(label: string) => {
+                                                                    if (!label) return '';
+                                                                    const parts = label.split('-');
+                                                                    if (parts.length === 3) return `${parseInt(parts[1], 10)}/${parseInt(parts[2], 10)}`;
+                                                                    return label;
+                                                                }}
                                                                 contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', padding: '12px' }} 
                                                                 itemStyle={{ fontWeight: 800, fontSize: '12px' }}
                                                             />
@@ -729,8 +740,7 @@ function DietPlanPageContent() {
                                                             <tr className="bg-gray-50/50 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-100">
                                                                 <th className="px-3 sm:px-6 py-4 whitespace-nowrap">日付</th>
                                                                 <th className="px-3 sm:px-6 py-4 text-center whitespace-nowrap">カロリー</th>
-                                                                <th className="px-3 sm:px-6 py-4 text-center whitespace-nowrap">PFC</th>
-                                                                <th className="px-3 sm:px-6 py-4 text-right whitespace-nowrap">操作</th>
+                                                                <th className="px-3 sm:px-6 py-4 text-right whitespace-nowrap">編集</th>
                                                             </tr>
                                                         </thead>
                                                         <tbody className="divide-y divide-gray-100">
@@ -739,13 +749,16 @@ function DietPlanPageContent() {
                                                                     <td className="px-3 sm:px-6 py-4 font-bold text-xs whitespace-nowrap">
                                                                         {(() => {
                                                                             const parts = record.start_date.split('-');
-                                                                            return parts.length === 3 ? `${parseInt(parts[1], 10)}/${parseInt(parts[2], 10)}` : record.start_date;
+                                                                            return parts.length === 3 ? `${parts[0].slice(-2)}/${parseInt(parts[1], 10)}/${parseInt(parts[2], 10)}` : record.start_date;
                                                                         })()}
                                                                     </td>
                                                                     <td className="px-3 sm:px-6 py-4 text-center font-black text-rose-600 whitespace-nowrap">{record.calories}kcal</td>
-                                                                    <td className="px-3 sm:px-6 py-4 text-center font-black text-gray-400 text-[10px] whitespace-nowrap">{record.protein} / {record.fat} / {record.carbs}</td>
                                                                     <td className="px-3 sm:px-6 py-4 text-right whitespace-nowrap">
-                                                                        <button onClick={() => { handleEditHistory(record); setIsSettingNewGoal(true); }} className="text-blue-500 hover:text-blue-700 font-bold text-xs underline whitespace-nowrap">編集</button>
+                                                                        <button onClick={() => { handleEditHistory(record); setIsSettingNewGoal(true); }} className="p-2 text-blue-500 hover:bg-blue-50 rounded-full transition-colors whitespace-nowrap inline-flex items-center justify-center" title="編集">
+                                                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                                                            </svg>
+                                                                        </button>
                                                                     </td>
                                                                 </tr>
                                                             ))}
