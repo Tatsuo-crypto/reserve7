@@ -102,7 +102,7 @@ export default function AnalyzeTab({ userId, token, isAdmin }: AnalyzeTabProps) 
 
             const item: any = {
                 date: dStr,
-                displayDate: dStr.substring(5).replace('-', '/'),
+                displayDate: `${parseInt(dStr.split('-')[1], 10)}/${parseInt(dStr.split('-')[2], 10)}`,
                 weight: lifestyle?.weight || null,
                 calories: diet?.calories || 0,
                 protein_kcal: (diet?.protein || 0) * 4,
@@ -176,11 +176,11 @@ export default function AnalyzeTab({ userId, token, isAdmin }: AnalyzeTabProps) 
     return (
         <div className="space-y-6 pb-24">
             {/* Controls */}
-            <div className="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm flex flex-row items-center justify-between gap-4">
                 <select
                     value={period}
                     onChange={(e) => setPeriod(e.target.value as PeriodType)}
-                    className="w-full sm:w-auto bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block p-2.5 font-bold outline-none"
+                    className="w-1/2 sm:w-auto bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block p-2.5 font-bold outline-none"
                 >
                     <option value="1w">7日間</option>
                     <option value="1m">1ヶ月</option>
@@ -192,7 +192,7 @@ export default function AnalyzeTab({ userId, token, isAdmin }: AnalyzeTabProps) 
                 <select
                     value={showAvg ? 'week' : 'day'}
                     onChange={(e) => setShowAvg(e.target.value === 'week')}
-                    className="w-full sm:w-auto bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block p-2.5 font-bold outline-none"
+                    className="w-1/2 sm:w-auto bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block p-2.5 font-bold outline-none"
                 >
                     <option value="day">日</option>
                     <option value="week">週平均</option>
