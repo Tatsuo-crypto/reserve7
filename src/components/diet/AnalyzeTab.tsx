@@ -161,7 +161,7 @@ export default function AnalyzeTab({ userId, token, isAdmin }: AnalyzeTabProps) 
     const commonXAxis = (
         <XAxis 
             dataKey="displayDate" 
-            axisLine={{ stroke: '#000000', strokeWidth: 1 }} 
+            axisLine={{ stroke: '#000000', strokeWidth: 0.3 }} 
             tickLine={false} 
             tick={{ fontSize: 9, fontWeight: 700, fill: '#94a3b8' }} 
             interval="preserveStartEnd"
@@ -176,31 +176,37 @@ export default function AnalyzeTab({ userId, token, isAdmin }: AnalyzeTabProps) 
     return (
         <div className="space-y-6 pb-24">
             {/* Controls */}
-            <div className="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm flex flex-row items-center justify-between gap-4">
-                <select
-                    value={period}
-                    onChange={(e) => setPeriod(e.target.value as PeriodType)}
-                    className="w-1/2 sm:w-auto bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block p-2.5 font-bold outline-none"
-                >
-                    <option value="1w">7日間</option>
-                    <option value="1m">1ヶ月</option>
-                    <option value="3m">3ヶ月</option>
-                    <option value="6m">6ヶ月</option>
-                    <option value="1y">1年</option>
-                    <option value="all">すべて</option>
-                </select>
-                <select
-                    value={showAvg ? 'week' : 'day'}
-                    onChange={(e) => setShowAvg(e.target.value === 'week')}
-                    className="w-1/2 sm:w-auto bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block p-2.5 font-bold outline-none"
-                >
-                    <option value="day">日</option>
-                    <option value="week">週平均</option>
-                </select>
+            <div className="bg-white p-3 sm:p-4 rounded-2xl border border-gray-200 shadow-sm flex flex-row items-center gap-4 sm:gap-6 overflow-x-auto whitespace-nowrap">
+                <label className="flex items-center gap-2 text-xs sm:text-sm font-bold text-gray-700 shrink-0">
+                    期間：
+                    <select
+                        value={period}
+                        onChange={(e) => setPeriod(e.target.value as PeriodType)}
+                        className="bg-gray-50 border border-gray-200 text-gray-900 text-xs sm:text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block py-1.5 px-2 outline-none font-bold"
+                    >
+                        <option value="1w">7日間</option>
+                        <option value="1m">1ヶ月</option>
+                        <option value="3m">3ヶ月</option>
+                        <option value="6m">6ヶ月</option>
+                        <option value="1y">1年</option>
+                        <option value="all">すべて</option>
+                    </select>
+                </label>
+                <label className="flex items-center gap-2 text-xs sm:text-sm font-bold text-gray-700 shrink-0">
+                    表示：
+                    <select
+                        value={showAvg ? 'week' : 'day'}
+                        onChange={(e) => setShowAvg(e.target.value === 'week')}
+                        className="bg-gray-50 border border-gray-200 text-gray-900 text-xs sm:text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block py-1.5 px-2 outline-none font-bold"
+                    >
+                        <option value="day">日</option>
+                        <option value="week">週平均</option>
+                    </select>
+                </label>
             </div>
 
             {/* 1. Weight Chart */}
-            <AnalysisChartCard title="体重推移" color="blue">
+            <AnalysisChartCard title="体重推移 (kg)" color="blue">
                 <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={analysisData} syncId="analyzeSync" margin={chartMargin}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
@@ -213,7 +219,7 @@ export default function AnalyzeTab({ userId, token, isAdmin }: AnalyzeTabProps) 
             </AnalysisChartCard>
 
             {/* 2. Calories Chart */}
-            <AnalysisChartCard title="摂取カロリー" color="rose">
+            <AnalysisChartCard title="摂取カロリー (kcal)" color="rose">
                 <ResponsiveContainer width="100%" height="100%">
                     <ComposedChart data={analysisData} syncId="analyzeSync" margin={chartMargin}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
@@ -228,7 +234,7 @@ export default function AnalyzeTab({ userId, token, isAdmin }: AnalyzeTabProps) 
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 {/* 3. Protein Chart */}
-                <AnalysisChartCard title="P (タンパク質)" color="amber">
+                <AnalysisChartCard title="P (タンパク質) (g)" color="amber">
                     <ResponsiveContainer width="100%" height="100%">
                         <ComposedChart data={analysisData} syncId="analyzeSync" margin={chartMargin}>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
@@ -242,7 +248,7 @@ export default function AnalyzeTab({ userId, token, isAdmin }: AnalyzeTabProps) 
                 </AnalysisChartCard>
 
                 {/* 4. Fat Chart */}
-                <AnalysisChartCard title="F (脂質)" color="emerald">
+                <AnalysisChartCard title="F (脂質) (g)" color="emerald">
                     <ResponsiveContainer width="100%" height="100%">
                         <ComposedChart data={analysisData} syncId="analyzeSync" margin={chartMargin}>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
@@ -256,7 +262,7 @@ export default function AnalyzeTab({ userId, token, isAdmin }: AnalyzeTabProps) 
                 </AnalysisChartCard>
 
                 {/* 5. Carbs Chart */}
-                <AnalysisChartCard title="C (炭水化物)" color="blue">
+                <AnalysisChartCard title="C (炭水化物) (g)" color="blue">
                     <ResponsiveContainer width="100%" height="100%">
                         <ComposedChart data={analysisData} syncId="analyzeSync" margin={chartMargin}>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
@@ -270,7 +276,7 @@ export default function AnalyzeTab({ userId, token, isAdmin }: AnalyzeTabProps) 
                 </AnalysisChartCard>
 
                 {/* 6. Fiber Chart */}
-                <AnalysisChartCard title="食物繊維" color="teal">
+                <AnalysisChartCard title="食物繊維 (g)" color="teal">
                     <ResponsiveContainer width="100%" height="100%">
                         <ComposedChart data={analysisData} syncId="analyzeSync" margin={chartMargin}>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
@@ -285,7 +291,7 @@ export default function AnalyzeTab({ userId, token, isAdmin }: AnalyzeTabProps) 
             </div>
 
             {/* 7. Steps Chart */}
-            <AnalysisChartCard title="歩数" color="emerald">
+            <AnalysisChartCard title="歩数 (歩)" color="emerald">
                 <ResponsiveContainer width="100%" height="100%">
                     <ComposedChart data={analysisData} syncId="analyzeSync" margin={chartMargin}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
@@ -299,7 +305,7 @@ export default function AnalyzeTab({ userId, token, isAdmin }: AnalyzeTabProps) 
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 {/* 8. Sleep Chart */}
-                <AnalysisChartCard title="睡眠時間" color="indigo">
+                <AnalysisChartCard title="睡眠時間 (時間)" color="indigo">
                     <ResponsiveContainer width="100%" height="100%">
                         <ComposedChart data={analysisData} syncId="analyzeSync" margin={chartMargin}>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
@@ -312,7 +318,7 @@ export default function AnalyzeTab({ userId, token, isAdmin }: AnalyzeTabProps) 
                 </AnalysisChartCard>
 
                 {/* 5. Water Chart */}
-                <AnalysisChartCard title="水分摂取量" color="sky">
+                <AnalysisChartCard title="水分摂取量 (L)" color="sky">
                     <ResponsiveContainer width="100%" height="100%">
                         <ComposedChart data={analysisData} syncId="analyzeSync" margin={chartMargin}>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
