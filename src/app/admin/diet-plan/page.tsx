@@ -727,20 +727,25 @@ function DietPlanPageContent() {
                                                     <table className="w-full text-sm text-left">
                                                         <thead>
                                                             <tr className="bg-gray-50/50 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-100">
-                                                                <th className="px-6 py-4">日付</th>
-                                                                <th className="px-6 py-4 text-center">カロリー</th>
-                                                                <th className="px-6 py-4 text-center">PFC</th>
-                                                                <th className="px-6 py-4 text-right">操作</th>
+                                                                <th className="px-3 sm:px-6 py-4 whitespace-nowrap">日付</th>
+                                                                <th className="px-3 sm:px-6 py-4 text-center whitespace-nowrap">カロリー</th>
+                                                                <th className="px-3 sm:px-6 py-4 text-center whitespace-nowrap">PFC</th>
+                                                                <th className="px-3 sm:px-6 py-4 text-right whitespace-nowrap">操作</th>
                                                             </tr>
                                                         </thead>
                                                         <tbody className="divide-y divide-gray-100">
                                                             {dietHistory.map((record) => (
                                                                 <tr key={record.id} className="hover:bg-gray-50 transition-colors">
-                                                                    <td className="px-6 py-4 font-bold text-xs">{record.start_date}</td>
-                                                                    <td className="px-6 py-4 text-center font-black text-rose-600">{record.calories}kcal</td>
-                                                                    <td className="px-6 py-4 text-center font-black text-gray-400 text-[10px]">{record.protein} / {record.fat} / {record.carbs}</td>
-                                                                    <td className="px-6 py-4 text-right">
-                                                                        <button onClick={() => { handleEditHistory(record); setIsSettingNewGoal(true); }} className="text-blue-500 hover:text-blue-700 font-bold text-xs underline">編集</button>
+                                                                    <td className="px-3 sm:px-6 py-4 font-bold text-xs whitespace-nowrap">
+                                                                        {(() => {
+                                                                            const parts = record.start_date.split('-');
+                                                                            return parts.length === 3 ? `${parseInt(parts[1], 10)}/${parseInt(parts[2], 10)}` : record.start_date;
+                                                                        })()}
+                                                                    </td>
+                                                                    <td className="px-3 sm:px-6 py-4 text-center font-black text-rose-600 whitespace-nowrap">{record.calories}kcal</td>
+                                                                    <td className="px-3 sm:px-6 py-4 text-center font-black text-gray-400 text-[10px] whitespace-nowrap">{record.protein} / {record.fat} / {record.carbs}</td>
+                                                                    <td className="px-3 sm:px-6 py-4 text-right whitespace-nowrap">
+                                                                        <button onClick={() => { handleEditHistory(record); setIsSettingNewGoal(true); }} className="text-blue-500 hover:text-blue-700 font-bold text-xs underline whitespace-nowrap">編集</button>
                                                                     </td>
                                                                 </tr>
                                                             ))}
@@ -1042,17 +1047,23 @@ function DietPlanPageContent() {
                                             <table className="w-full text-sm text-left">
                                                 <thead>
                                                     <tr className="bg-gray-50/50 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-100">
-                                                        <th className="px-6 py-4">日付</th>
-                                                        <th className="px-6 py-4 text-center">体重</th>
-                                                        <th className="px-6 py-4 text-center">歩数</th>
+                                                        <th className="px-3 sm:px-6 py-4 whitespace-nowrap">日付</th>
+                                                        <th className="px-3 sm:px-6 py-4 text-center whitespace-nowrap">体重</th>
+                                                        <th className="px-3 sm:px-6 py-4 text-center whitespace-nowrap">歩数</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody className="divide-y divide-gray-100">
                                                     {[...processedWeightData].reverse().map((r, i) => (
                                                         <tr key={i} className="hover:bg-gray-50">
-                                                            <td className="px-6 py-4 font-bold">{r.recorded_date}</td>
-                                                            <td className="px-6 py-4 text-center font-black text-blue-600">{r.weight_kg || '-'} kg</td>
-                                                            <td className="px-6 py-4 text-center font-black text-gray-500">{r.steps?.toLocaleString() || '-'} 歩</td>
+                                                            <td className="px-3 sm:px-6 py-4 font-bold whitespace-nowrap">
+                                                                {(() => {
+                                                                    if (!r.recorded_date) return '-';
+                                                                    const parts = r.recorded_date.split('-');
+                                                                    return parts.length === 3 ? `${parseInt(parts[1], 10)}/${parseInt(parts[2], 10)}` : r.recorded_date;
+                                                                })()}
+                                                            </td>
+                                                            <td className="px-3 sm:px-6 py-4 text-center font-black text-blue-600 whitespace-nowrap">{r.weight_kg || '-'} kg</td>
+                                                            <td className="px-3 sm:px-6 py-4 text-center font-black text-gray-500 whitespace-nowrap">{r.steps?.toLocaleString() || '-'} 歩</td>
                                                         </tr>
                                                     ))}
                                                 </tbody>
