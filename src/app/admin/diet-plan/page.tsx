@@ -1233,7 +1233,7 @@ function AnalysisChartCard({ title, children, color }: { title: string, children
     }
     return (
         <div className={`p-6 rounded-2xl border ${colorStyles[color]} shadow-sm space-y-4`}>
-            <h3 className="text-sm font-black text-gray-500 uppercase tracking-widest">{title}</h3>
+            <h3 className="text-sm font-black text-gray-500 tracking-widest">{title}</h3>
             <div className="h-[250px] w-full">{children}</div>
         </div>
     )
