@@ -58,6 +58,7 @@ function DietPlanPageContent() {
     const [activeTab, setActiveTab] = useState<TabType>('goals')
     const [isSettingNewGoal, setIsSettingNewGoal] = useState(false)
     const [analysisPeriod, setAnalysisPeriod] = useState<PeriodType>('1m')
+    const [selectedWeek, setSelectedWeek] = useState<string>('')
     const [showWeightAvg, setShowWeightAvg] = useState(false)
     const [isWeightListOpen, setIsWeightListOpen] = useState(false)
 
@@ -358,46 +359,64 @@ function DietPlanPageContent() {
         return result;
     }, [weightHistory, lifestyleHistory, intakeHistory, analysisPeriod, showWeightAvg]);
 
-    const weeklyStats = useMemo(() => {
-        if (!intakeHistory.length || !dietHistory.length) return null;
-
-        // 1. Get current week range (Monday to Sunday)
+    const availableWeeks = useMemo(() => {
+        const weeks = [];
         const now = new Date();
-        const day = now.getDay(); // 0 (Sun) to 6 (Sat)
-        const diff = now.getDate() - day + (day === 0 ? -6 : 1); // Adjust to Monday
-        const monday = new Date(now.setDate(diff));
-        monday.setHours(0, 0, 0, 0);
+        const currentDay = now.getDay();
+        const diffToMonday = now.getDate() - currentDay + (currentDay === 0 ? -6 : 1);
+        const thisMonday = new Date(now.setDate(diffToMonday));
+        thisMonday.setHours(0,0,0,0);
         
-        const sunday = new Date(monday);
-        sunday.setDate(monday.getDate() + 6);
-        sunday.setHours(23, 59, 59, 999);
+        for (let i = 0; i < 12; i++) {
+            const m = new Date(thisMonday);
+            m.setDate(m.getDate() - (i * 7));
+            const s = new Date(m);
+            s.setDate(s.getDate() + 6);
+            
+            const mStr = m.toISOString().split('T')[0];
+            const sStr = s.toISOString().split('T')[0];
+            
+            let label = `${m.getMonth()+1}/${m.getDate()}〜${s.getMonth()+1}/${s.getDate()}`;
+            if (i === 0) label = `今週 (${label})`;
+            if (i === 1) label = `先週 (${label})`;
+            
+            weeks.push({ label, start: mStr, end: sStr, value: mStr });
+        }
+        return weeks;
+    }, []);
 
-        // 2. Filter logs for this week
-        const thisWeekLogs = intakeHistory.filter(log => {
-            const logDate = new Date(log.date);
-            return logDate >= monday && logDate <= sunday;
-        });
+    useEffect(() => {
+        if (!selectedWeek && availableWeeks.length > 0) {
+            setSelectedWeek(availableWeeks[0].value);
+        }
+    }, [availableWeeks, selectedWeek]);
 
-        // 3. Get target for this week (latest setting)
-        const target = dietHistory[0];
-        const daysInWeek = 7;
+    const weeklyStats = useMemo(() => {
+        if (!selectedWeek || !availableWeeks.length || !dietHistory.length) return null;
+        const week = availableWeeks.find(w => w.value === selectedWeek) || availableWeeks[0];
+        
+        const logs = intakeHistory.filter(l => l.date >= week.start && l.date <= week.end);
+        const lifeLogs = lifestyleHistory.filter(l => l.date >= week.start && l.date <= week.end);
+        
+        const target = [...dietHistory].reverse().find(t => t.start_date <= week.end) || dietHistory[0];
+
+        const daysWithDiet = logs.length || 1;
+        const daysWithLife = lifeLogs.length || 1;
 
         const actual = {
-            calories: thisWeekLogs.reduce((sum, log) => sum + (log.calories || 0), 0),
-            protein: thisWeekLogs.reduce((sum, log) => sum + (log.protein || 0), 0),
-            fat: thisWeekLogs.reduce((sum, log) => sum + (log.fat || 0), 0),
-            carbs: thisWeekLogs.reduce((sum, log) => sum + (log.carbs || 0), 0),
+            calories: Math.round(logs.reduce((s, l) => s + (l.calories || 0), 0) / daysWithDiet),
+            protein: Math.round(logs.reduce((s, l) => s + (l.protein || 0), 0) / daysWithDiet),
+            fat: Math.round(logs.reduce((s, l) => s + (l.fat || 0), 0) / daysWithDiet),
+            carbs: Math.round(logs.reduce((s, l) => s + (l.carbs || 0), 0) / daysWithDiet),
+            fiber: Math.round(logs.reduce((s, l) => s + (l.fiber || 0), 0) / daysWithDiet),
+            sleep: Number((lifeLogs.reduce((s, l) => s + (l.sleep_hours || 0), 0) / daysWithLife).toFixed(1)),
+            workout: Number((lifeLogs.reduce((s, l) => s + (l.habits?.workout || 0), 0) / daysWithLife).toFixed(1)),
+            steps: Math.round(lifeLogs.reduce((s, l) => s + (l.steps || 0), 0) / daysWithLife),
+            water: Number((lifeLogs.reduce((s, l) => s + (l.water_liters || 0), 0) / daysWithLife).toFixed(1))
         };
 
-        const targets = {
-            calories: target.calories * daysInWeek,
-            protein: target.protein * daysInWeek,
-            fat: target.fat * daysInWeek,
-            carbs: target.carbs * daysInWeek,
-        };
-
-        return { actual, targets, targetPerDay: target };
-    }, [intakeHistory, dietHistory]);
+        return { actual, target, habitTargets };
+    }, [selectedWeek, intakeHistory, lifestyleHistory, dietHistory, availableWeeks, habitTargets]);
 
     const analysisData = useMemo(() => {
         if (!intakeHistory.length && !lifestyleHistory.length && !weightHistory.length) return [];
@@ -566,9 +585,9 @@ function DietPlanPageContent() {
                         {/* Tabs */}
                         <div className="flex bg-white p-1.5 rounded-2xl border border-gray-200 shadow-sm sticky top-2 z-20 gap-1 overflow-x-auto">
                             {[
-                                { id: 'goals', label: '目標' },
+                                { id: 'goals', label: '設定' },
                                 { id: 'analysis', label: '分析' },
-                                { id: 'weekly', label: '今週' }
+                                { id: 'weekly', label: '目標' }
                             ].map(tab => (
                                 <button
                                     key={tab.id}
@@ -1104,49 +1123,87 @@ function DietPlanPageContent() {
 
                         {!loadingData && activeTab === 'weekly' && (
                             <div className="space-y-6 pb-20 animate-fadeIn">
-                                <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm space-y-8">
-                                    <h2 className="text-xl font-black flex items-center gap-2">
-                                        <span className="w-2 h-8 bg-rose-500 rounded-full"></span>
-                                        今週の達成状況 (月〜日)
-                                    </h2>
+                                <div className="bg-white p-4 sm:p-6 rounded-2xl border border-gray-200 shadow-sm space-y-6 overflow-hidden">
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                        <h2 className="text-xl font-black flex items-center gap-2">
+                                            <span className="w-2 h-8 bg-rose-500 rounded-full"></span>
+                                            目標と平均
+                                        </h2>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xs font-bold text-gray-500 whitespace-nowrap">週:</span>
+                                            <select 
+                                                value={selectedWeek} 
+                                                onChange={(e) => setSelectedWeek(e.target.value)}
+                                                className="bg-gray-50 border border-gray-200 text-gray-900 text-sm font-bold rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 outline-none"
+                                            >
+                                                {availableWeeks.map(w => (
+                                                    <option key={w.value} value={w.value}>{w.label}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    </div>
 
                                     {weeklyStats ? (
-                                        <div className="grid gap-8">
-                                            <WeeklyProgressItem 
-                                                label="合計カロリー" 
-                                                actual={weeklyStats.actual.calories} 
-                                                target={weeklyStats.targets.calories} 
-                                                unit="kcal" 
-                                                color="rose"
-                                                perDay={weeklyStats.targetPerDay.calories}
-                                            />
-                                            <WeeklyProgressItem 
-                                                label="タンパク質 (P)" 
-                                                actual={weeklyStats.actual.protein} 
-                                                target={weeklyStats.targets.protein} 
-                                                unit="g" 
-                                                color="amber"
-                                                perDay={weeklyStats.targetPerDay.protein}
-                                            />
-                                            <WeeklyProgressItem 
-                                                label="脂質 (F)" 
-                                                actual={weeklyStats.actual.fat} 
-                                                target={weeklyStats.targets.fat} 
-                                                unit="g" 
-                                                color="emerald"
-                                                perDay={weeklyStats.targetPerDay.fat}
-                                            />
-                                            <WeeklyProgressItem 
-                                                label="炭水化物 (C)" 
-                                                actual={weeklyStats.actual.carbs} 
-                                                target={weeklyStats.targets.carbs} 
-                                                unit="g" 
-                                                color="blue"
-                                                perDay={weeklyStats.targetPerDay.carbs}
-                                            />
+                                        <div className="overflow-x-auto -mx-4 sm:mx-0">
+                                            <table className="w-full text-sm text-left border-collapse min-w-[300px]">
+                                                <thead>
+                                                    <tr className="bg-gray-50/50 text-[10px] font-black text-gray-400 uppercase tracking-widest border-y border-gray-100">
+                                                        <th className="px-4 sm:px-6 py-4 whitespace-nowrap">項目</th>
+                                                        <th className="px-4 sm:px-6 py-4 text-center whitespace-nowrap">平均</th>
+                                                        <th className="px-4 sm:px-6 py-4 text-center whitespace-nowrap">目標</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-gray-100">
+                                                    <tr className="hover:bg-gray-50 transition-colors">
+                                                        <td className="px-4 sm:px-6 py-4 font-bold whitespace-nowrap text-gray-700">カロリー</td>
+                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-rose-600 whitespace-nowrap">{weeklyStats.actual.calories.toLocaleString()} <span className="text-[10px] text-gray-400 font-bold">kcal</span></td>
+                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-gray-400 whitespace-nowrap">{weeklyStats.target.calories.toLocaleString()} <span className="text-[10px] text-gray-300 font-bold">kcal</span></td>
+                                                    </tr>
+                                                    <tr className="hover:bg-gray-50 transition-colors">
+                                                        <td className="px-4 sm:px-6 py-4 font-bold whitespace-nowrap text-gray-700">タンパク質</td>
+                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-amber-500 whitespace-nowrap">{weeklyStats.actual.protein} <span className="text-[10px] text-gray-400 font-bold">g</span></td>
+                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-gray-400 whitespace-nowrap">{weeklyStats.target.protein} <span className="text-[10px] text-gray-300 font-bold">g</span></td>
+                                                    </tr>
+                                                    <tr className="hover:bg-gray-50 transition-colors">
+                                                        <td className="px-4 sm:px-6 py-4 font-bold whitespace-nowrap text-gray-700">脂質</td>
+                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-emerald-500 whitespace-nowrap">{weeklyStats.actual.fat} <span className="text-[10px] text-gray-400 font-bold">g</span></td>
+                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-gray-400 whitespace-nowrap">{weeklyStats.target.fat} <span className="text-[10px] text-gray-300 font-bold">g</span></td>
+                                                    </tr>
+                                                    <tr className="hover:bg-gray-50 transition-colors">
+                                                        <td className="px-4 sm:px-6 py-4 font-bold whitespace-nowrap text-gray-700">糖質</td>
+                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-blue-500 whitespace-nowrap">{weeklyStats.actual.carbs} <span className="text-[10px] text-gray-400 font-bold">g</span></td>
+                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-gray-400 whitespace-nowrap">{weeklyStats.target.carbs} <span className="text-[10px] text-gray-300 font-bold">g</span></td>
+                                                    </tr>
+                                                    <tr className="hover:bg-gray-50 transition-colors">
+                                                        <td className="px-4 sm:px-6 py-4 font-bold whitespace-nowrap text-gray-700">食物繊維</td>
+                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-teal-500 whitespace-nowrap">{weeklyStats.actual.fiber} <span className="text-[10px] text-gray-400 font-bold">g</span></td>
+                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-gray-400 whitespace-nowrap">{weeklyStats.target.fiber || 20} <span className="text-[10px] text-gray-300 font-bold">g</span></td>
+                                                    </tr>
+                                                    <tr className="hover:bg-gray-50 transition-colors">
+                                                        <td className="px-4 sm:px-6 py-4 font-bold whitespace-nowrap text-gray-700">睡眠</td>
+                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-indigo-500 whitespace-nowrap">{weeklyStats.actual.sleep} <span className="text-[10px] text-gray-400 font-bold">h</span></td>
+                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-gray-400 whitespace-nowrap">{weeklyStats.habitTargets.sleep} <span className="text-[10px] text-gray-300 font-bold">h</span></td>
+                                                    </tr>
+                                                    <tr className="hover:bg-gray-50 transition-colors">
+                                                        <td className="px-4 sm:px-6 py-4 font-bold whitespace-nowrap text-gray-700">筋トレ</td>
+                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-orange-500 whitespace-nowrap">{weeklyStats.actual.workout} <span className="text-[10px] text-gray-400 font-bold">times</span></td>
+                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-gray-400 whitespace-nowrap">{weeklyStats.habitTargets.workout} <span className="text-[10px] text-gray-300 font-bold">times</span></td>
+                                                    </tr>
+                                                    <tr className="hover:bg-gray-50 transition-colors">
+                                                        <td className="px-4 sm:px-6 py-4 font-bold whitespace-nowrap text-gray-700">歩数</td>
+                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-sky-500 whitespace-nowrap">{weeklyStats.actual.steps.toLocaleString()} <span className="text-[10px] text-gray-400 font-bold">step</span></td>
+                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-gray-400 whitespace-nowrap">{weeklyStats.habitTargets.steps.toLocaleString()} <span className="text-[10px] text-gray-300 font-bold">step</span></td>
+                                                    </tr>
+                                                    <tr className="hover:bg-gray-50 transition-colors">
+                                                        <td className="px-4 sm:px-6 py-4 font-bold whitespace-nowrap text-gray-700">水</td>
+                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-cyan-500 whitespace-nowrap">{weeklyStats.actual.water} <span className="text-[10px] text-gray-400 font-bold">l</span></td>
+                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-gray-400 whitespace-nowrap">{weeklyStats.habitTargets.water} <span className="text-[10px] text-gray-300 font-bold">l</span></td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
                                         </div>
                                     ) : (
-                                        <div className="p-12 text-center text-gray-400 font-bold italic border-2 border-dashed border-gray-100 rounded-2xl">今週の記録がありません</div>
+                                        <div className="p-12 text-center text-gray-400 font-bold italic border-2 border-dashed border-gray-100 rounded-2xl">記録がありません</div>
                                     )}
                                 </div>
                             </div>
