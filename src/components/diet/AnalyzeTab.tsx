@@ -161,7 +161,7 @@ export default function AnalyzeTab({ userId, token, isAdmin }: AnalyzeTabProps) 
     const commonXAxis = (
         <XAxis 
             dataKey="displayDate" 
-            axisLine={false} 
+            axisLine={{ stroke: '#000000', strokeWidth: 1 }} 
             tickLine={false} 
             tick={{ fontSize: 9, fontWeight: 700, fill: '#94a3b8' }} 
             interval="preserveStartEnd"
@@ -212,25 +212,79 @@ export default function AnalyzeTab({ userId, token, isAdmin }: AnalyzeTabProps) 
                 </ResponsiveContainer>
             </AnalysisChartCard>
 
-            {/* 2. PFC Stacked Chart */}
-            <AnalysisChartCard title="摂取カロリー・PFC" color="rose">
+            {/* 2. Calories Chart */}
+            <AnalysisChartCard title="摂取カロリー" color="rose">
                 <ResponsiveContainer width="100%" height="100%">
                     <ComposedChart data={analysisData} syncId="analyzeSync" margin={chartMargin}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                         {commonXAxis}
                         {commonYAxis}
                         {commonTooltip}
-                        <Legend iconType="circle" wrapperStyle={{ paddingTop: '10px', fontSize: '10px', fontWeight: 700 }} />
-                        <Bar dataKey="protein_kcal" name="P" stackId="a" fill="#fbbf24" radius={[0, 0, 0, 0]} />
-                        <Bar dataKey="fat_kcal" name="F" stackId="a" fill="#10b981" radius={[0, 0, 0, 0]} />
-                        <Bar dataKey="carbs_kcal" name="C" stackId="a" fill="#3b82f6" radius={[2, 2, 0, 0]} />
-                        <Line type="monotone" dataKey="calories" name="合計摂取" stroke="#f43f5e" strokeWidth={3} dot={false} />
-                        <Line type="monotone" dataKey="target_calories" name="目標" stroke="#e2e8f0" strokeWidth={1} strokeDasharray="5 5" dot={false} />
+                        <Bar dataKey="calories" name="摂取カロリー" fill="#f43f5e" radius={[4, 4, 0, 0]} />
+                        <Line type="monotone" dataKey="target_calories" name="目標" stroke="#e2e8f0" strokeWidth={2} strokeDasharray="5 5" dot={false} />
                     </ComposedChart>
                 </ResponsiveContainer>
             </AnalysisChartCard>
 
-            {/* 3. Steps Chart */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                {/* 3. Protein Chart */}
+                <AnalysisChartCard title="P (タンパク質)" color="amber">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <ComposedChart data={analysisData} syncId="analyzeSync" margin={chartMargin}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                            {commonXAxis}
+                            {commonYAxis}
+                            {commonTooltip}
+                            <Bar dataKey="protein" name="タンパク質(g)" fill="#fbbf24" radius={[4, 4, 0, 0]} />
+                            <Line type="monotone" dataKey="target_protein" name="目標(g)" stroke="#e2e8f0" strokeWidth={2} strokeDasharray="5 5" dot={false} />
+                        </ComposedChart>
+                    </ResponsiveContainer>
+                </AnalysisChartCard>
+
+                {/* 4. Fat Chart */}
+                <AnalysisChartCard title="F (脂質)" color="emerald">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <ComposedChart data={analysisData} syncId="analyzeSync" margin={chartMargin}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                            {commonXAxis}
+                            {commonYAxis}
+                            {commonTooltip}
+                            <Bar dataKey="fat" name="脂質(g)" fill="#10b981" radius={[4, 4, 0, 0]} />
+                            <Line type="monotone" dataKey="target_fat" name="目標(g)" stroke="#e2e8f0" strokeWidth={2} strokeDasharray="5 5" dot={false} />
+                        </ComposedChart>
+                    </ResponsiveContainer>
+                </AnalysisChartCard>
+
+                {/* 5. Carbs Chart */}
+                <AnalysisChartCard title="C (炭水化物)" color="blue">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <ComposedChart data={analysisData} syncId="analyzeSync" margin={chartMargin}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                            {commonXAxis}
+                            {commonYAxis}
+                            {commonTooltip}
+                            <Bar dataKey="carbs" name="炭水化物(g)" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                            <Line type="monotone" dataKey="target_carbs" name="目標(g)" stroke="#e2e8f0" strokeWidth={2} strokeDasharray="5 5" dot={false} />
+                        </ComposedChart>
+                    </ResponsiveContainer>
+                </AnalysisChartCard>
+
+                {/* 6. Fiber Chart */}
+                <AnalysisChartCard title="食物繊維" color="teal">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <ComposedChart data={analysisData} syncId="analyzeSync" margin={chartMargin}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                            {commonXAxis}
+                            {commonYAxis}
+                            {commonTooltip}
+                            <Bar dataKey="fiber" name="食物繊維(g)" fill="#14b8a6" radius={[4, 4, 0, 0]} />
+                            <Line type="monotone" dataKey="target_fiber" name="目標(g)" stroke="#e2e8f0" strokeWidth={2} strokeDasharray="5 5" dot={false} />
+                        </ComposedChart>
+                    </ResponsiveContainer>
+                </AnalysisChartCard>
+            </div>
+
+            {/* 7. Steps Chart */}
             <AnalysisChartCard title="歩数" color="emerald">
                 <ResponsiveContainer width="100%" height="100%">
                     <ComposedChart data={analysisData} syncId="analyzeSync" margin={chartMargin}>
@@ -244,7 +298,7 @@ export default function AnalyzeTab({ userId, token, isAdmin }: AnalyzeTabProps) 
             </AnalysisChartCard>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                {/* 4. Sleep Chart */}
+                {/* 8. Sleep Chart */}
                 <AnalysisChartCard title="睡眠時間" color="indigo">
                     <ResponsiveContainer width="100%" height="100%">
                         <ComposedChart data={analysisData} syncId="analyzeSync" margin={chartMargin}>

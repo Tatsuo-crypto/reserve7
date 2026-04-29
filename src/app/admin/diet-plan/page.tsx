@@ -775,7 +775,7 @@ function DietPlanPageContent() {
                                     <ResponsiveContainer width="100%" height="100%">
                                         <LineChart data={processedWeightData}>
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                            <XAxis dataKey="recorded_date" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} tickFormatter={(val) => {
+                                            <XAxis dataKey="recorded_date" axisLine={{ stroke: '#000000', strokeWidth: 1 }} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} tickFormatter={(val) => {
                                                 if (!val) return '';
                                                 const parts = val.split('-');
                                                 if (parts.length === 3) return `${parseInt(parts[1], 10)}/${parseInt(parts[2], 10)}`;
@@ -793,12 +793,12 @@ function DietPlanPageContent() {
                                     </ResponsiveContainer>
                                 </AnalysisChartCard>
 
-                                {/* Calorie/PFC Chart */}
-                                <AnalysisChartCard title="摂取カロリー・PFC" color="rose">
+                                {/* Calories Chart */}
+                                <AnalysisChartCard title="摂取カロリー" color="rose">
                                     <ResponsiveContainer width="100%" height="100%">
                                         <ComposedChart data={analysisData}>
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                            <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} tickFormatter={(val) => {
+                                            <XAxis dataKey="date" axisLine={{ stroke: '#000000', strokeWidth: 1 }} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} tickFormatter={(val) => {
                                                 if (!val) return '';
                                                 const parts = val.split('-');
                                                 if (parts.length === 3) return `${parseInt(parts[1], 10)}/${parseInt(parts[2], 10)}`;
@@ -811,22 +811,116 @@ function DietPlanPageContent() {
                                                 if (parts.length === 3) return `${parseInt(parts[1], 10)}/${parseInt(parts[2], 10)}`;
                                                 return label;
                                             }} contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', padding: '12px' }} />
-                                            <Legend iconType="circle" wrapperStyle={{ paddingTop: '10px', fontSize: '10px', fontWeight: 700 }} />
-                                            <Bar dataKey="protein_kcal" name="P" stackId="a" fill="#fbbf24" />
-                                            <Bar dataKey="fat_kcal" name="F" stackId="a" fill="#10b981" />
-                                            <Bar dataKey="carbs_kcal" name="C" stackId="a" fill="#3b82f6" />
-                                            <Line type="monotone" dataKey="calories" name="合計摂取" stroke="#f43f5e" strokeWidth={3} dot={false} />
-                                            <Line type="monotone" dataKey="target_calories" name="目標" stroke="#e2e8f0" strokeWidth={1} strokeDasharray="5 5" dot={false} />
+                                            <Bar dataKey="calories" name="摂取カロリー" fill="#f43f5e" radius={[4, 4, 0, 0]} />
+                                            <Line type="monotone" dataKey="target_calories" name="目標" stroke="#e2e8f0" strokeWidth={2} strokeDasharray="5 5" dot={false} />
                                         </ComposedChart>
                                     </ResponsiveContainer>
                                 </AnalysisChartCard>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                    {/* Protein Chart */}
+                                    <AnalysisChartCard title="P (タンパク質)" color="amber">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <ComposedChart data={analysisData}>
+                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                                <XAxis dataKey="date" axisLine={{ stroke: '#000000', strokeWidth: 1 }} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} tickFormatter={(val) => {
+                                                    if (!val) return '';
+                                                    const parts = val.split('-');
+                                                    if (parts.length === 3) return `${parseInt(parts[1], 10)}/${parseInt(parts[2], 10)}`;
+                                                    return val;
+                                                }} />
+                                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} />
+                                                <Tooltip labelFormatter={(label: string) => {
+                                                    if (!label) return '';
+                                                    const parts = label.split('-');
+                                                    if (parts.length === 3) return `${parseInt(parts[1], 10)}/${parseInt(parts[2], 10)}`;
+                                                    return label;
+                                                }} contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', padding: '12px' }} />
+                                                <Bar dataKey="protein" name="タンパク質(g)" fill="#fbbf24" radius={[4, 4, 0, 0]} />
+                                                <Line type="monotone" dataKey="target_protein" name="目標(g)" stroke="#e2e8f0" strokeWidth={2} strokeDasharray="5 5" dot={false} />
+                                            </ComposedChart>
+                                        </ResponsiveContainer>
+                                    </AnalysisChartCard>
+
+                                    {/* Fat Chart */}
+                                    <AnalysisChartCard title="F (脂質)" color="emerald">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <ComposedChart data={analysisData}>
+                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                                <XAxis dataKey="date" axisLine={{ stroke: '#000000', strokeWidth: 1 }} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} tickFormatter={(val) => {
+                                                    if (!val) return '';
+                                                    const parts = val.split('-');
+                                                    if (parts.length === 3) return `${parseInt(parts[1], 10)}/${parseInt(parts[2], 10)}`;
+                                                    return val;
+                                                }} />
+                                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} />
+                                                <Tooltip labelFormatter={(label: string) => {
+                                                    if (!label) return '';
+                                                    const parts = label.split('-');
+                                                    if (parts.length === 3) return `${parseInt(parts[1], 10)}/${parseInt(parts[2], 10)}`;
+                                                    return label;
+                                                }} contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', padding: '12px' }} />
+                                                <Bar dataKey="fat" name="脂質(g)" fill="#10b981" radius={[4, 4, 0, 0]} />
+                                                <Line type="monotone" dataKey="target_fat" name="目標(g)" stroke="#e2e8f0" strokeWidth={2} strokeDasharray="5 5" dot={false} />
+                                            </ComposedChart>
+                                        </ResponsiveContainer>
+                                    </AnalysisChartCard>
+
+                                    {/* Carbs Chart */}
+                                    <AnalysisChartCard title="C (炭水化物)" color="blue">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <ComposedChart data={analysisData}>
+                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                                <XAxis dataKey="date" axisLine={{ stroke: '#000000', strokeWidth: 1 }} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} tickFormatter={(val) => {
+                                                    if (!val) return '';
+                                                    const parts = val.split('-');
+                                                    if (parts.length === 3) return `${parseInt(parts[1], 10)}/${parseInt(parts[2], 10)}`;
+                                                    return val;
+                                                }} />
+                                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} />
+                                                <Tooltip labelFormatter={(label: string) => {
+                                                    if (!label) return '';
+                                                    const parts = label.split('-');
+                                                    if (parts.length === 3) return `${parseInt(parts[1], 10)}/${parseInt(parts[2], 10)}`;
+                                                    return label;
+                                                }} contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', padding: '12px' }} />
+                                                <Bar dataKey="carbs" name="炭水化物(g)" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                                                <Line type="monotone" dataKey="target_carbs" name="目標(g)" stroke="#e2e8f0" strokeWidth={2} strokeDasharray="5 5" dot={false} />
+                                            </ComposedChart>
+                                        </ResponsiveContainer>
+                                    </AnalysisChartCard>
+
+                                    {/* Fiber Chart */}
+                                    <AnalysisChartCard title="食物繊維" color="teal">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <ComposedChart data={analysisData}>
+                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                                <XAxis dataKey="date" axisLine={{ stroke: '#000000', strokeWidth: 1 }} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} tickFormatter={(val) => {
+                                                    if (!val) return '';
+                                                    const parts = val.split('-');
+                                                    if (parts.length === 3) return `${parseInt(parts[1], 10)}/${parseInt(parts[2], 10)}`;
+                                                    return val;
+                                                }} />
+                                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} />
+                                                <Tooltip labelFormatter={(label: string) => {
+                                                    if (!label) return '';
+                                                    const parts = label.split('-');
+                                                    if (parts.length === 3) return `${parseInt(parts[1], 10)}/${parseInt(parts[2], 10)}`;
+                                                    return label;
+                                                }} contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', padding: '12px' }} />
+                                                <Bar dataKey="fiber" name="食物繊維(g)" fill="#14b8a6" radius={[4, 4, 0, 0]} />
+                                                <Line type="monotone" dataKey="target_fiber" name="目標(g)" stroke="#e2e8f0" strokeWidth={2} strokeDasharray="5 5" dot={false} />
+                                            </ComposedChart>
+                                        </ResponsiveContainer>
+                                    </AnalysisChartCard>
+                                </div>
 
                                 {/* Steps Chart */}
                                 <AnalysisChartCard title="歩数" color="emerald">
                                     <ResponsiveContainer width="100%" height="100%">
                                         <BarChart data={analysisData}>
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                            <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} tickFormatter={(val) => {
+                                            <XAxis dataKey="date" axisLine={{ stroke: '#000000', strokeWidth: 1 }} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} tickFormatter={(val) => {
                                                 if (!val) return '';
                                                 const parts = val.split('-');
                                                 if (parts.length === 3) return `${parseInt(parts[1], 10)}/${parseInt(parts[2], 10)}`;
@@ -850,7 +944,7 @@ function DietPlanPageContent() {
                                         <ResponsiveContainer width="100%" height="100%">
                                             <BarChart data={analysisData}>
                                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                                <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} tickFormatter={(val) => {
+                                                <XAxis dataKey="date" axisLine={{ stroke: '#000000', strokeWidth: 1 }} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} tickFormatter={(val) => {
                                                     if (!val) return '';
                                                     const parts = val.split('-');
                                                     if (parts.length === 3) return `${parseInt(parts[1], 10)}/${parseInt(parts[2], 10)}`;
@@ -873,7 +967,7 @@ function DietPlanPageContent() {
                                         <ResponsiveContainer width="100%" height="100%">
                                             <BarChart data={analysisData}>
                                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                                <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} tickFormatter={(val) => {
+                                                <XAxis dataKey="date" axisLine={{ stroke: '#000000', strokeWidth: 1 }} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} tickFormatter={(val) => {
                                                     if (!val) return '';
                                                     const parts = val.split('-');
                                                     if (parts.length === 3) return `${parseInt(parts[1], 10)}/${parseInt(parts[2], 10)}`;
