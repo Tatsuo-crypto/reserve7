@@ -73,14 +73,15 @@ function DietPlanPageContent() {
     })
 
     const [lifestyleSettings, setLifestyleSettings] = useState({
-        visible_items: { steps: true, sleep: true, water: true },
+        visible_items: { steps: true, sleep: true, water: true, workout: true },
         visible_tabs: { input: true, analyze: true, progress: true }
     })
 
     const [habitTargets, setHabitTargets] = useState({
         steps: 8000,
-        water: 2.0,
-        sleep: 7.0
+        sleep: 7,
+        water: 2,
+        workout: 30
     })
 
     const [quitGoals, setQuitGoals] = useState<string[]>([])
@@ -124,7 +125,7 @@ function DietPlanPageContent() {
                 const { data } = await lifestyleRes.json()
                 if (data) {
                     setLifestyleSettings({
-                        visible_items: data.visible_items || { steps: true, sleep: true, water: true },
+                        visible_items: data.visible_items || { steps: true, sleep: true, water: true, workout: true },
                         visible_tabs: data.visible_tabs || { input: true, analyze: true, progress: true }
                     })
                     if (data.quit_goals) setQuitGoals(data.quit_goals)
@@ -441,10 +442,20 @@ function DietPlanPageContent() {
                 protein_kcal: (intake?.protein || 0) * 4,
                 fat_kcal: (intake?.fat || 0) * 9,
                 carbs_kcal: (intake?.carbs || 0) * 4,
-                target_calories: target?.calories || 0,
+                protein: intake?.protein || 0,
+                fat: intake?.fat || 0,
+                carbs: intake?.carbs || 0,
+                fiber: intake?.fiber || 0,
+                target_calories: target?.calories || null,
+                target_protein: target?.protein || null,
+                target_fat: target?.fat || null,
+                target_carbs: target?.carbs || null,
+                target_fiber: target?.fiber || null,
                 steps: lifestyle?.steps || 0,
                 sleep: lifestyle?.sleep_hours || 0,
                 water: lifestyle?.water_liters || 0,
+                workout: lifestyle?.habits?.workout || 0,
+                target_workout: habitTargets?.workout || 1,
             });
             current.setDate(current.getDate() + 1);
         }
@@ -618,10 +629,11 @@ function DietPlanPageContent() {
                                         </div>
                                         <div className="space-y-6 pt-6 border-t border-gray-100">
                                             <h2 className="text-lg font-black flex items-center gap-2"><span className="w-2 h-6 bg-teal-500 rounded-full"></span>② 習慣設定</h2>
-                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                                                 <HabitConfig label="歩数" unit="歩" active={lifestyleSettings.visible_items.steps} target={habitTargets.steps} onToggle={() => setLifestyleSettings({ ...lifestyleSettings, visible_items: { ...lifestyleSettings.visible_items, steps: !lifestyleSettings.visible_items.steps } })} onTargetChange={(v) => setHabitTargets({...habitTargets, steps: v})} step={500} />
-                                                <HabitConfig label="水分" unit="L" active={lifestyleSettings.visible_items.water} target={habitTargets.water} onToggle={() => setLifestyleSettings({ ...lifestyleSettings, visible_items: { ...lifestyleSettings.visible_items, water: !lifestyleSettings.visible_items.water } })} onTargetChange={(v) => setHabitTargets({...habitTargets, water: v})} step={0.1} />
+                                                <HabitConfig label="水分" unit="l" active={lifestyleSettings.visible_items.water} target={habitTargets.water} onToggle={() => setLifestyleSettings({ ...lifestyleSettings, visible_items: { ...lifestyleSettings.visible_items, water: !lifestyleSettings.visible_items.water } })} onTargetChange={(v) => setHabitTargets({...habitTargets, water: v})} step={0.1} />
                                                 <HabitConfig label="睡眠" unit="時間" active={lifestyleSettings.visible_items.sleep} target={habitTargets.sleep} onToggle={() => setLifestyleSettings({ ...lifestyleSettings, visible_items: { ...lifestyleSettings.visible_items, sleep: !lifestyleSettings.visible_items.sleep } })} onTargetChange={(v) => setHabitTargets({...habitTargets, sleep: v})} step={0.5} />
+                                                <HabitConfig label="筋トレ" unit="回" active={lifestyleSettings.visible_items.workout ?? true} target={habitTargets.workout ?? 1} onToggle={() => setLifestyleSettings({ ...lifestyleSettings, visible_items: { ...lifestyleSettings.visible_items, workout: !lifestyleSettings.visible_items.workout } })} onTargetChange={(v) => setHabitTargets({...habitTargets, workout: v})} step={1} />
                                             </div>
                                         </div>
                                         <div className="space-y-6 pt-6 border-t border-gray-100">
@@ -922,7 +934,7 @@ function DietPlanPageContent() {
                                 </div>
 
                                 {/* Steps Chart */}
-                                <AnalysisChartCard title="歩数 (歩)" color="emerald">
+                                <AnalysisChartCard title="歩数 (step)" color="emerald">
                                     <ResponsiveContainer width="100%" height="100%">
                                         <BarChart data={analysisData}>
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
@@ -946,7 +958,7 @@ function DietPlanPageContent() {
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                     {/* Sleep Chart */}
-                                    <AnalysisChartCard title="睡眠時間 (時間)" color="indigo">
+                                    <AnalysisChartCard title="睡眠時間 (h)" color="indigo">
                                         <ResponsiveContainer width="100%" height="100%">
                                             <BarChart data={analysisData}>
                                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
@@ -969,7 +981,7 @@ function DietPlanPageContent() {
                                     </AnalysisChartCard>
 
                                     {/* Water Chart */}
-                                    <AnalysisChartCard title="水分摂取量 (L)" color="sky">
+                                    <AnalysisChartCard title="水分摂取量 (l)" color="sky">
                                         <ResponsiveContainer width="100%" height="100%">
                                             <BarChart data={analysisData}>
                                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
@@ -991,6 +1003,31 @@ function DietPlanPageContent() {
                                         </ResponsiveContainer>
                                     </AnalysisChartCard>
                                 </div>
+
+                                {/* Workout Chart */}
+                                <AnalysisChartCard title="筋トレ (times)" color="orange">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <ComposedChart data={analysisData}>
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                            <XAxis dataKey="date" axisLine={{ stroke: '#000000', strokeWidth: 0.3 }} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} tickFormatter={(val) => {
+                                                if (!val) return '';
+                                                const parts = val.split('-');
+                                                if (parts.length === 3) return `${parseInt(parts[1], 10)}/${parseInt(parts[2], 10)}`;
+                                                return val;
+                                            }} />
+                                            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} />
+                                            <Tooltip labelFormatter={(label: string) => {
+                                                if (!label) return '';
+                                                const parts = label.split('-');
+                                                if (parts.length === 3) return `${parseInt(parts[1], 10)}/${parseInt(parts[2], 10)}`;
+                                                return label;
+                                            }} contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', padding: '12px' }} />
+                                            <Bar dataKey="workout" name="筋トレ" fill="#f97316" radius={[4, 4, 0, 0]} />
+                                            <Line type="monotone" dataKey="target_workout" name="目標" stroke="#e2e8f0" strokeWidth={2} strokeDasharray="5 5" dot={false} />
+                                        </ComposedChart>
+                                    </ResponsiveContainer>
+                                </AnalysisChartCard>
+                            </div>
 
                                 {/* Weight List (Collapsible) */}
                                 <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">

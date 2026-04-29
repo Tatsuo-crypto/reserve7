@@ -49,10 +49,10 @@ export async function GET(req: NextRequest) {
         if (!settings) {
             return NextResponse.json({
                 data: {
-                    visible_items: { steps: false, sleep: false, water: false },
+                    visible_items: { steps: false, sleep: false, water: false, workout: false },
                     visible_tabs: { input: false, analyze: false, progress: false },
                     quit_goals: [],
-                    habit_targets: { steps: 8000, sleep: 7, water: 2 }
+                    habit_targets: { steps: 8000, sleep: 7, water: 2, workout: 30 }
                 }
             });
         }
@@ -60,10 +60,10 @@ export async function GET(req: NextRequest) {
         // Merge defaults for missing fields
         const mergedSettings = {
             ...settings,
-            visible_items: settings.visible_items || { steps: false, sleep: false, water: false },
+            visible_items: settings.visible_items || { steps: false, sleep: false, water: false, workout: false },
             visible_tabs: settings.visible_tabs || { input: false, analyze: false, progress: false },
             quit_goals: settings.quit_goals || [],
-            habit_targets: settings.habit_targets || { steps: 8000, sleep: 7, water: 2 }
+            habit_targets: settings.habit_targets || { steps: 8000, sleep: 7, water: 2, workout: 30 }
         };
 
         return NextResponse.json({ data: mergedSettings });

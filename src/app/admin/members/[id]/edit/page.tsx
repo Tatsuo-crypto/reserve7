@@ -33,7 +33,7 @@ export default function EditMemberPage() {
   })
 
   const [settings, setSettings] = useState({
-    visible_items: { steps: false, sleep: false, water: false, alcohol: false },
+    visible_items: { steps: false, sleep: false, water: false, alcohol: false, workout: false },
     visible_tabs: { input: false, analyze: false, progress: false }
   })
 
@@ -86,7 +86,7 @@ export default function EditMemberPage() {
           const { data } = await settingsRes.json()
           if (data) {
             setSettings({
-              visible_items: data.visible_items || { steps: true, sleep: true, water: true, alcohol: true },
+              visible_items: data.visible_items || { steps: true, sleep: true, water: true, alcohol: true, workout: true },
               visible_tabs: data.visible_tabs || { input: true, analyze: true, progress: true }
             })
           }
@@ -388,7 +388,7 @@ export default function EditMemberPage() {
                     const isChecked = e.target.checked;
                     setSettings({
                       visible_tabs: { input: isChecked, analyze: isChecked, progress: isChecked },
-                      visible_items: { steps: isChecked, sleep: isChecked, water: isChecked, alcohol: isChecked }
+                      visible_items: { steps: isChecked, sleep: isChecked, water: isChecked, alcohol: isChecked, workout: isChecked }
                     });
                   }}
                   className="w-6 h-6 text-blue-600 border-gray-300 rounded focus:ring-blue-500"

@@ -42,7 +42,7 @@ export default function InputTab({ userId, token, isAdmin }: InputTabProps) {
     const [quitGoals, setQuitGoals] = useState<string[]>([])
     const [saving, setSaving] = useState(false)
     const [showGoalModal, setShowGoalModal] = useState(false)
-    const [visibleItems, setVisibleItems] = useState({ steps: true, sleep: true, water: true, alcohol: true })
+    const [visibleItems, setVisibleItems] = useState({ steps: true, sleep: true, water: true, alcohol: true, workout: true })
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
 
     const fileInputRef = useRef<HTMLInputElement>(null)
@@ -413,6 +413,19 @@ export default function InputTab({ userId, token, isAdmin }: InputTabProps) {
                             type="select"
                             options={Array.from({ length: 27 }, (_, i) => (1.0 + i * 0.5).toFixed(1))}
                             onChange={(v) => setSleep(v)}
+                        />
+                    )}
+                    {visibleItems.workout && (
+                        <EditableLogItem
+                            icon={<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18M7 6v12M17 6v12" />}
+                            label="筋トレ"
+                            value={String(habits.workout || '0')}
+                            unit="回"
+                            iconBg="bg-orange-50"
+                            iconColor="text-orange-500"
+                            type="select"
+                            options={Array.from({ length: 11 }, (_, i) => String(i))}
+                            onChange={(v) => setHabits(prev => ({ ...prev, workout: parseInt(v) }))}
                         />
                     )}
                 </div>

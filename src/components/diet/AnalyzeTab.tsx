@@ -108,10 +108,20 @@ export default function AnalyzeTab({ userId, token, isAdmin }: AnalyzeTabProps) 
                 protein_kcal: (diet?.protein || 0) * 4,
                 fat_kcal: (diet?.fat || 0) * 9,
                 carbs_kcal: (diet?.carbs || 0) * 4,
+                protein: diet?.protein || 0,
+                fat: diet?.fat || 0,
+                carbs: diet?.carbs || 0,
+                fiber: diet?.fiber || 0,
                 target_calories: target?.calories || null,
+                target_protein: target?.protein || null,
+                target_fat: target?.fat || null,
+                target_carbs: target?.carbs || null,
+                target_fiber: target?.fiber || null,
                 steps: lifestyle?.steps || 0,
                 sleep: lifestyle?.sleep || 0,
                 water: lifestyle?.water || 0,
+                workout: lifestyle?.habits?.workout || 0,
+                target_workout: settings?.habit_targets?.workout || 1,
             }
 
             // Habits
@@ -291,7 +301,7 @@ export default function AnalyzeTab({ userId, token, isAdmin }: AnalyzeTabProps) 
             </div>
 
             {/* 7. Steps Chart */}
-            <AnalysisChartCard title="歩数 (歩)" color="emerald">
+            <AnalysisChartCard title="歩数 (step)" color="emerald">
                 <ResponsiveContainer width="100%" height="100%">
                     <ComposedChart data={analysisData} syncId="analyzeSync" margin={chartMargin}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
@@ -305,7 +315,7 @@ export default function AnalyzeTab({ userId, token, isAdmin }: AnalyzeTabProps) 
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 {/* 8. Sleep Chart */}
-                <AnalysisChartCard title="睡眠時間 (時間)" color="indigo">
+                <AnalysisChartCard title="睡眠時間 (h)" color="indigo">
                     <ResponsiveContainer width="100%" height="100%">
                         <ComposedChart data={analysisData} syncId="analyzeSync" margin={chartMargin}>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
@@ -318,7 +328,7 @@ export default function AnalyzeTab({ userId, token, isAdmin }: AnalyzeTabProps) 
                 </AnalysisChartCard>
 
                 {/* 5. Water Chart */}
-                <AnalysisChartCard title="水分摂取量 (L)" color="sky">
+                <AnalysisChartCard title="水分摂取量 (l)" color="sky">
                     <ResponsiveContainer width="100%" height="100%">
                         <ComposedChart data={analysisData} syncId="analyzeSync" margin={chartMargin}>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
@@ -326,6 +336,20 @@ export default function AnalyzeTab({ userId, token, isAdmin }: AnalyzeTabProps) 
                             {commonYAxis}
                             {commonTooltip}
                             <Bar dataKey="water" name="水分(L)" fill="#0ea5e9" radius={[4, 4, 0, 0]} />
+                        </ComposedChart>
+                    </ResponsiveContainer>
+                </AnalysisChartCard>
+
+                {/* 9. Workout Chart */}
+                <AnalysisChartCard title="筋トレ (times)" color="orange">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <ComposedChart data={analysisData} syncId="analyzeSync" margin={chartMargin}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                            {commonXAxis}
+                            {commonYAxis}
+                            {commonTooltip}
+                            <Bar dataKey="workout" name="筋トレ" fill="#f97316" radius={[4, 4, 0, 0]} />
+                            <Line type="monotone" dataKey="target_workout" name="目標" stroke="#e2e8f0" strokeWidth={2} strokeDasharray="5 5" dot={false} />
                         </ComposedChart>
                     </ResponsiveContainer>
                 </AnalysisChartCard>
