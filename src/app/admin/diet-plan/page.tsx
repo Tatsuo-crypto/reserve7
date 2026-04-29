@@ -83,7 +83,7 @@ function DietPlanPageContent() {
         steps: 8000,
         sleep: 7,
         water: 2,
-        workout: 30
+        workout: 1
     })
 
     const [quitGoals, setQuitGoals] = useState<string[]>([])
@@ -398,7 +398,7 @@ function DietPlanPageContent() {
         const logs = intakeHistory.filter(l => l.date >= week.start && l.date <= week.end);
         const lifeLogs = lifestyleHistory.filter(l => l.date >= week.start && l.date <= week.end);
         
-        const target = [...dietHistory].reverse().find(t => t.start_date <= week.end) || dietHistory[0];
+        const target = dietHistory.find(t => t.start_date <= week.end) || dietHistory[dietHistory.length - 1];
 
         const daysWithDiet = logs.length || 1;
         const daysWithLife = lifeLogs.length || 1;
@@ -456,7 +456,7 @@ function DietPlanPageContent() {
             // Find lifestyle
             const lifestyle = lifestyleHistory.find(l => l.date === dStr);
             // Find target (latest setting before or on this date)
-            const target = [...dietHistory].reverse().find(t => t.start_date <= dStr) || dietHistory[dietHistory.length - 1];
+            const target = dietHistory.find(t => t.start_date <= dStr) || dietHistory[dietHistory.length - 1];
 
             data.push({
                 date: dStr,
@@ -1187,7 +1187,7 @@ function DietPlanPageContent() {
                                                     <tr className="hover:bg-gray-50 transition-colors">
                                                         <td className="px-4 sm:px-6 py-4 font-bold whitespace-nowrap text-gray-700">筋トレ</td>
                                                         <td className="px-4 sm:px-6 py-4 text-center font-black text-orange-500 whitespace-nowrap">{weeklyStats.actual.workout} <span className="text-[10px] text-gray-400 font-bold">times</span></td>
-                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-gray-400 whitespace-nowrap">{weeklyStats.habitTargets.workout} <span className="text-[10px] text-gray-300 font-bold">times</span></td>
+                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-gray-400 whitespace-nowrap">{weeklyStats.habitTargets.workout ?? 1} <span className="text-[10px] text-gray-300 font-bold">times</span></td>
                                                     </tr>
                                                     <tr className="hover:bg-gray-50 transition-colors">
                                                         <td className="px-4 sm:px-6 py-4 font-bold whitespace-nowrap text-gray-700">歩数</td>
