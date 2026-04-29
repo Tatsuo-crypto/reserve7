@@ -748,22 +748,26 @@ function DietPlanPageContent() {
                             <div className="space-y-6 pb-20 animate-fadeIn">
                                 {/* Period & Avg Selector */}
                                 <div className="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4 sticky top-[72px] z-10">
-                                    <div className="flex bg-gray-100 p-1 rounded-xl w-full sm:w-auto">
-                                        {[
-                                            { label: '1週', value: '1w' },
-                                            { label: '1月', value: '1m' },
-                                            { label: '3月', value: '3m' },
-                                            { label: '6月', value: '6m' },
-                                            { label: '1年', value: '1y' },
-                                            { label: '全', value: 'all' }
-                                        ].map(p => (
-                                            <button key={p.value} onClick={() => setAnalysisPeriod(p.value as PeriodType)} className={`flex-1 sm:px-3 py-1.5 rounded-lg text-[10px] font-black transition-all ${analysisPeriod === p.value ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>{p.label}</button>
-                                        ))}
-                                    </div>
-                                    <div className="flex bg-gray-100 p-1 rounded-xl w-full sm:w-auto">
-                                        <button onClick={() => setShowWeightAvg(false)} className={`flex-1 sm:px-4 py-1.5 rounded-lg text-[10px] font-black transition-all ${!showWeightAvg ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-400'}`}>日次</button>
-                                        <button onClick={() => setShowWeightAvg(true)} className={`flex-1 sm:px-4 py-1.5 rounded-lg text-[10px] font-black transition-all ${showWeightAvg ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-400'}`}>週平均</button>
-                                    </div>
+                                    <select
+                                        value={analysisPeriod}
+                                        onChange={(e) => setAnalysisPeriod(e.target.value as PeriodType)}
+                                        className="w-full sm:w-auto bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block p-2.5 font-bold outline-none"
+                                    >
+                                        <option value="1w">7日間</option>
+                                        <option value="1m">1ヶ月</option>
+                                        <option value="3m">3ヶ月</option>
+                                        <option value="6m">6ヶ月</option>
+                                        <option value="1y">1年</option>
+                                        <option value="all">すべて</option>
+                                    </select>
+                                    <select
+                                        value={showWeightAvg ? 'week' : 'day'}
+                                        onChange={(e) => setShowWeightAvg(e.target.value === 'week')}
+                                        className="w-full sm:w-auto bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block p-2.5 font-bold outline-none"
+                                    >
+                                        <option value="day">日</option>
+                                        <option value="week">週平均</option>
+                                    </select>
                                 </div>
 
                                 {/* Weight Chart */}
