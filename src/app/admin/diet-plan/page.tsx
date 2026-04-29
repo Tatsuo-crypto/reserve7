@@ -69,7 +69,8 @@ function DietPlanPageContent() {
         carbs: DEFAULT_CARBS,
         fiber: DEFAULT_FIBER,
         salt: DEFAULT_SALT,
-        startDate: today
+        startDate: today,
+        title: ''
     })
 
     const [lifestyleSettings, setLifestyleSettings] = useState({
@@ -116,7 +117,8 @@ function DietPlanPageContent() {
                         carbs: isOldPreset ? DEFAULT_CARBS : latest.carbs,
                         fiber: isOldPreset ? DEFAULT_FIBER : (latest.fiber || 20),
                         salt: isOldPreset ? DEFAULT_SALT : (latest.salt || 6),
-                        startDate: today
+                        startDate: today,
+                        title: ''
                     }))
                 }
             }
@@ -242,7 +244,8 @@ function DietPlanPageContent() {
             carbs: record.carbs,
             fiber: record.fiber || 20,
             salt: record.salt || 6,
-            startDate: record.start_date
+            startDate: record.start_date,
+            title: record.title || ''
         })
         setActiveTab('goals')
         window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -616,6 +619,12 @@ function DietPlanPageContent() {
                                                         <input type="date" value={nutrientForm.startDate} onChange={e => setNutrientForm({ ...nutrientForm, startDate: e.target.value })} className="bg-white border border-gray-200 rounded-xl px-10 py-3 font-black text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none shadow-sm text-center text-lg min-w-[240px]" />
                                                     </div>
                                                 </div>
+                                                <div className="bg-gray-50/50 p-4 sm:p-5 rounded-2xl border border-gray-100 space-y-3">
+                                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block text-center">変更理由・タイトル</label>
+                                                    <div className="flex justify-center">
+                                                        <input type="text" placeholder="例: 減量期スタート" value={nutrientForm.title} onChange={e => setNutrientForm({ ...nutrientForm, title: e.target.value })} className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 font-black text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none shadow-sm text-center text-sm" />
+                                                    </div>
+                                                </div>
                                                 <div className="bg-blue-50/30 p-5 sm:p-6 rounded-2xl border border-blue-100 flex flex-col items-center justify-center gap-1">
                                                     <div className="text-[10px] font-black text-blue-300 uppercase tracking-widest">合計カロリー</div>
                                                     <div className="flex items-baseline gap-1.5"><span className="text-4xl sm:text-5xl font-black text-blue-600 tabular-nums">{totalKcal}</span><span className="text-lg font-black text-blue-400">kcal</span></div>
@@ -747,10 +756,17 @@ function DietPlanPageContent() {
                                                             {dietHistory.map((record) => (
                                                                 <tr key={record.id} className="hover:bg-gray-50 transition-colors">
                                                                     <td className="px-3 sm:px-6 py-4 font-bold text-xs whitespace-nowrap">
-                                                                        {(() => {
-                                                                            const parts = record.start_date.split('-');
-                                                                            return parts.length === 3 ? `${parts[0].slice(-2)}/${parseInt(parts[1], 10)}/${parseInt(parts[2], 10)}` : record.start_date;
-                                                                        })()}
+                                                                        <div className="flex items-center gap-1.5 max-w-[150px] sm:max-w-[200px]">
+                                                                            <span>
+                                                                                {(() => {
+                                                                                    const parts = record.start_date.split('-');
+                                                                                    return parts.length === 3 ? `${parts[0].slice(-2)}/${parseInt(parts[1], 10)}/${parseInt(parts[2], 10)}` : record.start_date;
+                                                                                })()}
+                                                                            </span>
+                                                                            {record.title && (
+                                                                                <span className="text-[10px] text-gray-500 truncate bg-gray-100 px-1.5 py-0.5 rounded font-bold">{record.title}</span>
+                                                                            )}
+                                                                        </div>
                                                                     </td>
                                                                     <td className="px-3 sm:px-6 py-4 text-center font-black text-rose-600 whitespace-nowrap">{record.calories}kcal</td>
                                                                     <td className="px-3 sm:px-6 py-4 text-right whitespace-nowrap">
