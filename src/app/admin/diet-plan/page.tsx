@@ -752,8 +752,9 @@ function DietPlanPageContent() {
                                                             {(chartView === 'all' || chartView === 'c') && (
                                                                 <Bar dataKey="carbs_kcal" name="C" stackId={chartView === 'all' ? 'a' : undefined} fill="#3b82f6" />
                                                             )}
-                                                            
-                                                            <Line type="monotone" dataKey="calories" name="設定カロリー" stroke="#f43f5e" strokeWidth={4} dot={{ r: 4, strokeWidth: 2, fill: '#fff' }} />
+                                                            {chartView === 'all' && (
+                                                                <Line type="monotone" dataKey="calories" name="設定カロリー" stroke="#f43f5e" strokeWidth={4} dot={{ r: 4, strokeWidth: 2, fill: '#fff' }} />
+                                                            )}
                                                         </ComposedChart>
                                                     </ResponsiveContainer>
                                                 </div>
