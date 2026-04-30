@@ -403,19 +403,31 @@ function DietPlanPageContent() {
         const daysWithDiet = logs.length || 1;
         const daysWithLife = lifeLogs.length || 1;
 
-        const actual = {
-            calories: Math.round(logs.reduce((s, l) => s + (l.calories || 0), 0) / daysWithDiet),
-            protein: Math.round(logs.reduce((s, l) => s + (l.protein || 0), 0) / daysWithDiet),
-            fat: Math.round(logs.reduce((s, l) => s + (l.fat || 0), 0) / daysWithDiet),
-            carbs: Math.round(logs.reduce((s, l) => s + (l.carbs || 0), 0) / daysWithDiet),
-            fiber: Math.round(logs.reduce((s, l) => s + (l.fiber || 0), 0) / daysWithDiet),
-            sleep: Number((lifeLogs.reduce((s, l) => s + (l.sleep_hours || 0), 0) / daysWithLife).toFixed(1)),
-            workout: Number((lifeLogs.reduce((s, l) => s + (l.habits?.workout || 0), 0) / daysWithLife).toFixed(1)),
-            steps: Math.round(lifeLogs.reduce((s, l) => s + (l.steps || 0), 0) / daysWithLife),
-            water: Number((lifeLogs.reduce((s, l) => s + (l.water_liters || 0), 0) / daysWithLife).toFixed(1))
+        const sum = {
+            calories: logs.reduce((s, l) => s + (l.calories || 0), 0),
+            protein: logs.reduce((s, l) => s + (l.protein || 0), 0),
+            fat: logs.reduce((s, l) => s + (l.fat || 0), 0),
+            carbs: logs.reduce((s, l) => s + (l.carbs || 0), 0),
+            fiber: logs.reduce((s, l) => s + (l.fiber || 0), 0),
+            sleep: Number(lifeLogs.reduce((s, l) => s + (l.sleep_hours || 0), 0).toFixed(1)),
+            workout: Number(lifeLogs.reduce((s, l) => s + (l.habits?.workout || 0), 0).toFixed(1)),
+            steps: lifeLogs.reduce((s, l) => s + (l.steps || 0), 0),
+            water: Number(lifeLogs.reduce((s, l) => s + (l.water_liters || 0), 0).toFixed(1))
         };
 
-        return { actual, target, habitTargets };
+        const avg = {
+            calories: Math.round(sum.calories / daysWithDiet),
+            protein: Math.round(sum.protein / daysWithDiet),
+            fat: Math.round(sum.fat / daysWithDiet),
+            carbs: Math.round(sum.carbs / daysWithDiet),
+            fiber: Math.round(sum.fiber / daysWithDiet),
+            sleep: Number((sum.sleep / daysWithLife).toFixed(1)),
+            workout: Number((sum.workout / daysWithLife).toFixed(1)),
+            steps: Math.round(sum.steps / daysWithLife),
+            water: Number((sum.water / daysWithLife).toFixed(1))
+        };
+
+        return { sum, avg, target, habitTargets };
     }, [selectedWeek, intakeHistory, lifestyleHistory, dietHistory, availableWeeks, habitTargets]);
 
     const analysisData = useMemo(() => {
@@ -1150,55 +1162,91 @@ function DietPlanPageContent() {
                                                 <thead>
                                                     <tr className="bg-gray-50/50 text-[10px] font-black text-gray-400 uppercase tracking-widest border-y border-gray-100">
                                                         <th className="px-4 sm:px-6 py-4 whitespace-nowrap">項目</th>
+                                                        <th className="px-4 sm:px-6 py-4 text-center whitespace-nowrap">合計</th>
                                                         <th className="px-4 sm:px-6 py-4 text-center whitespace-nowrap">平均</th>
-                                                        <th className="px-4 sm:px-6 py-4 text-center whitespace-nowrap">目標</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody className="divide-y divide-gray-100">
                                                     <tr className="hover:bg-gray-50 transition-colors">
                                                         <td className="px-4 sm:px-6 py-4 font-bold whitespace-nowrap text-gray-700">カロリー</td>
-                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-rose-600 whitespace-nowrap">{weeklyStats.actual.calories.toLocaleString()} <span className="text-[10px] text-gray-400 font-bold">kcal</span></td>
-                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-gray-400 whitespace-nowrap">{weeklyStats.target.calories.toLocaleString()} <span className="text-[10px] text-gray-300 font-bold">kcal</span></td>
+                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-rose-600 whitespace-nowrap">
+                                                            {weeklyStats.sum.calories.toLocaleString()} <span className="text-[9px] text-gray-400 font-bold">/ {(weeklyStats.target.calories * 7).toLocaleString()}</span>
+                                                        </td>
+                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-rose-600/70 whitespace-nowrap">
+                                                            {weeklyStats.avg.calories.toLocaleString()} <span className="text-[9px] text-gray-400 font-bold">/ {weeklyStats.target.calories.toLocaleString()}</span>
+                                                        </td>
                                                     </tr>
                                                     <tr className="hover:bg-gray-50 transition-colors">
                                                         <td className="px-4 sm:px-6 py-4 font-bold whitespace-nowrap text-gray-700">タンパク質</td>
-                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-amber-500 whitespace-nowrap">{weeklyStats.actual.protein} <span className="text-[10px] text-gray-400 font-bold">g</span></td>
-                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-gray-400 whitespace-nowrap">{weeklyStats.target.protein} <span className="text-[10px] text-gray-300 font-bold">g</span></td>
+                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-amber-500 whitespace-nowrap">
+                                                            {weeklyStats.sum.protein} <span className="text-[9px] text-gray-400 font-bold">/ {weeklyStats.target.protein * 7}</span>
+                                                        </td>
+                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-amber-500/70 whitespace-nowrap">
+                                                            {weeklyStats.avg.protein} <span className="text-[9px] text-gray-400 font-bold">/ {weeklyStats.target.protein}</span>
+                                                        </td>
                                                     </tr>
                                                     <tr className="hover:bg-gray-50 transition-colors">
                                                         <td className="px-4 sm:px-6 py-4 font-bold whitespace-nowrap text-gray-700">脂質</td>
-                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-emerald-500 whitespace-nowrap">{weeklyStats.actual.fat} <span className="text-[10px] text-gray-400 font-bold">g</span></td>
-                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-gray-400 whitespace-nowrap">{weeklyStats.target.fat} <span className="text-[10px] text-gray-300 font-bold">g</span></td>
+                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-emerald-500 whitespace-nowrap">
+                                                            {weeklyStats.sum.fat} <span className="text-[9px] text-gray-400 font-bold">/ {weeklyStats.target.fat * 7}</span>
+                                                        </td>
+                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-emerald-500/70 whitespace-nowrap">
+                                                            {weeklyStats.avg.fat} <span className="text-[9px] text-gray-400 font-bold">/ {weeklyStats.target.fat}</span>
+                                                        </td>
                                                     </tr>
                                                     <tr className="hover:bg-gray-50 transition-colors">
                                                         <td className="px-4 sm:px-6 py-4 font-bold whitespace-nowrap text-gray-700">糖質</td>
-                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-blue-500 whitespace-nowrap">{weeklyStats.actual.carbs} <span className="text-[10px] text-gray-400 font-bold">g</span></td>
-                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-gray-400 whitespace-nowrap">{weeklyStats.target.carbs} <span className="text-[10px] text-gray-300 font-bold">g</span></td>
+                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-blue-500 whitespace-nowrap">
+                                                            {weeklyStats.sum.carbs} <span className="text-[9px] text-gray-400 font-bold">/ {weeklyStats.target.carbs * 7}</span>
+                                                        </td>
+                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-blue-500/70 whitespace-nowrap">
+                                                            {weeklyStats.avg.carbs} <span className="text-[9px] text-gray-400 font-bold">/ {weeklyStats.target.carbs}</span>
+                                                        </td>
                                                     </tr>
                                                     <tr className="hover:bg-gray-50 transition-colors">
                                                         <td className="px-4 sm:px-6 py-4 font-bold whitespace-nowrap text-gray-700">食物繊維</td>
-                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-teal-500 whitespace-nowrap">{weeklyStats.actual.fiber} <span className="text-[10px] text-gray-400 font-bold">g</span></td>
-                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-gray-400 whitespace-nowrap">{weeklyStats.target.fiber || 20} <span className="text-[10px] text-gray-300 font-bold">g</span></td>
+                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-teal-500 whitespace-nowrap">
+                                                            {weeklyStats.sum.fiber} <span className="text-[9px] text-gray-400 font-bold">/ {(weeklyStats.target.fiber || 20) * 7}</span>
+                                                        </td>
+                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-teal-500/70 whitespace-nowrap">
+                                                            {weeklyStats.avg.fiber} <span className="text-[9px] text-gray-400 font-bold">/ {weeklyStats.target.fiber || 20}</span>
+                                                        </td>
                                                     </tr>
                                                     <tr className="hover:bg-gray-50 transition-colors">
                                                         <td className="px-4 sm:px-6 py-4 font-bold whitespace-nowrap text-gray-700">睡眠</td>
-                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-indigo-500 whitespace-nowrap">{weeklyStats.actual.sleep} <span className="text-[10px] text-gray-400 font-bold">h</span></td>
-                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-gray-400 whitespace-nowrap">{weeklyStats.habitTargets.sleep} <span className="text-[10px] text-gray-300 font-bold">h</span></td>
+                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-indigo-500 whitespace-nowrap">
+                                                            {weeklyStats.sum.sleep} <span className="text-[9px] text-gray-400 font-bold">/ {weeklyStats.habitTargets.sleep * 7}</span>
+                                                        </td>
+                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-indigo-500/70 whitespace-nowrap">
+                                                            {weeklyStats.avg.sleep} <span className="text-[9px] text-gray-400 font-bold">/ {weeklyStats.habitTargets.sleep}</span>
+                                                        </td>
                                                     </tr>
                                                     <tr className="hover:bg-gray-50 transition-colors">
                                                         <td className="px-4 sm:px-6 py-4 font-bold whitespace-nowrap text-gray-700">筋トレ</td>
-                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-orange-500 whitespace-nowrap">{weeklyStats.actual.workout} <span className="text-[10px] text-gray-400 font-bold">times</span></td>
-                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-gray-400 whitespace-nowrap">{weeklyStats.habitTargets.workout ?? 1} <span className="text-[10px] text-gray-300 font-bold">times</span></td>
+                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-orange-500 whitespace-nowrap">
+                                                            {weeklyStats.sum.workout} <span className="text-[9px] text-gray-400 font-bold">/ {(weeklyStats.habitTargets.workout ?? 1) * 7}</span>
+                                                        </td>
+                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-orange-500/70 whitespace-nowrap">
+                                                            {weeklyStats.avg.workout} <span className="text-[9px] text-gray-400 font-bold">/ {weeklyStats.habitTargets.workout ?? 1}</span>
+                                                        </td>
                                                     </tr>
                                                     <tr className="hover:bg-gray-50 transition-colors">
                                                         <td className="px-4 sm:px-6 py-4 font-bold whitespace-nowrap text-gray-700">歩数</td>
-                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-sky-500 whitespace-nowrap">{weeklyStats.actual.steps.toLocaleString()} <span className="text-[10px] text-gray-400 font-bold">step</span></td>
-                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-gray-400 whitespace-nowrap">{weeklyStats.habitTargets.steps.toLocaleString()} <span className="text-[10px] text-gray-300 font-bold">step</span></td>
+                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-sky-500 whitespace-nowrap">
+                                                            {weeklyStats.sum.steps.toLocaleString()} <span className="text-[9px] text-gray-400 font-bold">/ {(weeklyStats.habitTargets.steps * 7).toLocaleString()}</span>
+                                                        </td>
+                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-sky-500/70 whitespace-nowrap">
+                                                            {weeklyStats.avg.steps.toLocaleString()} <span className="text-[9px] text-gray-400 font-bold">/ {weeklyStats.habitTargets.steps.toLocaleString()}</span>
+                                                        </td>
                                                     </tr>
                                                     <tr className="hover:bg-gray-50 transition-colors">
                                                         <td className="px-4 sm:px-6 py-4 font-bold whitespace-nowrap text-gray-700">水</td>
-                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-cyan-500 whitespace-nowrap">{weeklyStats.actual.water} <span className="text-[10px] text-gray-400 font-bold">l</span></td>
-                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-gray-400 whitespace-nowrap">{weeklyStats.habitTargets.water} <span className="text-[10px] text-gray-300 font-bold">l</span></td>
+                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-cyan-500 whitespace-nowrap">
+                                                            {weeklyStats.sum.water} <span className="text-[9px] text-gray-400 font-bold">/ {(weeklyStats.habitTargets.water * 7).toFixed(1)}</span>
+                                                        </td>
+                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-cyan-500/70 whitespace-nowrap">
+                                                            {weeklyStats.avg.water} <span className="text-[9px] text-gray-400 font-bold">/ {weeklyStats.habitTargets.water}</span>
+                                                        </td>
                                                     </tr>
                                                 </tbody>
                                             </table>
