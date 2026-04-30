@@ -62,7 +62,8 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json({
             error: 'Failed to analyze image',
-            message: errorMessage
+            message: errorMessage,
+            details: error.stack || null
         }, { status: 500 });
     }
 }

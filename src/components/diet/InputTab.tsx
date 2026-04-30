@@ -181,8 +181,8 @@ export default function InputTab({ userId, token, isAdmin }: InputTabProps) {
             if (analyzeRes.ok) {
                 setOcrResult(analyzeData.data)
             } else {
-                console.error('Analysis failed:', analyzeData.error)
-                setMessage({ type: 'error', text: '写真の解析に失敗しました。手動で入力してください。' })
+                console.error('Analysis failed:', analyzeData.error, analyzeData.message)
+                setMessage({ type: 'error', text: analyzeData.message || '写真の解析に失敗しました。手動で入力してください。' })
             }
         } catch (e: any) {
             console.error('Upload process error:', e)

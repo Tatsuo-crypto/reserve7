@@ -68,10 +68,7 @@ export class VisionService {
             console.log(fullText);
             console.log('--- OCR Result End ---');
 
-            // Debug: Save OCR text to a file for investigation
-            const fs = require('fs');
-            fs.writeFileSync('./ocr_debug.txt', fullText);
-
+            // OCR processing
             return this.parseNutrients(fullText);
         } catch (error) {
             console.error('❌ Error in analyzeNutrients:', error);
