@@ -23,8 +23,8 @@ import {
 import { getStatusDotColor } from '@/lib/utils/member'
 import AdminHeader from '@/app/components/AdminHeader'
 import HomeTab from '@/components/diet/HomeTab'
-import InputTab from '@/components/diet/InputTab'
 import AnalyzeTab from '@/components/diet/AnalyzeTab'
+import ProgressTab from '@/components/diet/ProgressTab'
 import GoalModal from '@/components/diet/GoalModal'
 
 const GOAL_SUGGESTIONS = [
@@ -46,7 +46,7 @@ const DEFAULT_FIBER = 20;
 const DEFAULT_SUGAR = 280; // Added sugar default
 const DEFAULT_SALT = 6;
 
-type TabType = 'home' | 'input' | 'analyze' | 'settings';
+type TabType = 'progress' | 'analyze' | 'plan';
 type PeriodType = '1w' | '1m' | '3m' | '6m' | '1y' | 'all';
 
 function DietPlanPageContent() {
@@ -61,8 +61,9 @@ function DietPlanPageContent() {
     const [loadingData, setLoadingData] = useState(false)
     const [saving, setSaving] = useState(false)
     const [message, setMessage] = useState('')
-    const [activeTab, setActiveTab] = useState<TabType>('input')
+    const [activeTab, setActiveTab] = useState<TabType>('progress')
     const [isSettingNewGoal, setIsSettingNewGoal] = useState(false)
+    const [editingHistoryId, setEditingHistoryId] = useState<string | null>(null)
     const [analysisPeriod, setAnalysisPeriod] = useState<PeriodType>('1m')
     const [selectedWeek, setSelectedWeek] = useState<string>('')
     const [showWeightAvg, setShowWeightAvg] = useState(false)
@@ -81,6 +82,7 @@ function DietPlanPageContent() {
         sugar: DEFAULT_SUGAR,
         fiber: DEFAULT_FIBER,
         salt: DEFAULT_SALT,
+        targetCalories: 1600, // Added target calories
         startDate: today,
         title: ''
     })
@@ -117,52 +119,67 @@ function DietPlanPageContent() {
             ])
 
             if (dietRes.ok) {
-                const { data } = await dietRes.json()
-                setDietHistory(data || [])
-                if (data && data.length > 0) {
-                    const latest = data[0]
-                    const isOldPreset = latest.protein === 100 && latest.fat === 60 && latest.carbs === 265;
-                    const protein = isOldPreset ? DEFAULT_PROTEIN : latest.protein;
-                    const fat = isOldPreset ? DEFAULT_FAT : latest.fat;
-                    const carbs = isOldPreset ? DEFAULT_CARBS : latest.carbs;
-                    const fiber = isOldPreset ? DEFAULT_FIBER : (latest.fiber || 20);
-                    const sugar = isOldPreset ? DEFAULT_SUGAR : (latest.sugar || (carbs - fiber));
-                    
-                    setNutrientForm(prev => ({
-                        ...prev,
-                        protein,
-                        fat,
-                        carbs,
-                        fiber,
-                        sugar,
-                        salt: isOldPreset ? DEFAULT_SALT : (latest.salt || 6),
-                        startDate: today,
-                        title: ''
-                    }))
+                const text = await dietRes.text()
+                if (text) {
+                    const { data } = JSON.parse(text)
+                    setDietHistory(data || [])
+                    if (data && data.length > 0) {
+                        const latest = data[0]
+                        const isOldPreset = latest.protein === 100 && latest.fat === 60 && latest.carbs === 265;
+                        const calories = latest.calories || 1600;
+                        const protein = isOldPreset ? DEFAULT_PROTEIN : latest.protein;
+                        const fat = isOldPreset ? DEFAULT_FAT : latest.fat;
+                        // Calculate carbs to ensure initial consistency: (Total - P*4 - F*9) / 4
+                        const calculatedCarbs = Math.max(0, Math.round((calories - (protein * 4) - (fat * 9)) / 4));
+                        const fiber = isOldPreset ? DEFAULT_FIBER : (latest.fiber || 20);
+                        const sugar = Math.max(0, calculatedCarbs - fiber);
+                        
+                        setNutrientForm(prev => ({
+                            ...prev,
+                            protein,
+                            fat,
+                            carbs: calculatedCarbs,
+                            fiber,
+                            sugar,
+                            targetCalories: calories,
+                            salt: isOldPreset ? DEFAULT_SALT : (latest.salt || 6),
+                            startDate: today,
+                            title: ''
+                        }))
+                    }
                 }
             }
 
             if (lifestyleRes.ok) {
-                const { data } = await lifestyleRes.json()
-                if (data) {
-                    setLifestyleSettings({
-                        visible_items: data.visible_items || { steps: true, sleep: true, water: true, workout: true },
-                        visible_tabs: data.visible_tabs || { input: true, analyze: true, progress: true }
-                    })
-                    if (data.quit_goals) setQuitGoals(data.quit_goals)
-                    if (data.habit_targets) setHabitTargets(data.habit_targets)
+                const text = await lifestyleRes.text()
+                if (text) {
+                    const { data } = JSON.parse(text)
+                    if (data) {
+                        setLifestyleSettings({
+                            visible_items: data.visible_items || { steps: true, sleep: true, water: true, workout: true },
+                            visible_tabs: data.visible_tabs || { input: true, analyze: true, progress: true }
+                        })
+                        if (data.quit_goals) setQuitGoals(data.quit_goals)
+                        if (data.habit_targets) setHabitTargets(data.habit_targets)
+                    }
                 }
             }
 
             if (trackingRes.ok) {
-                const json = await trackingRes.json()
-                setWeightHistory(json.data?.weightRecords || [])
-                setLifestyleHistory(json.data?.lifestyleLogs || [])
+                const text = await trackingRes.text()
+                if (text) {
+                    const json = JSON.parse(text)
+                    setWeightHistory(json.data?.weightRecords || [])
+                    setLifestyleHistory(json.data?.lifestyleLogs || [])
+                }
             }
 
             if (logsRes.ok) {
-                const { data } = await logsRes.json()
-                setIntakeHistory(data || [])
+                const text = await logsRes.text()
+                if (text) {
+                    const { data } = JSON.parse(text)
+                    setIntakeHistory(data || [])
+                }
             }
         } catch (error) {
             console.error('Fetch member data error:', error)
@@ -177,17 +194,20 @@ function DietPlanPageContent() {
             try {
                 const response = await fetch('/api/admin/members?diet_only=true')
                 if (response.ok) {
-                    const result = await response.json()
-                    const data = result.data || result
-                    const fetchedMembers = data.members || []
-                    setMembers(fetchedMembers)
-                    
-                    // Auto-select member if userId is in URL
-                    const userId = searchParams.get('userId')
-                    if (userId) {
-                        const member = fetchedMembers.find((m: Member) => m.id === userId)
-                        if (member) {
-                            setSelectedMember(member)
+                    const text = await response.text()
+                    if (text) {
+                        const result = JSON.parse(text)
+                        const data = result.data || result
+                        const fetchedMembers = data.members || []
+                        setMembers(fetchedMembers)
+                        
+                        // Auto-select member if userId is in URL
+                        const userId = searchParams.get('userId')
+                        if (userId) {
+                            const member = fetchedMembers.find((m: Member) => m.id === userId)
+                            if (member) {
+                                setSelectedMember(member)
+                            }
                         }
                     }
                 }
@@ -227,14 +247,19 @@ function DietPlanPageContent() {
         setSaving(true)
         setMessage('')
         try {
-            const { startDate, ...nutrients } = nutrientForm
             const dietSave = fetch(`/api/diet/goals?token=${selectedMember.access_token}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
-                    ...nutrients, 
-                    calories: totalKcal,
-                    startDate: startDate 
+                    protein: nutrientForm.protein,
+                    fat: nutrientForm.fat,
+                    carbs: nutrientForm.carbs,
+                    sugar: nutrientForm.sugar,
+                    fiber: nutrientForm.fiber,
+                    salt: nutrientForm.salt,
+                    calories: nutrientForm.targetCalories,
+                    startDate: nutrientForm.startDate,
+                    title: nutrientForm.title
                 })
             })
 
@@ -268,22 +293,31 @@ function DietPlanPageContent() {
     }
 
     const handleEditHistory = (record: any) => {
+        const calories = record.calories;
+        const protein = record.protein;
+        const fat = record.fat;
+        const calculatedCarbs = Math.max(0, Math.round((calories - (protein * 4) - (fat * 9)) / 4));
+        const fiber = record.fiber || 20;
+        const sugar = Math.max(0, calculatedCarbs - fiber);
+
         setNutrientForm({
-            protein: record.protein,
-            fat: record.fat,
-            carbs: record.carbs,
-            sugar: record.sugar || (record.carbs - (record.fiber || 20)),
-            fiber: record.fiber || 20,
+            protein: protein,
+            fat: fat,
+            carbs: calculatedCarbs,
+            sugar: sugar,
+            fiber: fiber,
             salt: record.salt || 6,
+            targetCalories: calories,
             startDate: record.start_date,
             title: record.title || ''
         })
-        setActiveTab('goals')
+        setEditingHistoryId(record.id)
+        setActiveTab('plan')
         window.scrollTo({ top: 0, behavior: 'smooth' })
     }
 
     const handleDeleteHistory = async (id: string) => {
-        if (!confirm('この設定履歴を削除してもよろしいですか？')) return
+        if (!confirm('この設定履歴を削除してもよろしいですか？')) return false
         try {
             const response = await fetch(`/api/diet/goals/${id}?token=${selectedMember?.access_token}`, {
                 method: 'DELETE'
@@ -292,9 +326,12 @@ function DietPlanPageContent() {
                 setMessage('履歴を削除しました')
                 fetchMemberData(selectedMember!.id, selectedMember!.access_token || '')
                 setTimeout(() => setMessage(''), 3000)
+                return true
             }
+            return false
         } catch (error) {
             console.error('Delete history error:', error)
+            return false
         }
     }
 
@@ -302,17 +339,38 @@ function DietPlanPageContent() {
         setNutrientForm(prev => {
             const next = { ...prev, [key]: Math.max(0, prev[key] + delta) };
             
-            // Sync Sugar, Carbs, and Fiber: C = Sugar + Fiber
-            if (key === 'carbs') {
-                next.sugar = Math.max(0, next.carbs - next.fiber);
-            } else if (key === 'fiber') {
-                next.sugar = Math.max(0, next.carbs - next.fiber);
-            } else if (key === 'sugar') {
+            // Sync Carbs and Sugar
+            if (key === 'sugar' || key === 'fiber') {
                 next.carbs = next.sugar + next.fiber;
+            } else if (key === 'carbs') {
+                next.sugar = Math.max(0, next.carbs - next.fiber);
             }
             
+            // Recalculate total target calories based on new grams
+            const pKcal = next.protein * 4;
+            const fKcal = next.fat * 9;
+            const cKcal = next.carbs * 4;
+            next.targetCalories = pKcal + fKcal + cKcal;
+
             return next;
-        })
+        });
+    }
+
+    const handleTargetCaloriesChange = (val: number) => {
+        setNutrientForm(prev => {
+            const pKcal = prev.protein * 4;
+            const fKcal = prev.fat * 9;
+            const remainingKcal = val - pKcal - fKcal;
+            const newCarbs = Math.max(0, Math.round(remainingKcal / 4));
+            const newSugar = Math.max(0, newCarbs - prev.fiber);
+            
+            return {
+                ...prev,
+                targetCalories: val,
+                carbs: newCarbs,
+                sugar: newSugar
+            };
+        });
     }
 
     const handleKcalChange = (key: 'protein' | 'fat' | 'carbs' | 'sugar' | 'fiber', delta: number) => {
@@ -547,15 +605,20 @@ function DietPlanPageContent() {
     }, [intakeHistory, lifestyleHistory, weightHistory, dietHistory, analysisPeriod]);
 
     const dietChartData = useMemo(() => {
-        const baseData = [...dietHistory].reverse().map(record => ({
-            ...record,
-            protein_kcal: record.protein * 4,
-            fat_kcal: record.fat * 9,
-            carbs_kcal: record.carbs * 4,
-            fiber_kcal: (record.fiber || 20) * 2
-        }));
-
-        return baseData;
+        return [...dietHistory].sort((a, b) => a.start_date.localeCompare(b.start_date)).map(record => {
+            const p_kcal = (record.protein || 0) * 4;
+            const f_kcal = (record.fat || 0) * 9;
+            // Gap-filling logic from member view to keep heights consistent
+            const c_kcal = record.calories - (p_kcal + f_kcal);
+            
+            return {
+                ...record,
+                displayDate: `${parseInt(record.start_date.split('-')[1], 10)}/${parseInt(record.start_date.split('-')[2], 10)}`,
+                protein_kcal: p_kcal,
+                fat_kcal: f_kcal,
+                carbs_kcal: c_kcal
+            };
+        });
     }, [dietHistory]);
 
     const [chartView, setChartView] = useState<'all' | 'p' | 'f' | 'c'>('all');
@@ -577,16 +640,34 @@ function DietPlanPageContent() {
         <div className="min-h-screen bg-gray-50 py-4 sm:py-6 text-gray-900">
             <div className="max-w-3xl mx-auto px-4 sm:px-6">
                 {/* Header */}
-                <div className="mb-6 sm:mb-8 text-center relative">
+                <div className={`${selectedMember ? 'mb-16' : 'mb-6 sm:mb-8'} text-center relative`}>
                     <button
                         onClick={() => selectedMember ? setSelectedMember(null) : router.push('/dashboard')}
-                        className="absolute left-0 top-1/2 -translate-y-1/2 p-1.5 text-gray-400 hover:text-gray-600 hover:bg-white rounded-full transition-all shadow-sm"
+                        className="absolute left-0 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600 hover:bg-white rounded-full transition-all shadow-sm border border-gray-100"
                     >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
                         </svg>
                     </button>
-                    <h1 className="text-2xl sm:text-3xl font-black tracking-tight inline-block">ダイエットプラン作成</h1>
+                    {!selectedMember ? (
+                        <h1 className="text-2xl sm:text-3xl font-black tracking-tight inline-block text-gray-900">ダイエット管理</h1>
+                    ) : (
+                        <div className="flex flex-col items-center mx-auto">
+                            <h1 className="text-4xl font-black tracking-tight text-gray-900 mb-2">{selectedMember.full_name}</h1>
+                            <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Active Plan</span>
+                            </div>
+                        </div>
+                    )}
+                    {selectedMember && (
+                        <button 
+                            onClick={() => setSelectedMember(null)} 
+                            className="absolute right-0 top-1/2 -translate-y-1/2 text-[10px] font-black text-gray-400 hover:text-rose-500 bg-white px-4 py-2 rounded-full uppercase tracking-widest border border-gray-100 shadow-sm transition-all"
+                        >
+                            会員変更
+                        </button>
+                    )}
                 </div>
 
                 {!selectedMember ? (
@@ -632,33 +713,17 @@ function DietPlanPageContent() {
                         </div>
                     </div>
                 ) : (
-                    <div className="space-y-6 animate-fadeIn pb-24">
-                        {/* Header */}
-                        <AdminHeader 
-                            title="ダイエット管理" 
-                            subTitle={`${selectedMember.full_name} 様`}
-                            onBack={() => setSelectedMember(null)}
-                            rightElement={
-                                <button 
-                                    onClick={() => setSelectedMember(null)} 
-                                    className="text-[10px] font-black text-rose-500 bg-rose-50 px-4 py-2 rounded-full uppercase tracking-widest border border-rose-100 shadow-sm"
-                                >
-                                    会員変更
-                                </button>
-                            }
-                        />
-
-                        {/* Top Tabs */}
-                        <div className="flex bg-white/80 backdrop-blur-md p-1.5 rounded-[2rem] border border-gray-100 shadow-sm sticky top-0 z-30 gap-1 overflow-x-auto no-scrollbar">
+                    <div className="space-y-12"> {/* Increased spacing between tabs and content */}
+                        <div className="flex bg-white/80 backdrop-blur-md p-2 rounded-[2.5rem] border border-gray-100 shadow-sm sticky top-0 z-30 gap-1 overflow-x-auto no-scrollbar">
                             {[
-                                { id: 'input', label: '記録入力' },
+                                { id: 'progress', label: '週間目標' },
                                 { id: 'analyze', label: '分析' },
-                                { id: 'settings', label: 'プラン設定' }
+                                { id: 'plan', label: 'プラン' }
                             ].map(tab => (
                                 <button
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id as TabType)}
-                                    className={`flex-1 py-3.5 px-4 min-w-[90px] rounded-[1.5rem] text-[11px] font-black transition-all ${activeTab === tab.id ? 'bg-gray-900 text-white shadow-xl scale-[1.02]' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50/50'}`}
+                                    className={`flex-1 py-4 px-6 min-w-[100px] rounded-[2rem] text-xs font-black transition-all ${activeTab === tab.id ? 'bg-gray-900 text-white shadow-xl scale-[1.02]' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50/50'}`}
                                 >
                                     {tab.label}
                                 </button>
@@ -666,19 +731,16 @@ function DietPlanPageContent() {
                         </div>
 
                         {loadingData && (
-                            <div className="flex justify-center py-10">
-                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-rose-600"></div>
+                            <div className="flex justify-center py-20">
+                                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-rose-600"></div>
                             </div>
                         )}
 
 
-                        {!loadingData && activeTab === 'input' && (
-                            <InputTab 
-                                userId={selectedMember.id} 
-                                token={selectedMember.access_token!} 
-                                isAdmin={true} 
-                                sharedState={sharedState} 
-                                onStateChange={setSharedState} 
+                        {!loadingData && activeTab === 'progress' && selectedMember && (
+                            <ProgressTab 
+                                userId={selectedMember.id}
+                                token={selectedMember.access_token!}
                             />
                         )}
 
@@ -691,208 +753,347 @@ function DietPlanPageContent() {
                             />
                         )}
 
-                        {!loadingData && activeTab === 'settings' && (
-                            <div className="space-y-6 pb-20 animate-fadeIn">
-                                {/* Set New Goal Toggle Button */}
-                                <div className="flex justify-center">
-                                    <button 
-                                        onClick={() => setIsSettingNewGoal(!isSettingNewGoal)}
-                                        className={`w-full py-4 rounded-2xl font-black text-sm transition-all flex items-center justify-center gap-2 shadow-md border ${isSettingNewGoal ? 'bg-white border-gray-200 text-gray-500' : 'bg-gray-900 border-gray-900 text-white hover:bg-black'}`}
-                                    >
-                                        {isSettingNewGoal ? (
-                                            <>
-                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>
-                                                入力を閉じる
-                                            </>
-                                        ) : (
-                                            <>
-                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" /></svg>
-                                                新しい目標を設定
-                                            </>
-                                        )}
-                                    </button>
-                                </div>
+                        {!loadingData && activeTab === 'plan' && (
+                            <div className="space-y-12 pb-20 animate-fadeIn">
+                                {/* Current Goal Summary Card */}
+                                {!isSettingNewGoal && (
+                                    <div className="bg-white rounded-[3.5rem] p-10 sm:p-14 shadow-sm border border-gray-100 space-y-14">
+                                        {/* Header */}
+                                        <div className="flex flex-col gap-8">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-1.5 h-7 bg-orange-500 rounded-full"></div>
+                                                <h2 className="text-3xl font-black text-gray-900 tracking-tight">現在の目標設定</h2>
+                                            </div>
+                                        </div>
 
-                                {isSettingNewGoal && (
-                                    <div className="space-y-6 bg-white p-6 rounded-3xl border-2 border-gray-100 shadow-sm animate-slideDown">
-                                        <div className="space-y-6">
-                                            <h2 className="text-lg font-black flex items-center gap-2"><span className="w-2 h-6 bg-blue-500 rounded-full"></span>① カロリー・PFC設定</h2>
-                                            <div className="space-y-6">
-                                                <div className="bg-gray-50/50 p-4 sm:p-5 rounded-2xl border border-gray-100 space-y-3 text-center">
-                                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">適用開始日</label>
-                                                    <div className="flex justify-center">
-                                                        <input type="date" value={nutrientForm.startDate} onChange={e => setNutrientForm({ ...nutrientForm, startDate: e.target.value })} className="bg-white border border-gray-200 rounded-xl px-10 py-3 font-black text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none shadow-sm text-center text-lg min-w-[240px]" />
+                                        {/* Nutrition Section */}
+                                        <div className="space-y-10">
+                                            {/* Action Button Moved Above Section Title */}
+                                            <button 
+                                                onClick={() => {
+                                                    setNutrientForm({
+                                                        protein: DEFAULT_PROTEIN,
+                                                        fat: DEFAULT_FAT,
+                                                        carbs: DEFAULT_CARBS,
+                                                        sugar: DEFAULT_SUGAR,
+                                                        fiber: DEFAULT_FIBER,
+                                                        salt: DEFAULT_SALT,
+                                                        targetCalories: 1600,
+                                                        startDate: today,
+                                                        title: ''
+                                                    });
+                                                    setEditingHistoryId(null);
+                                                    setIsSettingNewGoal(true);
+                                                }}
+                                                className="w-full py-5 rounded-[2rem] bg-gray-900 text-white font-black text-sm hover:bg-black transition-all shadow-xl flex items-center justify-center gap-3"
+                                            >
+                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" /></svg>
+                                                新しいプランに変更
+                                            </button>
+
+                                            <div className="space-y-1">
+                                                <h3 className="text-base font-black text-gray-400 tracking-widest uppercase">食事・栄養の目標</h3>
+                                            </div>
+
+                                            {/* Big Calorie Card */}
+                                            <div className="bg-gray-50/50 rounded-[3rem] p-12 text-center space-y-3 border border-gray-100/50">
+                                                <div className="text-xs font-black text-gray-400 uppercase tracking-widest">目標摂取カロリー</div>
+                                                <div className="flex items-baseline justify-center gap-2">
+                                                    <span className="text-6xl font-black text-gray-900 tabular-nums">{nutrientForm.targetCalories.toLocaleString()}</span>
+                                                    <span className="text-base font-black text-gray-400">kcal / 日</span>
+                                                </div>
+                                            </div>
+
+                                            {/* Nutrient Grid */}
+                                            <div className="grid grid-cols-2 gap-6">
+                                                <div className="bg-gray-50/50 rounded-[2.5rem] p-8 space-y-4 border border-gray-100/50">
+                                                    <div className="text-xs font-black text-gray-400 uppercase tracking-widest">タンパク質</div>
+                                                    <div className="flex items-baseline gap-1">
+                                                        <span className="text-4xl font-black text-orange-500 tabular-nums">{nutrientForm.protein}</span>
+                                                        <span className="text-xs font-bold text-gray-400 uppercase">g</span>
                                                     </div>
                                                 </div>
-                                                <div className="bg-gray-50/50 p-4 sm:p-5 rounded-2xl border border-gray-100 space-y-3">
-                                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block text-center">変更理由・タイトル</label>
-                                                    <div className="flex justify-center">
-                                                        <input type="text" placeholder="例: 減量期スタート" value={nutrientForm.title} onChange={e => setNutrientForm({ ...nutrientForm, title: e.target.value })} className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 font-black text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none shadow-sm text-center text-sm" />
+                                                <div className="bg-gray-50/50 rounded-[2.5rem] p-8 space-y-4 border border-gray-100/50">
+                                                    <div className="text-xs font-black text-gray-400 uppercase tracking-widest">脂質</div>
+                                                    <div className="flex items-baseline gap-1">
+                                                        <span className="text-4xl font-black text-teal-500 tabular-nums">{nutrientForm.fat}</span>
+                                                        <span className="text-xs font-bold text-gray-400 uppercase">g</span>
                                                     </div>
                                                 </div>
-                                                <div className="bg-blue-50/30 p-5 sm:p-6 rounded-2xl border border-blue-100 flex flex-col items-center justify-center gap-1">
-                                                    <div className="text-[10px] font-black text-blue-300 uppercase tracking-widest">合計カロリー</div>
-                                                    <div className="flex items-baseline gap-1.5"><span className="text-4xl sm:text-5xl font-black text-blue-600 tabular-nums">{totalKcal}</span><span className="text-lg font-black text-blue-400">kcal</span></div>
+                                                <div className="bg-gray-50/50 rounded-[2.5rem] p-8 space-y-4 border border-gray-100/50">
+                                                    <div className="text-xs font-black text-gray-400 uppercase tracking-widest">炭水化物</div>
+                                                    <div className="flex items-baseline gap-1">
+                                                        <span className="text-4xl font-black text-blue-500 tabular-nums">{nutrientForm.carbs}</span>
+                                                        <span className="text-xs font-bold text-gray-400 uppercase">g</span>
+                                                    </div>
                                                 </div>
-                                                <NutrientCard label="P (タンパク質)" grams={nutrientForm.protein} kcal={pKcal} pct={pPct} onGramChange={(d) => handleGramChange('protein', d)} onKcalChange={(d) => handleKcalChange('protein', d)} onPctChange={(d) => handlePctChange('protein', d)} color="rose" />
-                                                <NutrientCard label="F (脂質)" grams={nutrientForm.fat} kcal={fKcal} pct={fPct} onGramChange={(d) => handleGramChange('fat', d)} onKcalChange={(d) => handleKcalChange('fat', d)} onPctChange={(d) => handlePctChange('fat', d)} color="amber" />
-                                                <NutrientCard label="C (炭水化物)" grams={nutrientForm.carbs} kcal={cKcal} pct={cPct} onGramChange={(d) => handleGramChange('carbs', d)} onKcalChange={(d) => handleKcalChange('carbs', d)} onPctChange={(d) => handlePctChange('carbs', d)} color="emerald" />
-                                                <NutrientCard label="糖質" grams={nutrientForm.sugar} kcal={sugarKcal} onGramChange={(d) => handleGramChange('sugar', d)} onKcalChange={(d) => handleKcalChange('sugar', d)} color="blue" showPct={false} />
-                                                <NutrientCard label="食物繊維" grams={nutrientForm.fiber} kcal={fiberKcal} onGramChange={(d) => handleGramChange('fiber', d)} onKcalChange={(d) => handleKcalChange('fiber', d)} color="teal" showPct={false} />
-                                                <NutrientCard label="塩分" grams={nutrientForm.salt} onGramChange={(d) => handleGramChange('salt', d)} color="gray" showKcal={false} showPct={false} />
-                                            </div>
-                                        </div>
-                                        <div className="space-y-6 pt-6 border-t border-gray-100">
-                                            <h2 className="text-lg font-black flex items-center gap-2"><span className="w-2 h-6 bg-teal-500 rounded-full"></span>② 習慣設定</h2>
-                                            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                                                <HabitConfig label="歩数" unit="歩" active={lifestyleSettings.visible_items.steps} target={habitTargets.steps} onToggle={() => setLifestyleSettings({ ...lifestyleSettings, visible_items: { ...lifestyleSettings.visible_items, steps: !lifestyleSettings.visible_items.steps } })} onTargetChange={(v) => setHabitTargets({...habitTargets, steps: v})} step={500} />
-                                                <HabitConfig label="水分" unit="l" active={lifestyleSettings.visible_items.water} target={habitTargets.water} onToggle={() => setLifestyleSettings({ ...lifestyleSettings, visible_items: { ...lifestyleSettings.visible_items, water: !lifestyleSettings.visible_items.water } })} onTargetChange={(v) => setHabitTargets({...habitTargets, water: v})} step={0.1} />
-                                                <HabitConfig label="睡眠" unit="時間" active={lifestyleSettings.visible_items.sleep} target={habitTargets.sleep} onToggle={() => setLifestyleSettings({ ...lifestyleSettings, visible_items: { ...lifestyleSettings.visible_items, sleep: !lifestyleSettings.visible_items.sleep } })} onTargetChange={(v) => setHabitTargets({...habitTargets, sleep: v})} step={0.5} />
-                                                <HabitConfig label="筋トレ" unit="回" active={lifestyleSettings.visible_items.workout ?? true} target={habitTargets.workout ?? 1} onToggle={() => setLifestyleSettings({ ...lifestyleSettings, visible_items: { ...lifestyleSettings.visible_items, workout: !lifestyleSettings.visible_items.workout } })} onTargetChange={(v) => setHabitTargets({...habitTargets, workout: v})} step={1} />
-                                            </div>
-                                        </div>
-                                        <div className="space-y-6 pt-6 border-t border-gray-100">
-                                            <h2 className="text-lg font-black flex items-center gap-2"><span className="w-2 h-6 bg-rose-500 rounded-full"></span>③ その他の目標</h2>
-                                            <div className="space-y-6">
-                                                <div className="flex flex-wrap gap-2">
-                                                    {GOAL_SUGGESTIONS.map(suggestion => (
-                                                        <button key={suggestion} onClick={() => quitGoals.includes(suggestion) ? setQuitGoals(quitGoals.filter(g => g !== suggestion)) : setQuitGoals([...quitGoals, suggestion])} className={`px-3 py-1.5 rounded-full text-[10px] font-bold border transition-all ${quitGoals.includes(suggestion) ? 'bg-rose-500 border-rose-500 text-white shadow-md' : 'bg-white border-gray-200 text-gray-500'}`}>{suggestion}</button>
-                                                    ))}
+                                                <div className="bg-gray-50/50 rounded-[2.5rem] p-8 space-y-4 border border-gray-100/50">
+                                                    <div className="text-xs font-black text-gray-400 uppercase tracking-widest">糖質</div>
+                                                    <div className="flex items-baseline gap-1">
+                                                        <span className="text-4xl font-black text-purple-500 tabular-nums">{nutrientForm.sugar}</span>
+                                                        <span className="text-xs font-bold text-gray-400 uppercase">g</span>
+                                                    </div>
                                                 </div>
-                                                <div className="flex gap-2 border-t border-gray-100 pt-6">
-                                                    <input type="text" placeholder="自由に追加..." value={newQuitGoal} onChange={(e) => setNewQuitGoal(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addQuitGoal())} className="flex-1 bg-gray-50 border border-gray-100 rounded-xl px-4 py-2 font-bold text-sm outline-none focus:ring-2 focus:ring-rose-500" />
-                                                    <button onClick={addQuitGoal} className="bg-rose-500 text-white px-4 py-2 rounded-xl font-black text-sm hover:bg-rose-600 transition-colors shadow-lg">追加</button>
+                                                <div className="bg-gray-50/50 rounded-[2.5rem] p-8 space-y-4 border border-gray-100/50">
+                                                    <div className="text-xs font-black text-gray-400 uppercase tracking-widest">食物繊維</div>
+                                                    <div className="flex items-baseline gap-1">
+                                                        <span className="text-4xl font-black text-rose-500 tabular-nums">{nutrientForm.fiber}</span>
+                                                        <span className="text-xs font-bold text-gray-400 uppercase">g</span>
+                                                    </div>
                                                 </div>
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                                    {quitGoals.map((goal, index) => (
-                                                        <div key={index} className="flex items-center justify-between bg-rose-50/30 px-4 py-2.5 rounded-xl border border-rose-100">
-                                                            <span className="font-black text-rose-900 text-sm">{goal}</span>
-                                                            <button onClick={() => setQuitGoals(quitGoals.filter((_, i) => i !== index))} className="text-rose-300 hover:text-rose-600">
-                                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                                                </svg>
-                                                            </button>
-                                                        </div>
-                                                    ))}
+                                                <div className="bg-gray-50/50 rounded-[2.5rem] p-8 space-y-4 border border-gray-100/50">
+                                                    <div className="text-xs font-black text-gray-400 uppercase tracking-widest">塩分</div>
+                                                    <div className="flex items-baseline gap-1">
+                                                        <span className="text-4xl font-black text-gray-500 tabular-nums">{nutrientForm.salt}</span>
+                                                        <span className="text-xs font-bold text-gray-400 uppercase">g</span>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="flex justify-center pt-2">
-                                            <button onClick={handleSave} disabled={saving} className="w-full bg-gray-900 text-white py-5 rounded-2xl font-black text-lg shadow-xl hover:bg-black transition-all flex items-center justify-center gap-2">{saving ? '保存中...' : 'プランを保存する'}</button>
+
+                                        {/* Habits Section */}
+                                        <div className="space-y-10 pt-6">
+                                            <div className="space-y-1">
+                                                <h3 className="text-base font-black text-gray-400 tracking-widest uppercase">生活習慣の目標</h3>
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-6">
+                                                <div className="bg-gray-50/50 rounded-[2.5rem] p-8 space-y-4 border border-gray-100/50">
+                                                    <div className="text-xs font-black text-gray-400 uppercase tracking-widest">水分摂取</div>
+                                                    <div className="flex items-baseline gap-1">
+                                                        <span className="text-4xl font-black text-blue-500 tabular-nums">{habitTargets.water}</span>
+                                                        <span className="text-xs font-bold text-gray-400 uppercase">L</span>
+                                                    </div>
+                                                </div>
+                                                <div className="bg-gray-50/50 rounded-[2.5rem] p-8 space-y-4 border border-gray-100/50">
+                                                    <div className="text-xs font-black text-gray-400 uppercase tracking-widest">目標歩数</div>
+                                                    <div className="flex items-baseline gap-1">
+                                                        <span className="text-4xl font-black text-teal-500 tabular-nums">{habitTargets.steps.toLocaleString()}</span>
+                                                        <span className="text-xs font-bold text-gray-400 uppercase">歩</span>
+                                                    </div>
+                                                </div>
+                                                <div className="bg-gray-50/50 rounded-[2.5rem] p-8 space-y-4 border border-gray-100/50">
+                                                    <div className="text-xs font-black text-gray-400 uppercase tracking-widest">筋トレ回数</div>
+                                                    <div className="flex items-baseline gap-1">
+                                                        <span className="text-4xl font-black text-orange-500 tabular-nums">{habitTargets.workout}</span>
+                                                        <span className="text-xs font-bold text-gray-400 uppercase">回 / 週</span>
+                                                    </div>
+                                                </div>
+                                                <div className="bg-gray-50/50 rounded-[2.5rem] p-8 space-y-4 border border-gray-100/50">
+                                                    <div className="text-xs font-black text-gray-400 uppercase tracking-widest">睡眠時間</div>
+                                                    <div className="flex items-baseline gap-1">
+                                                        <span className="text-4xl font-black text-indigo-500 tabular-nums">{habitTargets.sleep}</span>
+                                                        <span className="text-xs font-bold text-gray-400 uppercase">時間</span>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 )}
 
-                                {/* History Section (Only visible when NOT setting a new goal) */}
-                                {!isSettingNewGoal && (
-                                    dietHistory.length > 0 ? (
-                                        <div className="space-y-6">
-                                            <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm space-y-4">
-                                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                                                    <h2 className="text-lg font-black flex items-center gap-2"><span className="w-2 h-6 bg-rose-500 rounded-full"></span>目標設定の推移</h2>
-                                                    <div className="flex bg-gray-100 p-1 rounded-xl">
-                                                        {[
-                                                            { label: 'PFC全て', value: 'all' },
-                                                            { label: 'Pのみ', value: 'p' },
-                                                            { label: 'Fのみ', value: 'f' },
-                                                            { label: 'Cのみ', value: 'c' }
-                                                        ].map(v => (
-                                                            <button 
-                                                                key={v.value} 
-                                                                onClick={() => setChartView(v.value as any)}
-                                                                className={`px-3 py-1.5 rounded-lg text-[10px] font-black transition-all ${chartView === v.value ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
-                                                            >
-                                                                {v.label}
-                                                            </button>
+                                {isSettingNewGoal && (
+                                    <div className="space-y-6 bg-white p-8 rounded-[3rem] border border-gray-100 shadow-sm animate-slideDown">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <h2 className="text-xl font-black flex items-center gap-2"><span className="w-2 h-8 bg-blue-500 rounded-full"></span>目標設定の編集</h2>
+                                            <button 
+                                                onClick={async () => {
+                                                    if (editingHistoryId) {
+                                                        const success = await handleDeleteHistory(editingHistoryId);
+                                                        if (success) {
+                                                            setIsSettingNewGoal(false);
+                                                            setEditingHistoryId(null);
+                                                        }
+                                                    } else {
+                                                        setIsSettingNewGoal(false);
+                                                    }
+                                                }} 
+                                                className="p-3 bg-gray-100 rounded-full hover:bg-rose-100 hover:text-rose-600 transition-colors group"
+                                            >
+                                                <svg className="w-5 h-5 text-gray-500 group-hover:text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>
+                                            </button>
+                                        </div>
+
+                                        <div className="space-y-8">
+                                            <div className="space-y-6">
+                                                <h3 className="text-sm font-black text-gray-400 tracking-widest">① カロリー・PFC設定</h3>
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                    <div className="bg-gray-50/50 p-6 rounded-[2rem] border border-gray-100 space-y-2">
+                                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">適用開始日</label>
+                                                        <input type="date" value={nutrientForm.startDate} onChange={e => setNutrientForm({ ...nutrientForm, startDate: e.target.value })} className="w-full bg-white border border-gray-200 rounded-2xl px-4 py-3 font-black text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none shadow-sm" />
+                                                    </div>
+                                                    <div className="bg-gray-50/50 p-6 rounded-[2rem] border border-gray-100 space-y-2">
+                                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">タイトル（任意）</label>
+                                                        <input type="text" placeholder="例: 増量期" value={nutrientForm.title} onChange={e => setNutrientForm({ ...nutrientForm, title: e.target.value })} className="w-full bg-white border border-gray-200 rounded-2xl px-4 py-3 font-black text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none shadow-sm" />
+                                                    </div>
+                                                </div>
+                                                
+                                                <div className="bg-rose-500 p-8 sm:p-10 rounded-[3rem] shadow-xl shadow-rose-200 flex flex-col items-center justify-center gap-2 group transition-all hover:scale-[1.02] w-full overflow-hidden">
+                                                    <div className="text-[10px] font-black text-rose-100 uppercase tracking-widest opacity-80">目標摂取カロリー設定</div>
+                                                    <div className="flex items-baseline gap-2 sm:gap-3 w-full justify-center">
+                                                        <input 
+                                                            type="number" 
+                                                            value={nutrientForm.targetCalories} 
+                                                            onChange={e => handleTargetCaloriesChange(parseInt(e.target.value) || 0)}
+                                                            className="w-[120px] sm:w-40 bg-white/20 border-b-2 border-white/40 focus:border-white outline-none text-4xl sm:text-6xl font-black text-white tabular-nums text-center transition-all p-1 sm:p-2 rounded-xl"
+                                                        />
+                                                        <span className="text-lg sm:text-2xl font-black text-rose-100">kcal</span>
+                                                    </div>
+                                                </div>
+
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                    <NutrientCard label="タンパク質" grams={nutrientForm.protein} kcal={pKcal} onGramChange={(d) => handleGramChange('protein', d)} color="rose" showPct={false} />
+                                                    <NutrientCard label="脂質" grams={nutrientForm.fat} kcal={fKcal} onGramChange={(d) => handleGramChange('fat', d)} color="amber" showPct={false} />
+                                                    <NutrientCard label="炭水化物" grams={nutrientForm.carbs} kcal={cKcal} onGramChange={(d) => handleGramChange('carbs', d)} color="blue" showPct={false} />
+                                                    <NutrientCard label="糖質" grams={nutrientForm.sugar} kcal={sugarKcal} onGramChange={(d) => handleGramChange('sugar', d)} color="purple" showPct={false} />
+                                                    <NutrientCard label="食物繊維" grams={nutrientForm.fiber} kcal={fiberKcal} onGramChange={(d) => handleGramChange('fiber', d)} color="rose" showPct={false} />
+                                                    <NutrientCard label="塩分" grams={nutrientForm.salt} onGramChange={(d) => handleGramChange('salt', d)} color="gray" showKcal={false} showPct={false} />
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-6 pt-6 border-t border-gray-100">
+                                                <h3 className="text-sm font-black text-gray-400 tracking-widest">② 習慣設定</h3>
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                                                    <HabitConfig label="歩数" unit="歩" active={lifestyleSettings.visible_items.steps} target={habitTargets.steps} onToggle={() => setLifestyleSettings({ ...lifestyleSettings, visible_items: { ...lifestyleSettings.visible_items, steps: !lifestyleSettings.visible_items.steps } })} onTargetChange={(v) => setHabitTargets({...habitTargets, steps: v})} step={500} />
+                                                    <HabitConfig label="水分" unit="L" active={lifestyleSettings.visible_items.water} target={habitTargets.water} onToggle={() => setLifestyleSettings({ ...lifestyleSettings, visible_items: { ...lifestyleSettings.visible_items, water: !lifestyleSettings.visible_items.water } })} onTargetChange={(v) => setHabitTargets({...habitTargets, water: v})} step={0.1} />
+                                                    <HabitConfig label="睡眠" unit="時間" active={lifestyleSettings.visible_items.sleep} target={habitTargets.sleep} onToggle={() => setLifestyleSettings({ ...lifestyleSettings, visible_items: { ...lifestyleSettings.visible_items, sleep: !lifestyleSettings.visible_items.sleep } })} onTargetChange={(v) => setHabitTargets({...habitTargets, sleep: v})} step={0.5} />
+                                                    <HabitConfig label="筋トレ" unit="回" active={lifestyleSettings.visible_items.workout ?? true} target={habitTargets.workout ?? 1} onToggle={() => setLifestyleSettings({ ...lifestyleSettings, visible_items: { ...lifestyleSettings.visible_items, workout: !lifestyleSettings.visible_items.workout } })} onTargetChange={(v) => setHabitTargets({...habitTargets, workout: v})} step={1} />
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-6 pt-6 border-t border-gray-100">
+                                                <h3 className="text-sm font-black text-gray-400 tracking-widest">③ 取り組む習慣</h3>
+                                                <div className="space-y-4">
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {GOAL_SUGGESTIONS.map(suggestion => (
+                                                            <button key={suggestion} onClick={() => quitGoals.includes(suggestion) ? setQuitGoals(quitGoals.filter(g => g !== suggestion)) : setQuitGoals([...quitGoals, suggestion])} className={`px-4 py-2 rounded-full text-[11px] font-black border transition-all ${quitGoals.includes(suggestion) ? 'bg-orange-500 border-orange-500 text-white shadow-md' : 'bg-white border-gray-200 text-gray-500 hover:border-orange-300'}`}>{suggestion}</button>
+                                                        ))}
+                                                    </div>
+                                                    <div className="flex gap-2">
+                                                        <input type="text" placeholder="自由に追加..." value={newQuitGoal} onChange={(e) => setNewQuitGoal(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addQuitGoal())} className="flex-1 bg-gray-50 border border-gray-200 rounded-2xl px-5 py-3 font-bold text-sm outline-none focus:ring-2 focus:ring-orange-500" />
+                                                        <button onClick={addQuitGoal} className="bg-orange-500 text-white px-6 py-3 rounded-2xl font-black text-sm hover:bg-orange-600 transition-colors shadow-lg">追加</button>
+                                                    </div>
+                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                        {quitGoals.map((goal, index) => (
+                                                            <div key={index} className="flex items-center justify-between bg-orange-50/30 px-5 py-3 rounded-[1.5rem] border border-orange-100">
+                                                                <span className="font-black text-orange-900 text-sm">{goal}</span>
+                                                                <button onClick={() => setQuitGoals(quitGoals.filter((_, i) => i !== index))} className="text-orange-300 hover:text-orange-600 p-1">
+                                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>
+                                                                </button>
+                                                            </div>
                                                         ))}
                                                     </div>
                                                 </div>
-                                                <div className="h-[300px] w-full">
-                                                    <ResponsiveContainer width="100%" height="100%">
-                                                        <ComposedChart data={dietChartData}>
-                                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                                            <XAxis dataKey="start_date" axisLine={{ stroke: '#000000', strokeWidth: 0.3 }} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} tickFormatter={(val) => {
-                                                                if (!val) return '';
-                                                                const parts = val.split('-');
-                                                                if (parts.length === 3) return `${parseInt(parts[1], 10)}/${parseInt(parts[2], 10)}`;
-                                                                return val;
-                                                            }} />
-                                                            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} />
-                                                            <Tooltip 
-                                                                labelFormatter={(label: string) => {
-                                                                    if (!label) return '';
-                                                                    const parts = label.split('-');
-                                                                    if (parts.length === 3) return `${parseInt(parts[1], 10)}/${parseInt(parts[2], 10)}`;
-                                                                    return label;
-                                                                }}
-                                                                contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', padding: '12px' }} 
-                                                                itemStyle={{ fontWeight: 800, fontSize: '12px' }}
-                                                            />
-                                                            <Legend iconType="circle" wrapperStyle={{ paddingTop: '20px', fontSize: '12px', fontWeight: 700 }} />
-                                                            
-                                                            {(chartView === 'all' || chartView === 'p') && (
-                                                                <Bar dataKey="protein_kcal" name="P" stackId={chartView === 'all' ? 'a' : undefined} fill="#fbbf24" />
-                                                            )}
-                                                            {(chartView === 'all' || chartView === 'f') && (
-                                                                <Bar dataKey="fat_kcal" name="F" stackId={chartView === 'all' ? 'a' : undefined} fill="#10b981" />
-                                                            )}
-                                                            {(chartView === 'all' || chartView === 'c') && (
-                                                                <Bar dataKey="carbs_kcal" name="C" stackId={chartView === 'all' ? 'a' : undefined} fill="#3b82f6" />
-                                                            )}
-                                                            {chartView === 'all' && (
-                                                                <Line type="monotone" dataKey="calories" name="設定カロリー" stroke="#f43f5e" strokeWidth={4} dot={{ r: 4, strokeWidth: 2, fill: '#fff' }} />
-                                                            )}
-                                                        </ComposedChart>
-                                                    </ResponsiveContainer>
-                                                </div>
                                             </div>
-                                            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-                                                <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-                                                    <h2 className="text-lg font-black flex items-center gap-2"><span className="w-2 h-6 bg-gray-900 rounded-full"></span>設定履歴一覧</h2>
-                                                </div>
-                                                <div className="overflow-x-auto">
-                                                    <table className="w-full text-sm text-left">
-                                                        <thead>
-                                                            <tr className="bg-gray-50/50 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-100">
-                                                                <th className="px-3 sm:px-6 py-4 whitespace-nowrap">日付</th>
-                                                                <th className="px-3 sm:px-6 py-4 text-center whitespace-nowrap">カロリー</th>
-                                                                <th className="px-3 sm:px-6 py-4 text-right whitespace-nowrap">編集</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody className="divide-y divide-gray-100">
-                                                            {dietHistory.map((record) => (
-                                                                <tr key={record.id} className="hover:bg-gray-50 transition-colors">
-                                                                    <td className="px-3 sm:px-6 py-4 font-bold text-xs whitespace-nowrap">
-                                                                        <div className="flex items-center gap-1.5 max-w-[150px] sm:max-w-[200px]">
-                                                                            <span>
-                                                                                {(() => {
-                                                                                    const parts = record.start_date.split('-');
-                                                                                    return parts.length === 3 ? `${parts[0].slice(-2)}/${parseInt(parts[1], 10)}/${parseInt(parts[2], 10)}` : record.start_date;
-                                                                                })()}
-                                                                            </span>
-                                                                            {record.title && (
-                                                                                <span className="text-[10px] text-gray-500 truncate bg-gray-100 px-1.5 py-0.5 rounded font-bold">{record.title}</span>
-                                                                            )}
-                                                                        </div>
-                                                                    </td>
-                                                                    <td className="px-3 sm:px-6 py-4 text-center font-black text-rose-600 whitespace-nowrap">{record.calories}kcal</td>
-                                                                    <td className="px-3 sm:px-6 py-4 text-right whitespace-nowrap">
-                                                                        <button onClick={() => { handleEditHistory(record); setIsSettingNewGoal(true); }} className="p-2 text-blue-500 hover:bg-blue-50 rounded-full transition-colors whitespace-nowrap inline-flex items-center justify-center" title="編集">
-                                                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                                                                            </svg>
-                                                                        </button>
-                                                                    </td>
-                                                                </tr>
-                                                            ))}
-                                                        </tbody>
-                                                    </table>
-                                                </div>
+
+                                            <div className="flex gap-4 pt-6">
+                                                <button onClick={() => setIsSettingNewGoal(false)} className="flex-1 bg-white border border-gray-200 text-gray-500 py-5 rounded-[2rem] font-black text-lg hover:bg-gray-50 transition-all">キャンセル</button>
+                                                <button onClick={handleSave} disabled={saving} className="flex-[2] bg-gray-900 text-white py-5 rounded-[2rem] font-black text-lg shadow-xl hover:bg-black transition-all flex items-center justify-center gap-2">{saving ? '保存中...' : '新しいプランを適用する'}</button>
                                             </div>
                                         </div>
-                                    ) : (
-                                        <div className="p-12 text-center text-gray-400 font-bold italic border-2 border-dashed border-gray-100 rounded-2xl">履歴がありません</div>
-                                    )
+                                    </div>
+                                )}
+
+                                {/* History Chart Section */}
+                                {!isSettingNewGoal && dietHistory.length > 0 && (
+                                    <div className="bg-white rounded-[3rem] p-10 sm:p-14 shadow-sm border border-gray-100 space-y-10">
+                                        <div className="space-y-2">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-1.5 h-7 bg-blue-500 rounded-full"></div>
+                                                <h2 className="text-3xl font-black text-gray-900 tracking-tight">目標カロリーの推移</h2>
+                                            </div>
+                                            <p className="text-sm font-bold text-gray-400 ml-4.5">PFCバランスの推移 (KCAL換算)</p>
+                                        </div>
+
+                                        <div className="flex bg-gray-100/50 p-2 rounded-2xl w-fit mx-auto"> {/* Centered tabs */}
+                                            {[
+                                                { label: 'PFC', value: 'all' },
+                                                { label: 'P', value: 'p' },
+                                                { label: 'F', value: 'f' },
+                                                { label: 'C', value: 'c' }
+                                            ].map(v => (
+                                                <button 
+                                                    key={v.value} 
+                                                    onClick={() => setChartView(v.value as any)}
+                                                    className={`px-6 py-2.5 rounded-xl text-xs font-black transition-all ${chartView === v.value ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                                                >
+                                                    {v.label}
+                                                </button>
+                                            ))}
+                                        </div>
+
+                                        <div className="h-[400px] w-full">
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <ComposedChart data={dietChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                                    <XAxis 
+                                                        dataKey="displayDate" 
+                                                        axisLine={false} 
+                                                        tickLine={false} 
+                                                        tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} 
+                                                    />
+                                                    <YAxis 
+                                                        axisLine={false} 
+                                                        tickLine={false} 
+                                                        tick={{ fontSize: 10, fontWeight: 700, fill: '#cbd5e1' }} 
+                                                    />
+                                                    <Tooltip 
+                                                        contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', padding: '12px' }}
+                                                        itemStyle={{ fontSize: '10px', fontWeight: 'bold' }}
+                                                        formatter={(value: any, name: string) => [`${Math.round(value)} kcal`, name]}
+                                                    />
+                                                    <Legend 
+                                                        align="center" 
+                                                        verticalAlign="bottom" 
+                                                        iconType="circle" 
+                                                        wrapperStyle={{ paddingTop: '40px', fontSize: '12px', fontWeight: 800 }}
+                                                        payload={[
+                                                            { value: 'P', type: 'circle', color: '#f59e0b' },
+                                                            { value: 'F', type: 'circle', color: '#10b981' },
+                                                            { value: 'C', type: 'circle', color: '#3b82f6' }
+                                                        ]}
+                                                    />
+                                                    
+                                                    {/* Stacking Order: Bottom(C) -> Middle(F) -> Top(P) - Consistent with Client View */}
+                                                    {(chartView === 'all' || chartView === 'c') && (
+                                                        <Bar dataKey="carbs_kcal" name="C" stackId="a" fill="#3b82f6" radius={[0, 0, 0, 0]} barSize={24} isAnimationActive={false} />
+                                                    )}
+                                                    {(chartView === 'all' || chartView === 'f') && (
+                                                        <Bar dataKey="fat_kcal" name="F" stackId="a" fill="#10b981" radius={[0, 0, 0, 0]} isAnimationActive={false} />
+                                                    )}
+                                                    {(chartView === 'all' || chartView === 'p') && (
+                                                        <Bar dataKey="protein_kcal" name="P" stackId="a" fill="#f59e0b" radius={[0, 0, 0, 0]} isAnimationActive={false} />
+                                                    )}
+                                                </ComposedChart>
+                                            </ResponsiveContainer>
+                                        </div>
+
+                                        {/* History List */}
+                                        <div className="pt-10 border-t border-gray-50">
+                                            <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-8">設定履歴一覧</h4>
+                                            <div className="space-y-4">
+                                                {dietHistory.map((record) => {
+                                                    const dateParts = record.start_date.split('-');
+                                                    const formattedDate = dateParts.length === 3 
+                                                        ? `${dateParts[0].slice(2)}/${parseInt(dateParts[1], 10)}/${parseInt(dateParts[2], 10)}` 
+                                                        : record.start_date;
+                                                    
+                                                    return (
+                                                        <div key={record.id} className="flex items-center justify-between p-6 bg-gray-50/50 rounded-3xl border border-gray-100/50 hover:bg-gray-50 transition-colors">
+                                                            <div className="flex items-center gap-6">
+                                                                <div className="text-base font-black text-gray-900">{formattedDate}</div>
+                                                            </div>
+                                                            <div className="flex items-center gap-8">
+                                                                <div className="text-base font-black text-orange-600">{record.calories}<span className="text-xs ml-1">kcal</span></div>
+                                                                <button onClick={() => { handleEditHistory(record); setIsSettingNewGoal(true); }} className="p-3 text-blue-500 hover:bg-blue-50 rounded-2xl transition-colors">
+                                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    </div>
                                 )}
                             </div>
                         )}
@@ -901,7 +1102,6 @@ function DietPlanPageContent() {
             </div>
             {message && <div className="fixed bottom-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-8 py-4 rounded-2xl font-black shadow-2xl z-50">{message}</div>}
         </div>
-    </div>
     );
 
     function addQuitGoal() {
@@ -959,24 +1159,29 @@ function WeeklyProgressItem({ label, actual, target, unit, color, perDay }: { la
     )
 }
 
-function NutrientCard({ label, grams, kcal, pct, onGramChange, onKcalChange, onPctChange, color, showKcal = true, showPct = true }: { 
-    label: string, grams: number, kcal?: number, pct?: number, onGramChange: (d: number) => void, onKcalChange?: (d: number) => void, onPctChange?: (d: number) => void, color: string, showKcal?: boolean, showPct?: boolean
+function NutrientCard({ label, grams, kcal, onGramChange, onKcalChange, color, showKcal = true, showPct = true }: { 
+    label: string, grams: number, kcal?: number, onGramChange: (d: number) => void, onKcalChange?: (d: number) => void, color: string, showKcal?: boolean, showPct?: boolean
 }) {
     const colorStyles: Record<string, string> = {
         rose: 'text-rose-600 bg-rose-50/30 border-rose-100',
         amber: 'text-amber-600 bg-amber-50/30 border-amber-100',
         emerald: 'text-emerald-600 bg-emerald-50/30 border-emerald-100',
-        teal: 'text-teal-600 bg-teal-50/30 border-teal-100',
+        blue: 'text-blue-600 bg-blue-50/30 border-blue-100',
+        purple: 'text-purple-600 bg-purple-50/30 border-purple-100',
         gray: 'text-gray-600 bg-gray-50/30 border-gray-100'
     }
-    const isThree = showKcal && showPct;
+    const isTwo = showKcal && kcal !== undefined;
     return (
-        <div className={`p-4 rounded-2xl border ${colorStyles[color]} space-y-3 shadow-sm`}>
+        <div className={`p-4 rounded-2xl border ${colorStyles[color] || colorStyles.gray} space-y-3 shadow-sm`}>
             <div className="text-base sm:text-lg font-black uppercase tracking-tight">{label}</div>
-            <div className={`grid gap-2 ${isThree ? 'grid-cols-3' : 'grid-cols-2'}`}>
+            <div className={`grid gap-2 ${isTwo ? 'grid-cols-2' : 'grid-cols-1'}`}>
                 <NutrientControl value={grams} unit="g" onDelta={onGramChange} />
-                {showKcal && kcal !== undefined && onKcalChange && <NutrientControl value={kcal} unit="kcal" onDelta={onKcalChange} />}
-                {showPct && pct !== undefined && onPctChange && <NutrientControl value={pct} unit="%" onDelta={onPctChange} />}
+                {showKcal && kcal !== undefined && (
+                    <div className="bg-white/40 rounded-xl p-2 border border-white/50 flex items-center justify-center gap-1 shadow-inner">
+                        <span className="text-base sm:text-lg font-black tabular-nums">{Math.round(kcal)}</span>
+                        <span className="text-[8px] font-bold opacity-30 uppercase">kcal</span>
+                    </div>
+                )}
             </div>
         </div>
     )
