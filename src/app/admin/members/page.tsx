@@ -15,6 +15,7 @@ import {
   generateMemberAccessUrl
 } from '@/lib/utils/member'
 import { useStoreChange } from '@/hooks/useStoreChange'
+import AdminHeader from '@/app/components/AdminHeader'
 
 function MembersPageContent() {
   const { count: storeChangeCount } = useStoreChange()
@@ -200,43 +201,22 @@ function MembersPageContent() {
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="mb-10 text-center">
-          <div className="relative mb-6">
-            <button
-              onClick={() => router.push(trainerToken ? `/trainer/${trainerToken}` : '/dashboard')}
-              className="absolute left-0 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600 bg-white rounded-full shadow-sm border border-gray-100 transition-all hover:shadow-md"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            <h1 className="text-3xl font-black text-gray-900 tracking-tight">会員管理</h1>
-            <p className="mt-1 text-sm font-medium text-gray-500 italic">会員ステータスと情報の管理</p>
-          </div>
-          
-          <div className="flex items-center justify-center gap-4">
-            {!trainerToken && (
-              <Link
-                href={`/admin/sales${(session as any)?.user?.storeId ? `?store=${(session as any).user.storeId}` : ''}`}
-                className="px-6 py-2.5 bg-rose-500 text-white text-sm font-black rounded-xl hover:bg-rose-600 transition-all shadow-md flex items-center gap-2"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                売上管理
-              </Link>
-            )}
+        <AdminHeader 
+          title="会員管理" 
+          subTitle="会員ステータスと情報の管理"
+          showBack={false}
+          rightElement={
             <Link
               href="/admin/members/new"
-              className="px-6 py-2.5 bg-blue-600 text-white text-sm font-black rounded-xl hover:bg-blue-700 transition-all shadow-md flex items-center gap-2"
+              className="px-5 py-2.5 bg-blue-600 text-white text-[10px] font-black rounded-2xl hover:bg-blue-700 transition-all shadow-md flex items-center gap-2 uppercase tracking-widest"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
               </svg>
               新規登録
             </Link>
-          </div>
-        </div>
+          }
+        />
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">

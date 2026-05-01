@@ -9,6 +9,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts'
 import { getStatusDotColor, getStatusText, getStatusColor } from '@/lib/utils/member'
+import AdminHeader from '@/app/components/AdminHeader'
 
 // --- Sub Components ---
 
@@ -96,14 +97,12 @@ const AdminDashboard = () => {
         {/* DIET TAB */}
         {activeTab === 'diet' && (
           <div className="space-y-6 animate-slideUp">
+            <AdminHeader 
+              title="ダイエット管理" 
+              subTitle="プランがONの会員のみ表示"
+              showBack={false}
+            />
             <div className="bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-6">
-              <div className="flex items-center justify-between px-2">
-                <div>
-                  <h2 className="text-xl font-black text-gray-900">ダイエット管理</h2>
-                  <p className="text-xs font-bold text-gray-400">プランがONの会員のみ表示</p>
-                </div>
-                <Link href="/admin/diet-plan" className="text-xs font-black text-rose-500 bg-rose-50 px-4 py-2 rounded-full">全体設定</Link>
-              </div>
               <div className="space-y-3">
                 {dietMembers.length === 0 ? (
                   <div className="py-10 text-center text-gray-400 italic text-sm">対象者がいません</div>
@@ -130,14 +129,10 @@ const AdminDashboard = () => {
 
         {/* HOME / RESERVATION TAB */}
         {activeTab === 'home' && (
-          <div className="space-y-6 animate-slideUp">
+          <div className="animate-slideUp -mt-10">
             <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden">
-              <div className="p-6 border-b border-gray-50 flex items-center justify-between">
-                <h2 className="text-xl font-black text-gray-900">予約カレンダー</h2>
-                <Link href="/admin/calendar" className="text-xs font-black text-blue-500 bg-blue-50 px-4 py-2 rounded-full">全画面</Link>
-              </div>
-              <div className="p-2 sm:p-4">
-                <CalendarView />
+              <div className="p-0">
+                <CalendarView key={searchParams.get('_t') || 'initial'} />
               </div>
             </div>
           </div>
@@ -148,11 +143,14 @@ const AdminDashboard = () => {
         {/* OTHERS TAB */}
         {activeTab === 'others' && (
           <div className="grid grid-cols-1 gap-4 animate-slideUp">
-            <div className="px-4 py-2">
-              <h2 className="text-xl font-black text-gray-900">管理・設定</h2>
-            </div>
+            <AdminHeader 
+              title="管理・設定" 
+              subTitle="各種マスター設定と管理"
+              showBack={false}
+            />
             <OtherSubCard href="/admin/trainers" label="トレーナー管理" subLabel="スタッフの登録・編集" color="emerald" icon={<path d="M12 14l9-5-9-5-9 5 9 5z" />} />
             <OtherSubCard href="/admin/stores" label="店舗管理" subLabel="店舗情報の変更・設定" color="indigo" icon={<path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />} />
+            <OtherSubCard href="/admin/shifts" label="シフト管理" subLabel="勤務スケジュールの作成" color="emerald" icon={<path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />} />
             <OtherSubCard href="/admin/online-lesson" label="オンライン" subLabel="スケジュールの管理" color="orange" icon={<path d="M15 10l4.553-2.069A1 1 0 0121 8.845v6.309a1 1 0 01-1.447.894L15 14" />} />
           </div>
         )}

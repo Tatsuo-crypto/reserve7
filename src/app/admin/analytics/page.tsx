@@ -8,6 +8,7 @@ import {
     BarChart, Bar, ComposedChart, Area
 } from 'recharts'
 import { useStoreChange } from '@/hooks/useStoreChange'
+import AdminHeader from '@/app/components/AdminHeader'
 import MemberMovementModal from './MemberMovementModal'
 
 export default function AnalyticsPage() {
@@ -155,22 +156,11 @@ export default function AnalyticsPage() {
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             {/* Header */}
-            <div className="mb-6">
-                <div className="relative flex items-center justify-center">
-                    <button
-                        onClick={() => router.push('/dashboard')}
-                        className="absolute left-0 text-gray-400 hover:text-gray-600"
-                    >
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                        </svg>
-                    </button>
-                    <div className="text-center">
-                        <h1 className="text-2xl font-bold text-gray-900">分析・レポート</h1>
-                        <p className="mt-1 text-sm text-gray-500">会員数、売上の推移を確認できます</p>
-                    </div>
-                </div>
-            </div>
+            <AdminHeader 
+                title="売上管理" 
+                subTitle="会員数、売上の推移を確認できます"
+                showBack={false}
+            />
 
             {/* Filters */}
             <div className="mb-8 flex justify-center gap-2">

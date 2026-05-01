@@ -314,7 +314,7 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
     // Empty cells for days before the first day of the month
     for (let i = 0; i < firstDay; i++) {
       days.push(
-        <div key={`empty-${i}`} className="h-[115px] bg-gray-50 border border-gray-100"></div>
+        <div key={`empty-${i}`} className="h-[85px] bg-gray-50 border border-gray-100"></div>
       )
     }
 
@@ -329,7 +329,7 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
       days.push(
         <div
           key={day}
-          className="h-[115px] p-1 overflow-hidden cursor-pointer flex flex-col bg-white hover:bg-gray-50 border border-gray-100"
+          className="h-[85px] p-1 overflow-hidden cursor-pointer flex flex-col bg-white hover:bg-gray-50 border border-gray-100"
           onClick={() => handleDateClick(dateStr)}
         >
           <div className="text-sm font-medium mb-1 flex-shrink-0 flex justify-start">
@@ -470,7 +470,7 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
       {/* White container: Month title -> Calendar grid -> Legend */}
       <div className="bg-white p-0">
         {/* Month Navigation */}
-        <div className="p-4">
+        <div className="py-2 px-4">
           <div className="flex items-center justify-center space-x-6">
             <button
               onClick={() => navigateMonth('prev')}
@@ -521,7 +521,7 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
         </div>
 
         {/* Legend inside white container */}
-        <div className="px-4 py-3">
+        <div className="px-4 py-1">
           <div className="flex items-center justify-center space-x-6 text-sm">
             <div className="flex items-center space-x-2">
               <div className="w-3 h-3 bg-green-100 border border-green-200 rounded"></div>
@@ -537,12 +537,14 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
             </div>
           </div>
         </div>
+
       </div>
-      {/* Button to navigate to reservation list */}
-      <div className="mt-4 flex justify-center">
+
+      {/* Button to navigate to reservation list - Placed below the card on the Y-axis */}
+      <div className="mt-6 pb-8 flex justify-center">
         <Link
           href={trainerToken ? `/admin/reservations?trainerToken=${trainerToken}` : '/admin/reservations'}
-          className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md shadow-sm hover:bg-indigo-700 transition-colors"
+          className="inline-flex items-center px-8 py-3 bg-indigo-50 text-indigo-600 text-[11px] font-black rounded-2xl hover:bg-indigo-100 transition-all uppercase tracking-widest border border-indigo-100 shadow-sm shadow-indigo-100/50"
         >
           予約一覧を見る
         </Link>
