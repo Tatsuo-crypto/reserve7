@@ -2,6 +2,7 @@ import './globals.css'
 import { Inter } from 'next/font/google'
 import { Providers } from './providers'
 import Navigation from './components/Navigation'
+import BottomNavigation from './components/BottomNavigation'
 import MainWrapper from './components/MainWrapper'
 
 const inter = Inter({ 
@@ -49,6 +50,7 @@ export default function RootLayout({
             <MainWrapper>
               {children}
             </MainWrapper>
+            <BottomNavigation />
           </div>
         </Providers>
       </body>

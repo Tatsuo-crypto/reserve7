@@ -38,6 +38,7 @@ const DEFAULT_PROTEIN = 100;
 const DEFAULT_FAT = 40;
 const DEFAULT_CARBS = 300;
 const DEFAULT_FIBER = 20;
+const DEFAULT_SUGAR = 280; // Added sugar default
 const DEFAULT_SALT = 6;
 
 type TabType = 'goals' | 'analysis' | 'weekly';
@@ -68,6 +69,7 @@ function DietPlanPageContent() {
         protein: DEFAULT_PROTEIN,
         fat: DEFAULT_FAT,
         carbs: DEFAULT_CARBS,
+        sugar: DEFAULT_SUGAR,
         fiber: DEFAULT_FIBER,
         salt: DEFAULT_SALT,
         startDate: today,
@@ -111,12 +113,19 @@ function DietPlanPageContent() {
                 if (data && data.length > 0) {
                     const latest = data[0]
                     const isOldPreset = latest.protein === 100 && latest.fat === 60 && latest.carbs === 265;
+                    const protein = isOldPreset ? DEFAULT_PROTEIN : latest.protein;
+                    const fat = isOldPreset ? DEFAULT_FAT : latest.fat;
+                    const carbs = isOldPreset ? DEFAULT_CARBS : latest.carbs;
+                    const fiber = isOldPreset ? DEFAULT_FIBER : (latest.fiber || 20);
+                    const sugar = isOldPreset ? DEFAULT_SUGAR : (latest.sugar || (carbs - fiber));
+                    
                     setNutrientForm(prev => ({
                         ...prev,
-                        protein: isOldPreset ? DEFAULT_PROTEIN : latest.protein,
-                        fat: isOldPreset ? DEFAULT_FAT : latest.fat,
-                        carbs: isOldPreset ? DEFAULT_CARBS : latest.carbs,
-                        fiber: isOldPreset ? DEFAULT_FIBER : (latest.fiber || 20),
+                        protein,
+                        fat,
+                        carbs,
+                        fiber,
+                        sugar,
                         salt: isOldPreset ? DEFAULT_SALT : (latest.salt || 6),
                         startDate: today,
                         title: ''
@@ -161,7 +170,17 @@ function DietPlanPageContent() {
                 if (response.ok) {
                     const result = await response.json()
                     const data = result.data || result
-                    setMembers(data.members || [])
+                    const fetchedMembers = data.members || []
+                    setMembers(fetchedMembers)
+                    
+                    // Auto-select member if userId is in URL
+                    const userId = searchParams.get('userId')
+                    if (userId) {
+                        const member = fetchedMembers.find((m: Member) => m.id === userId)
+                        if (member) {
+                            setSelectedMember(member)
+                        }
+                    }
                 }
             } catch (error) {
                 console.error('Fetch members error:', error)
@@ -172,7 +191,7 @@ function DietPlanPageContent() {
         if (status === 'authenticated') {
             fetchMembers()
         }
-    }, [status])
+    }, [status, searchParams])
 
     // Fetch member specific data when selected
     useEffect(() => {
@@ -184,14 +203,15 @@ function DietPlanPageContent() {
     // Calculate calories
     const pKcal = nutrientForm.protein * 4;
     const fKcal = nutrientForm.fat * 9;
-    const cKcal = nutrientForm.carbs * 4;
+    const sugarKcal = nutrientForm.sugar * 4;
     const fiberKcal = nutrientForm.fiber * 2;
-    const totalKcal = pKcal + fKcal + cKcal + fiberKcal;
+    const cKcal = sugarKcal + fiberKcal;
+    const totalKcal = pKcal + fKcal + sugarKcal + fiberKcal;
 
     const pPct = totalKcal > 0 ? Math.round((pKcal / totalKcal) * 100) : 0;
     const fPct = totalKcal > 0 ? Math.round((fKcal / totalKcal) * 100) : 0;
+    const cPct = totalKcal > 0 ? Math.max(0, 100 - pPct - fPct) : 0;
     const fiberPct = totalKcal > 0 ? Math.round((fiberKcal / totalKcal) * 100) : 0;
-    const cPct = totalKcal > 0 ? Math.max(0, 100 - pPct - fPct - fiberPct) : 0;
 
     const handleSave = async () => {
         if (!selectedMember) return
@@ -243,6 +263,7 @@ function DietPlanPageContent() {
             protein: record.protein,
             fat: record.fat,
             carbs: record.carbs,
+            sugar: record.sugar || (record.carbs - (record.fiber || 20)),
             fiber: record.fiber || 20,
             salt: record.salt || 6,
             startDate: record.start_date,
@@ -268,15 +289,30 @@ function DietPlanPageContent() {
         }
     }
 
-    const handleGramChange = (key: 'protein' | 'fat' | 'carbs' | 'fiber' | 'salt', delta: number) => {
-        setNutrientForm(prev => ({ ...prev, [key]: Math.max(0, prev[key] + delta) }))
+    const handleGramChange = (key: 'protein' | 'fat' | 'carbs' | 'sugar' | 'fiber' | 'salt', delta: number) => {
+        setNutrientForm(prev => {
+            const next = { ...prev, [key]: Math.max(0, prev[key] + delta) };
+            
+            // Sync Sugar, Carbs, and Fiber: C = Sugar + Fiber
+            if (key === 'carbs') {
+                next.sugar = Math.max(0, next.carbs - next.fiber);
+            } else if (key === 'fiber') {
+                next.sugar = Math.max(0, next.carbs - next.fiber);
+            } else if (key === 'sugar') {
+                next.carbs = next.sugar + next.fiber;
+            }
+            
+            return next;
+        })
     }
 
-    const handleKcalChange = (key: 'protein' | 'fat' | 'carbs' | 'fiber', delta: number) => {
+    const handleKcalChange = (key: 'protein' | 'fat' | 'carbs' | 'sugar' | 'fiber', delta: number) => {
         const factor = key === 'fat' ? 9 : key === 'fiber' ? 2 : 4;
         const currentKcal = nutrientForm[key] * factor;
         const newKcal = Math.max(0, currentKcal + delta);
-        setNutrientForm(prev => ({ ...prev, [key]: Math.round(newKcal / factor) }))
+        const newGram = Math.round(newKcal / factor);
+        
+        handleGramChange(key, newGram - nutrientForm[key]);
     }
 
     const handlePctChange = (key: 'protein' | 'fat' | 'carbs', delta: number) => {
@@ -285,7 +321,8 @@ function DietPlanPageContent() {
         const currentPct = Math.round(((nutrientForm[key] * factor) / totalKcal) * 100);
         const newPct = Math.max(0, currentPct + delta);
         const newGram = Math.round((totalKcal * (newPct / 100)) / factor);
-        setNutrientForm(prev => ({ ...prev, [key]: newGram }))
+        
+        handleGramChange(key, newGram - nutrientForm[key]);
     }
 
     const processedWeightData = useMemo(() => {
@@ -409,10 +446,10 @@ function DietPlanPageContent() {
             fat: logs.reduce((s, l) => s + (l.fat || 0), 0),
             carbs: logs.reduce((s, l) => s + (l.carbs || 0), 0),
             fiber: logs.reduce((s, l) => s + (l.fiber || 0), 0),
-            sleep: Number(lifeLogs.reduce((s, l) => s + (l.sleep_hours || 0), 0).toFixed(1)),
+            sleep: Number(lifeLogs.reduce((s, l) => s + (l.sleep_hours || l.sleep || 0), 0).toFixed(1)),
             workout: Number(lifeLogs.reduce((s, l) => s + (l.habits?.workout || 0), 0).toFixed(1)),
             steps: lifeLogs.reduce((s, l) => s + (l.steps || 0), 0),
-            water: Number(lifeLogs.reduce((s, l) => s + (l.water_liters || 0), 0).toFixed(1))
+            water: Number(lifeLogs.reduce((s, l) => s + (l.water_liters || l.water || 0), 0).toFixed(1))
         };
 
         const avg = {
@@ -486,9 +523,12 @@ function DietPlanPageContent() {
                 target_carbs: target?.carbs || null,
                 target_fiber: target?.fiber || null,
                 steps: lifestyle?.steps || 0,
-                sleep: lifestyle?.sleep_hours || 0,
-                water: lifestyle?.water_liters || 0,
+                sleep: lifestyle?.sleep_hours || lifestyle?.sleep || 0,
+                water: lifestyle?.water_liters || lifestyle?.water || 0,
                 workout: lifestyle?.habits?.workout || 0,
+                target_steps: habitTargets?.steps || 8000,
+                target_sleep: habitTargets?.sleep || 8,
+                target_water: habitTargets?.water || 2,
                 target_workout: habitTargets?.workout || 1,
             });
             current.setDate(current.getDate() + 1);
@@ -663,6 +703,7 @@ function DietPlanPageContent() {
                                                 <NutrientCard label="P (タンパク質)" grams={nutrientForm.protein} kcal={pKcal} pct={pPct} onGramChange={(d) => handleGramChange('protein', d)} onKcalChange={(d) => handleKcalChange('protein', d)} onPctChange={(d) => handlePctChange('protein', d)} color="rose" />
                                                 <NutrientCard label="F (脂質)" grams={nutrientForm.fat} kcal={fKcal} pct={fPct} onGramChange={(d) => handleGramChange('fat', d)} onKcalChange={(d) => handleKcalChange('fat', d)} onPctChange={(d) => handlePctChange('fat', d)} color="amber" />
                                                 <NutrientCard label="C (炭水化物)" grams={nutrientForm.carbs} kcal={cKcal} pct={cPct} onGramChange={(d) => handleGramChange('carbs', d)} onKcalChange={(d) => handleKcalChange('carbs', d)} onPctChange={(d) => handlePctChange('carbs', d)} color="emerald" />
+                                                <NutrientCard label="糖質" grams={nutrientForm.sugar} kcal={sugarKcal} onGramChange={(d) => handleGramChange('sugar', d)} onKcalChange={(d) => handleKcalChange('sugar', d)} color="blue" showPct={false} />
                                                 <NutrientCard label="食物繊維" grams={nutrientForm.fiber} kcal={fiberKcal} onGramChange={(d) => handleGramChange('fiber', d)} onKcalChange={(d) => handleKcalChange('fiber', d)} color="teal" showPct={false} />
                                                 <NutrientCard label="塩分" grams={nutrientForm.salt} onGramChange={(d) => handleGramChange('salt', d)} color="gray" showKcal={false} showPct={false} />
                                             </div>
@@ -1002,7 +1043,7 @@ function DietPlanPageContent() {
                                 {/* Steps Chart */}
                                 <AnalysisChartCard title="歩数 (step)" color="emerald">
                                     <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart data={analysisData}>
+                                        <ComposedChart data={analysisData}>
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                                             <XAxis dataKey="date" axisLine={{ stroke: '#000000', strokeWidth: 0.3 }} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} tickFormatter={(val) => {
                                                 if (!val) return '';
@@ -1018,7 +1059,8 @@ function DietPlanPageContent() {
                                                 return label;
                                             }} contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', padding: '12px' }} />
                                             <Bar dataKey="steps" name="歩数" fill="#10b981" radius={[4, 4, 0, 0]} />
-                                        </BarChart>
+                                            <Line type="monotone" dataKey="target_steps" name="目標" stroke="#e2e8f0" strokeWidth={2} strokeDasharray="5 5" dot={false} />
+                                        </ComposedChart>
                                     </ResponsiveContainer>
                                 </AnalysisChartCard>
 
@@ -1026,7 +1068,7 @@ function DietPlanPageContent() {
                                     {/* Sleep Chart */}
                                     <AnalysisChartCard title="睡眠時間 (h)" color="indigo">
                                         <ResponsiveContainer width="100%" height="100%">
-                                            <BarChart data={analysisData}>
+                                            <ComposedChart data={analysisData}>
                                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                                                 <XAxis dataKey="date" axisLine={{ stroke: '#000000', strokeWidth: 0.3 }} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} tickFormatter={(val) => {
                                                     if (!val) return '';
@@ -1042,14 +1084,15 @@ function DietPlanPageContent() {
                                                     return label;
                                                 }} contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', padding: '12px' }} />
                                                 <Bar dataKey="sleep" name="睡眠時間" fill="#6366f1" radius={[4, 4, 0, 0]} />
-                                            </BarChart>
+                                                <Line type="monotone" dataKey="target_sleep" name="目標" stroke="#e2e8f0" strokeWidth={2} strokeDasharray="5 5" dot={false} />
+                                            </ComposedChart>
                                         </ResponsiveContainer>
                                     </AnalysisChartCard>
 
                                     {/* Water Chart */}
                                     <AnalysisChartCard title="水分摂取量 (l)" color="sky">
                                         <ResponsiveContainer width="100%" height="100%">
-                                            <BarChart data={analysisData}>
+                                            <ComposedChart data={analysisData}>
                                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                                                 <XAxis dataKey="date" axisLine={{ stroke: '#000000', strokeWidth: 0.3 }} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} tickFormatter={(val) => {
                                                     if (!val) return '';
@@ -1065,7 +1108,8 @@ function DietPlanPageContent() {
                                                     return label;
                                                 }} contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', padding: '12px' }} />
                                                 <Bar dataKey="water" name="水分(L)" fill="#0ea5e9" radius={[4, 4, 0, 0]} />
-                                            </BarChart>
+                                                <Line type="monotone" dataKey="target_water" name="目標" stroke="#e2e8f0" strokeWidth={2} strokeDasharray="5 5" dot={false} />
+                                            </ComposedChart>
                                         </ResponsiveContainer>
                                     </AnalysisChartCard>
                                 </div>

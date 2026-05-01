@@ -18,14 +18,15 @@ import {
 } from 'recharts'
 
 interface AnalyzeTabProps {
-    userId: string;
-    token: string;
-    isAdmin: boolean;
+    userId: string
+    token: string
+    isAdmin?: boolean
+    todayDraft?: any
 }
 
 type PeriodType = '1w' | '1m' | '3m' | '6m' | '1y' | 'all'
 
-export default function AnalyzeTab({ userId, token, isAdmin }: AnalyzeTabProps) {
+export default function AnalyzeTab({ userId, token, isAdmin, todayDraft }: AnalyzeTabProps) {
     const [period, setPeriod] = useState<PeriodType>('1m')
     const [showAvg, setShowAvg] = useState(false)
     const [dietLogs, setDietLogs] = useState<any[]>([])
@@ -33,6 +34,16 @@ export default function AnalyzeTab({ userId, token, isAdmin }: AnalyzeTabProps) 
     const [goals, setGoals] = useState<any[]>([])
     const [settings, setSettings] = useState<any>(null)
     const [loading, setLoading] = useState(true)
+    const [mounted, setMounted] = useState(false)
+
+    const formatDate = (d: Date) => {
+        const year = d.getFullYear()
+        const month = String(d.getMonth() + 1).padStart(2, '0')
+        const day = String(d.getDate()).padStart(2, '0')
+        return `${year}-${month}-${day}`
+    }
+
+    const selectedDate = todayDraft?.selectedDate || formatDate(new Date())
 
     useEffect(() => {
         const fetchData = async () => {
@@ -57,80 +68,98 @@ export default function AnalyzeTab({ userId, token, isAdmin }: AnalyzeTabProps) 
                 setGoals(goalData.data || [])
                 setSettings(settingData.data || null)
             } catch (e) {
-                console.error('Fetch error:', e)
+                console.error('Fetch error in AnalyzeTab:', e)
             } finally {
                 setLoading(false)
             }
         }
         fetchData()
-    }, [token])
+    }, [userId, token])
 
     const analysisData = useMemo(() => {
-        if (!dietLogs.length && !lifestyleLogs.length) return []
-
-        // 1. Get latest date across all data
-        const allDates = [
-            ...dietLogs.map(l => l.date),
-            ...lifestyleLogs.map(l => l.date)
-        ].sort()
-
-        if (allDates.length === 0) return []
-        const latestDataDate = new Date(allDates[allDates.length - 1])
-
-        // 2. Determine range based on period
-        const filterEnd = (period === '1w') ? new Date(latestDataDate) : new Date()
-        const filterStart = new Date(filterEnd)
-
-        if (period === '1w') filterStart.setDate(filterEnd.getDate() - 6)
-        else if (period === '1m') filterStart.setMonth(filterEnd.getMonth() - 1)
-        else if (period === '3m') filterStart.setMonth(filterEnd.getMonth() - 3)
-        else if (period === '6m') filterStart.setMonth(filterEnd.getMonth() - 6)
-        else if (period === '1y') filterStart.setFullYear(filterEnd.getFullYear() - 1)
+        const end = new Date()
+        end.setHours(23, 59, 59, 999)
+        const start = new Date()
+        start.setHours(0, 0, 0, 0)
+        
+        if (period === '1w') start.setDate(end.getDate() - 6)
+        else if (period === '1m') start.setMonth(end.getMonth() - 1)
+        else if (period === '3m') start.setMonth(end.getMonth() - 3)
+        else if (period === '6m') start.setMonth(end.getMonth() - 6)
+        else if (period === '1y') start.setFullYear(end.getFullYear() - 1)
         else if (period === 'all') {
-            filterStart.setTime(new Date(allDates[0]).getTime())
+            const allDates = [...dietLogs, ...lifestyleLogs].map(l => l.date).sort()
+            if (allDates.length > 0) start.setTime(new Date(allDates[0]).getTime())
+            else start.setMonth(end.getMonth() - 1)
+            start.setHours(0, 0, 0, 0)
         }
 
+        const sortedGoals = [...goals].sort((a, b) => a.start_date.localeCompare(b.start_date))
+
         const data: any[] = []
-        const current = new Date(filterStart)
-        const limit = new Date(filterEnd)
+        const current = new Date(start)
+        const limit = new Date(end)
 
         while (current <= limit) {
-            const dStr = current.toISOString().split('T')[0]
-            const diet = dietLogs.find(l => l.date === dStr)
-            const lifestyle = lifestyleLogs.find(l => l.date === dStr)
-            const target = [...goals].reverse().find(t => t.start_date <= dStr) || goals[goals.length - 1]
+            const dStr = formatDate(current)
+            let diet = dietLogs.find(l => l.date === dStr)
+            let lifestyle = lifestyleLogs.find(l => l.date === dStr)
+            
+            const target = [...sortedGoals].reverse().find(t => t.start_date <= dStr) || sortedGoals[0]
+
+            if (dStr === selectedDate && todayDraft) {
+                if (todayDraft.isSaved) {
+                    lifestyle = {
+                        ...lifestyle,
+                        weight: todayDraft.weight ? parseFloat(todayDraft.weight) : (lifestyle?.weight || null),
+                        water: todayDraft.water ? parseFloat(todayDraft.water) : (lifestyle?.water || 0),
+                        steps: todayDraft.steps ? parseInt(todayDraft.steps) : (lifestyle?.steps || 0),
+                        sleep: todayDraft.sleep ? parseFloat(todayDraft.sleep) : (lifestyle?.sleep || 0),
+                        habits: todayDraft.habits || { workout: 0 }
+                    }
+                    diet = todayDraft.ocrResult || diet || null
+                } else {
+                    // Strictly unsaved/reset state: Clear these for the chart
+                    lifestyle = { weight: null, water: 0, steps: 0, sleep: 0, habits: { workout: 0 } }
+                    diet = null
+                }
+            }
 
             const item: any = {
                 date: dStr,
                 displayDate: `${parseInt(dStr.split('-')[1], 10)}/${parseInt(dStr.split('-')[2], 10)}`,
                 weight: lifestyle?.weight || null,
                 calories: diet?.calories || 0,
-                protein_kcal: (diet?.protein || 0) * 4,
-                fat_kcal: (diet?.fat || 0) * 9,
-                carbs_kcal: (diet?.carbs || 0) * 4,
                 protein: diet?.protein || 0,
                 fat: diet?.fat || 0,
                 carbs: diet?.carbs || 0,
+                sugar: diet?.sugar ?? Math.max(0, (diet?.carbs || 0) - (diet?.fiber || 0)),
                 fiber: diet?.fiber || 0,
+                salt: diet?.salt || 0,
                 target_calories: target?.calories || null,
                 target_protein: target?.protein || null,
                 target_fat: target?.fat || null,
                 target_carbs: target?.carbs || null,
+                target_sugar: target?.sugar ?? (target ? Math.max(0, target.carbs - (target.fiber || 20)) : null),
                 target_fiber: target?.fiber || null,
                 steps: lifestyle?.steps || 0,
                 sleep: lifestyle?.sleep || 0,
                 water: lifestyle?.water || 0,
-                workout: lifestyle?.habits?.workout || 0,
+                workout: (lifestyle?.habits?.workout || 0) > 0 ? 1 : 0,
+                target_steps: settings?.habit_targets?.steps || 8000,
+                target_water: settings?.habit_targets?.water || 2.0,
+                target_sleep: settings?.habit_targets?.sleep || 8.0,
                 target_workout: settings?.habit_targets?.workout || 1,
             }
 
             // Habits
             if (settings?.quit_goals) {
                 settings.quit_goals.forEach((goal: string) => {
-                    // Check achievement from habits JSON if exists, or fallback to individual columns
-                    const achievement = lifestyle?.habits?.[goal] ?? 
-                                      (goal.includes('酒') ? (lifestyle?.alcohol > 0 ? 0 : 1) : null)
+                    const habitsObj = lifestyle?.habits || {}
+                    const achievement = habitsObj[goal] ?? 
+                                      (goal && goal.includes('酒') ? (lifestyle?.alcohol > 0 ? 0 : 1) : null)
                     item[`habit_${goal}`] = achievement
+                    item[`target_habit_${goal}`] = 1 // Target is always 1 (Done/Avoided)
                 })
             }
 
@@ -149,7 +178,7 @@ export default function AnalyzeTab({ userId, token, isAdmin }: AnalyzeTabProps) 
                 weight: avgWeight ? Number(avgWeight.toFixed(1)) : null
             }
         })
-    }, [dietLogs, lifestyleLogs, goals, settings, period, showAvg])
+    }, [dietLogs, lifestyleLogs, goals, settings, period, showAvg, todayDraft, selectedDate])
 
     const stats = useMemo(() => {
         const weights = analysisData.map(d => d.weight).filter(w => w != null)
@@ -163,6 +192,20 @@ export default function AnalyzeTab({ userId, token, isAdmin }: AnalyzeTabProps) 
             rate: rate.toFixed(1)
         }
     }, [analysisData])
+
+    const [calendarDate, setCalendarDate] = useState(new Date())
+
+    const handlePrevMonth = () => {
+        const d = new Date(calendarDate)
+        d.setMonth(d.getMonth() - 1)
+        setCalendarDate(d)
+    }
+
+    const handleNextMonth = () => {
+        const d = new Date(calendarDate)
+        d.setMonth(d.getMonth() + 1)
+        setCalendarDate(d)
+    }
 
     if (loading) return <div className="h-64 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>
 
@@ -216,7 +259,7 @@ export default function AnalyzeTab({ userId, token, isAdmin }: AnalyzeTabProps) 
             </div>
 
             {/* 1. Weight Chart */}
-            <AnalysisChartCard title="体重推移 (kg)" color="blue">
+            <AnalysisChartCard title="体重推移" color="blue">
                 <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={analysisData} syncId="analyzeSync" margin={chartMargin}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
@@ -229,130 +272,275 @@ export default function AnalyzeTab({ userId, token, isAdmin }: AnalyzeTabProps) 
             </AnalysisChartCard>
 
             {/* 2. Calories Chart */}
-            <AnalysisChartCard title="摂取カロリー (kcal)" color="rose">
+            <AnalysisChartCard title="摂取カロリー" color="rose">
                 <ResponsiveContainer width="100%" height="100%">
                     <ComposedChart data={analysisData} syncId="analyzeSync" margin={chartMargin}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                         {commonXAxis}
-                        {commonYAxis}
+                        <YAxis 
+                            width={40} 
+                            axisLine={false} 
+                            tickLine={false} 
+                            tick={{ fontSize: 9, fontWeight: 700, fill: '#cbd5e1' }}
+                            domain={[0, (dataMax: number) => Math.ceil(Math.max(dataMax, analysisData[analysisData.length - 1]?.target_calories || 0) * 1.2)]}
+                        />
                         {commonTooltip}
                         <Bar dataKey="calories" name="摂取カロリー" fill="#f43f5e" radius={[4, 4, 0, 0]} />
-                        <Line type="monotone" dataKey="target_calories" name="目標" stroke="#e2e8f0" strokeWidth={2} strokeDasharray="5 5" dot={false} />
+                        <Line type="stepAfter" dataKey="target_calories" name="目標設定" stroke="#f43f5e" strokeWidth={2} strokeDasharray="5 5" dot={false} />
                     </ComposedChart>
                 </ResponsiveContainer>
             </AnalysisChartCard>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 {/* 3. Protein Chart */}
-                <AnalysisChartCard title="P (タンパク質) (g)" color="amber">
+                <AnalysisChartCard title="タンパク質 (P)" color="amber">
                     <ResponsiveContainer width="100%" height="100%">
                         <ComposedChart data={analysisData} syncId="analyzeSync" margin={chartMargin}>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                             {commonXAxis}
-                            {commonYAxis}
+                            <YAxis 
+                                width={40} 
+                                axisLine={false} 
+                                tickLine={false} 
+                                tick={{ fontSize: 9, fontWeight: 700, fill: '#cbd5e1' }}
+                                domain={[0, (dataMax: number) => Math.ceil(Math.max(dataMax, analysisData[analysisData.length - 1]?.target_protein || 0) * 1.2)]}
+                            />
                             {commonTooltip}
-                            <Bar dataKey="protein" name="タンパク質(g)" fill="#fbbf24" radius={[4, 4, 0, 0]} />
-                            <Line type="monotone" dataKey="target_protein" name="目標(g)" stroke="#e2e8f0" strokeWidth={2} strokeDasharray="5 5" dot={false} />
+                            <Bar dataKey="protein" name="摂取量" fill="#fbbf24" radius={[4, 4, 0, 0]} />
+                            <Line type="stepAfter" dataKey="target_protein" name="目標設定" stroke="#fbbf24" strokeWidth={2} strokeDasharray="5 5" dot={false} />
                         </ComposedChart>
                     </ResponsiveContainer>
                 </AnalysisChartCard>
 
                 {/* 4. Fat Chart */}
-                <AnalysisChartCard title="F (脂質) (g)" color="emerald">
+                <AnalysisChartCard title="脂質 (F)" color="emerald">
                     <ResponsiveContainer width="100%" height="100%">
                         <ComposedChart data={analysisData} syncId="analyzeSync" margin={chartMargin}>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                             {commonXAxis}
-                            {commonYAxis}
+                            <YAxis 
+                                width={40} 
+                                axisLine={false} 
+                                tickLine={false} 
+                                tick={{ fontSize: 9, fontWeight: 700, fill: '#cbd5e1' }}
+                                domain={[0, (dataMax: number) => Math.ceil(Math.max(dataMax, analysisData[analysisData.length - 1]?.target_fat || 0) * 1.2)]}
+                            />
                             {commonTooltip}
-                            <Bar dataKey="fat" name="脂質(g)" fill="#10b981" radius={[4, 4, 0, 0]} />
-                            <Line type="monotone" dataKey="target_fat" name="目標(g)" stroke="#e2e8f0" strokeWidth={2} strokeDasharray="5 5" dot={false} />
+                            <Bar dataKey="fat" name="摂取量" fill="#10b981" radius={[4, 4, 0, 0]} />
+                            <Line type="stepAfter" dataKey="target_fat" name="目標設定" stroke="#10b981" strokeWidth={2} strokeDasharray="5 5" dot={false} />
                         </ComposedChart>
                     </ResponsiveContainer>
                 </AnalysisChartCard>
 
                 {/* 5. Carbs Chart */}
-                <AnalysisChartCard title="C (炭水化物) (g)" color="blue">
+                <AnalysisChartCard title="炭水化物 (C)" color="blue">
                     <ResponsiveContainer width="100%" height="100%">
                         <ComposedChart data={analysisData} syncId="analyzeSync" margin={chartMargin}>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                             {commonXAxis}
-                            {commonYAxis}
+                            <YAxis 
+                                width={40} 
+                                axisLine={false} 
+                                tickLine={false} 
+                                tick={{ fontSize: 9, fontWeight: 700, fill: '#cbd5e1' }}
+                                domain={[0, (dataMax: number) => Math.ceil(Math.max(dataMax, analysisData[analysisData.length - 1]?.target_carbs || 0) * 1.2)]}
+                            />
                             {commonTooltip}
-                            <Bar dataKey="carbs" name="炭水化物(g)" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                            <Line type="monotone" dataKey="target_carbs" name="目標(g)" stroke="#e2e8f0" strokeWidth={2} strokeDasharray="5 5" dot={false} />
+                            <Bar dataKey="carbs" name="摂取量" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                            <Line type="stepAfter" dataKey="target_carbs" name="目標設定" stroke="#3b82f6" strokeWidth={2} strokeDasharray="5 5" dot={false} />
                         </ComposedChart>
                     </ResponsiveContainer>
                 </AnalysisChartCard>
 
-                {/* 6. Fiber Chart */}
-                <AnalysisChartCard title="食物繊維 (g)" color="teal">
+                {/* 6. Sugar Chart */}
+                <AnalysisChartCard title="糖質" color="purple">
                     <ResponsiveContainer width="100%" height="100%">
                         <ComposedChart data={analysisData} syncId="analyzeSync" margin={chartMargin}>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                             {commonXAxis}
-                            {commonYAxis}
+                            <YAxis 
+                                width={40} 
+                                axisLine={false} 
+                                tickLine={false} 
+                                tick={{ fontSize: 9, fontWeight: 700, fill: '#cbd5e1' }}
+                                domain={[0, (dataMax: number) => Math.ceil(Math.max(dataMax, analysisData[analysisData.length - 1]?.target_sugar || 0) * 1.2)]}
+                            />
                             {commonTooltip}
-                            <Bar dataKey="fiber" name="食物繊維(g)" fill="#14b8a6" radius={[4, 4, 0, 0]} />
-                            <Line type="monotone" dataKey="target_fiber" name="目標(g)" stroke="#e2e8f0" strokeWidth={2} strokeDasharray="5 5" dot={false} />
+                            <Bar dataKey="sugar" name="摂取量" fill="#a855f7" radius={[4, 4, 0, 0]} />
+                            <Line type="stepAfter" dataKey="target_sugar" name="目標設定" stroke="#a855f7" strokeWidth={2} strokeDasharray="5 5" dot={false} />
+                        </ComposedChart>
+                    </ResponsiveContainer>
+                </AnalysisChartCard>
+
+                {/* 7. Fiber Chart */}
+                <AnalysisChartCard title="食物繊維" color="teal">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <ComposedChart data={analysisData} syncId="analyzeSync" margin={chartMargin}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                            {commonXAxis}
+                            <YAxis 
+                                width={40} 
+                                axisLine={false} 
+                                tickLine={false} 
+                                tick={{ fontSize: 9, fontWeight: 700, fill: '#cbd5e1' }}
+                                domain={[0, (dataMax: number) => Math.ceil(Math.max(dataMax, analysisData[analysisData.length - 1]?.target_fiber || 0) * 1.2)]}
+                            />
+                            {commonTooltip}
+                            <Bar dataKey="fiber" name="摂取量" fill="#14b8a6" radius={[4, 4, 0, 0]} />
+                            <Line type="stepAfter" dataKey="target_fiber" name="目標設定" stroke="#14b8a6" strokeWidth={2} strokeDasharray="5 5" dot={false} />
                         </ComposedChart>
                     </ResponsiveContainer>
                 </AnalysisChartCard>
             </div>
 
             {/* 7. Steps Chart */}
-            <AnalysisChartCard title="歩数 (step)" color="emerald">
+            <AnalysisChartCard title="歩数" color="emerald">
                 <ResponsiveContainer width="100%" height="100%">
                     <ComposedChart data={analysisData} syncId="analyzeSync" margin={chartMargin}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                         {commonXAxis}
-                        {commonYAxis}
+                        <YAxis 
+                            width={40} 
+                            axisLine={false} 
+                            tickLine={false} 
+                            tick={{ fontSize: 9, fontWeight: 700, fill: '#cbd5e1' }}
+                            domain={[0, (dataMax: number) => Math.ceil(Math.max(dataMax, analysisData[analysisData.length - 1]?.target_steps || 8000) * 1.2)]}
+                        />
                         {commonTooltip}
                         <Bar dataKey="steps" name="歩数" fill="#10b981" radius={[4, 4, 0, 0]} />
+                        <Line type="stepAfter" dataKey="target_steps" name="目標設定" stroke="#10b981" strokeWidth={2} strokeDasharray="5 5" dot={false} />
                     </ComposedChart>
                 </ResponsiveContainer>
             </AnalysisChartCard>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 {/* 8. Sleep Chart */}
-                <AnalysisChartCard title="睡眠時間 (h)" color="indigo">
+                <AnalysisChartCard title="睡眠時間" color="indigo">
                     <ResponsiveContainer width="100%" height="100%">
                         <ComposedChart data={analysisData} syncId="analyzeSync" margin={chartMargin}>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                             {commonXAxis}
-                            {commonYAxis}
+                            <YAxis 
+                                width={40} 
+                                axisLine={false} 
+                                tickLine={false} 
+                                tick={{ fontSize: 9, fontWeight: 700, fill: '#cbd5e1' }}
+                                domain={[0, (dataMax: number) => Math.ceil(Math.max(dataMax, analysisData[analysisData.length - 1]?.target_sleep || 8) * 1.2)]}
+                            />
                             {commonTooltip}
                             <Bar dataKey="sleep" name="睡眠時間" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                            <Line type="stepAfter" dataKey="target_sleep" name="目標設定" stroke="#6366f1" strokeWidth={2} strokeDasharray="5 5" dot={false} />
                         </ComposedChart>
                     </ResponsiveContainer>
                 </AnalysisChartCard>
 
                 {/* 5. Water Chart */}
-                <AnalysisChartCard title="水分摂取量 (l)" color="sky">
+                <AnalysisChartCard title="水分摂取量" color="sky">
                     <ResponsiveContainer width="100%" height="100%">
                         <ComposedChart data={analysisData} syncId="analyzeSync" margin={chartMargin}>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                             {commonXAxis}
-                            {commonYAxis}
+                            <YAxis 
+                                width={40} 
+                                axisLine={false} 
+                                tickLine={false} 
+                                tick={{ fontSize: 9, fontWeight: 700, fill: '#cbd5e1' }}
+                                domain={[0, (dataMax: number) => Math.ceil(Math.max(dataMax, analysisData[analysisData.length - 1]?.target_water || 2) * 1.2)]}
+                            />
                             {commonTooltip}
-                            <Bar dataKey="water" name="水分(L)" fill="#0ea5e9" radius={[4, 4, 0, 0]} />
+                            <Bar dataKey="water" name="水分摂取量" fill="#0ea5e9" radius={[4, 4, 0, 0]} />
+                            <Line type="stepAfter" dataKey="target_water" name="目標設定" stroke="#0ea5e9" strokeWidth={2} strokeDasharray="5 5" dot={false} />
                         </ComposedChart>
                     </ResponsiveContainer>
                 </AnalysisChartCard>
+            </div>
 
-                {/* 9. Workout Chart */}
-                <AnalysisChartCard title="筋トレ (times)" color="orange">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <ComposedChart data={analysisData} syncId="analyzeSync" margin={chartMargin}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                            {commonXAxis}
-                            {commonYAxis}
-                            {commonTooltip}
-                            <Bar dataKey="workout" name="筋トレ" fill="#f97316" radius={[4, 4, 0, 0]} />
-                            <Line type="monotone" dataKey="target_workout" name="目標" stroke="#e2e8f0" strokeWidth={2} strokeDasharray="5 5" dot={false} />
-                        </ComposedChart>
-                    </ResponsiveContainer>
-                </AnalysisChartCard>
+            {/* 9. Workout Chart - Spanning full width with enough height */}
+            <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm flex flex-col min-h-[450px]">
+                <div className="flex items-center justify-between mb-8">
+                    <div className="flex items-center gap-2">
+                        <div className="w-1.5 h-6 bg-orange-500 rounded-full"></div>
+                        <h3 className="text-lg font-black text-gray-800">筋トレカレンダー</h3>
+                    </div>
+                    <div className="flex items-center gap-2 bg-orange-50 rounded-full p-1 shadow-inner">
+                        <button 
+                            onClick={handlePrevMonth}
+                            className="w-8 h-8 flex items-center justify-center hover:bg-white rounded-full transition-all text-orange-500 active:scale-90"
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
+                        </button>
+                        <span className="text-sm font-black text-orange-600 min-w-[100px] text-center">
+                            {calendarDate.getFullYear()}年 {calendarDate.getMonth() + 1}月
+                        </span>
+                        <button 
+                            onClick={handleNextMonth}
+                            className="w-8 h-8 flex items-center justify-center hover:bg-white rounded-full transition-all text-orange-500 active:scale-90"
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" /></svg>
+                        </button>
+                    </div>
+                </div>
+                
+                <div className="flex flex-col flex-1">
+                    <div className="grid grid-cols-7 gap-3 mb-4">
+                        {['日', '月', '火', '水', '木', '金', '土'].map(d => (
+                            <div key={d} className="text-[10px] font-black text-gray-400 text-center uppercase tracking-widest">{d}</div>
+                        ))}
+                    </div>
+                    <div className="grid grid-cols-7 gap-3 flex-1">
+                        {(() => {
+                            const calendarDays = []
+                            const start = new Date(calendarDate.getFullYear(), calendarDate.getMonth(), 1)
+                            start.setDate(start.getDate() - start.getDay()) 
+
+                            const todayStr = formatDate(new Date())
+
+                            for (let i = 0; i < 35; i++) {
+                                const date = new Date(start)
+                                date.setDate(start.getDate() + i)
+                                const dStr = formatDate(date)
+                                
+                                const dayData = analysisData.find(d => d.date === dStr)
+                                const isDone = dayData?.workout === 1
+                                const isToday = dStr === todayStr
+                                const isSelected = dStr === selectedDate
+                                const isCurrentMonth = date.getMonth() === calendarDate.getMonth()
+                                
+                                calendarDays.push(
+                                    <div key={dStr} className={`relative aspect-square flex flex-col items-center justify-center rounded-2xl border-2 transition-all overflow-hidden ${!isCurrentMonth ? 'opacity-10 pointer-events-none' : ''} ${isSelected ? 'border-orange-500 bg-orange-50/50' : 'border-gray-50 bg-gray-50/30 hover:border-gray-100'}`}>
+                                        <span className={`text-[10px] font-black z-10 ${isDone ? 'text-white opacity-40' : isToday ? 'text-blue-500' : 'text-gray-300'}`}>
+                                            {date.getDate()}
+                                        </span>
+                                        {isDone && (
+                                            <div className="absolute inset-0 flex items-center justify-center animate-popIn">
+                                                <div className="w-10 h-10 bg-[#FF6B00] rounded-full shadow-lg flex items-center justify-center relative">
+                                                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={5} d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )
+                            }
+                            return calendarDays
+                        })()}
+                    </div>
+                    <div className="mt-10 flex items-center justify-center gap-10 pb-4">
+                        <div className="flex items-center gap-3">
+                            <div className="w-6 h-6 bg-orange-500 rounded-full shadow-md flex items-center justify-center">
+                                <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M5 13l4 4L19 7" />
+                                </svg>
+                            </div>
+                            <span className="text-xs font-black text-gray-600 uppercase tracking-tighter">実施済み</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <div className="w-6 h-6 bg-gray-50 rounded-xl border-2 border-gray-100"></div>
+                            <span className="text-xs font-black text-gray-400 uppercase tracking-tighter">未実施</span>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             {/* Custom Habits Charts */}
@@ -389,34 +577,6 @@ export default function AnalyzeTab({ userId, token, isAdmin }: AnalyzeTabProps) 
                 </div>
             )}
 
-            {/* Summary Stats */}
-            <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm">
-                <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 text-center">期間内の変化</div>
-                {stats ? (
-                    <div className="flex gap-4">
-                        <div className="flex-1 bg-blue-50/30 rounded-2xl p-4 border border-blue-100 text-center transition-all hover:bg-blue-50/50">
-                            <div className="text-[10px] font-black text-blue-400 uppercase mb-1">体重増減</div>
-                            <div className="flex items-baseline justify-center gap-1">
-                                <span className={`text-2xl font-black ${Number(stats.diff) <= 0 ? 'text-blue-600' : 'text-rose-500'}`}>
-                                    {Number(stats.diff) > 0 ? '+' : ''}{stats.diff}
-                                </span>
-                                <span className="text-[10px] font-bold text-blue-400">kg</span>
-                            </div>
-                        </div>
-                        <div className="flex-1 bg-emerald-50/30 rounded-2xl p-4 border border-emerald-100 text-center transition-all hover:bg-emerald-50/50">
-                            <div className="text-[10px] font-black text-emerald-400 uppercase mb-1">減少率</div>
-                            <div className="flex items-baseline justify-center gap-1">
-                                <span className={`text-2xl font-black ${Number(stats.rate) <= 0 ? 'text-emerald-600' : 'text-rose-500'}`}>
-                                    {Number(stats.rate) > 0 ? '+' : ''}{stats.rate}
-                                </span>
-                                <span className="text-[10px] font-bold text-emerald-400">%</span>
-                            </div>
-                        </div>
-                    </div>
-                ) : (
-                    <div className="text-center py-4 text-xs font-bold text-gray-300 italic">分析には2日以上の記録が必要です</div>
-                )}
-            </div>
         </div>
     )
 }
@@ -431,7 +591,7 @@ function AnalysisChartCard({ title, children, color }: { title: string, children
     }
     return (
         <div className={`p-6 rounded-2xl border ${colorStyles[color]} shadow-sm space-y-4`}>
-            <h3 className="text-sm font-black text-gray-500 uppercase tracking-widest">{title}</h3>
+            <h3 className="text-sm font-black text-gray-500 tracking-widest">{title}</h3>
             <div className="h-[250px] w-full">{children}</div>
         </div>
     )

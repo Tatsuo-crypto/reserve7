@@ -1,546 +1,183 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useSession, signOut } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
+import React, { useState, useEffect, Suspense } from 'react'
+import { useSession } from 'next-auth/react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import CalendarView from '@/components/CalendarView'
+import { 
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
+} from 'recharts'
+import { getStatusDotColor, getStatusText, getStatusColor } from '@/lib/utils/member'
 
-export default function DashboardPage() {
-  const { data: session, status } = useSession()
-  const router = useRouter()
+// --- Sub Components ---
 
-  useEffect(() => {
-    if (status === 'loading') return // Still loading
-    if (!session) {
-      router.push('/login')
-    }
-  }, [session, status, router])
-
-  const handleLogout = async () => {
-    await signOut({ redirect: false })
-    router.push('/')
-  }
-
-  if (status === 'loading') {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">読み込み中...</p>
-        </div>
-      </div>
-    )
-  }
-
-  if (!session) {
-    return null
-  }
-
-  const isAdmin = session.user.role === 'ADMIN'
-  const isTrainer = session.user.role === 'TRAINER'
-
+function OtherSubCard({ href, label, subLabel, color, icon }: { href: string, label: string, subLabel: string, color: string, icon: React.ReactNode }) {
+  const colorMap: any = {
+    emerald: 'bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-100',
+    indigo: 'bg-indigo-50 text-indigo-600 border-indigo-100 hover:bg-indigo-100',
+    orange: 'bg-orange-50 text-orange-600 border-orange-100 hover:bg-orange-100',
+  };
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      {/* Role-specific content */}
-      {isAdmin ? (
-        <AdminDashboard />
-      ) : isTrainer ? (
-        <TrainerDashboard />
-      ) : (
-        <ClientDashboard />
-      )}
-    </div>
-  )
+    <Link href={href} className="flex items-center gap-4 p-5 rounded-3xl border transition-all shadow-sm bg-white hover:shadow-md transform hover:-translate-y-1">
+      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${colorMap[color]?.split(' ')[0]} ${colorMap[color]?.split(' ')[1]}`}>
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">{icon}</svg>
+      </div>
+      <div className="flex-1">
+        <div className="text-base font-black text-gray-900">{label}</div>
+        <div className="text-xs font-bold text-gray-400">{subLabel}</div>
+      </div>
+      <svg className="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" /></svg>
+    </Link>
+  );
 }
 
-function TrainerDashboard() {
-  const [trainerToken, setTrainerToken] = useState<string | null>(null)
+// ハイドレーションエラーを防ぐためのラッパーコンポーネント
+const AdminDashboard = () => {
+  const searchParams = useSearchParams();
+  const [activeTab, setActiveTab] = useState<string>('home'); // 初期値を固定
+  const [mounted, setMounted] = useState(false);
+  
+  const [members, setMembers] = useState<any[]>([]);
+  const [dietMembers, setDietMembers] = useState<any[]>([]);
+  const [analyticsData, setAnalyticsData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+
+  // クライアントサイドでのみURLパラメータを読み込む（不一致を防止）
+  useEffect(() => {
+    setMounted(true);
+    const tab = searchParams.get('tab');
+    if (tab) setActiveTab(tab);
+  }, [searchParams]);
 
   useEffect(() => {
-    const fetchToken = async () => {
+    const fetchData = async () => {
       try {
-        const res = await fetch('/api/trainer/me')
-        if (res.ok) {
-          const data = await res.json()
-          setTrainerToken(data.token)
+        const [membersRes, dietMembersRes, analyticsRes] = await Promise.all([
+          fetch('/api/admin/members'),
+          fetch('/api/admin/members?diet_only=true'),
+          fetch('/api/admin/analytics?period=3m')
+        ]);
+        
+        if (membersRes.ok) {
+          const mData = await membersRes.json();
+          setMembers(mData.members || mData.data?.members || []);
+        }
+
+        if (dietMembersRes.ok) {
+          const dData = await dietMembersRes.json();
+          setDietMembers(dData.members || dData.data?.members || []);
+        }
+        
+        if (analyticsRes.ok) {
+          const aData = await analyticsRes.json();
+          setAnalyticsData(aData);
         }
       } catch (e) {
-        console.error('Failed to fetch trainer token', e)
-      }
-    }
-    fetchToken()
-  }, [])
-
-  return (
-    <div className="space-y-6">
-      <div className="bg-white shadow-sm border border-gray-200 rounded-xl p-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          {/* 予約管理 */}
-          <Link
-            href="/admin/calendar"
-            className="group bg-gradient-to-br from-white to-blue-50 hover:from-blue-50 hover:to-blue-100 border border-blue-200 p-8 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col min-h-[200px] transform hover:-translate-y-1"
-          >
-            <div className="flex items-center mb-6">
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl flex items-center justify-center group-hover:from-blue-200 group-hover:to-blue-300 transition-all duration-300 shadow-sm">
-                <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                </svg>
-              </div>
-            </div>
-            <div className="flex-1">
-              <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-blue-800 transition-colors duration-200">予約</h3>
-              <p className="text-base text-gray-600 leading-relaxed">すべての予約を確認・管理</p>
-            </div>
-          </Link>
-
-          {/* シフト管理 */}
-          {trainerToken && (
-            <Link
-              href={`/trainer/${trainerToken}/shifts`}
-              className="group bg-gradient-to-br from-white to-teal-50 hover:from-teal-50 hover:to-teal-100 border border-teal-200 p-8 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col min-h-[200px] transform hover:-translate-y-1"
-            >
-              <div className="flex items-center mb-6">
-                <div className="w-16 h-16 bg-gradient-to-br from-teal-100 to-teal-200 rounded-xl flex items-center justify-center group-hover:from-teal-200 group-hover:to-teal-300 transition-all duration-300 shadow-sm">
-                  <svg className="w-8 h-8 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-              </div>
-              <div className="flex-1">
-                <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-teal-800 transition-colors duration-200">シフト管理</h3>
-                <p className="text-base text-gray-600 leading-relaxed">自分のシフトを確認・申請</p>
-              </div>
-            </Link>
-          )}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function AdminDashboard() {
-  const router = useRouter()
-  const [showIconBanner, setShowIconBanner] = useState(false)
-
-  useEffect(() => {
-    // Check if iOS device
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
-    // Check if not dismissed
-    const dismissed = localStorage.getItem('icon-update-dismissed')
-    if (isIOS && !dismissed) {
-      setShowIconBanner(true)
-    }
-  }, [])
-
-  const dismissBanner = () => {
-    localStorage.setItem('icon-update-dismissed', 'true')
-    setShowIconBanner(false)
-  }
-
-  return (
-    <div className="space-y-6">
-      {/* Icon Update Banner for iOS */}
-      {showIconBanner && (
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4 shadow-sm">
-          <div className="flex items-start">
-            <div className="flex-shrink-0">
-              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <div className="ml-3 flex-1">
-              <h3 className="text-sm font-medium text-blue-900">アイコンが新しくなりました</h3>
-              <div className="mt-2 text-sm text-blue-700">
-                <p>ホーム画面のアイコンを更新するには、<Link href="/home-icon" className="font-semibold underline">こちら</Link>のページから再度「ホーム画面に追加」してください。</p>
-              </div>
-            </div>
-            <button
-              onClick={dismissBanner}
-              className="flex-shrink-0 ml-3 text-blue-400 hover:text-blue-600"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-        </div>
-      )}
-
-      <div className="bg-white shadow-sm border border-gray-200 rounded-xl p-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          {/* 予約（シフト管理を統合） */}
-          <Link
-            href="/admin/calendar"
-            className="group bg-gradient-to-br from-white to-blue-50 hover:from-blue-50 hover:to-blue-100 border border-blue-200 p-8 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col min-h-[200px] transform hover:-translate-y-1"
-          >
-            <div className="flex items-center mb-6">
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl flex items-center justify-center group-hover:from-blue-200 group-hover:to-blue-300 transition-all duration-300 shadow-sm">
-                <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-              </div>
-            </div>
-            <div className="flex-1">
-              <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-blue-800 transition-colors duration-200">予約</h3>
-              <p className="text-base text-gray-600 leading-relaxed">予約・シフトの確認・管理</p>
-            </div>
-          </Link>
-
-          {/* 会員管理（売上管理を統合） */}
-          <Link
-            href="/admin/members"
-            className="group bg-gradient-to-br from-white to-purple-50 hover:from-purple-50 hover:to-purple-100 border border-purple-200 p-8 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col min-h-[200px] transform hover:-translate-y-1"
-          >
-            <div className="flex items-center mb-6">
-              <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-purple-200 rounded-xl flex items-center justify-center group-hover:from-purple-200 group-hover:to-purple-300 transition-all duration-300 shadow-sm">
-                <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-              </div>
-            </div>
-            <div className="flex-1">
-              <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-purple-800 transition-colors duration-200">会員管理</h3>
-              <p className="text-base text-gray-600 leading-relaxed">会員情報・売上の管理</p>
-            </div>
-          </Link>
-
-          {/* スタッフ管理（トレーナー管理+店舗管理を統合） */}
-          <Link
-            href="/admin/trainers"
-            className="group bg-gradient-to-br from-white to-emerald-50 hover:from-emerald-50 hover:to-emerald-100 border border-emerald-200 p-8 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col min-h-[200px] transform hover:-translate-y-1"
-          >
-            <div className="flex items-center mb-6">
-              <div className="w-16 h-16 bg-gradient-to-br from-emerald-100 to-emerald-200 rounded-xl flex items-center justify-center group-hover:from-emerald-200 group-hover:to-emerald-300 transition-all duration-300 shadow-sm">
-                <svg className="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l6.16-3.422A12.083 12.083 0 0112 21.5 12.083 12.083 0 015.84 10.578L12 14z" />
-                </svg>
-              </div>
-            </div>
-            <div className="flex-1">
-              <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-emerald-800 transition-colors duration-200">スタッフ管理</h3>
-              <p className="text-base text-gray-600 leading-relaxed">トレーナー・店舗の管理</p>
-            </div>
-          </Link>
-
-          {/* 分析 */}
-          <Link
-            href="/admin/analytics"
-            className="group bg-gradient-to-br from-white to-cyan-50 hover:from-cyan-50 hover:to-cyan-100 border border-cyan-200 p-8 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col min-h-[200px] transform hover:-translate-y-1"
-          >
-            <div className="flex items-center mb-6">
-              <div className="w-16 h-16 bg-gradient-to-br from-cyan-100 to-cyan-200 rounded-xl flex items-center justify-center group-hover:from-cyan-200 group-hover:to-cyan-300 transition-all duration-300 shadow-sm">
-                <svg className="w-8 h-8 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-              </div>
-            </div>
-            <div className="flex-1">
-              <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-cyan-800 transition-colors duration-200">分析</h3>
-              <p className="text-base text-gray-600 leading-relaxed">会員数・売上推移の分析</p>
-            </div>
-          </Link>
-
-          {/* オンラインレッスン */}
-          <Link
-            href="/admin/online-lesson"
-            className="group bg-gradient-to-br from-white to-orange-50 hover:from-orange-50 hover:to-orange-100 border border-orange-200 p-8 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col min-h-[200px] transform hover:-translate-y-1"
-          >
-            <div className="flex items-center mb-6">
-              <div className="w-16 h-16 bg-gradient-to-br from-orange-100 to-orange-200 rounded-xl flex items-center justify-center group-hover:from-orange-200 group-hover:to-orange-300 transition-all duration-300 shadow-sm">
-                <svg className="w-8 h-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.069A1 1 0 0121 8.845v6.309a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                </svg>
-              </div>
-            </div>
-            <div className="flex-1">
-              <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-orange-800 transition-colors duration-200">オンラインレッスン</h3>
-              <p className="text-base text-gray-600 leading-relaxed">スケジュールとURLの管理</p>
-            </div>
-          </Link>
-
-          {/* ダイエットプラン */}
-          <Link
-            href="/admin/diet-plan"
-            className="group bg-gradient-to-br from-white to-rose-50 hover:from-rose-50 hover:to-rose-100 border border-rose-200 p-8 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col min-h-[200px] transform hover:-translate-y-1"
-          >
-            <div className="flex items-center mb-6">
-              <div className="w-16 h-16 bg-gradient-to-br from-rose-100 to-rose-200 rounded-xl flex items-center justify-center group-hover:from-rose-200 group-hover:to-rose-300 transition-all duration-300 shadow-sm">
-                <svg className="w-8 h-8 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04M12 21.5a11.955 11.955 0 01-8.618-3.04M12 21.5a11.955 11.955 0 008.618-3.04M12 21.5V14.5" />
-                </svg>
-              </div>
-            </div>
-            <div className="flex-1">
-              <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-rose-800 transition-colors duration-200">ダイエットプラン</h3>
-              <p className="text-base text-gray-600 leading-relaxed">目標設定・習慣管理・プラン作成</p>
-            </div>
-          </Link>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function ClientDashboard() {
-  const router = useRouter()
-  const { data: session } = useSession()
-  const [userInfo, setUserInfo] = useState<{ plan?: string, status?: string, monthlyUsage?: { currentCount: number, maxCount: number, planName: string } }>({})
-  const [reservations, setReservations] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [reservationsLoading, setReservationsLoading] = useState(true)
-
-  // Helper: derive max count from plan string when API doesn't provide it
-  const getPlanMaxCount = (plan?: string, fallbackMax?: number) => {
-    if (typeof fallbackMax === 'number') return fallbackMax
-    if (!plan) return 4
-    if (plan.includes('8回')) return 8
-    if (plan.includes('6回')) return 6
-    if (plan.includes('2回')) return 2
-    return 4
-  }
-
-  useEffect(() => {
-    const fetchUserInfo = async () => {
-      try {
-        const response = await fetch('/api/user/profile')
-        if (response.ok) {
-          const result = await response.json()
-          setUserInfo(result.data || result)
-        } else {
-          // If API fails, show default plan without usage info
-          setUserInfo({ plan: '月4回', status: 'active' })
-        }
-      } catch (error) {
-        console.error('Failed to fetch user info:', error)
-        // Fallback to default values
-        setUserInfo({ plan: '月4回', status: 'active' })
+        console.error('Failed to fetch dashboard data', e);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
+    fetchData();
+  }, []);
 
-    const fetchReservations = async () => {
-      try {
-        const response = await fetch('/api/user/reservations')
-        if (response.ok) {
-          const result = await response.json()
-          setReservations(result.data?.reservations || [])
-        }
-      } catch (error) {
-        console.error('Failed to fetch reservations:', error)
-      } finally {
-        setReservationsLoading(false)
-      }
-    }
-
-    if (session?.user) {
-      fetchUserInfo()
-      fetchReservations()
-    } else {
-      setLoading(false)
-      setReservationsLoading(false)
-    }
-  }, [session])
+  // マウントされるまでは何も表示しない（ハイドレーションエラー対策）
+  if (!mounted) return null;
+  if (loading) return <div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div></div>;
 
   return (
-    <div className="space-y-6">
-      {/* ユーザー情報カード */}
-      <div className="bg-white shadow-sm border border-gray-200 rounded-lg">
-        <div className="px-6 py-5">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">
-            会員情報
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <div className="flex items-center">
-                <div className="bg-blue-500 p-2 rounded-lg mr-3">
-                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                </div>
+    <div className="animate-fadeIn">
+      <div className="max-w-5xl mx-auto space-y-6">
+        
+        {/* SALES TAB - Removed as requested, now points to detailed page via BottomNavigation */}
+
+        {/* DIET TAB */}
+        {activeTab === 'diet' && (
+          <div className="space-y-6 animate-slideUp">
+            <div className="bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-6">
+              <div className="flex items-center justify-between px-2">
                 <div>
-                  <p className="text-sm font-medium text-blue-800">現在のプラン</p>
-                  <p className="text-lg font-semibold text-blue-900">
-                    {loading ? '読み込み中...' : (
-                      userInfo.monthlyUsage
-                        ? `${userInfo.monthlyUsage.planName}`
-                        : (userInfo.plan || '月4回')
-                    )}
-                  </p>
+                  <h2 className="text-xl font-black text-gray-900">ダイエット管理</h2>
+                  <p className="text-xs font-bold text-gray-400">プランがONの会員のみ表示</p>
                 </div>
+                <Link href="/admin/diet-plan" className="text-xs font-black text-rose-500 bg-rose-50 px-4 py-2 rounded-full">全体設定</Link>
               </div>
-            </div>
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-              <div className="flex items-center">
-                <div className="bg-green-500 p-2 rounded-lg mr-3">
-                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-green-800">ステータス</p>
-                  <p className="text-lg font-semibold text-green-900">
-                    {loading ? '読み込み中...' : (
-                      userInfo.status === 'active' ? '在籍' :
-                        userInfo.status === 'suspended' ? '休会' :
-                          userInfo.status === 'withdrawn' ? '退会' : '在籍'
-                    )}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* 予約一覧 */}
-      <div className="bg-white shadow-sm border border-gray-200 rounded-lg">
-        <div className="px-6 py-5">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-semibold text-gray-900">
-              マイ予約
-            </h2>
-          </div>
-          {reservationsLoading ? (
-            <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
-              <p className="mt-2 text-gray-600">読み込み中...</p>
-            </div>
-          ) : reservations.length === 0 ? (
-            <div className="text-center py-8">
-              <div className="bg-gray-100 p-3 rounded-lg inline-block mb-4">
-                <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3a2 2 0 012-2h4a2 2 0 012 2v4m-6 0h6m-6 0a2 2 0 00-2-2v10a2 2 0 002 2h10a2 2 0 002-2V9a2 2 0 00-2-2h-4" />
-                </svg>
-              </div>
-              <p className="text-gray-600">予約がありません</p>
-            </div>
-          ) : (
-            <div className="space-y-6">
-              {(() => {
-                // helpers
-                const formatJPDate = (dateString: string) => {
-                  const date = new Date(dateString)
-                  const month = date.getMonth() + 1
-                  const day = date.getDate()
-                  const dayNames = ['日', '月', '火', '水', '木', '金', '土']
-                  const dayOfWeek = dayNames[date.getDay()]
-                  return `${month}月${day}日（${dayOfWeek}）`
-                }
-
-                // split reservations
-                const upcoming = [...reservations]
-                  .filter(r => !r.isPast)
-                  .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-                const completed = [...reservations]
-                  .filter(r => r.isPast)
-                  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-
-                // Build monthly counters to show idx/max per month
-                const monthlyCounters: Record<string, number> = {}
-                const monthlyIndexById: Record<string, { idx: number; month: number }> = {}
-                const sortedAll = [...reservations].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-                sortedAll.forEach(r => {
-                  const d = new Date(r.date)
-                  const key = `${d.getFullYear()}-${d.getMonth()}`
-                  monthlyCounters[key] = (monthlyCounters[key] || 0) + 1
-                  monthlyIndexById[r.id] = { idx: monthlyCounters[key], month: d.getMonth() + 1 }
-                })
-
-                const monthMax = (() => {
-                  return (userInfo.monthlyUsage?.maxCount) ?? (() => {
-                    const plan = userInfo.monthlyUsage?.planName || userInfo.plan || ''
-                    if (plan.includes('8回')) return 8
-                    if (plan.includes('6回')) return 6
-                    if (plan.includes('2回')) return 2
-                    return 4
-                  })()
-                })()
-
-                // Render sections with card layout
-                const Section = ({ title, items }: { title: string; items: any[] }) => {
-                  // group items by year-month
-                  const groups: Record<string, { year: number; month: number; list: any[] }> = {}
-                  const sorted = [...items].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-                  sorted.forEach(it => {
-                    const [y, m] = String(it.date).split('/')
-                    const key = `${y}-${m}`
-                    if (!groups[key]) groups[key] = { year: Number(y), month: Number(m), list: [] }
-                    groups[key].list.push(it)
-                  })
-
-                  const dayNames = ['日', '月', '火', '水', '木', '金', '土']
-
-                  return (
-                    <div>
-                      <h3 className="text-sm font-semibold text-gray-900 mb-2">{title}</h3>
-                      {items.length === 0 ? (
-                        <div className="text-gray-500 text-sm">該当の予約はありません</div>
-                      ) : (
-                        <div className="space-y-5">
-                          {Object.values(groups).map(group => (
-                            <div key={`${group.year}-${group.month}`} className="space-y-2">
-                              {/* monthly cards */}
-                              <div className="space-y-3">
-                                {group.list.map(item => {
-                                  const [yearStr, monthStr, dayStr] = String(item.date).split('/')
-                                  const year = Number(yearStr)
-                                  const month = Number(monthStr)
-                                  const day = Number(dayStr)
-                                  const dateObj = new Date(year, month - 1, day)
-                                  const dateLabel = `${month}月${day}日（${dayNames[dateObj.getDay()]}）`
-                                  const idxInfo = monthlyIndexById[item.id]
-
-                                  return (
-                                    <div key={item.id} className="flex items-stretch gap-3">
-                                      {/* Left month mini-card */}
-                                      <div className="w-16 sm:w-20 flex-shrink-0">
-                                        <div className="h-full rounded-lg border border-purple-200 bg-purple-50 text-purple-800 flex flex-col items-center justify-center py-2">
-                                          <div className="text-[10px] sm:text-xs opacity-70">{year}</div>
-                                          <div className="text-base sm:text-lg font-bold leading-tight">{month}月</div>
-                                        </div>
-                                      </div>
-
-                                      {/* Right detail card */}
-                                      <div className={`flex-1 border rounded-lg p-4 ${title === '予約済み' ? 'bg-blue-50 border-blue-200' : 'bg-white border-gray-200'}`}>
-                                        <div className="flex items-center justify-between">
-                                          <div className="flex-1 min-w-0">
-                                            <div className="font-semibold text-gray-900 text-lg">{`${idxInfo?.idx ?? '-'}回目（${idxInfo?.idx ?? '-'} / ${monthMax}）`}</div>
-                                            <div className="mt-1 text-gray-700">
-                                              <div className="font-medium">{dateLabel}</div>
-                                              <div className="font-medium">{item.time}</div>
-                                            </div>
-                                          </div>
-                                          <div className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ml-2 ${title === '予約済み' ? 'bg-blue-200 text-blue-800' : 'bg-gray-200 text-gray-700'}`}>
-                                            {title === '予約済み' ? '予約済' : '完了'}
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  )
-                                })}
-                              </div>
-                            </div>
-                          ))}
+              <div className="space-y-3">
+                {dietMembers.length === 0 ? (
+                  <div className="py-10 text-center text-gray-400 italic text-sm">対象者がいません</div>
+                ) : (
+                  dietMembers.map(member => (
+                    <Link key={member.id} href={`/admin/diet-plan?userId=${member.id}`} className="flex items-center gap-4 p-5 hover:bg-gray-50 rounded-3xl border border-gray-50 transition-all shadow-sm">
+                      <div className={`w-3 h-3 rounded-full ${getStatusDotColor(member.status)}`} />
+                      <div className="flex-1">
+                        <div className="text-base font-black text-gray-900">{member.full_name}</div>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-[10px] font-black text-gray-400 bg-gray-100 px-2 py-0.5 rounded-md uppercase">
+                            {member.stores?.name || '店舗未設定'}
+                          </span>
                         </div>
-                      )}
-                    </div>
-                  )
-                }
-
-                return (
-                  <>
-                    <Section title="予約済み" items={upcoming} />
-                    <Section title="完了" items={completed} />
-                  </>
-                )
-              })()}
+                      </div>
+                      <svg className="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" /></svg>
+                    </Link>
+                  ))
+                )}
+              </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
+
+        {/* HOME / RESERVATION TAB */}
+        {activeTab === 'home' && (
+          <div className="space-y-6 animate-slideUp">
+            <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden">
+              <div className="p-6 border-b border-gray-50 flex items-center justify-between">
+                <h2 className="text-xl font-black text-gray-900">予約カレンダー</h2>
+                <Link href="/admin/calendar" className="text-xs font-black text-blue-500 bg-blue-50 px-4 py-2 rounded-full">全画面</Link>
+              </div>
+              <div className="p-2 sm:p-4">
+                <CalendarView />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* MEMBERS TAB - Removed as requested, now points to detailed page via BottomNavigation */}
+
+        {/* OTHERS TAB */}
+        {activeTab === 'others' && (
+          <div className="grid grid-cols-1 gap-4 animate-slideUp">
+            <div className="px-4 py-2">
+              <h2 className="text-xl font-black text-gray-900">管理・設定</h2>
+            </div>
+            <OtherSubCard href="/admin/trainers" label="トレーナー管理" subLabel="スタッフの登録・編集" color="emerald" icon={<path d="M12 14l9-5-9-5-9 5 9 5z" />} />
+            <OtherSubCard href="/admin/stores" label="店舗管理" subLabel="店舗情報の変更・設定" color="indigo" icon={<path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />} />
+            <OtherSubCard href="/admin/online-lesson" label="オンライン" subLabel="スケジュールの管理" color="orange" icon={<path d="M15 10l4.553-2.069A1 1 0 0121 8.845v6.309a1 1 0 01-1.447.894L15 14" />} />
+          </div>
+        )}
+
       </div>
     </div>
+  );
+};
 
-  )
+export default function DashboardPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === 'unauthenticated') router.push('/login');
+  }, [status, router]);
+
+  if (status === 'loading') return null;
+  if (!session) return null;
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <Suspense fallback={null}>
+        {session.user.role === 'ADMIN' ? <AdminDashboard /> : <div className="text-center py-20 font-bold">アクセス権限がありません</div>}
+      </Suspense>
+    </div>
+  );
 }

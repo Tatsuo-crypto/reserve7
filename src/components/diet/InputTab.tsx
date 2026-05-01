@@ -27,73 +27,147 @@ interface NutrientData {
     salt_target?: number;
 }
 
-export default function InputTab({ userId, token, isAdmin }: InputTabProps) {
-    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
-    const [weight, setWeight] = useState<string>('')
-    const [water, setWater] = useState<string>('0.0')
-    const [steps, setSteps] = useState<string>('0')
-    const [sleep, setSleep] = useState<string>('0.0')
-    const [alcohol, setAlcohol] = useState<string>('0')
-    const [notes, setNotes] = useState<string>('')
-    const [dietImageUrl, setDietImageUrl] = useState<string | null>(null)
-    const [analyzing, setAnalyzing] = useState(false)
-    const [ocrResult, setOcrResult] = useState<NutrientData | null>(null)
-    const [habits, setHabits] = useState<Record<string, number>>({})
-    const [quitGoals, setQuitGoals] = useState<string[]>([])
+export default function InputTab({ userId, token, isAdmin, sharedState, onStateChange }: InputTabProps) {
+    if (!sharedState) return null
+
+    const { 
+        selectedDate = new Date().toISOString().split('T')[0], 
+        weight = '', 
+        water = '2.0', 
+        steps = '10000', 
+        sleep = '8.0', 
+        alcohol = '0', 
+        notes = '', 
+        dietImageUrl = null, 
+        ocrResult = null, 
+        habits = { workout: 0 }, 
+        quitGoals = [], 
+        isSaved = false 
+    } = sharedState
+
+    const updateSharedState = (updates: any) => {
+        onStateChange({ ...sharedState, ...updates, isSaved: false })
+    }
+
+    const setWeight = (v: string) => updateSharedState({ weight: v })
+    const setWater = (v: string) => updateSharedState({ water: v })
+    const setSteps = (v: string) => updateSharedState({ steps: v })
+    const setSleep = (v: string) => updateSharedState({ sleep: v })
+    const setAlcohol = (v: string) => updateSharedState({ alcohol: v })
+    const setNotes = (v: string) => updateSharedState({ notes: v })
+    const setHabits = (fn: any) => {
+        const next = typeof fn === 'function' ? fn(habits) : fn
+        updateSharedState({ habits: next })
+    }
+    const setOcrResult = (v: any) => updateSharedState({ ocrResult: v })
+    const setDietImageUrl = (v: any) => updateSharedState({ dietImageUrl: v })
+    const setIsSaved = (v: boolean) => onStateChange({ ...sharedState, isSaved: v })
+    const setSelectedDate = (v: string) => onStateChange({ ...sharedState, selectedDate: v, isSaved: false })
+    const setQuitGoals = (v: any) => onStateChange({ ...sharedState, quitGoals: v })
+
+    const [target, setTarget] = useState<any>(null)
     const [saving, setSaving] = useState(false)
-    const [showGoalModal, setShowGoalModal] = useState(false)
-    const [visibleItems, setVisibleItems] = useState({ steps: true, sleep: true, water: true, alcohol: true, workout: true })
+    const [analyzing, setAnalyzing] = useState(false)
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
+    const [visibleItems, setVisibleItems] = useState({ steps: true, sleep: true, water: true, alcohol: true, workout: true })
+    const [showGoalModal, setShowGoalModal] = useState(false)
 
     const fileInputRef = useRef<HTMLInputElement>(null)
 
     // Fetch data for selected date
     useEffect(() => {
         const fetchDateData = async () => {
-            // Reset states before fetch
-            setWeight('')
-            setWater('0.0')
-            setSteps('0')
-            setSleep('0.0')
-            setAlcohol('0')
-            setNotes('')
-            setHabits({})
-            setOcrResult(null)
-            setDietImageUrl(null)
-
             try {
-                const [logRes, settingRes, dietRes] = await Promise.all([
+                const [logRes, settingRes, dietRes, goalRes] = await Promise.all([
                     fetch(`/api/lifestyle/logs?date=${selectedDate}&token=${token}`),
                     fetch(`/api/lifestyle/settings?token=${token}`),
-                    fetch(`/api/diet/logs?date=${selectedDate}&token=${token}`)
+                    fetch(`/api/diet/logs?date=${selectedDate}&token=${token}`),
+                    fetch(`/api/diet/goals?token=${token}`)
                 ])
 
-                if (logRes.ok) {
-                    const { data } = await logRes.json()
+                let currentSettings: any = null
+                if (settingRes.ok) {
+                    const { data } = await settingRes.json()
+                    currentSettings = data
                     if (data) {
-                        if (data.weight) setWeight(String(data.weight))
-                        if (data.water !== undefined) setWater(String(data.water))
-                        if (data.steps !== undefined) setSteps(String(data.steps))
-                        if (data.sleep !== undefined) setSleep(String(data.sleep))
-                        if (data.alcohol !== undefined) setAlcohol(String(data.alcohol))
-                        if (data.notes) setNotes(data.notes)
-                        if (data.habits) setHabits(data.habits)
+                        const items = data.visible_items || {}
+                        setVisibleItems({ ...items, workout: true })
+                        if (data.quit_goals) setQuitGoals(data.quit_goals)
                     }
                 }
 
-                if (settingRes.ok) {
-                    const { data } = await settingRes.json()
+                let currentPlan: any = null
+                if (goalRes.ok) {
+                    const { data } = await goalRes.json()
+                    if (data && data.length > 0) {
+                        currentPlan = [...data].reverse().find(g => g.start_date <= selectedDate) || data[data.length - 1]
+                        setTarget(currentPlan)
+                    }
+                }
+
+                // Initialize with settings or defaults
+                setWeight('')
+                setWater(currentSettings?.water_target != null ? String(currentSettings.water_target) : '2.0')
+                setSteps(currentSettings?.step_target != null ? String(currentSettings.step_target) : '8000')
+                setSleep(currentSettings?.sleep_target != null ? String(currentSettings.sleep_target) : '8.0')
+                setAlcohol('0')
+                setNotes('')
+                setHabits({ workout: 0 })
+                setOcrResult(null)
+                setDietImageUrl(null)
+                setIsSaved(false)
+
+                let hasAnyData = false
+                if (logRes.ok) {
+                    const { data } = await logRes.json()
                     if (data) {
-                        if (data.visible_items) setVisibleItems(data.visible_items)
-                        if (data.quit_goals) setQuitGoals(data.quit_goals)
+                        hasAnyData = true
+                        if (data.weight) setWeight(String(data.weight))
+                        if (data.water_liters != null) setWater(String(data.water_liters))
+                        else if (data.water != null) setWater(String(data.water))
+                        
+                        if (data.steps != null) setSteps(String(data.steps))
+                        
+                        if (data.sleep_hours != null) setSleep(String(data.sleep_hours))
+                        else if (data.sleep != null) setSleep(String(data.sleep))
+                        
+                        if (data.alcohol_units != null) setAlcohol(String(data.alcohol_units))
+                        else if (data.alcohol != null) setAlcohol(String(data.alcohol))
+                        
+                        if (data.notes) setNotes(data.notes)
+                        if (data.habits) setHabits(data.habits)
                     }
                 }
 
                 if (dietRes.ok) {
                     const { data } = await dietRes.json()
                     if (data) {
-                        setOcrResult(data)
+                        hasAnyData = true
+                        setOcrResult({
+                            ...data,
+                            calories_target: currentPlan?.calories || data.calories_target,
+                            protein_target: currentPlan?.protein || data.protein_target,
+                            fat_target: currentPlan?.fat || data.fat_target,
+                            carbs_target: currentPlan?.carbs || data.carbs_target,
+                            sugar_target: currentPlan?.sugar || data.sugar_target,
+                            fiber_target: currentPlan?.fiber || data.fiber_target,
+                            salt_target: currentPlan?.salt || data.salt_target
+                        })
                         if (data.image_url) setDietImageUrl(data.image_url)
+                    }
+                }
+
+                // If data was loaded, it's "saved". If no data, it stays "unsaved" (default draft).
+                if (hasAnyData) {
+                    setIsSaved(true)
+                } else if (lifeSettingRes.ok) {
+                    // If no log but we have settings, initialize with settings
+                    const { data: s } = await lifeSettingRes.json()
+                    if (s && s.habit_targets) {
+                        if (s.habit_targets.water != null) setWater(String(s.habit_targets.water))
+                        if (s.habit_targets.steps != null) setSteps(String(s.habit_targets.steps))
+                        if (s.habit_targets.sleep != null) setSleep(String(s.habit_targets.sleep))
+                        if (s.habit_targets.workout != null) setHabits({ workout: 0 }) // Start at 0 progress
                     }
                 }
             } catch (e) { console.error(e) }
@@ -105,27 +179,45 @@ export default function InputTab({ userId, token, isAdmin }: InputTabProps) {
         setSaving(true)
         setMessage(null)
         try {
-            const body: any = {
+            // 1. Save Lifestyle Logs
+            const lifestyleBody: any = {
                 date: selectedDate,
                 token: token,
                 notes: notes,
                 habits: habits
             }
 
-            if (weight) body.weight = parseFloat(weight)
-            if (water) body.water = parseFloat(water)
-            if (steps) body.steps = parseInt(steps)
-            if (sleep) body.sleep = parseFloat(sleep)
-            if (alcohol) body.alcohol = parseFloat(alcohol)
+            if (weight) lifestyleBody.weight = parseFloat(weight)
+            if (water) lifestyleBody.water_liters = parseFloat(water)
+            if (steps) lifestyleBody.steps = parseInt(steps)
+            if (sleep) lifestyleBody.sleep_hours = parseFloat(sleep)
+            if (alcohol) lifestyleBody.alcohol_units = parseFloat(alcohol)
 
-            const res = await fetch('/api/lifestyle/logs', {
+            const lifestyleRes = await fetch('/api/lifestyle/logs', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body)
+                body: JSON.stringify(lifestyleBody)
             })
 
-            if (res.ok) {
-                setMessage({ type: 'success', text: '記録を保存しました' })
+            // 2. Save Diet Logs (OCR Results)
+            let dietResOk = true
+            if (ocrResult) {
+                const dietRes = await fetch('/api/diet/logs', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        date: selectedDate,
+                        token: token,
+                        ...ocrResult,
+                        image_url: dietImageUrl
+                    })
+                })
+                dietResOk = dietRes.ok
+            }
+
+            if (lifestyleRes.ok && dietResOk) {
+                setMessage({ type: 'success', text: 'すべての記録を保存しました' })
+                setIsSaved(true)
                 setTimeout(() => setMessage(null), 3000)
             } else {
                 throw new Error('保存に失敗しました')
@@ -144,6 +236,7 @@ export default function InputTab({ userId, token, isAdmin }: InputTabProps) {
         setAnalyzing(true)
         setMessage(null)
         setOcrResult(null) // Reset OCR result for new upload
+        setIsSaved(false)
         
         const formData = new FormData()
         formData.append('image', file)
@@ -179,7 +272,9 @@ export default function InputTab({ userId, token, isAdmin }: InputTabProps) {
             })
             const analyzeData = await analyzeRes.json()
             if (analyzeRes.ok) {
-                setOcrResult(analyzeData.data)
+                const data = analyzeData.data
+                setOcrResult(data)
+                // Automatic save removed - wait for user to click the main save button
             } else {
                 console.error('Analysis failed:', analyzeData.error, analyzeData.message)
                 setMessage({ type: 'error', text: analyzeData.message || '写真の解析に失敗しました。手動で入力してください。' })
@@ -190,33 +285,6 @@ export default function InputTab({ userId, token, isAdmin }: InputTabProps) {
         } finally {
             setAnalyzing(false)
             if (fileInputRef.current) fileInputRef.current.value = ''
-        }
-    }
-
-    const handleOcrSave = async () => {
-        if (!ocrResult) return
-        setSaving(true)
-        try {
-            const res = await fetch('/api/diet/logs', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    date: selectedDate,
-                    token: token,
-                    ...ocrResult,
-                    image_url: dietImageUrl
-                })
-            })
-            if (res.ok) {
-                setMessage({ type: 'success', text: '食事データを保存しました' })
-                setTimeout(() => setMessage(null), 3000)
-            } else {
-                throw new Error('保存に失敗しました')
-            }
-        } catch (e) {
-            setMessage({ type: 'error', text: 'エラーが発生しました' })
-        } finally {
-            setSaving(false)
         }
     }
 
@@ -280,7 +348,7 @@ export default function InputTab({ userId, token, isAdmin }: InputTabProps) {
                         <div className="relative z-10 flex flex-col items-center">
                             <div className="w-16 h-16 bg-white bg-opacity-20 rounded-2xl flex items-center justify-center mb-4">
                                 <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812-1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                                 </svg>
                             </div>
@@ -303,6 +371,7 @@ export default function InputTab({ userId, token, isAdmin }: InputTabProps) {
                                 className="hidden"
                             />
                         </div>
+
                     </div>
 
                     {/* OCR Result Preview */}
@@ -310,10 +379,10 @@ export default function InputTab({ userId, token, isAdmin }: InputTabProps) {
                         <div className="bg-white rounded-2xl shadow-lg border-2 border-blue-500 p-6 animate-slideUp">
                             <div className="flex items-center justify-between mb-4">
                                 <h2 className="text-lg font-bold text-gray-900">
-                                    {saving ? '保存中...' : (ocrResult.id ? '保存済み' : '解析結果のプレビュー')}
+                                    {saving ? '保存中...' : '解析結果'}
                                 </h2>
                             </div>
-                            <div className="grid grid-cols-2 gap-4 mb-6">
+                            <div className="grid grid-cols-2 gap-4 mb-2">
                                 <div className="col-span-2 bg-blue-50 p-4 rounded-xl">
                                     <div className="text-[10px] font-bold text-blue-600 uppercase mb-2 tracking-widest text-center">総エネルギー (摂取 / 目標)</div>
                                     <div className="flex items-center justify-center space-x-3">
@@ -330,14 +399,6 @@ export default function InputTab({ userId, token, isAdmin }: InputTabProps) {
                                 <NutrientItem label="食物繊維" value={ocrResult.fiber} target={ocrResult.fiber_target} unit="g" onChange={(v) => setOcrResult({ ...ocrResult, fiber: v })} />
                                 <NutrientItem label="塩分" value={ocrResult.salt} target={ocrResult.salt_target} unit="g" onChange={(v) => setOcrResult({ ...ocrResult, salt: v })} />
                             </div>
-
-                            <button
-                                onClick={handleOcrSave}
-                                disabled={saving}
-                                className="w-full bg-blue-600 text-white py-3 rounded-xl font-bold shadow-lg hover:bg-blue-700 transition-colors"
-                            >
-                                {saving ? '保存中...' : 'この内容で確定する'}
-                            </button>
                         </div>
                     )}
                 </>
@@ -367,7 +428,9 @@ export default function InputTab({ userId, token, isAdmin }: InputTabProps) {
                                     inputMode="decimal"
                                     step="0.1"
                                     value={weight}
-                                    onChange={(e) => setWeight(e.target.value)}
+                                    onChange={(e) => {
+                                        setWeight(e.target.value)
+                                    }}
                                     placeholder="00.0"
                                     className="w-20 text-right text-2xl font-black text-gray-900 bg-transparent border-none p-0 focus:ring-0 placeholder-gray-200"
                                 />
@@ -381,12 +444,14 @@ export default function InputTab({ userId, token, isAdmin }: InputTabProps) {
                             icon={<path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />}
                             label="水分"
                             value={water}
+                            target={target?.water_target != null ? String(target.water_target) : undefined}
                             unit="L"
                             iconBg="bg-blue-50"
                             iconColor="text-blue-500"
-                            type="select"
-                            options={Array.from({ length: 11 }, (_, i) => (i * 0.5).toFixed(1))}
-                            onChange={(v) => setWater(v)}
+                            step={0.5}
+                            onChange={(v) => {
+                                setWater(v)
+                            }}
                         />
                     )}
                     {visibleItems.steps && (
@@ -394,12 +459,14 @@ export default function InputTab({ userId, token, isAdmin }: InputTabProps) {
                             icon={<path d="M13 4v16M17 4v16M7 4v16M11 4v16" />}
                             label="歩数"
                             value={steps}
+                            target={target?.step_target != null ? String(target.step_target) : undefined}
                             unit="歩"
                             iconBg="bg-emerald-50"
                             iconColor="text-emerald-500"
-                            type="select"
-                            options={Array.from({ length: 61 }, (_, i) => String(i * 500))}
-                            onChange={(v) => setSteps(v)}
+                            step={500}
+                            onChange={(v) => {
+                                setSteps(v)
+                            }}
                         />
                     )}
                     {visibleItems.sleep && (
@@ -407,26 +474,48 @@ export default function InputTab({ userId, token, isAdmin }: InputTabProps) {
                             icon={<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />}
                             label="睡眠"
                             value={sleep}
+                            target={target?.sleep_target != null ? String(target.sleep_target) : undefined}
                             unit="h"
                             iconBg="bg-indigo-50"
                             iconColor="text-indigo-500"
-                            type="select"
-                            options={Array.from({ length: 27 }, (_, i) => (1.0 + i * 0.5).toFixed(1))}
-                            onChange={(v) => setSleep(v)}
+                            step={0.5}
+                            onChange={(v) => {
+                                setSleep(v)
+                            }}
                         />
                     )}
-                    {visibleItems.workout && (
-                        <EditableLogItem
-                            icon={<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18M7 6v12M17 6v12" />}
-                            label="筋トレ"
-                            value={String(habits.workout || '0')}
-                            unit="回"
-                            iconBg="bg-orange-50"
-                            iconColor="text-orange-500"
-                            type="select"
-                            options={Array.from({ length: 11 }, (_, i) => String(i))}
-                            onChange={(v) => setHabits(prev => ({ ...prev, workout: parseInt(v) }))}
-                        />
+                    {(visibleItems.workout || true) && (
+                        <div className="space-y-3">
+                            <div className="flex items-center justify-between p-3 border border-gray-50 rounded-2xl hover:bg-gray-50 transition-colors">
+                                <div className="flex items-center space-x-3">
+                                    <div className="w-10 h-10 bg-orange-50 text-orange-500 rounded-xl flex items-center justify-center shadow-sm">
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18M7 6v12M17 6v12" />
+                                        </svg>
+                                    </div>
+                                    <span className="text-sm font-bold text-gray-700">筋トレ</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-[10px] font-bold text-gray-400">実施</span>
+                                    <button
+                                        onClick={() => {
+                                            setHabits((prev: any) => ({ ...prev, workout: prev.workout === 1 ? 0 : 1 }))
+                                        }}
+                                        className={`w-12 h-6 rounded-full transition-all relative ${habits.workout === 1 ? 'bg-orange-500' : 'bg-gray-200'}`}
+                                    >
+                                        <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${habits.workout === 1 ? 'left-7' : 'left-1'}`}></div>
+                                    </button>
+                                </div>
+                            </div>
+                            {habits.workout === 1 && (
+                                <textarea
+                                    value={habits.workout_notes || ''}
+                                    onChange={(e) => setHabits((prev: any) => ({ ...prev, workout_notes: e.target.value }))}
+                                    placeholder="トレーニング内容（例：スクワット 10回×3セットなど）"
+                                    className="w-full p-4 rounded-2xl bg-gray-50 border-none focus:ring-2 focus:ring-orange-200 text-sm font-bold text-gray-700 placeholder:text-gray-300 min-h-[80px] transition-all"
+                                />
+                            )}
+                        </div>
                     )}
                 </div>
 
@@ -435,14 +524,16 @@ export default function InputTab({ userId, token, isAdmin }: InputTabProps) {
                     <label className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 block">メモ（任意）</label>
                     <textarea
                         value={notes}
-                        onChange={(e) => setNotes(e.target.value)}
+                        onChange={(e) => {
+                            setNotes(e.target.value)
+                        }}
                         placeholder="今日の体調や食事の感想など"
                         className="w-full bg-gray-50 border-none rounded-2xl p-4 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-blue-500 min-h-[100px]"
                     />
                 </div>
 
                 {/* Other Goals (Habits) Section */}
-                {quitGoals.length > 0 && (
+                {(quitGoals?.length || 0) > 0 && (
                     <div className="mt-8 space-y-4">
                         <div className="flex items-center gap-2">
                             <div className="w-1 h-4 bg-rose-500 rounded-full"></div>
@@ -453,7 +544,9 @@ export default function InputTab({ userId, token, isAdmin }: InputTabProps) {
                                 <div key={goal} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-transparent hover:border-rose-100 transition-all">
                                     <span className="text-sm font-bold text-gray-700">{goal}</span>
                                     <button
-                                        onClick={() => setHabits(prev => ({ ...prev, [goal]: prev[goal] === 1 ? 0 : 1 }))}
+                                        onClick={() => {
+                                            setHabits(prev => ({ ...prev, [goal]: prev[goal] === 1 ? 0 : 1 }))
+                                        }}
                                         className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all ${habits[goal] === 1 ? 'bg-emerald-500 text-white shadow-md' : 'bg-white text-gray-400 border border-gray-100'}`}
                                     >
                                         {habits[goal] === 1 ? (
@@ -475,11 +568,13 @@ export default function InputTab({ userId, token, isAdmin }: InputTabProps) {
                 )}
 
                 {/* Save Button */}
-                <div className="mt-8">
+                <div className="mt-8 space-y-4">
                     <button
                         onClick={handleAllSave}
                         disabled={saving}
-                        className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black shadow-lg hover:bg-blue-700 transition-all active:scale-95 flex items-center justify-center gap-2 text-lg"
+                        className={`w-full py-4 rounded-2xl font-black shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 text-lg ${
+                            isSaved && !saving ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-blue-600 text-white hover:bg-blue-700'
+                        }`}
                     >
                         {saving ? (
                             <>
@@ -489,9 +584,51 @@ export default function InputTab({ userId, token, isAdmin }: InputTabProps) {
                                 </svg>
                                 保存中...
                             </>
-                        ) : '入力内容を保存する'}
+                        ) : isSaved ? '編集内容を更新する' : '入力内容を保存する'}
                     </button>
-                    <p className="text-center text-[10px] text-gray-400 mt-3">日付: {selectedDate} の記録として保存されます</p>
+                    <p className="text-center text-[10px] text-gray-400">日付: {selectedDate} の記録として保存されます</p>
+
+                    <div className="flex justify-center pt-2">
+                        <button
+                            onClick={async () => {
+                                if (window.confirm('この日の入力内容を完全に削除し、初期値に戻しますか？（保存済みのデータも削除されます）')) {
+                                    setSaving(true)
+                                    try {
+                                        await Promise.all([
+                                            fetch(`/api/lifestyle/logs?date=${selectedDate}&token=${token}`, { method: 'DELETE' }),
+                                            fetch(`/api/diet/logs?date=${selectedDate}&token=${token}`, { method: 'DELETE' })
+                                        ])
+                                        onStateChange({
+                                            ...sharedState,
+                                            weight: '',
+                                            water: target?.water_target != null ? String(target.water_target) : '2.0',
+                                            steps: target?.step_target != null ? String(target.step_target) : '8000',
+                                            sleep: target?.sleep_target != null ? String(target.sleep_target) : '8.0',
+                                            alcohol: '0',
+                                            notes: '',
+                                            habits: { workout: 0 },
+                                            ocrResult: null,
+                                            dietImageUrl: null,
+                                            isSaved: false
+                                        })
+                                        setMessage({ type: 'success', text: '記録を削除しました' })
+                                        setTimeout(() => setMessage(null), 3000)
+                                    } catch (e) {
+                                        console.error('Delete error:', e)
+                                        setMessage({ type: 'error', text: '削除中にエラーが発生しました' })
+                                    } finally {
+                                        setSaving(false)
+                                    }
+                                }
+                            }}
+                            className="text-[10px] font-black text-gray-300 hover:text-gray-400 transition-colors flex items-center gap-1 uppercase tracking-widest"
+                        >
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                            入力をリセット
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -524,18 +661,25 @@ function NutrientItem({ label, value, target, unit, onChange }: { label: string,
     )
 }
 
-function EditableLogItem({ icon, label, value, unit, iconBg, iconColor, type = 'number', options, onChange, onSave }: {
+function EditableLogItem({ icon, label, value, target, unit, iconBg, iconColor, step, onChange }: {
     icon: React.ReactNode,
     label: string,
     value: string,
+    target?: string,
     unit: string,
     iconBg: string,
     iconColor: string,
-    type?: 'number' | 'select',
-    options?: string[],
-    onChange: (v: string) => void,
-    onSave?: () => void
+    step: number,
+    onChange: (v: string) => void
 }) {
+    const handleAdjust = (direction: 'up' | 'down') => {
+        const current = parseFloat(value) || 0
+        const newValue = direction === 'up' ? current + step : Math.max(0, current - step)
+        // Format to 1 decimal place for water/sleep, 0 for steps
+        const formatted = step < 1 ? newValue.toFixed(1) : Math.round(newValue).toString()
+        onChange(formatted)
+    }
+
     return (
         <div className="flex items-center justify-between p-3 border border-gray-50 rounded-2xl hover:bg-gray-50 transition-colors">
             <div className="flex items-center space-x-3">
@@ -546,38 +690,37 @@ function EditableLogItem({ icon, label, value, unit, iconBg, iconColor, type = '
                 </div>
                 <span className="text-sm font-bold text-gray-700">{label}</span>
             </div>
-            <div className="flex items-center space-x-2">
-                {type === 'select' ? (
-                    <select
-                        value={value}
-                        onChange={(e) => onChange(e.target.value)}
-                        className="text-xl font-black text-gray-900 bg-transparent border-none p-0 focus:ring-0 appearance-none cursor-pointer text-right min-w-[60px]"
+            <div className="flex items-center gap-4">
+                <div className="flex items-center bg-gray-100 rounded-xl p-1">
+                    <button 
+                        onClick={() => handleAdjust('down')}
+                        className="p-1.5 hover:bg-white rounded-lg transition-all text-gray-400 hover:text-blue-500"
                     >
-                        {options?.map(opt => (
-                            <option key={opt} value={opt}>{opt}</option>
-                        ))}
-                    </select>
-                ) : (
-                    <input
-                        type="number"
-                        inputMode="decimal"
-                        step="0.1"
-                        value={value}
-                        onChange={(e) => onChange(e.target.value)}
-                        className="w-16 text-right text-xl font-black text-gray-900 bg-transparent border-none p-0 focus:ring-0"
-                    />
-                )}
-                <span className="text-[10px] font-bold text-gray-400 mt-1">{unit}</span>
-                {type !== 'select' && onSave && (
-                    <button
-                        onClick={onSave}
-                        className="ml-2 p-1 text-blue-600 hover:bg-blue-50 rounded"
-                    >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg>
                     </button>
-                )}
+                    <div className="flex items-baseline px-2 min-w-[90px] justify-center">
+                        <input
+                            type="number"
+                            inputMode="decimal"
+                            value={value}
+                            onChange={(e) => onChange(e.target.value)}
+                            className="w-24 text-center text-lg font-black text-gray-900 bg-transparent border-none p-0 focus:ring-0"
+                        />
+                        {target && (
+                            <div className="flex items-baseline ml-1 opacity-40">
+                                <span className="text-[10px] font-bold mx-0.5">/</span>
+                                <span className="text-xs font-bold">{target}</span>
+                            </div>
+                        )}
+                    </div>
+                    <button 
+                        onClick={() => handleAdjust('up')}
+                        className="p-1.5 hover:bg-white rounded-lg transition-all text-gray-400 hover:text-blue-500"
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 15l7-7 7 7" /></svg>
+                    </button>
+                </div>
+                <span className="text-[10px] font-bold text-gray-400 w-4">{unit}</span>
             </div>
         </div>
     )

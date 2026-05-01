@@ -93,6 +93,15 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Date is required' }, { status: 400 });
         }
 
+        // 'image_url' and 'notes' will be added to the table via SQL
+        const allowedKeys = ['calories', 'protein', 'fat', 'carbs', 'sugar', 'fiber', 'salt', 'image_url', 'notes'];
+        const filteredNutrients: any = {};
+        allowedKeys.forEach(key => {
+            if (nutrients[key] !== undefined) {
+                filteredNutrients[key] = nutrients[key];
+            }
+        });
+
         const { data: existing } = await client
             .from('diet_logs')
             .select('id')
@@ -105,7 +114,7 @@ export async function POST(req: NextRequest) {
             result = await client
                 .from('diet_logs')
                 .update({
-                    ...nutrients,
+                    ...filteredNutrients,
                     updated_at: new Date().toISOString(),
                 })
                 .eq('id', existing.id)
@@ -117,7 +126,7 @@ export async function POST(req: NextRequest) {
                 .insert({
                     user_id: userId,
                     date,
-                    ...nutrients,
+                    ...filteredNutrients,
                 })
                 .select()
                 .single();
@@ -128,6 +137,53 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ success: true, data: result.data });
     } catch (error: any) {
         console.error('Diet log save error:', error);
+        return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+}
+
+// Delete a diet log for a specific date
+export async function DELETE(req: NextRequest) {
+    try {
+        const { searchParams } = new URL(req.url);
+        const date = searchParams.get('date');
+        const token = searchParams.get('token');
+
+        if (!date) {
+            return NextResponse.json({ error: 'Date is required' }, { status: 400 });
+        }
+
+        let userId: string;
+        let client = supabase;
+
+        const session = await getServerSession(authOptions);
+        if (token) {
+            const { data: user, error: userError } = await supabaseAdmin
+                .from('users')
+                .select('id')
+                .eq('access_token', token)
+                .single();
+            if (userError || !user) {
+                return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+            }
+            userId = user.id;
+            client = supabaseAdmin;
+        } else if (session && session.user) {
+            userId = (session.user as any).id;
+        } else {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        const { error } = await client
+            .from('diet_logs')
+            .delete()
+            .eq('user_id', userId)
+            .eq('date', date);
+
+        if (error) throw error;
+
+        return NextResponse.json({ success: true, message: 'Deleted successfully' });
+    } catch (error: any) {
+        console.error('Diet log delete error:', error);
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }

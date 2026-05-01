@@ -258,11 +258,11 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
                 <table className="min-w-full divide-y divide-gray-50">
                   <thead className="bg-gray-50/50">
                     <tr>
-                      <th className="px-8 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">対象月</th>
-                      <th className="px-8 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">プラン</th>
-                      <th className="px-8 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">予定金額</th>
-                      <th className="px-8 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">メモ</th>
-                      <th className="px-8 py-4 text-right text-[10px] font-black text-gray-400 uppercase tracking-widest">操作</th>
+                      <th className="px-3 sm:px-8 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">対象月</th>
+                      <th className="px-3 sm:px-4 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">プラン</th>
+                      <th className="px-3 sm:px-4 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">予定金額</th>
+                      <th className="hidden lg:table-cell px-8 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">メモ</th>
+                      <th className="px-3 sm:px-8 py-4 text-right text-[10px] font-black text-gray-400 uppercase tracking-widest">操作</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-50">
@@ -274,37 +274,39 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
                           key={`${p.month}-${idx}`}
                           className={`group transition-colors ${isFutureMonth ? 'bg-blue-50/30 hover:bg-blue-50/50' : 'hover:bg-gray-50/50'}`}
                         >
-                          <td className="px-8 py-5 whitespace-nowrap">
-                            <div className="flex items-center gap-3">
-                              <span className="text-sm font-black text-gray-900 tabular-nums">
+                          <td className="px-3 sm:px-8 py-4">
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                              <span className="text-sm font-black text-gray-900 tabular-nums whitespace-nowrap">
                                 {formatMonth(p.month)}
                               </span>
-                              {isFutureMonth && (
-                                <span className="text-[10px] font-black bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full uppercase tracking-tighter">予定</span>
-                              )}
-                              {isCurrentMonth && (
-                                <span className="text-[10px] font-black bg-green-100 text-green-600 px-2 py-0.5 rounded-full uppercase tracking-tighter">今月</span>
-                              )}
+                              <div className="flex gap-1">
+                                {isFutureMonth && (
+                                  <span className="text-[8px] font-black bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full uppercase tracking-tighter">予定</span>
+                                )}
+                                {isCurrentMonth && (
+                                  <span className="text-[8px] font-black bg-green-100 text-green-600 px-1.5 py-0.5 rounded-full uppercase tracking-tighter">今月</span>
+                                )}
+                              </div>
                             </div>
                           </td>
-                          <td className="px-8 py-5 whitespace-nowrap">
-                            <span className="text-sm font-bold text-gray-700">
+                          <td className="px-3 sm:px-4 py-4">
+                            <div className="text-sm font-bold text-gray-700 truncate max-w-[80px] sm:max-w-none" title={p.plan || ''}>
                               {p.plan || <span className="text-gray-300 font-medium italic">未設定</span>}
+                            </div>
+                          </td>
+                          <td className="px-3 sm:px-4 py-4">
+                            <span className="text-sm font-black text-gray-900 tabular-nums whitespace-nowrap">
+                              {p.expectedAmount > 0 ? `¥${p.expectedAmount.toLocaleString()}` : (isFutureMonth ? '未設定' : '-')}
                             </span>
                           </td>
-                          <td className="px-8 py-5 whitespace-nowrap">
-                            <span className="text-sm font-black text-gray-900 tabular-nums">
-                              {p.expectedAmount > 0 ? `¥${p.expectedAmount.toLocaleString()}` : (isFutureMonth ? <span className="text-gray-300 font-medium italic">未設定</span> : '-')}
-                            </span>
-                          </td>
-                          <td className="px-8 py-5">
+                          <td className="hidden lg:table-cell px-8 py-4">
                             <span className="text-xs font-bold text-gray-400 line-clamp-1 max-w-[200px]">
                               {p.memo || '-'}
                             </span>
                           </td>
-                          <td className="px-8 py-5 whitespace-nowrap text-right">
+                          <td className="px-3 sm:px-8 py-4 text-right">
                             <button
-                              className={`text-xs font-black uppercase tracking-widest px-4 py-2 rounded-xl border transition-all ${
+                              className={`text-[10px] font-black uppercase tracking-widest px-3 py-2 rounded-xl border transition-all ${
                                 isFutureMonth 
                                   ? 'bg-blue-50 text-blue-600 border-blue-100 hover:bg-blue-100' 
                                   : 'bg-white text-indigo-600 border-gray-100 hover:border-indigo-200 hover:bg-indigo-50'
