@@ -21,6 +21,11 @@ import {
 
 // Reusing some logic from members page
 import { getStatusDotColor } from '@/lib/utils/member'
+import AdminHeader from '@/app/components/AdminHeader'
+import HomeTab from '@/components/diet/HomeTab'
+import InputTab from '@/components/diet/InputTab'
+import AnalyzeTab from '@/components/diet/AnalyzeTab'
+import GoalModal from '@/components/diet/GoalModal'
 
 const GOAL_SUGGESTIONS = [
     'お酒を週2回までにする',
@@ -41,7 +46,7 @@ const DEFAULT_FIBER = 20;
 const DEFAULT_SUGAR = 280; // Added sugar default
 const DEFAULT_SALT = 6;
 
-type TabType = 'goals' | 'analysis' | 'weekly';
+type TabType = 'home' | 'input' | 'analyze' | 'settings';
 type PeriodType = '1w' | '1m' | '3m' | '6m' | '1y' | 'all';
 
 function DietPlanPageContent() {
@@ -56,12 +61,16 @@ function DietPlanPageContent() {
     const [loadingData, setLoadingData] = useState(false)
     const [saving, setSaving] = useState(false)
     const [message, setMessage] = useState('')
-    const [activeTab, setActiveTab] = useState<TabType>('goals')
+    const [activeTab, setActiveTab] = useState<TabType>('input')
     const [isSettingNewGoal, setIsSettingNewGoal] = useState(false)
     const [analysisPeriod, setAnalysisPeriod] = useState<PeriodType>('1m')
     const [selectedWeek, setSelectedWeek] = useState<string>('')
     const [showWeightAvg, setShowWeightAvg] = useState(false)
     const [isWeightListOpen, setIsWeightListOpen] = useState(false)
+    const [sharedState, setSharedState] = useState<any>({
+        selectedDate: new Date().toISOString().split('T')[0],
+        habits: { workout: 0 }
+    })
 
     const today = new Date().toISOString().split('T')[0];
 
@@ -556,7 +565,7 @@ function DietPlanPageContent() {
             <div className="min-h-screen flex items-center justify-center bg-gray-50">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-rose-600"></div>
             </div>
-        )
+        );
     }
 
     const filteredMembers = members.filter(m => 
@@ -581,11 +590,11 @@ function DietPlanPageContent() {
                 </div>
 
                 {!selectedMember ? (
-                    <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-                        <div className="p-6 border-b border-gray-100 bg-rose-50/30">
-                            <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
-                                <span className="w-2 h-6 bg-rose-500 rounded-full"></span>
-                                ① 会員を選択
+                    <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden">
+                        <div className="p-8 border-b border-gray-50">
+                            <h2 className="text-xl font-black mb-6 flex items-center gap-2">
+                                <span className="w-1.5 h-6 bg-rose-500 rounded-full"></span>
+                                会員を選択
                             </h2>
                             <div className="relative">
                                 <input
@@ -593,58 +602,63 @@ function DietPlanPageContent() {
                                     placeholder="名前やメールアドレスで検索..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none transition-all shadow-sm"
+                                    className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-rose-500 outline-none transition-all font-bold"
                                 />
-                                <svg className="absolute left-3 top-3.5 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="absolute left-4 top-4.5 w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                 </svg>
                             </div>
                         </div>
-                        <div className="divide-y divide-gray-100 max-h-[500px] overflow-y-auto">
+                        <div className="divide-y divide-gray-50 max-h-[60vh] overflow-y-auto px-4 pb-4">
                             {filteredMembers.map(member => (
                                 <button
                                     key={member.id}
                                     onClick={() => setSelectedMember(member)}
-                                    className="w-full flex items-center px-6 py-4 hover:bg-rose-50 transition-colors group"
+                                    className="w-full flex items-center px-6 py-5 hover:bg-rose-50/50 transition-all rounded-[2rem] group mt-2"
                                 >
-                                    <div className="flex-1 flex items-center gap-3 text-left">
-                                        <span className={`w-2 h-2 rounded-full ${getStatusDotColor(member.status)}`} />
+                                    <div className="flex-1 flex items-center gap-4 text-left">
+                                        <div className={`w-3 h-3 rounded-full ${getStatusDotColor(member.status)} shadow-sm`} />
                                         <div>
-                                            <div className="font-bold group-hover:text-rose-700 transition-colors">{member.full_name}</div>
-                                            <div className="text-xs text-gray-500">{member.email}</div>
+                                            <div className="font-black text-gray-800 group-hover:text-rose-600 transition-colors">{member.full_name}</div>
+                                            <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{member.email}</div>
                                         </div>
                                     </div>
-                                    <div className="text-xs font-bold text-gray-400 bg-gray-100 px-3 py-1 rounded-full group-hover:bg-rose-100 group-hover:text-rose-600 transition-all">選択</div>
+                                    <div className="text-[10px] font-black text-gray-400 bg-gray-50 px-4 py-2 rounded-full group-hover:bg-rose-500 group-hover:text-white transition-all uppercase tracking-widest">選択</div>
                                 </button>
                             ))}
+                            {filteredMembers.length === 0 && (
+                                <div className="py-20 text-center text-gray-400 italic font-bold">会員が見つかりません</div>
+                            )}
                         </div>
                     </div>
                 ) : (
-                    <div className="space-y-4 sm:space-y-6 animate-fadeIn">
-                        {/* Member Status Bar */}
-                        <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex items-center justify-center relative">
-                            <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 bg-rose-100 rounded-lg flex items-center justify-center text-rose-600">
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                    </svg>
-                                </div>
-                                <div className="text-lg font-black text-center">{selectedMember.full_name} 様</div>
-                            </div>
-                            <button onClick={() => setSelectedMember(null)} className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-400 hover:text-gray-600 underline">変更する</button>
-                        </div>
+                    <div className="space-y-6 animate-fadeIn pb-24">
+                        {/* Header */}
+                        <AdminHeader 
+                            title="ダイエット管理" 
+                            subTitle={`${selectedMember.full_name} 様`}
+                            onBack={() => setSelectedMember(null)}
+                            rightElement={
+                                <button 
+                                    onClick={() => setSelectedMember(null)} 
+                                    className="text-[10px] font-black text-rose-500 bg-rose-50 px-4 py-2 rounded-full uppercase tracking-widest border border-rose-100 shadow-sm"
+                                >
+                                    会員変更
+                                </button>
+                            }
+                        />
 
-                        {/* Tabs */}
-                        <div className="flex bg-white p-1.5 rounded-2xl border border-gray-200 shadow-sm sticky top-2 z-20 gap-1 overflow-x-auto">
+                        {/* Top Tabs */}
+                        <div className="flex bg-white/80 backdrop-blur-md p-1.5 rounded-[2rem] border border-gray-100 shadow-sm sticky top-0 z-30 gap-1 overflow-x-auto no-scrollbar">
                             {[
-                                { id: 'goals', label: '設定' },
-                                { id: 'analysis', label: '分析' },
-                                { id: 'weekly', label: '目標' }
+                                { id: 'input', label: '記録入力' },
+                                { id: 'analyze', label: '分析' },
+                                { id: 'settings', label: 'プラン設定' }
                             ].map(tab => (
                                 <button
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id as TabType)}
-                                    className={`flex-1 py-3 px-2 min-w-[80px] rounded-xl text-[10px] sm:text-xs font-black transition-all ${activeTab === tab.id ? 'bg-gray-900 text-white shadow-lg' : 'text-gray-500 hover:bg-gray-50'}`}
+                                    className={`flex-1 py-3.5 px-4 min-w-[90px] rounded-[1.5rem] text-[11px] font-black transition-all ${activeTab === tab.id ? 'bg-gray-900 text-white shadow-xl scale-[1.02]' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50/50'}`}
                                 >
                                     {tab.label}
                                 </button>
@@ -657,7 +671,27 @@ function DietPlanPageContent() {
                             </div>
                         )}
 
-                        {!loadingData && activeTab === 'goals' && (
+
+                        {!loadingData && activeTab === 'input' && (
+                            <InputTab 
+                                userId={selectedMember.id} 
+                                token={selectedMember.access_token!} 
+                                isAdmin={true} 
+                                sharedState={sharedState} 
+                                onStateChange={setSharedState} 
+                            />
+                        )}
+
+                        {!loadingData && activeTab === 'analyze' && (
+                            <AnalyzeTab 
+                                userId={selectedMember.id} 
+                                token={selectedMember.access_token!} 
+                                isAdmin={true} 
+                                todayDraft={sharedState} 
+                            />
+                        )}
+
+                        {!loadingData && activeTab === 'settings' && (
                             <div className="space-y-6 pb-20 animate-fadeIn">
                                 {/* Set New Goal Toggle Button */}
                                 <div className="flex justify-center">
@@ -862,450 +896,12 @@ function DietPlanPageContent() {
                                 )}
                             </div>
                         )}
-
-                        {!loadingData && activeTab === 'analysis' && (
-                            <div className="space-y-6 pb-20 animate-fadeIn">
-                                {/* Period & Avg Selector */}
-                                <div className="bg-white p-3 sm:p-4 rounded-2xl border border-gray-200 shadow-sm flex flex-row items-center gap-4 sm:gap-6 overflow-x-auto whitespace-nowrap sticky top-[72px] z-10">
-                                    <label className="flex items-center gap-2 text-xs sm:text-sm font-bold text-gray-700 shrink-0">
-                                        期間：
-                                        <select
-                                            value={analysisPeriod}
-                                            onChange={(e) => setAnalysisPeriod(e.target.value as PeriodType)}
-                                            className="bg-gray-50 border border-gray-200 text-gray-900 text-xs sm:text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block py-1.5 px-2 outline-none font-bold"
-                                        >
-                                            <option value="1w">7日間</option>
-                                            <option value="1m">1ヶ月</option>
-                                            <option value="3m">3ヶ月</option>
-                                            <option value="6m">6ヶ月</option>
-                                            <option value="1y">1年</option>
-                                            <option value="all">すべて</option>
-                                        </select>
-                                    </label>
-                                    <label className="flex items-center gap-2 text-xs sm:text-sm font-bold text-gray-700 shrink-0">
-                                        表示：
-                                        <select
-                                            value={showWeightAvg ? 'week' : 'day'}
-                                            onChange={(e) => setShowWeightAvg(e.target.value === 'week')}
-                                            className="bg-gray-50 border border-gray-200 text-gray-900 text-xs sm:text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block py-1.5 px-2 outline-none font-bold"
-                                        >
-                                            <option value="day">日</option>
-                                            <option value="week">週平均</option>
-                                        </select>
-                                    </label>
-                                </div>
-
-                                {/* Weight Chart */}
-                                <AnalysisChartCard title="体重推移 (kg)" color="blue">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <LineChart data={processedWeightData}>
-                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                            <XAxis dataKey="recorded_date" axisLine={{ stroke: '#000000', strokeWidth: 0.3 }} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} tickFormatter={(val) => {
-                                                if (!val) return '';
-                                                const parts = val.split('-');
-                                                if (parts.length === 3) return `${parseInt(parts[1], 10)}/${parseInt(parts[2], 10)}`;
-                                                return val;
-                                            }} />
-                                            <YAxis axisLine={false} tickLine={false} domain={['dataMin - 1', 'dataMax + 1']} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} />
-                                            <Tooltip labelFormatter={(label: string) => {
-                                                if (!label) return '';
-                                                const parts = label.split('-');
-                                                if (parts.length === 3) return `${parseInt(parts[1], 10)}/${parseInt(parts[2], 10)}`;
-                                                return label;
-                                            }} contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', padding: '12px' }} />
-                                            <Line type="monotone" dataKey="weight_kg" name="体重" stroke="#3b82f6" strokeWidth={4} dot={!showWeightAvg ? { r: 4, strokeWidth: 2, fill: '#fff' } : false} connectNulls />
-                                        </LineChart>
-                                    </ResponsiveContainer>
-                                </AnalysisChartCard>
-
-                                {/* Calories Chart */}
-                                <AnalysisChartCard title="摂取カロリー (kcal)" color="rose">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <ComposedChart data={analysisData}>
-                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                            <XAxis dataKey="date" axisLine={{ stroke: '#000000', strokeWidth: 0.3 }} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} tickFormatter={(val) => {
-                                                if (!val) return '';
-                                                const parts = val.split('-');
-                                                if (parts.length === 3) return `${parseInt(parts[1], 10)}/${parseInt(parts[2], 10)}`;
-                                                return val;
-                                            }} />
-                                            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} />
-                                            <Tooltip labelFormatter={(label: string) => {
-                                                if (!label) return '';
-                                                const parts = label.split('-');
-                                                if (parts.length === 3) return `${parseInt(parts[1], 10)}/${parseInt(parts[2], 10)}`;
-                                                return label;
-                                            }} contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', padding: '12px' }} />
-                                            <Bar dataKey="calories" name="摂取カロリー" fill="#f43f5e" radius={[4, 4, 0, 0]} />
-                                            <Line type="monotone" dataKey="target_calories" name="目標" stroke="#e2e8f0" strokeWidth={2} strokeDasharray="5 5" dot={false} />
-                                        </ComposedChart>
-                                    </ResponsiveContainer>
-                                </AnalysisChartCard>
-
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                    {/* Protein Chart */}
-                                    <AnalysisChartCard title="P (タンパク質) (g)" color="amber">
-                                        <ResponsiveContainer width="100%" height="100%">
-                                            <ComposedChart data={analysisData}>
-                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                                <XAxis dataKey="date" axisLine={{ stroke: '#000000', strokeWidth: 0.3 }} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} tickFormatter={(val) => {
-                                                    if (!val) return '';
-                                                    const parts = val.split('-');
-                                                    if (parts.length === 3) return `${parseInt(parts[1], 10)}/${parseInt(parts[2], 10)}`;
-                                                    return val;
-                                                }} />
-                                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} />
-                                                <Tooltip labelFormatter={(label: string) => {
-                                                    if (!label) return '';
-                                                    const parts = label.split('-');
-                                                    if (parts.length === 3) return `${parseInt(parts[1], 10)}/${parseInt(parts[2], 10)}`;
-                                                    return label;
-                                                }} contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', padding: '12px' }} />
-                                                <Bar dataKey="protein" name="タンパク質(g)" fill="#fbbf24" radius={[4, 4, 0, 0]} />
-                                                <Line type="monotone" dataKey="target_protein" name="目標(g)" stroke="#e2e8f0" strokeWidth={2} strokeDasharray="5 5" dot={false} />
-                                            </ComposedChart>
-                                        </ResponsiveContainer>
-                                    </AnalysisChartCard>
-
-                                    {/* Fat Chart */}
-                                    <AnalysisChartCard title="F (脂質) (g)" color="emerald">
-                                        <ResponsiveContainer width="100%" height="100%">
-                                            <ComposedChart data={analysisData}>
-                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                                <XAxis dataKey="date" axisLine={{ stroke: '#000000', strokeWidth: 0.3 }} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} tickFormatter={(val) => {
-                                                    if (!val) return '';
-                                                    const parts = val.split('-');
-                                                    if (parts.length === 3) return `${parseInt(parts[1], 10)}/${parseInt(parts[2], 10)}`;
-                                                    return val;
-                                                }} />
-                                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} />
-                                                <Tooltip labelFormatter={(label: string) => {
-                                                    if (!label) return '';
-                                                    const parts = label.split('-');
-                                                    if (parts.length === 3) return `${parseInt(parts[1], 10)}/${parseInt(parts[2], 10)}`;
-                                                    return label;
-                                                }} contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', padding: '12px' }} />
-                                                <Bar dataKey="fat" name="脂質(g)" fill="#10b981" radius={[4, 4, 0, 0]} />
-                                                <Line type="monotone" dataKey="target_fat" name="目標(g)" stroke="#e2e8f0" strokeWidth={2} strokeDasharray="5 5" dot={false} />
-                                            </ComposedChart>
-                                        </ResponsiveContainer>
-                                    </AnalysisChartCard>
-
-                                    {/* Carbs Chart */}
-                                    <AnalysisChartCard title="C (炭水化物) (g)" color="blue">
-                                        <ResponsiveContainer width="100%" height="100%">
-                                            <ComposedChart data={analysisData}>
-                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                                <XAxis dataKey="date" axisLine={{ stroke: '#000000', strokeWidth: 0.3 }} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} tickFormatter={(val) => {
-                                                    if (!val) return '';
-                                                    const parts = val.split('-');
-                                                    if (parts.length === 3) return `${parseInt(parts[1], 10)}/${parseInt(parts[2], 10)}`;
-                                                    return val;
-                                                }} />
-                                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} />
-                                                <Tooltip labelFormatter={(label: string) => {
-                                                    if (!label) return '';
-                                                    const parts = label.split('-');
-                                                    if (parts.length === 3) return `${parseInt(parts[1], 10)}/${parseInt(parts[2], 10)}`;
-                                                    return label;
-                                                }} contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', padding: '12px' }} />
-                                                <Bar dataKey="carbs" name="炭水化物(g)" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                                                <Line type="monotone" dataKey="target_carbs" name="目標(g)" stroke="#e2e8f0" strokeWidth={2} strokeDasharray="5 5" dot={false} />
-                                            </ComposedChart>
-                                        </ResponsiveContainer>
-                                    </AnalysisChartCard>
-
-                                    {/* Fiber Chart */}
-                                    <AnalysisChartCard title="食物繊維 (g)" color="teal">
-                                        <ResponsiveContainer width="100%" height="100%">
-                                            <ComposedChart data={analysisData}>
-                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                                <XAxis dataKey="date" axisLine={{ stroke: '#000000', strokeWidth: 0.3 }} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} tickFormatter={(val) => {
-                                                    if (!val) return '';
-                                                    const parts = val.split('-');
-                                                    if (parts.length === 3) return `${parseInt(parts[1], 10)}/${parseInt(parts[2], 10)}`;
-                                                    return val;
-                                                }} />
-                                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} />
-                                                <Tooltip labelFormatter={(label: string) => {
-                                                    if (!label) return '';
-                                                    const parts = label.split('-');
-                                                    if (parts.length === 3) return `${parseInt(parts[1], 10)}/${parseInt(parts[2], 10)}`;
-                                                    return label;
-                                                }} contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', padding: '12px' }} />
-                                                <Bar dataKey="fiber" name="食物繊維(g)" fill="#14b8a6" radius={[4, 4, 0, 0]} />
-                                                <Line type="monotone" dataKey="target_fiber" name="目標(g)" stroke="#e2e8f0" strokeWidth={2} strokeDasharray="5 5" dot={false} />
-                                            </ComposedChart>
-                                        </ResponsiveContainer>
-                                    </AnalysisChartCard>
-                                </div>
-
-                                {/* Steps Chart */}
-                                <AnalysisChartCard title="歩数 (step)" color="emerald">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <ComposedChart data={analysisData}>
-                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                            <XAxis dataKey="date" axisLine={{ stroke: '#000000', strokeWidth: 0.3 }} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} tickFormatter={(val) => {
-                                                if (!val) return '';
-                                                const parts = val.split('-');
-                                                if (parts.length === 3) return `${parseInt(parts[1], 10)}/${parseInt(parts[2], 10)}`;
-                                                return val;
-                                            }} />
-                                            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} />
-                                            <Tooltip labelFormatter={(label: string) => {
-                                                if (!label) return '';
-                                                const parts = label.split('-');
-                                                if (parts.length === 3) return `${parseInt(parts[1], 10)}/${parseInt(parts[2], 10)}`;
-                                                return label;
-                                            }} contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', padding: '12px' }} />
-                                            <Bar dataKey="steps" name="歩数" fill="#10b981" radius={[4, 4, 0, 0]} />
-                                            <Line type="monotone" dataKey="target_steps" name="目標" stroke="#e2e8f0" strokeWidth={2} strokeDasharray="5 5" dot={false} />
-                                        </ComposedChart>
-                                    </ResponsiveContainer>
-                                </AnalysisChartCard>
-
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                    {/* Sleep Chart */}
-                                    <AnalysisChartCard title="睡眠時間 (h)" color="indigo">
-                                        <ResponsiveContainer width="100%" height="100%">
-                                            <ComposedChart data={analysisData}>
-                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                                <XAxis dataKey="date" axisLine={{ stroke: '#000000', strokeWidth: 0.3 }} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} tickFormatter={(val) => {
-                                                    if (!val) return '';
-                                                    const parts = val.split('-');
-                                                    if (parts.length === 3) return `${parseInt(parts[1], 10)}/${parseInt(parts[2], 10)}`;
-                                                    return val;
-                                                }} />
-                                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} />
-                                                <Tooltip labelFormatter={(label: string) => {
-                                                    if (!label) return '';
-                                                    const parts = label.split('-');
-                                                    if (parts.length === 3) return `${parseInt(parts[1], 10)}/${parseInt(parts[2], 10)}`;
-                                                    return label;
-                                                }} contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', padding: '12px' }} />
-                                                <Bar dataKey="sleep" name="睡眠時間" fill="#6366f1" radius={[4, 4, 0, 0]} />
-                                                <Line type="monotone" dataKey="target_sleep" name="目標" stroke="#e2e8f0" strokeWidth={2} strokeDasharray="5 5" dot={false} />
-                                            </ComposedChart>
-                                        </ResponsiveContainer>
-                                    </AnalysisChartCard>
-
-                                    {/* Water Chart */}
-                                    <AnalysisChartCard title="水分摂取量 (l)" color="sky">
-                                        <ResponsiveContainer width="100%" height="100%">
-                                            <ComposedChart data={analysisData}>
-                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                                <XAxis dataKey="date" axisLine={{ stroke: '#000000', strokeWidth: 0.3 }} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} tickFormatter={(val) => {
-                                                    if (!val) return '';
-                                                    const parts = val.split('-');
-                                                    if (parts.length === 3) return `${parseInt(parts[1], 10)}/${parseInt(parts[2], 10)}`;
-                                                    return val;
-                                                }} />
-                                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} />
-                                                <Tooltip labelFormatter={(label: string) => {
-                                                    if (!label) return '';
-                                                    const parts = label.split('-');
-                                                    if (parts.length === 3) return `${parseInt(parts[1], 10)}/${parseInt(parts[2], 10)}`;
-                                                    return label;
-                                                }} contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', padding: '12px' }} />
-                                                <Bar dataKey="water" name="水分(L)" fill="#0ea5e9" radius={[4, 4, 0, 0]} />
-                                                <Line type="monotone" dataKey="target_water" name="目標" stroke="#e2e8f0" strokeWidth={2} strokeDasharray="5 5" dot={false} />
-                                            </ComposedChart>
-                                        </ResponsiveContainer>
-                                    </AnalysisChartCard>
-                                </div>
-
-                                {/* Workout Chart */}
-                                <AnalysisChartCard title="筋トレ (times)" color="orange">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <ComposedChart data={analysisData}>
-                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                            <XAxis dataKey="date" axisLine={{ stroke: '#000000', strokeWidth: 0.3 }} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} tickFormatter={(val) => {
-                                                if (!val) return '';
-                                                const parts = val.split('-');
-                                                if (parts.length === 3) return `${parseInt(parts[1], 10)}/${parseInt(parts[2], 10)}`;
-                                                return val;
-                                            }} />
-                                            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} />
-                                            <Tooltip labelFormatter={(label: string) => {
-                                                if (!label) return '';
-                                                const parts = label.split('-');
-                                                if (parts.length === 3) return `${parseInt(parts[1], 10)}/${parseInt(parts[2], 10)}`;
-                                                return label;
-                                            }} contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', padding: '12px' }} />
-                                            <Bar dataKey="workout" name="筋トレ" fill="#f97316" radius={[4, 4, 0, 0]} />
-                                            <Line type="monotone" dataKey="target_workout" name="目標" stroke="#e2e8f0" strokeWidth={2} strokeDasharray="5 5" dot={false} />
-                                        </ComposedChart>
-                                    </ResponsiveContainer>
-                                </AnalysisChartCard>
-
-                                {/* Weight List (Collapsible) */}
-                                <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-                                    <button onClick={() => setIsWeightListOpen(!isWeightListOpen)} className="w-full p-6 flex items-center justify-between hover:bg-gray-50 transition-colors">
-                                        <h2 className="text-lg font-black flex items-center gap-2"><span className="w-2 h-6 bg-gray-900 rounded-full"></span>体重・歩数記録一覧</h2>
-                                        <svg className={`w-5 h-5 text-gray-400 transition-transform ${isWeightListOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                        </svg>
-                                    </button>
-                                    {isWeightListOpen && (
-                                        <div className="overflow-x-auto border-t border-gray-100">
-                                            <table className="w-full text-sm text-left">
-                                                <thead>
-                                                    <tr className="bg-gray-50/50 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-100">
-                                                        <th className="px-3 sm:px-6 py-4 whitespace-nowrap">日付</th>
-                                                        <th className="px-3 sm:px-6 py-4 text-center whitespace-nowrap">体重</th>
-                                                        <th className="px-3 sm:px-6 py-4 text-center whitespace-nowrap">歩数</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="divide-y divide-gray-100">
-                                                    {[...processedWeightData].reverse().map((r, i) => (
-                                                        <tr key={i} className="hover:bg-gray-50">
-                                                            <td className="px-3 sm:px-6 py-4 font-bold whitespace-nowrap">
-                                                                {(() => {
-                                                                    if (!r.recorded_date) return '-';
-                                                                    const parts = r.recorded_date.split('-');
-                                                                    return parts.length === 3 ? `${parseInt(parts[1], 10)}/${parseInt(parts[2], 10)}` : r.recorded_date;
-                                                                })()}
-                                                            </td>
-                                                            <td className="px-3 sm:px-6 py-4 text-center font-black text-blue-600 whitespace-nowrap">{r.weight_kg || '-'} kg</td>
-                                                            <td className="px-3 sm:px-6 py-4 text-center font-black text-gray-500 whitespace-nowrap">{r.steps?.toLocaleString() || '-'} 歩</td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        )}
-
-                        {!loadingData && activeTab === 'weekly' && (
-                            <div className="space-y-6 pb-20 animate-fadeIn">
-                                <div className="bg-white p-4 sm:p-6 rounded-2xl border border-gray-200 shadow-sm space-y-6 overflow-hidden">
-                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                                        <h2 className="text-xl font-black flex items-center gap-2">
-                                            <span className="w-2 h-8 bg-rose-500 rounded-full"></span>
-                                            目標と平均
-                                        </h2>
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-xs font-bold text-gray-500 whitespace-nowrap">週:</span>
-                                            <select 
-                                                value={selectedWeek} 
-                                                onChange={(e) => setSelectedWeek(e.target.value)}
-                                                className="bg-gray-50 border border-gray-200 text-gray-900 text-sm font-bold rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 outline-none"
-                                            >
-                                                {availableWeeks.map(w => (
-                                                    <option key={w.value} value={w.value}>{w.label}</option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                    </div>
-
-                                    {weeklyStats ? (
-                                        <div className="overflow-x-auto -mx-4 sm:mx-0">
-                                            <table className="w-full text-sm text-left border-collapse min-w-[300px]">
-                                                <thead>
-                                                    <tr className="bg-gray-50/50 text-[10px] font-black text-gray-400 uppercase tracking-widest border-y border-gray-100">
-                                                        <th className="px-4 sm:px-6 py-4 whitespace-nowrap">項目</th>
-                                                        <th className="px-4 sm:px-6 py-4 text-center whitespace-nowrap">合計</th>
-                                                        <th className="px-4 sm:px-6 py-4 text-center whitespace-nowrap">平均</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="divide-y divide-gray-100">
-                                                    <tr className="hover:bg-gray-50 transition-colors">
-                                                        <td className="px-4 sm:px-6 py-4 font-bold whitespace-nowrap text-gray-700">カロリー</td>
-                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-rose-600 whitespace-nowrap">
-                                                            {weeklyStats.sum.calories.toLocaleString()} <span className="text-[9px] text-gray-400 font-bold">/ {(weeklyStats.target.calories * 7).toLocaleString()}</span>
-                                                        </td>
-                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-rose-600/70 whitespace-nowrap">
-                                                            {weeklyStats.avg.calories.toLocaleString()} <span className="text-[9px] text-gray-400 font-bold">/ {weeklyStats.target.calories.toLocaleString()}</span>
-                                                        </td>
-                                                    </tr>
-                                                    <tr className="hover:bg-gray-50 transition-colors">
-                                                        <td className="px-4 sm:px-6 py-4 font-bold whitespace-nowrap text-gray-700">タンパク質</td>
-                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-amber-500 whitespace-nowrap">
-                                                            {weeklyStats.sum.protein} <span className="text-[9px] text-gray-400 font-bold">/ {weeklyStats.target.protein * 7}</span>
-                                                        </td>
-                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-amber-500/70 whitespace-nowrap">
-                                                            {weeklyStats.avg.protein} <span className="text-[9px] text-gray-400 font-bold">/ {weeklyStats.target.protein}</span>
-                                                        </td>
-                                                    </tr>
-                                                    <tr className="hover:bg-gray-50 transition-colors">
-                                                        <td className="px-4 sm:px-6 py-4 font-bold whitespace-nowrap text-gray-700">脂質</td>
-                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-emerald-500 whitespace-nowrap">
-                                                            {weeklyStats.sum.fat} <span className="text-[9px] text-gray-400 font-bold">/ {weeklyStats.target.fat * 7}</span>
-                                                        </td>
-                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-emerald-500/70 whitespace-nowrap">
-                                                            {weeklyStats.avg.fat} <span className="text-[9px] text-gray-400 font-bold">/ {weeklyStats.target.fat}</span>
-                                                        </td>
-                                                    </tr>
-                                                    <tr className="hover:bg-gray-50 transition-colors">
-                                                        <td className="px-4 sm:px-6 py-4 font-bold whitespace-nowrap text-gray-700">糖質</td>
-                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-blue-500 whitespace-nowrap">
-                                                            {weeklyStats.sum.carbs} <span className="text-[9px] text-gray-400 font-bold">/ {weeklyStats.target.carbs * 7}</span>
-                                                        </td>
-                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-blue-500/70 whitespace-nowrap">
-                                                            {weeklyStats.avg.carbs} <span className="text-[9px] text-gray-400 font-bold">/ {weeklyStats.target.carbs}</span>
-                                                        </td>
-                                                    </tr>
-                                                    <tr className="hover:bg-gray-50 transition-colors">
-                                                        <td className="px-4 sm:px-6 py-4 font-bold whitespace-nowrap text-gray-700">食物繊維</td>
-                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-teal-500 whitespace-nowrap">
-                                                            {weeklyStats.sum.fiber} <span className="text-[9px] text-gray-400 font-bold">/ {(weeklyStats.target.fiber || 20) * 7}</span>
-                                                        </td>
-                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-teal-500/70 whitespace-nowrap">
-                                                            {weeklyStats.avg.fiber} <span className="text-[9px] text-gray-400 font-bold">/ {weeklyStats.target.fiber || 20}</span>
-                                                        </td>
-                                                    </tr>
-                                                    <tr className="hover:bg-gray-50 transition-colors">
-                                                        <td className="px-4 sm:px-6 py-4 font-bold whitespace-nowrap text-gray-700">睡眠</td>
-                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-indigo-500 whitespace-nowrap">
-                                                            {weeklyStats.sum.sleep} <span className="text-[9px] text-gray-400 font-bold">/ {weeklyStats.habitTargets.sleep * 7}</span>
-                                                        </td>
-                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-indigo-500/70 whitespace-nowrap">
-                                                            {weeklyStats.avg.sleep} <span className="text-[9px] text-gray-400 font-bold">/ {weeklyStats.habitTargets.sleep}</span>
-                                                        </td>
-                                                    </tr>
-                                                    <tr className="hover:bg-gray-50 transition-colors">
-                                                        <td className="px-4 sm:px-6 py-4 font-bold whitespace-nowrap text-gray-700">筋トレ</td>
-                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-orange-500 whitespace-nowrap">
-                                                            {weeklyStats.sum.workout} <span className="text-[9px] text-gray-400 font-bold">/ {(weeklyStats.habitTargets.workout ?? 1) * 7}</span>
-                                                        </td>
-                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-orange-500/70 whitespace-nowrap">
-                                                            {weeklyStats.avg.workout} <span className="text-[9px] text-gray-400 font-bold">/ {weeklyStats.habitTargets.workout ?? 1}</span>
-                                                        </td>
-                                                    </tr>
-                                                    <tr className="hover:bg-gray-50 transition-colors">
-                                                        <td className="px-4 sm:px-6 py-4 font-bold whitespace-nowrap text-gray-700">歩数</td>
-                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-sky-500 whitespace-nowrap">
-                                                            {weeklyStats.sum.steps.toLocaleString()} <span className="text-[9px] text-gray-400 font-bold">/ {(weeklyStats.habitTargets.steps * 7).toLocaleString()}</span>
-                                                        </td>
-                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-sky-500/70 whitespace-nowrap">
-                                                            {weeklyStats.avg.steps.toLocaleString()} <span className="text-[9px] text-gray-400 font-bold">/ {weeklyStats.habitTargets.steps.toLocaleString()}</span>
-                                                        </td>
-                                                    </tr>
-                                                    <tr className="hover:bg-gray-50 transition-colors">
-                                                        <td className="px-4 sm:px-6 py-4 font-bold whitespace-nowrap text-gray-700">水</td>
-                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-cyan-500 whitespace-nowrap">
-                                                            {weeklyStats.sum.water} <span className="text-[9px] text-gray-400 font-bold">/ {(weeklyStats.habitTargets.water * 7).toFixed(1)}</span>
-                                                        </td>
-                                                        <td className="px-4 sm:px-6 py-4 text-center font-black text-cyan-500/70 whitespace-nowrap">
-                                                            {weeklyStats.avg.water} <span className="text-[9px] text-gray-400 font-bold">/ {weeklyStats.habitTargets.water}</span>
-                                                        </td>
-                                                    </tr>
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    ) : (
-                                        <div className="p-12 text-center text-gray-400 font-bold italic border-2 border-dashed border-gray-100 rounded-2xl">記録がありません</div>
-                                    )}
-                                </div>
-                            </div>
-                        )}
                     </div>
                 )}
             </div>
             {message && <div className="fixed bottom-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-8 py-4 rounded-2xl font-black shadow-2xl z-50">{message}</div>}
         </div>
+    </div>
     );
 
     function addQuitGoal() {
