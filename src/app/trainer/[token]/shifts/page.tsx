@@ -50,37 +50,44 @@ export default function ShiftsPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Top Navigation */}
-      <header className="bg-gradient-to-b from-white to-gray-50 border-b border-gray-100 shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="text-xl font-normal text-gray-900">
-              T&J GYM
-            </div>
+      <header className="bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-50 h-16">
+        <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between relative">
+          {/* Left: Back Button */}
+          <div className="z-10 min-w-[44px]">
+            <Link
+              href={`/trainer/${token}`}
+              className="w-10 h-10 flex items-center justify-center text-blue-500 bg-white rounded-full shadow-sm border border-gray-100 transition-all active:scale-90 hover:bg-gray-50"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+              </svg>
+            </Link>
+          </div>
+
+          {/* Center: Title */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <h1 className="text-[17px] font-normal text-gray-900 tracking-tight whitespace-nowrap pointer-events-auto">
+              シフト管理
+            </h1>
+          </div>
+
+          {/* Right: Account Pill */}
+          <div className="z-10 flex justify-end min-w-[44px]">
             {trainer && (
-              <div className="bg-white border border-gray-300 px-4 py-2 rounded-lg shadow-sm text-sm flex items-center space-x-3">
-                <span className="text-gray-700 font-normal">
-                  {getStoreDisplayName(trainer.storeId)}
+              <div className="h-10 px-4 flex items-center gap-1 bg-white rounded-full shadow-sm border border-gray-100 transition-all">
+                <span className="text-gray-700 text-[13px] font-normal truncate max-w-[100px]">
+                  {trainer.name}
                 </span>
-                <span className="px-3 py-1 rounded-full text-xs font-normal border bg-blue-100 text-blue-700 border-blue-300">
+                <div className="ml-1 px-2 py-0.5 rounded-full text-[10px] font-normal whitespace-nowrap bg-blue-500 text-white">
                   トレーナー
-                </span>
+                </div>
               </div>
             )}
           </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="relative flex items-center justify-center mb-6">
-          <Link
-            href={`/trainer/${token}`}
-            className="absolute left-0 inline-flex items-center text-gray-600 hover:text-gray-900 font-normal text-xl px-2 py-1"
-            aria-label="ホームへ戻る"
-          >
-            ＜
-          </Link>
-          <h1 className="text-2xl font-normal text-gray-900">シフト管理</h1>
-        </div>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-12">
 
         <TrainerShiftPage token={token} trainerName={trainer?.name} />
       </main>

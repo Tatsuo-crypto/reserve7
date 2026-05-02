@@ -73,42 +73,35 @@ export default function TrainerDashboardPage() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gray-50">
       {/* Top Navigation */}
-      <header className="bg-gradient-to-b from-white to-gray-50 border-b border-gray-100 shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="text-xl font-normal text-gray-900">
-              T&J GYM
-            </div>
-            <div className="bg-white border border-gray-300 px-4 py-2 rounded-lg shadow-sm text-sm flex items-center space-x-3">
-              <span className="text-gray-700 font-normal">
-                {getStoreDisplayName(trainer.storeId)}
+      <header className="bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-50 h-16">
+        <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between relative">
+          {/* Left: Spacer to center title */}
+          <div className="min-w-[44px]"></div>
+
+          {/* Center: Title */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <h1 className="text-[17px] font-normal text-gray-900 tracking-tight whitespace-nowrap pointer-events-auto">
+              ダッシュボード
+            </h1>
+          </div>
+
+          {/* Right: Account Pill */}
+          <div className="z-10 flex justify-end min-w-[44px]">
+            <div className="h-10 px-4 flex items-center gap-1 bg-white rounded-full shadow-sm border border-gray-100 transition-all">
+              <span className="text-gray-700 text-[13px] font-normal truncate max-w-[100px]">
+                {trainer.name}
               </span>
-              <span className="px-3 py-1 rounded-full text-xs font-normal border bg-blue-100 text-blue-700 border-blue-300">
+              <div className="ml-1 px-2 py-0.5 rounded-full text-[10px] font-normal whitespace-nowrap bg-blue-500 text-white">
                 トレーナー
-              </span>
+              </div>
             </div>
           </div>
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
-        {/* Header */}
-        <div className="bg-white shadow-sm border border-gray-200 rounded-lg mb-6">
-          <div className="px-6 py-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-2xl font-normal text-gray-900">
-                  ダッシュボード
-                </h1>
-                <p className="mt-1 text-sm text-gray-600">
-                  ようこそ、{trainer.name}さん
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-12">
 
       {/* Dashboard Content */}
       <div className="space-y-6 pb-6">
