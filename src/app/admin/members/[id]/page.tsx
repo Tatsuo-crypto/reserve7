@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import Link from 'next/link'
 
 interface MemberDetail {
@@ -70,6 +70,16 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
     fetchData()
   }, [session, status, memberId, router])
 
+  const pathname = usePathname()
+  useEffect(() => {
+    if (member && !searchParams.get('name')) {
+      const lastName = member.fullName.split(/[\s　]+/)[0]
+      const params = new URLSearchParams(searchParams.toString())
+      params.set('name', lastName)
+      router.replace(`${pathname}?${params.toString()}`)
+    }
+  }, [member, searchParams, router, pathname])
+
   if (status === 'loading' || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center text-gray-600 font-normal tracking-widest uppercase">読み込み中...</div>
@@ -83,23 +93,8 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gray-50 pt-4 pb-12">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-8 mt-4">
-          <div className="flex items-center gap-4 mb-4">
-             <h2 className="text-2xl font-normal text-gray-900">{member.fullName} 様</h2>
-             <span className={`px-3 py-1 text-xs font-normal rounded-full shadow-sm border ${
-               member.status === 'suspended' ? 'bg-yellow-50 text-yellow-600 border-yellow-100' :
-               member.status === 'withdrawn' ? 'bg-red-50 text-red-600 border-red-100' :
-               'bg-green-50 text-green-600 border-green-100'
-             }`}>
-               {member.status === 'suspended' ? '休会中' : 
-                member.status === 'withdrawn' ? '退会済み' : '在籍中'}
-             </span>
-          </div>
-        </div>
-
         {/* Action Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-10">
           {/* Copy URL Card */}

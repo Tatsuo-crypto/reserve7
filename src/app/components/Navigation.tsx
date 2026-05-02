@@ -39,7 +39,8 @@ function NavigationContent() {
     
     // Member detail pages (try to get name from somewhere or just generic)
     if (pathname?.startsWith('/admin/members/')) {
-       return '会員詳細'
+       const name = searchParams.get('name')
+       return name ? `${name}様` : '会員詳細'
     }
 
     if (pathname === '/dashboard') {

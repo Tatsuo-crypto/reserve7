@@ -301,7 +301,10 @@ function MembersPageContent() {
                   {(showOnlyActive ? sortedMembers.filter(m => (m.status || 'active') === 'active') : sortedMembers).map((member) => (
                     <tr 
                       key={member.id}
-                      onClick={() => router.push(`/admin/members/${member.id}`)}
+                      onClick={() => {
+                        const lastName = (member.full_name || '').split(/[\s　]+/)[0]
+                        router.push(`/admin/members/${member.id}?name=${encodeURIComponent(lastName)}`)
+                      }}
                       className="hover:bg-blue-50/30 transition-colors cursor-pointer group"
                     >
                       <td className="px-4 py-4">
