@@ -7,6 +7,8 @@ interface InputTabProps {
     userId: string;
     token: string;
     isAdmin: boolean;
+    sharedState: any;
+    onStateChange: (state: any) => void;
 }
 
 interface NutrientData {
