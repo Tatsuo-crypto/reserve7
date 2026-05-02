@@ -1,6 +1,6 @@
 'use client'
 
-import { useParams, useSearchParams } from 'next/navigation'
+import { useParams, useSearchParams, useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import dynamic from 'next/dynamic'
@@ -29,6 +29,7 @@ type TabType = 'home' | 'res' | 'diet' | 'plan' | 'online'
 export default function ClientReservationsPage() {
   const params = useParams()
   const searchParams = useSearchParams()
+  const router = useRouter()
   const token = params?.token as string
   const fromAdmin = searchParams?.get('from') === 'admin'
 
