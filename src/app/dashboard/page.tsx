@@ -113,11 +113,6 @@ const AdminDashboard = () => {
         {/* HOME / RESERVATION TAB */}
         {activeTab === 'home' && (
           <div className="animate-slideUp -mt-2">
-            <AdminHeader 
-              title="予約状況" 
-              showBack={false}
-              rightElement={rightPill}
-            />
             <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden">
               <div className="p-0">
                 <CalendarView key={searchParams.get('_t') || 'initial'} />
@@ -129,12 +124,6 @@ const AdminDashboard = () => {
         {/* OTHERS TAB */}
         {activeTab === 'others' && (
           <div className="grid grid-cols-1 gap-4 animate-slideUp">
-            <AdminHeader 
-              title="管理・設定" 
-              subTitle="各種マスター設定と管理"
-              showBack={false}
-              rightElement={rightPill}
-            />
             <OtherSubCard href="/admin/trainers" label="トレーナー管理" subLabel="スタッフの登録・編集" color="emerald" icon={<path d="M12 14l9-5-9-5-9 5 9 5z" />} />
             <OtherSubCard href="/admin/stores" label="店舗管理" subLabel="店舗情報の変更・設定" color="indigo" icon={<path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />} />
             <OtherSubCard href="/admin/shifts" label="シフト管理" subLabel="勤務スケジュールの作成" color="emerald" icon={<path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />} />
