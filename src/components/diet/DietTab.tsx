@@ -40,7 +40,7 @@ export default function DietTab({ userId, token, isAdmin, sharedState, onStateCh
                         <InputTab 
                             userId={userId} 
                             token={token} 
-                            isAdmin={isAdmin} 
+                            isAdmin={!!isAdmin} 
                             sharedState={sharedState} 
                             onStateChange={onStateChange} 
                         />
