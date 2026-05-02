@@ -47,7 +47,7 @@ const BottomNavigationContent = () => {
   ];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-100 pb-safe">
+    <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-gray-100 pb-8 shadow-[0_-1px_10px_rgba(0,0,0,0.02)]">
       <div className="max-w-md mx-auto flex items-end px-2 py-1 relative">
         {navItems.map((item) => {
           // 遷移先URLの決定
