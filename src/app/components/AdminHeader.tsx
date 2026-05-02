@@ -33,11 +33,11 @@ export default function AdminHeader({ title, subTitle, onBack, rightElement, sho
 
         {/* Title Group */}
         <div className="text-center px-12">
-          <h1 className="text-2xl font-black text-gray-900 tracking-tight leading-none">
+          <h1 className="text-xl sm:text-2xl font-normal text-gray-900 tracking-tight leading-none">
             {title}
           </h1>
           {subTitle && (
-            <p className="mt-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-widest italic">
+            <p className="mt-1.5 text-[10px] font-normal text-gray-400 uppercase tracking-widest italic">
               {subTitle}
             </p>
           )}

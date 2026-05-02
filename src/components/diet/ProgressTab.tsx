@@ -123,12 +123,12 @@ export default function ProgressTab({ userId, token }: ProgressTabProps) {
             <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 space-y-8">
                 <div className="flex items-center gap-2">
                     <div className="w-1 h-6 bg-rose-500 rounded-full"></div>
-                    <h2 className="text-lg font-black text-gray-900">今週の達成状況 (月〜日)</h2>
+                    <h2 className="text-lg font-normal text-gray-900">今週の達成状況 (月〜日)</h2>
                 </div>
 
                 <div className="grid gap-12">
                     <div className="space-y-8">
-                        <h3 className="text-xs font-black text-gray-300 uppercase tracking-widest border-b pb-2">食事・栄養バランス</h3>
+                        <h3 className="text-xs font-normal text-gray-300 uppercase tracking-widest border-b pb-2">食事・栄養バランス</h3>
                         <WeeklyProgressItem 
                             label="合計カロリー" 
                             actual={weeklyStats.actual.calories} 
@@ -164,7 +164,7 @@ export default function ProgressTab({ userId, token }: ProgressTabProps) {
                     </div>
 
                     <div className="space-y-8">
-                        <h3 className="text-xs font-black text-gray-300 uppercase tracking-widest border-b pb-2">ライフスタイル・運動</h3>
+                        <h3 className="text-xs font-normal text-gray-300 uppercase tracking-widest border-b pb-2">ライフスタイル・運動</h3>
                         <WeeklyProgressItem 
                             label="合計歩数" 
                             actual={weeklyStats.actual.steps} 
@@ -224,17 +224,17 @@ function WeeklyProgressItem({ label, actual, target, unit, color, perDay, isFreq
         <div className="space-y-4">
             <div className="flex justify-between items-end">
                 <div className="space-y-1">
-                    <div className="text-xs font-black text-gray-400 uppercase tracking-wider">{label}</div>
+                    <div className="text-xs font-normal text-gray-400 uppercase tracking-wider">{label}</div>
                     <div className="flex items-baseline gap-1">
-                        <span className="text-2xl font-black tabular-nums text-gray-900">{isFrequency ? actual : actual.toLocaleString()}</span>
+                        <span className="text-2xl font-normal tabular-nums text-gray-900">{isFrequency ? actual : actual.toLocaleString()}</span>
                         <span className="text-sm font-bold text-gray-300">/ {target.toLocaleString()} {unit}</span>
                     </div>
                 </div>
                 <div className="text-right">
-                    <div className="text-[10px] font-black text-gray-400">
+                    <div className="text-[10px] font-normal text-gray-400">
                         {isFrequency ? `週目標: ${target}${unit}` : `1日目標: ${perDay}${unit}`}
                     </div>
-                    <div className={`text-xl font-black tabular-nums ${pct >= 100 ? 'text-emerald-500' : textColors[color]}`}>
+                    <div className={`text-xl font-normal tabular-nums ${pct >= 100 ? 'text-emerald-500' : textColors[color]}`}>
                         {pct}%
                     </div>
                 </div>
@@ -245,7 +245,7 @@ function WeeklyProgressItem({ label, actual, target, unit, color, perDay, isFreq
                     style={{ width: `${pct}%` }} 
                 />
             </div>
-            <div className="flex justify-between text-[8px] font-black text-gray-300 uppercase tracking-widest">
+            <div className="flex justify-between text-[8px] font-normal text-gray-300 uppercase tracking-widest">
                 <span>0%</span>
                 <span>50%</span>
                 <span>100%達成</span>

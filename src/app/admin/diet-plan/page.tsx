@@ -650,16 +650,16 @@ function DietPlanPageContent() {
                         </svg>
                     </button>
                     {!selectedMember ? (
-                        <h1 className="text-2xl sm:text-3xl font-black tracking-tight inline-block text-gray-900">ダイエット管理</h1>
+                        <h1 className="text-2xl sm:text-3xl font-normal tracking-tight inline-block text-gray-900">ダイエット管理</h1>
                     ) : (
                         <div className="flex flex-col items-center mx-auto py-10">
-                            <h1 className="text-5xl font-black tracking-tight text-gray-900">{selectedMember.full_name}</h1>
+                            <h1 className="text-xl sm:text-2xl font-normal tracking-tight text-gray-900">{selectedMember.full_name}</h1>
                         </div>
                     )}
                     {selectedMember && (
                         <button 
                             onClick={() => setSelectedMember(null)} 
-                            className="absolute right-0 top-1/2 -translate-y-1/2 text-[10px] font-black text-gray-400 hover:text-rose-500 bg-white px-4 py-2 rounded-full uppercase tracking-widest border border-gray-100 shadow-sm transition-all"
+                            className="absolute right-0 top-1/2 -translate-y-1/2 text-[10px] font-normal text-gray-400 hover:text-rose-500 bg-white px-4 py-2 rounded-full uppercase tracking-widest border border-gray-100 shadow-sm transition-all"
                         >
                             会員変更
                         </button>
@@ -669,7 +669,7 @@ function DietPlanPageContent() {
                 {!selectedMember ? (
                     <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden">
                         <div className="p-8 border-b border-gray-50">
-                            <h2 className="text-xl font-black mb-6 flex items-center gap-2">
+                            <h2 className="text-xl font-normal mb-6 flex items-center gap-2">
                                 <span className="w-1.5 h-6 bg-rose-500 rounded-full"></span>
                                 会員を選択
                             </h2>
@@ -679,7 +679,7 @@ function DietPlanPageContent() {
                                     placeholder="名前やメールアドレスで検索..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-rose-500 outline-none transition-all font-bold"
+                                    className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-rose-500 outline-none transition-all font-normal"
                                 />
                                 <svg className="absolute left-4 top-4.5 w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -696,8 +696,8 @@ function DietPlanPageContent() {
                                     <div className="flex-1 flex items-center gap-4 text-left">
                                         <div className={`w-3 h-3 rounded-full ${getStatusDotColor(member.status)} shadow-sm`} />
                                         <div>
-                                            <div className="font-black text-gray-800 group-hover:text-rose-600 transition-colors">{member.full_name}</div>
-                                            <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{member.email}</div>
+                                            <div className="font-normal text-gray-800 group-hover:text-rose-600 transition-colors">{member.full_name}</div>
+                                            <div className="text-[10px] font-normal text-gray-400 uppercase tracking-widest">{member.email}</div>
                                         </div>
                                     </div>
                                     <div className="text-[10px] font-black text-gray-400 bg-gray-50 px-4 py-2 rounded-full group-hover:bg-rose-500 group-hover:text-white transition-all uppercase tracking-widest">選択</div>

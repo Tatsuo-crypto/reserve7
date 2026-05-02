@@ -21,13 +21,13 @@ export default function DietTab({ userId, token, isAdmin, sharedState, onStateCh
             <div className="bg-gray-100 p-1 rounded-2xl flex items-center mb-4">
                 <button 
                     onClick={() => setMode('input')}
-                    className={`flex-1 py-3 rounded-xl text-sm font-black transition-all ${mode === 'input' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                    className={`flex-1 py-3 rounded-xl text-sm font-normal transition-all ${mode === 'input' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
                 >
                     入力
                 </button>
                 <button 
                     onClick={() => setMode('analyze')}
-                    className={`flex-1 py-3 rounded-xl text-sm font-black transition-all ${mode === 'analyze' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                    className={`flex-1 py-3 rounded-xl text-sm font-normal transition-all ${mode === 'analyze' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
                 >
                     分析
                 </button>
