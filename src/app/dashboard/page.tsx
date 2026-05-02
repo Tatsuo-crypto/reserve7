@@ -36,64 +36,47 @@ function OtherSubCard({ href, label, subLabel, color, icon }: { href: string, la
 // ハイドレーションエラーを防ぐためのラッパーコンポーネント
 const AdminDashboard = () => {
   const searchParams = useSearchParams();
-  const [activeTab, setActiveTab] = useState<string>('home'); // 初期値を固定
+  const [activeTab, setActiveTab] = useState<string>('home');
   const [mounted, setMounted] = useState(false);
   
-  const [members, setMembers] = useState<any[]>([]);
   const [dietMembers, setDietMembers] = useState<any[]>([]);
-  const [analyticsData, setAnalyticsData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [dietLoading, setDietLoading] = useState(false);
   const router = useRouter();
-
-  // クライアントサイドでのみURLパラメータを読み込む（不一致を防止）
+  
+  // クライアントサイドでのみURLパラメータを読み込む
   useEffect(() => {
     setMounted(true);
     const tab = searchParams.get('tab');
     if (tab) setActiveTab(tab);
   }, [searchParams]);
 
+  // ダイエットタブが選択された時だけデータを取得
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [membersRes, dietMembersRes, analyticsRes] = await Promise.all([
-          fetch('/api/admin/members'),
-          fetch('/api/admin/members?diet_only=true'),
-          fetch('/api/admin/analytics?period=3m')
-        ]);
-        
-        if (membersRes.ok) {
-          const mData = await membersRes.json();
-          setMembers(mData.members || mData.data?.members || []);
+    if (activeTab === 'diet' && dietMembers.length === 0) {
+      const fetchDietMembers = async () => {
+        setDietLoading(true);
+        try {
+          const res = await fetch('/api/admin/members?diet_only=true');
+          if (res.ok) {
+            const data = await res.json();
+            setDietMembers(data.members || data.data?.members || []);
+          }
+        } catch (e) {
+          console.error('Failed to fetch diet members', e);
+        } finally {
+          setDietLoading(false);
         }
+      };
+      fetchDietMembers();
+    }
+  }, [activeTab, dietMembers.length]);
 
-        if (dietMembersRes.ok) {
-          const dData = await dietMembersRes.json();
-          setDietMembers(dData.members || dData.data?.members || []);
-        }
-        
-        if (analyticsRes.ok) {
-          const aData = await analyticsRes.json();
-          setAnalyticsData(aData);
-        }
-      } catch (e) {
-        console.error('Failed to fetch dashboard data', e);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
-
-  // マウントされるまでは何も表示しない（ハイドレーションエラー対策）
   if (!mounted) return null;
-  if (loading) return <div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div></div>;
 
   return (
     <div className="animate-fadeIn">
       <div className="max-w-5xl mx-auto space-y-6">
         
-        {/* SALES TAB - Removed as requested, now points to detailed page via BottomNavigation */}
-
         {/* DIET TAB */}
         {activeTab === 'diet' && (
           <div className="space-y-6 animate-slideUp">
@@ -104,7 +87,12 @@ const AdminDashboard = () => {
             />
             <div className="bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-6">
               <div className="space-y-3">
-                {dietMembers.length === 0 ? (
+                {dietLoading ? (
+                  <div className="py-10 text-center flex flex-col items-center gap-3">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-rose-500"></div>
+                    <span className="text-xs font-bold text-gray-400">読み込み中...</span>
+                  </div>
+                ) : dietMembers.length === 0 ? (
                   <div className="py-10 text-center text-gray-400 italic text-sm">対象者がいません</div>
                 ) : (
                   dietMembers.map(member => (
@@ -137,8 +125,6 @@ const AdminDashboard = () => {
             </div>
           </div>
         )}
-
-        {/* MEMBERS TAB - Removed as requested, now points to detailed page via BottomNavigation */}
 
         {/* OTHERS TAB */}
         {activeTab === 'others' && (
