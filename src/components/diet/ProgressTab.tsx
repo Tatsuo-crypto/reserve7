@@ -114,7 +114,7 @@ export default function ProgressTab({ userId, token }: ProgressTabProps) {
 
     if (!weeklyStats) return (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-12 text-center">
-            <p className="text-gray-400 font-bold italic">今週の記録または目標がありません</p>
+            <p className="text-gray-400 font-normal italic">今週の記録または目標がありません</p>
         </div>
     )
 
@@ -195,7 +195,7 @@ export default function ProgressTab({ userId, token }: ProgressTabProps) {
             </div>
             
             <div className="text-center">
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest italic">Weekly Progress Sync with Trainer Settings</p>
+                <p className="text-[10px] font-normal text-gray-400 uppercase tracking-widest italic">Weekly Progress Sync with Trainer Settings</p>
             </div>
         </div>
     )
@@ -227,7 +227,7 @@ function WeeklyProgressItem({ label, actual, target, unit, color, perDay, isFreq
                     <div className="text-xs font-normal text-gray-400 uppercase tracking-wider">{label}</div>
                     <div className="flex items-baseline gap-1">
                         <span className="text-2xl font-normal tabular-nums text-gray-900">{isFrequency ? actual : actual.toLocaleString()}</span>
-                        <span className="text-sm font-bold text-gray-300">/ {target.toLocaleString()} {unit}</span>
+                        <span className="text-sm font-normal text-gray-300">/ {target.toLocaleString()} {unit}</span>
                     </div>
                 </div>
                 <div className="text-right">

@@ -331,7 +331,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            <h2 className="text-xl font-bold text-gray-900 whitespace-nowrap">
+            <h2 className="text-xl font-normal text-gray-900 whitespace-nowrap">
               {formatSelectedDate(selectedDate)}
             </h2>
             <button
@@ -352,7 +352,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
         {/* Trainer Headers */}
         <div className="flex border-b border-gray-200 ml-12">
           {trainers.map((trainer) => (
-            <div key={trainer.id} className="flex-1 text-center py-2 font-bold text-gray-700 border-l border-gray-200 bg-gray-50">
+            <div key={trainer.id} className="flex-1 text-center py-2 font-normal text-gray-700 border-l border-gray-200 bg-gray-50">
               {trainer.name}
             </div>
           ))}
@@ -616,7 +616,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
                       return (
                         <div
                           key={`${event.id}-${trainer.id}`}
-                          className={`absolute px-1 py-1 rounded text-xs font-medium ${colorClass} z-10`}
+                          className={`absolute px-1 py-1 rounded text-xs font-normal ${colorClass} z-10`}
                           style={{
                             top: `${top}px`,
                             left: `${leftPercent}%`,
@@ -626,7 +626,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
                           }}
                           onClick={(e) => openEditFromEvent(e, event)}
                         >
-                          <div className="truncate font-bold leading-tight">{formatReservationTitle(event.title, event.plan)}</div>
+                          <div className="truncate font-normal leading-tight">{formatReservationTitle(event.title, event.plan)}</div>
                         </div>
                       )
                     })
@@ -698,7 +698,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
         <div className="fixed inset-0 bg-gray-900 bg-opacity-50 z-[100] flex items-center justify-center backdrop-blur-sm">
           <div className="bg-white p-6 rounded-xl shadow-2xl flex flex-col items-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4"></div>
-            <p className="text-gray-800 font-bold">予約画面へ移動中...</p>
+            <p className="text-gray-800 font-normal">予約画面へ移動中...</p>
             <p className="text-gray-500 text-xs mt-2">少々お待ちください</p>
           </div>
         </div>
@@ -709,10 +709,10 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
           <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
             <div className="mt-3">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">予約の変更</h3>
+              <h3 className="text-lg font-normal text-gray-900 mb-4">予約の変更</h3>
               <form onSubmit={handleEditSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">タイトル</label>
+                  <label className="block text-sm font-normal text-gray-700 mb-1">タイトル</label>
                   <input
                     type="text"
                     value={editFormData.title}
@@ -722,7 +722,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">担当トレーナー</label>
+                  <label className="block text-sm font-normal text-gray-700 mb-1">担当トレーナー</label>
                   <select
                     value={editFormData.trainerId || ''}
                     onChange={(e) => setEditFormData(prev => ({ ...prev, trainerId: e.target.value }))}
@@ -735,7 +735,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">開始時刻</label>
+                  <label className="block text-sm font-normal text-gray-700 mb-1">開始時刻</label>
                   <input
                     type="datetime-local"
                     value={editFormData.startTime}
@@ -745,7 +745,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">終了時刻</label>
+                  <label className="block text-sm font-normal text-gray-700 mb-1">終了時刻</label>
                   <input
                     type="datetime-local"
                     value={editFormData.endTime}
@@ -755,7 +755,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">メモ</label>
+                  <label className="block text-sm font-normal text-gray-700 mb-1">メモ</label>
                   <textarea
                     value={editFormData.notes}
                     onChange={(e) => setEditFormData(prev => ({ ...prev, notes: e.target.value }))}
@@ -805,20 +805,20 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">予約を削除しますか？</h3>
+              <h3 className="text-xl font-normal text-gray-900 mb-2">予約を削除しますか？</h3>
               <p className="text-sm text-gray-600 mb-6">この操作は取り消せません。</p>
               <div className="flex justify-center space-x-3 w-full">
                 <button
                   type="button"
                   onClick={() => setShowDeleteConfirmModal(false)}
-                  className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 bg-white rounded-xl hover:bg-gray-50 transition-colors font-medium shadow-sm"
+                  className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 bg-white rounded-xl hover:bg-gray-50 transition-colors font-normal shadow-sm"
                 >
                   キャンセル
                 </button>
                 <button
                   type="button"
                   onClick={executeDeleteReservation}
-                  className="flex-1 px-4 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors font-medium shadow-sm"
+                  className="flex-1 px-4 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors font-normal shadow-sm"
                 >
                   削除する
                 </button>

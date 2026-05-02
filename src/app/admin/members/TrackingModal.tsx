@@ -242,7 +242,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
             <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
             </svg>
-            <h2 className="text-xl font-bold text-gray-900">目標・記録管理</h2>
+            <h2 className="text-xl font-normal text-gray-900">目標・記録管理</h2>
           </div>
           <button
             onClick={onClose}
@@ -256,7 +256,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
 
         {/* 会員名表示 */}
         <div className="px-6 py-3 bg-gray-50 border-b border-gray-200">
-          <p className="text-sm text-gray-600">会員名: <span className="font-semibold text-gray-900">{memberName}</span></p>
+          <p className="text-sm text-gray-600">会員名: <span className="font-normal text-gray-900">{memberName}</span></p>
         </div>
 
         {/* メッセージ */}
@@ -299,7 +299,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key as any)}
-                className={`py-2.5 px-2 sm:px-3 text-xs sm:text-sm font-medium border-b-2 transition-colors flex flex-row items-center gap-1.5 whitespace-nowrap ${
+                className={`py-2.5 px-2 sm:px-3 text-xs sm:text-sm font-normal border-b-2 transition-colors flex flex-row items-center gap-1.5 whitespace-nowrap ${
                   activeTab === tab.key
                     ? 'border-blue-500 text-blue-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700'
@@ -319,10 +319,10 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
           {activeTab === 'yearly' && (
             <div className="space-y-6">
               <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="text-sm font-bold text-gray-700 mb-3">新規登録</h3>
+                <h3 className="text-sm font-normal text-gray-700 mb-3">新規登録</h3>
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">年</label>
+                    <label className="block text-sm font-normal text-gray-700 mb-1">年</label>
                     <input
                       type="number"
                       value={yearlyForm.year}
@@ -331,7 +331,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">目標</label>
+                    <label className="block text-sm font-normal text-gray-700 mb-1">目標</label>
                     <textarea
                       value={yearlyForm.goal_text}
                       onChange={(e) => setYearlyForm({ ...yearlyForm, goal_text: e.target.value })}
@@ -342,7 +342,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                   <button
                     onClick={() => handleSubmit('yearly_goal', yearlyForm)}
                     disabled={loading || !yearlyForm.goal_text}
-                    className="w-full bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+                    className="w-full bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-normal hover:bg-blue-700 disabled:opacity-50"
                   >
                     保存
                   </button>
@@ -350,7 +350,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
               </div>
 
               <div>
-                <h3 className="text-sm font-bold text-gray-700 mb-3">既存データ</h3>
+                <h3 className="text-sm font-normal text-gray-700 mb-3">既存データ</h3>
                 {yearlyGoals.length === 0 ? (
                   <p className="text-sm text-gray-500">データがありません</p>
                 ) : (
@@ -389,7 +389,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                         ) : (
                           <div className="flex items-center justify-between">
                             <div>
-                              <div className="text-sm font-bold text-yellow-700">{goal.year}年</div>
+                              <div className="text-sm font-normal text-yellow-700">{goal.year}年</div>
                               <div className="text-sm text-gray-900">{goal.goal_text}</div>
                             </div>
                             <div className="flex gap-2">
@@ -423,11 +423,11 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
           {activeTab === 'monthly' && (
             <div className="space-y-6">
               <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="text-sm font-bold text-gray-700 mb-3">新規登録（最大3つまで）</h3>
+                <h3 className="text-sm font-normal text-gray-700 mb-3">新規登録（最大3つまで）</h3>
                 <div className="space-y-3">
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">年</label>
+                      <label className="block text-sm font-normal text-gray-700 mb-1">年</label>
                       <input
                         type="number"
                         value={monthlyForm.year}
@@ -436,7 +436,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">月</label>
+                      <label className="block text-sm font-normal text-gray-700 mb-1">月</label>
                       <select
                         value={monthlyForm.month}
                         onChange={(e) => setMonthlyForm({ ...monthlyForm, month: parseInt(e.target.value) })}
@@ -449,7 +449,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">目標1</label>
+                    <label className="block text-sm font-normal text-gray-700 mb-1">目標1</label>
                     <input
                       type="text"
                       value={monthlyForm.goal_text_1}
@@ -459,7 +459,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">目標2</label>
+                    <label className="block text-sm font-normal text-gray-700 mb-1">目標2</label>
                     <input
                       type="text"
                       value={monthlyForm.goal_text_2}
@@ -469,7 +469,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">目標3</label>
+                    <label className="block text-sm font-normal text-gray-700 mb-1">目標3</label>
                     <input
                       type="text"
                       value={monthlyForm.goal_text_3}
@@ -518,7 +518,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                       }
                     }}
                     disabled={loading || (!monthlyForm.goal_text_1 && !monthlyForm.goal_text_2 && !monthlyForm.goal_text_3)}
-                    className="w-full bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+                    className="w-full bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-normal hover:bg-blue-700 disabled:opacity-50"
                   >
                     まとめて保存
                   </button>
@@ -526,7 +526,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
               </div>
 
               <div>
-                <h3 className="text-sm font-bold text-gray-700 mb-3">既存データ</h3>
+                <h3 className="text-sm font-normal text-gray-700 mb-3">既存データ</h3>
                 {monthlyGoals.length === 0 ? (
                   <p className="text-sm text-gray-500">データがありません</p>
                 ) : (
@@ -576,7 +576,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                         ) : (
                           <div className="flex items-center justify-between">
                             <div>
-                              <div className="text-sm font-bold text-blue-700">{goal.year}年{goal.month}月</div>
+                              <div className="text-sm font-normal text-blue-700">{goal.year}年{goal.month}月</div>
                               <div className="text-sm text-gray-900">{goal.goal_text}</div>
                             </div>
                             <div className="flex gap-2">
@@ -610,10 +610,10 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
           {activeTab === 'weight' && (
             <div className="space-y-6">
               <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="text-sm font-bold text-gray-700 mb-3">新規登録</h3>
+                <h3 className="text-sm font-normal text-gray-700 mb-3">新規登録</h3>
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">記録日</label>
+                    <label className="block text-sm font-normal text-gray-700 mb-1">記録日</label>
                     <input
                       type="date"
                       value={weightForm.recorded_date}
@@ -622,7 +622,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">体重 (kg)</label>
+                    <label className="block text-sm font-normal text-gray-700 mb-1">体重 (kg)</label>
                     <input
                       type="number"
                       step="0.1"
@@ -632,7 +632,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">メモ</label>
+                    <label className="block text-sm font-normal text-gray-700 mb-1">メモ</label>
                     <input
                       type="text"
                       value={weightForm.notes}
@@ -643,7 +643,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                   <button
                     onClick={() => handleSubmit('weight_record', { ...weightForm, weight_kg: parseFloat(weightForm.weight_kg) })}
                     disabled={loading || !weightForm.weight_kg}
-                    className="w-full bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+                    className="w-full bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-normal hover:bg-blue-700 disabled:opacity-50"
                   >
                     保存
                   </button>
@@ -651,7 +651,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
               </div>
 
               <div>
-                <h3 className="text-sm font-bold text-gray-700 mb-3">既存データ</h3>
+                <h3 className="text-sm font-normal text-gray-700 mb-3">既存データ</h3>
                 {weightRecords.length === 0 ? (
                   <p className="text-sm text-gray-500">データがありません</p>
                 ) : (
@@ -698,7 +698,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                         ) : (
                           <div className="flex items-center justify-between">
                             <div>
-                              <div className="text-sm font-bold text-green-700">{new Date(record.recorded_date).toLocaleDateString('ja-JP')}</div>
+                              <div className="text-sm font-normal text-green-700">{new Date(record.recorded_date).toLocaleDateString('ja-JP')}</div>
                               <div className="text-sm text-gray-900">{record.weight_kg}kg {record.notes && `- ${record.notes}`}</div>
                             </div>
                             <div className="flex gap-2">
@@ -732,10 +732,10 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
           {activeTab === 'squat' && (
             <div className="space-y-6">
               <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="text-sm font-bold text-gray-700 mb-3">新規登録</h3>
+                <h3 className="text-sm font-normal text-gray-700 mb-3">新規登録</h3>
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">記録日</label>
+                    <label className="block text-sm font-normal text-gray-700 mb-1">記録日</label>
                     <input
                       type="date"
                       value={squatForm.recorded_date}
@@ -744,7 +744,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">重量 (kg)</label>
+                    <label className="block text-sm font-normal text-gray-700 mb-1">重量 (kg)</label>
                     <input
                       type="number"
                       step="0.5"
@@ -755,7 +755,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">セット数</label>
+                      <label className="block text-sm font-normal text-gray-700 mb-1">セット数</label>
                       <input
                         type="number"
                         value={squatForm.sets}
@@ -764,7 +764,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">回数</label>
+                      <label className="block text-sm font-normal text-gray-700 mb-1">回数</label>
                       <input
                         type="number"
                         value={squatForm.reps}
@@ -774,7 +774,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">メモ</label>
+                    <label className="block text-sm font-normal text-gray-700 mb-1">メモ</label>
                     <input
                       type="text"
                       value={squatForm.notes}
@@ -790,7 +790,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                       reps: squatForm.reps ? parseInt(squatForm.reps) : undefined,
                     })}
                     disabled={loading || !squatForm.weight_kg}
-                    className="w-full bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+                    className="w-full bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-normal hover:bg-blue-700 disabled:opacity-50"
                   >
                     保存
                   </button>
@@ -798,7 +798,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
               </div>
 
               <div>
-                <h3 className="text-sm font-bold text-gray-700 mb-3">既存データ</h3>
+                <h3 className="text-sm font-normal text-gray-700 mb-3">既存データ</h3>
                 {squatRecords.length === 0 ? (
                   <p className="text-sm text-gray-500">データがありません</p>
                 ) : (
@@ -862,7 +862,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                         ) : (
                           <div className="flex items-center justify-between">
                             <div>
-                              <div className="text-sm font-bold text-purple-700">{new Date(record.recorded_date).toLocaleDateString('ja-JP')}</div>
+                              <div className="text-sm font-normal text-purple-700">{new Date(record.recorded_date).toLocaleDateString('ja-JP')}</div>
                               <div className="text-sm text-gray-900">
                                 {record.weight_kg}kg
                                 {record.sets && ` | ${record.sets}セット`}
@@ -906,7 +906,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
           {activeTab === 'settings' && (
             <div className="space-y-8">
               <div>
-                <h3 className="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <h3 className="text-sm font-normal text-gray-900 mb-4 flex items-center gap-2">
                   <span className="w-1 h-4 bg-blue-600 rounded-full"></span>
                   食事管理機能の設定
                 </h3>
@@ -926,7 +926,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                     className="w-8 h-8 text-blue-600 border-gray-300 rounded-lg focus:ring-blue-500 transition-all"
                   />
                   <div>
-                    <div className="text-lg font-black text-gray-900">食事管理機能を表示する <span className="text-blue-600 ml-1">(ダイエットプラン限定)</span></div>
+                    <div className="text-lg font-normal text-gray-900">食事管理機能を表示する <span className="text-blue-600 ml-1">(ダイエットプラン限定)</span></div>
                     <div className="text-sm text-gray-600 mt-1 italic">チェックを入れると全ての管理機能（入力・分析・進捗）が会員アプリに表示されます</div>
                   </div>
                 </label>
@@ -936,7 +936,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                 <button
                   onClick={handleSettingsSave}
                   disabled={loading}
-                  className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black shadow-lg hover:bg-blue-700 transition-all active:scale-95 disabled:opacity-50 text-lg"
+                  className="w-full bg-blue-600 text-white py-4 rounded-2xl font-normal shadow-lg hover:bg-blue-700 transition-all active:scale-95 disabled:opacity-50 text-lg"
                 >
                   {loading ? '保存中...' : '設定を保存する'}
                 </button>
@@ -949,7 +949,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
         <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 px-6 py-4 flex justify-end">
           <button
             onClick={onClose}
-            className="px-6 py-2 bg-gray-600 text-white rounded-md text-sm font-medium hover:bg-gray-700"
+            className="px-6 py-2 bg-gray-600 text-white rounded-md text-sm font-normal hover:bg-gray-700"
           >
             閉じる
           </button>

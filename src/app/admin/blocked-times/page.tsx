@@ -129,7 +129,7 @@ export default function BlockedTimesPage() {
 
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+              <h1 className="text-2xl sm:text-3xl font-normal text-gray-900 mb-2">
                 予約不可時間設定
               </h1>
               <p className="text-gray-600">
@@ -139,7 +139,7 @@ export default function BlockedTimesPage() {
 
             <button
               onClick={() => setIsModalOpen(true)}
-              className="mt-4 sm:mt-0 bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200 flex items-center whitespace-nowrap"
+              className="mt-4 sm:mt-0 bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-normal transition-colors duration-200 flex items-center whitespace-nowrap"
             >
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -173,11 +173,11 @@ export default function BlockedTimesPage() {
               <svg className="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18.364 5.636M5.636 18.364l12.728-12.728" />
               </svg>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">予約不可時間が設定されていません</h3>
+              <h3 className="text-lg font-normal text-gray-900 mb-2">予約不可時間が設定されていません</h3>
               <p className="text-gray-600 mb-4">営業時間外や休業日を設定してください</p>
               <button
                 onClick={() => setIsModalOpen(true)}
-                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200"
+                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-normal transition-colors duration-200"
               >
                 新規設定
               </button>
@@ -187,16 +187,16 @@ export default function BlockedTimesPage() {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-normal text-gray-500 uppercase tracking-wider">
                       期間
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-normal text-gray-500 uppercase tracking-wider">
                       理由
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-normal text-gray-500 uppercase tracking-wider">
                       繰り返し
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-normal text-gray-500 uppercase tracking-wider">
                       作成日時
                     </th>
                   </tr>
@@ -218,7 +218,7 @@ export default function BlockedTimesPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${blockedTime.recurrence_type === 'none'
+                        <span className={`inline-flex px-2 py-1 text-xs font-normal rounded-full ${blockedTime.recurrence_type === 'none'
                           ? 'bg-gray-100 text-gray-800'
                           : 'bg-blue-100 text-blue-800'
                           }`}>

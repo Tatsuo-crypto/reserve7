@@ -295,7 +295,7 @@ export default function TrainersPage() {
             </svg>
           </button>
           <div className="text-center">
-            <h1 className="text-2xl font-bold text-gray-900">トレーナー管理</h1>
+            <h1 className="text-2xl font-normal text-gray-900">トレーナー管理</h1>
             <p className="mt-1 text-sm text-gray-500">トレーナー情報の閲覧・管理</p>
           </div>
           <Link
@@ -334,7 +334,7 @@ export default function TrainersPage() {
             </select>
           </div>
           <button
-            className="px-3 py-1.5 bg-emerald-600 text-white text-xs font-medium rounded-full hover:bg-emerald-700 transition-colors flex items-center gap-1"
+            className="px-3 py-1.5 bg-emerald-600 text-white text-xs font-normal rounded-full hover:bg-emerald-700 transition-colors flex items-center gap-1"
             onClick={openCreate}
           >
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -360,20 +360,20 @@ export default function TrainersPage() {
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <span className={`flex-shrink-0 w-2 h-2 rounded-full ${t.status === 'active' ? 'bg-emerald-500' : 'bg-gray-400'}`} />
-                  <span className="font-medium text-sm text-gray-900 truncate">{t.full_name}</span>
+                  <span className="font-normal text-sm text-gray-900 truncate">{t.full_name}</span>
                   <span className="text-xs text-gray-400 flex-shrink-0">{storeNameById[t.store_id] || ''}</span>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0 ml-3">
                   {t.access_token && (
                     <button
-                      className="px-2 py-1 text-[10px] font-semibold rounded-full bg-indigo-100 text-indigo-700 hover:bg-indigo-200 transition-colors"
+                      className="px-2 py-1 text-[10px] font-normal rounded-full bg-indigo-100 text-indigo-700 hover:bg-indigo-200 transition-colors"
                       onClick={() => handleCopyAccessUrl(t.access_token!, t.full_name)}
                     >
                       URL
                     </button>
                   )}
                   <button
-                    className="px-2 py-1 text-[10px] font-semibold rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
+                    className="px-2 py-1 text-[10px] font-normal rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
                     onClick={() => openEdit(t)}
                   >
                     編集
@@ -390,7 +390,7 @@ export default function TrainersPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/30" onClick={() => setModalOpen(false)} />
           <div className="relative bg-white rounded-lg border border-gray-200 shadow-lg w-full max-w-lg p-6">
-            <h3 className="text-lg font-semibold mb-4">{editing ? 'トレーナー編集' : '新規トレーナー'}</h3>
+            <h3 className="text-lg font-normal mb-4">{editing ? 'トレーナー編集' : '新規トレーナー'}</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
                 <label className="block text-xs text-gray-500 mb-1">氏名</label>

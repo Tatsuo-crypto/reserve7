@@ -82,25 +82,25 @@ export default function PlanTab({ token }: PlanTabProps) {
                     <div>
                         <div className="flex items-center gap-2 mb-1">
                             <div className="w-1.5 h-5 bg-orange-500 rounded-full"></div>
-                            <h3 className="text-xl font-black text-gray-800">現在の目標設定</h3>
+                            <h3 className="text-xl font-normal text-gray-800">現在の目標設定</h3>
                         </div>
-                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">目標数値の詳細</p>
+                        <p className="text-[10px] font-normal text-gray-400 uppercase tracking-widest">目標数値の詳細</p>
                     </div>
                     <div className="px-4 py-1.5 bg-orange-50 rounded-full">
-                        <span className="text-[10px] font-black text-orange-600">最終更新: {currentGoal?.date}</span>
+                        <span className="text-[10px] font-normal text-orange-600">最終更新: {currentGoal?.date}</span>
                     </div>
                 </div>
 
                 <div className="space-y-8">
                     {/* Diet Section */}
                     <div className="space-y-4">
-                        <p className="text-xs font-black text-gray-400 pl-2">食事・栄養の目標</p>
+                        <p className="text-xs font-normal text-gray-400 pl-2">食事・栄養の目標</p>
                         <div className="bg-gray-50 rounded-3xl p-6 flex items-center justify-center">
                             <div className="text-center">
-                                <p className="text-xs font-bold text-gray-400 mb-1">目標摂取カロリー</p>
+                                <p className="text-xs font-normal text-gray-400 mb-1">目標摂取カロリー</p>
                                 <div className="flex items-baseline gap-1 justify-center">
-                                    <span className="text-4xl font-black text-gray-800">{currentGoal?.calories.toLocaleString()}</span>
-                                    <span className="text-sm font-black text-gray-400">kcal / 日</span>
+                                    <span className="text-4xl font-normal text-gray-800">{currentGoal?.calories.toLocaleString()}</span>
+                                    <span className="text-sm font-normal text-gray-400">kcal / 日</span>
                                 </div>
                             </div>
                         </div>
@@ -117,7 +117,7 @@ export default function PlanTab({ token }: PlanTabProps) {
 
                     {/* Lifestyle Section */}
                     <div className="space-y-4 pt-4 border-t border-gray-50">
-                        <p className="text-xs font-black text-gray-400 pl-2">生活習慣の目標</p>
+                        <p className="text-xs font-normal text-gray-400 pl-2">生活習慣の目標</p>
                         <div className="grid grid-cols-2 gap-4">
                             <PFCStatCard label="水分摂取" value={lifestyleSettings?.habit_targets?.water} unit="L" color="sky" />
                             <PFCStatCard label="目標歩数" value={lifestyleSettings?.habit_targets?.steps} unit="歩" color="emerald" />
@@ -133,9 +133,9 @@ export default function PlanTab({ token }: PlanTabProps) {
                 <div className="mb-8">
                     <div className="flex items-center gap-2 mb-1">
                         <div className="w-1.5 h-5 bg-blue-600 rounded-full"></div>
-                        <h3 className="text-xl font-black text-gray-800">目標カロリーの推移</h3>
+                        <h3 className="text-xl font-normal text-gray-800">目標カロリーの推移</h3>
                     </div>
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">PFCバランスの推移 (kcal換算)</p>
+                    <p className="text-[10px] font-normal text-gray-400 uppercase tracking-widest">PFCバランスの推移 (kcal換算)</p>
                 </div>
 
                 <div className="h-[300px] w-full">
@@ -165,9 +165,9 @@ export default function PlanTab({ token }: PlanTabProps) {
                     </ResponsiveContainer>
                 </div>
                 <div className="mt-4 flex justify-center gap-6">
-                    <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-amber-500"></div><span className="text-[10px] font-black text-gray-500">P</span></div>
-                    <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-emerald-500"></div><span className="text-[10px] font-black text-gray-500">F</span></div>
-                    <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-blue-500"></div><span className="text-[10px] font-black text-gray-500">C</span></div>
+                    <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-amber-500"></div><span className="text-[10px] font-normal text-gray-500">P</span></div>
+                    <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-emerald-500"></div><span className="text-[10px] font-normal text-gray-500">F</span></div>
+                    <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-blue-500"></div><span className="text-[10px] font-normal text-gray-500">C</span></div>
                 </div>
             </div>
 
@@ -175,16 +175,16 @@ export default function PlanTab({ token }: PlanTabProps) {
             <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-sm overflow-hidden">
                 <div className="flex items-center gap-2 mb-6">
                     <div className="w-1.5 h-5 bg-gray-400 rounded-full"></div>
-                    <h3 className="text-xl font-black text-gray-800">目標設定の履歴</h3>
+                    <h3 className="text-xl font-normal text-gray-800">目標設定の履歴</h3>
                 </div>
                 
                 <div className="overflow-x-auto -mx-8 px-8">
                     <table className="w-full text-left">
                         <thead>
                             <tr className="border-b border-gray-50">
-                                <th className="py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">開始日</th>
-                                <th className="py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">カロリー</th>
-                                <th className="py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">P / F / C</th>
+                                <th className="py-4 text-[10px] font-normal text-gray-400 uppercase tracking-widest text-center">開始日</th>
+                                <th className="py-4 text-[10px] font-normal text-gray-400 uppercase tracking-widest text-center">カロリー</th>
+                                <th className="py-4 text-[10px] font-normal text-gray-400 uppercase tracking-widest text-center">P / F / C</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50">
@@ -193,11 +193,11 @@ export default function PlanTab({ token }: PlanTabProps) {
                                 const shortDate = `${y.slice(2)}/${parseInt(m, 10)}/${parseInt(d, 10)}`
                                 return (
                                     <tr key={i} className="group hover:bg-gray-50/50 transition-colors">
-                                        <td className="py-4 text-xs font-bold text-gray-700 whitespace-nowrap text-center">{shortDate}</td>
-                                        <td className="py-4 text-xs font-black text-gray-900 text-center">
-                                            {h.calories.toLocaleString()}<span className="text-[10px] font-bold text-gray-400 ml-0.5">kcal</span>
+                                        <td className="py-4 text-xs font-normal text-gray-700 whitespace-nowrap text-center">{shortDate}</td>
+                                        <td className="py-4 text-xs font-normal text-gray-900 text-center">
+                                            {h.calories.toLocaleString()}<span className="text-[10px] font-normal text-gray-400 ml-0.5">kcal</span>
                                         </td>
-                                        <td className="py-4 text-xs font-bold text-gray-600 text-center">
+                                        <td className="py-4 text-xs font-normal text-gray-600 text-center">
                                             {h.p}/{h.f}/{h.c}
                                         </td>
                                     </tr>
@@ -226,10 +226,10 @@ function PFCStatCard({ label, value, unit, color }: { label: string, value: numb
 
     return (
         <div className="bg-gray-50 rounded-3xl p-5 border border-transparent hover:border-gray-200 transition-all">
-            <p className="text-[10px] font-black text-gray-400 mb-2 uppercase tracking-widest">{label}</p>
+            <p className="text-[10px] font-normal text-gray-400 mb-2 uppercase tracking-widest">{label}</p>
             <div className="flex items-baseline gap-1">
-                <span className={`text-2xl font-black ${colorMap[color]?.split(' ')[0]}`}>{value || 0}</span>
-                <span className="text-[10px] font-bold text-gray-300">{unit}</span>
+                <span className={`text-2xl font-normal ${colorMap[color]?.split(' ')[0]}`}>{value || 0}</span>
+                <span className="text-[10px] font-normal text-gray-300">{unit}</span>
             </div>
         </div>
     )

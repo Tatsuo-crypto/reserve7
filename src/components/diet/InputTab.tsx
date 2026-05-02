@@ -294,7 +294,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
         <div className="space-y-6">
             {/* Toast Message */}
             {message && (
-                <div className={`fixed top-16 left-4 right-4 z-50 p-4 rounded-xl shadow-lg border text-sm font-bold flex items-center justify-between ${message.type === 'success' ? 'bg-green-50 border-green-200 text-green-700' : 'bg-red-50 border-red-200 text-red-700'
+                <div className={`fixed top-16 left-4 right-4 z-50 p-4 rounded-xl shadow-lg border text-sm font-normal flex items-center justify-between ${message.type === 'success' ? 'bg-green-50 border-green-200 text-green-700' : 'bg-red-50 border-red-200 text-red-700'
                     }`}>
                     <span>{message.text}</span>
                     <button onClick={() => setMessage(null)}>×</button>
@@ -319,9 +319,9 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
             <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
                 <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                        <h2 className="text-sm font-black text-gray-400 uppercase tracking-widest">記録する日を選択</h2>
+                        <h2 className="text-sm font-normal text-gray-400 uppercase tracking-widest">記録する日を選択</h2>
                         {isAdmin && (
-                            <button className="text-xs font-bold text-blue-600 px-3 py-1 bg-blue-50 rounded-full">項目編集</button>
+                            <button className="text-xs font-normal text-blue-600 px-3 py-1 bg-blue-50 rounded-full">項目編集</button>
                         )}
                     </div>
 
@@ -330,11 +330,11 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                             type="date"
                             value={selectedDate}
                             onChange={(e) => setSelectedDate(e.target.value)}
-                            className="flex-1 bg-gray-50 border-none rounded-xl font-bold text-gray-700 px-4 py-2 focus:ring-2 focus:ring-blue-500"
+                            className="flex-1 bg-gray-50 border-none rounded-xl font-normal text-gray-700 px-4 py-2 focus:ring-2 focus:ring-blue-500"
                         />
                         <button
                             onClick={() => setSelectedDate(new Date().toISOString().split('T')[0])}
-                            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${selectedDate === new Date().toISOString().split('T')[0] ? 'bg-blue-600 text-white shadow-md' : 'bg-gray-100 text-gray-500'}`}
+                            className={`px-4 py-2 rounded-xl text-xs font-normal transition-all ${selectedDate === new Date().toISOString().split('T')[0] ? 'bg-blue-600 text-white shadow-md' : 'bg-gray-100 text-gray-500'}`}
                         >
                             今日
                         </button>
@@ -354,13 +354,13 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                                 </svg>
                             </div>
-                            <h2 className="text-lg font-bold mb-1">食事写真を解析</h2>
+                            <h2 className="text-lg font-normal mb-1">食事写真を解析</h2>
                             <p className="text-blue-100 text-xs mb-6 text-center opacity-80">スクリーンショットを読み取って栄養バランスを一律入力します</p>
 
                             <button
                                 onClick={() => fileInputRef.current?.click()}
                                 disabled={analyzing}
-                                className={`w-full bg-white text-blue-600 py-3 rounded-xl font-black shadow-md hover:bg-blue-50 transition-colors disabled:opacity-50 flex items-center justify-center ${analyzing ? 'animate-pulse' : ''}`}
+                                className={`w-full bg-white text-blue-600 py-3 rounded-xl font-normal shadow-md hover:bg-blue-50 transition-colors disabled:opacity-50 flex items-center justify-center ${analyzing ? 'animate-pulse' : ''}`}
                             >
                                 {analyzing ? '解析中...' : '写真をアップロード'}
                             </button>
@@ -380,18 +380,18 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                     {ocrResult && (
                         <div className="bg-white rounded-2xl shadow-lg border-2 border-blue-500 p-6 animate-slideUp">
                             <div className="flex items-center justify-between mb-4">
-                                <h2 className="text-lg font-bold text-gray-900">
+                                <h2 className="text-lg font-normal text-gray-900">
                                     {saving ? '保存中...' : '解析結果'}
                                 </h2>
                             </div>
                             <div className="grid grid-cols-2 gap-4 mb-2">
                                 <div className="col-span-2 bg-blue-50 p-4 rounded-xl">
-                                    <div className="text-[10px] font-bold text-blue-600 uppercase mb-2 tracking-widest text-center">総エネルギー (摂取 / 目標)</div>
+                                    <div className="text-[10px] font-normal text-blue-600 uppercase mb-2 tracking-widest text-center">総エネルギー (摂取 / 目標)</div>
                                     <div className="flex items-center justify-center space-x-3">
-                                        <div className="text-3xl font-black text-blue-900">{ocrResult.calories}</div>
-                                        <div className="text-xl font-bold text-blue-300">/</div>
-                                        <div className="text-2xl font-bold text-blue-600 opacity-60">{ocrResult.calories_target}</div>
-                                        <div className="text-sm font-bold text-blue-400">kcal</div>
+                                        <div className="text-3xl font-normal text-blue-900">{ocrResult.calories}</div>
+                                        <div className="text-xl font-normal text-blue-300">/</div>
+                                        <div className="text-2xl font-normal text-blue-600 opacity-60">{ocrResult.calories_target}</div>
+                                        <div className="text-sm font-normal text-blue-400">kcal</div>
                                     </div>
                                 </div>
                                 <NutrientItem label="P: たんぱく質" value={ocrResult.protein} target={ocrResult.protein_target} unit="g" onChange={(v) => setOcrResult({ ...ocrResult, protein: v })} />
@@ -409,7 +409,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
             {/* 3. Metrics Input Section */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
                 <div className="space-y-3">
-                    <h2 className="text-sm font-black text-gray-400 uppercase tracking-widest mb-4">各項目の詳細入力</h2>
+                    <h2 className="text-sm font-normal text-gray-400 uppercase tracking-widest mb-4">各項目の詳細入力</h2>
                     
                     {/* Weight Input Row */}
                     <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl mb-4 group focus-within:ring-2 focus-within:ring-blue-100 transition-all">
@@ -421,7 +421,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                                     <path d="M12 12l1.5-1.5" strokeWidth={2} strokeLinecap="round" />
                                 </svg>
                             </div>
-                            <span className="text-sm font-bold text-gray-700">現在の体重</span>
+                            <span className="text-sm font-normal text-gray-700">現在の体重</span>
                         </div>
                         <div className="flex items-center space-x-3">
                             <div className="flex items-baseline space-x-1">
@@ -434,9 +434,9 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                                         setWeight(e.target.value)
                                     }}
                                     placeholder="00.0"
-                                    className="w-20 text-right text-2xl font-black text-gray-900 bg-transparent border-none p-0 focus:ring-0 placeholder-gray-200"
+                                    className="w-20 text-right text-2xl font-normal text-gray-900 bg-transparent border-none p-0 focus:ring-0 placeholder-gray-200"
                                 />
-                                <span className="text-xs font-bold text-gray-400">kg</span>
+                                <span className="text-xs font-normal text-gray-400">kg</span>
                             </div>
                         </div>
                     </div>
@@ -495,10 +495,10 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18M7 6v12M17 6v12" />
                                         </svg>
                                     </div>
-                                    <span className="text-sm font-bold text-gray-700">筋トレ</span>
+                                    <span className="text-sm font-normal text-gray-700">筋トレ</span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <span className="text-[10px] font-bold text-gray-400">実施</span>
+                                    <span className="text-[10px] font-normal text-gray-400">実施</span>
                                     <button
                                         onClick={() => {
                                             setHabits((prev: any) => ({ ...prev, workout: prev.workout === 1 ? 0 : 1 }))
@@ -514,7 +514,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                                     value={habits.workout_notes || ''}
                                     onChange={(e) => setHabits((prev: any) => ({ ...prev, workout_notes: e.target.value }))}
                                     placeholder="トレーニング内容（例：スクワット 10回×3セットなど）"
-                                    className="w-full p-4 rounded-2xl bg-gray-50 border-none focus:ring-2 focus:ring-orange-200 text-sm font-bold text-gray-700 placeholder:text-gray-300 min-h-[80px] transition-all"
+                                    className="w-full p-4 rounded-2xl bg-gray-50 border-none focus:ring-2 focus:ring-orange-200 text-sm font-normal text-gray-700 placeholder:text-gray-300 min-h-[80px] transition-all"
                                 />
                             )}
                         </div>
@@ -523,14 +523,14 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
 
                 {/* Notes Section */}
                 <div className="mt-6">
-                    <label className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 block">メモ（任意）</label>
+                    <label className="text-xs font-normal text-gray-400 uppercase tracking-widest mb-2 block">メモ（任意）</label>
                     <textarea
                         value={notes}
                         onChange={(e) => {
                             setNotes(e.target.value)
                         }}
                         placeholder="今日の体調や食事の感想など"
-                        className="w-full bg-gray-50 border-none rounded-2xl p-4 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-blue-500 min-h-[100px]"
+                        className="w-full bg-gray-50 border-none rounded-2xl p-4 text-sm font-normal text-gray-700 focus:ring-2 focus:ring-blue-500 min-h-[100px]"
                     />
                 </div>
 
@@ -539,17 +539,17 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                     <div className="mt-8 space-y-4">
                         <div className="flex items-center gap-2">
                             <div className="w-1 h-4 bg-rose-500 rounded-full"></div>
-                            <h2 className="text-sm font-black text-gray-400 uppercase tracking-widest">その他の目標</h2>
+                            <h2 className="text-sm font-normal text-gray-400 uppercase tracking-widest">その他の目標</h2>
                         </div>
                         <div className="grid grid-cols-1 gap-3">
                             {quitGoals.map((goal: string) => (
                                 <div key={goal} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-transparent hover:border-rose-100 transition-all">
-                                    <span className="text-sm font-bold text-gray-700">{goal}</span>
+                                    <span className="text-sm font-normal text-gray-700">{goal}</span>
                                     <button
                                         onClick={() => {
                                             setHabits((prev: any) => ({ ...prev, [goal]: prev[goal] === 1 ? 0 : 1 }))
                                         }}
-                                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all ${habits[goal] === 1 ? 'bg-emerald-500 text-white shadow-md' : 'bg-white text-gray-400 border border-gray-100'}`}
+                                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-normal transition-all ${habits[goal] === 1 ? 'bg-emerald-500 text-white shadow-md' : 'bg-white text-gray-400 border border-gray-100'}`}
                                     >
                                         {habits[goal] === 1 ? (
                                             <>
@@ -574,7 +574,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                     <button
                         onClick={handleAllSave}
                         disabled={saving}
-                        className={`w-full py-4 rounded-2xl font-black shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 text-lg ${
+                        className={`w-full py-4 rounded-2xl font-normal shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 text-lg ${
                             isSaved && !saving ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-blue-600 text-white hover:bg-blue-700'
                         }`}
                     >
@@ -623,7 +623,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                                     }
                                 }
                             }}
-                            className="text-[10px] font-black text-gray-300 hover:text-gray-400 transition-colors flex items-center gap-1 uppercase tracking-widest"
+                            className="text-[10px] font-normal text-gray-300 hover:text-gray-400 transition-colors flex items-center gap-1 uppercase tracking-widest"
                         >
                             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -640,7 +640,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
 function NutrientItem({ label, value, target, unit, onChange }: { label: string, value: number, target?: number, unit: string, onChange: (v: number) => void }) {
     return (
         <div className="border border-gray-100 p-3 rounded-xl bg-white shadow-sm">
-            <div className="text-[10px] font-bold text-gray-400 mb-1 uppercase tracking-wider">{label}</div>
+            <div className="text-[10px] font-normal text-gray-400 mb-1 uppercase tracking-wider">{label}</div>
             <div className="flex items-center justify-between">
                 <div className="flex items-baseline space-x-1">
                     <input
@@ -648,16 +648,16 @@ function NutrientItem({ label, value, target, unit, onChange }: { label: string,
                         step="0.1"
                         value={value}
                         onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
-                        className="w-16 text-lg font-black text-gray-900 border-none p-0 focus:ring-0 leading-none bg-transparent"
+                        className="w-16 text-lg font-normal text-gray-900 border-none p-0 focus:ring-0 leading-none bg-transparent"
                     />
                     {target !== undefined && (
                         <>
-                            <span className="text-gray-300 font-bold mx-1">/</span>
-                            <span className="text-gray-400 font-bold">{target}</span>
+                            <span className="text-gray-300 font-normal mx-1">/</span>
+                            <span className="text-gray-400 font-normal">{target}</span>
                         </>
                     )}
                 </div>
-                <span className="text-[10px] font-bold text-gray-300">{unit}</span>
+                <span className="text-[10px] font-normal text-gray-300">{unit}</span>
             </div>
         </div>
     )
@@ -690,7 +690,7 @@ function EditableLogItem({ icon, label, value, target, unit, iconBg, iconColor, 
                         {icon}
                     </svg>
                 </div>
-                <span className="text-sm font-bold text-gray-700">{label}</span>
+                <span className="text-sm font-normal text-gray-700">{label}</span>
             </div>
             <div className="flex items-center gap-4">
                 <div className="flex items-center bg-gray-100 rounded-xl p-1">
@@ -706,12 +706,12 @@ function EditableLogItem({ icon, label, value, target, unit, iconBg, iconColor, 
                             inputMode="decimal"
                             value={value}
                             onChange={(e) => onChange(e.target.value)}
-                            className="w-24 text-center text-lg font-black text-gray-900 bg-transparent border-none p-0 focus:ring-0"
+                            className="w-24 text-center text-lg font-normal text-gray-900 bg-transparent border-none p-0 focus:ring-0"
                         />
                         {target && (
                             <div className="flex items-baseline ml-1 opacity-40">
-                                <span className="text-[10px] font-bold mx-0.5">/</span>
-                                <span className="text-xs font-bold">{target}</span>
+                                <span className="text-[10px] font-normal mx-0.5">/</span>
+                                <span className="text-xs font-normal">{target}</span>
                             </div>
                         )}
                     </div>
@@ -722,7 +722,7 @@ function EditableLogItem({ icon, label, value, target, unit, iconBg, iconColor, 
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 15l7-7 7 7" /></svg>
                     </button>
                 </div>
-                <span className="text-[10px] font-bold text-gray-400 w-4">{unit}</span>
+                <span className="text-[10px] font-normal text-gray-400 w-4">{unit}</span>
             </div>
         </div>
     )

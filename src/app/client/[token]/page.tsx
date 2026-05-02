@@ -121,7 +121,7 @@ export default function ClientReservationsPage() {
                 </svg>
               </a>
             )}
-            <h1 className="text-xl font-black text-gray-800 tracking-tight">
+            <h1 className="text-xl font-normal text-gray-800 tracking-tight">
               {activeTab === 'home' && 'ホーム'}
               {activeTab === 'res' && '予約'}
               {activeTab === 'diet' && '食事管理'}
@@ -129,7 +129,7 @@ export default function ClientReservationsPage() {
               {activeTab === 'online' && 'オンライン'}
             </h1>
           </div>
-          <div className="text-[10px] font-black text-blue-600 bg-blue-50 px-3 py-1 rounded-full uppercase tracking-widest">{userName}</div>
+          <div className="text-[10px] font-normal text-blue-600 bg-blue-50 px-3 py-1 rounded-full uppercase tracking-widest">{userName}</div>
         </div>
       </header>
 
@@ -202,7 +202,7 @@ export default function ClientReservationsPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
               </svg>
             </button>
-            <span className={`absolute bottom-2 text-[10px] font-black transition-colors duration-300 ${activeTab === 'home' ? 'text-blue-600' : 'text-gray-400'}`}>ホーム</span>
+            <span className={`absolute bottom-2 text-[10px] font-normal transition-colors duration-300 ${activeTab === 'home' ? 'text-blue-600' : 'text-gray-400'}`}>ホーム</span>
           </div>
 
           <NavBtn
@@ -237,7 +237,7 @@ function NavBtn({ active, onClick, icon, label }: { active: boolean, onClick: ()
             {icon}
           </svg>
         </div>
-        <span className="text-[10px] font-black tracking-tighter mt-0.5">{label}</span>
+        <span className="text-[10px] font-normal tracking-tighter mt-0.5">{label}</span>
       </div>
       {/* Reserve space for the dot to prevent layout shift */}
       <div className={`w-1 h-1 rounded-full transition-all duration-300 ${active ? 'bg-blue-600 opacity-100' : 'bg-transparent opacity-0'}`}></div>

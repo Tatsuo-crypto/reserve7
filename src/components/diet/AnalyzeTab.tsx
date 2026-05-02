@@ -230,12 +230,12 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft }: Analy
         <div className="space-y-6 pb-24">
             {/* Controls */}
             <div className="bg-white p-3 sm:p-4 rounded-2xl border border-gray-200 shadow-sm flex flex-row items-center gap-4 sm:gap-6 overflow-x-auto whitespace-nowrap">
-                <label className="flex items-center gap-2 text-xs sm:text-sm font-bold text-gray-700 shrink-0">
+                <label className="flex items-center gap-2 text-xs sm:text-sm font-normal text-gray-700 shrink-0">
                     期間：
                     <select
                         value={period}
                         onChange={(e) => setPeriod(e.target.value as PeriodType)}
-                        className="bg-gray-50 border border-gray-200 text-gray-900 text-xs sm:text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block py-1.5 px-2 outline-none font-bold"
+                        className="bg-gray-50 border border-gray-200 text-gray-900 text-xs sm:text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block py-1.5 px-2 outline-none font-normal"
                     >
                         <option value="1w">7日間</option>
                         <option value="1m">1ヶ月</option>
@@ -245,12 +245,12 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft }: Analy
                         <option value="all">すべて</option>
                     </select>
                 </label>
-                <label className="flex items-center gap-2 text-xs sm:text-sm font-bold text-gray-700 shrink-0">
+                <label className="flex items-center gap-2 text-xs sm:text-sm font-normal text-gray-700 shrink-0">
                     表示：
                     <select
                         value={showAvg ? 'week' : 'day'}
                         onChange={(e) => setShowAvg(e.target.value === 'week')}
-                        className="bg-gray-50 border border-gray-200 text-gray-900 text-xs sm:text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block py-1.5 px-2 outline-none font-bold"
+                        className="bg-gray-50 border border-gray-200 text-gray-900 text-xs sm:text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block py-1.5 px-2 outline-none font-normal"
                     >
                         <option value="day">日</option>
                         <option value="week">週平均</option>
@@ -460,7 +460,7 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft }: Analy
                 <div className="flex items-center justify-between mb-8">
                     <div className="flex items-center gap-2">
                         <div className="w-1.5 h-6 bg-orange-500 rounded-full"></div>
-                        <h3 className="text-lg font-black text-gray-800">筋トレカレンダー</h3>
+                        <h3 className="text-lg font-normal text-gray-800">筋トレカレンダー</h3>
                     </div>
                     <div className="flex items-center gap-2 bg-orange-50 rounded-full p-1 shadow-inner">
                         <button 
@@ -469,7 +469,7 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft }: Analy
                         >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
                         </button>
-                        <span className="text-sm font-black text-orange-600 min-w-[100px] text-center">
+                        <span className="text-sm font-normal text-orange-600 min-w-[100px] text-center">
                             {calendarDate.getFullYear()}年 {calendarDate.getMonth() + 1}月
                         </span>
                         <button 
@@ -484,7 +484,7 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft }: Analy
                 <div className="flex flex-col flex-1">
                     <div className="grid grid-cols-7 gap-3 mb-4">
                         {['日', '月', '火', '水', '木', '金', '土'].map(d => (
-                            <div key={d} className="text-[10px] font-black text-gray-400 text-center uppercase tracking-widest">{d}</div>
+                            <div key={d} className="text-[10px] font-normal text-gray-400 text-center uppercase tracking-widest">{d}</div>
                         ))}
                     </div>
                     <div className="grid grid-cols-7 gap-3 flex-1">
@@ -508,7 +508,7 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft }: Analy
                                 
                                 calendarDays.push(
                                     <div key={dStr} className={`relative aspect-square flex flex-col items-center justify-center rounded-2xl border-2 transition-all overflow-hidden ${!isCurrentMonth ? 'opacity-10 pointer-events-none' : ''} ${isSelected ? 'border-orange-500 bg-orange-50/50' : 'border-gray-50 bg-gray-50/30 hover:border-gray-100'}`}>
-                                        <span className={`text-[10px] font-black z-10 ${isDone ? 'text-white opacity-40' : isToday ? 'text-blue-500' : 'text-gray-300'}`}>
+                                        <span className={`text-[10px] font-normal z-10 ${isDone ? 'text-white opacity-40' : isToday ? 'text-blue-500' : 'text-gray-300'}`}>
                                             {date.getDate()}
                                         </span>
                                         {isDone && (
@@ -533,11 +533,11 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft }: Analy
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M5 13l4 4L19 7" />
                                 </svg>
                             </div>
-                            <span className="text-xs font-black text-gray-600 uppercase tracking-tighter">実施済み</span>
+                            <span className="text-xs font-normal text-gray-600 uppercase tracking-tighter">実施済み</span>
                         </div>
                         <div className="flex items-center gap-3">
                             <div className="w-6 h-6 bg-gray-50 rounded-xl border-2 border-gray-100"></div>
-                            <span className="text-xs font-black text-gray-400 uppercase tracking-tighter">未実施</span>
+                            <span className="text-xs font-normal text-gray-400 uppercase tracking-tighter">未実施</span>
                         </div>
                     </div>
                 </div>
@@ -548,7 +548,7 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft }: Analy
                 <div className="space-y-4">
                     <div className="flex items-center gap-2 px-1 pt-4">
                         <div className="w-1.5 h-5 bg-rose-500 rounded-full"></div>
-                        <h2 className="text-sm font-black text-gray-800 uppercase tracking-widest">習慣の達成状況</h2>
+                        <h2 className="text-sm font-normal text-gray-800 uppercase tracking-widest">習慣の達成状況</h2>
                     </div>
                     {settings.quit_goals.map((goal: string) => (
                         <AnalysisChartCard key={goal} title={`習慣: ${goal}`} color="rose">
@@ -591,7 +591,7 @@ function AnalysisChartCard({ title, children, color }: { title: string, children
     }
     return (
         <div className={`p-6 rounded-2xl border ${colorStyles[color]} shadow-sm space-y-4`}>
-            <h3 className="text-sm font-black text-gray-500 tracking-widest">{title}</h3>
+            <h3 className="text-sm font-normal text-gray-500 tracking-widest">{title}</h3>
             <div className="h-[250px] w-full">{children}</div>
         </div>
     )

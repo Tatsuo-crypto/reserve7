@@ -144,7 +144,7 @@ export default function StoresPage() {
             </svg>
           </button>
           <div className="text-center">
-            <h1 className="text-2xl font-bold text-gray-900">店舗管理</h1>
+            <h1 className="text-2xl font-normal text-gray-900">店舗管理</h1>
             <p className="mt-1 text-sm text-gray-500">店舗情報の閲覧・管理</p>
           </div>
         </div>
@@ -202,7 +202,7 @@ export default function StoresPage() {
                   {stores.map(s => (
                     <tr key={s.id} className="hover:bg-gray-50">
                       <td className="px-3 py-2 border-b whitespace-nowrap text-center">
-                        <div className="font-medium text-gray-900 whitespace-nowrap">{s.name}</div>
+                        <div className="font-normal text-gray-900 whitespace-nowrap">{s.name}</div>
                       </td>
                       <td className="px-3 py-2 border-b whitespace-nowrap text-center">
                         <div className="text-gray-800 truncate max-w-[240px] mx-auto" title={s.email || ''}>{s.email || '-'}</div>
@@ -214,7 +214,7 @@ export default function StoresPage() {
                         <div className="text-gray-900">{s.memberCount ?? 0}</div>
                       </td>
                       <td className="px-3 py-2 border-b whitespace-nowrap text-center">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${s.status === 'active' ? 'bg-indigo-100 text-indigo-800' : 'bg-gray-200 text-gray-700'}`}>{s.status === 'active' ? '有効' : '無効'}</span>
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-normal ${s.status === 'active' ? 'bg-indigo-100 text-indigo-800' : 'bg-gray-200 text-gray-700'}`}>{s.status === 'active' ? '有効' : '無効'}</span>
                       </td>
                       <td className="px-3 py-2 border-b text-center whitespace-nowrap">
                         <div className="inline-flex items-center gap-2 whitespace-nowrap justify-center">
@@ -236,7 +236,7 @@ export default function StoresPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/30" onClick={() => setModalOpen(false)} />
           <div className="relative bg-white rounded-lg border border-gray-200 shadow-lg w-full max-w-lg p-6">
-            <h3 className="text-lg font-semibold mb-4">{editing ? '店舗編集' : '新規店舗'}</h3>
+            <h3 className="text-lg font-normal mb-4">{editing ? '店舗編集' : '新規店舗'}</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
                 <label className="block text-xs text-gray-500 mb-1">店舗名</label>

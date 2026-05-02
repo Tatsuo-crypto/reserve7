@@ -65,7 +65,7 @@ export default function TrainerDashboardPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="text-red-500 text-6xl mb-4">⚠️</div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">アクセスエラー</h1>
+          <h1 className="text-2xl font-normal text-gray-900 mb-2">アクセスエラー</h1>
           <p className="text-gray-600">{error || '無効なURLです'}</p>
         </div>
       </div>
@@ -78,14 +78,14 @@ export default function TrainerDashboardPage() {
       <header className="bg-gradient-to-b from-white to-gray-50 border-b border-gray-100 shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="text-xl font-semibold text-gray-900">
+            <div className="text-xl font-normal text-gray-900">
               T&J GYM
             </div>
             <div className="bg-white border border-gray-300 px-4 py-2 rounded-lg shadow-sm text-sm flex items-center space-x-3">
-              <span className="text-gray-700 font-medium">
+              <span className="text-gray-700 font-normal">
                 {getStoreDisplayName(trainer.storeId)}
               </span>
-              <span className="px-3 py-1 rounded-full text-xs font-medium border bg-blue-100 text-blue-700 border-blue-300">
+              <span className="px-3 py-1 rounded-full text-xs font-normal border bg-blue-100 text-blue-700 border-blue-300">
                 トレーナー
               </span>
             </div>
@@ -99,7 +99,7 @@ export default function TrainerDashboardPage() {
           <div className="px-6 py-5">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-2xl font-semibold text-gray-900">
+                <h1 className="text-2xl font-normal text-gray-900">
                   ダッシュボード
                 </h1>
                 <p className="mt-1 text-sm text-gray-600">
@@ -127,7 +127,7 @@ export default function TrainerDashboardPage() {
                 </div>
               </div>
               <div className="flex-1">
-                <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-blue-800 transition-colors duration-200">予約</h3>
+                <h3 className="text-2xl font-normal text-gray-900 mb-3 group-hover:text-blue-800 transition-colors duration-200">予約</h3>
                 <p className="text-base text-gray-600 leading-relaxed">すべての予約を確認・管理</p>
               </div>
             </Link>
@@ -145,7 +145,7 @@ export default function TrainerDashboardPage() {
                 </div>
               </div>
               <div className="flex-1">
-                <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-teal-800 transition-colors duration-200">シフト管理</h3>
+                <h3 className="text-2xl font-normal text-gray-900 mb-3 group-hover:text-teal-800 transition-colors duration-200">シフト管理</h3>
                 <p className="text-base text-gray-600 leading-relaxed">勤務シフトの登録・確認</p>
               </div>
             </Link>

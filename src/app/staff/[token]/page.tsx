@@ -54,7 +54,7 @@ export default function StaffPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="text-red-500 text-6xl mb-4">⚠️</div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">アクセスエラー</h1>
+          <h1 className="text-2xl font-normal text-gray-900 mb-2">アクセスエラー</h1>
           <p className="text-gray-600">{error || '無効なURLです'}</p>
         </div>
       </div>
@@ -67,7 +67,7 @@ export default function StaffPage() {
       <header className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <h1 className="text-xl font-bold text-gray-900">T&J GYM - スタッフページ</h1>
+            <h1 className="text-xl font-normal text-gray-900">T&J GYM - スタッフページ</h1>
             <div className="text-sm text-gray-600">{staff.name} さん</div>
           </div>
         </div>
@@ -87,7 +87,7 @@ export default function StaffPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
               </div>
-              <h2 className="text-2xl font-bold text-gray-900">予約管理</h2>
+              <h2 className="text-2xl font-normal text-gray-900">予約管理</h2>
             </div>
             <p className="text-gray-600">予約の確認・作成・編集・削除</p>
           </button>

@@ -76,7 +76,7 @@ export default function OnlineTab({ token }: OnlineTabProps) {
         <div className="space-y-6 pb-24">
             <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl p-6 text-white shadow-lg overflow-hidden relative">
                 <div className="relative z-10">
-                    <h2 className="text-xl font-black mb-2 italic">LIVE LESSON</h2>
+                    <h2 className="text-xl font-normal mb-2 italic">LIVE LESSON</h2>
                     <p className="text-blue-100 text-sm opacity-90">ご自宅からプロの指導を受けられます</p>
                 </div>
                 <div className="absolute right-0 bottom-0 -mr-4 -mb-4 opacity-20 transform rotate-12">
@@ -99,14 +99,14 @@ export default function OnlineTab({ token }: OnlineTabProps) {
                                     <div className="flex justify-between items-start mb-4">
                                         <div className="w-full">
                                             <div className="flex items-center space-x-2 mb-1">
-                                                <h3 className="font-bold text-gray-900">{lesson.title}</h3>
-                                                <span className="text-[10px] font-bold px-2 py-0.5 bg-blue-50 text-blue-600 rounded-full">{lesson.difficulty}</span>
+                                                <h3 className="font-normal text-gray-900">{lesson.title}</h3>
+                                                <span className="text-[10px] font-normal px-2 py-0.5 bg-blue-50 text-blue-600 rounded-full">{lesson.difficulty}</span>
                                             </div>
-                                            <div className="text-sm font-bold text-blue-600 flex items-center mb-1">
+                                            <div className="text-sm font-normal text-blue-600 flex items-center mb-1">
                                                 <span className="mr-1.5">📅</span>
                                                 毎週{lesson.day_of_week?.map(d => DAYS_JA[d]).join('・')} {lesson.start_time?.substring(0, 5)}〜{lesson.end_time?.substring(0, 5)}
                                             </div>
-                                            <p className="text-xs text-gray-400 font-medium truncate mb-2">{lesson.meet_url}</p>
+                                            <p className="text-xs text-gray-400 font-normal truncate mb-2">{lesson.meet_url}</p>
                                             {lesson.description && (
                                                 <p className="text-xs text-gray-500 leading-relaxed line-clamp-2 mb-4 bg-gray-50 p-2 rounded-lg">
                                                     {lesson.description}
@@ -118,14 +118,14 @@ export default function OnlineTab({ token }: OnlineTabProps) {
                                     <button
                                         onClick={() => window.open(lesson.meet_url, '_blank')}
                                         disabled={!status.canJoin}
-                                        className={`w-full py-3 rounded-xl font-black transition-all flex items-center justify-center space-x-2 ${status.canJoin
+                                        className={`w-full py-3 rounded-xl font-normal transition-all flex items-center justify-center space-x-2 ${status.canJoin
                                             ? 'bg-blue-600 text-white shadow-lg shadow-blue-100 active:scale-95'
                                             : 'bg-gray-100 text-gray-400'
                                             }`}
                                     >
                                         <span>{status.canJoin ? (status.label === '開催中' ? '参加する' : status.label) : status.label}</span>
                                     </button>
-                                    <p className="mt-3 text-[10px] text-gray-400 font-bold text-center">
+                                    <p className="mt-3 text-[10px] text-gray-400 font-normal text-center">
                                         ※開始5分前から入室いただけます
                                     </p>
                                 </div>
@@ -139,8 +139,8 @@ export default function OnlineTab({ token }: OnlineTabProps) {
             {isIOS && (
                 <div className="bg-orange-50 rounded-2xl p-4 border border-orange-100 flex items-start space-x-3">
                     <div className="text-xl">💡</div>
-                    <div className="text-xs text-orange-800 leading-relaxed font-medium">
-                        iPhoneをご利用の場合は、事前に<span className="font-black underline">Google Meetアプリ</span>のインストールが必要です。
+                    <div className="text-xs text-orange-800 leading-relaxed font-normal">
+                        iPhoneをご利用の場合は、事前に<span className="font-normal underline">Google Meetアプリ</span>のインストールが必要です。
                     </div>
                 </div>
             )}

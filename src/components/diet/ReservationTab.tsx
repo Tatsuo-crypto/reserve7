@@ -91,7 +91,7 @@ export default function ReservationTab({ token }: ReservationTabProps) {
             <section>
                 {futureReservations.length === 0 ? (
                     <div className="bg-white rounded-3xl p-8 text-center border border-gray-100 shadow-sm">
-                        <p className="text-gray-400 text-sm font-bold">今後の予約はありません</p>
+                        <p className="text-gray-400 text-sm font-normal">今後の予約はありません</p>
                     </div>
                 ) : (
                     <div className="space-y-6">
@@ -99,7 +99,7 @@ export default function ReservationTab({ token }: ReservationTabProps) {
                             <div key={monthKey} className="space-y-3">
                                 <div className="flex items-center space-x-2 py-2">
                                     <div className="h-px flex-1 bg-blue-50"></div>
-                                    <div className="text-[10px] font-black text-blue-500 bg-blue-50 px-4 py-1 rounded-full uppercase tracking-tighter">
+                                    <div className="text-[10px] font-normal text-blue-500 bg-blue-50 px-4 py-1 rounded-full uppercase tracking-tighter">
                                         {monthKey}
                                     </div>
                                     <div className="h-px flex-1 bg-blue-50"></div>
@@ -110,17 +110,17 @@ export default function ReservationTab({ token }: ReservationTabProps) {
                                         .map((res: Reservation) => (
                                             <div key={res.id} className="bg-white rounded-[2rem] p-5 border border-gray-100 shadow-sm border-l-4 border-l-blue-600 hover:scale-[1.01] transition-transform">
                                                 <div className="flex justify-between items-start mb-2">
-                                                    <h3 className="font-black text-gray-800">{formatTitle(res.title)}</h3>
-                                                    <span className="text-[10px] font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md">確定</span>
+                                                    <h3 className="font-normal text-gray-800">{formatTitle(res.title)}</h3>
+                                                    <span className="text-[10px] font-normal text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md">確定</span>
                                                 </div>
-                                                <div className="flex items-center text-blue-600 text-sm font-bold">
+                                                <div className="flex items-center text-blue-600 text-sm font-normal">
                                                     <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                     </svg>
                                                     {formatDate(res.start_time)}
                                                 </div>
                                                 {res.notes && (
-                                                    <p className="text-[11px] font-bold text-gray-400 mt-3 bg-gray-50 p-3 rounded-2xl italic leading-relaxed">
+                                                    <p className="text-[11px] font-normal text-gray-400 mt-3 bg-gray-50 p-3 rounded-2xl italic leading-relaxed">
                                                         「{res.notes}」
                                                     </p>
                                                 )}
@@ -145,7 +145,7 @@ export default function ReservationTab({ token }: ReservationTabProps) {
                                 <svg className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${showPast ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
                                 </svg>
-                                <span className="text-sm font-black text-gray-500">過去の予約を表示 ({pastReservations.length}回)</span>
+                                <span className="text-sm font-normal text-gray-500">過去の予約を表示 ({pastReservations.length}回)</span>
                             </div>
                         </button>
 
@@ -154,7 +154,7 @@ export default function ReservationTab({ token }: ReservationTabProps) {
                                 {sortedPastMonths.map(([monthKey, reservations]) => (
                                     <div key={monthKey} className="space-y-3">
                                         <div className="flex items-center space-x-2">
-                                            <div className="text-[10px] font-black text-gray-400 px-3 py-1 rounded-full bg-gray-100">
+                                            <div className="text-[10px] font-normal text-gray-400 px-3 py-1 rounded-full bg-gray-100">
                                                 {monthKey}
                                             </div>
                                             <div className="h-px flex-1 bg-gray-100"></div>
@@ -164,8 +164,8 @@ export default function ReservationTab({ token }: ReservationTabProps) {
                                                 .sort((a: Reservation, b: Reservation) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime())
                                                 .map((res: Reservation) => (
                                                     <div key={res.id} className="flex items-center justify-between p-4 bg-white/50 rounded-2xl border border-gray-50 opacity-60">
-                                                        <span className="text-xs font-bold text-gray-600">{formatTitle(res.title)}</span>
-                                                        <span className="text-[10px] font-bold text-gray-400">{formatDate(res.start_time).split(' ')[0]}</span>
+                                                        <span className="text-xs font-normal text-gray-600">{formatTitle(res.title)}</span>
+                                                        <span className="text-[10px] font-normal text-gray-400">{formatDate(res.start_time).split(' ')[0]}</span>
                                                     </div>
                                                 ))}
                                         </div>

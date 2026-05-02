@@ -159,7 +159,7 @@ export default function BlockedTimeModal({ isOpen, onClose, onSave }: BlockedTim
       <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         {/* ヘッダー */}
         <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-xl font-semibold text-gray-900">予約不可時間設定</h2>
+          <h2 className="text-xl font-normal text-gray-900">予約不可時間設定</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -173,13 +173,13 @@ export default function BlockedTimeModal({ isOpen, onClose, onSave }: BlockedTim
         <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* 新規作成・編集フォーム */}
           <div className="space-y-4">
-            <h3 className="text-lg font-medium text-gray-900">
+            <h3 className="text-lg font-normal text-gray-900">
               {editingId ? '予約不可時間を編集' : '新しい予約不可時間を追加'}
             </h3>
             
             {/* 開始時間 */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-normal text-gray-700 mb-2">
                 開始時間 *
               </label>
               <input
@@ -193,7 +193,7 @@ export default function BlockedTimeModal({ isOpen, onClose, onSave }: BlockedTim
 
             {/* 終了時間 */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-normal text-gray-700 mb-2">
                 終了時間 *
               </label>
               <input
@@ -207,7 +207,7 @@ export default function BlockedTimeModal({ isOpen, onClose, onSave }: BlockedTim
 
             {/* 理由 */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-normal text-gray-700 mb-2">
                 理由（任意）
               </label>
               <input
@@ -221,7 +221,7 @@ export default function BlockedTimeModal({ isOpen, onClose, onSave }: BlockedTim
 
             {/* 繰り返し設定 */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-normal text-gray-700 mb-2">
                 繰り返し設定
               </label>
               <select
@@ -238,7 +238,7 @@ export default function BlockedTimeModal({ isOpen, onClose, onSave }: BlockedTim
             {/* 繰り返し終了日 */}
             {formData.recurrence_type !== 'none' && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-normal text-gray-700 mb-2">
                   繰り返し終了日（任意）
                 </label>
                 <input
@@ -272,7 +272,7 @@ export default function BlockedTimeModal({ isOpen, onClose, onSave }: BlockedTim
 
           {/* 既存のブロック時間一覧 */}
           <div className="space-y-4">
-            <h3 className="text-lg font-medium text-gray-900">設定済み予約不可時間</h3>
+            <h3 className="text-lg font-normal text-gray-900">設定済み予約不可時間</h3>
             
             <div className="space-y-3 max-h-96 overflow-y-auto">
               {blockedTimes.length === 0 ? (
@@ -287,7 +287,7 @@ export default function BlockedTimeModal({ isOpen, onClose, onSave }: BlockedTim
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-gray-900">
+                        <div className="text-sm font-normal text-gray-900">
                           {new Date(blockedTime.start_time).toLocaleString('ja-JP')} 〜 
                           {new Date(blockedTime.end_time).toLocaleString('ja-JP')}
                         </div>

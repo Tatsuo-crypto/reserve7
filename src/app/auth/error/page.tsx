@@ -26,7 +26,7 @@ function ErrorContent() {
     <div className="min-h-screen flex flex-col bg-gray-50 pt-20 pb-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full mx-auto space-y-4">
         <div>
-          <h2 className="text-center text-3xl font-extrabold text-gray-900">
+          <h2 className="text-center text-3xl font-normal text-gray-900">
             T&J GYM
           </h2>
           <p className="mt-1 text-center text-lg text-gray-700">
@@ -42,7 +42,7 @@ function ErrorContent() {
               </svg>
             </div>
             <div className="ml-3">
-              <h3 className="text-sm font-medium text-red-800">
+              <h3 className="text-sm font-normal text-red-800">
                 {getErrorMessage(error)}
               </h3>
               <div className="mt-2 text-sm text-red-700">
@@ -55,7 +55,7 @@ function ErrorContent() {
         <div className="text-center">
           <Link 
             href="/login" 
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-normal rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
           >
             ログインページに戻る
           </Link>

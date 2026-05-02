@@ -688,11 +688,11 @@ function DietPlanPageContent() {
                                             <div className="text-[10px] font-normal text-gray-400 uppercase tracking-widest">{member.email}</div>
                                         </div>
                                     </div>
-                                    <div className="text-[10px] font-black text-gray-400 bg-gray-50 px-4 py-2 rounded-full group-hover:bg-rose-500 group-hover:text-white transition-all uppercase tracking-widest">選択</div>
+                                    <div className="text-[10px] font-normal text-gray-400 bg-gray-50 px-4 py-2 rounded-full group-hover:bg-rose-500 group-hover:text-white transition-all uppercase tracking-widest">選択</div>
                                 </button>
                             ))}
                             {filteredMembers.length === 0 && (
-                                <div className="py-20 text-center text-gray-400 italic font-bold">会員が見つかりません</div>
+                                <div className="py-20 text-center text-gray-400 italic font-normal">会員が見つかりません</div>
                             )}
                         </div>
                     </div>
@@ -1079,7 +1079,7 @@ function DietPlanPageContent() {
                     </div>
                 )}
             </div>
-            {message && <div className="fixed bottom-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-8 py-4 rounded-2xl font-black shadow-2xl z-50">{message}</div>}
+            {message && <div className="fixed bottom-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-8 py-4 rounded-2xl font-normal shadow-2xl z-50">{message}</div>}
         </div>
     );
 
@@ -1101,7 +1101,7 @@ function AnalysisChartCard({ title, children, color }: { title: string, children
     }
     return (
         <div className={`p-6 rounded-2xl border ${colorStyles[color]} shadow-sm space-y-4`}>
-            <h3 className="text-sm font-black text-gray-500 tracking-widest">{title}</h3>
+            <h3 className="text-sm font-normal text-gray-500 tracking-widest">{title}</h3>
             <div className="h-[250px] w-full">{children}</div>
         </div>
     )
@@ -1119,21 +1119,21 @@ function WeeklyProgressItem({ label, actual, target, unit, color, perDay }: { la
         <div className="space-y-3">
             <div className="flex justify-between items-end">
                 <div>
-                    <div className="text-sm font-black text-gray-500">{label}</div>
+                    <div className="text-sm font-normal text-gray-500">{label}</div>
                     <div className="flex items-baseline gap-1">
-                        <span className="text-2xl font-black tabular-nums">{actual.toLocaleString()}</span>
-                        <span className="text-sm font-black text-gray-400">/ {target.toLocaleString()} {unit}</span>
+                        <span className="text-2xl font-normal tabular-nums">{actual.toLocaleString()}</span>
+                        <span className="text-sm font-normal text-gray-400">/ {target.toLocaleString()} {unit}</span>
                     </div>
                 </div>
                 <div className="text-right">
-                    <div className="text-[10px] font-black text-gray-400">1日目標: {perDay}{unit}</div>
-                    <div className={`text-lg font-black tabular-nums ${pct >= 100 ? 'text-emerald-500' : 'text-gray-900'}`}>{pct}%</div>
+                    <div className="text-[10px] font-normal text-gray-400">1日目標: {perDay}{unit}</div>
+                    <div className={`text-lg font-normal tabular-nums ${pct >= 100 ? 'text-emerald-500' : 'text-gray-900'}`}>{pct}%</div>
                 </div>
             </div>
             <div className="h-4 bg-gray-100 rounded-full overflow-hidden">
                 <div className={`h-full transition-all duration-1000 ${colors[color]}`} style={{ width: `${pct}%` }} />
             </div>
-            <div className="text-[10px] font-bold text-gray-400 text-center italic">(= {perDay} × 7) {unit}</div>
+            <div className="text-[10px] font-normal text-gray-400 text-center italic">(= {perDay} × 7) {unit}</div>
         </div>
     )
 }
@@ -1152,13 +1152,13 @@ function NutrientCard({ label, grams, kcal, onGramChange, onKcalChange, color, s
     const isTwo = showKcal && kcal !== undefined;
     return (
         <div className={`p-4 rounded-2xl border ${colorStyles[color] || colorStyles.gray} space-y-3 shadow-sm`}>
-            <div className="text-base sm:text-lg font-black uppercase tracking-tight">{label}</div>
+            <div className="text-base sm:text-lg font-normal uppercase tracking-tight">{label}</div>
             <div className={`grid gap-2 ${isTwo ? 'grid-cols-2' : 'grid-cols-1'}`}>
                 <NutrientControl value={grams} unit="g" onDelta={onGramChange} />
                 {showKcal && kcal !== undefined && (
                     <div className="bg-white/40 rounded-xl p-2 border border-white/50 flex items-center justify-center gap-1 shadow-inner">
-                        <span className="text-base sm:text-lg font-black tabular-nums">{Math.round(kcal)}</span>
-                        <span className="text-[8px] font-bold opacity-30 uppercase">kcal</span>
+                        <span className="text-base sm:text-lg font-normal tabular-nums">{Math.round(kcal)}</span>
+                        <span className="text-[8px] font-normal opacity-30 uppercase">kcal</span>
                     </div>
                 )}
             </div>
@@ -1170,8 +1170,8 @@ function NutrientControl({ value, unit, onDelta }: { value: number, unit: string
     return (
         <div className="bg-white rounded-xl p-2 border border-white flex items-center justify-between shadow-sm">
             <div className="flex-1 flex items-center justify-center gap-1">
-                <span className="text-base sm:text-lg font-black tabular-nums">{value}</span>
-                <span className="text-[8px] font-bold opacity-30">{unit}</span>
+                <span className="text-base sm:text-lg font-normal tabular-nums">{value}</span>
+                <span className="text-[8px] font-normal opacity-30">{unit}</span>
             </div>
             <div className="flex flex-col gap-0.5 border-l border-gray-100 pl-2">
                 <button onClick={() => onDelta(1)} className="text-gray-300 hover:text-blue-500"><svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M5 15l7-7 7 7" /></svg></button>
@@ -1185,12 +1185,12 @@ function HabitConfig({ label, unit, active, target, onToggle, onTargetChange, st
     return (
         <div className={`p-4 rounded-2xl border-2 transition-all h-full flex flex-col ${active ? 'bg-teal-50 border-teal-200 shadow-md' : 'bg-white border-gray-100 opacity-60'}`}>
             <div className="flex items-center justify-between mb-2">
-                <span className={`text-sm font-black ${active ? 'text-teal-700' : 'text-gray-400'}`}>{label}</span>
+                <span className={`text-sm font-normal ${active ? 'text-teal-700' : 'text-gray-400'}`}>{label}</span>
                 <button onClick={onToggle} className={`w-10 h-5 rounded-full transition-all relative ${active ? 'bg-teal-500' : 'bg-gray-200'}`}><div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all shadow-sm ${active ? 'left-5.5' : 'left-0.5'}`} /></button>
             </div>
             {active && (
                 <div className="mt-auto flex items-center justify-between bg-white px-3 py-2 rounded-xl border border-teal-100 shadow-sm">
-                    <div className="flex-1 flex items-center justify-center gap-1"><span className="text-lg font-black text-teal-700 tabular-nums">{target}</span><span className="text-[10px] font-bold text-teal-400">{unit}</span></div>
+                    <div className="flex-1 flex items-center justify-center gap-1"><span className="text-lg font-normal text-teal-700 tabular-nums">{target}</span><span className="text-[10px] font-normal text-teal-400">{unit}</span></div>
                     <div className="flex flex-col gap-0.5 border-l border-gray-100 pl-3">
                         <button onClick={() => onTargetChange(Number((target + step).toFixed(1)))} className="text-teal-400 hover:text-teal-600"><svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M5 15l7-7 7 7" /></svg></button>
                         <button onClick={() => onTargetChange(Math.max(0, Number((target - step).toFixed(1))))} className="text-teal-400 hover:text-teal-600"><svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg></button>

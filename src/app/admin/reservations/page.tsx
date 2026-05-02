@@ -391,7 +391,7 @@ function AdminReservationsContent() {
               </svg>
             </button>
             <div className="text-center">
-              <h1 className="text-2xl font-bold text-gray-900">予約</h1>
+              <h1 className="text-2xl font-normal text-gray-900">予約</h1>
               <p className="mt-1 text-sm text-gray-500">予約のステータス管理</p>
             </div>
           </div>
@@ -418,22 +418,22 @@ function AdminReservationsContent() {
               <table className="min-w-max divide-y divide-gray-200">
                 <thead className="bg-gradient-to-r from-blue-50 to-indigo-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px] border-r border-gray-100">
+                    <th className="px-6 py-3 text-left text-xs font-normal text-gray-500 uppercase tracking-wider min-w-[120px] border-r border-gray-100">
                       日付
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[140px] border-r border-gray-100">
+                    <th className="px-6 py-3 text-left text-xs font-normal text-gray-500 uppercase tracking-wider min-w-[140px] border-r border-gray-100">
                       時間
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[150px] border-r border-gray-100">
+                    <th className="px-6 py-3 text-left text-xs font-normal text-gray-500 uppercase tracking-wider min-w-[150px] border-r border-gray-100">
                       会員名
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px] border-r border-gray-100">
+                    <th className="px-6 py-3 text-left text-xs font-normal text-gray-500 uppercase tracking-wider min-w-[120px] border-r border-gray-100">
                       回数
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[150px] border-r border-gray-100">
+                    <th className="px-6 py-3 text-left text-xs font-normal text-gray-500 uppercase tracking-wider min-w-[150px] border-r border-gray-100">
                       メモ
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px]">
+                    <th className="px-6 py-3 text-left text-xs font-normal text-gray-500 uppercase tracking-wider min-w-[120px]">
                       操作
                     </th>
                   </tr>
@@ -447,7 +447,7 @@ function AdminReservationsContent() {
                         : ''
                       }
                     >
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium min-w-[120px] border-r border-gray-100">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-normal min-w-[120px] border-r border-gray-100">
                         <div className="bg-blue-50 text-blue-800 px-2 py-1 rounded-md text-center">
                           {formatDate(reservation.startTime || reservation.start_time)}
                         </div>
@@ -461,13 +461,13 @@ function AdminReservationsContent() {
                         <div className="flex items-center">
                           <div className="flex-shrink-0 h-8 w-8">
                             <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
-                              <span className="text-sm font-medium text-gray-700">
+                              <span className="text-sm font-normal text-gray-700">
                                 {reservation.client?.id === 'blocked' ? 'B' : (reservation.client?.fullName || reservation.client?.full_name || reservation.client_name || '-').charAt(0)}
                               </span>
                             </div>
                           </div>
                           <div className="ml-3">
-                            <div className="font-medium text-gray-900">
+                            <div className="font-normal text-gray-900">
                               {reservation.client?.id === 'blocked' ? '予約不可時間' : (reservation.client?.fullName || reservation.client?.full_name || reservation.client_name || '-')}
                             </div>
                             <div className="text-gray-500 text-xs">
@@ -482,11 +482,11 @@ function AdminReservationsContent() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm min-w-[120px] border-r border-gray-100">
                         {reservation.client?.id === 'blocked' ? (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-normal bg-red-100 text-red-800">
                             予約不可
                           </span>
                         ) : (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-normal bg-green-100 text-green-800">
                             {`${getMonthlyCount(reservation, reservations)}/${monthlyUsage[reservation.client.id]?.maxCount ?? '-'}回（${new Date(reservation.startTime || reservation.start_time).getMonth() + 1}月）`}
                           </span>
                         )}
@@ -494,7 +494,7 @@ function AdminReservationsContent() {
                       <td className="px-6 py-4 text-sm min-w-[150px] border-r border-gray-100">
                         {reservation.memo || reservation.notes || '-'}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium min-w-[120px]">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-normal min-w-[120px]">
                         <div className="flex space-x-2">
                           <button
                             type="button"
@@ -546,12 +546,12 @@ function AdminReservationsContent() {
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
           <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
             <div className="mt-3">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">
+              <h3 className="text-lg font-normal text-gray-900 mb-4">
                 予約の変更
               </h3>
               <form onSubmit={handleEditSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-normal text-gray-700 mb-1">
                     タイトル
                   </label>
                   <input
@@ -566,7 +566,7 @@ function AdminReservationsContent() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-normal text-gray-700 mb-1">
                     開始時刻
                   </label>
                   <input
@@ -578,7 +578,7 @@ function AdminReservationsContent() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-normal text-gray-700 mb-1">
                     終了時刻
                   </label>
                   <input
@@ -593,7 +593,7 @@ function AdminReservationsContent() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-normal text-gray-700 mb-1">
                     メモ
                   </label>
                   <textarea

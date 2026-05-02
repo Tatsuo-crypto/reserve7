@@ -96,13 +96,13 @@ export default function ShiftCalendar({
     <div className="flex flex-col border border-gray-200 rounded-lg bg-white overflow-hidden">
       {/* Header: Days of week */}
       <div className="grid grid-cols-8 border-b border-gray-200 bg-gray-50 flex-shrink-0">
-        <div className="p-2 border-r border-gray-200 text-center text-xs font-medium text-gray-500 sticky left-0 bg-gray-50 z-10">
+        <div className="p-2 border-r border-gray-200 text-center text-xs font-normal text-gray-500 sticky left-0 bg-gray-50 z-10">
           時間
         </div>
         {weekDays.map(day => (
           <div key={day.toString()} className={`p-2 text-center border-r border-gray-200 last:border-r-0 ${isSameDay(day, new Date()) ? 'bg-blue-50' : ''}`}>
-            <div className="text-xs font-medium text-gray-500">{format(day, 'E', { locale: ja })}</div>
-            <div className={`text-sm font-bold ${isSameDay(day, new Date()) ? 'text-blue-600' : 'text-gray-900'}`}>
+            <div className="text-xs font-normal text-gray-500">{format(day, 'E', { locale: ja })}</div>
+            <div className={`text-sm font-normal ${isSameDay(day, new Date()) ? 'text-blue-600' : 'text-gray-900'}`}>
               {format(day, 'M/d')}
             </div>
           </div>
@@ -163,11 +163,11 @@ export default function ShiftCalendar({
                       style={getShiftStyle(start, end)}
                     >
                       <div className="w-full text-center px-0.5">
-                        <div className="text-[10px] text-indigo-900 leading-tight break-words font-medium">
+                        <div className="text-[10px] text-indigo-900 leading-tight break-words font-normal">
                           {surname}
                         </div>
                         {/* 
-                        <div className="text-[9px] text-indigo-700 font-medium leading-tight">
+                        <div className="text-[9px] text-indigo-700 font-normal leading-tight">
                           (固定)
                         </div>
                         */}
@@ -193,7 +193,7 @@ export default function ShiftCalendar({
                       onClick={(e) => handleShiftClick(e, shift)}
                     >
                       <div className="w-full px-0.5 text-center">
-                        <span className={`relative z-50 text-[10px] leading-tight break-words block ${isSelected ? 'text-orange-900 font-medium' : 'text-indigo-900'}`}>
+                        <span className={`relative z-50 text-[10px] leading-tight break-words block ${isSelected ? 'text-orange-900 font-normal' : 'text-indigo-900'}`}>
                           {surname}
                         </span>
                       </div>
@@ -299,7 +299,7 @@ function ShiftEditModal({ shift, isOpen, onClose, onSave, onDelete }: {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-30 z-50 flex items-center justify-center">
       <div className="bg-white rounded-lg shadow-xl p-6 w-80">
-        <h3 className="text-lg font-medium mb-4">シフト編集</h3>
+        <h3 className="text-lg font-normal mb-4">シフト編集</h3>
         <p className="text-sm text-gray-500 mb-4">{format(new Date(shift.start_time), 'yyyy/MM/dd (E)', { locale: ja })}</p>
 
         <div className="space-y-4 mb-6">

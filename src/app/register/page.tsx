@@ -90,12 +90,12 @@ export default function RegisterPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          <h2 className="mt-6 text-center text-3xl font-normal text-gray-900">
             新規会員登録
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
             または{' '}
-            <Link href="/login" className="font-medium text-indigo-600 hover:text-indigo-500">
+            <Link href="/login" className="font-normal text-indigo-600 hover:text-indigo-500">
               ログインはこちら
             </Link>
           </p>
@@ -104,7 +104,7 @@ export default function RegisterPage() {
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
-              <label htmlFor="storeId" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="storeId" className="block text-sm font-normal text-gray-700">
                 利用店舗を選択してください
               </label>
               <div className="relative mt-1">
@@ -131,7 +131,7 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label htmlFor="fullName" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="fullName" className="block text-sm font-normal text-gray-700">
                 氏名
               </label>
               <input
@@ -150,7 +150,7 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="email" className="block text-sm font-normal text-gray-700">
                 メールアドレス（任意）
               </label>
               <input
@@ -168,7 +168,7 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="password" className="block text-sm font-normal text-gray-700">
                 パスワード
               </label>
               <input
@@ -187,7 +187,7 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="confirmPassword" className="block text-sm font-normal text-gray-700">
                 パスワード（確認）
               </label>
               <input
@@ -216,7 +216,7 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-normal rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? '登録中...' : '会員登録'}
             </button>

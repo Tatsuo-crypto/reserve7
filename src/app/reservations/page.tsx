@@ -349,7 +349,7 @@ export default function ReservationsPage() {
         {/* Header */}
         <div className="mb-8">
           <div className="flex flex-col items-center space-y-3">
-            <h1 className="text-4xl font-bold text-gray-900">
+            <h1 className="text-4xl font-normal text-gray-900">
               予約管理
             </h1>
             <div className="flex items-center justify-between w-full">
@@ -396,7 +396,7 @@ export default function ReservationsPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
+            <h3 className="text-lg font-normal text-gray-900 mb-2">
               予約がありません
             </h3>
             <p className="text-gray-600">
@@ -413,23 +413,23 @@ export default function ReservationsPage() {
                 <table className="min-w-max divide-y divide-gray-200">
                   <thead className="bg-gradient-to-r from-blue-50 to-indigo-50">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px] border-r border-gray-100">
+                      <th className="px-6 py-3 text-left text-xs font-normal text-gray-500 uppercase tracking-wider min-w-[120px] border-r border-gray-100">
                         日付
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[140px] border-r border-gray-100">
+                      <th className="px-6 py-3 text-left text-xs font-normal text-gray-500 uppercase tracking-wider min-w-[140px] border-r border-gray-100">
                         時間
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[150px] border-r border-gray-100">
+                      <th className="px-6 py-3 text-left text-xs font-normal text-gray-500 uppercase tracking-wider min-w-[150px] border-r border-gray-100">
                         会員名
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px] border-r border-gray-100">
+                      <th className="px-6 py-3 text-left text-xs font-normal text-gray-500 uppercase tracking-wider min-w-[120px] border-r border-gray-100">
                         回数
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[150px] border-r border-gray-100">
+                      <th className="px-6 py-3 text-left text-xs font-normal text-gray-500 uppercase tracking-wider min-w-[150px] border-r border-gray-100">
                         メモ
                       </th>
                       {isAdmin && (
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px]">
+                        <th className="px-6 py-3 text-left text-xs font-normal text-gray-500 uppercase tracking-wider min-w-[120px]">
                           操作
                         </th>
                       )}
@@ -438,7 +438,7 @@ export default function ReservationsPage() {
                   <tbody className="bg-white divide-y divide-gray-200">
                     {reservations && reservations.map((reservation) => (
                       <tr key={reservation.id} className={getRowClassName(reservation)}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium min-w-[120px] border-r border-gray-100">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-normal min-w-[120px] border-r border-gray-100">
                           <div className="bg-blue-50 text-blue-800 px-2 py-1 rounded-md text-center">
                             {formatDate(reservation.startTime)}
                           </div>
@@ -452,13 +452,13 @@ export default function ReservationsPage() {
                           <div className="flex items-center">
                             <div className="flex-shrink-0 h-8 w-8">
                               <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
-                                <span className="text-sm font-medium text-gray-700">
+                                <span className="text-sm font-normal text-gray-700">
                                   {reservation.client.id === 'blocked' ? 'B' : reservation.client.fullName.charAt(0)}
                                 </span>
                               </div>
                             </div>
                             <div className="ml-3">
-                              <div className="font-medium text-gray-900">
+                              <div className="font-normal text-gray-900">
                                 {reservation.client.id === 'blocked' ? '予約不可時間' : reservation.client.fullName}
                               </div>
                               <div className="text-gray-500 text-xs">
@@ -473,11 +473,11 @@ export default function ReservationsPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm min-w-[120px] border-r border-gray-100">
                           {reservation.client.id === 'blocked' ? (
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-normal bg-red-100 text-red-800">
                               予約不可
                             </span>
                           ) : (
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-normal bg-green-100 text-green-800">
                               {`${getMonthlyCount(reservation, reservations)}/${getPlanMaxCount(reservation.client.plan)}回（${new Date(reservation.startTime).getMonth() + 1}月）`}
                             </span>
                           )}
@@ -486,7 +486,7 @@ export default function ReservationsPage() {
                           {reservation.notes || '-'}
                         </td>
                         {isAdmin && (
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium min-w-[120px]">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-normal min-w-[120px]">
                             <div className="flex space-x-2">
                               <button
                                 type="button"
@@ -528,12 +528,12 @@ export default function ReservationsPage() {
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
           <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
             <div className="mt-3">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">
+              <h3 className="text-lg font-normal text-gray-900 mb-4">
                 予約の変更
               </h3>
               <form onSubmit={handleEditSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-normal text-gray-700 mb-1">
                     タイトル
                   </label>
                   <input
@@ -549,7 +549,7 @@ export default function ReservationsPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-normal text-gray-700 mb-1">
                     開始時間
                   </label>
                   <input
@@ -561,7 +561,7 @@ export default function ReservationsPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-normal text-gray-700 mb-1">
                     終了時間
                   </label>
                   <input
@@ -576,7 +576,7 @@ export default function ReservationsPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-normal text-gray-700 mb-1">
                     メモ
                   </label>
                   <textarea
@@ -624,7 +624,7 @@ export default function ReservationsPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
                 </svg>
               </div>
-              <h3 className="text-lg font-medium text-gray-900 text-center mb-4">
+              <h3 className="text-lg font-normal text-gray-900 text-center mb-4">
                 予約をキャンセルしますか？
               </h3>
               <p className="text-sm text-gray-500 text-center mb-6">

@@ -132,7 +132,7 @@ export default function NewMemberPage() {
           </svg>
         </button>
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900">新規会員追加</h1>
+          <h1 className="text-2xl font-normal text-gray-900">新規会員追加</h1>
           <p className="mt-1 text-sm text-gray-600">会員情報を入力してください</p>
         </div>
       </div>
@@ -148,7 +148,7 @@ export default function NewMemberPage() {
           {/* 氏名（苗字・名前） */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="lastName" className="block text-sm font-normal text-gray-700 mb-2">
                 苗字（任意）
               </label>
               <input
@@ -162,7 +162,7 @@ export default function NewMemberPage() {
               />
             </div>
             <div>
-              <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="firstName" className="block text-sm font-normal text-gray-700 mb-2">
                 名前（任意）
               </label>
               <input
@@ -179,7 +179,7 @@ export default function NewMemberPage() {
 
           {/* メールアドレス */}
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="email" className="block text-sm font-normal text-gray-700 mb-2">
               メールアドレス（任意）
             </label>
             <input
@@ -196,7 +196,7 @@ export default function NewMemberPage() {
 
           {/* 店舗 */}
           <div>
-            <label htmlFor="storeId" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="storeId" className="block text-sm font-normal text-gray-700 mb-2">
               店舗 <span className="text-red-500">*</span>
             </label>
             <select
@@ -216,7 +216,7 @@ export default function NewMemberPage() {
 
           {/* 入会時プラン */}
           <div>
-            <label htmlFor="plan" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="plan" className="block text-sm font-normal text-gray-700 mb-2">
               入会時プラン
             </label>
             <select
@@ -235,7 +235,7 @@ export default function NewMemberPage() {
 
           {/* 入会時月会費 */}
           <div>
-            <label htmlFor="monthlyFee" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="monthlyFee" className="block text-sm font-normal text-gray-700 mb-2">
               入会時月会費（円）
             </label>
             <input
@@ -252,7 +252,7 @@ export default function NewMemberPage() {
 
           {/* 開始月 */}
           <div>
-            <label htmlFor="startMonth" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="startMonth" className="block text-sm font-normal text-gray-700 mb-2">
               開始月
             </label>
             <input
@@ -270,7 +270,7 @@ export default function NewMemberPage() {
 
           {/* 登録日 */}
           <div>
-            <label htmlFor="registrationDate" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="registrationDate" className="block text-sm font-normal text-gray-700 mb-2">
               登録日
             </label>
             <input
@@ -285,7 +285,7 @@ export default function NewMemberPage() {
 
           {/* ステータス */}
           <div>
-            <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="status" className="block text-sm font-normal text-gray-700 mb-2">
               ステータス
             </label>
             <select
@@ -303,7 +303,7 @@ export default function NewMemberPage() {
 
           {/* メモ */}
           <div>
-            <label htmlFor="memo" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="memo" className="block text-sm font-normal text-gray-700 mb-2">
               メモ（任意）
             </label>
             <textarea
@@ -338,7 +338,7 @@ export default function NewMemberPage() {
 
         {/* Info Box */}
         <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <h3 className="text-sm font-medium text-blue-900 mb-2">会員追加について</h3>
+          <h3 className="text-sm font-normal text-blue-900 mb-2">会員追加について</h3>
           <ul className="text-sm text-blue-800 space-y-1">
             <li>• 会員追加後、会員管理ページから専用URLを発行できます</li>
             <li>• メールアドレスは専用URL発行時に必要です</li>

@@ -107,10 +107,10 @@ function LessonCard({ lesson, onJoin }: { lesson: OnlineLesson; onJoin: (url: st
                 <div className="flex items-start justify-between">
                     <div className="flex-1">
                         <div className="flex items-center space-x-2">
-                            <h3 className={`font-bold text-lg ${status.isOngoing ? 'text-white' : 'text-gray-800'}`}>
+                            <h3 className={`font-normal text-lg ${status.isOngoing ? 'text-white' : 'text-gray-800'}`}>
                                 {lesson.title}
                             </h3>
-                            <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-blue-100 text-blue-700">
+                            <span className="text-xs px-2 py-0.5 rounded-full font-normal bg-blue-100 text-blue-700">
                                 {lesson.difficulty || '初心者'}
                             </span>
                         </div>
@@ -121,7 +121,7 @@ function LessonCard({ lesson, onJoin }: { lesson: OnlineLesson; onJoin: (url: st
                         )}
                     </div>
                     {status.isOngoing && (
-                        <span className="ml-3 flex-shrink-0 px-2 py-1 bg-white bg-opacity-20 text-white text-xs font-bold rounded-full animate-pulse">
+                        <span className="ml-3 flex-shrink-0 px-2 py-1 bg-white bg-opacity-20 text-white text-xs font-normal rounded-full animate-pulse">
                             LIVE
                         </span>
                     )}
@@ -138,7 +138,7 @@ function LessonCard({ lesson, onJoin }: { lesson: OnlineLesson; onJoin: (url: st
                 <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
                         <div className={`w-2.5 h-2.5 rounded-full ${status.canJoin ? 'bg-green-500 animate-pulse' : 'bg-gray-300'}`} />
-                        <span className={`text-sm font-medium ${status.canJoin ? 'text-green-700' : 'text-gray-500'}`}>
+                        <span className={`text-sm font-normal ${status.canJoin ? 'text-green-700' : 'text-gray-500'}`}>
                             {status.statusLabel}
                         </span>
                     </div>
@@ -147,7 +147,7 @@ function LessonCard({ lesson, onJoin }: { lesson: OnlineLesson; onJoin: (url: st
                     <button
                         onClick={() => onJoin(lesson.meet_url)}
                         disabled={!status.canJoin}
-                        className={`flex items-center space-x-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all ${status.canJoin
+                        className={`flex items-center space-x-2 px-5 py-2.5 rounded-xl font-normal text-sm transition-all ${status.canJoin
                             ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-md hover:shadow-lg transform hover:scale-105 active:scale-95'
                             : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                             }`}
@@ -241,8 +241,8 @@ export default function OnlineLessonPage() {
                         </svg>
                     </button>
                     <div>
-                        <h1 className="text-lg font-bold text-gray-900">オンラインレッスン</h1>
-                        <p className="text-xs text-blue-600 font-medium">開始5分前から参加できます</p>
+                        <h1 className="text-lg font-normal text-gray-900">オンラインレッスン</h1>
+                        <p className="text-xs text-blue-600 font-normal">開始5分前から参加できます</p>
                     </div>
                 </div>
             </div>
@@ -259,7 +259,7 @@ export default function OnlineLessonPage() {
                                     </svg>
                                 </div>
                                 <div>
-                                    <p className="text-sm font-bold">アプリのダウンロードが必要です</p>
+                                    <p className="text-sm font-normal">アプリのダウンロードが必要です</p>
                                     <p className="text-xs text-blue-100">iPhoneではGoogle Meetアプリから参加します</p>
                                 </div>
                             </div>
@@ -268,7 +268,7 @@ export default function OnlineLessonPage() {
                                     href="https://apps.apple.com/jp/app/google-meet/id1270665395"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="bg-white text-blue-600 text-xs font-bold px-3 py-1.5 rounded-lg whitespace-nowrap"
+                                    className="bg-white text-blue-600 text-xs font-normal px-3 py-1.5 rounded-lg whitespace-nowrap"
                                 >
                                     App Store
                                 </a>
@@ -295,7 +295,7 @@ export default function OnlineLessonPage() {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                         </div>
-                        <p className="text-gray-700 font-medium">{error}</p>
+                        <p className="text-gray-700 font-normal">{error}</p>
                         <button
                             onClick={fetchLessons}
                             className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm"
@@ -310,7 +310,7 @@ export default function OnlineLessonPage() {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.069A1 1 0 0121 8.845v6.309a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                             </svg>
                         </div>
-                        <h2 className="text-xl font-bold text-gray-700 mb-2">現在準備中です</h2>
+                        <h2 className="text-xl font-normal text-gray-700 mb-2">現在準備中です</h2>
                         <p className="text-gray-500 text-sm">オンラインレッスンの詳細は<br />もうしばらくお待ちください</p>
                     </div>
                 ) : (
@@ -321,7 +321,7 @@ export default function OnlineLessonPage() {
 
                         {/* How to join */}
                         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mt-2">
-                            <h3 className="font-semibold text-gray-800 mb-3">参加方法</h3>
+                            <h3 className="font-normal text-gray-800 mb-3">参加方法</h3>
                             <div className="space-y-3">
                                 {(isIOS ? [
                                     { step: '1', text: 'App StoreからGoogle Meetアプリをダウンロードしておいてください' },
@@ -335,7 +335,7 @@ export default function OnlineLessonPage() {
                                 ]).map(item => (
                                     <div key={item.step} className="flex items-start space-x-3">
                                         <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                                            <span className="text-blue-600 font-bold text-xs">{item.step}</span>
+                                            <span className="text-blue-600 font-normal text-xs">{item.step}</span>
                                         </div>
                                         <p className="text-gray-600 text-sm leading-relaxed pt-0.5">{item.text}</p>
                                     </div>
@@ -345,7 +345,7 @@ export default function OnlineLessonPage() {
                                         href="https://apps.apple.com/jp/app/google-meet/id1270665395"
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="mt-2 flex items-center justify-center w-full py-3 bg-blue-600 text-white rounded-xl font-medium text-sm space-x-2 hover:bg-blue-700 transition-colors"
+                                        className="mt-2 flex items-center justify-center w-full py-3 bg-blue-600 text-white rounded-xl font-normal text-sm space-x-2 hover:bg-blue-700 transition-colors"
                                     >
                                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />

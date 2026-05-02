@@ -70,7 +70,7 @@ function LoginForm() {
     <div className="min-h-screen flex flex-col bg-gray-50 pt-20 pb-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full mx-auto space-y-4">
         <div>
-          <h2 className="text-center text-3xl font-extrabold text-gray-900">
+          <h2 className="text-center text-3xl font-normal text-gray-900">
             T&J GYM
           </h2>
           <p className="mt-1 text-center text-lg text-gray-700">
@@ -88,7 +88,7 @@ function LoginForm() {
         <form className="mt-4 space-y-3" onSubmit={handleSubmit}>
           <div className="space-y-3">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="email" className="block text-sm font-normal text-gray-700">
                 メールアドレス
               </label>
               <input
@@ -104,7 +104,7 @@ function LoginForm() {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="password" className="block text-sm font-normal text-gray-700">
                 パスワード
               </label>
               <input
@@ -130,7 +130,7 @@ function LoginForm() {
             <button
               type="submit"
               disabled={isLoading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-normal rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? 'ログイン中...' : 'ログイン'}
             </button>

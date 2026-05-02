@@ -191,7 +191,7 @@ export default function AdminOnlineLessonPage() {
 
                     {/* Center: Title & Subtitle */}
                     <div className="absolute inset-x-0 flex flex-col items-center pointer-events-none mt-1 sm:mt-0">
-                        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 pointer-events-auto">オンラインレッスン</h1>
+                        <h1 className="text-xl sm:text-2xl font-normal text-gray-900 pointer-events-auto">オンラインレッスン</h1>
                         <p className="text-[10px] sm:text-sm text-gray-500 mt-1 sm:mt-0.5 pointer-events-auto text-center">複数のレッスンを登録できます</p>
                     </div>
 
@@ -211,14 +211,14 @@ export default function AdminOnlineLessonPage() {
                 {/* Edit / New Form */}
                 {editingId !== null && (
                     <div className="bg-white rounded-2xl shadow-sm border border-blue-100 p-6 mb-6">
-                        <h2 className="text-lg font-bold text-gray-800 mb-5">
+                        <h2 className="text-lg font-normal text-gray-800 mb-5">
                             {editingId === 'new' ? '新しいレッスンを追加' : 'レッスンを編集'}
                         </h2>
 
                         <div className="space-y-5">
                             {/* Title */}
                             <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-1.5">タイトル <span className="text-red-500">*</span></label>
+                                <label className="block text-sm font-normal text-gray-700 mb-1.5">タイトル <span className="text-red-500">*</span></label>
                                 <input
                                     type="text"
                                     value={form.title}
@@ -230,7 +230,7 @@ export default function AdminOnlineLessonPage() {
 
                             {/* Meet URL */}
                             <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Google Meet URL <span className="text-red-500">*</span></label>
+                                <label className="block text-sm font-normal text-gray-700 mb-1.5">Google Meet URL <span className="text-red-500">*</span></label>
                                 <input
                                     type="url"
                                     value={form.meet_url}
@@ -242,7 +242,7 @@ export default function AdminOnlineLessonPage() {
 
                             {/* Day of Week */}
                             <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-2">開催曜日</label>
+                                <label className="block text-sm font-normal text-gray-700 mb-2">開催曜日</label>
                                 <div className="flex space-x-2">
                                     {[0, 1, 2, 3, 4, 5, 6].map(d => {
                                         const selected = (form.day_of_week || []).includes(d)
@@ -260,7 +260,7 @@ export default function AdminOnlineLessonPage() {
                                                 key={d}
                                                 type="button"
                                                 onClick={() => toggleDay(d)}
-                                                className={`w-10 h-10 rounded-xl border-2 text-sm font-bold transition-all ${selected ? colors[d] + ' border-current' : 'bg-gray-100 text-gray-400 border-gray-200'}`}
+                                                className={`w-10 h-10 rounded-xl border-2 text-sm font-normal transition-all ${selected ? colors[d] + ' border-current' : 'bg-gray-100 text-gray-400 border-gray-200'}`}
                                             >
                                                 {DAYS_JA[d]}
                                             </button>
@@ -272,7 +272,7 @@ export default function AdminOnlineLessonPage() {
                             {/* Start / End Time */}
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">開始時刻</label>
+                                    <label className="block text-sm font-normal text-gray-700 mb-1.5">開始時刻</label>
                                     <input
                                         type="time"
                                         value={form.start_time || ''}
@@ -281,7 +281,7 @@ export default function AdminOnlineLessonPage() {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">終了時刻</label>
+                                    <label className="block text-sm font-normal text-gray-700 mb-1.5">終了時刻</label>
                                     <input
                                         type="time"
                                         value={form.end_time || ''}
@@ -293,7 +293,7 @@ export default function AdminOnlineLessonPage() {
 
                             {/* Description */}
                             <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-1.5">説明・備考</label>
+                                <label className="block text-sm font-normal text-gray-700 mb-1.5">説明・備考</label>
                                 <textarea
                                     value={form.description}
                                     onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
@@ -305,7 +305,7 @@ export default function AdminOnlineLessonPage() {
 
                             {/* Difficulty */}
                             <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-2">難易度</label>
+                                <label className="block text-sm font-normal text-gray-700 mb-2">難易度</label>
                                 <div className="flex space-x-4">
                                     {['初心者', '中級', '上級'].map(diff => (
                                         <label key={diff} className="flex items-center space-x-2 cursor-pointer">
@@ -325,7 +325,7 @@ export default function AdminOnlineLessonPage() {
 
                             {/* URL Expiration */}
                             <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-1.5">URL有効期限</label>
+                                <label className="block text-sm font-normal text-gray-700 mb-1.5">URL有効期限</label>
                                 <input
                                     type="date"
                                     value={form.url_expires_at || ''}
@@ -345,7 +345,7 @@ export default function AdminOnlineLessonPage() {
                                         type="button"
                                         onClick={() => handleDelete(editingId!)}
                                         disabled={deletingId === editingId}
-                                        className="py-3 px-4 sm:flex-none border border-red-200 text-red-600 rounded-xl hover:bg-red-50 transition-colors font-medium text-sm flex items-center justify-center space-x-2"
+                                        className="py-3 px-4 sm:flex-none border border-red-200 text-red-600 rounded-xl hover:bg-red-50 transition-colors font-normal text-sm flex items-center justify-center space-x-2"
                                     >
                                         {deletingId === editingId ? (
                                             <div className="animate-spin h-5 w-5 border-b-2 border-red-600 rounded-full" />
@@ -361,7 +361,7 @@ export default function AdminOnlineLessonPage() {
                                     <button
                                         type="button"
                                         onClick={cancelEdit}
-                                        className="flex-1 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors font-medium text-sm"
+                                        className="flex-1 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors font-normal text-sm"
                                     >
                                         キャンセル
                                     </button>
@@ -369,7 +369,7 @@ export default function AdminOnlineLessonPage() {
                                         type="button"
                                         onClick={handleSave}
                                         disabled={saving}
-                                        className="flex-1 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium text-sm disabled:opacity-50"
+                                        className="flex-1 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-normal text-sm disabled:opacity-50"
                                     >
                                         {saving ? '保存中...' : '保存する'}
                                     </button>
@@ -385,7 +385,7 @@ export default function AdminOnlineLessonPage() {
                         <svg className="w-16 h-16 mx-auto mb-4 text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.069A1 1 0 0121 8.845v6.309a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                         </svg>
-                        <p className="text-sm font-medium">レッスンがありません</p>
+                        <p className="text-sm font-normal">レッスンがありません</p>
                         <p className="text-xs mt-1">「追加」ボタンからレッスンを登録してください</p>
                     </div>
                 ) : (
@@ -399,8 +399,8 @@ export default function AdminOnlineLessonPage() {
                                 <div className="flex flex-col space-y-3">
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center space-x-2 mb-1">
-                                            <h3 className="font-bold text-gray-900 text-lg group-hover:text-blue-600 transition-colors">{lesson.title}</h3>
-                                            <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-blue-100 text-blue-700">
+                                            <h3 className="font-normal text-gray-900 text-lg group-hover:text-blue-600 transition-colors">{lesson.title}</h3>
+                                            <span className="text-xs px-2 py-0.5 rounded-full font-normal bg-blue-100 text-blue-700">
                                                 {lesson.difficulty || '初心者'}
                                             </span>
                                         </div>

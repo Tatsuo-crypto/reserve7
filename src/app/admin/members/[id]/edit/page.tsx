@@ -204,7 +204,7 @@ export default function EditMemberPage() {
     <div className="max-w-2xl mx-auto py-8 px-4">
       <div className="bg-white shadow-sm border border-gray-200 rounded-lg p-6">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">会員情報編集</h1>
+          <h1 className="text-2xl font-normal text-gray-900">会員情報編集</h1>
           <p className="mt-2 text-sm text-gray-600">会員情報を更新してください</p>
         </div>
 
@@ -217,7 +217,7 @@ export default function EditMemberPage() {
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* 名前 */}
           <div>
-            <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="fullName" className="block text-sm font-normal text-gray-700 mb-2">
               氏名 <span className="text-red-500">*</span>
             </label>
             <input
@@ -234,7 +234,7 @@ export default function EditMemberPage() {
 
           {/* メールアドレス */}
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="email" className="block text-sm font-normal text-gray-700 mb-2">
               メールアドレス <span className="text-red-500">*</span>
             </label>
             <input
@@ -251,7 +251,7 @@ export default function EditMemberPage() {
 
           {/* 店舗 */}
           <div>
-            <label htmlFor="storeId" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="storeId" className="block text-sm font-normal text-gray-700 mb-2">
               店舗 <span className="text-red-500">*</span>
             </label>
             <select
@@ -271,7 +271,7 @@ export default function EditMemberPage() {
 
           {/* 入会時プラン */}
           <div>
-            <label htmlFor="plan" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="plan" className="block text-sm font-normal text-gray-700 mb-2">
               入会時プラン
             </label>
             <select
@@ -290,7 +290,7 @@ export default function EditMemberPage() {
 
           {/* 入会時月会費 */}
           <div>
-            <label htmlFor="monthlyFee" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="monthlyFee" className="block text-sm font-normal text-gray-700 mb-2">
               入会時月会費（円）
             </label>
             <input
@@ -307,7 +307,7 @@ export default function EditMemberPage() {
 
           {/* 開始月 */}
           <div>
-            <label htmlFor="startMonth" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="startMonth" className="block text-sm font-normal text-gray-700 mb-2">
               開始月
             </label>
             <input
@@ -322,7 +322,7 @@ export default function EditMemberPage() {
 
           {/* 登録日 */}
           <div>
-            <label htmlFor="registrationDate" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="registrationDate" className="block text-sm font-normal text-gray-700 mb-2">
               登録日
             </label>
             <input
@@ -337,7 +337,7 @@ export default function EditMemberPage() {
 
           {/* ステータス */}
           <div>
-            <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="status" className="block text-sm font-normal text-gray-700 mb-2">
               ステータス
             </label>
             <select
@@ -356,7 +356,7 @@ export default function EditMemberPage() {
           {/* 変更日 (プラン・会費変更時のみ表示) */}
           {isChanged && (
             <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-              <label htmlFor="changeDate" className="block text-sm font-medium text-yellow-800 mb-2">
+              <label htmlFor="changeDate" className="block text-sm font-normal text-yellow-800 mb-2">
                 変更適用日
               </label>
               <input
@@ -377,7 +377,7 @@ export default function EditMemberPage() {
 
           {/* 表示設定 */}
           <div className="pt-6 border-t border-gray-100">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">機能表示設定</h3>
+            <h3 className="text-lg font-normal text-gray-900 mb-4">機能表示設定</h3>
             
             <div className="space-y-4">
               <label className="flex items-center gap-4 p-4 bg-blue-50/50 border border-blue-100 rounded-xl cursor-pointer hover:bg-blue-50 transition-colors">
@@ -394,7 +394,7 @@ export default function EditMemberPage() {
                   className="w-6 h-6 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                 />
                 <div>
-                  <div className="font-black text-gray-900">食事管理機能を表示する <span className="text-blue-600 ml-1 text-xs">(ダイエットプラン限定)</span></div>
+                  <div className="font-normal text-gray-900">食事管理機能を表示する <span className="text-blue-600 ml-1 text-xs">(ダイエットプラン限定)</span></div>
                   <div className="text-xs text-gray-500 mt-1">「入力・分析・進捗」の全タブと生活記録項目が有効になります</div>
                 </div>
               </label>
@@ -403,7 +403,7 @@ export default function EditMemberPage() {
 
           {/* メモ */}
           <div>
-            <label htmlFor="memo" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="memo" className="block text-sm font-normal text-gray-700 mb-2">
               メモ（任意）
             </label>
             <textarea

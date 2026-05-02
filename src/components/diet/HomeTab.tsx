@@ -154,7 +154,7 @@ export default function HomeTab({ token, userName, todayDraft }: HomeTabProps) {
         <div className="space-y-4 animate-fadeIn">
             {/* 1. Integrated Header Section */}
             <div className="px-2 flex flex-col items-center">
-                <h2 className="text-2xl font-black text-gray-800 tracking-tight mb-3">
+                <h2 className="text-2xl font-normal text-gray-800 tracking-tight mb-3">
                     週間目標
                 </h2>
                 
@@ -168,10 +168,10 @@ export default function HomeTab({ token, userName, todayDraft }: HomeTabProps) {
                     
                     <div className="flex-1 text-center">
                         <div className="flex items-center justify-center gap-2">
-                            <span className="text-sm font-black text-gray-800">
+                            <span className="text-sm font-normal text-gray-800">
                                 {weekOffset === 0 ? '今週' : weekOffset === -1 ? '先週' : `${Math.abs(weekOffset)}週間前`}
                             </span>
-                            <span className="text-[10px] font-bold text-gray-500 tabular-nums">
+                            <span className="text-[10px] font-normal text-gray-500 tabular-nums">
                                 ({weeklyStats?.weekRangeStr})
                             </span>
                         </div>
@@ -193,7 +193,7 @@ export default function HomeTab({ token, userName, todayDraft }: HomeTabProps) {
                 <div className="bg-white rounded-3xl p-5 border border-gray-100 shadow-sm">
                     <div className="flex items-center gap-2 mb-4">
                         <div className="w-1 h-4 bg-rose-500 rounded-full"></div>
-                        <h3 className="text-sm font-black text-gray-800">食事・栄養</h3>
+                        <h3 className="text-sm font-normal text-gray-800">食事・栄養</h3>
                     </div>
                     
                     <div className="space-y-5">
@@ -238,7 +238,7 @@ export default function HomeTab({ token, userName, todayDraft }: HomeTabProps) {
                 <div className="bg-white rounded-3xl p-5 border border-gray-100 shadow-sm">
                     <div className="flex items-center gap-2 mb-4">
                         <div className="w-1 h-4 bg-blue-600 rounded-full"></div>
-                        <h3 className="text-sm font-black text-gray-800">運動・生活</h3>
+                        <h3 className="text-sm font-normal text-gray-800">運動・生活</h3>
                     </div>
                     
                     <div className="space-y-5">
@@ -307,14 +307,14 @@ function WeeklyProgressItem({ label, actual, target, unit, color, perDay, isFreq
         <div className="space-y-1.5">
             <div className="flex justify-between items-end">
                 <div className="space-y-0.5">
-                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none">{label}</p>
+                    <p className="text-[9px] font-normal text-gray-400 uppercase tracking-widest leading-none">{label}</p>
                     <div className="flex items-baseline gap-1">
-                        <span className="text-lg font-black text-gray-800 tabular-nums leading-none">{isFrequency ? actual : actual.toLocaleString()}</span>
-                        <span className="text-[9px] font-bold text-gray-300">/ {target.toLocaleString()} {unit}</span>
+                        <span className="text-lg font-normal text-gray-800 tabular-nums leading-none">{isFrequency ? actual : actual.toLocaleString()}</span>
+                        <span className="text-[9px] font-normal text-gray-300">/ {target.toLocaleString()} {unit}</span>
                     </div>
                 </div>
                 <div className="text-right">
-                    <p className={`text-sm font-black tabular-nums leading-none ${pct >= 100 ? 'text-emerald-500' : textColors[color]}`}>
+                    <p className={`text-sm font-normal tabular-nums leading-none ${pct >= 100 ? 'text-emerald-500' : textColors[color]}`}>
                         {pct}%
                     </p>
                 </div>
@@ -325,7 +325,7 @@ function WeeklyProgressItem({ label, actual, target, unit, color, perDay, isFreq
                     style={{ width: `${pct}%` }} 
                 />
             </div>
-            <div className="flex justify-between items-center text-[7px] font-black text-gray-300 uppercase tracking-tighter leading-none">
+            <div className="flex justify-between items-center text-[7px] font-normal text-gray-300 uppercase tracking-tighter leading-none">
                 <span>累計</span>
                 <span>{isFrequency ? `目標: ${target}${unit}` : `1日: ${perDay}${unit}`}</span>
             </div>

@@ -71,15 +71,15 @@ function AdminCalendarPageContent() {
         <header className="bg-gradient-to-b from-white to-gray-50 border-b border-gray-100 shadow mb-6">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-16">
-              <div className="text-xl font-semibold text-gray-900">
+              <div className="text-xl font-normal text-gray-900">
                 T&J GYM
               </div>
               {trainer && (
                 <div className="bg-white border border-gray-300 px-4 py-2 rounded-lg shadow-sm text-sm flex items-center space-x-3">
-                  <span className="text-gray-700 font-medium">
+                  <span className="text-gray-700 font-normal">
                     {getStoreDisplayName(trainer.storeId)}
                   </span>
-                  <span className="px-3 py-1 rounded-full text-xs font-medium border bg-blue-100 text-blue-700 border-blue-300">
+                  <span className="px-3 py-1 rounded-full text-xs font-normal border bg-blue-100 text-blue-700 border-blue-300">
                     トレーナー
                   </span>
                 </div>
@@ -102,7 +102,7 @@ function AdminCalendarPageContent() {
               </svg>
             </button>
             <div className="text-center">
-              <h1 className="text-2xl font-bold text-gray-900">予約</h1>
+              <h1 className="text-2xl font-normal text-gray-900">予約</h1>
               <p className="mt-1 text-sm text-gray-500">予約のステータス管理</p>
             </div>
             {!trainerToken && (

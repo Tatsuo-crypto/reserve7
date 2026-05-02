@@ -332,7 +332,7 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
           className="h-[85px] p-1 overflow-hidden cursor-pointer flex flex-col bg-white hover:bg-gray-50 border border-gray-100"
           onClick={() => handleDateClick(dateStr)}
         >
-          <div className="text-sm font-medium mb-1 flex-shrink-0 flex justify-start">
+          <div className="text-sm font-normal mb-1 flex-shrink-0 flex justify-start">
             {isToday ? (
               <div className="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-normal">
                 {day}
@@ -480,7 +480,7 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            <h3 className="text-xl sm:text-lg font-medium text-gray-900 min-w-[160px] text-center">
+            <h3 className="text-xl sm:text-lg font-normal text-gray-900 min-w-[160px] text-center">
               {formatMonth(currentDate)}
             </h3>
             <button
@@ -544,7 +544,7 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
       <div className="mt-6 pb-8 flex justify-center">
         <Link
           href={trainerToken ? `/admin/reservations?trainerToken=${trainerToken}` : '/admin/reservations'}
-          className="inline-flex items-center px-8 py-3 bg-indigo-50 text-indigo-600 text-[11px] font-black rounded-2xl hover:bg-indigo-100 transition-all uppercase tracking-widest border border-indigo-100 shadow-sm shadow-indigo-100/50"
+          className="inline-flex items-center px-8 py-3 bg-indigo-50 text-indigo-600 text-[11px] font-normal rounded-2xl hover:bg-indigo-100 transition-all uppercase tracking-widest border border-indigo-100 shadow-sm shadow-indigo-100/50"
         >
           予約一覧を見る
         </Link>

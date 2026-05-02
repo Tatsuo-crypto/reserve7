@@ -104,7 +104,7 @@ export default function TrainerTemplateModal({ isOpen, onClose, token, onSave }:
     <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center">
       <div className="relative bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
-          <h3 className="text-lg font-medium text-gray-900">固定シフト設定</h3>
+          <h3 className="text-lg font-normal text-gray-900">固定シフト設定</h3>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-500">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -136,7 +136,7 @@ export default function TrainerTemplateModal({ isOpen, onClose, token, onSave }:
                         className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded"
                       />
                     </div>
-                    <label htmlFor={`day-${template.dayOfWeek}`} className="min-w-[3rem] text-sm font-medium text-gray-700 select-none cursor-pointer">
+                    <label htmlFor={`day-${template.dayOfWeek}`} className="min-w-[3rem] text-sm font-normal text-gray-700 select-none cursor-pointer">
                       {dayName}曜日
                     </label>
                     
@@ -165,14 +165,14 @@ export default function TrainerTemplateModal({ isOpen, onClose, token, onSave }:
         <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end space-x-3">
           <button
             onClick={onClose}
-            className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none"
+            className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-normal text-gray-700 bg-white hover:bg-gray-50 focus:outline-none"
           >
             キャンセル
           </button>
           <button
             onClick={handleSave}
             disabled={loading}
-            className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none disabled:opacity-50"
+            className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-normal text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none disabled:opacity-50"
           >
             {loading ? '保存中...' : '設定を保存'}
           </button>

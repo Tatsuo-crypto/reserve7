@@ -72,7 +72,7 @@ export default function CalendarTestPage() {
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md mx-auto">
         <div className="bg-white rounded-lg shadow px-6 py-8">
-          <h1 className="text-2xl font-bold text-gray-900 mb-6 text-center">
+          <h1 className="text-2xl font-normal text-gray-900 mb-6 text-center">
             Googleカレンダー連携テスト
           </h1>
           
@@ -84,7 +84,7 @@ export default function CalendarTestPage() {
             <button
               onClick={handleTestCalendar}
               disabled={isLoading}
-              className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+              className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-normal py-2 px-4 rounded-lg transition-colors"
             >
               {isLoading ? 'テスト中...' : 'カレンダー連携テスト実行'}
             </button>
@@ -102,7 +102,7 @@ export default function CalendarTestPage() {
             )}
 
             <div className="mt-6 text-xs text-gray-500">
-              <h3 className="font-medium mb-2">設定確認項目:</h3>
+              <h3 className="font-normal mb-2">設定確認項目:</h3>
               <ul className="space-y-1">
                 <li>• Google Cloud ProjectでCalendar APIが有効</li>
                 <li>• サービスアカウントキーが正しく設定</li>

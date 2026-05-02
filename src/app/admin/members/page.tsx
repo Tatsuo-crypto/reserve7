@@ -208,7 +208,7 @@ function MembersPageContent() {
           rightElement={
             <Link
               href="/admin/members/new"
-              className="px-5 py-2.5 bg-blue-600 text-white text-[10px] font-black rounded-2xl hover:bg-blue-700 transition-all shadow-md flex items-center gap-2 uppercase tracking-widest"
+              className="px-5 py-2.5 bg-blue-600 text-white text-[10px] font-normal rounded-2xl hover:bg-blue-700 transition-all shadow-md flex items-center gap-2 uppercase tracking-widest"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
@@ -221,19 +221,19 @@ function MembersPageContent() {
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-            <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">現在の在籍者</div>
+            <div className="text-[10px] font-normal text-gray-400 uppercase tracking-widest mb-1">現在の在籍者</div>
             <div className="flex items-baseline gap-2">
-              <span className="text-4xl font-black text-blue-600 tracking-tight">{totalActive}</span>
-              <span className="text-sm font-bold text-gray-400">名</span>
+              <span className="text-4xl font-normal text-blue-600 tracking-tight">{totalActive}</span>
+              <span className="text-sm font-normal text-gray-400">名</span>
             </div>
           </div>
           <div className="md:col-span-3 bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-            <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">プラン別内訳</div>
+            <div className="text-[10px] font-normal text-gray-400 uppercase tracking-widest mb-4">プラン別内訳</div>
             <div className="flex flex-wrap gap-2">
               {sortedPlans.map(plan => (
                 <div key={plan} className="bg-gray-50 rounded-lg px-3 py-1.5 border border-gray-100 flex items-center gap-2">
-                  <span className="text-[10px] font-black text-gray-500">{plan}</span>
-                  <span className="text-sm font-black text-gray-800 tabular-nums">{planCounts[plan]}</span>
+                  <span className="text-[10px] font-normal text-gray-500">{plan}</span>
+                  <span className="text-sm font-normal text-gray-800 tabular-nums">{planCounts[plan]}</span>
                 </div>
               ))}
             </div>
@@ -245,13 +245,13 @@ function MembersPageContent() {
           <div className="flex items-center gap-2 bg-gray-50 p-1 rounded-xl border border-gray-100">
             <button
               onClick={() => setShowOnlyActive(true)}
-              className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${showOnlyActive ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+              className={`px-4 py-2 rounded-lg text-xs font-normal transition-all ${showOnlyActive ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
             >
               在籍のみ
             </button>
             <button
               onClick={() => setShowOnlyActive(false)}
-              className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${!showOnlyActive ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+              className={`px-4 py-2 rounded-lg text-xs font-normal transition-all ${!showOnlyActive ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
             >
               全員表示
             </button>
@@ -261,7 +261,7 @@ function MembersPageContent() {
             <select
               value={sortKey || ''}
               onChange={(e) => setSortKey(e.target.value as any || null)}
-              className="bg-gray-50 border border-gray-100 rounded-xl px-4 py-2 text-xs font-bold text-gray-600 focus:ring-2 focus:ring-blue-500 outline-none"
+              className="bg-gray-50 border border-gray-100 rounded-xl px-4 py-2 text-xs font-normal text-gray-600 focus:ring-2 focus:ring-blue-500 outline-none"
             >
               <option value="">標準並び替え</option>
               <option value="plan">プラン順</option>
@@ -280,7 +280,7 @@ function MembersPageContent() {
         </div>
 
         {error && (
-          <div className="mb-6 p-4 rounded-2xl bg-gray-900 text-white font-black text-sm shadow-xl flex items-center gap-3 animate-fadeIn">
+          <div className="mb-6 p-4 rounded-2xl bg-gray-900 text-white font-normal text-sm shadow-xl flex items-center gap-3 animate-fadeIn">
             <div className="w-1.5 h-4 bg-rose-500 rounded-full"></div>
             {error}
           </div>
@@ -290,16 +290,16 @@ function MembersPageContent() {
         <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
           {!members || members.length === 0 ? (
             <div className="p-20 text-center">
-              <p className="text-gray-400 font-bold italic">会員データが見つかりません</p>
+              <p className="text-gray-400 font-normal italic">会員データが見つかりません</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-gray-50/50 border-b border-gray-100">
-                    <th className="px-4 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">氏名</th>
-                    <th className="px-4 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">プラン</th>
-                    <th className="px-4 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">ステータス</th>
+                    <th className="px-4 py-4 text-[10px] font-normal text-gray-400 uppercase tracking-widest">氏名</th>
+                    <th className="px-4 py-4 text-[10px] font-normal text-gray-400 uppercase tracking-widest">プラン</th>
+                    <th className="px-4 py-4 text-[10px] font-normal text-gray-400 uppercase tracking-widest text-center">ステータス</th>
                     <th className="px-4 py-4 text-right"></th>
                   </tr>
                 </thead>
@@ -313,18 +313,18 @@ function MembersPageContent() {
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-2">
                           <div className={`flex-shrink-0 w-2 h-2 rounded-full ${getStatusDotColor(member.status)} shadow-sm`}></div>
-                          <div className="text-sm font-black text-gray-900 group-hover:text-blue-600 transition-colors truncate max-w-[120px] sm:max-w-none">
+                          <div className="text-sm font-normal text-gray-900 group-hover:text-blue-600 transition-colors truncate max-w-[120px] sm:max-w-none">
                             {member.full_name}
                           </div>
                         </div>
                       </td>
                       <td className="px-4 py-4">
-                        <span className="text-[10px] font-black text-gray-600 bg-gray-100 px-2 py-0.5 rounded-md whitespace-nowrap">
+                        <span className="text-[10px] font-normal text-gray-600 bg-gray-100 px-2 py-0.5 rounded-md whitespace-nowrap">
                           {member.plan || '-'}
                         </span>
                       </td>
                       <td className="px-4 py-4 text-center">
-                        <span className={`px-2 py-0.5 text-[10px] font-black rounded-full shadow-sm whitespace-nowrap ${getStatusColor(member.status)}`}>
+                        <span className={`px-2 py-0.5 text-[10px] font-normal rounded-full shadow-sm whitespace-nowrap ${getStatusColor(member.status)}`}>
                           {getStatusText(member.status)}
                         </span>
                       </td>

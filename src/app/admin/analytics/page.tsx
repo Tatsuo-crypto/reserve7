@@ -193,20 +193,20 @@ export default function AnalyticsPage() {
             {/* Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                    <h3 className="text-sm font-medium text-gray-500">現在の月額会員数</h3>
+                    <h3 className="text-sm font-normal text-gray-500">現在の月額会員数</h3>
                     <div className="mt-2 flex items-baseline">
-                        <span className="text-3xl font-bold text-gray-900">{activeCount}</span>
+                        <span className="text-3xl font-normal text-gray-900">{activeCount}</span>
                         <span className="ml-1 text-sm text-gray-500">名</span>
-                        <span className={`ml-2 text-sm font-medium ${Number(growth) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        <span className={`ml-2 text-sm font-normal ${Number(growth) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                             {Number(growth) >= 0 ? '+' : ''}{growth}%
                         </span>
                         <span className="ml-2 text-xs text-gray-400">前月比</span>
                     </div>
                 </div>
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                    <h3 className="text-sm font-medium text-gray-500">今月の売上見込み (概算)</h3>
+                    <h3 className="text-sm font-normal text-gray-500">今月の売上見込み (概算)</h3>
                     <div className="mt-2 flex items-baseline">
-                        <span className="text-3xl font-bold text-gray-900">¥{projectedSales.toLocaleString()}</span>
+                        <span className="text-3xl font-normal text-gray-900">¥{projectedSales.toLocaleString()}</span>
                     </div>
                 </div>
             </div>
@@ -217,7 +217,7 @@ export default function AnalyticsPage() {
                 {/* Sales Chart */}
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                     <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-lg font-bold text-gray-900">売上推移</h3>
+                        <h3 className="text-lg font-normal text-gray-900">売上推移</h3>
                     </div>
                     <div className="h-[300px]">
                         <ResponsiveContainer width="100%" height="100%">
@@ -239,7 +239,7 @@ export default function AnalyticsPage() {
                 {/* Member Growth Chart */}
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                     <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-lg font-bold text-gray-900">会員数推移</h3>
+                        <h3 className="text-lg font-normal text-gray-900">会員数推移</h3>
                     </div>
                     <div className="h-[300px]">
                         <ResponsiveContainer width="100%" height="100%">
@@ -262,7 +262,7 @@ export default function AnalyticsPage() {
                 {/* Member Movement (Join/Withdraw) - Custom Block Chart */}
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 lg:col-span-2">
                     <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-lg font-bold text-gray-900">入会・退会推移</h3>
+                        <h3 className="text-lg font-normal text-gray-900">入会・退会推移</h3>
                         <div className="flex items-center gap-4 text-xs text-gray-500">
                             <span className="flex items-center gap-1.5">
                                 <span className="inline-block w-3 h-3 rounded-sm bg-red-400"></span>
@@ -289,14 +289,14 @@ export default function AnalyticsPage() {
                                         {/* Vertical year divider */}
                                         {showYear && idx > 0 && (
                                             <div className="flex flex-col items-center mr-1">
-                                                <div className="text-[9px] font-bold text-gray-400 whitespace-nowrap mb-1">{yearStr}</div>
+                                                <div className="text-[9px] font-normal text-gray-400 whitespace-nowrap mb-1">{yearStr}</div>
                                                 <div className="w-px bg-gray-300 flex-1" />
                                             </div>
                                         )}
                                         <div className="flex flex-col items-center">
                                         {/* Year label at top for first item */}
                                         {showYear && idx === 0 && (
-                                            <div className="text-[10px] font-bold text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded-full mb-1 whitespace-nowrap">
+                                            <div className="text-[10px] font-normal text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded-full mb-1 whitespace-nowrap">
                                                 {yearStr}
                                             </div>
                                         )}
@@ -318,7 +318,7 @@ export default function AnalyticsPage() {
                                             </div>
                                             {/* Center line + month label */}
                                             <div className="w-full border-t border-gray-200 my-1" />
-                                            <div className="text-[10px] text-gray-500 leading-none mb-1 font-medium">
+                                            <div className="text-[10px] text-gray-500 leading-none mb-1 font-normal">
                                                 {monthLabel}
                                             </div>
                                             <div className="w-full border-t border-gray-200 mb-1" />

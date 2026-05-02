@@ -56,7 +56,7 @@ function NavigationContent() {
     <header className="bg-gradient-to-b from-white to-gray-50 border-b border-gray-100 shadow">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          <Link href="/dashboard" className="text-xl sm:text-2xl font-bold text-gray-900 hover:text-gray-700">
+          <Link href="/dashboard" className="text-xl sm:text-2xl font-normal text-gray-900 hover:text-gray-700">
             T&J GYM
           </Link>
 
@@ -70,7 +70,7 @@ function NavigationContent() {
             {isTrainer ? (
               <button
                 onClick={handleLogout}
-                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm font-medium transition-colors border border-red-600"
+                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm font-normal transition-colors border border-red-600"
               >
                 ログアウト
               </button>
@@ -85,21 +85,21 @@ function NavigationContent() {
                     <>
                       {session?.user?.role === 'ADMIN' ? (
                         <>
-                          <Link href="/admin/analytics" className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors">売上</Link>
-                          <Link href="/admin/diet-plan" className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors">ダイエット</Link>
-                          <Link href="/admin/calendar" className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors">予約</Link>
-                          <Link href="/admin/members" className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors">会員</Link>
-                          <Link href="/admin/trainers" className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors">その他</Link>
+                          <Link href="/admin/analytics" className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-normal transition-colors">売上</Link>
+                          <Link href="/admin/diet-plan" className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-normal transition-colors">ダイエット</Link>
+                          <Link href="/admin/calendar" className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-normal transition-colors">予約</Link>
+                          <Link href="/admin/members" className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-normal transition-colors">会員</Link>
+                          <Link href="/admin/trainers" className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-normal transition-colors">その他</Link>
                         </>
                       ) : (
                         <>
-                          <Link href="/dashboard" className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors">ホーム</Link>
-                          <Link href="/reservations" className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors">予約</Link>
+                          <Link href="/dashboard" className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-normal transition-colors">ホーム</Link>
+                          <Link href="/reservations" className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-normal transition-colors">予約</Link>
                         </>
                       )}
                       <button
                         onClick={handleLogout}
-                        className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm font-medium transition-colors border border-red-600"
+                        className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm font-normal transition-colors border border-red-600"
                       >
                         ログアウト
                       </button>
@@ -108,13 +108,13 @@ function NavigationContent() {
                     <>
                       <Link
                         href="/login"
-                        className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                        className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-normal"
                       >
                         ログイン
                       </Link>
                       <Link
                         href="/register"
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-normal"
                       >
                         会員登録
                       </Link>
@@ -178,16 +178,16 @@ function NavigationContent() {
               <>
                 {session?.user?.role === 'ADMIN' ? (
                   <>
-                    <Link href="/admin/analytics" className="text-gray-700 hover:text-gray-900 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium" onClick={() => setIsMobileMenuOpen(false)}>売上</Link>
-                    <Link href="/admin/diet-plan" className="text-gray-700 hover:text-gray-900 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium" onClick={() => setIsMobileMenuOpen(false)}>ダイエット</Link>
-                    <Link href="/admin/calendar" className="text-gray-700 hover:text-gray-900 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium" onClick={() => setIsMobileMenuOpen(false)}>予約</Link>
-                    <Link href="/admin/members" className="text-gray-700 hover:text-gray-900 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium" onClick={() => setIsMobileMenuOpen(false)}>会員</Link>
-                    <Link href="/admin/trainers" className="text-gray-700 hover:text-gray-900 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium" onClick={() => setIsMobileMenuOpen(false)}>その他</Link>
+                    <Link href="/admin/analytics" className="text-gray-700 hover:text-gray-900 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-normal" onClick={() => setIsMobileMenuOpen(false)}>売上</Link>
+                    <Link href="/admin/diet-plan" className="text-gray-700 hover:text-gray-900 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-normal" onClick={() => setIsMobileMenuOpen(false)}>ダイエット</Link>
+                    <Link href="/admin/calendar" className="text-gray-700 hover:text-gray-900 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-normal" onClick={() => setIsMobileMenuOpen(false)}>予約</Link>
+                    <Link href="/admin/members" className="text-gray-700 hover:text-gray-900 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-normal" onClick={() => setIsMobileMenuOpen(false)}>会員</Link>
+                    <Link href="/admin/trainers" className="text-gray-700 hover:text-gray-900 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-normal" onClick={() => setIsMobileMenuOpen(false)}>その他</Link>
                   </>
                 ) : (
                   <>
-                    <Link href="/dashboard" className="text-gray-700 hover:text-gray-900 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium" onClick={() => setIsMobileMenuOpen(false)}>ホーム</Link>
-                    <Link href="/reservations" className="text-gray-700 hover:text-gray-900 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium" onClick={() => setIsMobileMenuOpen(false)}>予約</Link>
+                    <Link href="/dashboard" className="text-gray-700 hover:text-gray-900 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-normal" onClick={() => setIsMobileMenuOpen(false)}>ホーム</Link>
+                    <Link href="/reservations" className="text-gray-700 hover:text-gray-900 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-normal" onClick={() => setIsMobileMenuOpen(false)}>予約</Link>
                   </>
                 )}
                 <button
@@ -195,7 +195,7 @@ function NavigationContent() {
                     handleLogout()
                     setIsMobileMenuOpen(false)
                   }}
-                  className="text-red-600 hover:text-red-700 hover:bg-red-50 block w-full text-left px-3 py-2 rounded-md text-base font-medium"
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50 block w-full text-left px-3 py-2 rounded-md text-base font-normal"
                 >
                   ログアウト
                 </button>
@@ -204,14 +204,14 @@ function NavigationContent() {
               <>
                 <Link
                   href="/login"
-                  className="text-gray-700 hover:text-gray-900 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium"
+                  className="text-gray-700 hover:text-gray-900 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-normal"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   ログイン
                 </Link>
                 <Link
                   href="/register"
-                  className="text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 block px-3 py-2 rounded-md text-base font-medium"
+                  className="text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 block px-3 py-2 rounded-md text-base font-normal"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   会員登録

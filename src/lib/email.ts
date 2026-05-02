@@ -54,24 +54,24 @@ export async function sendTrainerNotification(params: {
       <p>${params.trainerName}さん、新しい予約が入りました。</p>
       <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
         <tr>
-          <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold; width: 100px;">店舗</td>
+          <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: normal; width: 100px;">店舗</td>
           <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${params.storeName}</td>
         </tr>
         <tr>
-          <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">会員</td>
+          <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: normal;">会員</td>
           <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${params.clientName}</td>
         </tr>
         <tr>
-          <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">日時</td>
+          <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: normal;">日時</td>
           <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${dateStr} ${startTimeStr} - ${endTimeStr}</td>
         </tr>
         <tr>
-          <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">タイトル</td>
+          <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: normal;">タイトル</td>
           <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${params.title}</td>
         </tr>
         ${params.notes ? `
         <tr>
-          <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">メモ</td>
+          <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: normal;">メモ</td>
           <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${params.notes}</td>
         </tr>
         ` : ''}

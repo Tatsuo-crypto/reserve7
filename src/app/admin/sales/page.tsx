@@ -97,7 +97,7 @@ function SalesPageContent() {
                             </svg>
                         </button>
                         <div className="text-center">
-                            <h1 className="text-2xl font-bold text-gray-900">売上管理</h1>
+                            <h1 className="text-2xl font-normal text-gray-900">売上管理</h1>
                             <p className="mt-1 text-sm text-gray-500">月会費の管理・確認</p>
                         </div>
                     </div>
@@ -125,7 +125,7 @@ function SalesPageContent() {
                         </div>
                         <div className="text-right">
                             <span className="text-xs text-gray-500">売上総額</span>
-                            <span className="ml-2 text-lg font-bold text-gray-900">¥{totalAmount.toLocaleString()}</span>
+                            <span className="ml-2 text-lg font-normal text-gray-900">¥{totalAmount.toLocaleString()}</span>
                         </div>
                     </div>
                 </div>
@@ -145,9 +145,9 @@ function SalesPageContent() {
                                     className="flex items-center px-3 py-2.5 hover:bg-gray-50 transition-colors"
                                 >
                                     <span className="flex-shrink-0 w-1.5 h-1.5 rounded-full mr-2 bg-gray-400" />
-                                    <span className="font-medium text-[13px] text-gray-900 truncate" style={{flex: '1 1 35%'}}>{item.full_name}</span>
+                                    <span className="font-normal text-[13px] text-gray-900 truncate" style={{flex: '1 1 35%'}}>{item.full_name}</span>
                                     <span className="text-[11px] text-gray-500 whitespace-nowrap text-left" style={{flex: '1 1 35%'}}>{item.plan}</span>
-                                    <span className="text-[13px] font-bold text-gray-900 whitespace-nowrap text-right" style={{flex: '0 0 auto'}}>¥{item.amount.toLocaleString()}</span>
+                                    <span className="text-[13px] font-normal text-gray-900 whitespace-nowrap text-right" style={{flex: '0 0 auto'}}>¥{item.amount.toLocaleString()}</span>
                                 </Link>
                             ))}
                         </div>

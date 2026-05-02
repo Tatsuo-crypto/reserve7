@@ -198,13 +198,13 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
 
   if (status === 'loading' || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-gray-600 font-black uppercase tracking-widest">読み込み中...</div>
+      <div className="min-h-screen flex items-center justify-center text-gray-600 font-normal uppercase tracking-widest">読み込み中...</div>
     )
   }
 
   if (error || !member) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-red-600 font-black uppercase tracking-widest">{error || '会員が見つかりません'}</div>
+      <div className="min-h-screen flex items-center justify-center text-red-600 font-normal uppercase tracking-widest">{error || '会員が見つかりません'}</div>
     )
   }
 
@@ -221,8 +221,8 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
             </button>
             <div className="text-center flex-1">
-              <h1 className="text-3xl font-black text-gray-900 tracking-tight">月額プラン履歴</h1>
-              <p className="mt-1 text-sm font-bold text-gray-400 tracking-wider uppercase">{member.fullName} 様</p>
+              <h1 className="text-3xl font-normal text-gray-900 tracking-tight">月額プラン履歴</h1>
+              <p className="mt-1 text-sm font-normal text-gray-400 tracking-wider uppercase">{member.fullName} 様</p>
             </div>
             <div className="w-10"></div>
           </div>
@@ -232,8 +232,8 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
         <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden mb-10">
           <div className="px-8 py-6 border-b border-gray-50 flex items-center justify-between">
             <div>
-              <h3 className="text-xl font-black text-gray-900 tracking-tight">支払い・プラン変更履歴</h3>
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-0.5">月ごとのプランと支払金額の管理</p>
+              <h3 className="text-xl font-normal text-gray-900 tracking-tight">支払い・プラン変更履歴</h3>
+              <p className="text-xs font-normal text-gray-400 uppercase tracking-widest mt-0.5">月ごとのプランと支払金額の管理</p>
             </div>
             <button
               onClick={handleAddMonth}
@@ -251,18 +251,18 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
                 <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
                   <svg className="w-8 h-8 text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                 </div>
-                <p className="text-gray-400 font-bold">データがありません</p>
+                <p className="text-gray-400 font-normal">データがありません</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-50">
                   <thead className="bg-gray-50/50">
                     <tr>
-                      <th className="px-3 sm:px-8 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">対象月</th>
-                      <th className="px-3 sm:px-4 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">プラン</th>
-                      <th className="px-3 sm:px-4 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">予定金額</th>
-                      <th className="hidden lg:table-cell px-8 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">メモ</th>
-                      <th className="px-3 sm:px-8 py-4 text-right text-[10px] font-black text-gray-400 uppercase tracking-widest">操作</th>
+                      <th className="px-3 sm:px-8 py-4 text-left text-[10px] font-normal text-gray-400 uppercase tracking-widest">対象月</th>
+                      <th className="px-3 sm:px-4 py-4 text-left text-[10px] font-normal text-gray-400 uppercase tracking-widest">プラン</th>
+                      <th className="px-3 sm:px-4 py-4 text-left text-[10px] font-normal text-gray-400 uppercase tracking-widest">予定金額</th>
+                      <th className="hidden lg:table-cell px-8 py-4 text-left text-[10px] font-normal text-gray-400 uppercase tracking-widest">メモ</th>
+                      <th className="px-3 sm:px-8 py-4 text-right text-[10px] font-normal text-gray-400 uppercase tracking-widest">操作</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-50">
@@ -276,37 +276,37 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
                         >
                           <td className="px-3 sm:px-8 py-4">
                             <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
-                              <span className="text-sm font-black text-gray-900 tabular-nums whitespace-nowrap">
+                              <span className="text-sm font-normal text-gray-900 tabular-nums whitespace-nowrap">
                                 {formatMonth(p.month)}
                               </span>
                               <div className="flex gap-1">
                                 {isFutureMonth && (
-                                  <span className="text-[8px] font-black bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full uppercase tracking-tighter">予定</span>
+                                  <span className="text-[8px] font-normal bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full uppercase tracking-tighter">予定</span>
                                 )}
                                 {isCurrentMonth && (
-                                  <span className="text-[8px] font-black bg-green-100 text-green-600 px-1.5 py-0.5 rounded-full uppercase tracking-tighter">今月</span>
+                                  <span className="text-[8px] font-normal bg-green-100 text-green-600 px-1.5 py-0.5 rounded-full uppercase tracking-tighter">今月</span>
                                 )}
                               </div>
                             </div>
                           </td>
                           <td className="px-3 sm:px-4 py-4">
-                            <div className="text-sm font-bold text-gray-700 truncate max-w-[80px] sm:max-w-none" title={p.plan || ''}>
-                              {p.plan || <span className="text-gray-300 font-medium italic">未設定</span>}
+                            <div className="text-sm font-normal text-gray-700 truncate max-w-[80px] sm:max-w-none" title={p.plan || ''}>
+                              {p.plan || <span className="text-gray-300 font-normal italic">未設定</span>}
                             </div>
                           </td>
                           <td className="px-3 sm:px-4 py-4">
-                            <span className="text-sm font-black text-gray-900 tabular-nums whitespace-nowrap">
+                            <span className="text-sm font-normal text-gray-900 tabular-nums whitespace-nowrap">
                               {p.expectedAmount > 0 ? `¥${p.expectedAmount.toLocaleString()}` : (isFutureMonth ? '未設定' : '-')}
                             </span>
                           </td>
                           <td className="hidden lg:table-cell px-8 py-4">
-                            <span className="text-xs font-bold text-gray-400 line-clamp-1 max-w-[200px]">
+                            <span className="text-xs font-normal text-gray-400 line-clamp-1 max-w-[200px]">
                               {p.memo || '-'}
                             </span>
                           </td>
                           <td className="px-3 sm:px-8 py-4 text-right">
                             <button
-                              className={`text-[10px] font-black uppercase tracking-widest px-3 py-2 rounded-xl border transition-all ${
+                              className={`text-[10px] font-normal uppercase tracking-widest px-3 py-2 rounded-xl border transition-all ${
                                 isFutureMonth 
                                   ? 'bg-blue-50 text-blue-600 border-blue-100 hover:bg-blue-100' 
                                   : 'bg-white text-indigo-600 border-gray-100 hover:border-indigo-200 hover:bg-indigo-50'
@@ -332,9 +332,9 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
             <div className="absolute inset-0 bg-black/30" onClick={() => setEditingItem(null)} />
             <div className="relative bg-white rounded-lg shadow-lg w-full max-w-md p-6">
               <div className="flex items-center gap-2 mb-4">
-                <h3 className="text-lg font-bold">{formatMonth(editingItem.month)} の設定</h3>
+                <h3 className="text-lg font-normal">{formatMonth(editingItem.month)} の設定</h3>
                 {editingItem.status === 'future' && (
-                  <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded font-medium">翌月以降の予定</span>
+                  <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded font-normal">翌月以降の予定</span>
                 )}
               </div>
 
@@ -347,7 +347,7 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
               
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">プラン</label>
+                  <label className="block text-sm font-normal text-gray-700 mb-1">プラン</label>
                   <select
                     className="w-full border rounded-md px-3 py-2 text-sm"
                     value={editForm.plan}
@@ -374,7 +374,7 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">月額費用</label>
+                  <label className="block text-sm font-normal text-gray-700 mb-1">月額費用</label>
                   <input
                     type="text"
                     inputMode="numeric"
@@ -390,7 +390,7 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
 
                 {editingItem.status !== 'future' && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">入金日（任意）</label>
+                    <label className="block text-sm font-normal text-gray-700 mb-1">入金日（任意）</label>
                     <input
                       type="date"
                       className="w-full border rounded-md px-3 py-2 text-sm"
@@ -401,7 +401,7 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
                 )}
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">メモ（任意）</label>
+                  <label className="block text-sm font-normal text-gray-700 mb-1">メモ（任意）</label>
                   <textarea
                     className="w-full border rounded-md px-3 py-2 text-sm"
                     rows={3}
