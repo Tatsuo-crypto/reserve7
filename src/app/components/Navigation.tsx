@@ -13,213 +13,121 @@ function NavigationContent() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const [trainerInfo, setTrainerInfo] = useState<{ name: string; storeId: string } | null>(null)
 
-  const trainerToken = searchParams.get('trainerToken')
+  // Determine if we should show a back button instead of a menu button
+  const isSubPage = pathname !== '/dashboard' && pathname !== '/admin/members' && pathname !== '/admin/analytics'
 
-  // Fetch trainer info if token is present
-  useEffect(() => {
-    const fetchTrainerInfo = async () => {
-      if (!trainerToken) return
-      try {
-        const res = await fetch(`/api/auth/trainer-token?token=${trainerToken}`)
-        if (res.ok) {
-          const data = await res.json()
-          setTrainerInfo(data.trainer)
-        }
-      } catch (e) {
-        console.error('Failed to fetch trainer info', e)
-      }
+  // Determine page title based on pathname and tab
+  const getPageTitle = () => {
+    const tab = searchParams.get('tab')
+    
+    // Member detail pages (try to get name from somewhere or just generic)
+    if (pathname?.startsWith('/admin/members/')) {
+       return '会員詳細'
     }
-    fetchTrainerInfo()
-  }, [trainerToken])
 
-  // Don't show navigation on client pages or trainer standalone pages (which have their own headers)
-  if (pathname && (pathname.startsWith('/client/') || pathname.startsWith('/trainer/'))) {
-    return null
+    if (pathname === '/dashboard') {
+      if (tab === 'diet') return 'ダイエット管理'
+      if (tab === 'sales') return '売上集計'
+      if (tab === 'members') return '会員管理'
+      if (tab === 'others') return 'その他設定'
+      return '予約状況'
+    }
+    
+    if (pathname?.startsWith('/admin/analytics')) return '売上集計'
+    if (pathname?.startsWith('/admin/diet-plan')) return 'ダイエット詳細'
+    if (pathname?.startsWith('/admin/members')) return '会員管理'
+    if (pathname?.startsWith('/admin/trainers')) return 'トレーナー管理'
+    if (pathname?.startsWith('/admin/stores')) return '店舗管理'
+    if (pathname?.startsWith('/admin/shifts')) return 'シフト管理'
+    if (pathname?.startsWith('/admin/online-lesson')) return 'オンライン管理'
+    return 'T&J GYM'
   }
 
-  // If accessing via trainer token, hide global navigation (page will handle header)
-  if (trainerToken) {
-    return null
+  const handleBack = () => {
+    router.back()
   }
-
-  // Check if user is a trainer
-  const isTrainer = session?.user?.role === 'TRAINER'
 
   const handleLogout = async () => {
     await signOut({ redirect: false })
     router.push('/')
   }
 
+  // Don't show global navigation on client pages (they have their own headers)
+  if (pathname && (pathname.startsWith('/client/') || pathname.startsWith('/trainer/'))) {
+    return null
+  }
+
   return (
-    <header className="bg-gradient-to-b from-white to-gray-50 border-b border-gray-100 shadow">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          <Link href="/dashboard" className="text-xl sm:text-2xl font-normal text-gray-900 hover:text-gray-700 keep-design">
-            T&J GYM
-          </Link>
+    <header className="bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-50 h-16">
+      <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between relative">
+        {/* Left: Menu or Back Button */}
+        <div className="z-10 min-w-[44px]">
+          {isSubPage ? (
+            <button
+              onClick={handleBack}
+              className="w-10 h-10 flex items-center justify-center text-blue-500 bg-white rounded-full shadow-sm border border-gray-100 transition-all active:scale-90 hover:bg-gray-50"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+          ) : (
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="w-10 h-10 flex items-center justify-center text-gray-400 bg-white rounded-full shadow-sm border border-gray-100 transition-all active:scale-90"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          )}
+        </div>
 
-          {/* Right side: Admin info + Navigation */}
-          <div className="flex items-center space-x-3">
-            {session?.user?.role === 'ADMIN' && (
-              <StoreSwitcher defaultStoreName={getStoreDisplayName(session.user.email)} />
-            )}
+        {/* Center: Dynamic Page Title */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <h1 className="text-[17px] font-normal text-gray-900 tracking-tight whitespace-nowrap pointer-events-auto">
+            {getPageTitle()}
+          </h1>
+        </div>
 
-            {/* Desktop Navigation */}
-            {isTrainer ? (
-              <button
-                onClick={handleLogout}
-                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm font-normal transition-colors border border-red-600"
+        {/* Right: Store Switcher / Account Pill */}
+        <div className="z-10 flex justify-end min-w-[44px]">
+          {session?.user?.role === 'ADMIN' ? (
+            <StoreSwitcher defaultStoreName={getStoreDisplayName(session.user.email)} />
+          ) : session?.user ? (
+             <button 
+               onClick={handleLogout}
+               className="h-10 px-4 flex items-center gap-1 bg-white rounded-full shadow-sm border border-gray-100 text-rose-500 text-[13px] font-normal transition-all active:scale-95"
+             >
+               <span className="truncate max-w-[80px]">{session.user.name}</span>
+               <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+               </svg>
+             </button>
+          ) : null}
+        </div>
+
+        {/* Mobile Menu Overlay */}
+        {isMobileMenuOpen && (
+          <div className="absolute top-16 left-4 right-4 bg-white rounded-3xl shadow-2xl border border-gray-100 p-2 z-50 animate-fadeIn overflow-hidden">
+             <div className="flex flex-col">
+              <Link 
+                href="/dashboard" 
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="flex items-center gap-3 p-5 hover:bg-gray-50 rounded-2xl transition-colors text-gray-700"
               >
-                ログアウト
+                <span className="text-base font-normal">ダッシュボード</span>
+              </Link>
+              <button 
+                onClick={handleLogout}
+                className="w-full flex items-center gap-3 p-5 hover:bg-rose-50 rounded-2xl transition-colors text-rose-600 border-t border-gray-50"
+              >
+                <span className="text-base font-normal">ログアウト</span>
               </button>
-            ) : (
-              <>
-                <nav className="hidden md:flex items-center space-x-4">
-                  {status === 'loading' ? (
-                    <div className="animate-pulse">
-                      <div className="h-4 bg-gray-200 rounded w-20"></div>
-                    </div>
-                  ) : session ? (
-                    <>
-                      {session?.user?.role === 'ADMIN' ? (
-                        <>
-                          <Link href="/admin/analytics" className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-normal transition-colors">売上</Link>
-                          <Link href="/admin/diet-plan" className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-normal transition-colors">ダイエット</Link>
-                          <Link href="/admin/calendar" className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-normal transition-colors">予約</Link>
-                          <Link href="/admin/members" className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-normal transition-colors">会員</Link>
-                          <Link href="/admin/trainers" className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-normal transition-colors">その他</Link>
-                        </>
-                      ) : (
-                        <>
-                          <Link href="/dashboard" className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-normal transition-colors">ホーム</Link>
-                          <Link href="/reservations" className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-normal transition-colors">予約</Link>
-                        </>
-                      )}
-                      <button
-                        onClick={handleLogout}
-                        className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm font-normal transition-colors border border-red-600"
-                      >
-                        ログアウト
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <Link
-                        href="/login"
-                        className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-normal"
-                      >
-                        ログイン
-                      </Link>
-                      <Link
-                        href="/register"
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-normal"
-                      >
-                        会員登録
-                      </Link>
-                    </>
-                  )}
-                </nav>
-
-                {/* Mobile menu button */}
-                <button
-                  onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                  className="md:hidden inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500"
-                  aria-expanded="false"
-                >
-                  <span className="sr-only">メニューを開く</span>
-                  {/* Hamburger icon */}
-                  <svg
-                    className={`${isMobileMenuOpen ? 'hidden' : 'block'} h-7 w-7`}
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    aria-hidden="true"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4 6h16M4 12h16M4 18h16"
-                    />
-                  </svg>
-                  {/* Close icon */}
-                  <svg
-                    className={`${isMobileMenuOpen ? 'block' : 'hidden'} h-7 w-7`}
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    aria-hidden="true"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </button>
-              </>
-            )}
+             </div>
           </div>
-        </div>
-
-        {/* Mobile menu */}
-        <div className={`md:hidden ${isMobileMenuOpen ? 'block' : 'hidden'}`}>
-          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 border-t border-gray-200 bg-white">
-            {status === 'loading' ? (
-              <div className="animate-pulse">
-                <div className="h-4 bg-gray-200 rounded w-20"></div>
-              </div>
-            ) : session ? (
-              <>
-                {session?.user?.role === 'ADMIN' ? (
-                  <>
-                    <Link href="/admin/analytics" className="text-gray-700 hover:text-gray-900 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-normal" onClick={() => setIsMobileMenuOpen(false)}>売上</Link>
-                    <Link href="/admin/diet-plan" className="text-gray-700 hover:text-gray-900 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-normal" onClick={() => setIsMobileMenuOpen(false)}>ダイエット</Link>
-                    <Link href="/admin/calendar" className="text-gray-700 hover:text-gray-900 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-normal" onClick={() => setIsMobileMenuOpen(false)}>予約</Link>
-                    <Link href="/admin/members" className="text-gray-700 hover:text-gray-900 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-normal" onClick={() => setIsMobileMenuOpen(false)}>会員</Link>
-                    <Link href="/admin/trainers" className="text-gray-700 hover:text-gray-900 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-normal" onClick={() => setIsMobileMenuOpen(false)}>その他</Link>
-                  </>
-                ) : (
-                  <>
-                    <Link href="/dashboard" className="text-gray-700 hover:text-gray-900 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-normal" onClick={() => setIsMobileMenuOpen(false)}>ホーム</Link>
-                    <Link href="/reservations" className="text-gray-700 hover:text-gray-900 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-normal" onClick={() => setIsMobileMenuOpen(false)}>予約</Link>
-                  </>
-                )}
-                <button
-                  onClick={() => {
-                    handleLogout()
-                    setIsMobileMenuOpen(false)
-                  }}
-                  className="text-red-600 hover:text-red-700 hover:bg-red-50 block w-full text-left px-3 py-2 rounded-md text-base font-normal"
-                >
-                  ログアウト
-                </button>
-              </>
-            ) : (
-              <>
-                <Link
-                  href="/login"
-                  className="text-gray-700 hover:text-gray-900 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-normal"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  ログイン
-                </Link>
-                <Link
-                  href="/register"
-                  className="text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 block px-3 py-2 rounded-md text-base font-normal"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  会員登録
-                </Link>
-              </>
-            )}
-          </div>
-        </div>
+        )}
       </div>
     </header>
   )

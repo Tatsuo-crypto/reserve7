@@ -41,7 +41,6 @@ const AdminDashboard = () => {
   
   const [dietMembers, setDietMembers] = useState<any[]>([]);
   const [dietLoading, setDietLoading] = useState(false);
-  const { data: session } = useSession();
   const router = useRouter();
   
   // クライアントサイドでのみURLパラメータを読み込む
@@ -72,16 +71,6 @@ const AdminDashboard = () => {
     }
   }, [activeTab, dietMembers.length]);
 
-  // 右側のピル型ボタン
-  const rightPill = (
-    <button className="h-10 px-4 flex items-center gap-1 bg-white rounded-full shadow-sm border border-gray-100 text-blue-500 text-sm transition-all active:scale-95 whitespace-nowrap overflow-hidden max-w-[120px]">
-      <span className="truncate">{session?.user?.name || '管理者'}</span>
-      <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
-      </svg>
-    </button>
-  );
-
   if (!mounted) return null;
 
   return (
@@ -91,12 +80,6 @@ const AdminDashboard = () => {
         {/* DIET TAB */}
         {activeTab === 'diet' && (
           <div className="space-y-6 animate-slideUp">
-            <AdminHeader 
-              title="ダイエット管理" 
-              subTitle="プランがONの会員のみ表示"
-              showBack={false}
-              rightElement={rightPill}
-            />
             <div className="bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-6">
               <div className="space-y-3">
                 {dietLoading ? (

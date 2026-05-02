@@ -86,33 +86,17 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="mb-10">
-          <div className="relative flex items-center justify-between">
-            <button
-              onClick={() => router.push(fromPage === 'sales' ? '/admin/sales' : '/admin/members')}
-              className="p-2 text-gray-400 hover:text-gray-600 bg-white rounded-full shadow-sm border border-gray-100 transition-all hover:shadow-md"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-            </button>
-            <div className="text-center flex-1">
-              <h1 className="text-4xl font-normal text-gray-900 tracking-tight">{member.fullName}</h1>
-              <div className="mt-2 flex items-center justify-center gap-3">
-                <span className={`px-3 py-1 text-xs font-normal rounded-full shadow-sm border ${
-                  member.status === 'suspended' ? 'bg-yellow-50 text-yellow-600 border-yellow-100' :
-                  member.status === 'withdrawn' ? 'bg-red-50 text-red-600 border-red-100' :
-                  'bg-green-50 text-green-600 border-green-100'
-                }`}>
-                  {member.status === 'suspended' ? '休会中' : 
-                   member.status === 'withdrawn' ? '退会済み' : '在籍中'}
-                </span>
-                {member.plan && (
-                  <span className="text-sm font-normal text-gray-400 bg-white px-3 py-1 rounded-full border border-gray-100 shadow-sm">
-                    {member.plan}
-                  </span>
-                )}
-              </div>
-            </div>
-            <div className="w-10"></div> {/* Spacer for symmetry */}
+        <div className="mb-8 mt-4">
+          <div className="flex items-center gap-4 mb-4">
+             <h2 className="text-2xl font-normal text-gray-900">{member.fullName} 様</h2>
+             <span className={`px-3 py-1 text-xs font-normal rounded-full shadow-sm border ${
+               member.status === 'suspended' ? 'bg-yellow-50 text-yellow-600 border-yellow-100' :
+               member.status === 'withdrawn' ? 'bg-red-50 text-red-600 border-red-100' :
+               'bg-green-50 text-green-600 border-green-100'
+             }`}>
+               {member.status === 'suspended' ? '休会中' : 
+                member.status === 'withdrawn' ? '退会済み' : '在籍中'}
+             </span>
           </div>
         </div>
 

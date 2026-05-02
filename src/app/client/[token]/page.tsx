@@ -104,34 +104,31 @@ export default function ClientReservationsPage() {
     )
   }
 
+  // Define tab titles
+  const tabTitles: Record<TabType, string> = {
+    home: 'マイページ',
+    res: '予約確認',
+    diet: '食事・体重管理',
+    plan: '契約プラン',
+    online: 'オンライン'
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Header */}
-      <header className="bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-30 px-4 py-4">
-        <div className="flex items-center justify-between max-w-lg mx-auto">
-          <div className="flex items-center gap-3">
-            {fromAdmin && isAdmin && (
-              <a
-                href="/admin/members"
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-xl transition-all"
-                title="会員管理に戻る"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </a>
-            )}
-            <h1 className="text-xl font-normal text-gray-800 tracking-tight">
-              {activeTab === 'home' && 'ホーム'}
-              {activeTab === 'res' && '予約'}
-              {activeTab === 'diet' && '食事管理'}
-              {activeTab === 'plan' && 'プラン'}
-              {activeTab === 'online' && 'オンライン'}
-            </h1>
+    <div className="min-h-screen bg-gray-50 pb-20">
+      {/* Universal AirPAY Header */}
+      <AdminHeader 
+        title={tabTitles[activeTab]} 
+        showBack={fromAdmin && isAdmin}
+        onBack={() => router.push('/admin/members')}
+        rightElement={
+          <div className="h-10 px-4 flex items-center gap-1 bg-white rounded-full shadow-sm border border-gray-100 text-blue-500 text-[13px] font-normal">
+            <span className="truncate max-w-[80px]">{userName} 様</span>
+            <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+            </svg>
           </div>
-          <div className="text-[10px] font-normal text-blue-600 bg-blue-50 px-3 py-1 rounded-full uppercase tracking-widest">{userName}</div>
-        </div>
-      </header>
+        }
+      />
 
       {/* Main Content */}
       <main className="flex-1 max-w-lg mx-auto w-full p-4 overflow-x-hidden pb-24">
