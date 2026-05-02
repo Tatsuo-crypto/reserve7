@@ -640,19 +640,6 @@ function DietPlanPageContent() {
         <div className="min-h-screen bg-gray-50 py-4 sm:py-6 text-gray-900">
             <div className="max-w-3xl mx-auto px-4 sm:px-6">
                 {/* Header */}
-            {/* Header using refined AdminHeader */}
-            <AdminHeader 
-                title={selectedMember ? selectedMember.full_name : "ダイエット管理"}
-                rightElement={
-                    <button className="h-10 px-4 flex items-center gap-1 bg-white rounded-full shadow-sm border border-gray-100 text-blue-500 text-sm transition-all active:scale-95 whitespace-nowrap overflow-hidden max-w-[120px]">
-                        <span className="truncate">{session?.user?.name || '管理者'}</span>
-                        <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
-                        </svg>
-                    </button>
-                }
-                onBack={() => selectedMember ? setSelectedMember(null) : router.push('/dashboard')}
-            />
 
                 {!selectedMember ? (
                     <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden">

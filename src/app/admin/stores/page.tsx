@@ -132,23 +132,6 @@ export default function StoresPage() {
 
   return (
     <div className="max-w-6xl mx-auto py-6 sm:px-6 lg:px-8">
-      {/* Header */}
-      <div className="mb-6">
-        <div className="relative flex items-center justify-center">
-          <button
-            onClick={() => router.push('/dashboard')}
-            className="absolute left-0 text-gray-400 hover:text-gray-600"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-          <div className="text-center">
-            <h1 className="text-2xl font-normal text-gray-900">店舗管理</h1>
-            <p className="mt-1 text-sm text-gray-500">店舗情報の閲覧・管理</p>
-          </div>
-        </div>
-      </div>
 
       {/* Action Button */}
       <div className="flex justify-center mb-6">

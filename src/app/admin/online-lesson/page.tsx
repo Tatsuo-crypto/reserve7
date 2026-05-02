@@ -178,28 +178,6 @@ export default function AdminOnlineLessonPage() {
     return (
         <div className="min-h-screen bg-gray-50">
             <div className="max-w-2xl mx-auto px-4 py-8">
-                {/* Header */}
-                <div className="relative flex items-center justify-between mb-8 min-h-[40px]">
-                    {/* Left: Back button */}
-                    <div className="flex-shrink-0 z-10">
-                        <Link href="/dashboard" className="p-2 -ml-2 text-gray-400 hover:text-gray-600 flex items-center transition-colors">
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                            </svg>
-                        </Link>
-                    </div>
-
-                    {/* Center: Title & Subtitle */}
-                    <div className="absolute inset-x-0 flex flex-col items-center pointer-events-none mt-1 sm:mt-0">
-                        <h1 className="text-xl sm:text-2xl font-normal text-gray-900 pointer-events-auto">オンラインレッスン</h1>
-                        <p className="text-[10px] sm:text-sm text-gray-500 mt-1 sm:mt-0.5 pointer-events-auto text-center">複数のレッスンを登録できます</p>
-                    </div>
-
-                    {/* Right: Add button */}
-                    <div className="flex-shrink-0 z-10 min-w-[72px] sm:min-w-[86px] flex justify-end">
-                        {/* Removed add button */}
-                    </div>
-                </div>
 
                 {/* Global success */}
                 {success && (

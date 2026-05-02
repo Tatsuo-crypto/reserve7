@@ -200,24 +200,6 @@ function MembersPageContent() {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <AdminHeader 
-          title="会員管理" 
-          subTitle="会員ステータスと情報の管理"
-          showBack={false}
-          rightElement={
-            <Link
-              href="/admin/members/new"
-              className="px-5 py-2.5 bg-blue-600 text-white text-[10px] font-normal rounded-2xl hover:bg-blue-700 transition-all shadow-md flex items-center gap-2 uppercase tracking-widest"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
-              </svg>
-              新規登録
-            </Link>
-          }
-        />
-
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
@@ -242,41 +224,53 @@ function MembersPageContent() {
 
         {/* Toolbar */}
         <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 mb-6 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-2 bg-gray-50 p-1 rounded-xl border border-gray-100">
-            <button
-              onClick={() => setShowOnlyActive(true)}
-              className={`px-4 py-2 rounded-lg text-xs font-normal transition-all ${showOnlyActive ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
-            >
-              在籍のみ
-            </button>
-            <button
-              onClick={() => setShowOnlyActive(false)}
-              className={`px-4 py-2 rounded-lg text-xs font-normal transition-all ${!showOnlyActive ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
-            >
-              全員表示
-            </button>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 bg-gray-50 p-1 rounded-xl border border-gray-100">
+              <button
+                onClick={() => setShowOnlyActive(true)}
+                className={`px-4 py-2 rounded-lg text-xs font-normal transition-all ${showOnlyActive ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+              >
+                在籍のみ
+              </button>
+              <button
+                onClick={() => setShowOnlyActive(false)}
+                className={`px-4 py-2 rounded-lg text-xs font-normal transition-all ${!showOnlyActive ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+              >
+                全員表示
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <select
+                value={sortKey || ''}
+                onChange={(e) => setSortKey(e.target.value as any || null)}
+                className="bg-gray-50 border border-gray-100 rounded-xl px-4 py-2 text-xs font-normal text-gray-600 focus:ring-2 focus:ring-blue-500 outline-none"
+              >
+                <option value="">標準並び替え</option>
+                <option value="plan">プラン順</option>
+                <option value="status">ステータス順</option>
+                <option value="created">登録日順</option>
+              </select>
+              <button
+                onClick={() => setSortAsc(!sortAsc)}
+                className="p-2 bg-gray-50 text-gray-400 hover:text-blue-600 rounded-xl border border-gray-100 transition-all"
+              >
+                <svg className={`w-4 h-4 transition-transform ${sortAsc ? '' : 'rotate-180'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+            </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <select
-              value={sortKey || ''}
-              onChange={(e) => setSortKey(e.target.value as any || null)}
-              className="bg-gray-50 border border-gray-100 rounded-xl px-4 py-2 text-xs font-normal text-gray-600 focus:ring-2 focus:ring-blue-500 outline-none"
-            >
-              <option value="">標準並び替え</option>
-              <option value="plan">プラン順</option>
-              <option value="status">ステータス順</option>
-              <option value="created">登録日順</option>
-            </select>
-            <button
-              onClick={() => setSortAsc(!sortAsc)}
-              className="p-2 bg-gray-50 text-gray-400 hover:text-blue-600 rounded-xl border border-gray-100 transition-all"
-            >
-              <svg className={`w-4 h-4 transition-transform ${sortAsc ? '' : 'rotate-180'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-          </div>
+          <Link
+            href="/admin/members/new"
+            className="px-5 py-2.5 bg-blue-600 text-white text-[10px] font-normal rounded-2xl hover:bg-blue-700 transition-all shadow-md flex items-center gap-2 uppercase tracking-widest"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+            </svg>
+            新規登録
+          </Link>
         </div>
 
         {error && (
