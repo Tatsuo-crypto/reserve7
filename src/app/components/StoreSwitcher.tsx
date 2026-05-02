@@ -79,8 +79,8 @@ export default function StoreSwitcher({ defaultStoreName }: StoreSwitcherProps) 
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 className="flex items-center space-x-1.5 px-3 py-1.5 border border-gray-100 rounded-full hover:bg-gray-50 transition-all bg-white/50 shadow-sm active:scale-95"
-                title="店舗を切り替え"
             >
+                <span className="text-[13px] font-normal text-gray-700 flex items-center whitespace-nowrap">
                     {simplifyName(currentStoreName)}
                     <svg className={`w-3 h-3 ml-1 text-gray-400 transform transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
