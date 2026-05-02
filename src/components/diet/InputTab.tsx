@@ -28,7 +28,14 @@ interface NutrientData {
 }
 
 export default function InputTab({ userId, token, isAdmin, sharedState, onStateChange }: InputTabProps) {
-    if (!sharedState) return null
+    const [target, setTarget] = useState<any>(null)
+    const [saving, setSaving] = useState(false)
+    const [analyzing, setAnalyzing] = useState(false)
+    const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
+    const [visibleItems, setVisibleItems] = useState({ steps: true, sleep: true, water: true, alcohol: true, workout: true })
+    const [showGoalModal, setShowGoalModal] = useState(false)
+
+    const fileInputRef = useRef<HTMLInputElement>(null)
 
     const { 
         selectedDate = new Date().toISOString().split('T')[0], 
@@ -39,43 +46,16 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
         alcohol = '0', 
         notes = '', 
         dietImageUrl = null, 
-        ocrResult = null, 
+        ocrResult = null,
         habits = { workout: 0 }, 
         quitGoals = [], 
         isSaved = false 
-    } = sharedState
-
-    const updateSharedState = (updates: any) => {
-        onStateChange({ ...sharedState, ...updates, isSaved: false })
-    }
-
-    const setWeight = (v: string) => updateSharedState({ weight: v })
-    const setWater = (v: string) => updateSharedState({ water: v })
-    const setSteps = (v: string) => updateSharedState({ steps: v })
-    const setSleep = (v: string) => updateSharedState({ sleep: v })
-    const setAlcohol = (v: string) => updateSharedState({ alcohol: v })
-    const setNotes = (v: string) => updateSharedState({ notes: v })
-    const setHabits = (fn: any) => {
-        const next = typeof fn === 'function' ? fn(habits) : fn
-        updateSharedState({ habits: next })
-    }
-    const setOcrResult = (v: any) => updateSharedState({ ocrResult: v })
-    const setDietImageUrl = (v: any) => updateSharedState({ dietImageUrl: v })
-    const setIsSaved = (v: boolean) => onStateChange({ ...sharedState, isSaved: v })
-    const setSelectedDate = (v: string) => onStateChange({ ...sharedState, selectedDate: v, isSaved: false })
-    const setQuitGoals = (v: any) => onStateChange({ ...sharedState, quitGoals: v })
-
-    const [target, setTarget] = useState<any>(null)
-    const [saving, setSaving] = useState(false)
-    const [analyzing, setAnalyzing] = useState(false)
-    const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
-    const [visibleItems, setVisibleItems] = useState({ steps: true, sleep: true, water: true, alcohol: true, workout: true })
-    const [showGoalModal, setShowGoalModal] = useState(false)
-
-    const fileInputRef = useRef<HTMLInputElement>(null)
+    } = sharedState || {}
 
     // Fetch data for selected date
     useEffect(() => {
+        if (!token || !selectedDate) return;
+
         const fetchDateData = async () => {
             try {
                 const [logRes, settingRes, dietRes, goalRes] = await Promise.all([
@@ -105,7 +85,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                     }
                 }
 
-                // Initialize with settings or defaults
+                // Initialize defaults
                 setWeight('')
                 setWater(currentSettings?.water_target != null ? String(currentSettings.water_target) : '2.0')
                 setSteps(currentSettings?.step_target != null ? String(currentSettings.step_target) : '8000')
@@ -157,23 +137,43 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                     }
                 }
 
-                // If data was loaded, it's "saved". If no data, it stays "unsaved" (default draft).
                 if (hasAnyData) {
                     setIsSaved(true)
-                } else if (lifeSettingRes.ok) {
-                    // If no log but we have settings, initialize with settings
-                    const { data: s } = await lifeSettingRes.json()
-                    if (s && s.habit_targets) {
-                        if (s.habit_targets.water != null) setWater(String(s.habit_targets.water))
-                        if (s.habit_targets.steps != null) setSteps(String(s.habit_targets.steps))
-                        if (s.habit_targets.sleep != null) setSleep(String(s.habit_targets.sleep))
-                        if (s.habit_targets.workout != null) setHabits({ workout: 0 }) // Start at 0 progress
+                } else if (settingRes && settingRes.ok) {
+                    // Initialize with habit targets if no data
+                    if (currentSettings && currentSettings.habit_targets) {
+                        if (currentSettings.habit_targets.water != null) setWater(String(currentSettings.habit_targets.water))
+                        if (currentSettings.habit_targets.steps != null) setSteps(String(currentSettings.habit_targets.steps))
+                        if (currentSettings.habit_targets.sleep != null) setSleep(String(currentSettings.habit_targets.sleep))
+                        if (currentSettings.habit_targets.workout != null) setHabits({ workout: 0 })
                     }
                 }
             } catch (e) { console.error(e) }
         }
         fetchDateData()
-    }, [userId, selectedDate, token])
+    }, [token, selectedDate])
+
+    if (!sharedState) return null
+
+    const updateSharedState = (updates: any) => {
+        onStateChange({ ...sharedState, ...updates, isSaved: false })
+    }
+
+    const setWeight = (v: string) => updateSharedState({ weight: v })
+    const setWater = (v: string) => updateSharedState({ water: v })
+    const setSteps = (v: string) => updateSharedState({ steps: v })
+    const setSleep = (v: string) => updateSharedState({ sleep: v })
+    const setAlcohol = (v: string) => updateSharedState({ alcohol: v })
+    const setNotes = (v: string) => updateSharedState({ notes: v })
+    const setHabits = (fn: any) => {
+        const next = typeof fn === 'function' ? fn(habits) : fn
+        updateSharedState({ habits: next })
+    }
+    const setOcrResult = (v: any) => updateSharedState({ ocrResult: v })
+    const setDietImageUrl = (v: any) => updateSharedState({ dietImageUrl: v })
+    const setIsSaved = (v: boolean) => onStateChange({ ...sharedState, isSaved: v })
+    const setSelectedDate = (v: string) => onStateChange({ ...sharedState, selectedDate: v, isSaved: false })
+    const setQuitGoals = (v: any) => onStateChange({ ...sharedState, quitGoals: v })
 
     const handleAllSave = async () => {
         setSaving(true)
