@@ -41,6 +41,7 @@ const AdminDashboard = () => {
   
   const [dietMembers, setDietMembers] = useState<any[]>([]);
   const [dietLoading, setDietLoading] = useState(false);
+  const { data: session } = useSession();
   const router = useRouter();
   
   // クライアントサイドでのみURLパラメータを読み込む
