@@ -282,7 +282,7 @@ export default function TrainersPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto py-6 sm:px-6 lg:px-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-12">
 
       {/* Compact toolbar: Filters + New button */}
       <div className="bg-white shadow rounded-lg p-4 mb-4">

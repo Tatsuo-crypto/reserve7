@@ -131,7 +131,7 @@ export default function StoresPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto py-6 sm:px-6 lg:px-8">
+    <div className="max-w-6xl mx-auto pt-4 pb-12 sm:px-6 lg:px-8">
 
       {/* Action Button */}
       <div className="flex justify-center mb-6">

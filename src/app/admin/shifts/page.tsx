@@ -400,7 +400,7 @@ export default function ShiftManagementPage() {
   if (status === 'loading') return <div className="p-8 text-center">読み込み中...</div>
 
   return (
-    <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+    <div className="max-w-7xl mx-auto pt-4 pb-12 px-4 sm:px-6 lg:px-8">
 
       {/* View Mode and Trainer Selector */}
       <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">

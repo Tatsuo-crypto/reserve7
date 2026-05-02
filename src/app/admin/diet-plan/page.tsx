@@ -637,7 +637,7 @@ function DietPlanPageContent() {
     );
 
     return (
-        <div className="min-h-screen bg-gray-50 py-4 sm:py-6 text-gray-900">
+        <div className="min-h-screen bg-gray-50 pt-4 pb-12 text-gray-900">
             <div className="max-w-3xl mx-auto px-4 sm:px-6">
                 {/* Header */}
 
