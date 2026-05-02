@@ -542,7 +542,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                             <h2 className="text-sm font-black text-gray-400 uppercase tracking-widest">その他の目標</h2>
                         </div>
                         <div className="grid grid-cols-1 gap-3">
-                            {quitGoals.map(goal => (
+                            {quitGoals.map((goal: string) => (
                                 <div key={goal} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-transparent hover:border-rose-100 transition-all">
                                     <span className="text-sm font-bold text-gray-700">{goal}</span>
                                     <button
