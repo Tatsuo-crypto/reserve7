@@ -75,7 +75,7 @@ const BottomNavigationContent = () => {
                 {item.icon}
               </div>
               
-              <span className={`text-[10px] font-bold transition-colors ${
+              <span className={`text-[10px] font-normal transition-colors ${
                 item.isCenter ? 'absolute bottom-1' : '-mt-1'
               } ${
                 isActive ? 'text-blue-600' : 'text-gray-400'

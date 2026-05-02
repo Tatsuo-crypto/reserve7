@@ -334,11 +334,11 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
         >
           <div className="text-sm font-medium mb-1 flex-shrink-0 flex justify-start">
             {isToday ? (
-              <div className="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
+              <div className="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-normal">
                 {day}
               </div>
             ) : (
-              <div className="w-6 h-6 flex items-center justify-center text-gray-900">
+              <div className="w-6 h-6 flex items-center justify-center text-gray-900 font-normal">
                 {day}
               </div>
             )}
@@ -363,7 +363,7 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
               return (
                 <div
                   key={event.id}
-                  className={`h-[14px] text-[10px] px-0.5 flex items-center rounded truncate leading-none mb-0.5 font-medium ${colorClass}`}
+                  className={`h-[14px] text-[10px] px-0.5 flex items-center rounded truncate leading-none mb-0.5 font-normal ${colorClass}`}
                   title={`${event.title} (${event.time})`}
                 >
                   {formatReservationTitle(event.title, event.plan)}
@@ -505,7 +505,7 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
               {/* Days of week header (no divider line) */}
               <div className="grid grid-cols-7 mb-1">
                 {['月', '火', '水', '木', '金', '土', '日'].map((day, index) => (
-                  <div key={day} className={`p-2 text-center text-sm font-medium ${index === 5 ? 'text-blue-500' : index === 6 ? 'text-red-500' : 'text-gray-700'
+                  <div key={day} className={`p-2 text-center text-sm font-normal ${index === 5 ? 'text-blue-500' : index === 6 ? 'text-red-500' : 'text-gray-700'
                     }`}>
                     {day}
                   </div>

@@ -25,8 +25,8 @@ function OtherSubCard({ href, label, subLabel, color, icon }: { href: string, la
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">{icon}</svg>
       </div>
       <div className="flex-1">
-        <div className="text-base font-black text-gray-900">{label}</div>
-        <div className="text-xs font-bold text-gray-400">{subLabel}</div>
+        <div className="text-base font-normal text-gray-900">{label}</div>
+        <div className="text-xs font-normal text-gray-400">{subLabel}</div>
       </div>
       <svg className="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" /></svg>
     </Link>
@@ -90,7 +90,7 @@ const AdminDashboard = () => {
                 {dietLoading ? (
                   <div className="py-10 text-center flex flex-col items-center gap-3">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-rose-500"></div>
-                    <span className="text-xs font-bold text-gray-400">読み込み中...</span>
+                    <span className="text-xs font-normal text-gray-400">読み込み中...</span>
                   </div>
                 ) : dietMembers.length === 0 ? (
                   <div className="py-10 text-center text-gray-400 italic text-sm">対象者がいません</div>
@@ -99,9 +99,9 @@ const AdminDashboard = () => {
                     <Link key={member.id} href={`/admin/diet-plan?userId=${member.id}`} className="flex items-center gap-4 p-5 hover:bg-gray-50 rounded-3xl border border-gray-50 transition-all shadow-sm">
                       <div className={`w-3 h-3 rounded-full ${getStatusDotColor(member.status)}`} />
                       <div className="flex-1">
-                        <div className="text-base font-black text-gray-900">{member.full_name}</div>
+                        <div className="text-base font-normal text-gray-900">{member.full_name}</div>
                         <div className="flex items-center gap-2 mt-0.5">
-                          <span className="text-[10px] font-black text-gray-400 bg-gray-100 px-2 py-0.5 rounded-md uppercase">
+                          <span className="text-[10px] font-normal text-gray-400 bg-gray-100 px-2 py-0.5 rounded-md uppercase">
                             {member.stores?.name || '店舗未設定'}
                           </span>
                         </div>
@@ -160,7 +160,7 @@ export default function DashboardPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <Suspense fallback={null}>
-        {session.user.role === 'ADMIN' ? <AdminDashboard /> : <div className="text-center py-20 font-bold">アクセス権限がありません</div>}
+        {session.user.role === 'ADMIN' ? <AdminDashboard /> : <div className="text-center py-20 font-normal">アクセス権限がありません</div>}
       </Suspense>
     </div>
   );

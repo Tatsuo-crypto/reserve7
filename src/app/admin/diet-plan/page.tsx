@@ -719,7 +719,7 @@ function DietPlanPageContent() {
                                 <button
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id as TabType)}
-                                    className={`flex-1 py-4 px-6 min-w-[100px] rounded-[2rem] text-xs font-black transition-all ${activeTab === tab.id ? 'bg-gray-900 text-white shadow-xl scale-[1.02]' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50/50'}`}
+                                    className={`flex-1 py-3 px-4 text-sm font-normal transition-all duration-300 rounded-2xl ${activeTab === tab.id ? 'bg-gray-900 text-white shadow-xl scale-[1.02]' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50/50'}`}
                                 >
                                     {tab.label}
                                 </button>
@@ -758,7 +758,7 @@ function DietPlanPageContent() {
                                         <div className="flex flex-col gap-8">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-1.5 h-7 bg-orange-500 rounded-full"></div>
-                                                <h2 className="text-3xl font-black text-gray-900 tracking-tight">現在の目標設定</h2>
+                                                <h2 className="text-xl sm:text-2xl font-normal text-gray-900 tracking-tight">現在の目標設定</h2>
                                             </div>
                                         </div>
 
@@ -781,67 +781,67 @@ function DietPlanPageContent() {
                                                     setEditingHistoryId(null);
                                                     setIsSettingNewGoal(true);
                                                 }}
-                                                className="w-full py-5 rounded-[2rem] bg-gray-900 text-white font-black text-sm hover:bg-black transition-all shadow-xl flex items-center justify-center gap-3"
+                                                className="w-full py-5 rounded-[2rem] bg-gray-900 text-white text-sm hover:bg-black transition-all shadow-xl flex items-center justify-center gap-3"
                                             >
                                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" /></svg>
                                                 新しいプランに変更
                                             </button>
 
                                             <div className="space-y-1">
-                                                <h3 className="text-base font-black text-gray-400 tracking-widest uppercase">食事・栄養の目標</h3>
+                                                <h3 className="text-base font-normal text-gray-400 tracking-widest uppercase">食事・栄養の目標</h3>
                                             </div>
 
                                             {/* Big Calorie Card */}
                                             <div className="bg-gray-50/50 rounded-[3rem] p-12 text-center space-y-3 border border-gray-100/50">
-                                                <div className="text-xs font-black text-gray-400 uppercase tracking-widest">目標摂取カロリー</div>
+                                                <div className="text-xs text-gray-400 uppercase tracking-widest">目標摂取カロリー</div>
                                                 <div className="flex items-baseline justify-center gap-2">
-                                                    <span className="text-6xl font-black text-gray-900 tabular-nums">{nutrientForm.targetCalories.toLocaleString()}</span>
-                                                    <span className="text-base font-black text-gray-400">kcal / 日</span>
+                                                    <span className="text-6xl text-gray-900 tabular-nums">{nutrientForm.targetCalories.toLocaleString()}</span>
+                                                    <span className="text-base text-gray-400">kcal / 日</span>
                                                 </div>
                                             </div>
 
                                             {/* Nutrient Grid */}
                                             <div className="grid grid-cols-2 gap-6">
                                                 <div className="bg-gray-50/50 rounded-[2.5rem] p-8 space-y-4 border border-gray-100/50">
-                                                    <div className="text-xs font-black text-gray-400 uppercase tracking-widest">タンパク質</div>
+                                                    <div className="text-xs text-gray-400 uppercase tracking-widest">タンパク質</div>
                                                     <div className="flex items-baseline gap-1">
-                                                        <span className="text-4xl font-black text-orange-500 tabular-nums">{nutrientForm.protein}</span>
-                                                        <span className="text-xs font-bold text-gray-400">g</span>
+                                                        <span className="text-4xl text-orange-500 tabular-nums">{nutrientForm.protein}</span>
+                                                        <span className="text-xs text-gray-400">g</span>
                                                     </div>
                                                 </div>
                                                 <div className="bg-gray-50/50 rounded-[2.5rem] p-8 space-y-4 border border-gray-100/50">
-                                                    <div className="text-xs font-black text-gray-400 uppercase tracking-widest">脂質</div>
+                                                    <div className="text-xs text-gray-400 uppercase tracking-widest">脂質</div>
                                                     <div className="flex items-baseline gap-1">
-                                                        <span className="text-4xl font-black text-teal-500 tabular-nums">{nutrientForm.fat}</span>
-                                                        <span className="text-xs font-bold text-gray-400">g</span>
+                                                        <span className="text-4xl text-teal-500 tabular-nums">{nutrientForm.fat}</span>
+                                                        <span className="text-xs text-gray-400">g</span>
                                                     </div>
                                                 </div>
                                                 <div className="bg-gray-50/50 rounded-[2.5rem] p-8 space-y-4 border border-gray-100/50">
-                                                    <div className="text-xs font-black text-gray-400 uppercase tracking-widest">炭水化物</div>
+                                                    <div className="text-xs text-gray-400 uppercase tracking-widest">炭水化物</div>
                                                     <div className="flex items-baseline gap-1">
-                                                        <span className="text-4xl font-black text-blue-500 tabular-nums">{nutrientForm.carbs}</span>
-                                                        <span className="text-xs font-bold text-gray-400">g</span>
+                                                        <span className="text-4xl text-blue-500 tabular-nums">{nutrientForm.carbs}</span>
+                                                        <span className="text-xs text-gray-400">g</span>
                                                     </div>
                                                 </div>
                                                 <div className="bg-gray-50/50 rounded-[2.5rem] p-8 space-y-4 border border-gray-100/50">
-                                                    <div className="text-xs font-black text-gray-400 uppercase tracking-widest">糖質</div>
+                                                    <div className="text-xs text-gray-400 uppercase tracking-widest">糖質</div>
                                                     <div className="flex items-baseline gap-1">
-                                                        <span className="text-4xl font-black text-purple-500 tabular-nums">{nutrientForm.sugar}</span>
-                                                        <span className="text-xs font-bold text-gray-400">g</span>
+                                                        <span className="text-4xl text-purple-500 tabular-nums">{nutrientForm.sugar}</span>
+                                                        <span className="text-xs text-gray-400">g</span>
                                                     </div>
                                                 </div>
                                                 <div className="bg-gray-50/50 rounded-[2.5rem] p-8 space-y-4 border border-gray-100/50">
-                                                    <div className="text-xs font-black text-gray-400 uppercase tracking-widest">食物繊維</div>
+                                                    <div className="text-xs text-gray-400 uppercase tracking-widest">食物繊維</div>
                                                     <div className="flex items-baseline gap-1">
-                                                        <span className="text-4xl font-black text-rose-500 tabular-nums">{nutrientForm.fiber}</span>
-                                                        <span className="text-xs font-bold text-gray-400">g</span>
+                                                        <span className="text-4xl text-rose-500 tabular-nums">{nutrientForm.fiber}</span>
+                                                        <span className="text-xs text-gray-400">g</span>
                                                     </div>
                                                 </div>
                                                 <div className="bg-gray-50/50 rounded-[2.5rem] p-8 space-y-4 border border-gray-100/50">
-                                                    <div className="text-xs font-black text-gray-400 uppercase tracking-widest">塩分</div>
+                                                    <div className="text-xs text-gray-400 uppercase tracking-widest">塩分</div>
                                                     <div className="flex items-baseline gap-1">
-                                                        <span className="text-4xl font-black text-gray-500 tabular-nums">{nutrientForm.salt}</span>
-                                                        <span className="text-xs font-bold text-gray-400">g</span>
+                                                        <span className="text-4xl text-gray-500 tabular-nums">{nutrientForm.salt}</span>
+                                                        <span className="text-xs text-gray-400">g</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -850,36 +850,36 @@ function DietPlanPageContent() {
                                         {/* Habits Section */}
                                         <div className="space-y-10 pt-6">
                                             <div className="space-y-1">
-                                                <h3 className="text-base font-black text-gray-400 tracking-widest uppercase">生活習慣の目標</h3>
+                                                <h3 className="text-base text-gray-400 tracking-widest uppercase">生活習慣の目標</h3>
                                             </div>
 
                                             <div className="grid grid-cols-2 gap-6">
                                                 <div className="bg-gray-50/50 rounded-[2.5rem] p-8 space-y-4 border border-gray-100/50">
-                                                    <div className="text-xs font-black text-gray-400 uppercase tracking-widest">水分摂取</div>
+                                                    <div className="text-xs text-gray-400 uppercase tracking-widest">水分摂取</div>
                                                     <div className="flex items-baseline gap-1">
-                                                        <span className="text-4xl font-black text-blue-500 tabular-nums">{habitTargets.water}</span>
-                                                        <span className="text-xs font-bold text-gray-400 uppercase">L</span>
+                                                        <span className="text-4xl text-blue-500 tabular-nums">{habitTargets.water}</span>
+                                                        <span className="text-xs text-gray-400 uppercase">L</span>
                                                     </div>
                                                 </div>
                                                 <div className="bg-gray-50/50 rounded-[2.5rem] p-8 space-y-4 border border-gray-100/50">
-                                                    <div className="text-xs font-black text-gray-400 uppercase tracking-widest">目標歩数</div>
+                                                    <div className="text-xs text-gray-400 uppercase tracking-widest">目標歩数</div>
                                                     <div className="flex items-baseline gap-1">
-                                                        <span className="text-4xl font-black text-teal-500 tabular-nums">{habitTargets.steps.toLocaleString()}</span>
-                                                        <span className="text-xs font-bold text-gray-400 uppercase">歩</span>
+                                                        <span className="text-4xl text-teal-500 tabular-nums">{habitTargets.steps.toLocaleString()}</span>
+                                                        <span className="text-xs text-gray-400 uppercase">歩</span>
                                                     </div>
                                                 </div>
                                                 <div className="bg-gray-50/50 rounded-[2.5rem] p-8 space-y-4 border border-gray-100/50">
-                                                    <div className="text-xs font-black text-gray-400 uppercase tracking-widest">筋トレ回数</div>
+                                                    <div className="text-xs text-gray-400 uppercase tracking-widest">筋トレ回数</div>
                                                     <div className="flex items-baseline gap-1">
-                                                        <span className="text-4xl font-black text-orange-500 tabular-nums">{habitTargets.workout}</span>
-                                                        <span className="text-xs font-bold text-gray-400 uppercase">回 / 週</span>
+                                                        <span className="text-4xl text-orange-500 tabular-nums">{habitTargets.workout}</span>
+                                                        <span className="text-xs text-gray-400 uppercase">回 / 週</span>
                                                     </div>
                                                 </div>
                                                 <div className="bg-gray-50/50 rounded-[2.5rem] p-8 space-y-4 border border-gray-100/50">
-                                                    <div className="text-xs font-black text-gray-400 uppercase tracking-widest">睡眠時間</div>
+                                                    <div className="text-xs text-gray-400 uppercase tracking-widest">睡眠時間</div>
                                                     <div className="flex items-baseline gap-1">
-                                                        <span className="text-4xl font-black text-indigo-500 tabular-nums">{habitTargets.sleep}</span>
-                                                        <span className="text-xs font-bold text-gray-400 uppercase">時間</span>
+                                                        <span className="text-4xl text-indigo-500 tabular-nums">{habitTargets.sleep}</span>
+                                                        <span className="text-xs text-gray-400 uppercase">時間</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -890,7 +890,7 @@ function DietPlanPageContent() {
                                 {isSettingNewGoal && (
                                     <div className="space-y-6 bg-white p-8 rounded-[3rem] border border-gray-100 shadow-sm animate-slideDown">
                                         <div className="flex items-center justify-between mb-4">
-                                            <h2 className="text-xl font-black flex items-center gap-2"><span className="w-2 h-8 bg-blue-500 rounded-full"></span>目標設定の編集</h2>
+                                            <h2 className="text-xl font-normal flex items-center gap-2"><span className="w-2 h-8 bg-blue-500 rounded-full"></span>目標設定の編集</h2>
                                             <button 
                                                 onClick={async () => {
                                                     if (editingHistoryId) {
@@ -911,28 +911,28 @@ function DietPlanPageContent() {
 
                                         <div className="space-y-8">
                                             <div className="space-y-6">
-                                                <h3 className="text-sm font-black text-gray-400 tracking-widest">① カロリー・PFC設定</h3>
+                                                <h3 className="text-sm text-gray-400 tracking-widest">① カロリー・PFC設定</h3>
                                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                                     <div className="bg-gray-50/50 p-6 rounded-[2rem] border border-gray-100 space-y-2">
-                                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">適用開始日</label>
-                                                        <input type="date" value={nutrientForm.startDate} onChange={e => setNutrientForm({ ...nutrientForm, startDate: e.target.value })} className="w-full bg-white border border-gray-200 rounded-2xl px-4 py-3 font-black text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none shadow-sm" />
+                                                        <label className="text-[10px] text-gray-400 uppercase tracking-widest block">適用開始日</label>
+                                                        <input type="date" value={nutrientForm.startDate} onChange={e => setNutrientForm({ ...nutrientForm, startDate: e.target.value })} className="w-full bg-white border border-gray-200 rounded-2xl px-4 py-3 text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none shadow-sm" />
                                                     </div>
                                                     <div className="bg-gray-50/50 p-6 rounded-[2rem] border border-gray-100 space-y-2">
-                                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">タイトル（任意）</label>
-                                                        <input type="text" placeholder="例: 増量期" value={nutrientForm.title} onChange={e => setNutrientForm({ ...nutrientForm, title: e.target.value })} className="w-full bg-white border border-gray-200 rounded-2xl px-4 py-3 font-black text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none shadow-sm" />
+                                                        <label className="text-[10px] text-gray-400 uppercase tracking-widest block">タイトル（任意）</label>
+                                                        <input type="text" placeholder="例: 増量期" value={nutrientForm.title} onChange={e => setNutrientForm({ ...nutrientForm, title: e.target.value })} className="w-full bg-white border border-gray-200 rounded-2xl px-4 py-3 text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none shadow-sm" />
                                                     </div>
                                                 </div>
                                                 
                                                 <div className="bg-rose-500 p-8 sm:p-10 rounded-[3rem] shadow-xl shadow-rose-200 flex flex-col items-center justify-center gap-2 group transition-all hover:scale-[1.02] w-full overflow-hidden">
-                                                    <div className="text-[10px] font-black text-rose-100 uppercase tracking-widest opacity-80">目標摂取カロリー設定</div>
+                                                    <div className="text-[10px] text-rose-100 uppercase tracking-widest opacity-80">目標摂取カロリー設定</div>
                                                     <div className="flex items-baseline gap-2 sm:gap-3 w-full justify-center">
                                                         <input 
                                                             type="number" 
                                                             value={nutrientForm.targetCalories} 
                                                             onChange={e => handleTargetCaloriesChange(parseInt(e.target.value) || 0)}
-                                                            className="w-[120px] sm:w-40 bg-white/20 border-b-2 border-white/40 focus:border-white outline-none text-4xl sm:text-6xl font-black text-white tabular-nums text-center transition-all p-1 sm:p-2 rounded-xl"
+                                                            className="w-[120px] sm:w-40 bg-white/20 border-b-2 border-white/40 focus:border-white outline-none text-4xl sm:text-6xl text-white tabular-nums text-center transition-all p-1 sm:p-2 rounded-xl"
                                                         />
-                                                        <span className="text-lg sm:text-2xl font-black text-rose-100">kcal</span>
+                                                        <span className="text-lg sm:text-2xl text-rose-100">kcal</span>
                                                     </div>
                                                 </div>
 
@@ -947,7 +947,7 @@ function DietPlanPageContent() {
                                             </div>
 
                                             <div className="space-y-6 pt-6 border-t border-gray-100">
-                                                <h3 className="text-sm font-black text-gray-400 tracking-widest">② 習慣設定</h3>
+                                                <h3 className="text-sm text-gray-400 tracking-widest">② 習慣設定</h3>
                                                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                                                     <HabitConfig label="歩数" unit="歩" active={lifestyleSettings.visible_items.steps} target={habitTargets.steps} onToggle={() => setLifestyleSettings({ ...lifestyleSettings, visible_items: { ...lifestyleSettings.visible_items, steps: !lifestyleSettings.visible_items.steps } })} onTargetChange={(v) => setHabitTargets({...habitTargets, steps: v})} step={500} />
                                                     <HabitConfig label="水分" unit="L" active={lifestyleSettings.visible_items.water} target={habitTargets.water} onToggle={() => setLifestyleSettings({ ...lifestyleSettings, visible_items: { ...lifestyleSettings.visible_items, water: !lifestyleSettings.visible_items.water } })} onTargetChange={(v) => setHabitTargets({...habitTargets, water: v})} step={0.1} />
@@ -957,21 +957,21 @@ function DietPlanPageContent() {
                                             </div>
 
                                             <div className="space-y-6 pt-6 border-t border-gray-100">
-                                                <h3 className="text-sm font-black text-gray-400 tracking-widest">③ 取り組む習慣</h3>
+                                                <h3 className="text-sm text-gray-400 tracking-widest">③ 取り組む習慣</h3>
                                                 <div className="space-y-4">
                                                     <div className="flex flex-wrap gap-2">
                                                         {GOAL_SUGGESTIONS.map(suggestion => (
-                                                            <button key={suggestion} onClick={() => quitGoals.includes(suggestion) ? setQuitGoals(quitGoals.filter(g => g !== suggestion)) : setQuitGoals([...quitGoals, suggestion])} className={`px-4 py-2 rounded-full text-[11px] font-black border transition-all ${quitGoals.includes(suggestion) ? 'bg-orange-500 border-orange-500 text-white shadow-md' : 'bg-white border-gray-200 text-gray-500 hover:border-orange-300'}`}>{suggestion}</button>
+                                                            <button key={suggestion} onClick={() => quitGoals.includes(suggestion) ? setQuitGoals(quitGoals.filter(g => g !== suggestion)) : setQuitGoals([...quitGoals, suggestion])} className={`px-4 py-2 rounded-full text-[11px] border transition-all ${quitGoals.includes(suggestion) ? 'bg-orange-500 border-orange-500 text-white shadow-md' : 'bg-white border-gray-200 text-gray-500 hover:border-orange-300'}`}>{suggestion}</button>
                                                         ))}
                                                     </div>
                                                     <div className="flex gap-2">
-                                                        <input type="text" placeholder="自由に追加..." value={newQuitGoal} onChange={(e) => setNewQuitGoal(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addQuitGoal())} className="flex-1 bg-gray-50 border border-gray-200 rounded-2xl px-5 py-3 font-bold text-sm outline-none focus:ring-2 focus:ring-orange-500" />
-                                                        <button onClick={addQuitGoal} className="bg-orange-500 text-white px-6 py-3 rounded-2xl font-black text-sm hover:bg-orange-600 transition-colors shadow-lg">追加</button>
+                                                        <input type="text" placeholder="自由に追加..." value={newQuitGoal} onChange={(e) => setNewQuitGoal(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addQuitGoal())} className="flex-1 bg-gray-50 border border-gray-200 rounded-2xl px-5 py-3 text-sm outline-none focus:ring-2 focus:ring-orange-500" />
+                                                        <button onClick={addQuitGoal} className="bg-orange-500 text-white px-6 py-3 rounded-2xl text-sm hover:bg-orange-600 transition-colors shadow-lg">追加</button>
                                                     </div>
                                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                                         {quitGoals.map((goal, index) => (
                                                             <div key={index} className="flex items-center justify-between bg-orange-50/30 px-5 py-3 rounded-[1.5rem] border border-orange-100">
-                                                                <span className="font-black text-orange-900 text-sm">{goal}</span>
+                                                                <span className="text-orange-900 text-sm">{goal}</span>
                                                                 <button onClick={() => setQuitGoals(quitGoals.filter((_, i) => i !== index))} className="text-orange-300 hover:text-orange-600 p-1">
                                                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>
                                                                 </button>
@@ -982,8 +982,8 @@ function DietPlanPageContent() {
                                             </div>
 
                                             <div className="flex gap-4 pt-6">
-                                                <button onClick={() => setIsSettingNewGoal(false)} className="flex-1 bg-white border border-gray-200 text-gray-500 py-5 rounded-[2rem] font-black text-lg hover:bg-gray-50 transition-all">キャンセル</button>
-                                                <button onClick={handleSave} disabled={saving} className="flex-[2] bg-gray-900 text-white py-5 rounded-[2rem] font-black text-lg shadow-xl hover:bg-black transition-all flex items-center justify-center gap-2">{saving ? '保存中...' : '新しいプランを適用する'}</button>
+                                                <button onClick={() => setIsSettingNewGoal(false)} className="flex-1 bg-white border border-gray-200 text-gray-500 py-5 rounded-[2rem] text-lg hover:bg-gray-50 transition-all">キャンセル</button>
+                                                <button onClick={handleSave} disabled={saving} className="flex-[2] bg-gray-900 text-white py-5 rounded-[2rem] text-lg shadow-xl hover:bg-black transition-all flex items-center justify-center gap-2">{saving ? '保存中...' : '新しいプランを適用する'}</button>
                                             </div>
                                         </div>
                                     </div>
@@ -995,9 +995,9 @@ function DietPlanPageContent() {
                                         <div className="space-y-2">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-1.5 h-7 bg-blue-500 rounded-full"></div>
-                                                <h2 className="text-3xl font-black text-gray-900 tracking-tight">目標カロリーの推移</h2>
+                                                <h2 className="text-xl sm:text-2xl text-gray-900 tracking-tight">目標カロリーの推移</h2>
                                             </div>
-                                            <p className="text-sm font-bold text-gray-400 ml-4.5">PFCバランスの推移 (KCAL換算)</p>
+                                            <p className="text-sm text-gray-400 ml-4.5">PFCバランスの推移 (KCAL換算)</p>
                                         </div>
 
                                         <div className="flex bg-gray-100/50 p-2 rounded-2xl w-fit mx-auto"> {/* Centered tabs */}
@@ -1010,7 +1010,7 @@ function DietPlanPageContent() {
                                                 <button 
                                                     key={v.value} 
                                                     onClick={() => setChartView(v.value as any)}
-                                                    className={`px-6 py-2.5 rounded-xl text-xs font-black transition-all ${chartView === v.value ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                                                    className={`px-6 py-2.5 rounded-xl text-xs transition-all ${chartView === v.value ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
                                                 >
                                                     {v.label}
                                                 </button>
@@ -1025,23 +1025,23 @@ function DietPlanPageContent() {
                                                         dataKey="displayDate" 
                                                         axisLine={false} 
                                                         tickLine={false} 
-                                                        tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} 
+                                                        tick={{ fontSize: 10, fill: '#94a3b8' }} 
                                                     />
                                                     <YAxis 
                                                         axisLine={false} 
                                                         tickLine={false} 
-                                                        tick={{ fontSize: 10, fontWeight: 700, fill: '#cbd5e1' }} 
+                                                        tick={{ fontSize: 10, fill: '#cbd5e1' }} 
                                                     />
                                                     <Tooltip 
                                                         contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', padding: '12px' }}
-                                                        itemStyle={{ fontSize: '10px', fontWeight: 'bold' }}
+                                                        itemStyle={{ fontSize: '10px' }}
                                                         formatter={(value: any, name: any) => [`${Math.round(value)} kcal`, name]}
                                                     />
                                                     <Legend 
                                                         align="center" 
                                                         verticalAlign="bottom" 
                                                         iconType="circle" 
-                                                        wrapperStyle={{ paddingTop: '40px', fontSize: '12px', fontWeight: 800 }}
+                                                        wrapperStyle={{ paddingTop: '40px', fontSize: '12px' }}
                                                     />
                                                     
                                                     {/* Stacking Order: Bottom(C) -> Middle(F) -> Top(P) - Consistent with Client View */}
@@ -1060,7 +1060,7 @@ function DietPlanPageContent() {
 
                                         {/* History List */}
                                         <div className="pt-10 border-t border-gray-50">
-                                            <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-8">設定履歴一覧</h4>
+                                            <h4 className="text-xs text-gray-400 uppercase tracking-widest mb-8">設定履歴一覧</h4>
                                             <div className="space-y-4">
                                                 {dietHistory.map((record) => {
                                                     const dateParts = record.start_date.split('-');
@@ -1071,10 +1071,10 @@ function DietPlanPageContent() {
                                                     return (
                                                         <div key={record.id} className="flex items-center justify-between p-6 bg-gray-50/50 rounded-3xl border border-gray-100/50 hover:bg-gray-50 transition-colors">
                                                             <div className="flex items-center gap-6">
-                                                                <div className="text-base font-black text-gray-900">{formattedDate}</div>
+                                                                <div className="text-base text-gray-900">{formattedDate}</div>
                                                             </div>
                                                             <div className="flex items-center gap-8">
-                                                                <div className="text-base font-black text-orange-600">{record.calories}<span className="text-xs ml-1">kcal</span></div>
+                                                                <div className="text-base text-orange-600">{record.calories}<span className="text-xs ml-1">kcal</span></div>
                                                                 <button onClick={() => { handleEditHistory(record); setIsSettingNewGoal(true); }} className="p-3 text-blue-500 hover:bg-blue-50 rounded-2xl transition-colors">
                                                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                                                                 </button>
