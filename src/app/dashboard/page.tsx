@@ -71,6 +71,16 @@ const AdminDashboard = () => {
     }
   }, [activeTab, dietMembers.length]);
 
+  // 右側のピル型ボタン
+  const rightPill = (
+    <button className="h-10 px-4 flex items-center gap-1 bg-white rounded-full shadow-sm border border-gray-100 text-blue-500 text-sm transition-all active:scale-95 whitespace-nowrap overflow-hidden max-w-[120px]">
+      <span className="truncate">{session?.user?.name || '管理者'}</span>
+      <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+      </svg>
+    </button>
+  );
+
   if (!mounted) return null;
 
   return (
@@ -84,6 +94,7 @@ const AdminDashboard = () => {
               title="ダイエット管理" 
               subTitle="プランがONの会員のみ表示"
               showBack={false}
+              rightElement={rightPill}
             />
             <div className="bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-6">
               <div className="space-y-3">
@@ -117,7 +128,12 @@ const AdminDashboard = () => {
 
         {/* HOME / RESERVATION TAB */}
         {activeTab === 'home' && (
-          <div className="animate-slideUp -mt-10">
+          <div className="animate-slideUp -mt-2">
+            <AdminHeader 
+              title="予約状況" 
+              showBack={false}
+              rightElement={rightPill}
+            />
             <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden">
               <div className="p-0">
                 <CalendarView key={searchParams.get('_t') || 'initial'} />
@@ -133,6 +149,7 @@ const AdminDashboard = () => {
               title="管理・設定" 
               subTitle="各種マスター設定と管理"
               showBack={false}
+              rightElement={rightPill}
             />
             <OtherSubCard href="/admin/trainers" label="トレーナー管理" subLabel="スタッフの登録・編集" color="emerald" icon={<path d="M12 14l9-5-9-5-9 5 9 5z" />} />
             <OtherSubCard href="/admin/stores" label="店舗管理" subLabel="店舗情報の変更・設定" color="indigo" icon={<path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />} />

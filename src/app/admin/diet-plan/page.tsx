@@ -640,31 +640,19 @@ function DietPlanPageContent() {
         <div className="min-h-screen bg-gray-50 py-4 sm:py-6 text-gray-900">
             <div className="max-w-3xl mx-auto px-4 sm:px-6">
                 {/* Header */}
-                <div className={`${selectedMember ? 'mb-16' : 'mb-6 sm:mb-8'} text-center relative`}>
-                    <button
-                        onClick={() => selectedMember ? setSelectedMember(null) : router.push('/dashboard')}
-                        className="absolute left-0 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600 hover:bg-white rounded-full transition-all shadow-sm border border-gray-100"
-                    >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+            {/* Header using refined AdminHeader */}
+            <AdminHeader 
+                title={selectedMember ? selectedMember.full_name : "ダイエット管理"}
+                rightElement={
+                    <button className="h-10 px-4 flex items-center gap-1 bg-white rounded-full shadow-sm border border-gray-100 text-blue-500 text-sm transition-all active:scale-95 whitespace-nowrap overflow-hidden max-w-[120px]">
+                        <span className="truncate">{session?.user?.name || '管理者'}</span>
+                        <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
                         </svg>
                     </button>
-                    {!selectedMember ? (
-                        <h1 className="text-2xl sm:text-3xl font-normal tracking-tight inline-block text-gray-900">ダイエット管理</h1>
-                    ) : (
-                        <div className="flex flex-col items-center mx-auto py-10">
-                            <h1 className="text-xl sm:text-2xl font-normal tracking-tight text-gray-900">{selectedMember.full_name}</h1>
-                        </div>
-                    )}
-                    {selectedMember && (
-                        <button 
-                            onClick={() => setSelectedMember(null)} 
-                            className="absolute right-0 top-1/2 -translate-y-1/2 text-[10px] font-normal text-gray-400 hover:text-rose-500 bg-white px-4 py-2 rounded-full uppercase tracking-widest border border-gray-100 shadow-sm transition-all"
-                        >
-                            会員変更
-                        </button>
-                    )}
-                </div>
+                }
+                onBack={() => selectedMember ? setSelectedMember(null) : router.push('/dashboard')}
+            />
 
                 {!selectedMember ? (
                     <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden">
