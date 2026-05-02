@@ -115,6 +115,12 @@ export default function ClientReservationsPage() {
     online: 'オンライン'
   };
 
+  const formatName = (fullName: string | null | undefined) => {
+    if (!fullName) return ''
+    const lastName = fullName.split(/[\s　]+/)[0]
+    return `${lastName}様`
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       {/* Universal AirPAY Header */}
@@ -123,11 +129,13 @@ export default function ClientReservationsPage() {
         showBack={fromAdmin && isAdmin}
         onBack={() => router.push('/admin/members')}
         rightElement={
-          <div className="h-10 px-4 flex items-center gap-1 bg-white rounded-full shadow-sm border border-gray-100 text-blue-500 text-[13px] font-normal">
-            <span className="truncate max-w-[80px]">{userName} 様</span>
-            <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
-            </svg>
+          <div className="h-10 px-4 flex items-center gap-2 bg-white rounded-full shadow-sm border border-gray-100 transition-all active:scale-95">
+            <span className="text-gray-700 text-[13px] font-normal truncate max-w-[100px]">
+              {formatName(userName)}
+            </span>
+            <div className="px-2 py-0.5 rounded-full text-[10px] font-normal bg-gray-500 text-white whitespace-nowrap">
+              会員
+            </div>
           </div>
         }
       />

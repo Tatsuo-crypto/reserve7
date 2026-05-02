@@ -17,6 +17,22 @@ function NavigationContent() {
   // Determine if we should show a back button instead of a menu button
   const isSubPage = pathname !== '/dashboard' && pathname !== '/admin/members' && pathname !== '/admin/analytics'
 
+  // Helper to get only last name
+  const formatName = (fullName: string | null | undefined, role: string | undefined) => {
+    if (!fullName) return ''
+    // Split by space (both half-width and full-width) and take the first part
+    const lastName = fullName.split(/[\s　]+/)[0]
+    if (role === 'ADMIN') return lastName
+    if (role === 'TRAINER') return lastName
+    if (role === 'MEMBER') return `${lastName}様`
+    return lastName
+  }
+
+  const handleLogout = async () => {
+    await signOut({ redirect: false })
+    router.push('/')
+  }
+
   // Determine page title based on pathname and tab
   const getPageTitle = () => {
     const tab = searchParams.get('tab')
@@ -46,11 +62,6 @@ function NavigationContent() {
 
   const handleBack = () => {
     router.back()
-  }
-
-  const handleLogout = async () => {
-    await signOut({ redirect: false })
-    router.push('/')
   }
 
   // Don't show global navigation on client pages (they have their own headers)
@@ -98,12 +109,16 @@ function NavigationContent() {
           ) : session?.user ? (
              <button 
                onClick={handleLogout}
-               className="h-10 px-4 flex items-center gap-1 bg-white rounded-full shadow-sm border border-gray-100 text-rose-500 text-[13px] font-normal transition-all active:scale-95"
+               className="h-10 px-4 flex items-center gap-1 bg-white rounded-full shadow-sm border border-gray-100 transition-all active:scale-95"
              >
-               <span className="truncate max-w-[80px]">{session.user.name}</span>
-               <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-               </svg>
+               <span className="text-gray-700 text-[13px] font-normal truncate max-w-[100px]">
+                 {formatName(session.user.name, session.user.role)}
+               </span>
+               <div className={`ml-1 px-2 py-0.5 rounded-full text-[10px] font-normal whitespace-nowrap ${
+                 session.user.role === 'TRAINER' ? 'bg-blue-500 text-white' : 'bg-gray-500 text-white'
+               }`}>
+                 {session.user.role === 'TRAINER' ? 'トレーナー' : '会員'}
+               </div>
              </button>
           ) : null}
         </div>
