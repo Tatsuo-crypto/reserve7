@@ -70,7 +70,7 @@ function LoginForm() {
     <div className="min-h-screen flex flex-col bg-gray-50 pt-20 pb-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full mx-auto space-y-4">
         <div>
-          <h2 className="text-center text-3xl font-normal text-gray-900">
+          <h2 className="text-center text-3xl font-normal text-gray-900 keep-design">
             T&J GYM
           </h2>
           <p className="mt-1 text-center text-lg text-gray-700">

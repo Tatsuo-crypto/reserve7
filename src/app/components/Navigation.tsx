@@ -56,7 +56,7 @@ function NavigationContent() {
     <header className="bg-gradient-to-b from-white to-gray-50 border-b border-gray-100 shadow">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          <Link href="/dashboard" className="text-xl sm:text-2xl font-normal text-gray-900 hover:text-gray-700">
+          <Link href="/dashboard" className="text-xl sm:text-2xl font-normal text-gray-900 hover:text-gray-700 keep-design">
             T&J GYM
           </Link>
 

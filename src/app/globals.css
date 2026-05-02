@@ -2,6 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Aggressive Global Bold Removal */
+*:not(.keep-design) {
+  font-weight: 400 !important;
+}
+
 @layer utilities {
   .animate-fadeIn {
     animation: fadeIn 0.3s ease-out;
