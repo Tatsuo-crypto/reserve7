@@ -652,12 +652,8 @@ function DietPlanPageContent() {
                     {!selectedMember ? (
                         <h1 className="text-2xl sm:text-3xl font-black tracking-tight inline-block text-gray-900">ダイエット管理</h1>
                     ) : (
-                        <div className="flex flex-col items-center mx-auto">
-                            <h1 className="text-4xl font-black tracking-tight text-gray-900 mb-2">{selectedMember.full_name}</h1>
-                            <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
-                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Active Plan</span>
-                            </div>
+                        <div className="flex flex-col items-center mx-auto py-10">
+                            <h1 className="text-5xl font-black tracking-tight text-gray-900">{selectedMember.full_name}</h1>
                         </div>
                     )}
                     {selectedMember && (
@@ -713,8 +709,8 @@ function DietPlanPageContent() {
                         </div>
                     </div>
                 ) : (
-                    <div className="space-y-12"> {/* Increased spacing between tabs and content */}
-                        <div className="flex bg-white/80 backdrop-blur-md p-2 rounded-[2.5rem] border border-gray-100 shadow-sm sticky top-0 z-30 gap-1 overflow-x-auto no-scrollbar">
+                    <div className="space-y-16 mt-10"> {/* Increased spacing and added top margin */}
+                        <div className="flex bg-white/80 backdrop-blur-md p-2 rounded-[2.5rem] border border-gray-100 shadow-sm sticky top-6 z-30 gap-1 overflow-x-auto no-scrollbar max-w-2xl mx-auto">
                             {[
                                 { id: 'progress', label: '週間目標' },
                                 { id: 'analyze', label: '分析' },
@@ -810,42 +806,42 @@ function DietPlanPageContent() {
                                                     <div className="text-xs font-black text-gray-400 uppercase tracking-widest">タンパク質</div>
                                                     <div className="flex items-baseline gap-1">
                                                         <span className="text-4xl font-black text-orange-500 tabular-nums">{nutrientForm.protein}</span>
-                                                        <span className="text-xs font-bold text-gray-400 uppercase">g</span>
+                                                        <span className="text-xs font-bold text-gray-400">g</span>
                                                     </div>
                                                 </div>
                                                 <div className="bg-gray-50/50 rounded-[2.5rem] p-8 space-y-4 border border-gray-100/50">
                                                     <div className="text-xs font-black text-gray-400 uppercase tracking-widest">脂質</div>
                                                     <div className="flex items-baseline gap-1">
                                                         <span className="text-4xl font-black text-teal-500 tabular-nums">{nutrientForm.fat}</span>
-                                                        <span className="text-xs font-bold text-gray-400 uppercase">g</span>
+                                                        <span className="text-xs font-bold text-gray-400">g</span>
                                                     </div>
                                                 </div>
                                                 <div className="bg-gray-50/50 rounded-[2.5rem] p-8 space-y-4 border border-gray-100/50">
                                                     <div className="text-xs font-black text-gray-400 uppercase tracking-widest">炭水化物</div>
                                                     <div className="flex items-baseline gap-1">
                                                         <span className="text-4xl font-black text-blue-500 tabular-nums">{nutrientForm.carbs}</span>
-                                                        <span className="text-xs font-bold text-gray-400 uppercase">g</span>
+                                                        <span className="text-xs font-bold text-gray-400">g</span>
                                                     </div>
                                                 </div>
                                                 <div className="bg-gray-50/50 rounded-[2.5rem] p-8 space-y-4 border border-gray-100/50">
                                                     <div className="text-xs font-black text-gray-400 uppercase tracking-widest">糖質</div>
                                                     <div className="flex items-baseline gap-1">
                                                         <span className="text-4xl font-black text-purple-500 tabular-nums">{nutrientForm.sugar}</span>
-                                                        <span className="text-xs font-bold text-gray-400 uppercase">g</span>
+                                                        <span className="text-xs font-bold text-gray-400">g</span>
                                                     </div>
                                                 </div>
                                                 <div className="bg-gray-50/50 rounded-[2.5rem] p-8 space-y-4 border border-gray-100/50">
                                                     <div className="text-xs font-black text-gray-400 uppercase tracking-widest">食物繊維</div>
                                                     <div className="flex items-baseline gap-1">
                                                         <span className="text-4xl font-black text-rose-500 tabular-nums">{nutrientForm.fiber}</span>
-                                                        <span className="text-xs font-bold text-gray-400 uppercase">g</span>
+                                                        <span className="text-xs font-bold text-gray-400">g</span>
                                                     </div>
                                                 </div>
                                                 <div className="bg-gray-50/50 rounded-[2.5rem] p-8 space-y-4 border border-gray-100/50">
                                                     <div className="text-xs font-black text-gray-400 uppercase tracking-widest">塩分</div>
                                                     <div className="flex items-baseline gap-1">
                                                         <span className="text-4xl font-black text-gray-500 tabular-nums">{nutrientForm.salt}</span>
-                                                        <span className="text-xs font-bold text-gray-400 uppercase">g</span>
+                                                        <span className="text-xs font-bold text-gray-400">g</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -1047,21 +1043,21 @@ function DietPlanPageContent() {
                                                         iconType="circle" 
                                                         wrapperStyle={{ paddingTop: '40px', fontSize: '12px', fontWeight: 800 }}
                                                         payload={[
-                                                            { value: 'P', type: 'circle', color: '#f59e0b' },
-                                                            { value: 'F', type: 'circle', color: '#10b981' },
-                                                            { value: 'C', type: 'circle', color: '#3b82f6' }
+                                                            { value: 'タンパク質', type: 'circle', color: '#f59e0b' },
+                                                            { value: '脂質', type: 'circle', color: '#10b981' },
+                                                            { value: '炭水化物', type: 'circle', color: '#3b82f6' }
                                                         ]}
                                                     />
                                                     
                                                     {/* Stacking Order: Bottom(C) -> Middle(F) -> Top(P) - Consistent with Client View */}
                                                     {(chartView === 'all' || chartView === 'c') && (
-                                                        <Bar dataKey="carbs_kcal" name="C" stackId="a" fill="#3b82f6" radius={[0, 0, 0, 0]} barSize={24} isAnimationActive={false} />
+                                                        <Bar dataKey="carbs_kcal" name="炭水化物" stackId="a" fill="#3b82f6" radius={[0, 0, 0, 0]} barSize={24} isAnimationActive={false} />
                                                     )}
                                                     {(chartView === 'all' || chartView === 'f') && (
-                                                        <Bar dataKey="fat_kcal" name="F" stackId="a" fill="#10b981" radius={[0, 0, 0, 0]} isAnimationActive={false} />
+                                                        <Bar dataKey="fat_kcal" name="脂質" stackId="a" fill="#10b981" radius={[0, 0, 0, 0]} isAnimationActive={false} />
                                                     )}
                                                     {(chartView === 'all' || chartView === 'p') && (
-                                                        <Bar dataKey="protein_kcal" name="P" stackId="a" fill="#f59e0b" radius={[0, 0, 0, 0]} isAnimationActive={false} />
+                                                        <Bar dataKey="protein_kcal" name="タンパク質" stackId="a" fill="#f59e0b" radius={[0, 0, 0, 0]} isAnimationActive={false} />
                                                     )}
                                                 </ComposedChart>
                                             </ResponsiveContainer>
@@ -1192,7 +1188,7 @@ function NutrientControl({ value, unit, onDelta }: { value: number, unit: string
         <div className="bg-white rounded-xl p-2 border border-white flex items-center justify-between shadow-sm">
             <div className="flex-1 flex items-center justify-center gap-1">
                 <span className="text-base sm:text-lg font-black tabular-nums">{value}</span>
-                <span className="text-[8px] font-bold opacity-30 uppercase">{unit}</span>
+                <span className="text-[8px] font-bold opacity-30">{unit}</span>
             </div>
             <div className="flex flex-col gap-0.5 border-l border-gray-100 pl-2">
                 <button onClick={() => onDelta(1)} className="text-gray-300 hover:text-blue-500"><svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M5 15l7-7 7 7" /></svg></button>
