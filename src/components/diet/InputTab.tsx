@@ -547,7 +547,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                                     <span className="text-sm font-bold text-gray-700">{goal}</span>
                                     <button
                                         onClick={() => {
-                                            setHabits(prev => ({ ...prev, [goal]: prev[goal] === 1 ? 0 : 1 }))
+                                            setHabits((prev: any) => ({ ...prev, [goal]: prev[goal] === 1 ? 0 : 1 }))
                                         }}
                                         className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all ${habits[goal] === 1 ? 'bg-emerald-500 text-white shadow-md' : 'bg-white text-gray-400 border border-gray-100'}`}
                                     >
