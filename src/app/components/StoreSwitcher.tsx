@@ -69,43 +69,46 @@ export default function StoreSwitcher({ defaultStoreName }: StoreSwitcherProps) 
         window.dispatchEvent(new Event('storeChange'))
     }
 
+    const simplifyName = (name: string) => {
+        const match = name.match(/【(.*?)】/)
+        return match ? match[1] : name
+    }
+
     return (
         <div className="relative" ref={dropdownRef}>
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="flex items-center space-x-2 px-3 py-1.5 border border-green-200 rounded-lg hover:bg-green-50 transition-colors bg-white"
+                className="flex items-center space-x-1.5 px-3 py-1.5 border border-gray-100 rounded-full hover:bg-gray-50 transition-all bg-white/50 shadow-sm active:scale-95"
                 title="店舗を切り替え"
             >
-                <div className="flex flex-col items-start">
-                    <span className="text-xs font-normal text-gray-800 flex items-center">
-                        {currentStoreName}
-                        <svg className={`w-3 h-3 ml-1 transform transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                        </svg>
-                    </span>
-                </div>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-normal bg-green-500 text-white whitespace-nowrap">
-                    管理者
+                <span className="text-[13px] font-normal text-gray-700 flex items-center whitespace-nowrap">
+                    {simplifyName(currentStoreName)}
+                    <svg className={`w-3 h-3 ml-1 text-gray-400 transform transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
                 </span>
+                <div className="px-2 py-0.5 rounded-full text-[10px] font-normal bg-green-500 text-white whitespace-nowrap">
+                    管理者
+                </div>
             </button>
 
             {isOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-100 ring-1 ring-black ring-opacity-5">
-                    <div className="px-3 py-2 text-xs font-normal text-gray-500 border-b border-gray-100">
+                <div className="absolute right-0 mt-2 w-40 bg-white rounded-2xl shadow-xl py-1 z-50 border border-gray-100 animate-fadeIn overflow-hidden">
+                    <div className="px-4 py-2 text-[10px] font-normal text-gray-400 uppercase tracking-widest border-b border-gray-50">
                         店舗選択
                     </div>
                     {stores.map(store => (
                         <button
                             key={store.id}
                             onClick={() => handleSelect(store)}
-                            className={`block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-900 ${store.name === currentStoreName ? 'bg-green-50 font-normal text-green-900' : ''
+                            className={`block w-full text-left px-4 py-3 text-[13px] text-gray-700 hover:bg-gray-50 transition-colors ${store.name === currentStoreName ? 'bg-gray-50 text-green-600' : ''
                                 }`}
                         >
-                            {store.name}
+                            {simplifyName(store.name)}
                         </button>
                     ))}
                     {stores.length === 0 && (
-                        <div className="px-4 py-2 text-sm text-gray-400">
+                        <div className="px-4 py-3 text-sm text-gray-400">
                             店舗が見つかりません
                         </div>
                     )}
