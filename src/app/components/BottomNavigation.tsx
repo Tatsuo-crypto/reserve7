@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 
-const BottomNavigation = () => {
+const BottomNavigationContent = () => {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const { data: session } = useSession()
@@ -90,4 +90,12 @@ const BottomNavigation = () => {
   );
 }
 
-export default BottomNavigation
+const BottomNavigation = () => {
+  return (
+    <React.Suspense fallback={null}>
+      <BottomNavigationContent />
+    </React.Suspense>
+  );
+}
+
+export default BottomNavigation;
