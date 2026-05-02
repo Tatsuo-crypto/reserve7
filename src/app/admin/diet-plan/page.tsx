@@ -1042,11 +1042,6 @@ function DietPlanPageContent() {
                                                         verticalAlign="bottom" 
                                                         iconType="circle" 
                                                         wrapperStyle={{ paddingTop: '40px', fontSize: '12px', fontWeight: 800 }}
-                                                        payload={[
-                                                            { value: 'タンパク質', type: 'circle', color: '#f59e0b' },
-                                                            { value: '脂質', type: 'circle', color: '#10b981' },
-                                                            { value: '炭水化物', type: 'circle', color: '#3b82f6' }
-                                                        ]}
                                                     />
                                                     
                                                     {/* Stacking Order: Bottom(C) -> Middle(F) -> Top(P) - Consistent with Client View */}
