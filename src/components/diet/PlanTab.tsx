@@ -156,7 +156,7 @@ export default function PlanTab({ token }: PlanTabProps) {
                             <Tooltip 
                                 contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', padding: '12px' }}
                                 itemStyle={{ fontSize: '10px', fontWeight: 'bold' }}
-                                formatter={(value: any, name: string) => [`${Math.round(value)} kcal`, name]}
+                                formatter={(value: any, name: any) => [`${Math.round(value)} kcal`, name]}
                             />
                             <Bar dataKey="c_cal" name="炭水化物" stackId="a" fill="#3b82f6" radius={[0, 0, 0, 0]} barSize={24} />
                             <Bar dataKey="f_cal" name="脂質" stackId="a" fill="#10b981" radius={[0, 0, 0, 0]} />
