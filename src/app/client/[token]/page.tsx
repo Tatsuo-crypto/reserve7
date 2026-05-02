@@ -9,6 +9,7 @@ import DietTab from '@/components/diet/DietTab'
 import PlanTab from '@/components/diet/PlanTab'
 import OnlineTab from '@/components/diet/OnlineTab'
 import ReservationTab from '@/components/diet/ReservationTab'
+import AdminHeader from '@/app/components/AdminHeader'
 
 // TrackingModalをアドミン専用に遅延読み込み
 const TrackingModal = dynamic(() => import('@/app/admin/members/TrackingModal'), {
