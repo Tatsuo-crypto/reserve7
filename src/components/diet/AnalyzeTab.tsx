@@ -169,7 +169,7 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft }: Analy
 
         if (!showAvg) return data
 
-        return data.map((d: any, i, arr) => {
+        return data.map((d: any, i: number, arr: any[]) => {
             const window = arr.slice(Math.max(0, i - 6), i + 1)
             const weights = window.map(w => w.weight).filter(w => w != null)
             const avgWeight = weights.length > 0 ? weights.reduce((acc, curr) => acc + curr, 0) / weights.length : null
@@ -559,7 +559,7 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft }: Analy
                                     {commonYAxis}
                                     <Tooltip 
                                         cursor={{ stroke: '#cbd5e1', strokeWidth: 1 }}
-                                        formatter={(value: any) => [value === 1 ? '○ 達成' : value === 0 ? '× 未達成' : '-', '状況']}
+                                        formatter={(value: any, name: any) => [value === 1 ? '○ 達成' : value === 0 ? '× 未達成' : '-', '状況']}
                                         contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', padding: '12px', fontSize: '10px' }} 
                                     />
                                     <Bar dataKey={`habit_${goal}`} radius={[2, 2, 0, 0]}>
