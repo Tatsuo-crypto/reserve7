@@ -342,8 +342,8 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                 </div>
             </div>
 
-            {/* 2. Diet OCR Input Card (Admin Only) */}
-            {isAdmin && (
+            {/* 2. Diet OCR Input Card */}
+            {(true) && (
                 <>
                     <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl shadow-lg p-6 text-white overflow-hidden relative group">
                         <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 bg-white bg-opacity-10 rounded-full group-hover:scale-150 transition-transform duration-700"></div>
@@ -384,6 +384,15 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                                     {saving ? '保存中...' : '解析結果'}
                                 </h2>
                             </div>
+                            {dietImageUrl && (
+                                <div className="mb-4 rounded-xl overflow-hidden border border-gray-100 shadow-inner bg-gray-50 aspect-video relative">
+                                    <img 
+                                        src={dietImageUrl} 
+                                        alt="Uploaded meal" 
+                                        className="w-full h-full object-contain"
+                                    />
+                                </div>
+                            )}
                             <div className="grid grid-cols-2 gap-4 mb-2">
                                 <div className="col-span-2 bg-blue-50 p-4 rounded-xl">
                                     <div className="text-[10px] font-normal text-blue-600 uppercase mb-2 tracking-widest text-center">総エネルギー (摂取 / 目標)</div>
