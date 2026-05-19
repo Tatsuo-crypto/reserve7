@@ -64,29 +64,34 @@ export default function HomeTab({ token, userName, todayDraft }: HomeTabProps) {
 
         const weekRangeStr = `${monday.getMonth() + 1}/${monday.getDate()} 〜 ${sunday.getMonth() + 1}/${sunday.getDate()}`;
 
-        // Filter and merge today's data based on isSaved
+        // Filter and merge draft data into the logs
         const processLogs = (logs: any[], isDiet: boolean) => {
+            // 1. Filter out today from the database logs to avoid duplication with draft
             let processed = logs.filter(log => {
                 const logDate = new Date(log.date);
-                return logDate >= monday && logDate <= sunday;
+                const isThisWeek = logDate >= monday && logDate <= sunday;
+                const isToday = log.date === todayStr;
+                return isThisWeek && !isToday;
             });
 
-            // Handle today specifically if it's within the selected week
-            if (todayDraft && todayDraft.selectedDate === todayStr) {
-                const isTodayInThisWeek = new Date(todayStr) >= monday && new Date(todayStr) <= sunday;
-                if (isTodayInThisWeek) {
-                    if (!todayDraft.isSaved) {
-                        processed = processed.filter(l => l.date !== todayStr);
-                    } else {
-                        const filtered = processed.filter(l => l.date !== todayStr);
-                        const todayData = isDiet ? todayDraft.ocrResult : {
-                            date: todayStr,
-                            steps: parseInt(todayDraft.steps) || 0,
-                            water: parseFloat(todayDraft.water) || 0,
-                            sleep: parseFloat(todayDraft.sleep) || 0,
-                            habits: todayDraft.habits || { workout: 0 }
-                        };
-                        if (todayData) processed = [...filtered, todayData];
+            // 2. Add today's draft data if it falls within this week
+            if (todayDraft) {
+                const draftDate = todayDraft.selectedDate;
+                const draftDateObj = new Date(draftDate);
+                const isDraftInThisWeek = draftDateObj >= monday && draftDateObj <= sunday;
+
+                if (isDraftInThisWeek) {
+                    const todayData = isDiet ? todayDraft.ocrResult : {
+                        date: draftDate,
+                        steps: todayDraft.touchedFields?.includes('steps') ? (parseInt(todayDraft.steps) || 0) : null,
+                        water: todayDraft.touchedFields?.includes('water') ? (parseFloat(todayDraft.water) || 0) : null,
+                        sleep: todayDraft.touchedFields?.includes('sleep') ? (parseFloat(todayDraft.sleep) || 0) : null,
+                        habits: todayDraft.habits || { workout: 0 }
+                    };
+                    
+                    // Only add if we have actual touched data or ocrResult
+                    if (todayData && (!isDiet || todayDraft.ocrResult)) {
+                        processed.push({ ...todayData, date: draftDate });
                     }
                 }
             }
@@ -113,14 +118,40 @@ export default function HomeTab({ token, userName, todayDraft }: HomeTabProps) {
         const daysInWeek = 7;
 
         const actual = {
-            calories: thisWeekDietLogs.reduce((sum, log) => sum + (log.calories || 0), 0),
-            protein: thisWeekDietLogs.reduce((sum, log) => sum + (log.protein || 0), 0),
-            fat: thisWeekDietLogs.reduce((sum, log) => sum + (log.fat || 0), 0),
-            carbs: thisWeekDietLogs.reduce((sum, log) => sum + (log.carbs || 0), 0),
-            steps: thisWeekLifeLogs.reduce((sum, log) => sum + (log.steps || 0), 0),
-            water: thisWeekLifeLogs.reduce((sum, log) => sum + (log.water_liters || log.water || 0), 0),
-            sleep: thisWeekLifeLogs.reduce((sum, log) => sum + (log.sleep_hours || log.sleep || 0), 0),
+            calories: thisWeekDietLogs.reduce((sum, log) => sum + (Number(log.calories) || 0), 0),
+            protein: thisWeekDietLogs.reduce((sum, log) => sum + (Number(log.protein) || 0), 0),
+            fat: thisWeekDietLogs.reduce((sum, log) => sum + (Number(log.fat) || 0), 0),
+            carbs: thisWeekDietLogs.reduce((sum, log) => sum + (Number(log.carbs) || 0), 0),
+            sugar: thisWeekDietLogs.reduce((sum, log) => sum + (Number(log.sugar) || 0), 0),
+            fiber: thisWeekDietLogs.reduce((sum, log) => sum + (Number(log.fiber) || 0), 0),
+            salt: thisWeekDietLogs.reduce((sum, log) => sum + (Number(log.salt) || 0), 0),
+            steps: thisWeekLifeLogs.reduce((sum, log) => {
+                const val = log.steps;
+                return sum + (val !== null && val !== undefined ? Number(val) : 0);
+            }, 0),
+            water: thisWeekLifeLogs.reduce((sum, log) => {
+                const val = log.water_liters || log.water;
+                return sum + (val !== null && val !== undefined ? Number(val) : 0);
+            }, 0),
+            sleep: thisWeekLifeLogs.reduce((sum, log) => {
+                const val = log.sleep_hours || log.sleep;
+                return sum + (val !== null && val !== undefined ? Number(val) : 0);
+            }, 0),
             workout: thisWeekLifeLogs.reduce((sum, log) => sum + ((log.habits?.workout || 0) > 0 ? 1 : 0), 0),
+        };
+
+        const counts = {
+            calories: thisWeekDietLogs.filter(log => (Number(log.calories) || 0) > 0).length,
+            protein: thisWeekDietLogs.filter(log => (Number(log.protein) || 0) > 0).length,
+            fat: thisWeekDietLogs.filter(log => (Number(log.fat) || 0) > 0).length,
+            carbs: thisWeekDietLogs.filter(log => (Number(log.carbs) || 0) > 0).length,
+            sugar: thisWeekDietLogs.filter(log => (Number(log.sugar) || 0) > 0).length,
+            fiber: thisWeekDietLogs.filter(log => (Number(log.fiber) || 0) > 0).length,
+            salt: thisWeekDietLogs.filter(log => (Number(log.salt) || 0) > 0).length,
+            steps: thisWeekLifeLogs.filter(log => log.steps !== null && log.steps !== undefined).length,
+            water: thisWeekLifeLogs.filter(log => (log.water_liters !== null && log.water_liters !== undefined) || (log.water !== null && log.water !== undefined)).length,
+            sleep: thisWeekLifeLogs.filter(log => (log.sleep_hours !== null && log.sleep_hours !== undefined) || (log.sleep !== null && log.sleep !== undefined)).length,
+            workout: thisWeekLifeLogs.filter(log => (log.habits?.workout || 0) > 0).length,
         };
  
         const targets = {
@@ -128,6 +159,9 @@ export default function HomeTab({ token, userName, todayDraft }: HomeTabProps) {
             protein: (currentDietGoal.protein || 0) * daysInWeek,
             fat: (currentDietGoal.fat || 0) * daysInWeek,
             carbs: (currentDietGoal.carbs || 0) * daysInWeek,
+            sugar: (currentDietGoal.sugar || 0) * daysInWeek,
+            fiber: (currentDietGoal.fiber || 0) * daysInWeek,
+            salt: (currentDietGoal.salt || 0) * daysInWeek,
             steps: (lifeTargets.steps || 8000) * daysInWeek,
             water: (lifeTargets.water || 2.0) * daysInWeek,
             sleep: (lifeTargets.sleep || 8.0) * daysInWeek,
@@ -137,13 +171,15 @@ export default function HomeTab({ token, userName, todayDraft }: HomeTabProps) {
         return { 
             actual, 
             targets, 
+            counts,
             weekRangeStr,
             dietTargetPerDay: currentDietGoal,
             lifeTargetPerDay: {
                 steps: lifeTargets.steps || 8000,
                 water: lifeTargets.water || 2.0,
                 sleep: lifeTargets.sleep || 8.0,
-                workout: lifeTargets.workout || 3
+                workout: lifeTargets.workout || 3,
+                salt: currentDietGoal.salt || 0
             }
         };
     }, [dietLogs, lifestyleLogs, dietGoals, lifestyleSettings, todayDraft, todayStr, weekOffset]);
@@ -204,6 +240,7 @@ export default function HomeTab({ token, userName, todayDraft }: HomeTabProps) {
                             unit="kcal" 
                             color="rose"
                             perDay={weeklyStats?.dietTargetPerDay.calories || 0}
+                            recordedDays={weeklyStats?.counts.calories}
                         />
                         <div className="grid grid-cols-1 gap-5">
                             <WeeklyProgressItem 
@@ -213,6 +250,7 @@ export default function HomeTab({ token, userName, todayDraft }: HomeTabProps) {
                                 unit="g" 
                                 color="amber"
                                 perDay={weeklyStats?.dietTargetPerDay.protein || 0}
+                                recordedDays={weeklyStats?.counts.protein}
                             />
                             <WeeklyProgressItem 
                                 label="脂質 (F)" 
@@ -221,6 +259,7 @@ export default function HomeTab({ token, userName, todayDraft }: HomeTabProps) {
                                 unit="g" 
                                 color="emerald"
                                 perDay={weeklyStats?.dietTargetPerDay.fat || 0}
+                                recordedDays={weeklyStats?.counts.fat}
                             />
                             <WeeklyProgressItem 
                                 label="炭水化物 (C)" 
@@ -229,6 +268,34 @@ export default function HomeTab({ token, userName, todayDraft }: HomeTabProps) {
                                 unit="g" 
                                 color="blue"
                                 perDay={weeklyStats?.dietTargetPerDay.carbs || 0}
+                                recordedDays={weeklyStats?.counts.carbs}
+                            />
+                            <WeeklyProgressItem 
+                                label="└ 糖質" 
+                                actual={weeklyStats?.actual.sugar || 0} 
+                                target={weeklyStats?.targets.sugar || 0} 
+                                unit="g" 
+                                color="sky"
+                                perDay={weeklyStats?.dietTargetPerDay.sugar || 0}
+                                recordedDays={weeklyStats?.counts.sugar}
+                            />
+                            <WeeklyProgressItem 
+                                label="└ 食物繊維" 
+                                actual={weeklyStats?.actual.fiber || 0} 
+                                target={weeklyStats?.targets.fiber || 0} 
+                                unit="g" 
+                                color="teal"
+                                perDay={weeklyStats?.dietTargetPerDay.fiber || 0}
+                                recordedDays={weeklyStats?.counts.fiber}
+                            />
+                            <WeeklyProgressItem 
+                                label="└ 塩分" 
+                                actual={weeklyStats?.actual.salt || 0} 
+                                target={weeklyStats?.targets.salt || 0} 
+                                unit="g" 
+                                color="gray"
+                                perDay={weeklyStats?.dietTargetPerDay.salt || 0}
+                                recordedDays={weeklyStats?.counts.salt}
                             />
                         </div>
                     </div>
@@ -249,6 +316,7 @@ export default function HomeTab({ token, userName, todayDraft }: HomeTabProps) {
                             unit="歩" 
                             color="emerald"
                             perDay={weeklyStats?.lifeTargetPerDay.steps || 0}
+                            recordedDays={weeklyStats?.counts.steps}
                         />
                         <WeeklyProgressItem 
                             label="水分摂取量" 
@@ -257,6 +325,7 @@ export default function HomeTab({ token, userName, todayDraft }: HomeTabProps) {
                             unit="L" 
                             color="sky"
                             perDay={weeklyStats?.lifeTargetPerDay.water || 0}
+                            recordedDays={weeklyStats?.counts.water}
                         />
                         <WeeklyProgressItem 
                             label="睡眠時間" 
@@ -265,6 +334,7 @@ export default function HomeTab({ token, userName, todayDraft }: HomeTabProps) {
                             unit="h" 
                             color="indigo"
                             perDay={weeklyStats?.lifeTargetPerDay.sleep || 0}
+                            recordedDays={weeklyStats?.counts.sleep}
                         />
                         <WeeklyProgressItem 
                             label="筋トレ実施回数" 
@@ -274,6 +344,7 @@ export default function HomeTab({ token, userName, todayDraft }: HomeTabProps) {
                             color="orange"
                             perDay={weeklyStats?.lifeTargetPerDay.workout || 0}
                             isFrequency
+                            recordedDays={weeklyStats?.counts.workout}
                         />
                     </div>
                 </div>
@@ -282,7 +353,7 @@ export default function HomeTab({ token, userName, todayDraft }: HomeTabProps) {
     )
 }
 
-function WeeklyProgressItem({ label, actual, target, unit, color, perDay, isFrequency }: { label: string, actual: number, target: number, unit: string, color: string, perDay: number, isFrequency?: boolean }) {
+function WeeklyProgressItem({ label, actual, target, unit, color, perDay, isFrequency, recordedDays }: { label: string, actual: number, target: number, unit: string, color: string, perDay: number, isFrequency?: boolean, recordedDays?: number }) {
     const pct = target > 0 ? Math.min(100, Math.round((actual / target) * 100)) : 0;
     const colors: Record<string, string> = {
         rose: 'bg-rose-500',
@@ -290,6 +361,7 @@ function WeeklyProgressItem({ label, actual, target, unit, color, perDay, isFreq
         emerald: 'bg-emerald-500',
         blue: 'bg-blue-500',
         sky: 'bg-sky-500',
+        teal: 'bg-teal-500',
         orange: 'bg-orange-500',
         indigo: 'bg-indigo-500',
     }
@@ -299,6 +371,7 @@ function WeeklyProgressItem({ label, actual, target, unit, color, perDay, isFreq
         emerald: 'text-emerald-600',
         blue: 'text-blue-600',
         sky: 'text-sky-600',
+        teal: 'text-teal-600',
         orange: 'text-orange-600',
         indigo: 'text-indigo-600',
     }
@@ -307,7 +380,12 @@ function WeeklyProgressItem({ label, actual, target, unit, color, perDay, isFreq
         <div className="space-y-1.5">
             <div className="flex justify-between items-end">
                 <div className="space-y-0.5">
-                    <p className="text-[9px] font-normal text-gray-400 uppercase tracking-widest leading-none">{label}</p>
+                    <div className="flex items-center gap-1.5">
+                        <p className="text-[9px] font-normal text-gray-400 uppercase tracking-widest leading-none">{label}</p>
+                        {recordedDays !== undefined && (
+                            <span className="text-[8px] bg-gray-100 text-gray-500 px-1 rounded-sm font-normal">{recordedDays}日分</span>
+                        )}
+                    </div>
                     <div className="flex items-baseline gap-1">
                         <span className="text-lg font-normal text-gray-800 tabular-nums leading-none">{isFrequency ? actual : actual.toLocaleString()}</span>
                         <span className="text-[9px] font-normal text-gray-300">/ {target.toLocaleString()} {unit}</span>
@@ -327,7 +405,7 @@ function WeeklyProgressItem({ label, actual, target, unit, color, perDay, isFreq
             </div>
             <div className="flex justify-between items-center text-[7px] font-normal text-gray-300 uppercase tracking-tighter leading-none">
                 <span>累計</span>
-                <span>{isFrequency ? `目標: ${target}${unit}` : `1日: ${perDay}${unit}`}</span>
+                <span>{isFrequency ? `目標: ${target}${unit}` : `1日目安: ${perDay}${unit}`}</span>
             </div>
         </div>
     )

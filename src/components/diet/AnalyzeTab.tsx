@@ -142,6 +142,7 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft }: Analy
                 target_carbs: target?.carbs || null,
                 target_sugar: target?.sugar ?? (target ? Math.max(0, target.carbs - (target.fiber || 20)) : null),
                 target_fiber: target?.fiber || null,
+                target_salt: target?.salt || null,
                 steps: lifestyle?.steps || 0,
                 sleep: lifestyle?.sleep || 0,
                 water: lifestyle?.water || 0,
@@ -353,7 +354,7 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft }: Analy
                 </AnalysisChartCard>
 
                 {/* 6. Sugar Chart */}
-                <AnalysisChartCard title="糖質" color="purple">
+                <AnalysisChartCard title="糖質" color="sky">
                     <ResponsiveContainer width="100%" height="100%">
                         <ComposedChart data={analysisData} syncId="analyzeSync" margin={chartMargin}>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
@@ -366,8 +367,8 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft }: Analy
                                 domain={[0, (dataMax: number) => Math.ceil(Math.max(dataMax, analysisData[analysisData.length - 1]?.target_sugar || 0) * 1.2)]}
                             />
                             {commonTooltip}
-                            <Bar dataKey="sugar" name="摂取量" fill="#a855f7" radius={[4, 4, 0, 0]} />
-                            <Line type="stepAfter" dataKey="target_sugar" name="目標設定" stroke="#a855f7" strokeWidth={2} strokeDasharray="5 5" dot={false} />
+                            <Bar dataKey="sugar" name="摂取量" fill="#0ea5e9" radius={[4, 4, 0, 0]} />
+                            <Line type="stepAfter" dataKey="target_sugar" name="目標設定" stroke="#0ea5e9" strokeWidth={2} strokeDasharray="5 5" dot={false} />
                         </ComposedChart>
                     </ResponsiveContainer>
                 </AnalysisChartCard>
@@ -388,6 +389,26 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft }: Analy
                             {commonTooltip}
                             <Bar dataKey="fiber" name="摂取量" fill="#14b8a6" radius={[4, 4, 0, 0]} />
                             <Line type="stepAfter" dataKey="target_fiber" name="目標設定" stroke="#14b8a6" strokeWidth={2} strokeDasharray="5 5" dot={false} />
+                        </ComposedChart>
+                    </ResponsiveContainer>
+                </AnalysisChartCard>
+
+                {/* 8. Salt Chart */}
+                <AnalysisChartCard title="塩分" color="gray">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <ComposedChart data={analysisData} syncId="analyzeSync" margin={chartMargin}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                            {commonXAxis}
+                            <YAxis 
+                                width={40} 
+                                axisLine={false} 
+                                tickLine={false} 
+                                tick={{ fontSize: 9, fontWeight: 700, fill: '#cbd5e1' }}
+                                domain={[0, (dataMax: number) => Math.ceil(Math.max(dataMax, analysisData[analysisData.length - 1]?.target_salt || 0) * 1.2)]}
+                            />
+                            {commonTooltip}
+                            <Bar dataKey="salt" name="摂取量" fill="#94a3b8" radius={[4, 4, 0, 0]} />
+                            <Line type="stepAfter" dataKey="target_salt" name="目標設定" stroke="#94a3b8" strokeWidth={2} strokeDasharray="5 5" dot={false} />
                         </ComposedChart>
                     </ResponsiveContainer>
                 </AnalysisChartCard>

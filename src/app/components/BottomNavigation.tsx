@@ -10,8 +10,12 @@ const BottomNavigationContent = () => {
   const searchParams = useSearchParams()
   const { data: session } = useSession()
   
-  // 管理者以外、または会員用画面（/client/...）では表示しない
-  if (session?.user?.role !== 'ADMIN' || pathname.startsWith('/client')) return null;
+  // 管理者以外、または会員用画面（/client/...）、トレーナー画面（/trainer/...）では表示しない
+  if (
+    session?.user?.role !== 'ADMIN' || 
+    pathname.startsWith('/client') || 
+    pathname.startsWith('/trainer')
+  ) return null;
 
   // 現在のタブを取得
   let activeTab = searchParams.get('tab') || (pathname === '/dashboard' ? 'home' : '');

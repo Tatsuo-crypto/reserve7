@@ -109,7 +109,9 @@ export default function GoalModal({ userId, token, onClose, onSave }: GoalModalP
                                 <InputItem label="P (g)" value={form.protein} onChange={v => setForm({ ...form, protein: v })} />
                                 <InputItem label="F (g)" value={form.fat} onChange={v => setForm({ ...form, fat: v })} />
                                 <InputItem label="C (g)" value={form.carbs} onChange={v => setForm({ ...form, carbs: v })} />
+                                <InputItem label="糖質 (g)" value={form.sugar} onChange={v => setForm({ ...form, sugar: v })} />
                                 <InputItem label="食物繊維 (g)" value={form.fiber} onChange={v => setForm({ ...form, fiber: v })} />
+                                <InputItem label="塩分 (g)" value={form.salt} onChange={v => setForm({ ...form, salt: v })} />
                             </div>
 
                             <button
@@ -136,7 +138,7 @@ export default function GoalModal({ userId, token, onClose, onSave }: GoalModalP
                                             <div className="text-lg font-normal text-gray-700">{h.calories} <span className="text-xs">kcal</span></div>
                                         </div>
                                         <div className="text-[10px] font-normal text-gray-400 bg-white px-3 py-1 rounded-full shadow-sm">
-                                            P:{h.protein} F:{h.fat} C:{h.carbs}
+                                            P:{h.protein} F:{h.fat} C:{h.carbs} 糖:{h.sugar} 繊:{h.fiber} 塩:{h.salt}
                                         </div>
                                     </div>
                                 ))}

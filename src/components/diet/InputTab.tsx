@@ -51,7 +51,8 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
         ocrResult = null,
         habits = { workout: 0 }, 
         quitGoals = [], 
-        isSaved = false 
+        isSaved = false,
+        touchedFields = []
     } = sharedState || {}
 
     // Fetch data for selected date
@@ -67,14 +68,33 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                     fetch(`/api/diet/goals?token=${token}`)
                 ])
 
-                let currentSettings: any = null
-                if (settingRes.ok) {
+                const updates: any = {
+                    weight: '',
+                    water: '0',
+                    steps: '0',
+                    sleep: '0',
+                    alcohol: '0',
+                    notes: '',
+                    habits: { workout: 0 },
+                    ocrResult: null,
+                    dietImageUrl: null,
+                    isSaved: false,
+                    touchedFields: []
+                }
+
+                if (settingRes && settingRes.ok) {
                     const { data } = await settingRes.json()
-                    currentSettings = data
                     if (data) {
                         const items = data.visible_items || {}
                         setVisibleItems({ ...items, workout: true })
-                        if (data.quit_goals) setQuitGoals(data.quit_goals)
+                        if (data.quit_goals) updates.quitGoals = data.quit_goals
+                        
+                        // Default habit targets
+                        if (data.habit_targets) {
+                            if (data.habit_targets.water != null) updates.water = String(data.habit_targets.water)
+                            if (data.habit_targets.steps != null) updates.steps = String(data.habit_targets.steps)
+                            if (data.habit_targets.sleep != null) updates.sleep = String(data.habit_targets.sleep)
+                        }
                     }
                 }
 
@@ -82,42 +102,34 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                 if (goalRes.ok) {
                     const { data } = await goalRes.json()
                     if (data && data.length > 0) {
-                        currentPlan = [...data].reverse().find(g => g.start_date <= selectedDate) || data[data.length - 1]
+                        currentPlan = data.find((g: any) => g.start_date <= selectedDate) || data[data.length - 1]
                         setTarget(currentPlan)
                     }
                 }
-
-                // Initialize defaults
-                setWeight('')
-                setWater(currentSettings?.water_target != null ? String(currentSettings.water_target) : '2.0')
-                setSteps(currentSettings?.step_target != null ? String(currentSettings.step_target) : '8000')
-                setSleep(currentSettings?.sleep_target != null ? String(currentSettings.sleep_target) : '8.0')
-                setAlcohol('0')
-                setNotes('')
-                setHabits({ workout: 0 })
-                setOcrResult(null)
-                setDietImageUrl(null)
-                setIsSaved(false)
 
                 let hasAnyData = false
                 if (logRes.ok) {
                     const { data } = await logRes.json()
                     if (data) {
                         hasAnyData = true
-                        if (data.weight) setWeight(String(data.weight))
-                        if (data.water_liters != null) setWater(String(data.water_liters))
-                        else if (data.water != null) setWater(String(data.water))
-                        
-                        if (data.steps != null) setSteps(String(data.steps))
-                        
-                        if (data.sleep_hours != null) setSleep(String(data.sleep_hours))
-                        else if (data.sleep != null) setSleep(String(data.sleep))
-                        
-                        if (data.alcohol_units != null) setAlcohol(String(data.alcohol_units))
-                        else if (data.alcohol != null) setAlcohol(String(data.alcohol))
-                        
-                        if (data.notes) setNotes(data.notes)
-                        if (data.habits) setHabits(data.habits)
+                        if (data.weight) updates.weight = String(data.weight)
+                        if (data.water_liters != null) updates.water = String(data.water_liters)
+                        else if (data.water != null) updates.water = String(data.water)
+                        if (data.steps != null) updates.steps = String(data.steps)
+                        if (data.sleep_hours != null) updates.sleep = String(data.sleep_hours)
+                        else if (data.sleep != null) updates.sleep = String(data.sleep)
+                        if (data.alcohol_units != null) updates.alcohol = String(data.alcohol_units)
+                        else if (data.alcohol != null) updates.alcohol = String(data.alcohol)
+                        if (data.notes) updates.notes = data.notes
+                        if (data.habits) updates.habits = data.habits
+
+                        // Mark fields as touched if they exist in DB
+                        const touched = []
+                        if (data.weight) touched.push('weight')
+                        if (data.water_liters != null || data.water != null) touched.push('water')
+                        if (data.steps != null) touched.push('steps')
+                        if (data.sleep_hours != null || data.sleep != null) touched.push('sleep')
+                        updates.touchedFields = touched
                     }
                 }
 
@@ -125,32 +137,27 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                     const { data } = await dietRes.json()
                     if (data) {
                         hasAnyData = true
-                        setOcrResult({
+                        updates.ocrResult = {
                             ...data,
-                            calories_target: currentPlan?.calories || data.calories_target,
-                            protein_target: currentPlan?.protein || data.protein_target,
-                            fat_target: currentPlan?.fat || data.fat_target,
-                            carbs_target: currentPlan?.carbs || data.carbs_target,
-                            sugar_target: currentPlan?.sugar || data.sugar_target,
-                            fiber_target: currentPlan?.fiber || data.fiber_target,
-                            salt_target: currentPlan?.salt || data.salt_target
-                        })
-                        if (data.image_url) setDietImageUrl(data.image_url)
+                            calories_target: currentPlan?.calories || data.calories_target || 1600,
+                            protein_target: currentPlan?.protein || data.protein_target || 100,
+                            fat_target: currentPlan?.fat || data.fat_target || 40,
+                            carbs_target: currentPlan?.carbs || data.carbs_target || 200,
+                            sugar_target: currentPlan?.sugar || data.sugar_target || 180,
+                            fiber_target: currentPlan?.fiber || data.fiber_target || 20,
+                            salt_target: currentPlan?.salt || data.salt_target || 6
+                        }
+                        if (data.image_url) updates.dietImageUrl = data.image_url
                     }
                 }
 
                 if (hasAnyData) {
-                    setIsSaved(true)
-                } else if (settingRes && settingRes.ok) {
-                    // Initialize with habit targets if no data
-                    if (currentSettings && currentSettings.habit_targets) {
-                        if (currentSettings.habit_targets.water != null) setWater(String(currentSettings.habit_targets.water))
-                        if (currentSettings.habit_targets.steps != null) setSteps(String(currentSettings.habit_targets.steps))
-                        if (currentSettings.habit_targets.sleep != null) setSleep(String(currentSettings.habit_targets.sleep))
-                        if (currentSettings.habit_targets.workout != null) setHabits({ workout: 0 })
-                    }
+                    updates.isSaved = true
                 }
-            } catch (e) { console.error(e) }
+
+                // Single update to parent state
+                onStateChange({ ...sharedState, ...updates })
+            } catch (e) { console.error('Fetch error:', e) }
         }
         fetchDateData()
     }, [token, selectedDate])
@@ -161,10 +168,10 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
         onStateChange({ ...sharedState, ...updates, isSaved: false })
     }
 
-    const setWeight = (v: string) => updateSharedState({ weight: v })
-    const setWater = (v: string) => updateSharedState({ water: v })
-    const setSteps = (v: string) => updateSharedState({ steps: v })
-    const setSleep = (v: string) => updateSharedState({ sleep: v })
+    const setWeight = (v: string) => updateSharedState({ weight: v, touchedFields: [...touchedFields.filter((f: string) => f !== 'weight'), 'weight'] })
+    const setWater = (v: string) => updateSharedState({ water: v, touchedFields: [...touchedFields.filter((f: string) => f !== 'water'), 'water'] })
+    const setSteps = (v: string) => updateSharedState({ steps: v, touchedFields: [...touchedFields.filter((f: string) => f !== 'steps'), 'steps'] })
+    const setSleep = (v: string) => updateSharedState({ sleep: v, touchedFields: [...touchedFields.filter((f: string) => f !== 'sleep'), 'sleep'] })
     const setAlcohol = (v: string) => updateSharedState({ alcohol: v })
     const setNotes = (v: string) => updateSharedState({ notes: v })
     const setHabits = (fn: any) => {
@@ -174,7 +181,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
     const setOcrResult = (v: any) => updateSharedState({ ocrResult: v })
     const setDietImageUrl = (v: any) => updateSharedState({ dietImageUrl: v })
     const setIsSaved = (v: boolean) => onStateChange({ ...sharedState, isSaved: v })
-    const setSelectedDate = (v: string) => onStateChange({ ...sharedState, selectedDate: v, isSaved: false })
+    const setSelectedDate = (v: string) => onStateChange({ ...sharedState, selectedDate: v, isSaved: false, touchedFields: [] })
     const setQuitGoals = (v: any) => onStateChange({ ...sharedState, quitGoals: v })
 
     const handleAllSave = async () => {
@@ -189,10 +196,10 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                 habits: habits
             }
 
-            if (weight) lifestyleBody.weight = parseFloat(weight)
-            if (water) lifestyleBody.water_liters = parseFloat(water)
-            if (steps) lifestyleBody.steps = parseInt(steps)
-            if (sleep) lifestyleBody.sleep_hours = parseFloat(sleep)
+            if (weight && touchedFields.includes('weight')) lifestyleBody.weight = parseFloat(weight)
+            if (water && touchedFields.includes('water')) lifestyleBody.water_liters = parseFloat(water)
+            if (steps && touchedFields.includes('steps')) lifestyleBody.steps = parseInt(steps)
+            if (sleep && touchedFields.includes('sleep')) lifestyleBody.sleep_hours = parseFloat(sleep)
             if (alcohol) lifestyleBody.alcohol_units = parseFloat(alcohol)
 
             const lifestyleRes = await fetch('/api/lifestyle/logs', {
@@ -275,7 +282,16 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
             const analyzeData = await analyzeRes.json()
             if (analyzeRes.ok) {
                 const data = analyzeData.data
-                setOcrResult(data)
+                setOcrResult({
+                    ...data,
+                    calories_target: target?.calories || data.calories_target || 1600,
+                    protein_target: target?.protein || data.protein_target || 100,
+                    fat_target: target?.fat || data.fat_target || 40,
+                    carbs_target: target?.carbs || data.carbs_target || 200,
+                    sugar_target: target?.sugar || data.sugar_target || 180,
+                    fiber_target: target?.fiber || data.fiber_target || 20,
+                    salt_target: target?.salt || data.salt_target || 6
+                })
                 // Automatic save removed - wait for user to click the main save button
             } else {
                 console.error('Analysis failed:', analyzeData.error, analyzeData.message)
@@ -342,9 +358,80 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                 </div>
             </div>
 
-            {/* 2. Diet OCR Input Card */}
-            {(true) && (
-                <>
+            {/* 2. Diet Record Section */}
+            <div className="space-y-4">
+                {/* Meal Result Section - Show prominently if data exists */}
+                {ocrResult && (
+                    <div className={`bg-white rounded-2xl shadow-lg p-6 animate-slideUp border-2 ${isSaved ? 'border-emerald-100' : 'border-blue-500'}`}>
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="text-lg font-normal text-gray-900">
+                                {analyzing ? '解析中...' : isSaved ? '食事の記録' : '解析結果'}
+                            </h2>
+                            {!analyzing && (
+                                <div className="flex items-center gap-2">
+                                    <div className={`w-2 h-2 rounded-full ${isSaved ? 'bg-emerald-500' : 'bg-blue-500 animate-pulse'}`}></div>
+                                    <span className={`text-[10px] font-normal uppercase tracking-widest ${isSaved ? 'text-emerald-600' : 'text-blue-600'}`}>
+                                        {isSaved ? 'Saved' : 'Draft'}
+                                    </span>
+                                </div>
+                            )}
+                        </div>
+
+                        {dietImageUrl && (
+                            <div className="mb-4 rounded-xl overflow-hidden border border-gray-100 shadow-inner bg-gray-50 aspect-video relative">
+                                <img 
+                                    src={dietImageUrl} 
+                                    alt="Uploaded meal" 
+                                    className="w-full h-full object-contain"
+                                />
+                            </div>
+                        )}
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className={`col-span-2 p-4 rounded-xl transition-colors ${isSaved ? 'bg-emerald-50/50' : 'bg-blue-50/50'}`}>
+                                <div className={`text-[10px] font-normal uppercase mb-2 tracking-widest text-center ${isSaved ? 'text-emerald-600' : 'text-blue-600'}`}>総エネルギー</div>
+                                <div className="flex items-center justify-center space-x-3">
+                                    <div className="text-3xl font-normal text-gray-900">{ocrResult.calories}</div>
+                                    <div className="text-xl font-normal text-gray-300">/</div>
+                                    <div className="text-2xl font-normal text-gray-400 opacity-60">{ocrResult.calories_target}</div>
+                                    <div className="text-sm font-normal text-gray-400">kcal</div>
+                                </div>
+                            </div>
+                            <NutrientItem label="たんぱく質 (P)" value={ocrResult.protein} target={ocrResult.protein_target} unit="g" onChange={(v) => setOcrResult({ ...ocrResult, protein: v })} />
+                            <NutrientItem label="脂質 (F)" value={ocrResult.fat} target={ocrResult.fat_target} unit="g" onChange={(v) => setOcrResult({ ...ocrResult, fat: v })} />
+                            <NutrientItem label="炭水化物 (C)" value={ocrResult.carbs} target={ocrResult.carbs_target} unit="g" onChange={(v) => setOcrResult({ ...ocrResult, carbs: v })} />
+                            <NutrientItem label="糖質" value={ocrResult.sugar} target={ocrResult.sugar_target} unit="g" onChange={(v) => setOcrResult({ ...ocrResult, sugar: v })} />
+                            <NutrientItem label="食物繊維" value={ocrResult.fiber} target={ocrResult.fiber_target} unit="g" onChange={(v) => setOcrResult({ ...ocrResult, fiber: v })} />
+                            <NutrientItem label="塩分" value={ocrResult.salt} target={ocrResult.salt_target} unit="g" onChange={(v) => setOcrResult({ ...ocrResult, salt: v })} />
+                        </div>
+
+                        <div className="mt-6 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <button 
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className="text-xs font-normal text-blue-600 px-3 py-1.5 bg-blue-50 rounded-full hover:bg-blue-100 transition-colors flex items-center gap-2"
+                                >
+                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                                    写真を再アップロード
+                                </button>
+                            </div>
+                            <button 
+                                onClick={() => {
+                                    if (confirm('入力をリセットしてよろしいですか？')) {
+                                        setOcrResult(null);
+                                        setDietImageUrl(null);
+                                    }
+                                }}
+                                className="text-[10px] font-normal text-gray-300 hover:text-gray-400 transition-colors flex items-center gap-1 uppercase tracking-widest"
+                            >
+                                削除
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* Large Upload Button - Only show if no data */}
+                {!ocrResult && (
                     <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl shadow-lg p-6 text-white overflow-hidden relative group">
                         <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 bg-white bg-opacity-10 rounded-full group-hover:scale-150 transition-transform duration-700"></div>
                         <div className="relative z-10 flex flex-col items-center">
@@ -364,56 +451,18 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                             >
                                 {analyzing ? '解析中...' : '写真をアップロード'}
                             </button>
-
-                            <input
-                                type="file"
-                                ref={fileInputRef}
-                                onChange={handleImageUpload}
-                                accept="image/*"
-                                className="hidden"
-                            />
                         </div>
-
                     </div>
+                )}
 
-                    {/* OCR Result Preview */}
-                    {ocrResult && (
-                        <div className="bg-white rounded-2xl shadow-lg border-2 border-blue-500 p-6 animate-slideUp">
-                            <div className="flex items-center justify-between mb-4">
-                                <h2 className="text-lg font-normal text-gray-900">
-                                    {saving ? '保存中...' : '解析結果'}
-                                </h2>
-                            </div>
-                            {dietImageUrl && (
-                                <div className="mb-4 rounded-xl overflow-hidden border border-gray-100 shadow-inner bg-gray-50 aspect-video relative">
-                                    <img 
-                                        src={dietImageUrl} 
-                                        alt="Uploaded meal" 
-                                        className="w-full h-full object-contain"
-                                    />
-                                </div>
-                            )}
-                            <div className="grid grid-cols-2 gap-4 mb-2">
-                                <div className="col-span-2 bg-blue-50 p-4 rounded-xl">
-                                    <div className="text-[10px] font-normal text-blue-600 uppercase mb-2 tracking-widest text-center">総エネルギー (摂取 / 目標)</div>
-                                    <div className="flex items-center justify-center space-x-3">
-                                        <div className="text-3xl font-normal text-blue-900">{ocrResult.calories}</div>
-                                        <div className="text-xl font-normal text-blue-300">/</div>
-                                        <div className="text-2xl font-normal text-blue-600 opacity-60">{ocrResult.calories_target}</div>
-                                        <div className="text-sm font-normal text-blue-400">kcal</div>
-                                    </div>
-                                </div>
-                                <NutrientItem label="P: たんぱく質" value={ocrResult.protein} target={ocrResult.protein_target} unit="g" onChange={(v) => setOcrResult({ ...ocrResult, protein: v })} />
-                                <NutrientItem label="F: 脂質" value={ocrResult.fat} target={ocrResult.fat_target} unit="g" onChange={(v) => setOcrResult({ ...ocrResult, fat: v })} />
-                                <NutrientItem label="C: 炭水化物" value={ocrResult.carbs} target={ocrResult.carbs_target} unit="g" onChange={(v) => setOcrResult({ ...ocrResult, carbs: v })} />
-                                <NutrientItem label="糖質" value={ocrResult.sugar} target={ocrResult.sugar_target} unit="g" onChange={(v) => setOcrResult({ ...ocrResult, sugar: v })} />
-                                <NutrientItem label="食物繊維" value={ocrResult.fiber} target={ocrResult.fiber_target} unit="g" onChange={(v) => setOcrResult({ ...ocrResult, fiber: v })} />
-                                <NutrientItem label="塩分" value={ocrResult.salt} target={ocrResult.salt_target} unit="g" onChange={(v) => setOcrResult({ ...ocrResult, salt: v })} />
-                            </div>
-                        </div>
-                    )}
-                </>
-            )}
+                <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleImageUpload}
+                    accept="image/*"
+                    className="hidden"
+                />
+            </div>
 
             {/* 3. Metrics Input Section */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
@@ -460,6 +509,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                             iconBg="bg-blue-50"
                             iconColor="text-blue-500"
                             step={0.5}
+                            isDefault={!touchedFields.includes('water')}
                             onChange={(v) => {
                                 setWater(v)
                             }}
@@ -469,12 +519,13 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                         <EditableLogItem
                             icon={<path d="M13 4v16M17 4v16M7 4v16M11 4v16" />}
                             label="歩数"
-                            value={steps}
+                            value={steps ?? '0'}
                             target={target?.step_target != null ? String(target.step_target) : undefined}
                             unit="歩"
                             iconBg="bg-emerald-50"
                             iconColor="text-emerald-500"
                             step={500}
+                            isDefault={!touchedFields.includes('steps')}
                             onChange={(v) => {
                                 setSteps(v)
                             }}
@@ -484,12 +535,13 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                         <EditableLogItem
                             icon={<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />}
                             label="睡眠"
-                            value={sleep}
+                            value={sleep ?? '0'}
                             target={target?.sleep_target != null ? String(target.sleep_target) : undefined}
                             unit="h"
                             iconBg="bg-indigo-50"
                             iconColor="text-indigo-500"
                             step={0.5}
+                            isDefault={!touchedFields.includes('sleep')}
                             onChange={(v) => {
                                 setSleep(v)
                             }}
@@ -620,7 +672,8 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                                             habits: { workout: 0 },
                                             ocrResult: null,
                                             dietImageUrl: null,
-                                            isSaved: false
+                                            isSaved: false,
+                                            touchedFields: []
                                         })
                                         setMessage({ type: 'success', text: '記録を削除しました' })
                                         setTimeout(() => setMessage(null), 3000)
@@ -672,7 +725,7 @@ function NutrientItem({ label, value, target, unit, onChange }: { label: string,
     )
 }
 
-function EditableLogItem({ icon, label, value, target, unit, iconBg, iconColor, step, onChange }: {
+function EditableLogItem({ icon, label, value, target, unit, iconBg, iconColor, step, isDefault, onChange }: {
     icon: React.ReactNode,
     label: string,
     value: string,
@@ -681,6 +734,7 @@ function EditableLogItem({ icon, label, value, target, unit, iconBg, iconColor, 
     iconBg: string,
     iconColor: string,
     step: number,
+    isDefault?: boolean,
     onChange: (v: string) => void
 }) {
     const handleAdjust = (direction: 'up' | 'down') => {
@@ -715,7 +769,7 @@ function EditableLogItem({ icon, label, value, target, unit, iconBg, iconColor, 
                             inputMode="decimal"
                             value={value}
                             onChange={(e) => onChange(e.target.value)}
-                            className="w-24 text-center text-lg font-normal text-gray-900 bg-transparent border-none p-0 focus:ring-0"
+                            className={`w-24 text-center text-lg font-normal bg-transparent border-none p-0 focus:ring-0 transition-colors ${isDefault ? 'text-gray-300' : 'text-gray-900'}`}
                         />
                         {target && (
                             <div className="flex items-baseline ml-1 opacity-40">

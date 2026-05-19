@@ -46,9 +46,9 @@ export default function ClientReservationsPage() {
   // State for real-time data synchronization between tabs
   const [todayData, setTodayData] = useState<any>({
     weight: '',
-    water: '2.0',
-    steps: '10000',
-    sleep: '8.0',
+    water: '0',
+    steps: '0',
+    sleep: '0',
     alcohol: '0',
     notes: '',
     habits: { workout: 0 },
@@ -56,6 +56,7 @@ export default function ClientReservationsPage() {
     dietImageUrl: null,
     quitGoals: [],
     isSaved: false,
+    touchedFields: [],
     selectedDate: new Date().toISOString().split('T')[0]
   })
 
