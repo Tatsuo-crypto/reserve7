@@ -543,9 +543,9 @@ function AdminReservationsContent() {
 
       {/* Edit Modal */}
       {showEditModal && editingReservation && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <div className="mt-3">
+        <div className="fixed inset-0 bg-gray-900 bg-opacity-60 z-[200] flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="relative w-full max-w-md bg-white shadow-xl rounded-xl max-h-[90vh] flex flex-col border border-gray-100">
+            <div className="p-6 overflow-y-auto">
               <h3 className="text-lg font-normal text-gray-900 mb-4">
                 予約の変更
               </h3>
