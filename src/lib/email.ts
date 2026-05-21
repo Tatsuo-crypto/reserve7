@@ -100,3 +100,88 @@ export async function sendTrainerNotification(params: {
     throw error
   }
 }
+
+export async function sendOnlineLessonReminder(params: {
+  email: string
+  clientName: string
+  title: string
+  startTime: string
+  endTime: string
+  meetUrl: string
+  description?: string
+  difficulty?: string
+}): Promise<boolean> {
+  const resend = getResend()
+  if (!resend) return false
+
+  const subject = `【T&J GYM】オンラインレッスン リマインダー: ${params.title}`
+
+  const html = `
+    <div style="font-family: sans-serif; max-width: 500px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; rounded-2xl; background-color: #ffffff;">
+      <h2 style="color: #1e40af; border-bottom: 2px solid #1e40af; padding-bottom: 8px; margin-top: 0;">
+        T&J GYM オンラインレッスン
+      </h2>
+      <p style="font-size: 16px; color: #1f2937;">${params.clientName}様</p>
+      <p style="font-size: 14px; color: #4b5563; line-height: 1.5;">
+        本日開催されるオンラインレッスンのリマインダーです。<br>
+        お時間になりましたら、以下のリンクよりご参加ください。
+      </p>
+      
+      <div style="background-color: #f3f4f6; border-radius: 12px; padding: 16px; margin: 20px 0;">
+        <table style="width: 100%; border-collapse: collapse;">
+          <tr>
+            <td style="padding: 6px 0; font-size: 14px; color: #4b5563; font-weight: bold; width: 80px;">レッスン</td>
+            <td style="padding: 6px 0; font-size: 14px; color: #1f2937;">${params.title}</td>
+          </tr>
+          <tr>
+            <td style="padding: 6px 0; font-size: 14px; color: #4b5563; font-weight: bold;">時間</td>
+            <td style="padding: 6px 0; font-size: 14px; color: #1f2937; font-weight: bold;">本日 ${params.startTime} - ${params.endTime}</td>
+          </tr>
+          ${params.difficulty ? `
+          <tr>
+            <td style="padding: 6px 0; font-size: 14px; color: #4b5563; font-weight: bold;">難易度</td>
+            <td style="padding: 6px 0; font-size: 14px; color: #1f2937;">${params.difficulty}</td>
+          </tr>
+          ` : ''}
+          ${params.description ? `
+          <tr>
+            <td style="padding: 6px 0; font-size: 14px; color: #4b5563; font-weight: bold; vertical-align: top;">内容</td>
+            <td style="padding: 6px 0; font-size: 14px; color: #4b5563; line-height: 1.4;">${params.description}</td>
+          </tr>
+          ` : ''}
+        </table>
+      </div>
+
+      <div style="text-align: center; margin: 24px 0;">
+        <a href="${params.meetUrl}" target="_blank" style="background-color: #2563eb; color: #ffffff; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block;">
+          レッスンに参加する (Google Meet)
+        </a>
+      </div>
+
+      <p style="font-size: 12px; color: #9ca3af; line-height: 1.5; margin-top: 24px; border-top: 1px solid #e5e7eb; padding-top: 12px;">
+        ※ 開始5分前から入室いただけます。<br>
+        ※ スマートフォンから参加する場合は、事前にGoogle Meetアプリのインストールが必要です。<br>
+        ※ このメールはT&J GYMシステムから自動送信されています。
+      </p>
+    </div>
+  `
+
+  try {
+    const { data, error } = await resend.emails.send({
+      from: 'T&J GYM <onboarding@resend.dev>',
+      to: params.email,
+      subject,
+      html,
+    })
+    if (error) {
+      console.error(`❌ Resend error for ${params.email}:`, error)
+      throw new Error(error.message)
+    }
+    console.log(`✅ Online lesson reminder email sent to ${params.email}, id: ${data?.id}`)
+    return true
+  } catch (error) {
+    console.error(`❌ Failed to send online lesson reminder email to ${params.email}:`, error)
+    throw error
+  }
+}
+
