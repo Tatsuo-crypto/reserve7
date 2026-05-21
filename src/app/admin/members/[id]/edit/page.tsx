@@ -30,6 +30,7 @@ export default function EditMemberPage() {
     status: 'active',
     memo: '',
     changeDate: new Date().toISOString().split('T')[0],
+    onlineReminderEnabled: false,
   })
 
   const [settings, setSettings] = useState({
@@ -79,6 +80,7 @@ export default function EditMemberPage() {
             status: member.status || 'active',
             memo: member.memo || '',
             changeDate: new Date().toISOString().split('T')[0],
+            onlineReminderEnabled: member.online_reminder_enabled || false,
           })
         }
 
@@ -143,6 +145,7 @@ export default function EditMemberPage() {
             status: formData.status,
             memo: formData.memo,
             changeDate: formData.changeDate,
+            onlineReminderEnabled: formData.onlineReminderEnabled,
           }),
         }),
         fetch('/api/lifestyle/settings', {
@@ -175,9 +178,10 @@ export default function EditMemberPage() {
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target
+    const { name, value, type } = e.target
+    const val = type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
     setFormData(prev => {
-      const newData = { ...prev, [name]: value }
+      const newData = { ...prev, [name]: val }
       // If status changed to suspended or withdrawn, set fee to 0
       if (name === 'status' && (value === 'suspended' || value === 'withdrawn')) {
         newData.monthlyFee = '0'
@@ -396,6 +400,27 @@ export default function EditMemberPage() {
                 <div>
                   <div className="font-normal text-gray-900">食事管理機能を表示する <span className="text-blue-600 ml-1 text-xs">(ダイエットプラン限定)</span></div>
                   <div className="text-xs text-gray-500 mt-1">「入力・分析・進捗」の全タブと生活記録項目が有効になります</div>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          {/* オンラインレッスン通知設定 */}
+          <div className="pt-6 border-t border-gray-100">
+            <h3 className="text-lg font-normal text-gray-900 mb-4">リマインダー通知設定</h3>
+            <div className="space-y-4">
+              <label className="flex items-center gap-4 p-4 bg-blue-50/50 border border-blue-100 rounded-xl cursor-pointer hover:bg-blue-50 transition-colors">
+                <input
+                  type="checkbox"
+                  id="onlineReminderEnabled"
+                  name="onlineReminderEnabled"
+                  checked={formData.onlineReminderEnabled}
+                  onChange={handleChange}
+                  className="w-6 h-6 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                />
+                <div>
+                  <div className="font-normal text-gray-900">オンラインレッスンのリマインダーメールを送信する</div>
+                  <div className="text-xs text-gray-500 mt-1">レッスン開始30分前に自動で案内メールが送信されます</div>
                 </div>
               </label>
             </div>

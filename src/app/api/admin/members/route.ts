@@ -76,6 +76,7 @@ export async function GET(request: NextRequest) {
         created_at, 
         memo, 
         access_token,
+        online_reminder_enabled,
         lifestyle_settings!left(visible_tabs)
       `)
       .neq('email', 'tandjgym@gmail.com')
@@ -183,7 +184,7 @@ export async function POST(request: NextRequest) {
       return createErrorResponse('管理者権限が必要です', 403)
     }
 
-    const { fullName, email, googleCalendarEmail, plan, status, memo, storeId, monthlyFee, startMonth, registrationDate } = await request.json()
+    const { fullName, email, googleCalendarEmail, plan, status, memo, storeId, monthlyFee, startMonth, registrationDate, onlineReminderEnabled } = await request.json()
 
     // Validation
     // 名前とメールアドレスは任意（空欄の場合はダミー値を設定）
@@ -236,6 +237,7 @@ export async function POST(request: NextRequest) {
       created_at: registrationDate || new Date().toISOString(),
       memo: memo || null,
       role: 'CLIENT',
+      online_reminder_enabled: onlineReminderEnabled || false,
       // access_tokenはSupabaseがUUIDで自動生成
     }
 
@@ -301,7 +303,7 @@ export async function PATCH(request: NextRequest) {
       return createErrorResponse('管理者権限が必要です', 403)
     }
 
-    const { memberId, fullName, email, googleCalendarEmail, storeId, status, plan, monthlyFee, memo, statusChangeDate, changeDate, startMonth, registrationDate } = await request.json()
+    const { memberId, fullName, email, googleCalendarEmail, storeId, status, plan, monthlyFee, memo, statusChangeDate, changeDate, startMonth, registrationDate, onlineReminderEnabled } = await request.json()
 
     // Validate status if provided
     if (status && !['active', 'suspended', 'withdrawn'].includes(status)) {
@@ -319,7 +321,7 @@ export async function PATCH(request: NextRequest) {
     // First check if the member exists
     const { data: member, error: fetchError } = await supabaseAdmin
       .from('users')
-      .select('id, email, store_id, status, plan, monthly_fee, transfer_day, billing_start_month')
+      .select('id, email, store_id, status, plan, monthly_fee, transfer_day, billing_start_month, online_reminder_enabled')
       .eq('id', memberId)
       .neq('email', 'tandjgym@gmail.com')
       .neq('email', 'tandjgym2goutenn@gmail.com')
@@ -341,6 +343,7 @@ export async function PATCH(request: NextRequest) {
     if (startMonth !== undefined) updateData.billing_start_month = startMonth ? `${startMonth}-01` : null
     if (registrationDate !== undefined) updateData.created_at = registrationDate
     if (memo !== undefined) updateData.memo = memo
+    if (onlineReminderEnabled !== undefined) updateData.online_reminder_enabled = onlineReminderEnabled
 
     // Update member
     const { data, error } = await supabaseAdmin

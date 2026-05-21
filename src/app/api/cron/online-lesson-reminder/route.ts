@@ -65,8 +65,8 @@ export async function GET(request: NextRequest) {
 
             const diffMinutes = (lessonStart.getTime() - jstNow.getTime()) / (1000 * 60)
 
-            // Reminder window: Send reminder if the lesson starts in the next 60 minutes
-            const isInReminderWindow = diffMinutes > 0 && diffMinutes <= 60
+            // Reminder window: Send reminder if the lesson starts in the next 30 minutes
+            const isInReminderWindow = diffMinutes > 0 && diffMinutes <= 30
 
             if (!isInReminderWindow) {
                 continue
@@ -90,11 +90,12 @@ export async function GET(request: NextRequest) {
                 continue
             }
 
-            // 4. Fetch users belonging to the store
+            // 4. Fetch users belonging to the store with online reminder enabled
             const { data: users, error: usersError } = await supabaseAdmin
                 .from('users')
                 .select('id, full_name, email')
                 .eq('store_id', lesson.store_id)
+                .eq('online_reminder_enabled', true)
 
             if (usersError) {
                 console.error(`Failed to fetch users for store ${lesson.store_id}:`, usersError)

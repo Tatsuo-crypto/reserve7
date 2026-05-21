@@ -74,8 +74,8 @@ async function testReminderCron() {
       console.log(`- Start time: ${lesson.start_time}`)
       console.log(`- Diff from now: ${diffMinutes.toFixed(1)} minutes (Bypassing for test)`)
       
-      const isInReminderWindow = diffMinutes > 0 && diffMinutes <= 60
-      console.log(`- Is in 60-min reminder window? ${isInReminderWindow ? '✅ Yes' : '❌ No'}`)
+      const isInReminderWindow = diffMinutes > 0 && diffMinutes <= 30
+      console.log(`- Is in 30-min reminder window? ${isInReminderWindow ? '✅ Yes' : '❌ No'}`)
 
       // Check database reminder history
       const { data: existingReminder, error: reminderCheckError } = await supabaseAdmin
@@ -92,11 +92,12 @@ async function testReminderCron() {
       }
 
       // Fetch users
-      console.log(`- Fetching users for store ${lesson.store_id}...`)
+      console.log(`- Fetching users with online reminder enabled for store ${lesson.store_id}...`)
       const { data: users, error: usersError } = await supabaseAdmin
         .from('users')
         .select('id, full_name, email')
         .eq('store_id', lesson.store_id)
+        .eq('online_reminder_enabled', true)
 
       if (usersError) {
         console.error(`- ❌ Failed to fetch users:`, usersError)

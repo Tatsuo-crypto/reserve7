@@ -7,7 +7,7 @@
   "crons": [
     {
       "path": "/api/cron/online-lesson-reminder",
-      "schedule": "0 * * * *"
+      "schedule": "*/15 * * * *"
     }
   ]
 }

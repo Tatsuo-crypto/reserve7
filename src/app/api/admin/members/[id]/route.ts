@@ -35,7 +35,8 @@ export async function GET(
         billing_start_month,
         created_at,
         memo,
-        access_token
+        access_token,
+        online_reminder_enabled
       `)
       .eq('id', id)
       .single()

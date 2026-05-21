@@ -22,6 +22,13 @@ export type Database = {
           email: string;
           password_hash: string;
           created_at: string;
+          role: string;
+          store_id: string;
+          plan: string;
+          status: string;
+          monthly_fee: number;
+          memo: string | null;
+          online_reminder_enabled: boolean;
         };
         Insert: {
           id?: string;
@@ -29,6 +36,13 @@ export type Database = {
           email: string;
           password_hash: string;
           created_at?: string;
+          role?: string;
+          store_id?: string;
+          plan?: string;
+          status?: string;
+          monthly_fee?: number;
+          memo?: string | null;
+          online_reminder_enabled?: boolean;
         };
         Update: {
           id?: string;
@@ -36,6 +50,13 @@ export type Database = {
           email?: string;
           password_hash?: string;
           created_at?: string;
+          role?: string;
+          store_id?: string;
+          plan?: string;
+          status?: string;
+          monthly_fee?: number;
+          memo?: string | null;
+          online_reminder_enabled?: boolean;
         };
       };
       reservations: {
