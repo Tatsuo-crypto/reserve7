@@ -54,6 +54,7 @@ export default function AdminOnlineLessonPage() {
     const [success, setSuccess] = useState<string | null>(null)
     const [deletingId, setDeletingId] = useState<string | null>(null)
     const [members, setMembers] = useState<{ id: string; full_name: string; email: string }[]>([])
+    const [dropdownOpen, setDropdownOpen] = useState(false)
 
     useEffect(() => {
         if (status === 'loading') return
@@ -82,8 +83,7 @@ export default function AdminOnlineLessonPage() {
                 const activeMembers = (data.members || []).filter((m: any) => 
                     m.status === 'active' && 
                     m.email && 
-                    !m.email.endsWith('@gym.internal') && 
-                    !m.email.endsWith('@example.com')
+                    m.email.trim() !== ''
                 )
                 setMembers(activeMembers)
             }
@@ -93,6 +93,7 @@ export default function AdminOnlineLessonPage() {
     }
 
     const startEdit = (lesson?: OnlineLesson) => {
+        setDropdownOpen(false)
         if (lesson) {
             setForm({
                 title: lesson.title,
@@ -338,35 +339,94 @@ export default function AdminOnlineLessonPage() {
                             </div>
 
                             {/* Target Members for Reminders */}
-                            <div>
+                            <div className="relative">
                                 <label className="block text-sm font-normal text-gray-700 mb-2">送信対象会員（オンラインレッスン通知先）</label>
                                 {members.length === 0 ? (
                                     <p className="text-sm text-gray-400">登録されている有効な会員がいません</p>
                                 ) : (
-                                    <div className="border border-gray-200 rounded-xl p-3 max-h-48 overflow-y-auto space-y-2">
-                                        {members.map(member => {
-                                            const isChecked = (form.userIds || []).includes(member.id)
-                                            return (
-                                                <label key={member.id} className="flex items-center space-x-3 cursor-pointer p-1.5 hover:bg-gray-50 rounded-lg transition-colors">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={isChecked}
-                                                        onChange={() => {
-                                                            setForm(prev => {
-                                                                const current = prev.userIds || []
-                                                                const next = current.includes(member.id)
-                                                                    ? current.filter(id => id !== member.id)
-                                                                    : [...current, member.id]
-                                                                return { ...prev, userIds: next }
-                                                            })
-                                                        }}
-                                                        className="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded cursor-pointer"
-                                                    />
-                                                    <span className="text-sm text-gray-700 font-normal">{member.full_name} ({member.email})</span>
-                                                </label>
-                                            )
-                                        })}
-                                    </div>
+                                    <>
+                                        {/* Trigger Area / Selected List */}
+                                        <div 
+                                            onClick={() => setDropdownOpen(!dropdownOpen)}
+                                            className="min-h-[46px] w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus-within:ring-2 focus-within:ring-blue-500 bg-white flex flex-wrap gap-1.5 items-center justify-between cursor-pointer"
+                                        >
+                                            <div className="flex flex-wrap gap-1.5 items-center flex-1">
+                                                {(form.userIds || []).length === 0 ? (
+                                                    <span className="text-gray-400">会員を選択してください（複数選択可）</span>
+                                                ) : (
+                                                    members.filter(m => (form.userIds || []).includes(m.id)).map(member => (
+                                                        <span 
+                                                            key={member.id} 
+                                                            className="inline-flex items-center gap-1 bg-blue-50 border border-blue-100 text-blue-700 px-2 py-0.5 rounded-lg text-xs font-normal"
+                                                        >
+                                                            {member.full_name}
+                                                            <button
+                                                                type="button"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation()
+                                                                    setForm(prev => ({
+                                                                        ...prev,
+                                                                        userIds: (prev.userIds || []).filter(id => id !== member.id)
+                                                                    }))
+                                                                }}
+                                                                className="hover:bg-blue-100 p-0.5 rounded transition-colors text-blue-500 hover:text-blue-700"
+                                                            >
+                                                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                                                </svg>
+                                                            </button>
+                                                        </span>
+                                                    ))
+                                                )}
+                                            </div>
+                                            <div className="text-gray-400 ml-2 flex-shrink-0">
+                                                <svg className={`w-4 h-4 transform transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                                </svg>
+                                            </div>
+                                        </div>
+
+                                        {/* Dropdown Options List */}
+                                        {dropdownOpen && (
+                                            <>
+                                                {/* Backdrop to close dropdown */}
+                                                <div 
+                                                    className="fixed inset-0 z-40" 
+                                                    onClick={() => setDropdownOpen(false)}
+                                                />
+                                                <div className="absolute left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl max-h-56 overflow-y-auto p-2 space-y-0.5 z-50">
+                                                    {members.map(member => {
+                                                        const isChecked = (form.userIds || []).includes(member.id)
+                                                        return (
+                                                            <label 
+                                                                key={member.id} 
+                                                                className="flex items-center space-x-3 cursor-pointer p-2 hover:bg-gray-50 rounded-lg transition-colors select-none"
+                                                            >
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={isChecked}
+                                                                    onChange={() => {
+                                                                        setForm(prev => {
+                                                                            const current = prev.userIds || []
+                                                                            const next = current.includes(member.id)
+                                                                                ? current.filter(id => id !== member.id)
+                                                                                : [...current, member.id]
+                                                                            return { ...prev, userIds: next }
+                                                                        })
+                                                                    }}
+                                                                    className="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded cursor-pointer"
+                                                                />
+                                                                <div className="flex flex-col">
+                                                                    <span className="text-sm text-gray-700 font-normal">{member.full_name}</span>
+                                                                    <span className="text-[10px] text-gray-400">{member.email}</span>
+                                                                </div>
+                                                            </label>
+                                                        )
+                                                    })}
+                                                </div>
+                                            </>
+                                        )}
+                                    </>
                                 )}
                                 <p className="text-xs text-gray-500 mt-1">※チェックを入れた会員に対し、レッスン開始30分前にリマインダーが自動送信されます</p>
                             </div>
