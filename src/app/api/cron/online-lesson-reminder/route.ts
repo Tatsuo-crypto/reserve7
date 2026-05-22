@@ -90,26 +90,36 @@ export async function GET(request: NextRequest) {
                 continue
             }
 
-            // 4. Fetch users belonging to the store with online reminder enabled
-            const { data: users, error: usersError } = await supabaseAdmin
-                .from('users')
-                .select('id, full_name, email')
-                .eq('store_id', lesson.store_id)
-                .eq('online_reminder_enabled', true)
+            // 4. Fetch users linked to this specific online lesson
+            const { data: lessonUsers, error: usersError } = await supabaseAdmin
+                .from('online_lesson_users')
+                .select(`
+                    user_id,
+                    users (
+                        id,
+                        full_name,
+                        email
+                    )
+                `)
+                .eq('online_lesson_id', lesson.id)
 
             if (usersError) {
-                console.error(`Failed to fetch users for store ${lesson.store_id}:`, usersError)
+                console.error(`Failed to fetch users for online lesson ${lesson.id}:`, usersError)
                 continue
             }
 
-            const validUsers = (users || []).filter(u => 
-                u.email && 
-                u.email.trim() !== '' && 
-                !u.email.endsWith('@gym.internal') && 
-                !u.email.endsWith('@example.com')
-            )
+            const validUsers = (lessonUsers || [])
+                .map((lu: any) => lu.users)
+                .filter((u: any) => 
+                    u &&
+                    u.email && 
+                    u.email.trim() !== '' && 
+                    !u.email.endsWith('@gym.internal') && 
+                    !u.email.endsWith('@example.com')
+                )
+
             if (validUsers.length === 0) {
-                console.log(`[Online Lesson Cron] No users found with email for store ${lesson.store_id}`)
+                console.log(`[Online Lesson Cron] No target users with email found for lesson: ${lesson.title} (${lesson.id})`)
                 continue
             }
 

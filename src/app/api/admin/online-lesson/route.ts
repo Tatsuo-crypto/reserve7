@@ -12,7 +12,10 @@ export async function GET(request: NextRequest) {
 
         const { data, error } = await supabaseAdmin
             .from('online_lessons')
-            .select('*')
+            .select(`
+                *,
+                online_lesson_users(user_id)
+            `)
             .eq('store_id', user.storeId)
             .order('created_at', { ascending: true })
 
@@ -21,7 +24,12 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ lessons: [] })
         }
 
-        return NextResponse.json({ lessons: data ?? [] })
+        const lessons = (data ?? []).map(lesson => ({
+            ...lesson,
+            userIds: lesson.online_lesson_users?.map((u: any) => u.user_id) ?? []
+        }))
+
+        return NextResponse.json({ lessons })
     } catch (error) {
         return handleApiError(error, 'Online lesson GET')
     }
@@ -35,13 +43,13 @@ export async function POST(request: NextRequest) {
         const { user } = auth
 
         const body = await request.json()
-        const { title, meetUrl, description, dayOfWeek, startTime, endTime, difficulty, urlExpiresAt } = body
+        const { title, meetUrl, description, dayOfWeek, startTime, endTime, difficulty, urlExpiresAt, userIds } = body
 
         if (!meetUrl) {
             return NextResponse.json({ error: 'Google Meetリンクは必須です' }, { status: 400 })
         }
 
-        const { data, error } = await supabaseAdmin
+        const { data: lesson, error } = await supabaseAdmin
             .from('online_lessons')
             .insert({
                 store_id: user.storeId,
@@ -59,7 +67,20 @@ export async function POST(request: NextRequest) {
             .single()
 
         if (error) throw error
-        return NextResponse.json({ lesson: data })
+
+        // Insert member mappings if provided
+        if (userIds && Array.isArray(userIds) && userIds.length > 0) {
+            const insertRows = userIds.map(uid => ({
+                online_lesson_id: lesson.id,
+                user_id: uid
+            }))
+            const { error: joinError } = await supabaseAdmin
+                .from('online_lesson_users')
+                .insert(insertRows)
+            if (joinError) throw joinError
+        }
+
+        return NextResponse.json({ lesson })
     } catch (error) {
         return handleApiError(error, 'Online lesson POST')
     }
@@ -77,9 +98,9 @@ export async function PUT(request: NextRequest) {
         if (!id) return NextResponse.json({ error: 'IDが必要です' }, { status: 400 })
 
         const body = await request.json()
-        const { title, meetUrl, description, dayOfWeek, startTime, endTime, difficulty, urlExpiresAt } = body
+        const { title, meetUrl, description, dayOfWeek, startTime, endTime, difficulty, urlExpiresAt, userIds } = body
 
-        const { data, error } = await supabaseAdmin
+        const { data: lesson, error } = await supabaseAdmin
             .from('online_lessons')
             .update({
                 title: title || 'オンラインレッスン',
@@ -99,7 +120,28 @@ export async function PUT(request: NextRequest) {
             .single()
 
         if (error) throw error
-        return NextResponse.json({ lesson: data })
+
+        // Update member mappings (delete then insert)
+        if (userIds && Array.isArray(userIds)) {
+            const { error: deleteJoinError } = await supabaseAdmin
+                .from('online_lesson_users')
+                .delete()
+                .eq('online_lesson_id', id)
+            if (deleteJoinError) throw deleteJoinError
+
+            if (userIds.length > 0) {
+                const insertRows = userIds.map(uid => ({
+                    online_lesson_id: id,
+                    user_id: uid
+                }))
+                const { error: insertJoinError } = await supabaseAdmin
+                    .from('online_lesson_users')
+                    .insert(insertRows)
+                if (insertJoinError) throw insertJoinError
+            }
+        }
+
+        return NextResponse.json({ lesson })
     } catch (error) {
         return handleApiError(error, 'Online lesson PUT')
     }

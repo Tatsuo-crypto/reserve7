@@ -92,25 +92,34 @@ async function testReminderCron() {
       }
 
       // Fetch users
-      console.log(`- Fetching users with online reminder enabled for store ${lesson.store_id}...`)
-      const { data: users, error: usersError } = await supabaseAdmin
-        .from('users')
-        .select('id, full_name, email')
-        .eq('store_id', lesson.store_id)
-        .eq('online_reminder_enabled', true)
+      console.log(`- Fetching users linked to online lesson ${lesson.id}...`)
+      const { data: lessonUsers, error: usersError } = await supabaseAdmin
+        .from('online_lesson_users')
+        .select(`
+          user_id,
+          users (
+            id,
+            full_name,
+            email
+          )
+        `)
+        .eq('online_lesson_id', lesson.id)
 
       if (usersError) {
         console.error(`- ❌ Failed to fetch users:`, usersError)
         continue
       }
 
-      const validUsers = (users || []).filter(u => 
-        u.email && 
-        u.email.trim() !== '' && 
-        !u.email.endsWith('@gym.internal') && 
-        !u.email.endsWith('@example.com')
-      )
-      console.log(`- Found ${validUsers.length} users with email in store.`)
+      const validUsers = (lessonUsers || [])
+        .map(lu => lu.users)
+        .filter(u => 
+          u &&
+          u.email && 
+          u.email.trim() !== '' && 
+          !u.email.endsWith('@gym.internal') && 
+          !u.email.endsWith('@example.com')
+        )
+      console.log(`- Found ${validUsers.length} users with email linked to this lesson.`)
       if (validUsers.length > 0) {
         console.log(`- Recipients: ${validUsers.map(u => `${u.full_name} (${u.email})`).join(', ')}`)
       }

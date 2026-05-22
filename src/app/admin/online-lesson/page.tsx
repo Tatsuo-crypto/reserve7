@@ -18,6 +18,7 @@ interface OnlineLesson {
     end_time: string | null
     difficulty: string
     url_expires_at: string | null
+    userIds?: string[]
 }
 
 const emptyLesson = (): Omit<OnlineLesson, 'id'> => ({
@@ -29,6 +30,7 @@ const emptyLesson = (): Omit<OnlineLesson, 'id'> => ({
     end_time: '',
     difficulty: '初心者',
     url_expires_at: '',
+    userIds: [],
 })
 
 function formatSchedule(lesson: OnlineLesson | Omit<OnlineLesson, 'id'>): string {
@@ -51,11 +53,13 @@ export default function AdminOnlineLessonPage() {
     const [error, setError] = useState<string | null>(null)
     const [success, setSuccess] = useState<string | null>(null)
     const [deletingId, setDeletingId] = useState<string | null>(null)
+    const [members, setMembers] = useState<{ id: string; full_name: string; email: string }[]>([])
 
     useEffect(() => {
         if (status === 'loading') return
         if (status === 'unauthenticated') { router.push('/login'); return }
         fetchLessons()
+        fetchMembers()
     }, [status])
 
     const fetchLessons = async () => {
@@ -70,6 +74,24 @@ export default function AdminOnlineLessonPage() {
         finally { setLoading(false) }
     }
 
+    const fetchMembers = async () => {
+        try {
+            const res = await fetch('/api/admin/members')
+            if (res.ok) {
+                const data = await res.json()
+                const activeMembers = (data.members || []).filter((m: any) => 
+                    m.status === 'active' && 
+                    m.email && 
+                    !m.email.endsWith('@gym.internal') && 
+                    !m.email.endsWith('@example.com')
+                )
+                setMembers(activeMembers)
+            }
+        } catch (e) {
+            console.error('Failed to fetch members:', e)
+        }
+    }
+
     const startEdit = (lesson?: OnlineLesson) => {
         if (lesson) {
             setForm({
@@ -81,6 +103,7 @@ export default function AdminOnlineLessonPage() {
                 end_time: lesson.end_time ? lesson.end_time.substring(0, 5) : '',
                 difficulty: lesson.difficulty || '初心者',
                 url_expires_at: lesson.url_expires_at ? lesson.url_expires_at.substring(0, 10) : '',
+                userIds: lesson.userIds || [],
             })
             setEditingId(lesson.id)
         } else {
@@ -120,6 +143,7 @@ export default function AdminOnlineLessonPage() {
                 endTime: form.end_time || null,
                 difficulty: form.difficulty,
                 urlExpiresAt: form.url_expires_at || null,
+                userIds: form.userIds || [],
             }
 
             let res: Response
@@ -311,6 +335,40 @@ export default function AdminOnlineLessonPage() {
                                     className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 />
                                 <p className="text-xs text-gray-500 mt-1">※設定した期限の1週間前からアラートが表示されます</p>
+                            </div>
+
+                            {/* Target Members for Reminders */}
+                            <div>
+                                <label className="block text-sm font-normal text-gray-700 mb-2">送信対象会員（オンラインレッスン通知先）</label>
+                                {members.length === 0 ? (
+                                    <p className="text-sm text-gray-400">登録されている有効な会員がいません</p>
+                                ) : (
+                                    <div className="border border-gray-200 rounded-xl p-3 max-h-48 overflow-y-auto space-y-2">
+                                        {members.map(member => {
+                                            const isChecked = (form.userIds || []).includes(member.id)
+                                            return (
+                                                <label key={member.id} className="flex items-center space-x-3 cursor-pointer p-1.5 hover:bg-gray-50 rounded-lg transition-colors">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={isChecked}
+                                                        onChange={() => {
+                                                            setForm(prev => {
+                                                                const current = prev.userIds || []
+                                                                const next = current.includes(member.id)
+                                                                    ? current.filter(id => id !== member.id)
+                                                                    : [...current, member.id]
+                                                                return { ...prev, userIds: next }
+                                                            })
+                                                        }}
+                                                        className="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded cursor-pointer"
+                                                    />
+                                                    <span className="text-sm text-gray-700 font-normal">{member.full_name} ({member.email})</span>
+                                                </label>
+                                            )
+                                        })}
+                                    </div>
+                                )}
+                                <p className="text-xs text-gray-500 mt-1">※チェックを入れた会員に対し、レッスン開始30分前にリマインダーが自動送信されます</p>
                             </div>
 
                             {error && (
