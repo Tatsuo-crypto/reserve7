@@ -79,8 +79,9 @@ export default function AdminOnlineLessonPage() {
         try {
             const res = await fetch('/api/admin/members')
             if (res.ok) {
-                const data = await res.json()
-                const activeMembers = (data.members || []).filter((m: any) => 
+                const resData = await res.json()
+                const membersList = resData.data?.members || []
+                const activeMembers = membersList.filter((m: any) => 
                     m.status === 'active' && 
                     m.email && 
                     m.email.trim() !== ''
