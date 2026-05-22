@@ -42,6 +42,7 @@ export default function ClientReservationsPage() {
   const [loading, setLoading] = useState(true)
   const [showTrackingModal, setShowTrackingModal] = useState(false)
   const [visibleTabs, setVisibleTabs] = useState({ input: true, analyze: true, progress: true })
+  const isDietPlan = visibleTabs.input || visibleTabs.analyze || visibleTabs.progress
   
   // State for real-time data synchronization between tabs
   const [todayData, setTodayData] = useState<any>({
@@ -82,6 +83,10 @@ export default function ClientReservationsPage() {
           const { data } = await res.json()
           if (data && data.visible_tabs) {
             setVisibleTabs(data.visible_tabs)
+            const isDiet = data.visible_tabs.input || data.visible_tabs.analyze || data.visible_tabs.progress
+            if (!isDiet) {
+              setActiveTab('res')
+            }
           }
         }
       } catch (e) { console.error(e) }
@@ -182,43 +187,49 @@ export default function ClientReservationsPage() {
 
       {/* Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-gray-100 shadow-[0_-5px_25px_rgba(0,0,0,0.05)] z-40 pb-safe">
-        <div className="grid grid-cols-5 items-center max-w-lg mx-auto h-20">
+        <div className={`grid ${isDietPlan ? 'grid-cols-5' : 'grid-cols-2'} items-center max-w-lg mx-auto h-20`}>
           <NavBtn
             active={activeTab === 'res'}
             onClick={() => setActiveTab('res')}
             icon={<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />}
             label="予約"
           />
-          <NavBtn
-            active={activeTab === 'diet'}
-            onClick={() => setActiveTab('diet')}
-            icon={<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />}
-            label="食事"
-          />
           
-          {/* Central Home Button */}
-          <div className="relative flex flex-col items-center justify-center h-full">
-            <button
-              onClick={() => setActiveTab('home')}
-              className={`absolute top-[-6px] w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 transform ${
-                activeTab === 'home' 
-                ? 'bg-blue-600 scale-105 shadow-blue-200' 
-                : 'bg-blue-500 hover:bg-blue-600 shadow-blue-100'
-              }`}
-            >
-              <svg className="w-7 h-7 text-white stroke-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-              </svg>
-            </button>
-            <span className={`absolute bottom-2 text-[10px] font-normal transition-colors duration-300 ${activeTab === 'home' ? 'text-blue-600' : 'text-gray-400'}`}>ホーム</span>
-          </div>
+          {isDietPlan && (
+            <>
+              <NavBtn
+                active={activeTab === 'diet'}
+                onClick={() => setActiveTab('diet')}
+                icon={<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />}
+                label="食事"
+              />
+              
+              {/* Central Home Button */}
+              <div className="relative flex flex-col items-center justify-center h-full">
+                <button
+                  onClick={() => setActiveTab('home')}
+                  className={`absolute top-[-6px] w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 transform ${
+                    activeTab === 'home' 
+                    ? 'bg-blue-600 scale-105 shadow-blue-200' 
+                    : 'bg-blue-500 hover:bg-blue-600 shadow-blue-100'
+                  }`}
+                >
+                  <svg className="w-7 h-7 text-white stroke-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                  </svg>
+                </button>
+                <span className={`absolute bottom-2 text-[10px] font-normal transition-colors duration-300 ${activeTab === 'home' ? 'text-blue-600' : 'text-gray-400'}`}>ホーム</span>
+              </div>
 
-          <NavBtn
-            active={activeTab === 'plan'}
-            onClick={() => setActiveTab('plan')}
-            icon={<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />}
-            label="プラン"
-          />
+              <NavBtn
+                active={activeTab === 'plan'}
+                onClick={() => setActiveTab('plan')}
+                icon={<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />}
+                label="プラン"
+              />
+            </>
+          )}
+
           <NavBtn
             active={activeTab === 'online'}
             onClick={() => setActiveTab('online')}
