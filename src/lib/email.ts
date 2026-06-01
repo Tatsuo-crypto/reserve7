@@ -1,13 +1,27 @@
-import { Resend } from 'resend'
+import nodemailer from 'nodemailer'
 
-const RESEND_API_KEY = process.env.RESEND_API_KEY || ''
+const GMAIL_USER = process.env.GMAIL_USER || ''
+const GMAIL_APP_PASSWORD = process.env.GMAIL_APP_PASSWORD || ''
 
-function getResend(): Resend | null {
-  if (!RESEND_API_KEY) {
-    console.warn('⚠️ Email not configured: RESEND_API_KEY missing')
+let transporter: nodemailer.Transporter | null = null
+
+function getTransporter(): nodemailer.Transporter | null {
+  if (!GMAIL_USER || !GMAIL_APP_PASSWORD) {
+    console.warn('⚠️ Email not configured: GMAIL_USER or GMAIL_APP_PASSWORD missing')
     return null
   }
-  return new Resend(RESEND_API_KEY)
+  if (!transporter) {
+    transporter = nodemailer.createTransport({
+      host: 'smtp.gmail.com',
+      port: 465,
+      secure: true,
+      auth: {
+        user: GMAIL_USER,
+        pass: GMAIL_APP_PASSWORD,
+      },
+    })
+  }
+  return transporter
 }
 
 export async function sendTrainerNotification(params: {
@@ -20,8 +34,8 @@ export async function sendTrainerNotification(params: {
   storeName: string
   notes?: string
 }): Promise<boolean> {
-  const resend = getResend()
-  if (!resend) return false
+  const t = getTransporter()
+  if (!t) return false
 
   const startDate = new Date(params.startTime)
   const endDate = new Date(params.endTime)
@@ -54,24 +68,24 @@ export async function sendTrainerNotification(params: {
       <p>${params.trainerName}さん、新しい予約が入りました。</p>
       <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
         <tr>
-          <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: normal; width: 100px;">店舗</td>
+          <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold; width: 100px;">店舗</td>
           <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${params.storeName}</td>
         </tr>
         <tr>
-          <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: normal;">会員</td>
+          <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">会員</td>
           <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${params.clientName}</td>
         </tr>
         <tr>
-          <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: normal;">日時</td>
+          <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">日時</td>
           <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${dateStr} ${startTimeStr} - ${endTimeStr}</td>
         </tr>
         <tr>
-          <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: normal;">タイトル</td>
+          <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">タイトル</td>
           <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${params.title}</td>
         </tr>
         ${params.notes ? `
         <tr>
-          <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: normal;">メモ</td>
+          <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">メモ</td>
           <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${params.notes}</td>
         </tr>
         ` : ''}
@@ -83,20 +97,103 @@ export async function sendTrainerNotification(params: {
   `
 
   try {
-    const { data, error } = await resend.emails.send({
-      from: 'T&J GYM <onboarding@resend.dev>',
+    const info = await t.sendMail({
+      from: `"T&J GYM" <${GMAIL_USER}>`,
       to: params.trainerEmail,
       subject,
       html,
     })
-    if (error) {
-      console.error(`❌ Resend error for ${params.trainerEmail}:`, error)
-      throw new Error(error.message)
-    }
-    console.log(`✅ Notification email sent to ${params.trainerEmail}, id: ${data?.id}`)
+    console.log(`✅ Notification email sent to ${params.trainerEmail}, messageId: ${info.messageId}`)
     return true
   } catch (error) {
     console.error(`❌ Failed to send notification email to ${params.trainerEmail}:`, error)
+    throw error
+  }
+}
+
+export async function sendClientNotification(params: {
+  clientEmail: string
+  clientName: string
+  trainerName: string
+  title: string
+  startTime: string
+  endTime: string
+  storeName: string
+  notes?: string
+}): Promise<boolean> {
+  const t = getTransporter()
+  if (!t) return false
+
+  const startDate = new Date(params.startTime)
+  const endDate = new Date(params.endTime)
+
+  const dateStr = startDate.toLocaleDateString('ja-JP', {
+    timeZone: 'Asia/Tokyo',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    weekday: 'short',
+  })
+  const startTimeStr = startDate.toLocaleTimeString('ja-JP', {
+    timeZone: 'Asia/Tokyo',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+  const endTimeStr = endDate.toLocaleTimeString('ja-JP', {
+    timeZone: 'Asia/Tokyo',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+
+  const subject = `【T&J GYM】予約確認: ${dateStr}`
+
+  const html = `
+    <div style="font-family: sans-serif; max-width: 500px; margin: 0 auto;">
+      <h2 style="color: #1e40af; border-bottom: 2px solid #1e40af; padding-bottom: 8px;">
+        T&J GYM 予約確認
+      </h2>
+      <p>${params.clientName}さん、予約が確定しました。</p>
+      <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
+        <tr>
+          <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold; width: 100px;">店舗</td>
+          <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${params.storeName}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">トレーナー</td>
+          <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${params.trainerName}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">日時</td>
+          <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${dateStr} ${startTimeStr} - ${endTimeStr}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">タイトル</td>
+          <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${params.title}</td>
+        </tr>
+        ${params.notes ? `
+        <tr>
+          <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">メモ</td>
+          <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${params.notes}</td>
+        </tr>
+        ` : ''}
+      </table>
+      <p style="color: #6b7280; font-size: 12px;">
+        ※ このメールはT&J GYM予約システムから自動送信されています。
+      </p>
+    </div>
+  `
+
+  try {
+    const info = await t.sendMail({
+      from: `"T&J GYM" <${GMAIL_USER}>`,
+      to: params.clientEmail,
+      subject,
+      html,
+    })
+    console.log(`✅ Notification email sent to ${params.clientEmail}, messageId: ${info.messageId}`)
+    return true
+  } catch (error) {
+    console.error(`❌ Failed to send notification email to ${params.clientEmail}:`, error)
     throw error
   }
 }
@@ -111,8 +208,8 @@ export async function sendOnlineLessonReminder(params: {
   description?: string
   difficulty?: string
 }): Promise<boolean> {
-  const resend = getResend()
-  if (!resend) return false
+  const t = getTransporter()
+  if (!t) return false
 
   const subject = `【T&J GYM】オンラインレッスン リマインダー: ${params.title}`
 
@@ -167,17 +264,13 @@ export async function sendOnlineLessonReminder(params: {
   `
 
   try {
-    const { data, error } = await resend.emails.send({
-      from: 'T&J GYM <onboarding@resend.dev>',
+    const info = await t.sendMail({
+      from: `"T&J GYM" <${GMAIL_USER}>`,
       to: params.email,
       subject,
       html,
     })
-    if (error) {
-      console.error(`❌ Resend error for ${params.email}:`, error)
-      throw new Error(error.message)
-    }
-    console.log(`✅ Online lesson reminder email sent to ${params.email}, id: ${data?.id}`)
+    console.log(`✅ Online lesson reminder email sent to ${params.email}, messageId: ${info.messageId}`)
     return true
   } catch (error) {
     console.error(`❌ Failed to send online lesson reminder email to ${params.email}:`, error)

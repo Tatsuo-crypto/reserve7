@@ -1,0 +1,18 @@
+[2026-05-22T01:34:08.979Z] === Members API GET started ===
+[2026-05-22T01:34:08.980Z] Query params - token: no, diet_only: null, all_stores: null
+[2026-05-22T01:34:12.342Z] Session authentication result - found: Yes, email: tandjgym@gmail.com, storeId: 77439c86-679a-409a-8000-2e5297e5c0e8
+[2026-05-22T01:34:12.342Z] Executing members query. store_id constraint: 77439c86-679a-409a-8000-2e5297e5c0e8
+[2026-05-22T01:34:12.723Z] Members fetched: 41
+[2026-05-22T01:34:12.861Z] === Members API GET completed successfully with 41 members ===
+[2026-05-22T01:34:18.785Z] === Members API GET started ===
+[2026-05-22T01:34:18.785Z] Query params - token: no, diet_only: null, all_stores: null
+[2026-05-22T01:34:19.881Z] Session authentication result - found: Yes, email: tandjgym@gmail.com, storeId: 77439c86-679a-409a-8000-2e5297e5c0e8
+[2026-05-22T01:34:19.881Z] Executing members query. store_id constraint: 77439c86-679a-409a-8000-2e5297e5c0e8
+[2026-05-22T01:34:20.211Z] Members fetched: 41
+[2026-05-22T01:34:20.533Z] === Members API GET completed successfully with 41 members ===
+[2026-05-22T01:34:20.546Z] === Members API GET started ===
+[2026-05-22T01:34:20.547Z] Query params - token: no, diet_only: null, all_stores: null
+[2026-05-22T01:34:21.169Z] Session authentication result - found: Yes, email: tandjgym@gmail.com, storeId: 77439c86-679a-409a-8000-2e5297e5c0e8
+[2026-05-22T01:34:21.170Z] Executing members query. store_id constraint: 77439c86-679a-409a-8000-2e5297e5c0e8
+[2026-05-22T01:34:21.500Z] Members fetched: 41
+[2026-05-22T01:34:21.799Z] === Members API GET completed successfully with 41 members ===

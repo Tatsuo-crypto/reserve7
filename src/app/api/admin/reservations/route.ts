@@ -4,7 +4,7 @@ import { supabaseAdmin } from '@/lib/supabase'
 import { requireAdminAuth, handleApiError } from '@/lib/api-utils'
 import { createGoogleCalendarService } from '@/lib/google-calendar'
 import { generateReservationTitle, updateMonthlyTitles, updateAllTitles, usesCumulativeCount } from '@/lib/title-utils'
-import { sendTrainerNotification } from '@/lib/email'
+import { sendTrainerNotification, sendClientNotification } from '@/lib/email'
 
 export async function POST(request: NextRequest) {
   try {
@@ -556,6 +556,22 @@ export async function POST(request: NextRequest) {
         storeName,
         notes: reservation.notes || undefined,
       }).catch(err => console.error('Email notification error:', err))
+    }
+
+    // Send email notification to client (fire-and-forget)
+    if (clientUser?.email && clientId !== 'BLOCKED' && clientId !== 'TRIAL' && clientId !== 'GUEST' && clientId !== 'TRAINING') {
+      const clientName = clientUser?.full_name || '不明'
+      const storeName = calendarId === 'tandjgym@gmail.com' ? 'T&J GYM 1号店' : 'T&J GYM 2号店'
+      sendClientNotification({
+        clientEmail: clientUser.email,
+        clientName,
+        trainerName: trainerName || '不明',
+        title: reservation.title,
+        startTime: reservation.start_time,
+        endTime: reservation.end_time,
+        storeName,
+        notes: reservation.notes || undefined,
+      }).catch(err => console.error('Client email notification error:', err))
     }
 
     return NextResponse.json({
