@@ -5,7 +5,7 @@ import { sendTrainerNotification, sendClientNotification } from '@/lib/email'
 export async function GET(request: NextRequest) {
   try {
     const gmailUser = process.env.GMAIL_USER || 'NOT SET'
-    const gmailPass = process.env.GMAIL_APP_PASSWORD ? `SET (${process.env.GMAIL_APP_PASSWORD.length} chars)` : 'NOT SET'
+    const gmailPass = process.env.GMAIL_APP_PASSWORD || process.env.GMAIL_APP_PASSWORD2 ? 'SET' : 'NOT SET'
 
     // テスト送信
     const testEmail = request.nextUrl.searchParams.get('to') || 'diet.30.40.50@gmail.com'
@@ -56,6 +56,10 @@ export async function GET(request: NextRequest) {
       }
     })
   } catch (error) {
-    return NextResponse.json({ error: String(error) }, { status: 500 })
+    console.error('Test email error:', error)
+    return NextResponse.json({
+      error: 'Internal server error',
+      message: error instanceof Error ? error.message : String(error)
+    }, { status: 500 })
   }
 }
