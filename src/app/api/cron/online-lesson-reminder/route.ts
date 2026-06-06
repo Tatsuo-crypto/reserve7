@@ -18,17 +18,29 @@ export async function GET(request: NextRequest) {
             }
         }
 
-        // Get current JST time
+        // Get tomorrow's JST date
         const jstDateStr = new Date().toLocaleString("en-US", { timeZone: "Asia/Tokyo" })
         const jstNow = new Date(jstDateStr)
-        const todayDow = jstNow.getDay() // 0: Sun, 1: Mon, ... 6: Sat
-        // Format date in YYYY-MM-DD JST timezone safely
-        const year = jstNow.getFullYear()
-        const month = String(jstNow.getMonth() + 1).padStart(2, '0')
-        const date = String(jstNow.getDate()).padStart(2, '0')
-        const todayDateStr = `${year}-${month}-${date}`
+        
+        // Calculate tomorrow JST
+        const jstTomorrow = new Date(jstNow)
+        jstTomorrow.setDate(jstNow.getDate() + 1)
+        
+        const tomorrowDow = jstTomorrow.getDay() // 0: Sun, 1: Mon, ... 6: Sat
+        
+        // Skip weekend lessons (Saturday: 6, Sunday: 0)
+        if (tomorrowDow === 0 || tomorrowDow === 6) {
+            console.log(`[Online Lesson Cron] Tomorrow is weekend (DOW: ${tomorrowDow}). Skipping reminder emails.`)
+            return NextResponse.json({ message: 'Tomorrow is weekend. Skipping reminders.' })
+        }
 
-        console.log(`[Online Lesson Cron] Running reminder check for ${todayDateStr} (DOW: ${todayDow}), JST time: ${jstNow.toLocaleTimeString()}`)
+        // Format tomorrow's date in YYYY-MM-DD
+        const year = jstTomorrow.getFullYear()
+        const month = String(jstTomorrow.getMonth() + 1).padStart(2, '0')
+        const date = String(jstTomorrow.getDate()).padStart(2, '0')
+        const tomorrowDateStr = `${year}-${month}-${date}`
+
+        console.log(`[Online Lesson Cron] Running reminder check for tomorrow: ${tomorrowDateStr} (DOW: ${tomorrowDow})`)
 
         // Fetch active online lessons
         const { data: lessons, error: lessonsError } = await supabaseAdmin
@@ -45,15 +57,12 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ message: 'No active online lessons found' })
         }
 
-        const settings = await getMailSettings()
-        const reminderWindow = settings?.reminder_before_minutes ?? 30
-
         const sentReminders: { lessonId: string; title: string; recipientCount: number }[] = []
 
         for (const lesson of lessons) {
-            // 1. Check if the lesson is scheduled for today
-            const isScheduledForToday = lesson.day_of_week && Array.isArray(lesson.day_of_week) && lesson.day_of_week.includes(todayDow)
-            if (!isScheduledForToday) {
+            // 1. Check if the lesson is scheduled for tomorrow (which is a weekday)
+            const isScheduledForTomorrow = lesson.day_of_week && Array.isArray(lesson.day_of_week) && lesson.day_of_week.includes(tomorrowDow)
+            if (!isScheduledForTomorrow) {
                 continue
             }
 
@@ -61,26 +70,12 @@ export async function GET(request: NextRequest) {
                 continue
             }
 
-            // 2. Parse lesson start time and calculate difference
-            const [startHour, startMinute] = lesson.start_time.split(':').map(Number)
-            const lessonStart = new Date(jstNow)
-            lessonStart.setHours(startHour, startMinute, 0, 0)
-
-            const diffMinutes = (lessonStart.getTime() - jstNow.getTime()) / (1000 * 60)
-
-            // Reminder window: Send reminder if the lesson starts in the next configurated minutes
-            const isInReminderWindow = diffMinutes > 0 && diffMinutes <= reminderWindow
-
-            if (!isInReminderWindow) {
-                continue
-            }
-
-            // 3. Check if we already sent a reminder for this lesson today
+            // 2. Check if we already sent a reminder for this lesson for tomorrow's date
             const { data: existingReminder, error: reminderCheckError } = await supabaseAdmin
                 .from('online_lesson_reminders')
                 .select('*')
                 .eq('online_lesson_id', lesson.id)
-                .eq('sent_date', todayDateStr)
+                .eq('sent_date', tomorrowDateStr)
                 .maybeSingle()
 
             if (reminderCheckError) {
@@ -89,11 +84,11 @@ export async function GET(request: NextRequest) {
             }
 
             if (existingReminder) {
-                console.log(`[Online Lesson Cron] Reminder already sent today for lesson: ${lesson.title} (${lesson.id})`)
+                console.log(`[Online Lesson Cron] Reminder already sent for tomorrow for lesson: ${lesson.title} (${lesson.id})`)
                 continue
             }
 
-            // 4. Fetch users linked to this specific online lesson
+            // 3. Fetch users linked to this specific online lesson
             const { data: lessonUsers, error: usersError } = await supabaseAdmin
                 .from('online_lesson_users')
                 .select(`
@@ -126,9 +121,9 @@ export async function GET(request: NextRequest) {
                 continue
             }
 
-            console.log(`[Online Lesson Cron] Sending reminders for "${lesson.title}" starting at ${lesson.start_time} to ${validUsers.length} users`)
+            console.log(`[Online Lesson Cron] Sending reminders for "${lesson.title}" tomorrow at ${lesson.start_time} to ${validUsers.length} users`)
 
-            // 5. Send reminder emails
+            // 4. Send reminder emails
             let successCount = 0
             for (const user of validUsers) {
                 try {
@@ -150,13 +145,13 @@ export async function GET(request: NextRequest) {
                 }
             }
 
-            // 6. Record that we sent the reminder today
+            // 5. Record that we sent the reminder for tomorrow's date
             if (successCount > 0) {
                 const { error: insertError } = await supabaseAdmin
                     .from('online_lesson_reminders')
                     .insert({
                         online_lesson_id: lesson.id,
-                        sent_date: todayDateStr
+                        sent_date: tomorrowDateStr
                     })
 
                 if (insertError) {
