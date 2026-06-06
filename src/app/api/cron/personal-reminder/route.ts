@@ -81,16 +81,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ message: `No reservations found for date: ${targetDateStr}` })
     }
 
-    // Fetch all trainers to map trainer details
-    const { data: trainers, error: trainersError } = await supabaseAdmin
-      .from('trainers')
-      .select('id, full_name, email')
-
-    if (trainersError) {
-      console.error('Failed to fetch trainers:', trainersError)
-    }
-    const trainerMap = new Map(trainers?.map(t => [t.id, t]) || [])
-
     const sentReminders: { reservationId: string; clientName: string; email: string }[] = []
 
     for (const res of reservations) {
@@ -127,26 +117,21 @@ export async function GET(request: NextRequest) {
         continue
       }
 
-      // Determine trainer name
-      const trainer = res.trainer_id ? trainerMap.get(res.trainer_id) : null
-      const trainerName = trainer?.full_name || '担当者なし'
+    // Determine store name
+    const storeName = res.calendar_id === 'tandjgym@gmail.com' ? 'T&J GYM 1号店' : 'T&J GYM 2号店'
 
-      // Determine store name
-      const storeName = res.calendar_id === 'tandjgym@gmail.com' ? 'T&J GYM 1号店' : 'T&J GYM 2号店'
-
-      // 2. Send reminder email
-      try {
-        console.log(`[Personal Reminder Cron] Sending reminder to ${client.full_name} (${client.email}) for reservation ${res.id}`)
-        const success = await sendPersonalSessionReminder({
-          email: client.email,
-          clientName: client.full_name,
-          trainerName,
-          title: res.title,
-          startTime: res.start_time,
-          endTime: res.end_time,
-          storeName,
-          notes: res.notes || undefined
-        })
+    // 2. Send reminder email
+    try {
+      console.log(`[Personal Reminder Cron] Sending reminder to ${client.full_name} (${client.email}) for reservation ${res.id}`)
+      const success = await sendPersonalSessionReminder({
+        email: client.email,
+        clientName: client.full_name,
+        title: res.title,
+        startTime: res.start_time,
+        endTime: res.end_time,
+        storeName,
+        notes: res.notes || undefined
+      })
 
         if (success) {
           // 3. Record log

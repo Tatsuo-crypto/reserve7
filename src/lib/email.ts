@@ -902,7 +902,6 @@ export async function sendOnlineLessonReminder(params: {
 export async function sendPersonalSessionReminder(params: {
   email: string
   clientName: string
-  trainerName: string
   title: string
   startTime: string
   endTime: string
@@ -952,7 +951,7 @@ export async function sendPersonalSessionReminder(params: {
 
   const bodyText = formatEmailTemplate(settings.personal_reminder_template || '', {
     clientName: params.clientName,
-    trainerName: params.trainerName,
+    trainerName: '',
     storeName: params.storeName,
     dateStr,
     timeStr: `${startTimeStr} - ${endTimeStr}`
@@ -968,10 +967,6 @@ export async function sendPersonalSessionReminder(params: {
         <tr>
           <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; font-weight: bold; width: 100px; color: #475569; font-size: 14px;">店舗</td>
           <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; color: #0f172a; font-size: 14px;">${params.storeName}</td>
-        </tr>
-        <tr>
-          <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #475569; font-size: 14px;">トレーナー</td>
-          <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; color: #0f172a; font-size: 14px;">${params.trainerName}</td>
         </tr>
         <tr>
           <td style="padding: 10px; font-weight: bold; color: #475569; font-size: 14px;">日時</td>
