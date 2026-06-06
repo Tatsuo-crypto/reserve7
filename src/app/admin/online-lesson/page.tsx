@@ -55,6 +55,7 @@ export default function AdminOnlineLessonPage() {
     const [deletingId, setDeletingId] = useState<string | null>(null)
     const [members, setMembers] = useState<{ id: string; full_name: string; email: string }[]>([])
     const [dropdownOpen, setDropdownOpen] = useState(false)
+    const [sendingAnnouncement, setSendingAnnouncement] = useState(false)
 
     useEffect(() => {
         if (status === 'loading') return
@@ -190,6 +191,30 @@ export default function AdminOnlineLessonPage() {
             alert(e instanceof Error ? e.message : '削除に失敗しました')
         } finally {
             setDeletingId(null)
+        }
+    }
+
+    const handleSendAnnouncement = async () => {
+        if (!editingId || editingId === 'new') return
+        if (!window.confirm('現在画面で選択されている送信対象会員にオンラインレッスンの告知メールを一斉送信しますか？')) return
+        setSendingAnnouncement(true)
+        setError(null)
+        try {
+            const res = await fetch('/api/admin/online-lesson/announcement', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    lessonId: editingId,
+                    userIds: form.userIds
+                }),
+            })
+            const data = await res.json()
+            if (!res.ok) throw new Error(data.error || '告知メールの送信に失敗しました')
+            alert(`告知メールを送信しました！(送信数: ${data.sentCount}/${data.totalCount})`)
+        } catch (e) {
+            setError(e instanceof Error ? e.message : '告知メールの送信に失敗しました')
+        } finally {
+            setSendingAnnouncement(false)
         }
     }
 
@@ -454,7 +479,7 @@ export default function AdminOnlineLessonPage() {
                                         <span className="sm:hidden">削除する</span>
                                     </button>
                                 )}
-                                <div className="flex space-x-3 flex-1">
+                                <div className="flex flex-col sm:flex-row gap-3 flex-1">
                                     <button
                                         type="button"
                                         onClick={cancelEdit}
@@ -462,6 +487,16 @@ export default function AdminOnlineLessonPage() {
                                     >
                                         キャンセル
                                     </button>
+                                    {editingId !== 'new' && (
+                                        <button
+                                            type="button"
+                                            onClick={handleSendAnnouncement}
+                                            disabled={saving || sendingAnnouncement}
+                                            className="flex-1 py-3 border border-blue-200 text-blue-600 rounded-xl hover:bg-blue-50 transition-colors font-normal text-sm disabled:opacity-50"
+                                        >
+                                            {sendingAnnouncement ? '送信中...' : '告知メールを送る'}
+                                        </button>
+                                    )}
                                     <button
                                         type="button"
                                         onClick={handleSave}

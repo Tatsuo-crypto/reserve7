@@ -3,6 +3,12 @@ import { supabaseAdmin } from '@/lib/supabase'
 import { requireAuth, handleApiError } from '@/lib/api-utils'
 import { updateMonthlyTitles, updateAllTitles, usesCumulativeCount } from '@/lib/title-utils'
 import { createGoogleCalendarService } from '@/lib/google-calendar'
+import { 
+  sendClientCancellationNotification, 
+  sendTrainerCancellationNotification,
+  sendClientUpdateNotification,
+  sendTrainerUpdateNotification 
+} from '@/lib/email'
 
 export const dynamic = 'force-dynamic'
 
@@ -76,12 +82,14 @@ export async function DELETE(
         client_id,
         start_time,
         end_time,
+        notes,
         external_event_id,
         trainer_external_event_id,
         calendar_id,
         title,
         trainer_id,
         users!client_id (
+          full_name,
           email,
           google_calendar_email,
           plan
@@ -173,6 +181,24 @@ export async function DELETE(
       }
     } else {
       // 通常予約: 1件のみ
+      let trainerName = '不明'
+      let trainerNotifyEmail: string | null = null
+      let trainerCalendarId: string | null = null
+
+      if (reservation.trainer_id) {
+        const { data: trainer } = await supabaseAdmin
+          .from('trainers')
+          .select('full_name, email, google_calendar_id')
+          .eq('id', reservation.trainer_id)
+          .single()
+
+        if (trainer) {
+          trainerName = trainer.full_name
+          trainerNotifyEmail = trainer.google_calendar_id || trainer.email || null
+          trainerCalendarId = trainer.google_calendar_id || null
+        }
+      }
+
       if (reservation.external_event_id) {
         console.log('📅 Attempting to delete from Google Calendar:', reservation.external_event_id)
 
@@ -181,16 +207,8 @@ export async function DELETE(
           trainerExternalEventId: (reservation as any).trainer_external_event_id || null,
         }
 
-        if (reservation.trainer_id) {
-          const { data: trainer } = await supabaseAdmin
-            .from('trainers')
-            .select('google_calendar_id')
-            .eq('id', reservation.trainer_id)
-            .single()
-
-          if (trainer?.google_calendar_id) {
-            deleteOptions.trainerCalendarEmail = trainer.google_calendar_id
-          }
+        if (trainerCalendarId) {
+          deleteOptions.trainerCalendarEmail = trainerCalendarId
         }
 
         if (calendarService) {
@@ -226,6 +244,50 @@ export async function DELETE(
         )
       }
       console.log('✅ Database deletion successful')
+
+      // Notify client and trainer
+      const clientUser = reservation.users as any
+      const cancelEmailPromises: Promise<any>[] = []
+
+      if (clientUser?.email && reservation.client_id) {
+        const clientName = clientUser.full_name || '不明'
+        const storeName = reservation.calendar_id === 'tandjgym@gmail.com' ? 'T&J GYM 1号店' : 'T&J GYM 2号店'
+        
+        cancelEmailPromises.push(
+          sendClientCancellationNotification({
+            clientEmail: clientUser.email,
+            clientName,
+            trainerName,
+            title: reservation.title,
+            startTime: reservation.start_time,
+            endTime: reservation.end_time,
+            storeName,
+            notes: reservation.notes || undefined,
+          }).catch(err => console.error('Client cancellation email error:', err))
+        )
+      }
+
+      if (trainerNotifyEmail && trainerName !== '不明') {
+        const clientName = clientUser?.full_name || '不明'
+        const storeName = reservation.calendar_id === 'tandjgym@gmail.com' ? 'T&J GYM 1号店' : 'T&J GYM 2号店'
+
+        cancelEmailPromises.push(
+          sendTrainerCancellationNotification({
+            trainerEmail: trainerNotifyEmail,
+            trainerName,
+            clientName,
+            title: reservation.title,
+            startTime: reservation.start_time,
+            endTime: reservation.end_time,
+            storeName,
+            notes: reservation.notes || undefined,
+          }).catch(err => console.error('Trainer cancellation email error:', err))
+        )
+      }
+
+      if (cancelEmailPromises.length > 0) {
+        await Promise.allSettled(cancelEmailPromises)
+      }
     }
 
     // After deletion, renumber titles for this client
@@ -547,6 +609,90 @@ export async function PUT(
           { status: 500 }
         )
       }
+    }
+
+    // Send email notifications for updates (fire-and-forget)
+    try {
+      if (!isTrainingReservation) {
+        let clientUser = reservation.users as any
+        const targetClientId = body.clientId !== undefined ? body.clientId : reservation.client_id
+
+        if (targetClientId && targetClientId !== reservation.client_id) {
+          if (targetClientId !== 'BLOCKED' && targetClientId !== 'TRIAL' && targetClientId !== 'GUEST' && targetClientId !== 'TRAINING') {
+            const { data: newClient } = await supabaseAdmin
+              .from('users')
+              .select('full_name, email, plan')
+              .eq('id', targetClientId)
+              .single()
+            if (newClient) {
+              clientUser = newClient
+            }
+          } else {
+            clientUser = null
+          }
+        }
+
+        const targetTrainerId = trainerId !== undefined ? trainerId : reservation.trainer_id
+        let trainerName = '不明'
+        let trainerNotifyEmail: string | null = null
+
+        if (targetTrainerId) {
+          const { data: trainer } = await supabaseAdmin
+            .from('trainers')
+            .select('full_name, email, google_calendar_id')
+            .eq('id', targetTrainerId)
+            .single()
+
+          if (trainer) {
+            trainerName = trainer.full_name
+            trainerNotifyEmail = trainer.google_calendar_id || trainer.email || null
+          }
+        }
+
+        const updateEmailPromises: Promise<any>[] = []
+
+        if (clientUser?.email && targetClientId !== 'BLOCKED' && targetClientId !== 'TRIAL' && targetClientId !== 'GUEST' && targetClientId !== 'TRAINING') {
+          const clientName = clientUser.full_name || '不明'
+          const storeName = reservation.calendar_id === 'tandjgym@gmail.com' ? 'T&J GYM 1号店' : 'T&J GYM 2号店'
+
+          updateEmailPromises.push(
+            sendClientUpdateNotification({
+              clientEmail: clientUser.email,
+              clientName,
+              trainerName: trainerName || '不明',
+              title: title || reservation.title,
+              startTime: startDateTime.toISOString(),
+              endTime: endDateTime.toISOString(),
+              storeName,
+              notes: notes || undefined,
+            }).catch(err => console.error('Client update email notification error:', err))
+          )
+        }
+
+        if (trainerNotifyEmail && trainerName !== '不明') {
+          const clientName = clientUser?.full_name || '不明'
+          const storeName = reservation.calendar_id === 'tandjgym@gmail.com' ? 'T&J GYM 1号店' : 'T&J GYM 2号店'
+
+          updateEmailPromises.push(
+            sendTrainerUpdateNotification({
+              trainerEmail: trainerNotifyEmail,
+              trainerName,
+              clientName,
+              title: title || reservation.title,
+              startTime: startDateTime.toISOString(),
+              endTime: endDateTime.toISOString(),
+              storeName,
+              notes: notes || undefined,
+            }).catch(err => console.error('Trainer update email notification error:', err))
+          )
+        }
+
+        if (updateEmailPromises.length > 0) {
+          await Promise.allSettled(updateEmailPromises)
+        }
+      }
+    } catch (emailErr) {
+      console.error('Failed to trigger update email notifications:', emailErr)
     }
 
     // After update, renumber titles for this client and update Google Calendar as needed

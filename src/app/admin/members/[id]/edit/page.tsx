@@ -405,9 +405,9 @@ export default function EditMemberPage() {
             </div>
           </div>
 
-          {/* オンラインレッスン通知設定 */}
+          {/* メール通知設定 */}
           <div className="pt-6 border-t border-gray-100">
-            <h3 className="text-lg font-normal text-gray-900 mb-4">リマインダー通知設定</h3>
+            <h3 className="text-lg font-normal text-gray-900 mb-4">メール通知設定</h3>
             <div className="space-y-4">
               <label className="flex items-center gap-4 p-4 bg-blue-50/50 border border-blue-100 rounded-xl cursor-pointer hover:bg-blue-50 transition-colors">
                 <input
@@ -419,8 +419,8 @@ export default function EditMemberPage() {
                   className="w-6 h-6 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                 />
                 <div>
-                  <div className="font-normal text-gray-900">オンラインレッスンのリマインダーメールを送信する</div>
-                  <div className="text-xs text-gray-500 mt-1">レッスン開始30分前に自動で案内メールが送信されます</div>
+                  <div className="font-normal text-gray-900">メール通知（予約確定・変更・リマインダー）を送信する</div>
+                  <div className="text-xs text-gray-500 mt-1">チェックを外すと、この会員様宛のすべての自動通知メールが停止されます。</div>
                 </div>
               </label>
             </div>

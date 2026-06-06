@@ -128,6 +128,13 @@ const AdminDashboard = () => {
             <OtherSubCard href="/admin/stores" label="店舗管理" subLabel="店舗情報の変更・設定" color="indigo" icon={<path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />} />
             <OtherSubCard href="/admin/shifts" label="シフト管理" subLabel="勤務スケジュールの作成" color="emerald" icon={<path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />} />
             <OtherSubCard href="/admin/online-lesson" label="オンライン" subLabel="スケジュールの管理" color="orange" icon={<path d="M15 10l4.553-2.069A1 1 0 0121 8.845v6.309a1 1 0 01-1.447.894L15 14" />} />
+            <OtherSubCard 
+              href="/admin/mail-settings" 
+              label="メール送信設定" 
+              subLabel="自動送信メール・通知先の管理" 
+              color="indigo" 
+              icon={<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />} 
+            />
           </div>
         )}
 

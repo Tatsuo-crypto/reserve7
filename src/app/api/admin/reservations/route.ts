@@ -536,7 +536,9 @@ export async function POST(request: NextRequest) {
       title: reservation.title,
     }))
 
-    // トレーナーにメール通知を送信（バックグラウンド、失敗しても予約作成には影響しない）
+    const emailPromises: Promise<any>[] = []
+
+    // トレーナーにメール通知を送信
     if (trainerNotifyEmail && trainerName && clientId !== 'BLOCKED' && clientId !== 'TRAINING') {
       const clientName = clientId === 'TRIAL'
         ? generatedTitle
@@ -546,32 +548,40 @@ export async function POST(request: NextRequest) {
 
       const storeName = calendarId === 'tandjgym@gmail.com' ? 'T&J GYM 1号店' : 'T&J GYM 2号店'
 
-      sendTrainerNotification({
-        trainerEmail: trainerNotifyEmail,
-        trainerName,
-        clientName,
-        title: reservation.title,
-        startTime: reservation.start_time,
-        endTime: reservation.end_time,
-        storeName,
-        notes: reservation.notes || undefined,
-      }).catch(err => console.error('Email notification error:', err))
+      emailPromises.push(
+        sendTrainerNotification({
+          trainerEmail: trainerNotifyEmail,
+          trainerName,
+          clientName,
+          title: reservation.title,
+          startTime: reservation.start_time,
+          endTime: reservation.end_time,
+          storeName,
+          notes: reservation.notes || undefined,
+        }).catch(err => console.error('Email notification error:', err))
+      )
     }
 
-    // Send email notification to client (fire-and-forget)
+    // Send email notification to client
     if (clientUser?.email && clientId !== 'BLOCKED' && clientId !== 'TRIAL' && clientId !== 'GUEST' && clientId !== 'TRAINING') {
       const clientName = clientUser?.full_name || '不明'
       const storeName = calendarId === 'tandjgym@gmail.com' ? 'T&J GYM 1号店' : 'T&J GYM 2号店'
-      sendClientNotification({
-        clientEmail: clientUser.email,
-        clientName,
-        trainerName: trainerName || '不明',
-        title: reservation.title,
-        startTime: reservation.start_time,
-        endTime: reservation.end_time,
-        storeName,
-        notes: reservation.notes || undefined,
-      }).catch(err => console.error('Client email notification error:', err))
+      emailPromises.push(
+        sendClientNotification({
+          clientEmail: clientUser.email,
+          clientName,
+          trainerName: trainerName || '不明',
+          title: reservation.title,
+          startTime: reservation.start_time,
+          endTime: reservation.end_time,
+          storeName,
+          notes: reservation.notes || undefined,
+        }).catch(err => console.error('Client email notification error:', err))
+      )
+    }
+
+    if (emailPromises.length > 0) {
+      await Promise.allSettled(emailPromises)
     }
 
     return NextResponse.json({

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 export const dynamic = 'force-dynamic'
 import { supabaseAdmin } from '@/lib/supabase'
-import { sendOnlineLessonReminder } from '@/lib/email'
+import { sendOnlineLessonReminder, getMailSettings } from '@/lib/email'
 
 export async function GET(request: NextRequest) {
     try {
@@ -45,6 +45,9 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ message: 'No active online lessons found' })
         }
 
+        const settings = await getMailSettings()
+        const reminderWindow = settings?.reminder_before_minutes ?? 30
+
         const sentReminders: { lessonId: string; title: string; recipientCount: number }[] = []
 
         for (const lesson of lessons) {
@@ -65,8 +68,8 @@ export async function GET(request: NextRequest) {
 
             const diffMinutes = (lessonStart.getTime() - jstNow.getTime()) / (1000 * 60)
 
-            // Reminder window: Send reminder if the lesson starts in the next 30 minutes
-            const isInReminderWindow = diffMinutes > 0 && diffMinutes <= 30
+            // Reminder window: Send reminder if the lesson starts in the next configurated minutes
+            const isInReminderWindow = diffMinutes > 0 && diffMinutes <= reminderWindow
 
             if (!isInReminderWindow) {
                 continue
