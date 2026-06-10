@@ -10,6 +10,7 @@ import PlanTab from '@/components/diet/PlanTab'
 import OnlineTab from '@/components/diet/OnlineTab'
 import ReservationTab from '@/components/diet/ReservationTab'
 import AdminHeader from '@/app/components/AdminHeader'
+import PushNotificationPrompt from './PushNotificationPrompt'
 
 // TrackingModalをアドミン専用に遅延読み込み
 const TrackingModal = dynamic(() => import('@/app/admin/members/TrackingModal'), {
@@ -148,6 +149,7 @@ export default function ClientReservationsPage() {
 
       {/* Main Content */}
       <main className="flex-1 max-w-lg mx-auto w-full p-4 overflow-x-hidden pb-24">
+        <PushNotificationPrompt token={token} />
         {activeTab === 'home' && (
           <HomeTab 
             token={token} 

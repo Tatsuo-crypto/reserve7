@@ -115,7 +115,7 @@ export const DEFAULT_MAIL_SETTINGS: MailSettings = {
   trainer_cancel_notify: true,
   personal_reminder_enabled: true,
   personal_reminder_days_before: 1,
-  personal_reminder_hour: 9,
+  personal_reminder_hour: 21,
   personal_reminder_template: 'ご予約のセッション日時が近づいてまいりましたので、お知らせいたします。\n内容をご確認いただき、お気をつけてお越しください。',
   online_announcement_template: 'オンラインレッスンが開催されますので、お知らせいたします。\nお時間になりましたら、以下のリンクよりご参加ください。\n\nレッスン：{title}\n開始時間：{time}\nURL：{url}',
   client_create_template: 'ご予約が確定しました。',
@@ -906,6 +906,7 @@ export async function sendPersonalSessionReminder(params: {
   startTime: string
   endTime: string
   storeName: string
+  trainerName?: string
   notes?: string
 }): Promise<boolean> {
   if (isDummyEmail(params.email)) return false

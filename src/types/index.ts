@@ -26,6 +26,8 @@ export interface Member {
   created_at: string;
   memo?: string;
   access_token?: string;
+  online_reminder_enabled?: boolean;
+  push_notification_enabled?: boolean;
   stores?: Store;
 }
 

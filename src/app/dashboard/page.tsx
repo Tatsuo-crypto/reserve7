@@ -130,8 +130,8 @@ const AdminDashboard = () => {
             <OtherSubCard href="/admin/online-lesson" label="オンライン" subLabel="スケジュールの管理" color="orange" icon={<path d="M15 10l4.553-2.069A1 1 0 0121 8.845v6.309a1 1 0 01-1.447.894L15 14" />} />
             <OtherSubCard 
               href="/admin/mail-settings" 
-              label="メール送信設定" 
-              subLabel="自動送信メール・通知先の管理" 
+              label="通知設定"
+              subLabel="メール・アプリ通知の管理"
               color="indigo" 
               icon={<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />} 
             />

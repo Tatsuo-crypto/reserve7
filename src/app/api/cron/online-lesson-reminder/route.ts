@@ -1,7 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
 export const dynamic = 'force-dynamic'
 import { supabaseAdmin } from '@/lib/supabase'
-import { sendOnlineLessonReminder, getMailSettings } from '@/lib/email'
+import { getMailSettings, sendOnlineLessonReminder, sendPersonalSessionReminder } from '@/lib/email'
+import { sendPushNotificationToUser } from '@/lib/push'
+
+function formatDateJST(date: Date): string {
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+}
+
+function formatTimeJST(date: Date): string {
+    const hour = String(date.getHours()).padStart(2, '0')
+    const minute = String(date.getMinutes()).padStart(2, '0')
+    return `${hour}:${minute}`
+}
+
+function isDummyEmail(email: string): boolean {
+    const cleaned = email.trim().toLowerCase()
+    return cleaned === '-' || cleaned.includes('@gym.internal') || cleaned.includes('no-email-')
+}
 
 export async function GET(request: NextRequest) {
     try {
@@ -18,29 +37,134 @@ export async function GET(request: NextRequest) {
             }
         }
 
-        // Get tomorrow's JST date
+        const settings = await getMailSettings()
+
+        // Get current JST time. This cron is expected to run once per day at 21:00 JST.
         const jstDateStr = new Date().toLocaleString("en-US", { timeZone: "Asia/Tokyo" })
         const jstNow = new Date(jstDateStr)
-        
-        // Calculate tomorrow JST
-        const jstTomorrow = new Date(jstNow)
-        jstTomorrow.setDate(jstNow.getDate() + 1)
-        
-        const tomorrowDow = jstTomorrow.getDay() // 0: Sun, 1: Mon, ... 6: Sat
-        
-        // Skip weekend lessons (Saturday: 6, Sunday: 0)
-        if (tomorrowDow === 0 || tomorrowDow === 6) {
-            console.log(`[Online Lesson Cron] Tomorrow is weekend (DOW: ${tomorrowDow}). Skipping reminder emails.`)
-            return NextResponse.json({ message: 'Tomorrow is weekend. Skipping reminders.' })
+
+        const personalTargetDate = new Date(jstNow)
+        personalTargetDate.setDate(jstNow.getDate() + 1)
+        const personalTargetDateStr = formatDateJST(personalTargetDate)
+        const personalTargetStart = new Date(`${personalTargetDateStr}T00:00:00+09:00`).toISOString()
+        const personalTargetEnd = new Date(`${personalTargetDateStr}T23:59:59+09:00`).toISOString()
+
+        const sentPersonalReminders: { reservationId: string; clientName: string; email: string }[] = []
+
+        if (settings.personal_reminder_enabled) {
+            const { data: reservations, error: fetchError } = await supabaseAdmin
+                .from('reservations')
+                .select(`
+                    id,
+                    title,
+                    start_time,
+                    end_time,
+                    notes,
+                    client_id,
+                    calendar_id,
+                    users!client_id (
+                        id,
+                        full_name,
+                        email,
+                        access_token,
+                        push_notification_enabled
+                    )
+                `)
+                .gte('start_time', personalTargetStart)
+                .lte('start_time', personalTargetEnd)
+                .not('client_id', 'is', null)
+
+            if (fetchError) {
+                console.error('Failed to fetch personal reservations:', fetchError)
+            }
+
+            for (const res of reservations || []) {
+                const client = res.users as any
+                if (!client) {
+                    continue
+                }
+
+                const { data: existingLog, error: logCheckError } = await supabaseAdmin
+                    .from('reservation_reminders')
+                    .select('*')
+                    .eq('reservation_id', res.id)
+                    .eq('sent_date', personalTargetDateStr)
+                    .maybeSingle()
+
+                if (logCheckError || existingLog) {
+                    if (logCheckError) console.error(`Error checking existing personal reminder for reservation ${res.id}:`, logCheckError)
+                    continue
+                }
+
+                const storeName = res.calendar_id === 'tandjgym@gmail.com' ? 'T&J GYM 1号店' : 'T&J GYM 2号店'
+
+                try {
+                    let success = false
+
+                    if (client.email && client.email.trim() !== '' && !isDummyEmail(client.email)) {
+                        success = await sendPersonalSessionReminder({
+                            email: client.email,
+                            clientName: client.full_name,
+                            title: res.title,
+                            startTime: res.start_time,
+                            endTime: res.end_time,
+                            storeName,
+                            notes: res.notes || undefined
+                        }) || success
+                    }
+
+                    if (client.push_notification_enabled && client.access_token) {
+                        const startDate = new Date(res.start_time)
+                        const dateStr = startDate.toLocaleDateString('ja-JP', {
+                            timeZone: 'Asia/Tokyo',
+                            month: 'long',
+                            day: 'numeric',
+                            weekday: 'short',
+                        })
+                        const timeStr = startDate.toLocaleTimeString('ja-JP', {
+                            timeZone: 'Asia/Tokyo',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                        })
+                        const pushCount = await sendPushNotificationToUser(client.id, {
+                            title: 'ご予約前日のお知らせ',
+                            body: `${dateStr} ${timeStr}のセッション予定があります。`,
+                            url: `/client/${client.access_token}`
+                        })
+                        success = pushCount > 0 || success
+                    }
+
+                    if (success) {
+                        const { error: insertError } = await supabaseAdmin
+                            .from('reservation_reminders')
+                            .insert({
+                                reservation_id: res.id,
+                                sent_date: personalTargetDateStr
+                            })
+
+                        if (insertError) {
+                            console.error(`Failed to insert personal reminder log for reservation ${res.id}:`, insertError)
+                        }
+
+                        sentPersonalReminders.push({
+                            reservationId: res.id,
+                            clientName: client.full_name,
+                        email: client.email
+                    })
+                    }
+                } catch (err) {
+                    console.error(`Failed to send personal reminder for reservation ${res.id}:`, err)
+                }
+            }
         }
 
-        // Format tomorrow's date in YYYY-MM-DD
-        const year = jstTomorrow.getFullYear()
-        const month = String(jstTomorrow.getMonth() + 1).padStart(2, '0')
-        const date = String(jstTomorrow.getDate()).padStart(2, '0')
-        const tomorrowDateStr = `${year}-${month}-${date}`
+        const onlineTargetTime = new Date(jstNow)
+        onlineTargetTime.setMinutes(jstNow.getMinutes() + settings.reminder_before_minutes)
+        const onlineTargetDateStr = formatDateJST(onlineTargetTime)
+        const onlineTargetTimeStr = formatTimeJST(onlineTargetTime)
+        const onlineTargetDow = onlineTargetTime.getDay() // 0: Sun, 1: Mon, ... 6: Sat
 
-        console.log(`[Online Lesson Cron] Running reminder check for tomorrow: ${tomorrowDateStr} (DOW: ${tomorrowDow})`)
+        console.log(`[Online Lesson Cron] Running reminder check for ${onlineTargetDateStr} ${onlineTargetTimeStr} JST (DOW: ${onlineTargetDow})`)
 
         // Fetch active online lessons
         const { data: lessons, error: lessonsError } = await supabaseAdmin
@@ -60,22 +184,20 @@ export async function GET(request: NextRequest) {
         const sentReminders: { lessonId: string; title: string; recipientCount: number }[] = []
 
         for (const lesson of lessons) {
-            // 1. Check if the lesson is scheduled for tomorrow (which is a weekday)
-            const isScheduledForTomorrow = lesson.day_of_week && Array.isArray(lesson.day_of_week) && lesson.day_of_week.includes(tomorrowDow)
-            if (!isScheduledForTomorrow) {
+            const isScheduledForTargetDay = lesson.day_of_week && Array.isArray(lesson.day_of_week) && lesson.day_of_week.includes(onlineTargetDow)
+            if (!isScheduledForTargetDay) {
                 continue
             }
 
-            if (!lesson.start_time) {
+            if (!lesson.start_time || lesson.start_time.substring(0, 5) !== onlineTargetTimeStr) {
                 continue
             }
 
-            // 2. Check if we already sent a reminder for this lesson for tomorrow's date
             const { data: existingReminder, error: reminderCheckError } = await supabaseAdmin
                 .from('online_lesson_reminders')
                 .select('*')
                 .eq('online_lesson_id', lesson.id)
-                .eq('sent_date', tomorrowDateStr)
+                .eq('sent_date', onlineTargetDateStr)
                 .maybeSingle()
 
             if (reminderCheckError) {
@@ -84,11 +206,10 @@ export async function GET(request: NextRequest) {
             }
 
             if (existingReminder) {
-                console.log(`[Online Lesson Cron] Reminder already sent for tomorrow for lesson: ${lesson.title} (${lesson.id})`)
+                console.log(`[Online Lesson Cron] Reminder already sent for lesson: ${lesson.title} (${lesson.id}) on ${onlineTargetDateStr}`)
                 continue
             }
 
-            // 3. Fetch users linked to this specific online lesson
             const { data: lessonUsers, error: usersError } = await supabaseAdmin
                 .from('online_lesson_users')
                 .select(`
@@ -96,7 +217,9 @@ export async function GET(request: NextRequest) {
                     users (
                         id,
                         full_name,
-                        email
+                        email,
+                        access_token,
+                        push_notification_enabled
                     )
                 `)
                 .eq('online_lesson_id', lesson.id)
@@ -106,24 +229,29 @@ export async function GET(request: NextRequest) {
                 continue
             }
 
-            const validUsers = (lessonUsers || [])
+            const targetUsers = (lessonUsers || [])
                 .map((lu: any) => lu.users)
                 .filter((u: any) => 
-                    u &&
+                    u
+                )
+
+            const validUsers = targetUsers
+                .filter((u: any) =>
                     u.email && 
                     u.email.trim() !== '' && 
                     !u.email.endsWith('@gym.internal') && 
                     !u.email.endsWith('@example.com')
                 )
 
-            if (validUsers.length === 0) {
-                console.log(`[Online Lesson Cron] No target users with email found for lesson: ${lesson.title} (${lesson.id})`)
+            const pushUsers = targetUsers.filter((u: any) => u.push_notification_enabled && u.access_token)
+
+            if (validUsers.length === 0 && pushUsers.length === 0) {
+                console.log(`[Online Lesson Cron] No target users found for lesson: ${lesson.title} (${lesson.id})`)
                 continue
             }
 
-            console.log(`[Online Lesson Cron] Sending reminders for "${lesson.title}" tomorrow at ${lesson.start_time} to ${validUsers.length} users`)
+            console.log(`[Online Lesson Cron] Sending reminders for "${lesson.title}" at ${lesson.start_time} to ${validUsers.length} users`)
 
-            // 4. Send reminder emails
             let successCount = 0
             for (const user of validUsers) {
                 try {
@@ -145,13 +273,26 @@ export async function GET(request: NextRequest) {
                 }
             }
 
-            // 5. Record that we sent the reminder for tomorrow's date
+            for (const user of pushUsers) {
+                try {
+                    const formattedStartTime = lesson.start_time.substring(0, 5)
+                    const pushCount = await sendPushNotificationToUser(user.id, {
+                        title: 'オンラインセッションのお知らせ',
+                        body: `${lesson.title}が${formattedStartTime}から始まります。`,
+                        url: `/client/${user.access_token}?tab=online`
+                    })
+                    if (pushCount > 0) successCount++
+                } catch (pushError) {
+                    console.error(`Failed to send push notification to user ${user.id}:`, pushError)
+                }
+            }
+
             if (successCount > 0) {
                 const { error: insertError } = await supabaseAdmin
                     .from('online_lesson_reminders')
                     .insert({
                         online_lesson_id: lesson.id,
-                        sent_date: tomorrowDateStr
+                        sent_date: onlineTargetDateStr
                     })
 
                 if (insertError) {
@@ -168,8 +309,17 @@ export async function GET(request: NextRequest) {
 
         return NextResponse.json({
             success: true,
-            processedCount: sentReminders.length,
-            sentReminders
+            personal: {
+                targetDate: personalTargetDateStr,
+                processedCount: sentPersonalReminders.length,
+                sentReminders: sentPersonalReminders
+            },
+            online: {
+                targetDate: onlineTargetDateStr,
+                targetTime: onlineTargetTimeStr,
+                processedCount: sentReminders.length,
+                sentReminders
+            }
         })
     } catch (error) {
         console.error('[Online Lesson Cron] Error in cron handler:', error)

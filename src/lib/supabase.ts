@@ -29,6 +29,7 @@ export type Database = {
           monthly_fee: number;
           memo: string | null;
           online_reminder_enabled: boolean;
+          push_notification_enabled: boolean;
         };
         Insert: {
           id?: string;
@@ -43,6 +44,7 @@ export type Database = {
           monthly_fee?: number;
           memo?: string | null;
           online_reminder_enabled?: boolean;
+          push_notification_enabled?: boolean;
         };
         Update: {
           id?: string;
@@ -57,6 +59,7 @@ export type Database = {
           monthly_fee?: number;
           memo?: string | null;
           online_reminder_enabled?: boolean;
+          push_notification_enabled?: boolean;
         };
       };
       reservations: {

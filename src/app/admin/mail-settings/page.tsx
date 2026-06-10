@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { Fragment, useState, useEffect, useMemo } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import AdminHeader from '@/app/components/AdminHeader'
@@ -25,6 +25,18 @@ interface MailSettings {
   client_cancel_template: string
 }
 
+interface MemberNotificationSetting {
+  id: string
+  fullName: string
+  email: string
+  status: string
+  storeId: string | null
+  storeName: string
+  emailEnabled: boolean
+  pushEnabled: boolean
+  pushSubscriptionCount: number
+}
+
 export default function AdminMailSettingsPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
@@ -41,7 +53,7 @@ export default function AdminMailSettingsPage() {
     trainer_cancel_notify: true,
     personal_reminder_enabled: true,
     personal_reminder_days_before: 1,
-    personal_reminder_hour: 9,
+    personal_reminder_hour: 21,
     personal_reminder_template: 'ご予約のセッション日時が近づいてまいりましたので、お知らせいたします。\n内容をご確認いただき、お気をつけてお越しください。',
     online_announcement_template: 'オンラインレッスンが開催されますので、お知らせいたします。\nお時間になりましたら、以下のリンクよりご参加ください。\n\nレッスン：{title}\n開始時間：{time}\nURL：{url}',
     client_create_template: 'ご予約が確定しました。',
@@ -54,6 +66,9 @@ export default function AdminMailSettingsPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+  const [members, setMembers] = useState<MemberNotificationSetting[]>([])
+  const [membersLoading, setMembersLoading] = useState(true)
+  const [membersSaving, setMembersSaving] = useState(false)
 
   // Test send states
   const [testTo, setTestTo] = useState('')
@@ -62,7 +77,7 @@ export default function AdminMailSettingsPage() {
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null)
 
   // Tabs states
-  const [activeTab, setActiveTab] = useState<'confirmation' | 'update' | 'reminder'>('confirmation')
+  const [activeTab, setActiveTab] = useState<'members' | 'confirmation' | 'update' | 'reminder'>('members')
   const [activeSubTab, setActiveSubTab] = useState<'update' | 'cancel'>('update')
   const [advancedOpen, setAdvancedOpen] = useState(false)
 
@@ -73,6 +88,7 @@ export default function AdminMailSettingsPage() {
       return
     }
     fetchSettings()
+    fetchMembers()
   }, [status])
 
   useEffect(() => {
@@ -83,7 +99,9 @@ export default function AdminMailSettingsPage() {
 
   // Sync test type to active tabs
   useEffect(() => {
-    if (activeTab === 'confirmation') {
+    if (activeTab === 'members') {
+      setTestType('personal-reminder')
+    } else if (activeTab === 'confirmation') {
       setTestType('client')
     } else if (activeTab === 'update') {
       setTestType(activeSubTab === 'update' ? 'client-update' : 'client-cancel')
@@ -104,7 +122,7 @@ export default function AdminMailSettingsPage() {
             ...data.settings,
             personal_reminder_enabled: data.settings.personal_reminder_enabled ?? true,
             personal_reminder_days_before: data.settings.personal_reminder_days_before ?? 1,
-            personal_reminder_hour: data.settings.personal_reminder_hour ?? 9,
+            personal_reminder_hour: data.settings.personal_reminder_hour ?? 21,
             personal_reminder_template: data.settings.personal_reminder_template ?? 'ご予約のセッション日時が近づいてまいりましたので、お知らせいたします。\n内容をご確認いただき、お気をつけてお越しください。',
             online_announcement_template: data.settings.online_announcement_template ?? 'オンラインレッスンが開催されますので、お知らせいたします。\nお時間になりましたら、以下のリンクよりご参加ください。\n\nレッスン：{title}\n開始時間：{time}\nURL：{url}',
             client_create_template: data.settings.client_create_template ?? 'ご予約が確定しました。',
@@ -121,6 +139,25 @@ export default function AdminMailSettingsPage() {
       setError(err instanceof Error ? err.message : '設定の読み込み中にエラーが発生しました。')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchMembers = async () => {
+    setMembersLoading(true)
+    try {
+      const res = await fetch('/api/admin/member-notification-settings')
+      const data = await res.json()
+
+      if (!res.ok) {
+        throw new Error(data.error || '会員通知設定の取得に失敗しました')
+      }
+
+      setMembers(data.members || [])
+    } catch (err: any) {
+      console.error(err)
+      setError(err instanceof Error ? err.message : '会員通知設定の読み込み中にエラーが発生しました。')
+    } finally {
+      setMembersLoading(false)
     }
   }
 
@@ -161,13 +198,91 @@ export default function AdminMailSettingsPage() {
         throw new Error(data.error || '設定の保存に失敗しました')
       }
 
-      setSuccess('メール送信設定を保存しました。')
+      setSuccess('通知設定を保存しました。')
       setTimeout(() => setSuccess(null), 3000)
     } catch (err: any) {
       console.error(err)
       setError(err instanceof Error ? err.message : '設定の保存中にエラーが発生しました。')
     } finally {
       setSaving(false)
+    }
+  }
+
+  const handleMemberToggle = (memberId: string, key: 'emailEnabled' | 'pushEnabled') => {
+    setMembers(prev => prev.map(member => (
+      member.id === memberId ? { ...member, [key]: !member[key] } : member
+    )))
+  }
+
+  const setAllMembers = (key: 'emailEnabled' | 'pushEnabled', value: boolean) => {
+    setMembers(prev => prev.map(member => ({
+      ...member,
+      [key]: value
+    })))
+  }
+
+  const memberStoreGroups = useMemo(() => {
+    const statusOrder: Record<string, number> = {
+      active: 0,
+      suspended: 1,
+      withdrawn: 2,
+    }
+
+    const sortedMembers = [...members].sort((a, b) => {
+      const storeCompare = (a.storeName || '店舗未設定').localeCompare(b.storeName || '店舗未設定', 'ja')
+      if (storeCompare !== 0) return storeCompare
+
+      const statusCompare = (statusOrder[a.status] ?? 1) - (statusOrder[b.status] ?? 1)
+      if (statusCompare !== 0) return statusCompare
+
+      return a.fullName.localeCompare(b.fullName, 'ja')
+    })
+
+    const groups = new Map<string, MemberNotificationSetting[]>()
+
+    for (const member of sortedMembers) {
+      const storeName = member.storeName || '店舗未設定'
+      groups.set(storeName, [...(groups.get(storeName) || []), member])
+    }
+
+    return Array.from(groups.entries()).map(([storeName, storeMembers]) => ({
+      storeName,
+      members: storeMembers,
+    }))
+  }, [members])
+
+  const handleSaveMembers = async () => {
+    setMembersSaving(true)
+    setError(null)
+    setSuccess(null)
+
+    try {
+      const res = await fetch('/api/admin/member-notification-settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          members: members.map(member => ({
+            id: member.id,
+            emailEnabled: member.emailEnabled,
+            pushEnabled: member.pushEnabled,
+          })),
+        }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        throw new Error(data.error || '会員通知設定の保存に失敗しました')
+      }
+
+      setSuccess('会員ごとの通知設定を保存しました。')
+      setTimeout(() => setSuccess(null), 3000)
+      fetchMembers()
+    } catch (err: any) {
+      console.error(err)
+      setError(err instanceof Error ? err.message : '会員通知設定の保存中にエラーが発生しました。')
+    } finally {
+      setMembersSaving(false)
     }
   }
 
@@ -262,8 +377,8 @@ export default function AdminMailSettingsPage() {
   return (
     <div className="min-h-screen bg-gray-50 pb-12">
       <AdminHeader
-        title="メール送信設定"
-        subTitle="MAIL CONFIGURATION"
+        title="通知設定"
+        subTitle="NOTIFICATION CONFIGURATION"
         onBack={() => router.push('/dashboard?tab=others')}
       />
 
@@ -309,7 +424,19 @@ export default function AdminMailSettingsPage() {
         )}
 
         {/* Main Tab Bar */}
-        <div className="flex bg-gray-200/60 p-1.5 rounded-2xl mb-8 border border-gray-200/50 max-w-2xl mx-auto shadow-inner">
+        <div className="flex bg-gray-200/60 p-1.5 rounded-2xl mb-8 border border-gray-200/50 max-w-3xl mx-auto shadow-inner">
+          <button
+            type="button"
+            onClick={() => setActiveTab('members')}
+            className={`flex-1 py-3 text-sm font-medium rounded-xl transition-all duration-200 flex items-center justify-center gap-1.5 ${
+              activeTab === 'members'
+                ? 'bg-white text-blue-600 shadow-sm border border-gray-100'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <span className="w-2.5 h-2.5 rounded-full bg-violet-500"></span>
+            会員別
+          </button>
           <button
             type="button"
             onClick={() => setActiveTab('confirmation')}
@@ -353,6 +480,134 @@ export default function AdminMailSettingsPage() {
             
             {/* Left Column: Form Settings (7 cols) */}
             <div className="lg:col-span-7 space-y-6">
+              {activeTab === 'members' && (
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-5 animate-fadeIn">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                      <h2 className="text-base font-semibold text-gray-900">会員ごとの通知設定</h2>
+                      <p className="mt-1 text-xs text-gray-500">メール通知とアプリ通知を会員ごとに一括管理できます。</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={fetchMembers}
+                      disabled={membersLoading}
+                      className="px-4 py-2 text-xs border border-gray-200 rounded-xl text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+                    >
+                      再読み込み
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setAllMembers('emailEnabled', true)}
+                      className="px-3 py-2 text-xs rounded-xl bg-blue-50 text-blue-700 border border-blue-100 hover:bg-blue-100"
+                    >
+                      メールを全員ON
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAllMembers('emailEnabled', false)}
+                      className="px-3 py-2 text-xs rounded-xl bg-gray-50 text-gray-600 border border-gray-100 hover:bg-gray-100"
+                    >
+                      メールを全員OFF
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAllMembers('pushEnabled', true)}
+                      className="px-3 py-2 text-xs rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-100 hover:bg-emerald-100"
+                    >
+                      アプリ通知を全員ON
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAllMembers('pushEnabled', false)}
+                      className="px-3 py-2 text-xs rounded-xl bg-gray-50 text-gray-600 border border-gray-100 hover:bg-gray-100"
+                    >
+                      アプリ通知を全員OFF
+                    </button>
+                  </div>
+
+                  <div className="overflow-x-auto border border-gray-100 rounded-2xl">
+                    <table className="w-full text-left border-collapse">
+                      <thead className="bg-gray-50 border-b border-gray-100">
+                        <tr>
+                          <th className="px-4 py-3 text-[10px] font-semibold text-gray-400 uppercase tracking-widest">会員</th>
+                          <th className="px-4 py-3 text-center text-[10px] font-semibold text-gray-400 uppercase tracking-widest">メール</th>
+                          <th className="px-4 py-3 text-center text-[10px] font-semibold text-gray-400 uppercase tracking-widest">アプリ通知</th>
+                          <th className="px-4 py-3 text-center text-[10px] font-semibold text-gray-400 uppercase tracking-widest">端末</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {membersLoading ? (
+                          <tr>
+                            <td colSpan={4} className="px-4 py-10 text-center text-sm text-gray-400">読み込み中...</td>
+                          </tr>
+                        ) : members.length === 0 ? (
+                          <tr>
+                            <td colSpan={4} className="px-4 py-10 text-center text-sm text-gray-400">会員が見つかりません</td>
+                          </tr>
+                        ) : (
+                          memberStoreGroups.map(group => (
+                            <Fragment key={group.storeName}>
+                              <tr className="bg-gray-50/80">
+                                <td colSpan={4} className="px-4 py-2">
+                                  <div className="flex items-center justify-between gap-3">
+                                    <span className="text-xs font-semibold text-gray-600">{group.storeName}</span>
+                                    <span className="text-[10px] text-gray-400">{group.members.length}名</span>
+                                  </div>
+                                </td>
+                              </tr>
+                              {group.members.map(member => (
+                                <tr key={member.id} className="hover:bg-gray-50/70">
+                                  <td className="px-4 py-3">
+                                    <div className="flex items-center gap-2">
+                                      <div className="text-sm text-gray-900">{member.fullName}</div>
+                                      {member.status !== 'active' && (
+                                        <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] text-gray-500">
+                                          {member.status === 'suspended' ? '休会' : '退会'}
+                                        </span>
+                                      )}
+                                    </div>
+                                    <div className="text-[11px] text-gray-400">{member.email}</div>
+                                  </td>
+                                  <td className="px-4 py-3 text-center">
+                                    <input
+                                      type="checkbox"
+                                      checked={member.emailEnabled}
+                                      onChange={() => handleMemberToggle(member.id, 'emailEnabled')}
+                                      className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                      aria-label={`${member.fullName}のメール通知`}
+                                    />
+                                  </td>
+                                  <td className="px-4 py-3 text-center">
+                                    <input
+                                      type="checkbox"
+                                      checked={member.pushEnabled}
+                                      onChange={() => handleMemberToggle(member.id, 'pushEnabled')}
+                                      className="w-5 h-5 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500"
+                                      aria-label={`${member.fullName}のアプリ通知`}
+                                    />
+                                  </td>
+                                  <td className="px-4 py-3 text-center">
+                                    <span className={`inline-flex items-center rounded-full px-2 py-1 text-[10px] ${
+                                      member.pushSubscriptionCount > 0
+                                        ? 'bg-emerald-50 text-emerald-700'
+                                        : 'bg-gray-100 text-gray-400'
+                                    }`}>
+                                      {member.pushSubscriptionCount > 0 ? `${member.pushSubscriptionCount}台` : '未登録'}
+                                    </span>
+                                  </td>
+                                </tr>
+                              ))}
+                            </Fragment>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
               
               {/* TAB 1: Confirmation Email Settings */}
               {activeTab === 'confirmation' && (
@@ -590,6 +845,7 @@ export default function AdminMailSettingsPage() {
               )}
 
               {/* Advanced settings toggle (BCC & Display Name) */}
+              {activeTab !== 'members' && (
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                 <button
                   type="button"
@@ -646,11 +902,66 @@ export default function AdminMailSettingsPage() {
                   </div>
                 )}
               </div>
+              )}
 
             </div>
 
             {/* Right Column: Live Preview & Testing (5 cols) */}
             <div className="lg:col-span-5 space-y-6 lg:sticky lg:top-6">
+              {activeTab === 'members' ? (
+                <>
+                  <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-4">
+                    <h2 className="text-base font-semibold text-gray-900">現在の設定状況</h2>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="rounded-2xl bg-blue-50 border border-blue-100 p-4">
+                        <div className="text-[10px] text-blue-500 uppercase tracking-widest">メールON</div>
+                        <div className="mt-1 text-3xl text-blue-700">{members.filter(member => member.emailEnabled).length}</div>
+                      </div>
+                      <div className="rounded-2xl bg-emerald-50 border border-emerald-100 p-4">
+                        <div className="text-[10px] text-emerald-500 uppercase tracking-widest">アプリ通知ON</div>
+                        <div className="mt-1 text-3xl text-emerald-700">{members.filter(member => member.pushEnabled).length}</div>
+                      </div>
+                      <div className="rounded-2xl bg-gray-50 border border-gray-100 p-4">
+                        <div className="text-[10px] text-gray-400 uppercase tracking-widest">会員数</div>
+                        <div className="mt-1 text-3xl text-gray-700">{members.length}</div>
+                      </div>
+                      <div className="rounded-2xl bg-violet-50 border border-violet-100 p-4">
+                        <div className="text-[10px] text-violet-500 uppercase tracking-widest">端末登録あり</div>
+                        <div className="mt-1 text-3xl text-violet-700">{members.filter(member => member.pushSubscriptionCount > 0).length}</div>
+                      </div>
+                    </div>
+                    <p className="text-xs text-gray-500 leading-relaxed">
+                      アプリ通知は、管理チェックがONで、かつ会員様がスマホ側で通知を許可している場合に送信されます。
+                    </p>
+                  </div>
+
+                  <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex justify-between gap-3">
+                    <button
+                      type="button"
+                      onClick={() => router.push('/dashboard?tab=others')}
+                      className="px-5 py-2.5 border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-xl text-sm font-medium transition-colors flex-1 text-center"
+                    >
+                      戻る
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSaveMembers}
+                      disabled={membersSaving || membersLoading}
+                      className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-medium disabled:opacity-50 disabled:hover:bg-blue-600 transition-colors flex items-center justify-center gap-2 flex-[2] shadow-md shadow-blue-500/10"
+                    >
+                      {membersSaving ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                          保存中...
+                        </>
+                      ) : (
+                        '会員通知設定を保存'
+                      )}
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
               
               {/* simulated email frame */}
               <div className="bg-white rounded-2xl shadow-sm border border-gray-150 overflow-hidden flex flex-col">
@@ -736,10 +1047,12 @@ export default function AdminMailSettingsPage() {
                       設定を保存中...
                     </>
                   ) : (
-                    'メール設定を保存'
+                    '通知設定を保存'
                   )}
                 </button>
               </div>
+                </>
+              )}
 
             </div>
 

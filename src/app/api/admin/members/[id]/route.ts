@@ -36,7 +36,8 @@ export async function GET(
         created_at,
         memo,
         access_token,
-        online_reminder_enabled
+        online_reminder_enabled,
+        push_notification_enabled
       `)
       .eq('id', id)
       .single()

@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS mail_settings (
   trainer_cancel_notify BOOLEAN DEFAULT true,
   personal_reminder_enabled BOOLEAN DEFAULT true,
   personal_reminder_days_before INTEGER DEFAULT 1,
-  personal_reminder_hour INTEGER DEFAULT 9,
+  personal_reminder_hour INTEGER DEFAULT 21,
   personal_reminder_template TEXT DEFAULT 'ご予約のセッション日時が近づいてまいりましたので、お知らせいたします。
 内容をご確認いただき、お気をつけてお越しください。',
   online_announcement_template TEXT DEFAULT 'オンラインレッスンが開催されますので、お知らせいたします。
@@ -30,7 +30,7 @@ URL：{url}',
 -- Add new columns dynamically if the table already existed
 ALTER TABLE mail_settings ADD COLUMN IF NOT EXISTS personal_reminder_enabled BOOLEAN DEFAULT true;
 ALTER TABLE mail_settings ADD COLUMN IF NOT EXISTS personal_reminder_days_before INTEGER DEFAULT 1;
-ALTER TABLE mail_settings ADD COLUMN IF NOT EXISTS personal_reminder_hour INTEGER DEFAULT 9;
+ALTER TABLE mail_settings ADD COLUMN IF NOT EXISTS personal_reminder_hour INTEGER DEFAULT 21;
 ALTER TABLE mail_settings ADD COLUMN IF NOT EXISTS personal_reminder_template TEXT DEFAULT 'ご予約のセッション日時が近づいてまいりましたので、お知らせいたします。
 内容をご確認いただき、お気をつけてお越しください。';
 ALTER TABLE mail_settings ADD COLUMN IF NOT EXISTS online_announcement_template TEXT DEFAULT 'オンラインレッスンが開催されますので、お知らせいたします。

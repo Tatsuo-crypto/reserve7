@@ -23,6 +23,7 @@ export default function NewMemberPage() {
     status: 'active',
     memo: '',
     onlineReminderEnabled: true,
+    pushNotificationEnabled: false,
   })
 
   // Check admin access
@@ -115,6 +116,8 @@ export default function NewMemberPage() {
       // If status changed to suspended or withdrawn, set fee to 0
       if (name === 'status' && (value === 'suspended' || value === 'withdrawn')) {
         newData.monthlyFee = '0'
+        newData.onlineReminderEnabled = false
+        newData.pushNotificationEnabled = false
       }
       return newData
     })
@@ -303,9 +306,9 @@ export default function NewMemberPage() {
             </select>
           </div>
 
-          {/* メール通知設定 */}
+          {/* 通知設定 */}
           <div className="pt-6 border-t border-gray-100">
-            <h3 className="text-lg font-normal text-gray-900 mb-4">メール通知設定</h3>
+            <h3 className="text-lg font-normal text-gray-900 mb-4">通知設定</h3>
             <div className="space-y-4">
               <label className="flex items-center gap-4 p-4 bg-blue-50/50 border border-blue-100 rounded-xl cursor-pointer hover:bg-blue-50 transition-colors">
                 <input
@@ -319,6 +322,20 @@ export default function NewMemberPage() {
                 <div>
                   <div className="font-normal text-gray-900">メール通知（予約確定・変更・リマインダー）を送信する</div>
                   <div className="text-xs text-gray-500 mt-1">チェックを外すと、この会員様宛のすべての自動通知メールが停止されます。</div>
+                </div>
+              </label>
+              <label className="flex items-center gap-4 p-4 bg-emerald-50/50 border border-emerald-100 rounded-xl cursor-pointer hover:bg-emerald-50 transition-colors">
+                <input
+                  type="checkbox"
+                  id="pushNotificationEnabled"
+                  name="pushNotificationEnabled"
+                  checked={formData.pushNotificationEnabled}
+                  onChange={handleChange}
+                  className="w-6 h-6 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500"
+                />
+                <div>
+                  <div className="font-normal text-gray-900">プッシュ通知（アプリ通知）を送信する</div>
+                  <div className="text-xs text-gray-500 mt-1">お客様がアプリ通知を許可している場合に、スマホへ通知します。</div>
                 </div>
               </label>
             </div>
