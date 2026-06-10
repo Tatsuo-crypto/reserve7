@@ -14,8 +14,11 @@ type PushSubscriptionRow = {
   auth: string
 }
 
+const VAPID_PUBLIC_KEY_FALLBACK =
+  'BF3y2wkY1j3CjeP3X0EYgjVq0aJyk1MHwqDj_yjHH4wbN5mMJGc6gaGTuRoucCNEbaFCyFo9GfhIPFLarU_9JPk'
+
 function configureWebPush(): boolean {
-  const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || process.env.VAPID_PUBLIC_KEY
+  const publicKey = getVapidPublicKey()
   const privateKey = process.env.VAPID_PRIVATE_KEY
   const subject = process.env.VAPID_SUBJECT || 'mailto:tandjgym@gmail.com'
 
@@ -29,7 +32,7 @@ function configureWebPush(): boolean {
 }
 
 export function getVapidPublicKey(): string {
-  return process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || process.env.VAPID_PUBLIC_KEY || ''
+  return process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || process.env.VAPID_PUBLIC_KEY || VAPID_PUBLIC_KEY_FALLBACK
 }
 
 export async function sendPushNotificationToUser(userId: string, payload: PushPayload): Promise<number> {
