@@ -49,6 +49,29 @@ const DEFAULT_SALT = 6;
 type TabType = 'progress' | 'analyze' | 'plan' | 'history';
 type PeriodType = '1w' | '1m' | '3m' | '6m' | '1y' | 'all';
 
+const ACTIVITY_LABELS: Record<string, string> = {
+    '1.2': '低い',
+    '1.375': 'やや低い',
+    '1.55': '普通',
+    '1.725': '高い',
+    '1.9': '非常に高い'
+}
+
+function calculateAge(birthDate?: string | null) {
+    if (!birthDate) return null
+    const birth = new Date(birthDate)
+    if (Number.isNaN(birth.getTime())) return null
+    const today = new Date()
+    let age = today.getFullYear() - birth.getFullYear()
+    const monthDiff = today.getMonth() - birth.getMonth()
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) age--
+    return age
+}
+
+function roundToNearest(value: number, unit: number) {
+    return Math.round(value / unit) * unit
+}
+
 function DietPlanPageContent() {
     const { data: session, status } = useSession()
     const router = useRouter()
@@ -326,6 +349,63 @@ function DietPlanPageContent() {
         setEditingHistoryId(null);
     }
 
+    const latestWeight = useMemo(() => {
+        const sorted = [...weightHistory]
+            .filter(record => record.weight || record.weight_kg)
+            .sort((a, b) => String(b.date || b.created_at || '').localeCompare(String(a.date || a.created_at || '')))
+        const latest = sorted[0]
+        const value = latest?.weight ?? latest?.weight_kg
+        return value ? Number(value) : null
+    }, [weightHistory])
+
+    const calorieEstimate = useMemo(() => {
+        if (!selectedMember) return null
+
+        const age = calculateAge(selectedMember.birth_date)
+        const height = selectedMember.height_cm ? Number(selectedMember.height_cm) : null
+        const activity = selectedMember.activity_level ? Number(selectedMember.activity_level) : null
+        const gender = selectedMember.gender
+
+        if (!age || !height || !latestWeight || !activity || !gender) return null
+
+        const genderOffset = gender === 'male' ? 5 : -161
+        const bmr = (10 * latestWeight) + (6.25 * height) - (5 * age) + genderOffset
+        const maintenance = bmr * activity
+        const mildCut = Math.max(1200, maintenance - 300)
+        const standardCut = Math.max(1200, maintenance - 500)
+
+        return {
+            age,
+            height,
+            weight: latestWeight,
+            activity,
+            activityLabel: ACTIVITY_LABELS[String(activity)] || '未設定',
+            bmr: Math.round(bmr),
+            maintenance: Math.round(maintenance),
+            mildCut: roundToNearest(mildCut, 50),
+            standardCut: roundToNearest(standardCut, 50),
+        }
+    }, [selectedMember, latestWeight])
+
+    const applyCaloriesToPlan = (calories: number) => {
+        const protein = latestWeight ? Math.round(latestWeight * 1.8) : nutrientForm.protein
+        const fat = Math.round((calories * 0.25) / 9)
+        const carbs = Math.max(0, Math.round((calories - (protein * 4) - (fat * 9)) / 4))
+        const fiber = nutrientForm.fiber || DEFAULT_FIBER
+
+        setNutrientForm(prev => ({
+            ...prev,
+            targetCalories: calories,
+            protein,
+            fat,
+            carbs,
+            fiber,
+            sugar: Math.max(0, carbs - fiber),
+            title: prev.title || 'カロリー計算から作成',
+        }))
+        setActiveTab('plan')
+    }
+
     if (status === 'loading' || loadingMembers) {
         return <div className="min-h-screen flex items-center justify-center bg-gray-50"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-rose-600"></div></div>
     }
@@ -448,6 +528,61 @@ function DietPlanPageContent() {
 
                         {!loadingData && activeTab === 'plan' && (
                             <div className="space-y-12 pb-20 animate-fadeIn">
+                                <div className="bg-white rounded-[2.5rem] p-8 sm:p-10 shadow-sm border border-gray-100 space-y-6">
+                                    <div className="flex items-center justify-between gap-4">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-1.5 h-6 bg-blue-500 rounded-full"></div>
+                                            <h2 className="text-xl font-normal text-gray-800 tracking-tight">基礎情報からカロリー計算</h2>
+                                        </div>
+                                        <Link
+                                            href={`/admin/members/${selectedMember.id}/edit`}
+                                            className="text-xs text-blue-600 bg-blue-50 px-4 py-2 rounded-full hover:bg-blue-100 transition-colors"
+                                        >
+                                            会員情報を編集
+                                        </Link>
+                                    </div>
+
+                                    {calorieEstimate ? (
+                                        <>
+                                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                                <DietProfileStat label="年齢" value={`${calorieEstimate.age}歳`} />
+                                                <DietProfileStat label="身長" value={`${calorieEstimate.height}cm`} />
+                                                <DietProfileStat label="最新体重" value={`${calorieEstimate.weight}kg`} />
+                                                <DietProfileStat label="活動量" value={calorieEstimate.activityLabel} />
+                                            </div>
+
+                                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                                <CalorieEstimateCard
+                                                    label="基礎代謝"
+                                                    value={calorieEstimate.bmr}
+                                                    description="何もしなくても使う目安"
+                                                />
+                                                <CalorieEstimateCard
+                                                    label="維持カロリー"
+                                                    value={calorieEstimate.maintenance}
+                                                    description="今の体重を維持する目安"
+                                                    onApply={() => applyCaloriesToPlan(roundToNearest(calorieEstimate.maintenance, 50))}
+                                                />
+                                                <CalorieEstimateCard
+                                                    label="減量スタート"
+                                                    value={calorieEstimate.standardCut}
+                                                    description="停滞時はここから調整"
+                                                    onApply={() => applyCaloriesToPlan(calorieEstimate.standardCut)}
+                                                    primary
+                                                />
+                                            </div>
+
+                                            <div className="rounded-2xl bg-amber-50 border border-amber-100 p-4 text-xs text-amber-800 leading-relaxed">
+                                                まずは維持カロリーから300〜500kcal引いた数値を開始目安にします。1〜2週間の体重平均を見て、落ちない場合はさらに100〜200kcal下げる運用がしやすいです。
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <div className="rounded-2xl bg-gray-50 border border-gray-100 p-5 text-sm text-gray-500 leading-relaxed">
+                                            計算には、生年月日・性別・身長・活動量・最新体重が必要です。会員情報に基礎情報を入力し、体重記録が入ると自動で計算できます。
+                                        </div>
+                                    )}
+                                </div>
+
                                 {!isSettingNewGoal ? (
                                     <div className="bg-white rounded-[2.5rem] p-8 sm:p-10 shadow-sm border border-gray-100 space-y-10">
                                         <div className="flex items-center justify-between">
@@ -592,6 +727,43 @@ function AdminStatCard({ label, value, unit, color, onIncrement, onDecrement, is
                     <button onClick={(e) => { e.preventDefault(); onDecrement(); }} className="p-1 hover:bg-white rounded-lg text-gray-400 hover:text-gray-600"><svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg></button>
                 </div>
             </div>
+        </div>
+    )
+}
+
+function DietProfileStat({ label, value }: { label: string, value: string }) {
+    return (
+        <div className="rounded-2xl bg-gray-50 border border-gray-100 p-4">
+            <div className="text-[10px] text-gray-400 uppercase tracking-widest">{label}</div>
+            <div className="mt-1 text-lg text-gray-900">{value}</div>
+        </div>
+    )
+}
+
+function CalorieEstimateCard({ label, value, description, onApply, primary }: {
+    label: string
+    value: number
+    description: string
+    onApply?: () => void
+    primary?: boolean
+}) {
+    return (
+        <div className={`rounded-[2rem] border p-5 ${primary ? 'bg-blue-50 border-blue-100' : 'bg-gray-50 border-gray-100'}`}>
+            <div className={`text-[10px] uppercase tracking-widest ${primary ? 'text-blue-500' : 'text-gray-400'}`}>{label}</div>
+            <div className="mt-2 flex items-baseline gap-1">
+                <span className={`text-3xl tabular-nums ${primary ? 'text-blue-700' : 'text-gray-900'}`}>{value.toLocaleString()}</span>
+                <span className="text-xs text-gray-400">kcal</span>
+            </div>
+            <p className="mt-2 text-[11px] leading-relaxed text-gray-500">{description}</p>
+            {onApply && (
+                <button
+                    type="button"
+                    onClick={onApply}
+                    className={`mt-4 w-full rounded-xl px-3 py-2 text-xs transition-colors ${primary ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'}`}
+                >
+                    目標に反映
+                </button>
+            )}
         </div>
     )
 }

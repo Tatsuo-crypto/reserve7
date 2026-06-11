@@ -37,7 +37,12 @@ export async function GET(
         memo,
         access_token,
         online_reminder_enabled,
-        push_notification_enabled
+        push_notification_enabled,
+        birth_date,
+        gender,
+        height_cm,
+        activity_level,
+        target_weight_kg
       `)
       .eq('id', id)
       .single()

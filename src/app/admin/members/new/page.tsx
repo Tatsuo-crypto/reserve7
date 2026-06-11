@@ -24,6 +24,11 @@ export default function NewMemberPage() {
     memo: '',
     onlineReminderEnabled: true,
     pushNotificationEnabled: false,
+    birthDate: '',
+    gender: '',
+    heightCm: '',
+    activityLevel: '',
+    targetWeightKg: '',
   })
 
   // Check admin access
@@ -304,6 +309,84 @@ export default function NewMemberPage() {
               <option value="suspended">休会</option>
               <option value="withdrawn">退会</option>
             </select>
+          </div>
+
+          {/* ダイエット基礎情報 */}
+          <div className="pt-6 border-t border-gray-100">
+            <h3 className="text-lg font-normal text-gray-900 mb-2">ダイエット基礎情報</h3>
+            <p className="text-xs text-gray-500 mb-4">カロリー計算に使う情報です。ダイエット対象者だけ入力すれば大丈夫です。</p>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="birthDate" className="block text-sm font-normal text-gray-700 mb-2">生年月日</label>
+                <input
+                  type="date"
+                  id="birthDate"
+                  name="birthDate"
+                  value={formData.birthDate}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              <div>
+                <label htmlFor="gender" className="block text-sm font-normal text-gray-700 mb-2">性別</label>
+                <select
+                  id="gender"
+                  name="gender"
+                  value={formData.gender}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">未設定</option>
+                  <option value="female">女性</option>
+                  <option value="male">男性</option>
+                </select>
+              </div>
+              <div>
+                <label htmlFor="heightCm" className="block text-sm font-normal text-gray-700 mb-2">身長(cm)</label>
+                <input
+                  type="number"
+                  id="heightCm"
+                  name="heightCm"
+                  value={formData.heightCm}
+                  onChange={handleChange}
+                  min="0"
+                  step="0.1"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="160"
+                />
+              </div>
+              <div>
+                <label htmlFor="targetWeightKg" className="block text-sm font-normal text-gray-700 mb-2">目標体重(kg)</label>
+                <input
+                  type="number"
+                  id="targetWeightKg"
+                  name="targetWeightKg"
+                  value={formData.targetWeightKg}
+                  onChange={handleChange}
+                  min="0"
+                  step="0.1"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="55"
+                />
+              </div>
+              <div className="col-span-2">
+                <label htmlFor="activityLevel" className="block text-sm font-normal text-gray-700 mb-2">活動量</label>
+                <select
+                  id="activityLevel"
+                  name="activityLevel"
+                  value={formData.activityLevel}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">未設定</option>
+                  <option value="1.2">低い: デスクワーク中心</option>
+                  <option value="1.375">やや低い: 週1〜3回運動</option>
+                  <option value="1.55">普通: 週3〜5回運動</option>
+                  <option value="1.725">高い: 週6回以上運動</option>
+                  <option value="1.9">非常に高い: 肉体労働・アスリート</option>
+                </select>
+              </div>
+            </div>
           </div>
 
           {/* 通知設定 */}

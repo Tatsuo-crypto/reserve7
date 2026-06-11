@@ -28,6 +28,11 @@ export interface Member {
   access_token?: string;
   online_reminder_enabled?: boolean;
   push_notification_enabled?: boolean;
+  birth_date?: string | null;
+  gender?: string | null;
+  height_cm?: number | null;
+  activity_level?: number | null;
+  target_weight_kg?: number | null;
   stores?: Store;
 }
 
