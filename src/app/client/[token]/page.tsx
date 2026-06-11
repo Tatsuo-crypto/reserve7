@@ -25,7 +25,7 @@ const TrackingModal = dynamic(() => import('@/app/admin/members/TrackingModal'),
   )
 })
 
-type TabType = 'home' | 'res' | 'diet' | 'plan' | 'online'
+type TabType = 'home' | 'res' | 'diet' | 'plan' | 'online' | 'notifications'
 
 export default function ClientReservationsPage() {
   const params = useParams()
@@ -119,7 +119,8 @@ export default function ClientReservationsPage() {
     res: '予約確認',
     diet: '食事・体重管理',
     plan: '契約プラン',
-    online: 'オンライン'
+    online: 'オンライン',
+    notifications: '通知設定'
   };
 
   const formatName = (fullName: string | null | undefined) => {
@@ -149,7 +150,6 @@ export default function ClientReservationsPage() {
 
       {/* Main Content */}
       <main className="flex-1 max-w-lg mx-auto w-full p-4 overflow-x-hidden pb-24">
-        <PushNotificationPrompt token={token} />
         {activeTab === 'home' && (
           <HomeTab 
             token={token} 
@@ -175,6 +175,9 @@ export default function ClientReservationsPage() {
         {activeTab === 'online' && (
           <OnlineTab token={token} />
         )}
+        {activeTab === 'notifications' && (
+          <NotificationSettingsTab token={token} />
+        )}
       </main>
 
       {/* TrackingModal */}
@@ -189,7 +192,7 @@ export default function ClientReservationsPage() {
 
       {/* Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-gray-100 shadow-[0_-5px_25px_rgba(0,0,0,0.05)] z-40 pb-safe">
-        <div className={`grid ${isDietPlan ? 'grid-cols-5' : 'grid-cols-2'} items-center max-w-lg mx-auto h-20`}>
+        <div className={`grid ${isDietPlan ? 'grid-cols-6' : 'grid-cols-3'} items-center max-w-lg mx-auto h-20`}>
           <NavBtn
             active={activeTab === 'res'}
             onClick={() => setActiveTab('res')}
@@ -233,6 +236,13 @@ export default function ClientReservationsPage() {
           )}
 
           <NavBtn
+            active={activeTab === 'notifications'}
+            onClick={() => setActiveTab('notifications')}
+            icon={<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0a3 3 0 11-6 0m6 0H9" />}
+            label="通知"
+          />
+
+          <NavBtn
             active={activeTab === 'online'}
             onClick={() => setActiveTab('online')}
             icon={<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.069A1 1 0 0121 8.845v6.309a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />}
@@ -242,6 +252,30 @@ export default function ClientReservationsPage() {
       </nav>
 
 
+    </div>
+  )
+}
+
+function NotificationSettingsTab({ token }: { token: string }) {
+  return (
+    <div className="space-y-4 animate-fadeIn">
+      <PushNotificationPrompt token={token} />
+
+      <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+        <div className="flex items-start gap-3">
+          <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div>
+            <div className="text-sm text-gray-900">通知の受け取り</div>
+            <p className="mt-1 text-xs leading-relaxed text-gray-500">
+              予約のお知らせやオンラインレッスン開始前の通知を、この端末で受け取れます。
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
