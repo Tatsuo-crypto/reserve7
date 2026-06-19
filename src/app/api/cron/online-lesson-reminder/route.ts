@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 export const dynamic = 'force-dynamic'
 import { supabaseAdmin } from '@/lib/supabase'
-import { getMailSettings, sendOnlineLessonReminder, sendPersonalSessionReminder } from '@/lib/email'
+import { getMailSettings } from '@/lib/email'
 import { sendPushNotificationToUser } from '@/lib/push'
 
 function formatDateJST(date: Date): string {
@@ -28,11 +28,6 @@ function addMinutes(date: Date, minutes: number): Date {
     const next = new Date(date)
     next.setMinutes(next.getMinutes() + minutes)
     return next
-}
-
-function isDummyEmail(email: string): boolean {
-    const cleaned = email.trim().toLowerCase()
-    return cleaned === '-' || cleaned.includes('@gym.internal') || cleaned.includes('no-email-')
 }
 
 export async function GET(request: NextRequest) {
@@ -69,7 +64,7 @@ export async function GET(request: NextRequest) {
         const personalTargetStart = new Date(`${personalTargetDateStr}T00:00:00+09:00`).toISOString()
         const personalTargetEnd = new Date(`${personalTargetDateStr}T23:59:59+09:00`).toISOString()
 
-        const sentPersonalReminders: { reservationId: string; clientName: string; email: string }[] = []
+        const sentPersonalReminders: { reservationId: string; clientName: string; pushCount: number }[] = []
 
         if (settings.personal_reminder_enabled && !dryRun) {
             const { data: reservations, error: fetchError } = await supabaseAdmin
@@ -116,22 +111,8 @@ export async function GET(request: NextRequest) {
                     continue
                 }
 
-                const storeName = res.calendar_id === 'tandjgym@gmail.com' ? 'T&J GYM 1号店' : 'T&J GYM 2号店'
-
                 try {
-                    let success = false
-
-                    if (client.email && client.email.trim() !== '' && !isDummyEmail(client.email)) {
-                        success = await sendPersonalSessionReminder({
-                            email: client.email,
-                            clientName: client.full_name,
-                            title: res.title,
-                            startTime: res.start_time,
-                            endTime: res.end_time,
-                            storeName,
-                            notes: res.notes || undefined
-                        }) || success
-                    }
+                    let pushCount = 0
 
                     if (client.push_notification_enabled && client.access_token) {
                         const startDate = new Date(res.start_time)
@@ -146,15 +127,14 @@ export async function GET(request: NextRequest) {
                             hour: '2-digit',
                             minute: '2-digit',
                         })
-                        const pushCount = await sendPushNotificationToUser(client.id, {
+                        pushCount = await sendPushNotificationToUser(client.id, {
                             title: 'ご予約前日のお知らせ',
                             body: `${dateStr} ${timeStr}のセッション予定があります。`,
                             url: `/client/${client.access_token}`
                         })
-                        success = pushCount > 0 || success
                     }
 
-                    if (success) {
+                    if (pushCount > 0) {
                         const { error: insertError } = await supabaseAdmin
                             .from('reservation_reminders')
                             .insert({
@@ -169,8 +149,8 @@ export async function GET(request: NextRequest) {
                         sentPersonalReminders.push({
                             reservationId: res.id,
                             clientName: client.full_name,
-                        email: client.email
-                    })
+                            pushCount
+                        })
                     }
                 } catch (err) {
                     console.error(`Failed to send personal reminder for reservation ${res.id}:`, err)
@@ -285,17 +265,9 @@ export async function GET(request: NextRequest) {
                     u
                 )
 
-            const validUsers = targetUsers
-                .filter((u: any) =>
-                    u.email && 
-                    u.email.trim() !== '' && 
-                    !u.email.endsWith('@gym.internal') && 
-                    !u.email.endsWith('@example.com')
-                )
-
             const pushUsers = targetUsers.filter((u: any) => u.push_notification_enabled && u.access_token)
 
-            if (validUsers.length === 0 && pushUsers.length === 0) {
+            if (pushUsers.length === 0) {
                 console.log(`[Online Lesson Cron] No target users found for lesson: ${lesson.title} (${lesson.id})`)
                 skippedLessons.push({
                     lessonId: lesson.id,
@@ -307,39 +279,19 @@ export async function GET(request: NextRequest) {
                 continue
             }
 
-            console.log(`[Online Lesson Cron] Sending reminders for "${lesson.title}" at ${lesson.start_time} to ${validUsers.length} users`)
+            console.log(`[Online Lesson Cron] Sending push reminders for "${lesson.title}" at ${lesson.start_time} to ${pushUsers.length} users`)
 
             let successCount = 0
             matchedLessons.push({
                 lessonId: lesson.id,
                 title: lesson.title,
                 startTime: lesson.start_time,
-                recipientCount: validUsers.length + pushUsers.length,
+                recipientCount: pushUsers.length,
                 pushRecipientCount: pushUsers.length,
-                emailRecipientCount: validUsers.length
+                emailRecipientCount: 0
             })
 
             if (!dryRun) {
-                for (const user of validUsers) {
-                    try {
-                        const formattedStartTime = lesson.start_time.substring(0, 5)
-                        const formattedEndTime = lesson.end_time ? lesson.end_time.substring(0, 5) : ''
-                        const success = await sendOnlineLessonReminder({
-                            email: user.email,
-                            clientName: user.full_name,
-                            title: lesson.title,
-                            startTime: formattedStartTime,
-                            endTime: formattedEndTime,
-                            meetUrl: lesson.meet_url,
-                            description: lesson.description || undefined,
-                            difficulty: lesson.difficulty || undefined
-                        })
-                        if (success) successCount++
-                    } catch (emailError) {
-                        console.error(`Failed to send email to user ${user.id} (${user.email}):`, emailError)
-                    }
-                }
-
                 for (const user of pushUsers) {
                     try {
                         const formattedStartTime = lesson.start_time.substring(0, 5)
