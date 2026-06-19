@@ -354,7 +354,10 @@ export default function HomeTab({ token, userName, todayDraft }: HomeTabProps) {
 }
 
 function WeeklyProgressItem({ label, actual, target, unit, color, perDay, isFrequency, recordedDays }: { label: string, actual: number, target: number, unit: string, color: string, perDay: number, isFrequency?: boolean, recordedDays?: number }) {
-    const pct = target > 0 ? Math.min(100, Math.round((actual / target) * 100)) : 0;
+    const pct = target > 0 ? Math.round((actual / target) * 100) : 0;
+    const barPct = Math.min(100, pct);
+    const filledDays = Math.min(7, recordedDays || 0);
+    const recordedPct = (filledDays / 7) * 100;
     const colors: Record<string, string> = {
         rose: 'bg-rose-500',
         amber: 'bg-amber-500',
@@ -374,6 +377,16 @@ function WeeklyProgressItem({ label, actual, target, unit, color, perDay, isFreq
         teal: 'text-teal-600',
         orange: 'text-orange-600',
         indigo: 'text-indigo-600',
+    }
+    const guideColors: Record<string, string> = {
+        rose: 'bg-rose-100',
+        amber: 'bg-amber-100',
+        emerald: 'bg-emerald-100',
+        blue: 'bg-blue-100',
+        sky: 'bg-sky-100',
+        teal: 'bg-teal-100',
+        orange: 'bg-orange-100',
+        indigo: 'bg-indigo-100',
     }
 
     return (
@@ -397,10 +410,24 @@ function WeeklyProgressItem({ label, actual, target, unit, color, perDay, isFreq
                     </p>
                 </div>
             </div>
-            <div className="h-2 bg-gray-50 rounded-full overflow-hidden p-0.5 border border-gray-100">
+            <div className="relative h-3 rounded-full overflow-hidden bg-gray-50 border border-gray-100">
+                <div className="absolute inset-x-1 top-1/2 -translate-y-1/2 grid grid-cols-7 gap-1">
+                    {Array.from({ length: 7 }).map((_, index) => (
+                        <span
+                            key={index}
+                            className={`h-1 rounded-full ${index < filledDays ? guideColors[color] : 'bg-gray-100'}`}
+                        />
+                    ))}
+                </div>
+                {recordedDays !== undefined && (
+                    <div
+                        className={`absolute left-0 top-1/2 h-1 -translate-y-1/2 rounded-full ${guideColors[color]}`}
+                        style={{ width: `${recordedPct}%` }}
+                    />
+                )}
                 <div 
-                    className={`h-full transition-all duration-1000 rounded-full ${colors[color]} shadow-sm`} 
-                    style={{ width: `${pct}%` }} 
+                    className={`absolute left-0 top-1/2 h-1.5 -translate-y-1/2 transition-all duration-1000 rounded-full ${colors[color]} shadow-sm`}
+                    style={{ width: `${barPct}%` }}
                 />
             </div>
             <div className="flex justify-between items-center text-[7px] font-normal text-gray-300 uppercase tracking-tighter leading-none">

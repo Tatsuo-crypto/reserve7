@@ -30,6 +30,11 @@ export type Database = {
           memo: string | null;
           online_reminder_enabled: boolean;
           push_notification_enabled: boolean;
+          birth_date: string | null;
+          gender: string | null;
+          height_cm: number | null;
+          activity_level: number | null;
+          target_weight_kg: number | null;
         };
         Insert: {
           id?: string;
@@ -45,6 +50,11 @@ export type Database = {
           memo?: string | null;
           online_reminder_enabled?: boolean;
           push_notification_enabled?: boolean;
+          birth_date?: string | null;
+          gender?: string | null;
+          height_cm?: number | null;
+          activity_level?: number | null;
+          target_weight_kg?: number | null;
         };
         Update: {
           id?: string;
@@ -60,6 +70,11 @@ export type Database = {
           memo?: string | null;
           online_reminder_enabled?: boolean;
           push_notification_enabled?: boolean;
+          birth_date?: string | null;
+          gender?: string | null;
+          height_cm?: number | null;
+          activity_level?: number | null;
+          target_weight_kg?: number | null;
         };
       };
       reservations: {

@@ -78,6 +78,11 @@ export async function GET(request: NextRequest) {
         access_token,
         online_reminder_enabled,
         push_notification_enabled,
+        birth_date,
+        gender,
+        height_cm,
+        activity_level,
+        target_weight_kg,
         lifestyle_settings!left(visible_tabs)
       `)
       .neq('email', 'tandjgym@gmail.com')
@@ -185,7 +190,7 @@ export async function POST(request: NextRequest) {
       return createErrorResponse('管理者権限が必要です', 403)
     }
 
-    const { fullName, email, googleCalendarEmail, plan, status, memo, storeId, monthlyFee, startMonth, registrationDate, onlineReminderEnabled, pushNotificationEnabled } = await request.json()
+    const { fullName, email, googleCalendarEmail, plan, status, memo, storeId, monthlyFee, startMonth, registrationDate, onlineReminderEnabled, pushNotificationEnabled, birthDate, gender, heightCm, activityLevel, targetWeightKg } = await request.json()
 
     // Validation
     // 名前とメールアドレスは任意（空欄の場合はダミー値を設定）
@@ -241,6 +246,11 @@ export async function POST(request: NextRequest) {
       role: 'CLIENT',
       online_reminder_enabled: onlineReminderEnabled === true,
       push_notification_enabled: pushNotificationEnabled === true,
+      birth_date: birthDate || null,
+      gender: gender || null,
+      height_cm: heightCm ? Number(heightCm) : null,
+      activity_level: activityLevel ? Number(activityLevel) : null,
+      target_weight_kg: targetWeightKg ? Number(targetWeightKg) : null,
       // access_tokenはSupabaseがUUIDで自動生成
     }
 
@@ -306,7 +316,7 @@ export async function PATCH(request: NextRequest) {
       return createErrorResponse('管理者権限が必要です', 403)
     }
 
-    const { memberId, fullName, email, googleCalendarEmail, storeId, status, plan, monthlyFee, memo, statusChangeDate, changeDate, startMonth, registrationDate, onlineReminderEnabled, pushNotificationEnabled } = await request.json()
+    const { memberId, fullName, email, googleCalendarEmail, storeId, status, plan, monthlyFee, memo, statusChangeDate, changeDate, startMonth, registrationDate, onlineReminderEnabled, pushNotificationEnabled, birthDate, gender, heightCm, activityLevel, targetWeightKg } = await request.json()
 
     // Validate status if provided
     if (status && !['active', 'suspended', 'withdrawn'].includes(status)) {
@@ -348,6 +358,11 @@ export async function PATCH(request: NextRequest) {
     if (memo !== undefined) updateData.memo = memo
     if (onlineReminderEnabled !== undefined) updateData.online_reminder_enabled = onlineReminderEnabled
     if (pushNotificationEnabled !== undefined) updateData.push_notification_enabled = pushNotificationEnabled
+    if (birthDate !== undefined) updateData.birth_date = birthDate || null
+    if (gender !== undefined) updateData.gender = gender || null
+    if (heightCm !== undefined) updateData.height_cm = heightCm ? Number(heightCm) : null
+    if (activityLevel !== undefined) updateData.activity_level = activityLevel ? Number(activityLevel) : null
+    if (targetWeightKg !== undefined) updateData.target_weight_kg = targetWeightKg ? Number(targetWeightKg) : null
 
     // Update member
     const { data, error } = await supabaseAdmin

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 export const dynamic = 'force-dynamic'
 import { supabaseAdmin } from '@/lib/supabase'
-import { getMailSettings, sendPersonalSessionReminder } from '@/lib/email'
+import { getMailSettings } from '@/lib/email'
+import { sendPushNotificationToUser } from '@/lib/push'
 
 export async function GET(request: NextRequest) {
   try {
@@ -65,7 +66,9 @@ export async function GET(request: NextRequest) {
         users!client_id (
           id,
           full_name,
-          email
+          email,
+          access_token,
+          push_notification_enabled
         )
       `)
       .gte('start_time', targetStart)
@@ -81,21 +84,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ message: `No reservations found for date: ${targetDateStr}` })
     }
 
-    const sentReminders: { reservationId: string; clientName: string; email: string }[] = []
+    const sentReminders: { reservationId: string; clientName: string; pushCount: number }[] = []
 
     for (const res of reservations) {
       const client = res.users as any
-      if (!client || !client.email || client.email.trim() === '') {
-        continue
-      }
-
-      // Check if client email is dummy
-      const isDummy = (email: string) => {
-        const cleaned = email.trim().toLowerCase()
-        return cleaned === '-' || cleaned.includes('@gym.internal') || cleaned.includes('no-email-')
-      }
-      if (isDummy(client.email)) {
-        console.log(`[Personal Reminder Cron] Skipping dummy email: ${client.email}`)
+      if (!client || !client.push_notification_enabled || !client.access_token) {
         continue
       }
 
@@ -117,23 +110,28 @@ export async function GET(request: NextRequest) {
         continue
       }
 
-    // Determine store name
-    const storeName = res.calendar_id === 'tandjgym@gmail.com' ? 'T&J GYM 1号店' : 'T&J GYM 2号店'
-
-    // 2. Send reminder email
+    // 2. Send push notification only. Email delivery is intentionally off for now.
     try {
-      console.log(`[Personal Reminder Cron] Sending reminder to ${client.full_name} (${client.email}) for reservation ${res.id}`)
-      const success = await sendPersonalSessionReminder({
-        email: client.email,
-        clientName: client.full_name,
-        title: res.title,
-        startTime: res.start_time,
-        endTime: res.end_time,
-        storeName,
-        notes: res.notes || undefined
+      console.log(`[Personal Reminder Cron] Sending push reminder to ${client.full_name} for reservation ${res.id}`)
+      const startDate = new Date(res.start_time)
+      const dateStr = startDate.toLocaleDateString('ja-JP', {
+        timeZone: 'Asia/Tokyo',
+        month: 'long',
+        day: 'numeric',
+        weekday: 'short',
+      })
+      const timeStr = startDate.toLocaleTimeString('ja-JP', {
+        timeZone: 'Asia/Tokyo',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+      const pushCount = await sendPushNotificationToUser(client.id, {
+        title: 'ご予約前日のお知らせ',
+        body: `${dateStr} ${timeStr}のセッション予定があります。`,
+        url: `/client/${client.access_token}`
       })
 
-        if (success) {
+        if (pushCount > 0) {
           // 3. Record log
           const { error: insertError } = await supabaseAdmin
             .from('reservation_reminders')
@@ -149,7 +147,7 @@ export async function GET(request: NextRequest) {
           sentReminders.push({
             reservationId: res.id,
             clientName: client.full_name,
-            email: client.email
+            pushCount
           })
         }
       } catch (err) {
