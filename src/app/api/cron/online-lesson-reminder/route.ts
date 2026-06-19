@@ -17,6 +17,19 @@ function formatTimeJST(date: Date): string {
     return `${hour}:${minute}`
 }
 
+function minutesFromTime(time?: string | null): number | null {
+    if (!time) return null
+    const [hour, minute] = time.substring(0, 5).split(':').map(Number)
+    if (!Number.isFinite(hour) || !Number.isFinite(minute)) return null
+    return hour * 60 + minute
+}
+
+function addMinutes(date: Date, minutes: number): Date {
+    const next = new Date(date)
+    next.setMinutes(next.getMinutes() + minutes)
+    return next
+}
+
 function isDummyEmail(email: string): boolean {
     const cleaned = email.trim().toLowerCase()
     return cleaned === '-' || cleaned.includes('@gym.internal') || cleaned.includes('no-email-')
@@ -38,9 +51,16 @@ export async function GET(request: NextRequest) {
         }
 
         const settings = await getMailSettings()
+        const dryRun = searchParams.get('dryRun') === 'true'
+        const force = searchParams.get('force') === 'true'
+        const configuredGraceMinutes = Number(searchParams.get('graceMinutes') || process.env.ONLINE_REMINDER_GRACE_MINUTES || 10)
+        const graceMinutes = Number.isFinite(configuredGraceMinutes) ? Math.max(0, configuredGraceMinutes) : 10
 
         // Get current JST time. This cron is expected to run once per day at 21:00 JST.
-        const jstDateStr = new Date().toLocaleString("en-US", { timeZone: "Asia/Tokyo" })
+        const nowParam = searchParams.get('now')
+        const jstDateStr = nowParam
+            ? new Date(nowParam).toLocaleString("en-US", { timeZone: "Asia/Tokyo" })
+            : new Date().toLocaleString("en-US", { timeZone: "Asia/Tokyo" })
         const jstNow = new Date(jstDateStr)
 
         const personalTargetDate = new Date(jstNow)
@@ -51,7 +71,7 @@ export async function GET(request: NextRequest) {
 
         const sentPersonalReminders: { reservationId: string; clientName: string; email: string }[] = []
 
-        if (settings.personal_reminder_enabled) {
+        if (settings.personal_reminder_enabled && !dryRun) {
             const { data: reservations, error: fetchError } = await supabaseAdmin
                 .from('reservations')
                 .select(`
@@ -158,13 +178,19 @@ export async function GET(request: NextRequest) {
             }
         }
 
-        const onlineTargetTime = new Date(jstNow)
-        onlineTargetTime.setMinutes(jstNow.getMinutes() + settings.reminder_before_minutes)
+        const reminderBeforeMinutes = settings.reminder_before_minutes ?? 30
+        const onlineTargetTime = addMinutes(jstNow, reminderBeforeMinutes)
+        const onlineWindowStart = addMinutes(onlineTargetTime, -graceMinutes)
+        const onlineWindowEnd = addMinutes(onlineTargetTime, graceMinutes)
         const onlineTargetDateStr = formatDateJST(onlineTargetTime)
         const onlineTargetTimeStr = formatTimeJST(onlineTargetTime)
+        const onlineWindowStartStr = formatTimeJST(onlineWindowStart)
+        const onlineWindowEndStr = formatTimeJST(onlineWindowEnd)
         const onlineTargetDow = onlineTargetTime.getDay() // 0: Sun, 1: Mon, ... 6: Sat
+        const onlineWindowStartMinutes = minutesFromTime(onlineWindowStartStr) ?? 0
+        const onlineWindowEndMinutes = minutesFromTime(onlineWindowEndStr) ?? 0
 
-        console.log(`[Online Lesson Cron] Running reminder check for ${onlineTargetDateStr} ${onlineTargetTimeStr} JST (DOW: ${onlineTargetDow})`)
+        console.log(`[Online Lesson Cron] Running reminder check for ${onlineTargetDateStr} ${onlineTargetTimeStr} JST (DOW: ${onlineTargetDow}, window: ${onlineWindowStartStr}-${onlineWindowEndStr}, dryRun: ${dryRun})`)
 
         // Fetch active online lessons
         const { data: lessons, error: lessonsError } = await supabaseAdmin
@@ -182,14 +208,31 @@ export async function GET(request: NextRequest) {
         }
 
         const sentReminders: { lessonId: string; title: string; recipientCount: number }[] = []
+        const matchedLessons: { lessonId: string; title: string; startTime: string; recipientCount: number; pushRecipientCount: number; emailRecipientCount: number }[] = []
+        const skippedLessons: { lessonId: string; title: string; reason: string; startTime?: string | null; dayOfWeek?: number[] | null }[] = []
 
         for (const lesson of lessons) {
             const isScheduledForTargetDay = lesson.day_of_week && Array.isArray(lesson.day_of_week) && lesson.day_of_week.includes(onlineTargetDow)
             if (!isScheduledForTargetDay) {
+                skippedLessons.push({
+                    lessonId: lesson.id,
+                    title: lesson.title,
+                    reason: 'target-day-mismatch',
+                    startTime: lesson.start_time,
+                    dayOfWeek: lesson.day_of_week
+                })
                 continue
             }
 
-            if (!lesson.start_time || lesson.start_time.substring(0, 5) !== onlineTargetTimeStr) {
+            const lessonStartMinutes = minutesFromTime(lesson.start_time)
+            if (lessonStartMinutes === null || lessonStartMinutes < onlineWindowStartMinutes || lessonStartMinutes > onlineWindowEndMinutes) {
+                skippedLessons.push({
+                    lessonId: lesson.id,
+                    title: lesson.title,
+                    reason: 'target-time-window-mismatch',
+                    startTime: lesson.start_time,
+                    dayOfWeek: lesson.day_of_week
+                })
                 continue
             }
 
@@ -205,8 +248,15 @@ export async function GET(request: NextRequest) {
                 continue
             }
 
-            if (existingReminder) {
+            if (!force && existingReminder) {
                 console.log(`[Online Lesson Cron] Reminder already sent for lesson: ${lesson.title} (${lesson.id}) on ${onlineTargetDateStr}`)
+                skippedLessons.push({
+                    lessonId: lesson.id,
+                    title: lesson.title,
+                    reason: 'already-sent',
+                    startTime: lesson.start_time,
+                    dayOfWeek: lesson.day_of_week
+                })
                 continue
             }
 
@@ -247,47 +297,65 @@ export async function GET(request: NextRequest) {
 
             if (validUsers.length === 0 && pushUsers.length === 0) {
                 console.log(`[Online Lesson Cron] No target users found for lesson: ${lesson.title} (${lesson.id})`)
+                skippedLessons.push({
+                    lessonId: lesson.id,
+                    title: lesson.title,
+                    reason: 'no-target-users',
+                    startTime: lesson.start_time,
+                    dayOfWeek: lesson.day_of_week
+                })
                 continue
             }
 
             console.log(`[Online Lesson Cron] Sending reminders for "${lesson.title}" at ${lesson.start_time} to ${validUsers.length} users`)
 
             let successCount = 0
-            for (const user of validUsers) {
-                try {
-                    const formattedStartTime = lesson.start_time.substring(0, 5)
-                    const formattedEndTime = lesson.end_time ? lesson.end_time.substring(0, 5) : ''
-                    const success = await sendOnlineLessonReminder({
-                        email: user.email,
-                        clientName: user.full_name,
-                        title: lesson.title,
-                        startTime: formattedStartTime,
-                        endTime: formattedEndTime,
-                        meetUrl: lesson.meet_url,
-                        description: lesson.description || undefined,
-                        difficulty: lesson.difficulty || undefined
-                    })
-                    if (success) successCount++
-                } catch (emailError) {
-                    console.error(`Failed to send email to user ${user.id} (${user.email}):`, emailError)
+            matchedLessons.push({
+                lessonId: lesson.id,
+                title: lesson.title,
+                startTime: lesson.start_time,
+                recipientCount: validUsers.length + pushUsers.length,
+                pushRecipientCount: pushUsers.length,
+                emailRecipientCount: validUsers.length
+            })
+
+            if (!dryRun) {
+                for (const user of validUsers) {
+                    try {
+                        const formattedStartTime = lesson.start_time.substring(0, 5)
+                        const formattedEndTime = lesson.end_time ? lesson.end_time.substring(0, 5) : ''
+                        const success = await sendOnlineLessonReminder({
+                            email: user.email,
+                            clientName: user.full_name,
+                            title: lesson.title,
+                            startTime: formattedStartTime,
+                            endTime: formattedEndTime,
+                            meetUrl: lesson.meet_url,
+                            description: lesson.description || undefined,
+                            difficulty: lesson.difficulty || undefined
+                        })
+                        if (success) successCount++
+                    } catch (emailError) {
+                        console.error(`Failed to send email to user ${user.id} (${user.email}):`, emailError)
+                    }
+                }
+
+                for (const user of pushUsers) {
+                    try {
+                        const formattedStartTime = lesson.start_time.substring(0, 5)
+                        const pushCount = await sendPushNotificationToUser(user.id, {
+                            title: 'オンラインセッションのお知らせ',
+                            body: `${lesson.title}が${formattedStartTime}から始まります。`,
+                            url: `/client/${user.access_token}?tab=online`
+                        })
+                        if (pushCount > 0) successCount++
+                    } catch (pushError) {
+                        console.error(`Failed to send push notification to user ${user.id}:`, pushError)
+                    }
                 }
             }
 
-            for (const user of pushUsers) {
-                try {
-                    const formattedStartTime = lesson.start_time.substring(0, 5)
-                    const pushCount = await sendPushNotificationToUser(user.id, {
-                        title: 'オンラインセッションのお知らせ',
-                        body: `${lesson.title}が${formattedStartTime}から始まります。`,
-                        url: `/client/${user.access_token}?tab=online`
-                    })
-                    if (pushCount > 0) successCount++
-                } catch (pushError) {
-                    console.error(`Failed to send push notification to user ${user.id}:`, pushError)
-                }
-            }
-
-            if (successCount > 0) {
+            if (!dryRun && successCount > 0) {
                 const { error: insertError } = await supabaseAdmin
                     .from('online_lesson_reminders')
                     .insert({
@@ -317,7 +385,15 @@ export async function GET(request: NextRequest) {
             online: {
                 targetDate: onlineTargetDateStr,
                 targetTime: onlineTargetTimeStr,
+                targetWindow: {
+                    start: onlineWindowStartStr,
+                    end: onlineWindowEndStr,
+                    graceMinutes
+                },
+                dryRun,
                 processedCount: sentReminders.length,
+                matchedLessons,
+                skippedLessons,
                 sentReminders
             }
         })

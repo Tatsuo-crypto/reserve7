@@ -72,6 +72,56 @@ function roundToNearest(value: number, unit: number) {
     return Math.round(value / unit) * unit
 }
 
+function getRecordDate(record: any) {
+    const value = record?.date || record?.recorded_date || record?.created_at || record?.target_date
+    if (!value) return null
+    const date = new Date(value)
+    return Number.isNaN(date.getTime()) ? null : date
+}
+
+function getWeekRange(weekOffset = 0) {
+    const anchor = new Date()
+    anchor.setDate(anchor.getDate() + (weekOffset * 7))
+    const day = anchor.getDay()
+    const daysFromMonday = day === 0 ? 6 : day - 1
+    const start = new Date(anchor)
+    start.setDate(anchor.getDate() - daysFromMonday)
+    start.setHours(0, 0, 0, 0)
+    const end = new Date(start)
+    end.setDate(start.getDate() + 6)
+    end.setHours(23, 59, 59, 999)
+
+    const prevEnd = new Date(start)
+    prevEnd.setMilliseconds(-1)
+    const prevStart = new Date(prevEnd)
+    prevStart.setDate(prevStart.getDate() - 6)
+    prevStart.setHours(0, 0, 0, 0)
+
+    return { start, end, prevStart, prevEnd }
+}
+
+function filterByRange(records: any[], start: Date, end: Date) {
+    return records.filter(record => {
+        const date = getRecordDate(record)
+        return date && date >= start && date <= end
+    })
+}
+
+function average(records: any[], key: string) {
+    return averageByKeys(records, [key])
+}
+
+function averageByKeys(records: any[], keys: string[]) {
+    const values = records
+        .map(record => {
+            const raw = keys.map(key => record?.[key]).find(value => value !== null && value !== undefined)
+            return Number(raw || 0)
+        })
+        .filter(value => Number.isFinite(value) && value > 0)
+    if (!values.length) return null
+    return values.reduce((sum, value) => sum + value, 0) / values.length
+}
+
 function DietPlanPageContent() {
     const { data: session, status } = useSession()
     const router = useRouter()
@@ -90,6 +140,7 @@ function DietPlanPageContent() {
     const [analysisPeriod, setAnalysisPeriod] = useState<PeriodType>('1m')
     const [selectedWeek, setSelectedWeek] = useState<string>('')
     const [showWeightAvg, setShowWeightAvg] = useState(false)
+    const [summaryWeekOffset, setSummaryWeekOffset] = useState(0)
     const [sharedState, setSharedState] = useState<any>({
         selectedDate: new Date().toISOString().split('T')[0],
         habits: { workout: 0 }
@@ -140,11 +191,12 @@ function DietPlanPageContent() {
     const fetchMemberData = useCallback(async (userId: string, token: string) => {
         setLoadingData(true)
         try {
-            const [dietRes, lifestyleRes, trackingRes, logsRes] = await Promise.all([
+            const [dietRes, lifestyleRes, trackingRes, logsRes, lifeLogsRes] = await Promise.all([
                 fetch(`/api/diet/goals?token=${token}`),
                 fetch(`/api/lifestyle/settings?userId=${userId}`),
                 fetch(`/api/admin/member-tracking/${userId}`),
-                fetch(`/api/diet/logs?token=${token}`)
+                fetch(`/api/diet/logs?token=${token}`),
+                fetch(`/api/lifestyle/logs?token=${token}`)
             ])
 
             if (dietRes.ok) {
@@ -191,6 +243,14 @@ function DietPlanPageContent() {
                     const json = JSON.parse(text)
                     setWeightHistory(json.data?.weightRecords || [])
                     setLifestyleHistory(json.data?.lifestyleLogs || [])
+                }
+            }
+
+            if (lifeLogsRes.ok) {
+                const text = await lifeLogsRes.text()
+                if (text) {
+                    const { data } = JSON.parse(text)
+                    if (data) setLifestyleHistory(data)
                 }
             }
 
@@ -387,6 +447,93 @@ function DietPlanPageContent() {
         }
     }, [selectedMember, latestWeight])
 
+    const weeklySummary = useMemo(() => {
+        const { start, end, prevStart, prevEnd } = getWeekRange(summaryWeekOffset)
+        const weekIntake = filterByRange(intakeHistory, start, end)
+        const weekLifestyle = filterByRange(lifestyleHistory, start, end)
+        const weekWeight = filterByRange(weightHistory, start, end)
+        const prevWeight = filterByRange(weightHistory, prevStart, prevEnd)
+        const prevLifestyle = filterByRange(lifestyleHistory, prevStart, prevEnd)
+        const targetDateStr = end.toLocaleDateString('sv-SE')
+        const currentDietGoal = [...dietHistory]
+            .filter(goal => goal?.start_date && goal.start_date <= targetDateStr)
+            .sort((a, b) => b.start_date.localeCompare(a.start_date))[0]
+        const effectiveTargetCalories = Number(currentDietGoal?.calories || nutrientForm.targetCalories)
+        const effectiveTargetProtein = Number(currentDietGoal?.protein || nutrientForm.protein)
+        const effectiveTargetFat = Number(currentDietGoal?.fat || nutrientForm.fat)
+        const effectiveTargetCarbs = Number(currentDietGoal?.carbs || nutrientForm.carbs)
+        const effectiveTargetFiber = Number(currentDietGoal?.fiber || nutrientForm.fiber || DEFAULT_FIBER)
+
+        const avgCalories = average(weekIntake, 'calories')
+        const avgProtein = average(weekIntake, 'protein')
+        const avgFat = average(weekIntake, 'fat')
+        const avgCarbs = average(weekIntake, 'carbs')
+        const avgFiber = average(weekIntake, 'fiber')
+        const avgWeight = average(weekWeight, 'weight') ?? average(weekWeight, 'weight_kg') ?? average(weekLifestyle, 'weight') ?? average(weekLifestyle, 'weight_kg')
+        const prevAvgWeight = average(prevWeight, 'weight') ?? average(prevWeight, 'weight_kg') ?? average(prevLifestyle, 'weight') ?? average(prevLifestyle, 'weight_kg')
+        const avgSteps = average(weekLifestyle, 'steps')
+        const avgWater = averageByKeys(weekLifestyle, ['water_liters', 'water'])
+        const prevAvgWater = averageByKeys(prevLifestyle, ['water_liters', 'water'])
+        const avgSleep = averageByKeys(weekLifestyle, ['sleep_hours', 'sleep'])
+        const workouts = weekLifestyle.filter(record => Number(record?.habits?.workout || record?.workout || 0) > 0).length
+
+        return {
+            dateLabel: `${start.getMonth() + 1}/${start.getDate()}〜${end.getMonth() + 1}/${end.getDate()}`,
+            targetCalories: effectiveTargetCalories,
+            targetProtein: effectiveTargetProtein,
+            targetFat: effectiveTargetFat,
+            targetCarbs: effectiveTargetCarbs,
+            targetFiber: effectiveTargetFiber,
+            recordedMeals: weekIntake.length,
+            recordedHabits: weekLifestyle.length,
+            avgCalories,
+            calorieDiff: avgCalories === null ? null : Math.round(avgCalories - effectiveTargetCalories),
+            avgProtein,
+            avgFat,
+            avgCarbs,
+            avgFiber,
+            avgWeight,
+            weightDiff: avgWeight !== null && prevAvgWeight !== null ? avgWeight - prevAvgWeight : null,
+            avgSteps,
+            avgWater,
+            waterDiff: avgWater !== null && prevAvgWater !== null ? avgWater - prevAvgWater : null,
+            avgSleep,
+            workouts,
+        }
+    }, [intakeHistory, lifestyleHistory, weightHistory, dietHistory, nutrientForm.targetCalories, summaryWeekOffset])
+
+    const goalChartData = useMemo(() => {
+        return [...dietHistory]
+            .filter(goal => goal?.start_date)
+            .sort((a, b) => a.start_date.localeCompare(b.start_date))
+            .map(goal => {
+                const [year, month, day] = goal.start_date.split('-')
+                const protein = Number(goal.protein || 0)
+                const fat = Number(goal.fat || 0)
+                const carbs = Number(goal.carbs || 0)
+                const calories = Number(goal.calories || 0)
+                const proteinCalories = protein * 4
+                const fatCalories = fat * 9
+                const calculatedCarbCalories = carbs * 4
+                const carbCalories = calories > 0
+                    ? Math.max(0, calories - proteinCalories - fatCalories)
+                    : calculatedCarbCalories
+                return {
+                    date: goal.start_date,
+                    displayDate: `${Number(month)}/${Number(day)}`,
+                    fullDate: `${year}/${Number(month)}/${Number(day)}`,
+                    calories,
+                    protein,
+                    fat,
+                    carbs,
+                    proteinCalories,
+                    fatCalories,
+                    carbCalories,
+                    pfcCalories: calories || (proteinCalories + fatCalories + carbCalories),
+                }
+            })
+    }, [dietHistory])
+
     const applyCaloriesToPlan = (calories: number) => {
         const protein = latestWeight ? Math.round(latestWeight * 1.8) : nutrientForm.protein
         const fat = Math.round((calories * 0.25) / 9)
@@ -416,7 +563,7 @@ function DietPlanPageContent() {
     );
 
     return (
-        <div className="min-h-screen bg-gray-50 pt-4 pb-12 text-gray-900">
+        <div className={`min-h-screen bg-gray-50 pb-12 text-gray-900 ${selectedMember ? 'pt-0' : 'pt-4'}`}>
             <div className="max-w-2xl mx-auto px-4 sm:px-6">
                 {!selectedMember ? (
                     <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden">
@@ -452,22 +599,44 @@ function DietPlanPageContent() {
                         </div>
                     </div>
                 ) : (
-                    <div className="space-y-16 mt-10">
-                        <div className="flex bg-white/80 backdrop-blur-md p-2 rounded-[2.5rem] border border-gray-100 shadow-sm sticky top-6 z-30 gap-1 overflow-x-auto no-scrollbar max-w-2xl mx-auto">
-                            {[
-                                { id: 'progress', label: '習慣達成' },
-                                { id: 'history', label: '食事履歴' },
-                                { id: 'analyze', label: '分析' },
-                                { id: 'plan', label: '目標' }
-                            ].map(tab => (
-                                <button key={tab.id} onClick={() => setActiveTab(tab.id as TabType)} className={`flex-1 py-3 px-4 text-[11px] sm:text-sm font-normal transition-all duration-300 rounded-2xl ${activeTab === tab.id ? 'bg-gray-900 text-white shadow-xl scale-[1.02]' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50/50'}`}>
-                                    {tab.label}
-                                </button>
-                            ))}
+                    <div className="space-y-5 mt-0">
+                        <div className="sticky top-16 z-40 max-w-2xl mx-auto space-y-1 bg-gray-50 px-1 pt-1 pb-2 shadow-[0_8px_18px_rgba(249,250,251,0.96)]">
+                            <div className="flex items-center justify-center gap-2 px-2">
+                                <span className={`w-2.5 h-2.5 rounded-full ${getStatusDotColor(selectedMember.status)}`} />
+                                <p className="text-lg sm:text-xl font-normal text-gray-900">
+                                    {selectedMember.full_name || selectedMember.email || '会員'}
+                                </p>
+                            </div>
+                            <div className="flex bg-white/95 backdrop-blur-md p-2 rounded-[2.5rem] border border-gray-100 shadow-sm gap-1 overflow-x-auto no-scrollbar">
+                                {[
+                                    { id: 'progress', label: 'サマリー' },
+                                    { id: 'history', label: '食事' },
+                                    { id: 'analyze', label: '体重・生活' },
+                                    { id: 'plan', label: '目標設定' }
+                                ].map(tab => (
+                                    <button key={tab.id} onClick={() => setActiveTab(tab.id as TabType)} className={`flex-1 py-3 px-4 text-[11px] sm:text-sm font-normal transition-all duration-300 rounded-2xl ${activeTab === tab.id ? 'bg-gray-900 text-white shadow-xl scale-[1.02]' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50/50'}`}>
+                                        {tab.label}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
 
                         {!loadingData && activeTab === 'progress' && (
-                            <ProgressTab userId={selectedMember.id} token={selectedMember.access_token!} />
+                            <div className="space-y-4 animate-fadeIn">
+                                <AdminWeeklySummary
+                                    summary={weeklySummary}
+                                    targetCalories={nutrientForm.targetCalories}
+                                    weekOffset={summaryWeekOffset}
+                                    onWeekOffsetChange={setSummaryWeekOffset}
+                                />
+                                <ProgressTab
+                                    userId={selectedMember.id}
+                                    token={selectedMember.access_token!}
+                                    weekOffset={summaryWeekOffset}
+                                    onWeekOffsetChange={setSummaryWeekOffset}
+                                    showWeekSwitcher={false}
+                                />
+                            </div>
                         )}
 
                         {!loadingData && activeTab === 'analyze' && (
@@ -476,6 +645,7 @@ function DietPlanPageContent() {
 
                         {!loadingData && activeTab === 'history' && (
                             <div className="space-y-8 animate-fadeIn">
+                                <FoodWeeklySummary summary={weeklySummary} targetCalories={nutrientForm.targetCalories} />
                                 <div className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-gray-100">
                                     <div className="flex items-center gap-2 mb-8">
                                         <div className="w-1.5 h-6 bg-rose-500 rounded-full"></div>
@@ -652,6 +822,10 @@ function DietPlanPageContent() {
                                     </div>
                                 )}
 
+                                {goalChartData.length > 0 && (
+                                    <GoalHistoryCharts data={goalChartData} />
+                                )}
+
                                 {dietHistory.length > 0 && (
                                     <div className="bg-white rounded-[2.5rem] p-8 sm:p-10 shadow-sm border border-gray-100 overflow-hidden">
                                         <div className="flex items-center justify-between mb-8">
@@ -764,6 +938,216 @@ function CalorieEstimateCard({ label, value, description, onApply, primary }: {
                     目標に反映
                 </button>
             )}
+        </div>
+    )
+}
+
+function GoalHistoryCharts({ data }: { data: any[] }) {
+    const latest = data[data.length - 1]
+    const first = data[0]
+    const calorieDiff = latest && first ? latest.calories - first.calories : 0
+
+    return (
+        <div className="bg-white rounded-[2.5rem] p-8 sm:p-10 shadow-sm border border-gray-100 space-y-8">
+            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+                <div className="flex items-center gap-2">
+                    <div className="w-1.5 h-6 bg-indigo-500 rounded-full"></div>
+                    <div>
+                        <h2 className="text-xl font-normal text-gray-800 tracking-tight">目標設定の推移</h2>
+                        <p className="text-[10px] text-gray-400 uppercase tracking-widest mt-1">カロリーとPFCの変更履歴</p>
+                    </div>
+                </div>
+                <div className="text-xs text-gray-400">
+                    {data.length}件 / 初回比 {calorieDiff > 0 ? '+' : ''}{calorieDiff.toLocaleString()}kcal
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                <div className="rounded-[2rem] bg-rose-50/40 border border-rose-100 p-5">
+                    <div className="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 className="text-sm text-gray-800">目標カロリー</h3>
+                            <p className="text-[11px] text-gray-400 mt-1">1日の目標摂取量</p>
+                        </div>
+                        <div className="text-right">
+                            <p className="text-2xl text-gray-900 tabular-nums">{latest?.calories?.toLocaleString()}</p>
+                            <p className="text-[10px] text-gray-400">kcal / 日</p>
+                        </div>
+                    </div>
+                    <div className="h-72">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={data} margin={{ top: 10, right: 8, left: -18, bottom: 0 }}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ffe4e6" />
+                                <XAxis dataKey="displayDate" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8' }} />
+                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#cbd5e1' }} />
+                                <Tooltip
+                                    contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 25px rgb(15 23 42 / 0.12)', padding: '12px' }}
+                                    labelFormatter={(_, payload) => payload?.[0]?.payload?.fullDate || ''}
+                                    formatter={(value: any) => [`${Number(value).toLocaleString()} kcal`, '目標カロリー']}
+                                />
+                                <Bar dataKey="calories" fill="#fb7185" radius={[10, 10, 4, 4]} barSize={28} />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+
+                <div className="rounded-[2rem] bg-gray-50/80 border border-gray-100 p-5">
+                    <div className="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 className="text-sm text-gray-800">PFC目標（kcal換算）</h3>
+                            <p className="text-[11px] text-gray-400 mt-1">P/F/Cを積み上げて総カロリーを表示</p>
+                        </div>
+                        <div className="text-right text-[11px] text-gray-500">
+                            <span className="text-amber-500">P {latest?.protein}g</span>
+                            <span className="mx-1 text-gray-300">/</span>
+                            <span className="text-emerald-500">F {latest?.fat}g</span>
+                            <span className="mx-1 text-gray-300">/</span>
+                            <span className="text-blue-500">C {latest?.carbs}g</span>
+                            <p className="mt-1 text-gray-400">{latest?.calories?.toLocaleString()}kcal / 日</p>
+                        </div>
+                    </div>
+                    <div className="h-72">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={data} margin={{ top: 10, right: 8, left: -18, bottom: 0 }}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                                <XAxis dataKey="displayDate" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8' }} />
+                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#cbd5e1' }} />
+                                <Tooltip
+                                    contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 25px rgb(15 23 42 / 0.12)', padding: '12px' }}
+                                    labelFormatter={(_, payload) => payload?.[0]?.payload?.fullDate || ''}
+                                    formatter={(value: any, name: any) => [`${Number(value).toLocaleString()} kcal`, name]}
+                                />
+                                <Legend iconType="circle" wrapperStyle={{ fontSize: 11, color: '#64748b' }} />
+                                <Bar dataKey="proteinCalories" name="タンパク質" stackId="pfc" fill="#f59e0b" radius={[0, 0, 4, 4]} barSize={28} />
+                                <Bar dataKey="fatCalories" name="脂質" stackId="pfc" fill="#10b981" radius={[0, 0, 0, 0]} />
+                                <Bar dataKey="carbCalories" name="炭水化物" stackId="pfc" fill="#3b82f6" radius={[10, 10, 0, 0]} />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+            </div>
+        </div>
+    )
+}
+
+function AdminWeeklySummary({
+    summary,
+    targetCalories,
+    weekOffset,
+    onWeekOffsetChange
+}: {
+    summary: any
+    targetCalories: number
+    weekOffset: number
+    onWeekOffsetChange: (updater: (prev: number) => number) => void
+}) {
+    const weightText = !summary.avgWeight
+        ? '今週記録なし'
+        : summary.weightDiff === null
+            ? '先週比較なし'
+            : Math.abs(summary.weightDiff) < 0.05
+                ? '先週と同じ'
+            : summary.weightDiff > 0
+                ? `先週より +${summary.weightDiff.toFixed(1)}kg`
+                : `先週より ${summary.weightDiff.toFixed(1)}kg`
+    const waterText = !summary.avgWater
+        ? '今週記録なし'
+        : summary.waterDiff === null
+            ? '先週比較なし'
+            : Math.abs(summary.waterDiff) < 0.05
+                ? '先週と同じ'
+            : summary.waterDiff > 0
+                ? `先週より +${summary.waterDiff.toFixed(1)}L`
+                : `先週より ${summary.waterDiff.toFixed(1)}L`
+    const weekLabel = weekOffset === 0
+        ? '今週'
+        : weekOffset === -1
+            ? '先週'
+            : `${Math.abs(weekOffset)}週間前`
+    const effectiveTargetCalories = summary.targetCalories || targetCalories
+
+    return (
+        <div className="bg-white rounded-[2.5rem] p-5 sm:p-7 shadow-sm border border-gray-100 space-y-5">
+            <div className="flex items-center justify-center">
+                <div className="flex items-center gap-3 bg-gray-100 rounded-2xl p-1.5 w-full max-w-[340px] shadow-sm">
+                    <button
+                        type="button"
+                        onClick={() => onWeekOffsetChange(prev => prev - 1)}
+                        className="w-10 h-10 flex items-center justify-center hover:bg-white rounded-xl transition-all text-gray-500 active:scale-95"
+                        aria-label="前の週"
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
+                    </button>
+
+                    <div className="flex-1 text-center leading-tight">
+                        <div className="text-sm text-gray-900">{weekLabel}</div>
+                        <div className="mt-1 text-[10px] text-gray-400 tabular-nums">{summary.dateLabel}</div>
+                    </div>
+
+                    <button
+                        type="button"
+                        onClick={() => onWeekOffsetChange(prev => Math.min(0, prev + 1))}
+                        disabled={weekOffset === 0}
+                        className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all active:scale-95 ${weekOffset === 0 ? 'text-gray-200 cursor-not-allowed' : 'hover:bg-white text-gray-500'}`}
+                        aria-label="次の週"
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" /></svg>
+                    </button>
+                </div>
+            </div>
+
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                <SummaryMetric label="平均カロリー" value={summary.avgCalories ? `${Math.round(summary.avgCalories).toLocaleString()}kcal` : '-'} sub={`目標 ${effectiveTargetCalories.toLocaleString()}kcal`} tone={summary.calorieDiff !== null && summary.calorieDiff > 0 ? 'rose' : 'emerald'} />
+                <SummaryMetric label="P平均" value={summary.avgProtein ? `${Math.round(summary.avgProtein)}g` : '-'} sub={`目標 ${summary.targetProtein || '-'}g`} tone="amber" />
+                <SummaryMetric label="脂質平均" value={summary.avgFat ? `${Math.round(summary.avgFat)}g` : '-'} sub={`目標 ${summary.targetFat || '-'}g`} tone="emerald" />
+                <SummaryMetric label="炭水化物平均" value={summary.avgCarbs ? `${Math.round(summary.avgCarbs)}g` : '-'} sub={`目標 ${summary.targetCarbs || '-'}g`} tone="blue" />
+                <SummaryMetric label="食物繊維平均" value={summary.avgFiber ? `${Math.round(summary.avgFiber)}g` : '-'} sub={`目標 ${summary.targetFiber || '-'}g`} tone="rose" />
+                <SummaryMetric label="平均体重" value={summary.avgWeight ? `${summary.avgWeight.toFixed(1)}kg` : '-'} sub={weightText} tone={summary.weightDiff !== null && summary.weightDiff > 0 ? 'amber' : 'blue'} />
+                <SummaryMetric label="水分平均" value={summary.avgWater ? `${summary.avgWater.toFixed(1)}L` : '-'} sub={waterText} tone="sky" />
+                <SummaryMetric label="睡眠平均" value={summary.avgSleep ? `${summary.avgSleep.toFixed(1)}h` : '-'} sub="1日平均" tone="indigo" />
+            </div>
+        </div>
+    )
+}
+
+function FoodWeeklySummary({ summary, targetCalories }: { summary: any; targetCalories: number }) {
+    const effectiveTargetCalories = summary.targetCalories || targetCalories
+
+    return (
+        <div className="bg-white rounded-[2.5rem] p-6 sm:p-8 shadow-sm border border-gray-100 space-y-4">
+            <div>
+                <p className="text-[10px] text-gray-400 uppercase tracking-widest">食事の週平均</p>
+                <h2 className="text-xl text-gray-900 mt-1">{summary.dateLabel}</h2>
+            </div>
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+                <SummaryMetric label="カロリー" value={summary.avgCalories ? `${Math.round(summary.avgCalories).toLocaleString()}kcal` : '-'} sub={`目標 ${effectiveTargetCalories.toLocaleString()}kcal`} tone="rose" />
+                <SummaryMetric label="タンパク質" value={summary.avgProtein ? `${Math.round(summary.avgProtein)}g` : '-'} sub={`目標 ${summary.targetProtein || '-'}g`} tone="amber" />
+                <SummaryMetric label="脂質" value={summary.avgFat ? `${Math.round(summary.avgFat)}g` : '-'} sub={`目標 ${summary.targetFat || '-'}g`} tone="emerald" />
+                <SummaryMetric label="炭水化物" value={summary.avgCarbs ? `${Math.round(summary.avgCarbs)}g` : '-'} sub={`目標 ${summary.targetCarbs || '-'}g`} tone="blue" />
+                <SummaryMetric label="食物繊維" value={summary.avgFiber ? `${Math.round(summary.avgFiber)}g` : '-'} sub={`目標 ${summary.targetFiber || '-'}g`} tone="rose" />
+            </div>
+        </div>
+    )
+}
+
+function SummaryMetric({ label, value, sub, tone }: { label: string; value: string; sub: string; tone: string }) {
+    const toneMap: Record<string, string> = {
+        rose: 'bg-rose-50 border-rose-100 text-rose-600',
+        emerald: 'bg-emerald-50 border-emerald-100 text-emerald-600',
+        amber: 'bg-amber-50 border-amber-100 text-amber-600',
+        blue: 'bg-blue-50 border-blue-100 text-blue-600',
+        sky: 'bg-sky-50 border-sky-100 text-sky-600',
+        indigo: 'bg-indigo-50 border-indigo-100 text-indigo-600',
+        orange: 'bg-orange-50 border-orange-100 text-orange-600',
+        gray: 'bg-gray-50 border-gray-100 text-gray-600',
+    }
+    const classes = toneMap[tone] || toneMap.gray
+
+    return (
+        <div className={`rounded-2xl border p-4 ${classes}`}>
+            <p className="text-[10px] text-gray-400 uppercase tracking-widest">{label}</p>
+            <div className="mt-2 text-lg text-gray-900 tabular-nums leading-tight">{value}</div>
+            <p className="mt-1 text-[11px] leading-relaxed">{sub}</p>
         </div>
     )
 }

@@ -5,16 +5,21 @@ import { useState, useEffect, useMemo } from 'react'
 interface ProgressTabProps {
     userId: string;
     token: string;
+    weekOffset?: number;
+    onWeekOffsetChange?: (updater: (prev: number) => number) => void;
+    showWeekSwitcher?: boolean;
 }
 
-export default function ProgressTab({ userId, token }: ProgressTabProps) {
+export default function ProgressTab({ userId, token, weekOffset: controlledWeekOffset, onWeekOffsetChange, showWeekSwitcher = true }: ProgressTabProps) {
     const [dietLogs, setDietLogs] = useState<any[]>([])
     const [lifestyleLogs, setLifestyleLogs] = useState<any[]>([])
     const [dietGoals, setDietGoals] = useState<any[]>([])
     const [lifestyleSettings, setLifestyleSettings] = useState<any>(null)
     const [loading, setLoading] = useState(true)
 
-    const [weekOffset, setWeekOffset] = useState(0) // 0: current, -1: last week, etc.
+    const [internalWeekOffset, setInternalWeekOffset] = useState(0) // 0: current, -1: last week, etc.
+    const weekOffset = controlledWeekOffset ?? internalWeekOffset
+    const setWeekOffset = onWeekOffsetChange ?? setInternalWeekOffset
 
     useEffect(() => {
         const fetchData = async () => {
@@ -83,6 +88,15 @@ export default function ProgressTab({ userId, token }: ProgressTabProps) {
             .sort((a, b) => b.start_date.localeCompare(a.start_date))[0] 
             || dietGoals[dietGoals.length - 1] 
             || { calories: 0, protein: 0, fat: 0, carbs: 0 };
+        const dietTargetPerDay = {
+            calories: Number(currentDietGoal.calories || 0),
+            protein: Number(currentDietGoal.protein || 0),
+            fat: Number(currentDietGoal.fat || 0),
+            carbs: Number(currentDietGoal.carbs || 0),
+            sugar: Number(currentDietGoal.sugar ?? 0),
+            fiber: Number(currentDietGoal.fiber ?? 0),
+            salt: Number(currentDietGoal.salt ?? 6.5),
+        };
 
         const lifeTargets = lifestyleSettings?.habit_targets || { 
             steps: 8000, 
@@ -106,7 +120,7 @@ export default function ProgressTab({ userId, token }: ProgressTabProps) {
                 return sum + (val !== null && val !== undefined ? Number(val) : 0);
             }, 0),
             water: thisWeekLifeLogs.reduce((sum, log) => {
-                const val = log.water_liters || log.water;
+                const val = log.water_liters ?? log.water ?? log.water_intake ?? log.water_amount;
                 return sum + (val !== null && val !== undefined ? Number(val) : 0);
             }, 0),
             sleep: thisWeekLifeLogs.reduce((sum, log) => {
@@ -125,19 +139,25 @@ export default function ProgressTab({ userId, token }: ProgressTabProps) {
             fiber: thisWeekDietLogs.filter(log => (Number(log.fiber) || 0) > 0).length,
             salt: thisWeekDietLogs.filter(log => (Number(log.salt) || 0) > 0).length,
             steps: thisWeekLifeLogs.filter(log => log.steps !== null && log.steps !== undefined).length,
-            water: thisWeekLifeLogs.filter(log => (log.water_liters !== null && log.water_liters !== undefined) || (log.water !== null && log.water !== undefined)).length,
-            sleep: thisWeekLifeLogs.filter(log => (log.sleep_hours !== null && log.sleep_hours !== undefined) || (log.sleep !== null && log.sleep !== undefined)).length,
+            water: thisWeekLifeLogs.filter(log => {
+                const val = log.water_liters ?? log.water ?? log.water_intake ?? log.water_amount;
+                return val !== null && val !== undefined && Number(val) > 0;
+            }).length,
+            sleep: thisWeekLifeLogs.filter(log => {
+                const val = log.sleep_hours ?? log.sleep;
+                return val !== null && val !== undefined && Number(val) > 0;
+            }).length,
             workout: thisWeekLifeLogs.filter(log => (log.habits?.workout || 0) > 0).length,
         };
  
         const targets = {
-            calories: (currentDietGoal.calories || 0) * daysInWeek,
-            protein: (currentDietGoal.protein || 0) * daysInWeek,
-            fat: (currentDietGoal.fat || 0) * daysInWeek,
-            carbs: (currentDietGoal.carbs || 0) * daysInWeek,
-            sugar: (currentDietGoal.sugar || 0) * daysInWeek,
-            fiber: (currentDietGoal.fiber || 0) * daysInWeek,
-            salt: (currentDietGoal.salt || 0) * daysInWeek,
+            calories: dietTargetPerDay.calories * daysInWeek,
+            protein: dietTargetPerDay.protein * daysInWeek,
+            fat: dietTargetPerDay.fat * daysInWeek,
+            carbs: dietTargetPerDay.carbs * daysInWeek,
+            sugar: dietTargetPerDay.sugar * daysInWeek,
+            fiber: dietTargetPerDay.fiber * daysInWeek,
+            salt: dietTargetPerDay.salt * daysInWeek,
             steps: (lifeTargets.steps || lifeTargets.step_target || 8000) * daysInWeek,
             water: (lifeTargets.water || lifeTargets.water_target || 2.0) * daysInWeek,
             sleep: (lifeTargets.sleep || lifeTargets.sleep_target || 8.0) * daysInWeek,
@@ -149,7 +169,7 @@ export default function ProgressTab({ userId, token }: ProgressTabProps) {
             targets, 
             counts,
             weekRangeStr,
-            dietTargetPerDay: currentDietGoal,
+            dietTargetPerDay,
             lifeTargetPerDay: {
                 steps: lifeTargets.steps || lifeTargets.step_target || 8000,
                 water: lifeTargets.water || lifeTargets.water_target || 2.0,
@@ -170,7 +190,7 @@ export default function ProgressTab({ userId, token }: ProgressTabProps) {
     return (
         <div className="space-y-4 pb-24 animate-fadeIn">
             {/* 1. Week Switcher Header */}
-            <div className="px-2 flex flex-col items-center">
+            {showWeekSwitcher && <div className="px-2 flex flex-col items-center">
                 <div className="flex items-center gap-3 bg-gray-100 rounded-2xl p-1.5 w-full max-w-[300px] shadow-sm">
                     <button 
                         onClick={() => setWeekOffset(prev => prev - 1)}
@@ -198,7 +218,7 @@ export default function ProgressTab({ userId, token }: ProgressTabProps) {
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" /></svg>
                     </button>
                 </div>
-            </div>
+            </div>}
 
             {/* 2. Weekly Progress Cards */}
             <div className="space-y-4">
@@ -335,7 +355,10 @@ export default function ProgressTab({ userId, token }: ProgressTabProps) {
 }
 
 function WeeklyProgressItem({ label, actual, target, unit, color, perDay, isFrequency, recordedDays }: { label: string, actual: number, target: number, unit: string, color: string, perDay: number, isFrequency?: boolean, recordedDays?: number }) {
-    const pct = target > 0 ? Math.min(100, Math.round((actual / target) * 100)) : 0;
+    const pct = target > 0 ? Math.round((actual / target) * 100) : 0;
+    const barPct = Math.min(100, pct);
+    const filledDays = Math.min(7, recordedDays || 0);
+    const recordedPct = (filledDays / 7) * 100;
     const colors: Record<string, string> = {
         rose: 'bg-rose-500',
         amber: 'bg-amber-500',
@@ -345,6 +368,7 @@ function WeeklyProgressItem({ label, actual, target, unit, color, perDay, isFreq
         teal: 'bg-teal-500',
         orange: 'bg-orange-500',
         indigo: 'bg-indigo-500',
+        gray: 'bg-gray-500',
     }
     const textColors: Record<string, string> = {
         rose: 'text-rose-600',
@@ -355,6 +379,18 @@ function WeeklyProgressItem({ label, actual, target, unit, color, perDay, isFreq
         teal: 'text-teal-600',
         orange: 'text-orange-600',
         indigo: 'text-indigo-600',
+        gray: 'text-gray-600',
+    }
+    const guideColors: Record<string, string> = {
+        rose: 'bg-rose-100',
+        amber: 'bg-amber-100',
+        emerald: 'bg-emerald-100',
+        blue: 'bg-blue-100',
+        sky: 'bg-sky-100',
+        teal: 'bg-teal-100',
+        orange: 'bg-orange-100',
+        indigo: 'bg-indigo-100',
+        gray: 'bg-gray-200',
     }
 
     return (
@@ -378,10 +414,24 @@ function WeeklyProgressItem({ label, actual, target, unit, color, perDay, isFreq
                     </p>
                 </div>
             </div>
-            <div className="h-2 bg-gray-50 rounded-full overflow-hidden p-0.5 border border-gray-100">
+            <div className="relative h-3 rounded-full overflow-hidden bg-gray-50 border border-gray-100">
+                <div className="absolute inset-x-1 top-1/2 -translate-y-1/2 grid grid-cols-7 gap-1">
+                    {Array.from({ length: 7 }).map((_, index) => (
+                        <span
+                            key={index}
+                            className={`h-1 rounded-full ${index < filledDays ? guideColors[color] : 'bg-gray-100'}`}
+                        />
+                    ))}
+                </div>
+                {recordedDays !== undefined && (
+                    <div
+                        className={`absolute left-0 top-1/2 h-1 -translate-y-1/2 rounded-full ${guideColors[color]}`}
+                        style={{ width: `${recordedPct}%` }}
+                    />
+                )}
                 <div 
-                    className={`h-full transition-all duration-1000 rounded-full ${colors[color]} shadow-sm`} 
-                    style={{ width: `${pct}%` }} 
+                    className={`absolute left-0 top-1/2 h-1.5 -translate-y-1/2 transition-all duration-1000 rounded-full ${colors[color]} shadow-sm`}
+                    style={{ width: `${barPct}%` }}
                 />
             </div>
             <div className="flex justify-between items-center text-[7px] font-normal text-gray-300 uppercase tracking-tighter leading-none">
