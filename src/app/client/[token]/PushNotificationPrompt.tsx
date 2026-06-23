@@ -49,7 +49,21 @@ export default function PushNotificationPrompt({ token }: PushNotificationPrompt
         const res = await fetch(`/api/push/subscriptions?token=${token}`)
         const data = res.ok ? await res.json() : {}
 
-        setSubscribed(Boolean(subscription))
+        if (subscription && data.subscribed !== true) {
+          const saveRes = await fetch('/api/push/subscriptions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token, subscription }),
+          })
+
+          if (saveRes.ok) {
+            const saveData = await saveRes.json()
+            data.subscribed = true
+            data.enabledByAdmin = saveData.enabledByAdmin
+          }
+        }
+
+        setSubscribed(Boolean(subscription) && data.subscribed === true)
         setEnabledByAdmin(data.enabledByAdmin === true)
       } catch (error) {
         console.error('Failed to load push notification status:', error)
@@ -83,7 +97,8 @@ export default function PushNotificationPrompt({ token }: PushNotificationPrompt
       }
 
       const registration = await navigator.serviceWorker.register('/sw.js')
-      const subscription = await registration.pushManager.subscribe({
+      const existingSubscription = await registration.pushManager.getSubscription()
+      const subscription = existingSubscription || await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(keyData.publicKey),
       })

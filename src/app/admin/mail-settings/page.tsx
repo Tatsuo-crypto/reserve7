@@ -251,6 +251,20 @@ export default function AdminMailSettingsPage() {
     }))
   }, [members])
 
+  const notificationStats = useMemo(() => {
+    const pushEnabledCount = members.filter(member => member.pushEnabled).length
+    const deviceRegisteredCount = members.filter(member => member.pushSubscriptionCount > 0).length
+    const readyCount = members.filter(member => member.pushEnabled && member.pushSubscriptionCount > 0).length
+    const missingDeviceCount = members.filter(member => member.pushEnabled && member.pushSubscriptionCount === 0).length
+
+    return {
+      pushEnabledCount,
+      deviceRegisteredCount,
+      readyCount,
+      missingDeviceCount,
+    }
+  }, [members])
+
   const handleSaveMembers = async () => {
     setMembersSaving(true)
     setError(null)
@@ -485,7 +499,7 @@ export default function AdminMailSettingsPage() {
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
                       <h2 className="text-base font-semibold text-gray-900">会員ごとの通知設定</h2>
-                      <p className="mt-1 text-xs text-gray-500">メール通知とアプリ通知を会員ごとに一括管理できます。</p>
+                      <p className="mt-1 text-xs text-gray-500">アプリ通知の管理ONと、実際に送れる端末登録の有無を確認できます。</p>
                     </div>
                     <button
                       type="button"
@@ -495,6 +509,36 @@ export default function AdminMailSettingsPage() {
                     >
                       再読み込み
                     </button>
+                  </div>
+
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                    <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4">
+                      <p className="text-[10px] text-emerald-600 font-semibold uppercase tracking-widest">送信可能</p>
+                      <p className="mt-2 text-2xl text-gray-900 tabular-nums">{notificationStats.readyCount}名</p>
+                      <p className="mt-1 text-[11px] text-emerald-700">通知ON＋端末登録あり</p>
+                    </div>
+                    <div className="rounded-2xl border border-amber-100 bg-amber-50 p-4">
+                      <p className="text-[10px] text-amber-600 font-semibold uppercase tracking-widest">要確認</p>
+                      <p className="mt-2 text-2xl text-gray-900 tabular-nums">{notificationStats.missingDeviceCount}名</p>
+                      <p className="mt-1 text-[11px] text-amber-700">通知ONだが端末登録なし</p>
+                    </div>
+                    <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4">
+                      <p className="text-[10px] text-blue-600 font-semibold uppercase tracking-widest">通知ON</p>
+                      <p className="mt-2 text-2xl text-gray-900 tabular-nums">{notificationStats.pushEnabledCount}名</p>
+                      <p className="mt-1 text-[11px] text-blue-700">管理画面でON</p>
+                    </div>
+                    <div className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
+                      <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-widest">端末登録</p>
+                      <p className="mt-2 text-2xl text-gray-900 tabular-nums">{notificationStats.deviceRegisteredCount}名</p>
+                      <p className="mt-1 text-[11px] text-gray-500">スマホ送信先あり</p>
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-sky-100 bg-sky-50 px-4 py-3 text-xs text-sky-800 leading-relaxed">
+                    <p className="font-semibold">表示の見方</p>
+                    <p className="mt-1">
+                      「通知ON」は管理画面で送信対象にしている状態です。「端末登録あり」は会員さんのスマホで通知許可を押したあと、通知の送信先が保存されている状態です。両方そろうとアプリ通知を送れます。
+                    </p>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
@@ -534,8 +578,8 @@ export default function AdminMailSettingsPage() {
                         <tr>
                           <th className="px-4 py-3 text-[10px] font-semibold text-gray-400 uppercase tracking-widest">会員</th>
                           <th className="px-4 py-3 text-center text-[10px] font-semibold text-gray-400 uppercase tracking-widest">メール</th>
-                          <th className="px-4 py-3 text-center text-[10px] font-semibold text-gray-400 uppercase tracking-widest">アプリ通知</th>
-                          <th className="px-4 py-3 text-center text-[10px] font-semibold text-gray-400 uppercase tracking-widest">端末</th>
+                          <th className="px-4 py-3 text-center text-[10px] font-semibold text-gray-400 uppercase tracking-widest">通知ON</th>
+                          <th className="px-4 py-3 text-center text-[10px] font-semibold text-gray-400 uppercase tracking-widest">端末登録</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-100">
@@ -590,13 +634,20 @@ export default function AdminMailSettingsPage() {
                                     />
                                   </td>
                                   <td className="px-4 py-3 text-center">
-                                    <span className={`inline-flex items-center rounded-full px-2 py-1 text-[10px] ${
-                                      member.pushSubscriptionCount > 0
-                                        ? 'bg-emerald-50 text-emerald-700'
-                                        : 'bg-gray-100 text-gray-400'
-                                    }`}>
-                                      {member.pushSubscriptionCount > 0 ? `${member.pushSubscriptionCount}台` : '未登録'}
-                                    </span>
+                                    <div className="flex flex-col items-center gap-1">
+                                      <span className={`inline-flex items-center rounded-full px-2 py-1 text-[10px] ${
+                                        member.pushSubscriptionCount > 0
+                                          ? 'bg-emerald-50 text-emerald-700'
+                                          : member.pushEnabled
+                                            ? 'bg-amber-50 text-amber-700'
+                                            : 'bg-gray-100 text-gray-400'
+                                      }`}>
+                                        {member.pushSubscriptionCount > 0 ? `あり ${member.pushSubscriptionCount}台` : 'なし'}
+                                      </span>
+                                      {member.pushEnabled && member.pushSubscriptionCount === 0 && (
+                                        <span className="text-[9px] text-amber-600">送信不可</span>
+                                      )}
+                                    </div>
                                   </td>
                                 </tr>
                               ))}
