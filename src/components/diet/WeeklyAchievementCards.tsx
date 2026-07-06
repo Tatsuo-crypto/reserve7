@@ -68,26 +68,45 @@ export function CalorieHeroCard({ actual, target }: { actual: number; target: nu
     )
 }
 
-/** O-5: 2列グリッド用の項目カード。上限型/下限型で達成色ロジックを切り替える。 */
+/**
+ * O-5: 2列グリッド用の項目カード。上限型/下限型で達成色ロジックを切り替える。
+ *
+ * mode:
+ *   - 'total'   : カロリー主役行と同じ「週合計 / 週目標」表記（食事・栄養系の項目で使用。
+ *                 実績・比率の基準をカロリーと完全に揃え、「カロリーだけ週合計、他は日平均」
+ *                 という見え方の不整合を解消する）。
+ *   - 'average' : 「記録日平均 / 目安（日）」表記（歩数・水分・睡眠など生活系の項目で使用。
+ *                 週合計より1日あたりの目安のほうが実用的なため維持）。
+ * isFrequency（筋トレ等）は上記どちらとも異なる「今週 X/Y回」の専用表示のまま。
+ */
 export function AchievementItemCard({
-    label, type, unit, target, avg, prevAvg, prevRecordedDays, isFrequency, actual,
+    label, type, unit, target, avg, prevAvg, prevRecordedDays, isFrequency, actual, mode = 'average', prevActual,
 }: {
     label: string
     type: 'upper' | 'lower'
     unit: string
+    /** mode='total'/'frequency'时は週合計の目標値、mode='average'時は1日あたりの目安値。 */
     target: number
+    /** mode='average'時: 記録日平均。 */
     avg?: number
     prevAvg?: number
     prevRecordedDays?: number
     isFrequency?: boolean
+    /** mode='total'/'frequency'時: 週合計の実績値。 */
     actual?: number
+    mode?: 'total' | 'average'
+    /** mode='total'時の前週合計値。 */
+    prevActual?: number
 }) {
     const roundVal = (v: number) => (isFrequency ? Math.round(v) : Math.round(v * 10) / 10)
-    const baseVal = isFrequency ? (actual || 0) : (avg || 0)
+    const useTotal = isFrequency || mode === 'total'
+    const baseVal = useTotal ? (actual || 0) : (avg || 0)
     const pct = target > 0 ? Math.round((baseVal / target) * 100) : 0
     const { bar, text } = type === 'upper' ? upperBoundColors(pct) : lowerBoundColors(pct)
     const hasPrevWeek = !isFrequency && (prevRecordedDays || 0) > 0
-    const avgDiff = hasPrevWeek && avg !== undefined && prevAvg !== undefined ? avg - prevAvg : null
+    const prevBase = mode === 'total' ? prevActual : prevAvg
+    const curBase = mode === 'total' ? actual : avg
+    const diff = hasPrevWeek && curBase !== undefined && prevBase !== undefined ? curBase - prevBase : null
 
     return (
         <Card padding="sm">
@@ -100,6 +119,11 @@ export function AchievementItemCard({
                 <div className="flex items-baseline gap-1">
                     <span className="stat-value !text-xl">{actual}</span>
                     <span className="stat-unit">/{target}{unit}</span>
+                </div>
+            ) : mode === 'total' ? (
+                <div className="flex items-baseline gap-1">
+                    <span className="stat-value !text-xl">{actual !== undefined ? Math.round(actual).toLocaleString() : '-'}</span>
+                    <span className="stat-unit">/ {Math.round(target).toLocaleString()}{unit}（週合計）</span>
                 </div>
             ) : (
                 <div className="flex items-baseline gap-1">
@@ -115,8 +139,8 @@ export function AchievementItemCard({
             {/* 前週比: H-2の「判断色をつけずグレー表示」ルールを維持 */}
             <p className="mt-1.5 text-[10px] font-normal text-gray-400 tabular-nums">
                 {!isFrequency ? (
-                    avgDiff !== null ? (
-                        <>{avgDiff === 0 ? '±0' : avgDiff > 0 ? `↑+${roundVal(avgDiff).toLocaleString()}` : `↓${roundVal(avgDiff).toLocaleString()}`} 前週比</>
+                    diff !== null ? (
+                        <>{diff === 0 ? '±0' : diff > 0 ? `↑+${roundVal(diff).toLocaleString()}` : `↓${roundVal(diff).toLocaleString()}`} 前週比</>
                     ) : '前週比 −'
                 ) : ' '}
             </p>
