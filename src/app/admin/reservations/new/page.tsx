@@ -381,10 +381,11 @@ function NewReservationContent() {
     })
 
     // Redirect to calendar after 1.5 seconds
+    // セッション認証のADMINはダッシュボードのカレンダー(正)へ、トークン認証のトレーナーは専用カレンダーへ戻す
     setTimeout(() => {
       const url = trainerToken
         ? `/admin/calendar?trainerToken=${trainerToken}`
-        : '/admin/calendar'
+        : '/dashboard?tab=home'
       router.push(url)
     }, 1500)
   }

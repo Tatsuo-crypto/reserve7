@@ -1,0 +1,185 @@
+'use client'
+
+import { useState } from 'react'
+import { adjustMacroGram, distributeCaloriesToMacros, type MacroGrams } from '@/lib/utils/dietGoalCalc'
+
+export interface GoalFormValues extends MacroGrams {
+    salt: number
+    targetCalories: number
+    startDate: string
+    title: string
+}
+
+export interface HabitTargetsValues {
+    steps: number | null
+    sleep: number | null
+    water: number | null
+    workout: number | null
+}
+
+interface GoalPlanFormProps {
+    values: GoalFormValues
+    onValuesChange: (updater: (prev: GoalFormValues) => GoalFormValues) => void
+    habitTargets: HabitTargetsValues
+    onHabitTargetsChange: (updater: (prev: HabitTargetsValues) => HabitTargetsValues) => void
+    /** K-4: モード差は「開始日」フィールドの有無だけ。現在の設定編集ではfalse、新規作成・履歴編集ではtrue。 */
+    showStartDate: boolean
+    onSave: () => void
+    saving: boolean
+    saveLabel: string
+    onDelete?: () => void
+    deleteLabel?: string
+    onCancel?: () => void
+}
+
+const DEFAULT_HABIT_TARGETS = { steps: 8000, sleep: 7, water: 2, workout: 1 }
+
+/**
+ * K-2/K-4: 「現在の目標設定」「新規プランの作成」「履歴バーからの編集」で共通利用する
+ * 統一フォーム。開始日フィールドの有無だけがモード差。
+ */
+export default function GoalPlanForm({
+    values,
+    onValuesChange,
+    habitTargets,
+    onHabitTargetsChange,
+    showStartDate,
+    onSave,
+    saving,
+    saveLabel,
+    onDelete,
+    deleteLabel = 'このプランを削除',
+    onCancel,
+}: GoalPlanFormProps) {
+    const [distributeInput, setDistributeInput] = useState<string>(String(values.targetCalories))
+
+    const handleGramChange = (key: 'protein' | 'fat' | 'carbs' | 'sugar' | 'fiber', delta: number) => {
+        onValuesChange(prev => ({ ...prev, ...adjustMacroGram(prev, key, delta) }))
+    }
+
+    const handleDistribute = () => {
+        const parsed = parseInt(distributeInput, 10)
+        if (!parsed || parsed <= 0) return
+        onValuesChange(prev => ({ ...prev, ...distributeCaloriesToMacros(parsed, prev) }))
+    }
+
+    const handleHabitChange = (key: keyof HabitTargetsValues, delta: number, base: number) => {
+        onHabitTargetsChange(prev => ({ ...prev, [key]: Math.max(0, (prev[key] ?? base) + delta) }))
+    }
+
+    return (
+        <div className="space-y-8">
+            {showStartDate && (
+                <div className="space-y-2">
+                    <label className="text-xs font-normal text-gray-400 uppercase tracking-widest pl-1">開始日</label>
+                    <input
+                        type="date"
+                        value={values.startDate}
+                        onChange={(e) => onValuesChange(prev => ({ ...prev, startDate: e.target.value }))}
+                        className="w-full bg-gray-50 border-none rounded-2xl p-4 text-sm font-normal focus:ring-2 focus:ring-rose-500"
+                    />
+                </div>
+            )}
+
+            <div className="space-y-1"><h3 className="text-[10px] font-normal text-gray-400 uppercase tracking-widest pl-1">食事・栄養の目標</h3></div>
+
+            {/* K-3: 目標カロリーは常にPFCからの導出値（読み取り専用）。カロリーを起点に決めたい場合はこちらから配分する */}
+            <div className="bg-gray-50/80 rounded-[2rem] p-8 text-center border border-gray-100/50 relative space-y-4">
+                <p className="text-[10px] font-normal text-gray-400 mb-1 uppercase tracking-widest">目標摂取カロリー（PFCからの導出値）</p>
+                <div className="flex items-baseline justify-center gap-1">
+                    <span className="text-5xl font-normal text-gray-900 tabular-nums">{Math.round(values.targetCalories).toLocaleString()}</span>
+                    <span className="text-sm font-normal text-gray-400">kcal / 日</span>
+                </div>
+                <div className="flex items-center justify-center gap-2 pt-2">
+                    <input
+                        type="number"
+                        value={distributeInput}
+                        onChange={(e) => setDistributeInput(e.target.value)}
+                        className="w-28 bg-white border border-gray-200 rounded-xl px-3 py-2 text-sm text-center font-normal"
+                        placeholder="kcal"
+                    />
+                    <button
+                        type="button"
+                        onClick={handleDistribute}
+                        className="text-xs font-normal text-blue-600 bg-blue-50 px-4 py-2 rounded-full hover:bg-blue-100 transition-colors"
+                    >
+                        カロリーから配分
+                    </button>
+                </div>
+                <p className="text-[10px] text-gray-400 leading-relaxed">タンパク質は現状維持し、残りを脂質・炭水化物の今の比率で自動配分します</p>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                <AdminStatCard label="タンパク質" value={values.protein} unit="g" color="amber" onIncrement={() => handleGramChange('protein', 1)} onDecrement={() => handleGramChange('protein', -1)} />
+                <AdminStatCard label="脂質" value={values.fat} unit="g" color="emerald" onIncrement={() => handleGramChange('fat', 1)} onDecrement={() => handleGramChange('fat', -1)} />
+                <AdminStatCard label="炭水化物" value={values.carbs} unit="g" color="blue" onIncrement={() => handleGramChange('carbs', 1)} onDecrement={() => handleGramChange('carbs', -1)} />
+                <AdminStatCard label="糖質" value={values.sugar} unit="g" color="purple" onIncrement={() => handleGramChange('sugar', 1)} onDecrement={() => handleGramChange('sugar', -1)} />
+                <AdminStatCard label="食物繊維" value={values.fiber} unit="g" color="rose" onIncrement={() => handleGramChange('fiber', 1)} onDecrement={() => handleGramChange('fiber', -1)} />
+                <AdminStatCard label="塩分" value={values.salt} unit="g" color="gray" onIncrement={() => onValuesChange(prev => ({ ...prev, salt: Math.max(0, prev.salt + 0.5) }))} onDecrement={() => onValuesChange(prev => ({ ...prev, salt: Math.max(0, prev.salt - 0.5) }))} />
+            </div>
+
+            <div className="space-y-8 pt-8 border-t border-gray-50">
+                <div className="space-y-1"><h3 className="text-[10px] font-normal text-gray-400 uppercase tracking-widest pl-1">生活習慣の目標</h3></div>
+                <div className="grid grid-cols-2 gap-4">
+                    <AdminStatCard label="水分摂取" value={habitTargets.water ?? DEFAULT_HABIT_TARGETS.water} unit="L" color="sky" onIncrement={() => handleHabitChange('water', 0.5, DEFAULT_HABIT_TARGETS.water)} onDecrement={() => handleHabitChange('water', -0.5, DEFAULT_HABIT_TARGETS.water)} />
+                    <AdminStatCard label="目標歩数" value={habitTargets.steps ?? DEFAULT_HABIT_TARGETS.steps} unit="歩" color="emerald" onIncrement={() => handleHabitChange('steps', 500, DEFAULT_HABIT_TARGETS.steps)} onDecrement={() => handleHabitChange('steps', -500, DEFAULT_HABIT_TARGETS.steps)} />
+                    <AdminStatCard label="筋トレ回数" value={habitTargets.workout ?? DEFAULT_HABIT_TARGETS.workout} unit="回/週" color="orange" onIncrement={() => handleHabitChange('workout', 1, DEFAULT_HABIT_TARGETS.workout)} onDecrement={() => handleHabitChange('workout', -1, DEFAULT_HABIT_TARGETS.workout)} />
+                    <AdminStatCard label="睡眠時間" value={habitTargets.sleep ?? DEFAULT_HABIT_TARGETS.sleep} unit="時間" color="indigo" onIncrement={() => handleHabitChange('sleep', 0.5, DEFAULT_HABIT_TARGETS.sleep)} onDecrement={() => handleHabitChange('sleep', -0.5, DEFAULT_HABIT_TARGETS.sleep)} />
+                </div>
+            </div>
+
+            <div className="pt-4 space-y-3">
+                <button onClick={onSave} disabled={saving} className="w-full py-5 rounded-2xl bg-gray-900 text-white text-sm font-normal hover:bg-black transition-all shadow-xl flex items-center justify-center gap-3 disabled:opacity-50">
+                    {saving ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>}
+                    {saveLabel}
+                </button>
+                {onDelete && (
+                    <button onClick={onDelete} className="w-full py-3 rounded-2xl bg-rose-50 text-rose-600 text-sm font-normal hover:bg-rose-100 transition-all">
+                        {deleteLabel}
+                    </button>
+                )}
+                {onCancel && (
+                    <button onClick={onCancel} className="w-full py-3 text-xs font-normal text-gray-400 hover:text-gray-600">
+                        キャンセル
+                    </button>
+                )}
+            </div>
+        </div>
+    )
+}
+
+function AdminStatCard({ label, value, unit, color, onIncrement, onDecrement }: {
+    label: string, value: number | null, unit: string, color: string, onIncrement: () => void, onDecrement: () => void
+}) {
+    const colorMap: any = {
+        amber: 'text-amber-500 bg-amber-50 border-amber-100',
+        emerald: 'text-emerald-500 bg-emerald-50 border-emerald-100',
+        blue: 'text-blue-500 bg-blue-50 border-blue-100',
+        purple: 'text-purple-500 bg-purple-50 border-purple-100',
+        rose: 'text-rose-500 bg-rose-50 border-rose-100',
+        gray: 'text-gray-500 bg-gray-50 border-gray-100',
+        sky: 'text-sky-500 bg-sky-50 border-sky-100',
+        orange: 'text-orange-500 bg-orange-50 border-orange-100',
+        indigo: 'text-indigo-500 bg-indigo-50 border-indigo-100'
+    }
+    const style = colorMap[color] || colorMap.gray;
+    const [baseColor, bgColor, borderColor] = style.split(' ');
+
+    return (
+        <div className={`${bgColor} rounded-[2rem] p-5 border ${borderColor} transition-all hover:shadow-md group relative overflow-hidden`}>
+            <p className="text-[9px] font-normal text-gray-400 mb-2 uppercase tracking-widest leading-none">{label}</p>
+            <div className="flex items-center justify-between">
+                <div className="flex items-baseline gap-1">
+                    <span className={`text-2xl font-normal tabular-nums leading-none ${baseColor}`}>
+                        {value === null ? '-' : unit === 'L' ? value.toFixed(1) : value}
+                    </span>
+                    <span className="text-[9px] font-normal text-gray-300 uppercase tracking-tighter">{unit}</span>
+                </div>
+                <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
+                    <button onClick={(e) => { e.preventDefault(); onIncrement(); }} className="p-1 hover:bg-white rounded-lg text-gray-400 hover:text-gray-600"><svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 15l7-7 7 7" /></svg></button>
+                    <button onClick={(e) => { e.preventDefault(); onDecrement(); }} className="p-1 hover:bg-white rounded-lg text-gray-400 hover:text-gray-600"><svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg></button>
+                </div>
+            </div>
+        </div>
+    )
+}

@@ -16,17 +16,21 @@ import {
     BarChart,
     LineChart
 } from 'recharts'
+import { useWeeklyProgress } from '@/hooks/useWeeklyProgress'
+import WeeklyProgressPanel from './WeeklyProgressPanel'
 
 interface AnalyzeTabProps {
     userId: string
     token: string
     isAdmin?: boolean
     todayDraft?: any
+    /** 週間目標(WeeklyProgressPanel)セクションを表示するか。管理者側「サマリー」タブに常設表示がある場合はfalseにして重複を避ける。 */
+    showWeeklyGoals?: boolean
 }
 
 type PeriodType = '1w' | '1m' | '3m' | '6m' | '1y' | 'all'
 
-export default function AnalyzeTab({ userId, token, isAdmin, todayDraft }: AnalyzeTabProps) {
+export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWeeklyGoals = true }: AnalyzeTabProps) {
     const [period, setPeriod] = useState<PeriodType>('1m')
     const [showAvg, setShowAvg] = useState(false)
     const [dietLogs, setDietLogs] = useState<any[]>([])
@@ -35,6 +39,7 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft }: Analy
     const [settings, setSettings] = useState<any>(null)
     const [loading, setLoading] = useState(true)
     const [mounted, setMounted] = useState(false)
+    const [fetchError, setFetchError] = useState<string | null>(null)
 
     const formatDate = (d: Date) => {
         const year = d.getFullYear()
@@ -45,16 +50,28 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft }: Analy
 
     const selectedDate = todayDraft?.selectedDate || formatDate(new Date())
 
+    const { weeklyStats, weekOffset, setWeekOffset } = useWeeklyProgress(token, { userId, isAdmin, todayDraft })
+
     useEffect(() => {
         const fetchData = async () => {
             setLoading(true)
+            setFetchError(null)
             try {
+                const params = isAdmin
+                    ? `userId=${encodeURIComponent(userId)}`
+                    : `token=${encodeURIComponent(token || '')}`
+
                 const [dietRes, lifeRes, goalRes, settingRes] = await Promise.all([
-                    fetch(`/api/diet/logs?token=${token}`),
-                    fetch(`/api/lifestyle/logs?token=${token}`),
-                    fetch(`/api/diet/goals?token=${token}`),
-                    fetch(`/api/lifestyle/settings?token=${token}`)
+                    fetch(`/api/diet/logs?${params}`),
+                    fetch(`/api/lifestyle/logs?${params}`),
+                    fetch(`/api/diet/goals?${params}`),
+                    fetch(`/api/lifestyle/settings?${params}`)
                 ])
+
+                const failed = [dietRes, lifeRes, goalRes, settingRes].find(res => !res.ok)
+                if (failed) {
+                    throw new Error(`記録の取得に失敗しました (${failed.status})`)
+                }
 
                 const [dietData, lifeData, goalData, settingData] = await Promise.all([
                     dietRes.json(),
@@ -69,12 +86,13 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft }: Analy
                 setSettings(settingData.data || null)
             } catch (e) {
                 console.error('Fetch error in AnalyzeTab:', e)
+                setFetchError(e instanceof Error ? e.message : '記録の取得に失敗しました')
             } finally {
                 setLoading(false)
             }
         }
         fetchData()
-    }, [userId, token])
+    }, [userId, token, isAdmin])
 
     const analysisData = useMemo(() => {
         const end = new Date()
@@ -107,21 +125,28 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft }: Analy
             
             const target = [...sortedGoals].reverse().find(t => t.start_date <= dStr) || sortedGoals[0]
 
-            if (dStr === selectedDate && todayDraft) {
+            const hasDraftChanges = Boolean(todayDraft?.isSaved || (Array.isArray(todayDraft?.touchedFields) && todayDraft.touchedFields.length > 0) || todayDraft?.ocrResult)
+            if (dStr === selectedDate && todayDraft && hasDraftChanges) {
                 if (todayDraft.isSaved) {
                     lifestyle = {
                         ...lifestyle,
                         weight: todayDraft.weight ? parseFloat(todayDraft.weight) : (lifestyle?.weight || null),
-                        water: todayDraft.water ? parseFloat(todayDraft.water) : (lifestyle?.water || 0),
+                        water_liters: todayDraft.water ? parseFloat(todayDraft.water) : (lifestyle?.water_liters ?? lifestyle?.water ?? 0),
                         steps: todayDraft.steps ? parseInt(todayDraft.steps) : (lifestyle?.steps || 0),
-                        sleep: todayDraft.sleep ? parseFloat(todayDraft.sleep) : (lifestyle?.sleep || 0),
+                        sleep_hours: todayDraft.sleep ? parseFloat(todayDraft.sleep) : (lifestyle?.sleep_hours ?? lifestyle?.sleep ?? 0),
                         habits: todayDraft.habits || { workout: 0 }
                     }
                     diet = todayDraft.ocrResult || diet || null
                 } else {
-                    // Strictly unsaved/reset state: Clear these for the chart
-                    lifestyle = { weight: null, water: 0, steps: 0, sleep: 0, habits: { workout: 0 } }
-                    diet = null
+                    lifestyle = {
+                        ...lifestyle,
+                        ...(todayDraft.touchedFields?.includes('weight') ? { weight: todayDraft.weight ? parseFloat(todayDraft.weight) : null } : {}),
+                        ...(todayDraft.touchedFields?.includes('water') ? { water_liters: todayDraft.water ? parseFloat(todayDraft.water) : 0 } : {}),
+                        ...(todayDraft.touchedFields?.includes('steps') ? { steps: todayDraft.steps ? parseInt(todayDraft.steps) : 0 } : {}),
+                        ...(todayDraft.touchedFields?.includes('sleep') ? { sleep_hours: todayDraft.sleep ? parseFloat(todayDraft.sleep) : 0 } : {}),
+                        habits: todayDraft.habits || lifestyle?.habits || { workout: 0 }
+                    }
+                    diet = todayDraft.ocrResult || diet
                 }
             }
 
@@ -144,8 +169,8 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft }: Analy
                 target_fiber: target?.fiber || null,
                 target_salt: target?.salt || null,
                 steps: lifestyle?.steps || 0,
-                sleep: lifestyle?.sleep || 0,
-                water: lifestyle?.water || 0,
+                sleep: lifestyle?.sleep_hours ?? lifestyle?.sleep ?? 0,
+                water: lifestyle?.water_liters ?? lifestyle?.water ?? 0,
                 workout: (lifestyle?.habits?.workout || 0) > 0 ? 1 : 0,
                 target_steps: settings?.habit_targets?.steps || 8000,
                 target_water: settings?.habit_targets?.water || 2.0,
@@ -209,6 +234,13 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft }: Analy
     }
 
     if (loading) return <div className="h-64 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>
+    if (fetchError) {
+        return (
+            <div className="bg-white rounded-3xl border border-rose-100 p-6 text-sm text-rose-600">
+                分析データを取得できませんでした。画面を再読み込みしてください。
+            </div>
+        )
+    }
 
     // Common styling for all charts to ensure perfect alignment
     const chartMargin = { top: 10, right: 10, left: -10, bottom: 0 }
@@ -229,6 +261,18 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft }: Analy
 
     return (
         <div className="space-y-6 pb-24">
+            {/* 週間目標（旧ホームタブのバー11本の移設先。デフォルト折りたたみ）
+                管理者側「サマリー」タブには常設表示があるため、showWeeklyGoals=falseで重複を避ける */}
+            {showWeeklyGoals && (
+                <WeeklyProgressPanel
+                    weeklyStats={weeklyStats}
+                    weekOffset={weekOffset}
+                    setWeekOffset={setWeekOffset}
+                    collapsible
+                    defaultOpen={false}
+                />
+            )}
+
             {/* Controls */}
             <div className="bg-white p-3 sm:p-4 rounded-2xl border border-gray-200 shadow-sm flex flex-row items-center gap-4 sm:gap-6 overflow-x-auto whitespace-nowrap">
                 <label className="flex items-center gap-2 text-xs sm:text-sm font-normal text-gray-700 shrink-0">
@@ -477,22 +521,25 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft }: Analy
             </div>
 
             {/* 9. Workout Chart - Spanning full width with enough height */}
-            <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm flex flex-col min-h-[450px]">
-                <div className="flex items-center justify-between mb-8">
-                    <div className="flex items-center gap-2">
-                        <div className="w-1.5 h-6 bg-orange-500 rounded-full"></div>
-                        <h3 className="text-lg font-normal text-gray-800">筋トレカレンダー</h3>
+            <div className="bg-white rounded-3xl p-4 sm:p-6 border border-gray-100 shadow-sm flex flex-col min-h-[450px]">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
+                    <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                            <div className="w-1.5 h-6 bg-orange-500 rounded-full"></div>
+                            <h3 className="text-lg font-normal text-gray-800">筋トレカレンダー</h3>
+                        </div>
+                        <div className="pl-3.5 text-sm font-normal text-orange-600">
+                            {calendarDate.getFullYear()}年 {calendarDate.getMonth() + 1}月
+                        </div>
                     </div>
-                    <div className="flex items-center gap-2 bg-orange-50 rounded-full p-1 shadow-inner">
+                    <div className="flex items-center justify-between sm:justify-center gap-2 bg-orange-50 rounded-full p-1 shadow-inner w-full sm:w-auto">
                         <button 
                             onClick={handlePrevMonth}
                             className="w-8 h-8 flex items-center justify-center hover:bg-white rounded-full transition-all text-orange-500 active:scale-90"
                         >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
                         </button>
-                        <span className="text-sm font-normal text-orange-600 min-w-[100px] text-center">
-                            {calendarDate.getFullYear()}年 {calendarDate.getMonth() + 1}月
-                        </span>
+                        <span className="text-xs font-normal text-orange-500 min-w-[72px] text-center">月移動</span>
                         <button 
                             onClick={handleNextMonth}
                             className="w-8 h-8 flex items-center justify-center hover:bg-white rounded-full transition-all text-orange-500 active:scale-90"
@@ -609,6 +656,8 @@ function AnalysisChartCard({ title, children, color }: { title: string, children
         emerald: 'bg-emerald-50/30 border-emerald-100',
         indigo: 'bg-indigo-50/30 border-indigo-100',
         sky: 'bg-sky-50/30 border-sky-100',
+        teal: 'bg-teal-50/30 border-teal-100',
+        gray: 'bg-gray-50/50 border-gray-100',
     }
     return (
         <div className={`p-6 rounded-2xl border ${colorStyles[color]} shadow-sm space-y-4`}>

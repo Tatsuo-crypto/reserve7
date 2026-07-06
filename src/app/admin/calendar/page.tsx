@@ -31,9 +31,16 @@ function AdminCalendarPageContent() {
     if (status === 'loading') return
     // If we have a trainer token, we don't need session auth
     if (trainerToken) return
-    
+
     if (status === 'unauthenticated') {
       router.push('/login')
+      return
+    }
+
+    // /admin/calendar はトークン認証トレーナー専用の入口。
+    // セッション認証のADMINが直接アクセスした場合は、正であるダッシュボードのカレンダーへ寄せる。
+    if (status === 'authenticated') {
+      router.replace('/dashboard?tab=home')
     }
   }, [status, router, trainerToken])
 
@@ -50,6 +57,11 @@ function AdminCalendarPageContent() {
 
   // If unauthenticated and no token, show nothing (will redirect)
   if (status === 'unauthenticated' && !trainerToken) {
+    return null
+  }
+
+  // セッション認証のADMINがトークンなしでアクセスした場合も、ダッシュボードへのリダイレクト待ちのため何も描画しない
+  if (status === 'authenticated' && !trainerToken) {
     return null
   }
 

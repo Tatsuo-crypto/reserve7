@@ -3,12 +3,13 @@ import { supabaseAdmin } from '@/lib/supabase'
 import { requireAuth, handleApiError } from '@/lib/api-utils'
 import { updateMonthlyTitles, updateAllTitles, usesCumulativeCount } from '@/lib/title-utils'
 import { createGoogleCalendarService } from '@/lib/google-calendar'
-import { 
-  sendClientCancellationNotification, 
+import {
+  sendClientCancellationNotification,
   sendTrainerCancellationNotification,
   sendClientUpdateNotification,
-  sendTrainerUpdateNotification 
+  sendTrainerUpdateNotification
 } from '@/lib/email'
+import { sendPushNotificationToUser } from '@/lib/push'
 
 export const dynamic = 'force-dynamic'
 
@@ -89,10 +90,12 @@ export async function DELETE(
         title,
         trainer_id,
         users!client_id (
+          id,
           full_name,
           email,
           google_calendar_email,
-          plan
+          plan,
+          access_token
         )
       `)
       .eq('id', reservationId)
@@ -285,6 +288,21 @@ export async function DELETE(
         )
       }
 
+      // 会員へプッシュ通知（メール送信廃止に伴い、会員側のキャンセル通知はプッシュのみ）
+      if (clientUser?.id && clientUser?.access_token && reservation.client_id) {
+        const startDate = new Date(reservation.start_time)
+        const dateStr = startDate.toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo', month: 'long', day: 'numeric', weekday: 'short' })
+        const timeStr = startDate.toLocaleTimeString('ja-JP', { timeZone: 'Asia/Tokyo', hour: '2-digit', minute: '2-digit' })
+
+        cancelEmailPromises.push(
+          sendPushNotificationToUser(clientUser.id, {
+            title: 'ご予約がキャンセルされました',
+            body: `${dateStr} ${timeStr}〜のご予約をキャンセルしました。`,
+            url: `/client/${clientUser.access_token}`,
+          }).catch(err => console.error('Client cancellation push error:', err))
+        )
+      }
+
       if (cancelEmailPromises.length > 0) {
         await Promise.allSettled(cancelEmailPromises)
       }
@@ -404,10 +422,12 @@ export async function PUT(
         calendar_id,
         trainer_id,
         users!client_id (
+          id,
           email,
           full_name,
           google_calendar_email,
-          plan
+          plan,
+          access_token
         )
       `)
       .eq('id', reservationId)
@@ -621,7 +641,7 @@ export async function PUT(
           if (targetClientId !== 'BLOCKED' && targetClientId !== 'TRIAL' && targetClientId !== 'GUEST' && targetClientId !== 'TRAINING') {
             const { data: newClient } = await supabaseAdmin
               .from('users')
-              .select('full_name, email, plan')
+              .select('id, full_name, email, plan, access_token')
               .eq('id', targetClientId)
               .single()
             if (newClient) {
@@ -684,6 +704,20 @@ export async function PUT(
               storeName,
               notes: notes || undefined,
             }).catch(err => console.error('Trainer update email notification error:', err))
+          )
+        }
+
+        // 会員へプッシュ通知（メール送信廃止に伴い、会員側の変更通知はプッシュのみ）
+        if (clientUser?.id && clientUser?.access_token && targetClientId !== 'BLOCKED' && targetClientId !== 'TRIAL' && targetClientId !== 'GUEST' && targetClientId !== 'TRAINING') {
+          const dateStr = startDateTime.toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo', month: 'long', day: 'numeric', weekday: 'short' })
+          const timeStr = startDateTime.toLocaleTimeString('ja-JP', { timeZone: 'Asia/Tokyo', hour: '2-digit', minute: '2-digit' })
+
+          updateEmailPromises.push(
+            sendPushNotificationToUser(clientUser.id, {
+              title: 'ご予約が変更されました',
+              body: `${dateStr} ${timeStr}〜に変更されました。`,
+              url: `/client/${clientUser.access_token}`,
+            }).catch(err => console.error('Client update push error:', err))
           )
         }
 

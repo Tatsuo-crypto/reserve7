@@ -1,6 +1,10 @@
 import nodemailer from 'nodemailer'
 import { supabaseAdmin } from './supabase'
 
+// 2026-07 決定: メール送信機能は廃止し、通知はアプリのプッシュ通知のみで行う（管理者側「配信設定」の再整理）。
+// 実装・テンプレートは将来の参考用に残すが、実際の送信はすべてここで止める。
+const EMAIL_NOTIFICATIONS_DISABLED = true
+
 const GMAIL_USER = process.env.GMAIL_USER || ''
 const GMAIL_APP_PASSWORD = process.env.GMAIL_APP_PASSWORD || process.env.GMAIL_APP_PASSWORD2 || ''
 
@@ -198,6 +202,7 @@ export async function sendTrainerNotification(params: {
   storeName: string
   notes?: string
 }): Promise<boolean> {
+  if (EMAIL_NOTIFICATIONS_DISABLED) return false
   if (isDummyEmail(params.trainerEmail)) {
     console.log(`ℹ️ Skipping trainer email notification: ${params.trainerEmail} is a dummy email address.`)
     return false
@@ -299,6 +304,7 @@ export async function sendClientNotification(params: {
   storeName: string
   notes?: string
 }): Promise<boolean> {
+  if (EMAIL_NOTIFICATIONS_DISABLED) return false
   if (isDummyEmail(params.clientEmail)) {
     console.log(`ℹ️ Skipping client email notification: ${params.clientEmail} is a dummy email address.`)
     return false
@@ -408,6 +414,7 @@ export async function sendClientUpdateNotification(params: {
   storeName: string
   notes?: string
 }): Promise<boolean> {
+  if (EMAIL_NOTIFICATIONS_DISABLED) return false
   if (isDummyEmail(params.clientEmail)) {
     console.log(`ℹ️ Skipping client email notification: ${params.clientEmail} is a dummy email address.`)
     return false
@@ -517,6 +524,7 @@ export async function sendClientCancellationNotification(params: {
   storeName: string
   notes?: string
 }): Promise<boolean> {
+  if (EMAIL_NOTIFICATIONS_DISABLED) return false
   if (isDummyEmail(params.clientEmail)) {
     console.log(`ℹ️ Skipping client email notification: ${params.clientEmail} is a dummy email address.`)
     return false
@@ -627,6 +635,7 @@ export async function sendTrainerUpdateNotification(params: {
   storeName: string
   notes?: string
 }): Promise<boolean> {
+  if (EMAIL_NOTIFICATIONS_DISABLED) return false
   if (isDummyEmail(params.trainerEmail)) {
     console.log(`ℹ️ Skipping trainer email notification: ${params.trainerEmail} is a dummy email address.`)
     return false
@@ -728,6 +737,7 @@ export async function sendTrainerCancellationNotification(params: {
   storeName: string
   notes?: string
 }): Promise<boolean> {
+  if (EMAIL_NOTIFICATIONS_DISABLED) return false
   if (isDummyEmail(params.trainerEmail)) {
     console.log(`ℹ️ Skipping trainer email notification: ${params.trainerEmail} is a dummy email address.`)
     return false
@@ -823,6 +833,7 @@ export async function sendOnlineLessonReminder(params: {
   description?: string
   difficulty?: string
 }): Promise<boolean> {
+  if (EMAIL_NOTIFICATIONS_DISABLED) return false
   if (isDummyEmail(params.email)) return false
   if (!(await isEmailNotificationsEnabled(params.email))) return false
 
@@ -909,6 +920,7 @@ export async function sendPersonalSessionReminder(params: {
   trainerName?: string
   notes?: string
 }): Promise<boolean> {
+  if (EMAIL_NOTIFICATIONS_DISABLED) return false
   if (isDummyEmail(params.email)) return false
   if (!(await isEmailNotificationsEnabled(params.email))) return false
 
@@ -1011,6 +1023,7 @@ export async function sendOnlineLessonAnnouncement(params: {
   difficulty?: string
   scheduleStr: string
 }): Promise<boolean> {
+  if (EMAIL_NOTIFICATIONS_DISABLED) return false
   if (isDummyEmail(params.email)) return false
   if (!(await isEmailNotificationsEnabled(params.email))) return false
 

@@ -5,6 +5,7 @@ import { requireAdminAuth, handleApiError } from '@/lib/api-utils'
 import { createGoogleCalendarService } from '@/lib/google-calendar'
 import { generateReservationTitle, updateMonthlyTitles, updateAllTitles, usesCumulativeCount } from '@/lib/title-utils'
 import { sendTrainerNotification, sendClientNotification } from '@/lib/email'
+import { sendPushNotificationToUser } from '@/lib/push'
 
 export async function POST(request: NextRequest) {
   try {
@@ -109,7 +110,7 @@ export async function POST(request: NextRequest) {
       // Get client user by ID for regular reservations
       const { data: fetchedUser, error: clientError } = await supabaseAdmin
         .from('users')
-        .select('id, full_name, email, google_calendar_email, store_id, plan')
+        .select('id, full_name, email, google_calendar_email, store_id, plan, access_token')
         .eq('id', clientId)
         .single()
 
@@ -577,6 +578,29 @@ export async function POST(request: NextRequest) {
           storeName,
           notes: reservation.notes || undefined,
         }).catch(err => console.error('Client email notification error:', err))
+      )
+    }
+
+    // Send push notification to client (メール送信廃止に伴い、会員へはプッシュ通知のみで知らせる)
+    if (clientUser?.access_token && clientId !== 'BLOCKED' && clientId !== 'TRIAL' && clientId !== 'GUEST' && clientId !== 'TRAINING') {
+      const startDate = new Date(reservation.start_time)
+      const dateStr = startDate.toLocaleDateString('ja-JP', {
+        timeZone: 'Asia/Tokyo',
+        month: 'long',
+        day: 'numeric',
+        weekday: 'short',
+      })
+      const timeStr = startDate.toLocaleTimeString('ja-JP', {
+        timeZone: 'Asia/Tokyo',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+      emailPromises.push(
+        sendPushNotificationToUser(clientUser.id, {
+          title: 'ご予約が確定しました',
+          body: `${dateStr} ${timeStr}〜のご予約を承りました。`,
+          url: `/client/${clientUser.access_token}`,
+        }).catch(err => console.error('Client push notification error:', err))
       )
     }
 

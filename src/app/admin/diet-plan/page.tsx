@@ -3,29 +3,19 @@
 import { useState, useEffect, Suspense, useCallback, useMemo } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import Link from 'next/link'
 import type { Member } from '@/types'
-import { 
-    ComposedChart,
-    Bar,
-    LineChart,
-    Line, 
-    XAxis, 
-    YAxis, 
-    CartesianGrid, 
-    Tooltip, 
-    ResponsiveContainer,
-    Legend,
-    BarChart
-} from 'recharts'
 
 // Reusing some logic from members page
 import { getStatusDotColor } from '@/lib/utils/member'
 import AdminHeader from '@/app/components/AdminHeader'
 import HomeTab from '@/components/diet/HomeTab'
 import AnalyzeTab from '@/components/diet/AnalyzeTab'
-import ProgressTab from '@/components/diet/ProgressTab'
-import GoalModal from '@/components/diet/GoalModal'
+import WeeklySummaryTab from '@/components/diet/WeeklySummaryTab'
+import WeightTab from '@/components/diet/WeightTab'
+import GoalsTab from '@/components/diet/GoalsTab'
+import GoalPlanForm, { type GoalFormValues, type HabitTargetsValues } from '@/components/diet/GoalPlanForm'
+import GoalEditModal from '@/components/diet/GoalEditModal'
+import { calculateAragonPlan, caloriesFromMacros, NEAT_LEVELS } from '@/lib/utils/dietGoalCalc'
 
 const GOAL_SUGGESTIONS = [
     'お酒を週2回までにする',
@@ -46,31 +36,8 @@ const DEFAULT_FIBER = 20;
 const DEFAULT_SUGAR = 280;
 const DEFAULT_SALT = 6;
 
-type TabType = 'progress' | 'analyze' | 'plan' | 'history';
+type TabType = 'panel' | 'weight' | 'graph' | 'goals' | 'plan';
 type PeriodType = '1w' | '1m' | '3m' | '6m' | '1y' | 'all';
-
-const ACTIVITY_LABELS: Record<string, string> = {
-    '1.2': '低い',
-    '1.375': 'やや低い',
-    '1.55': '普通',
-    '1.725': '高い',
-    '1.9': '非常に高い'
-}
-
-function calculateAge(birthDate?: string | null) {
-    if (!birthDate) return null
-    const birth = new Date(birthDate)
-    if (Number.isNaN(birth.getTime())) return null
-    const today = new Date()
-    let age = today.getFullYear() - birth.getFullYear()
-    const monthDiff = today.getMonth() - birth.getMonth()
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) age--
-    return age
-}
-
-function roundToNearest(value: number, unit: number) {
-    return Math.round(value / unit) * unit
-}
 
 function getRecordDate(record: any) {
     const value = record?.date || record?.recorded_date || record?.created_at || record?.target_date
@@ -134,9 +101,22 @@ function DietPlanPageContent() {
     const [loadingData, setLoadingData] = useState(false)
     const [saving, setSaving] = useState(false)
     const [message, setMessage] = useState('')
-    const [activeTab, setActiveTab] = useState<TabType>('progress')
-    const [isSettingNewGoal, setIsSettingNewGoal] = useState(false)
-    const [editingHistoryId, setEditingHistoryId] = useState<string | null>(null)
+    const [activeTab, setActiveTab] = useState<TabType>('panel')
+    const [showDailyRecords, setShowDailyRecords] = useState(false)
+    const [editingCurrentPlan, setEditingCurrentPlan] = useState(false)
+    // アラゴン式カロリー計算の入力（初回のみ表示するカードで使用）
+    const [aragonInput, setAragonInput] = useState({
+        targetWeight: '',
+        periodWeeks: '12',
+        weeklyTrainingHours: '3',
+        neat: NEAT_LEVELS[0].value,
+    })
+    const [goalModal, setGoalModal] = useState<{
+        mode: 'new' | 'edit'
+        recordId?: string
+        initialValues: GoalFormValues
+        initialHabitTargets: HabitTargetsValues
+    } | null>(null)
     const [analysisPeriod, setAnalysisPeriod] = useState<PeriodType>('1m')
     const [selectedWeek, setSelectedWeek] = useState<string>('')
     const [showWeightAvg, setShowWeightAvg] = useState(false)
@@ -171,13 +151,6 @@ function DietPlanPageContent() {
         water: null,
         workout: null
     })
-
-    const DEFAULT_HABIT_TARGETS = {
-        steps: 8000,
-        sleep: 7,
-        water: 2,
-        workout: 1
-    }
 
     const [quitGoals, setQuitGoals] = useState<string[]>([])
     const [newQuitGoal, setNewQuitGoal] = useState('')
@@ -305,17 +278,17 @@ function DietPlanPageContent() {
         }
     }, [selectedMember, fetchMemberData])
 
-    const handleSave = async () => {
-        if (!selectedMember) return
-        setSaving(true)
+    // K-2/K-4: 「現在の目標設定」インライン保存とモーダル保存（新規作成・履歴編集）の両方から呼ぶ共通処理
+    const saveGoalPlan = async (values: GoalFormValues, targetHabitTargets: HabitTargetsValues): Promise<boolean> => {
+        if (!selectedMember) return false
         setMessage('')
         try {
             const dietSave = fetch(`/api/diet/goals?token=${selectedMember.access_token}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    ...nutrientForm,
-                    calories: nutrientForm.targetCalories
+                body: JSON.stringify({
+                    ...values,
+                    calories: values.targetCalories
                 })
             })
 
@@ -327,7 +300,7 @@ function DietPlanPageContent() {
                     visibleItems: lifestyleSettings.visible_items,
                     visibleTabs: lifestyleSettings.visible_tabs,
                     quit_goals: quitGoals,
-                    habit_targets: habitTargets
+                    habit_targets: targetHabitTargets
                 })
             })
 
@@ -335,45 +308,33 @@ function DietPlanPageContent() {
 
             if (dietRes.ok && lifestyleRes.ok) {
                 setMessage('設定を保存しました')
-                fetchMemberData(selectedMember.id, selectedMember.access_token || '')
+                await fetchMemberData(selectedMember.id, selectedMember.access_token || '')
                 setTimeout(() => setMessage(''), 3000)
-            } else {
-                setMessage('保存に失敗しました')
+                return true
             }
+            setMessage('保存に失敗しました')
+            return false
         } catch (error) {
             console.error('Save error:', error)
             setMessage('エラーが発生しました')
-        } finally {
-            setSaving(false)
+            return false
         }
     }
 
-    const handleEditHistory = (record: any) => {
-        setNutrientForm({
-            protein: record.protein,
-            fat: record.fat,
-            carbs: record.carbs,
-            sugar: record.sugar || (record.carbs - (record.fiber || 20)),
-            fiber: record.fiber || 20,
-            salt: record.salt || 6,
-            targetCalories: record.calories,
-            startDate: record.start_date,
-            title: record.title || ''
-        })
-        setEditingHistoryId(record.id)
-        setActiveTab('plan')
-        window.scrollTo({ top: 0, behavior: 'smooth' })
+    const handleSave = async () => {
+        setSaving(true)
+        await saveGoalPlan(nutrientForm, habitTargets)
+        setSaving(false)
     }
 
     const handleDeleteHistory = async (id: string) => {
-        if (!confirm('この設定履歴を削除してもよろしいですか？')) return
         try {
             const response = await fetch(`/api/diet/goals/${id}?token=${selectedMember?.access_token}`, {
                 method: 'DELETE'
             })
             if (response.ok) {
                 setMessage('履歴を削除しました')
-                fetchMemberData(selectedMember!.id, selectedMember!.access_token || '')
+                await fetchMemberData(selectedMember!.id, selectedMember!.access_token || '')
                 setTimeout(() => setMessage(''), 3000)
             }
         } catch (error) {
@@ -381,32 +342,44 @@ function DietPlanPageContent() {
         }
     }
 
-    const handleGramChange = (key: string, delta: number) => {
-        setNutrientForm(prev => {
-            const next = { ...prev, [key as keyof typeof prev]: Math.max(0, (prev[key as keyof typeof prev] as number) + delta) };
-            if (key === 'sugar' || key === 'fiber') {
-                next.carbs = next.sugar + next.fiber;
-            } else if (key === 'carbs') {
-                next.sugar = Math.max(0, next.carbs - next.fiber);
-            }
-            next.targetCalories = (next.protein * 4) + (next.fat * 9) + (next.carbs * 4);
-            return next;
-        });
+    // K-2: 統合グラフのバーをタップして開く編集モーダル
+    const openEditGoalModal = (record: any) => {
+        setGoalModal({
+            mode: 'edit',
+            recordId: record.id,
+            initialValues: {
+                protein: record.protein,
+                fat: record.fat,
+                carbs: record.carbs,
+                sugar: record.sugar || Math.max(0, record.carbs - (record.fiber || 20)),
+                fiber: record.fiber || 20,
+                salt: record.salt || 6,
+                targetCalories: record.calories,
+                startDate: record.start_date,
+                title: record.title || ''
+            },
+            initialHabitTargets: habitTargets,
+        })
     }
 
-    const handleNewPlan = () => {
-        setNutrientForm({
-            protein: DEFAULT_PROTEIN,
-            fat: DEFAULT_FAT,
-            carbs: DEFAULT_CARBS,
-            sugar: DEFAULT_SUGAR,
-            fiber: DEFAULT_FIBER,
-            salt: DEFAULT_SALT,
-            targetCalories: 1600,
-            startDate: today,
-            title: ''
-        });
-        setEditingHistoryId(null);
+    // K-4: 新規作成時は現在の設定値をそのまま複製し、開始日だけ今日に初期化する
+    const openNewGoalModal = () => {
+        setGoalModal({
+            mode: 'new',
+            initialValues: { ...nutrientForm, startDate: today, title: '' },
+            initialHabitTargets: habitTargets,
+        })
+    }
+
+    const handleModalSave = async (values: GoalFormValues, targetHabitTargets: HabitTargetsValues) => {
+        const ok = await saveGoalPlan(values, targetHabitTargets)
+        if (ok) setGoalModal(null)
+    }
+
+    const handleModalDelete = async () => {
+        if (!goalModal?.recordId) return
+        await handleDeleteHistory(goalModal.recordId)
+        setGoalModal(null)
     }
 
     const latestWeight = useMemo(() => {
@@ -418,34 +391,20 @@ function DietPlanPageContent() {
         return value ? Number(value) : null
     }, [weightHistory])
 
-    const calorieEstimate = useMemo(() => {
-        if (!selectedMember) return null
-
-        const age = calculateAge(selectedMember.birth_date)
-        const height = selectedMember.height_cm ? Number(selectedMember.height_cm) : null
-        const activity = selectedMember.activity_level ? Number(selectedMember.activity_level) : null
-        const gender = selectedMember.gender
-
-        if (!age || !height || !latestWeight || !activity || !gender) return null
-
-        const genderOffset = gender === 'male' ? 5 : -161
-        const bmr = (10 * latestWeight) + (6.25 * height) - (5 * age) + genderOffset
-        const maintenance = bmr * activity
-        const mildCut = Math.max(1200, maintenance - 300)
-        const standardCut = Math.max(1200, maintenance - 500)
-
-        return {
-            age,
-            height,
-            weight: latestWeight,
-            activity,
-            activityLabel: ACTIVITY_LABELS[String(activity)] || '未設定',
-            bmr: Math.round(bmr),
-            maintenance: Math.round(maintenance),
-            mildCut: roundToNearest(mildCut, 50),
-            standardCut: roundToNearest(standardCut, 50),
-        }
-    }, [selectedMember, latestWeight])
+    // アラゴン式カロリー計算（現在体重・目標体重・期間・週トレ時間・NEATから算出）
+    const aragonResult = useMemo(() => {
+        const targetWeight = parseFloat(aragonInput.targetWeight)
+        const periodWeeks = parseFloat(aragonInput.periodWeeks)
+        const weeklyTrainingHours = parseFloat(aragonInput.weeklyTrainingHours)
+        if (!latestWeight || !targetWeight || !periodWeeks || Number.isNaN(weeklyTrainingHours)) return null
+        return calculateAragonPlan({
+            currentWeightKg: latestWeight,
+            targetWeightKg: targetWeight,
+            periodWeeks,
+            weeklyTrainingHours,
+            neat: aragonInput.neat,
+        })
+    }, [latestWeight, aragonInput])
 
     const weeklySummary = useMemo(() => {
         const { start, end, prevStart, prevEnd } = getWeekRange(summaryWeekOffset)
@@ -502,55 +461,65 @@ function DietPlanPageContent() {
         }
     }, [intakeHistory, lifestyleHistory, weightHistory, dietHistory, nutrientForm.targetCalories, summaryWeekOffset])
 
+    // N: 各プランの「実施期間」を横幅に反映するため、開始日〜次の開始日(最新は今日まで)の日数を算出する
     const goalChartData = useMemo(() => {
-        return [...dietHistory]
+        const sorted = [...dietHistory]
             .filter(goal => goal?.start_date)
             .sort((a, b) => a.start_date.localeCompare(b.start_date))
-            .map(goal => {
-                const [year, month, day] = goal.start_date.split('-')
-                const protein = Number(goal.protein || 0)
-                const fat = Number(goal.fat || 0)
-                const carbs = Number(goal.carbs || 0)
-                const calories = Number(goal.calories || 0)
-                const proteinCalories = protein * 4
-                const fatCalories = fat * 9
-                const calculatedCarbCalories = carbs * 4
-                const carbCalories = calories > 0
-                    ? Math.max(0, calories - proteinCalories - fatCalories)
-                    : calculatedCarbCalories
-                return {
-                    date: goal.start_date,
-                    displayDate: `${Number(month)}/${Number(day)}`,
-                    fullDate: `${year}/${Number(month)}/${Number(day)}`,
-                    calories,
-                    protein,
-                    fat,
-                    carbs,
-                    proteinCalories,
-                    fatCalories,
-                    carbCalories,
-                    pfcCalories: calories || (proteinCalories + fatCalories + carbCalories),
-                }
-            })
+
+        return sorted.map((goal, index) => {
+            const [year, month, day] = goal.start_date.split('-')
+            const protein = Number(goal.protein || 0)
+            const fat = Number(goal.fat || 0)
+            const carbs = Number(goal.carbs || 0)
+            const calories = Number(goal.calories || 0)
+            const proteinCalories = protein * 4
+            const fatCalories = fat * 9
+            const calculatedCarbCalories = carbs * 4
+            const carbCalories = calories > 0
+                ? Math.max(0, calories - proteinCalories - fatCalories)
+                : calculatedCarbCalories
+
+            const startDate = new Date(goal.start_date)
+            const next = sorted[index + 1]
+            const endDate = next ? new Date(next.start_date) : new Date()
+            const periodDays = Math.max(1, Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)))
+            const isOngoing = !next
+            const endLabel = isOngoing
+                ? '継続中'
+                : `${endDate.getMonth() + 1}/${endDate.getDate()}`
+
+            return {
+                date: goal.start_date,
+                displayDate: `${Number(month)}/${Number(day)}`,
+                fullDate: `${year}/${Number(month)}/${Number(day)}`,
+                periodDays,
+                periodLabel: `${Number(month)}/${Number(day)}〜${endLabel}（${periodDays}日間）`,
+                calories,
+                protein,
+                fat,
+                carbs,
+                proteinCalories,
+                fatCalories,
+                carbCalories,
+                pfcCalories: calories || (proteinCalories + fatCalories + carbCalories),
+            }
+        })
     }, [dietHistory])
 
-    const applyCaloriesToPlan = (calories: number) => {
-        const protein = latestWeight ? Math.round(latestWeight * 1.8) : nutrientForm.protein
-        const fat = Math.round((calories * 0.25) / 9)
-        const carbs = Math.max(0, Math.round((calories - (protein * 4) - (fat * 9)) / 4))
-        const fiber = nutrientForm.fiber || DEFAULT_FIBER
-
+    // アラゴン式の算出結果（カロリー・P/F/Cとも既に確定済み）をそのまま目標に反映する
+    const applyAragonPlanToGoal = () => {
+        if (!aragonResult) return
         setNutrientForm(prev => ({
             ...prev,
-            targetCalories: calories,
-            protein,
-            fat,
-            carbs,
-            fiber,
-            sugar: Math.max(0, carbs - fiber),
-            title: prev.title || 'カロリー計算から作成',
+            protein: aragonResult.protein,
+            fat: aragonResult.fat,
+            carbs: aragonResult.carbs,
+            sugar: Math.max(0, aragonResult.carbs - (prev.fiber || DEFAULT_FIBER)),
+            targetCalories: caloriesFromMacros(aragonResult.protein, aragonResult.fat, aragonResult.carbs),
+            title: prev.title || 'アラゴン式計算から作成',
         }))
-        setActiveTab('plan')
+        setEditingCurrentPlan(true)
     }
 
     if (status === 'loading' || loadingMembers) {
@@ -609,10 +578,11 @@ function DietPlanPageContent() {
                             </div>
                             <div className="flex bg-white/95 backdrop-blur-md p-2 rounded-[2.5rem] border border-gray-100 shadow-sm gap-1 overflow-x-auto no-scrollbar">
                                 {[
-                                    { id: 'progress', label: 'サマリー' },
-                                    { id: 'history', label: '食事' },
-                                    { id: 'analyze', label: '体重・生活' },
-                                    { id: 'plan', label: '目標設定' }
+                                    { id: 'panel', label: '週間パネル' },
+                                    { id: 'weight', label: '体重' },
+                                    { id: 'graph', label: 'グラフ' },
+                                    { id: 'goals', label: '目標' },
+                                    { id: 'plan', label: 'カロリー設定' }
                                 ].map(tab => (
                                     <button key={tab.id} onClick={() => setActiveTab(tab.id as TabType)} className={`flex-1 py-3 px-4 text-[11px] sm:text-sm font-normal transition-all duration-300 rounded-2xl ${activeTab === tab.id ? 'bg-gray-900 text-white shadow-xl scale-[1.02]' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50/50'}`}>
                                         {tab.label}
@@ -621,243 +591,224 @@ function DietPlanPageContent() {
                             </div>
                         </div>
 
-                        {!loadingData && activeTab === 'progress' && (
+                        {/* J-1: 週間パネルタブ（初期表示）。WeeklySummaryPanel全項目 + 折りたたみ「日別の記録」 */}
+                        {!loadingData && activeTab === 'panel' && (
                             <div className="space-y-4 animate-fadeIn">
-                                <AdminWeeklySummary
-                                    summary={weeklySummary}
-                                    targetCalories={nutrientForm.targetCalories}
-                                    weekOffset={summaryWeekOffset}
-                                    onWeekOffsetChange={setSummaryWeekOffset}
-                                />
-                                <ProgressTab
+                                <WeeklySummaryTab
                                     userId={selectedMember.id}
                                     token={selectedMember.access_token!}
+                                    isAdmin={true}
                                     weekOffset={summaryWeekOffset}
                                     onWeekOffsetChange={setSummaryWeekOffset}
-                                    showWeekSwitcher={false}
+                                    showWeekSwitcher={true}
                                 />
-                            </div>
-                        )}
 
-                        {!loadingData && activeTab === 'analyze' && (
-                            <AnalyzeTab userId={selectedMember.id} token={selectedMember.access_token!} isAdmin={true} todayDraft={sharedState} />
-                        )}
-
-                        {!loadingData && activeTab === 'history' && (
-                            <div className="space-y-8 animate-fadeIn">
-                                <FoodWeeklySummary summary={weeklySummary} targetCalories={nutrientForm.targetCalories} />
-                                <div className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-gray-100">
-                                    <div className="flex items-center gap-2 mb-8">
-                                        <div className="w-1.5 h-6 bg-rose-500 rounded-full"></div>
-                                        <h2 className="text-xl font-normal text-gray-800">毎日の食事記録</h2>
-                                    </div>
-                                    <div className="overflow-x-auto -mx-8 px-8">
-                                        <table className="w-full text-left">
-                                            <thead>
-                                                <tr className="border-b border-gray-50">
-                                                    <th className="py-4 text-[10px] font-normal text-gray-400 uppercase tracking-widest">日付</th>
-                                                    <th className="py-4 text-[10px] font-normal text-gray-400 uppercase tracking-widest text-right">カロリー</th>
-                                                    <th className="py-4 text-[10px] font-normal text-gray-400 uppercase tracking-widest text-center">P/F/C (g)</th>
-                                                    <th className="py-4 text-[10px] font-normal text-gray-400 uppercase tracking-widest text-center">糖質/繊維/塩</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-gray-50">
-                                                {intakeHistory.length > 0 ? intakeHistory.map((h, i) => (
-                                                    <tr key={i} className="group hover:bg-gray-50 transition-colors">
-                                                        <td className="py-5 text-sm font-normal text-gray-900">
-                                                            {h.date.slice(5).replace(/-/g, '/')}
-                                                            {h.image_url && <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-[8px] bg-blue-50 text-blue-500 uppercase tracking-tighter font-bold">Image</span>}
-                                                        </td>
-                                                        <td className="py-5 text-sm font-normal text-gray-900 text-right tabular-nums">{h.calories?.toLocaleString()} <span className="text-[10px] text-gray-300">kcal</span></td>
-                                                        <td className="py-5 text-sm font-normal text-gray-600 text-center tabular-nums">
-                                                            <span className="text-amber-600">{Math.round(h.protein)}</span>
-                                                            <span className="mx-1 text-gray-200">/</span>
-                                                            <span className="text-emerald-600">{Math.round(h.fat)}</span>
-                                                            <span className="mx-1 text-gray-200">/</span>
-                                                            <span className="text-blue-600">{Math.round(h.carbs)}</span>
-                                                        </td>
-                                                        <td className="py-5 text-sm font-normal text-gray-500 text-center tabular-nums">
-                                                            <span className="text-gray-600">{Math.round(h.sugar)}</span>
-                                                            <span className="mx-1 text-gray-200">/</span>
-                                                            <span className="text-gray-600">{Math.round(h.fiber)}</span>
-                                                            <span className="mx-1 text-gray-200">/</span>
-                                                            <span className="text-gray-400">{h.salt ?? 0}</span>
-                                                        </td>
+                                <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden">
+                                    <button
+                                        onClick={() => setShowDailyRecords(!showDailyRecords)}
+                                        className="w-full flex items-center justify-between px-8 py-6"
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-1.5 h-6 bg-rose-500 rounded-full"></div>
+                                            <h2 className="text-base font-normal text-gray-800">日別の記録</h2>
+                                        </div>
+                                        <svg className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${showDailyRecords ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                                        </svg>
+                                    </button>
+                                    {showDailyRecords && (
+                                        <div className="overflow-x-auto px-8 pb-8 animate-fadeIn">
+                                            <table className="w-full text-left">
+                                                <thead>
+                                                    <tr className="border-b border-gray-50">
+                                                        <th className="py-4 text-[10px] font-normal text-gray-400 uppercase tracking-widest">日付</th>
+                                                        <th className="py-4 text-[10px] font-normal text-gray-400 uppercase tracking-widest text-right">カロリー</th>
+                                                        <th className="py-4 text-[10px] font-normal text-gray-400 uppercase tracking-widest text-center">P/F/C (g)</th>
+                                                        <th className="py-4 text-[10px] font-normal text-gray-400 uppercase tracking-widest text-center">糖質/繊維/塩</th>
                                                     </tr>
-                                                )) : (
-                                                    <tr>
-                                                        <td colSpan={4} className="py-20 text-center text-sm font-normal text-gray-400 italic">記録がまだありません</td>
-                                                    </tr>
-                                                )}
-                                            </tbody>
-                                        </table>
-                                    </div>
+                                                </thead>
+                                                <tbody className="divide-y divide-gray-50">
+                                                    {intakeHistory.length > 0 ? intakeHistory.map((h, i) => (
+                                                        <tr key={i} className="group hover:bg-gray-50 transition-colors">
+                                                            <td className="py-5 text-sm font-normal text-gray-900">
+                                                                {h.date.slice(5).replace(/-/g, '/')}
+                                                                {h.image_url && <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-[8px] bg-blue-50 text-blue-500 uppercase tracking-tighter font-bold">Image</span>}
+                                                            </td>
+                                                            <td className="py-5 text-sm font-normal text-gray-900 text-right tabular-nums">{h.calories?.toLocaleString()} <span className="text-[10px] text-gray-300">kcal</span></td>
+                                                            <td className="py-5 text-sm font-normal text-gray-600 text-center tabular-nums">
+                                                                <span className="text-amber-600">{Math.round(h.protein)}</span>
+                                                                <span className="mx-1 text-gray-200">/</span>
+                                                                <span className="text-emerald-600">{Math.round(h.fat)}</span>
+                                                                <span className="mx-1 text-gray-200">/</span>
+                                                                <span className="text-blue-600">{Math.round(h.carbs)}</span>
+                                                            </td>
+                                                            <td className="py-5 text-sm font-normal text-gray-500 text-center tabular-nums">
+                                                                <span className="text-gray-600">{Math.round(h.sugar)}</span>
+                                                                <span className="mx-1 text-gray-200">/</span>
+                                                                <span className="text-gray-600">{Math.round(h.fiber)}</span>
+                                                                <span className="mx-1 text-gray-200">/</span>
+                                                                <span className="text-gray-400">{h.salt ?? 0}</span>
+                                                            </td>
+                                                        </tr>
+                                                    )) : (
+                                                        <tr>
+                                                            <td colSpan={4} className="py-20 text-center text-sm font-normal text-gray-400 italic">記録がまだありません</td>
+                                                        </tr>
+                                                    )}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
+                        )}
+
+                        {/* J-1: 体重タブ。PR-J1時点ではWeightWeeklyCompareのみ（推移グラフ+目標体重ラインはPR-J2で追加） */}
+                        {!loadingData && activeTab === 'weight' && (
+                            <WeightTab userId={selectedMember.id} token={selectedMember.access_token!} isAdmin={true} />
+                        )}
+
+                        {/* J-1: グラフタブ。既存AnalyzeTabのグラフ群一式（期間切替そのまま） */}
+                        {!loadingData && activeTab === 'graph' && (
+                            <AnalyzeTab userId={selectedMember.id} token={selectedMember.access_token!} isAdmin={true} todayDraft={sharedState} showWeeklyGoals={false} />
+                        )}
+
+                        {/* M-2: 目標タブ（体重・習慣の成果ゴール。期限＋達成/未達成を管理） */}
+                        {!loadingData && activeTab === 'goals' && (
+                            <GoalsTab userId={selectedMember.id} token={selectedMember.access_token!} isAdmin={true} />
                         )}
 
                         {!loadingData && activeTab === 'plan' && (
                             <div className="space-y-12 pb-20 animate-fadeIn">
+                                {/* 基礎情報からカロリー計算（アラゴン式）: 最初の目標設定時だけ必要なため、
+                                    目標設定の履歴が既にある会員には表示しない */}
+                                {dietHistory.length === 0 && (
                                 <div className="bg-white rounded-[2.5rem] p-8 sm:p-10 shadow-sm border border-gray-100 space-y-6">
-                                    <div className="flex items-center justify-between gap-4">
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-1.5 h-6 bg-blue-500 rounded-full"></div>
-                                            <h2 className="text-xl font-normal text-gray-800 tracking-tight">基礎情報からカロリー計算</h2>
-                                        </div>
-                                        <Link
-                                            href={`/admin/members/${selectedMember.id}/edit`}
-                                            className="text-xs text-blue-600 bg-blue-50 px-4 py-2 rounded-full hover:bg-blue-100 transition-colors"
-                                        >
-                                            会員情報を編集
-                                        </Link>
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-1.5 h-6 bg-blue-500 rounded-full"></div>
+                                        <h2 className="text-xl font-normal text-gray-800 tracking-tight">基礎情報からカロリー計算</h2>
                                     </div>
 
-                                    {calorieEstimate ? (
+                                    {!latestWeight ? (
+                                        <div className="rounded-2xl bg-gray-50 border border-gray-100 p-5 text-sm text-gray-500 leading-relaxed">
+                                            計算には現在の体重の記録が必要です。会員に体重を記録してもらうと自動で計算できるようになります。
+                                        </div>
+                                    ) : (
                                         <>
                                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                                                <DietProfileStat label="年齢" value={`${calorieEstimate.age}歳`} />
-                                                <DietProfileStat label="身長" value={`${calorieEstimate.height}cm`} />
-                                                <DietProfileStat label="最新体重" value={`${calorieEstimate.weight}kg`} />
-                                                <DietProfileStat label="活動量" value={calorieEstimate.activityLabel} />
+                                                <DietProfileStat label="現在の体重" value={`${latestWeight}kg`} />
+                                                <div className="space-y-1">
+                                                    <label className="text-[10px] font-normal text-gray-400 uppercase tracking-widest pl-1">最終目標体重(kg)</label>
+                                                    <input type="number" value={aragonInput.targetWeight} onChange={(e) => setAragonInput(prev => ({ ...prev, targetWeight: e.target.value }))} placeholder="例: 65" className="w-full bg-gray-50 border-none rounded-xl px-3 py-3 text-sm font-normal focus:ring-2 focus:ring-rose-500" />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-[10px] font-normal text-gray-400 uppercase tracking-widest pl-1">目標期間(週間)</label>
+                                                    <input type="number" value={aragonInput.periodWeeks} onChange={(e) => setAragonInput(prev => ({ ...prev, periodWeeks: e.target.value }))} className="w-full bg-gray-50 border-none rounded-xl px-3 py-3 text-sm font-normal focus:ring-2 focus:ring-rose-500" />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-[10px] font-normal text-gray-400 uppercase tracking-widest pl-1">週のトレーニング時間</label>
+                                                    <input type="number" value={aragonInput.weeklyTrainingHours} onChange={(e) => setAragonInput(prev => ({ ...prev, weeklyTrainingHours: e.target.value }))} className="w-full bg-gray-50 border-none rounded-xl px-3 py-3 text-sm font-normal focus:ring-2 focus:ring-rose-500" />
+                                                </div>
                                             </div>
 
-                                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                                <CalorieEstimateCard
-                                                    label="基礎代謝"
-                                                    value={calorieEstimate.bmr}
-                                                    description="何もしなくても使う目安"
-                                                />
-                                                <CalorieEstimateCard
-                                                    label="維持カロリー"
-                                                    value={calorieEstimate.maintenance}
-                                                    description="今の体重を維持する目安"
-                                                    onApply={() => applyCaloriesToPlan(roundToNearest(calorieEstimate.maintenance, 50))}
-                                                />
-                                                <CalorieEstimateCard
-                                                    label="減量スタート"
-                                                    value={calorieEstimate.standardCut}
-                                                    description="停滞時はここから調整"
-                                                    onApply={() => applyCaloriesToPlan(calorieEstimate.standardCut)}
-                                                    primary
-                                                />
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-normal text-gray-400 uppercase tracking-widest pl-1">日常の活動量（NEAT）</label>
+                                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                                    {NEAT_LEVELS.map(level => (
+                                                        <button
+                                                            key={level.value}
+                                                            onClick={() => setAragonInput(prev => ({ ...prev, neat: level.value }))}
+                                                            className={`text-xs py-3 px-2 rounded-xl transition-colors ${aragonInput.neat === level.value ? 'bg-blue-600 text-white' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}`}
+                                                        >
+                                                            {level.label}
+                                                        </button>
+                                                    ))}
+                                                </div>
                                             </div>
 
-                                            <div className="rounded-2xl bg-amber-50 border border-amber-100 p-4 text-xs text-amber-800 leading-relaxed">
-                                                まずは維持カロリーから300〜500kcal引いた数値を開始目安にします。1〜2週間の体重平均を見て、落ちない場合はさらに100〜200kcal下げる運用がしやすいです。
-                                            </div>
+                                            {aragonResult ? (
+                                                <>
+                                                    {aragonResult.paceExceeded && (
+                                                        <div className="rounded-2xl bg-amber-50 border border-amber-100 p-4 text-xs text-amber-800 leading-relaxed">
+                                                            希望ペース（週{aragonResult.requestedWeeklyLossKg}kg減）が安全上限（週{aragonResult.maxSafeWeeklyLossKg}kg減）を超えています。筋肉を落とさないため、12週間後の中間目標体重 {aragonResult.tbwKg}kg を採用して計算しています。
+                                                        </div>
+                                                    )}
+                                                    <div className="bg-gray-50/80 rounded-[2rem] p-8 text-center border border-gray-100/50">
+                                                        <p className="text-[10px] font-normal text-gray-400 mb-1 uppercase tracking-widest">目標摂取カロリー</p>
+                                                        <div className="flex items-baseline justify-center gap-1 mb-4">
+                                                            <span className="text-4xl font-normal text-gray-900 tabular-nums">{aragonResult.targetCalories.toLocaleString()}</span>
+                                                            <span className="text-sm font-normal text-gray-400">kcal / 日</span>
+                                                        </div>
+                                                        <p className="text-[11px] text-gray-500">
+                                                            <span className="text-amber-500">P {aragonResult.protein}g</span>
+                                                            <span className="mx-1 text-gray-300">/</span>
+                                                            <span className="text-emerald-500">F {aragonResult.fat}g</span>
+                                                            <span className="mx-1 text-gray-300">/</span>
+                                                            <span className="text-blue-500">C {aragonResult.carbs}g</span>
+                                                        </p>
+                                                        <button onClick={applyAragonPlanToGoal} className="mt-4 w-full sm:w-auto px-6 py-3 rounded-xl bg-blue-600 text-white text-sm hover:bg-blue-700 transition-colors">目標に反映</button>
+                                                    </div>
+                                                </>
+                                            ) : (
+                                                <div className="rounded-2xl bg-gray-50 border border-gray-100 p-5 text-sm text-gray-500 leading-relaxed">
+                                                    最終目標体重・目標期間・週のトレーニング時間を入力すると計算されます。
+                                                </div>
+                                            )}
                                         </>
+                                    )}
+                                </div>
+                                )}
+
+                                {/* L-2: 現在の目標設定。デフォルトは閲覧専用のコンパクト表示、「編集」で統一フォームを展開 */}
+                                <div className="bg-white rounded-[2.5rem] p-8 sm:p-10 shadow-sm border border-gray-100">
+                                    <div className="flex items-center justify-between mb-6">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-1.5 h-6 bg-orange-500 rounded-full"></div>
+                                            <h2 className="text-xl font-normal text-gray-800 tracking-tight">現在の目標設定</h2>
+                                        </div>
+                                        {!editingCurrentPlan && (
+                                            <button onClick={() => setEditingCurrentPlan(true)} className="text-xs text-blue-600 bg-blue-50 px-4 py-2 rounded-full hover:bg-blue-100">編集</button>
+                                        )}
+                                    </div>
+                                    {editingCurrentPlan ? (
+                                        <GoalPlanForm
+                                            values={nutrientForm}
+                                            onValuesChange={setNutrientForm}
+                                            habitTargets={habitTargets}
+                                            onHabitTargetsChange={setHabitTargets}
+                                            showStartDate={false}
+                                            onSave={async () => { await handleSave(); setEditingCurrentPlan(false) }}
+                                            saving={saving}
+                                            saveLabel="設定を保存"
+                                            onCancel={() => setEditingCurrentPlan(false)}
+                                        />
                                     ) : (
-                                        <div className="rounded-2xl bg-gray-50 border border-gray-100 p-5 text-sm text-gray-500 leading-relaxed">
-                                            計算には、生年月日・性別・身長・活動量・最新体重が必要です。会員情報に基礎情報を入力し、体重記録が入ると自動で計算できます。
+                                        <div className="space-y-2">
+                                            <p className="text-2xl font-normal text-gray-900 tabular-nums">
+                                                目標 {Math.round(nutrientForm.targetCalories).toLocaleString()} kcal
+                                                <span className="text-sm font-normal text-gray-400 ml-2">
+                                                    （P {nutrientForm.protein}g / F {nutrientForm.fat}g / C {nutrientForm.carbs}g）
+                                                </span>
+                                            </p>
+                                            <p className="text-xs font-normal text-gray-400">
+                                                水分{habitTargets.water ?? 2}L・{habitTargets.steps ?? 8000}歩・筋トレ週{habitTargets.workout ?? 1}回・睡眠{habitTargets.sleep ?? 7}h
+                                            </p>
                                         </div>
                                     )}
                                 </div>
 
-                                {!isSettingNewGoal ? (
-                                    <div className="bg-white rounded-[2.5rem] p-8 sm:p-10 shadow-sm border border-gray-100 space-y-10">
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-2">
-                                                <div className="w-1.5 h-6 bg-orange-500 rounded-full"></div>
-                                                <h2 className="text-xl font-normal text-gray-800 tracking-tight">現在の目標設定</h2>
-                                            </div>
-                                            <div className="px-4 py-1.5 bg-orange-50 rounded-full"><span className="text-[10px] font-normal text-orange-600">管理モード</span></div>
-                                        </div>
+                                {/* L-4: 「新しい目標を追加」はグラフの付属品ではなく同格の機能として独立配置 */}
+                                <button onClick={openNewGoalModal} className="w-full text-sm text-white bg-blue-600 hover:bg-blue-700 px-4 py-4 rounded-2xl shadow-sm transition-colors">新しい目標を追加</button>
 
-                                        <div className="space-y-8">
-                                            <div className="space-y-1"><h3 className="text-[10px] font-normal text-gray-400 uppercase tracking-widest pl-1">食事・栄養の目標</h3></div>
-                                            <div className="bg-gray-50/80 rounded-[2rem] p-8 text-center border border-gray-100/50 relative">
-                                                <p className="text-[10px] font-normal text-gray-400 mb-1 uppercase tracking-widest">目標摂取カロリー</p>
-                                                <div className="flex items-baseline justify-center gap-1">
-                                                    <span className="text-5xl font-normal text-gray-900 tabular-nums">{nutrientForm.targetCalories.toLocaleString()}</span>
-                                                    <span className="text-sm font-normal text-gray-400">kcal / 日</span>
-                                                </div>
-                                            </div>
-
-                                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                                                <AdminStatCard label="タンパク質" value={nutrientForm.protein} unit="g" color="amber" onIncrement={() => handleGramChange('protein', 1)} onDecrement={() => handleGramChange('protein', -1)} isPlaceholder={!dietHistory.length && nutrientForm.protein === DEFAULT_PROTEIN} />
-                                                <AdminStatCard label="脂質" value={nutrientForm.fat} unit="g" color="emerald" onIncrement={() => handleGramChange('fat', 1)} onDecrement={() => handleGramChange('fat', -1)} isPlaceholder={!dietHistory.length && nutrientForm.fat === DEFAULT_FAT} />
-                                                <AdminStatCard label="炭水化物" value={nutrientForm.carbs} unit="g" color="blue" onIncrement={() => handleGramChange('carbs', 1)} onDecrement={() => handleGramChange('carbs', -1)} isPlaceholder={!dietHistory.length && nutrientForm.carbs === DEFAULT_CARBS} />
-                                                <AdminStatCard label="糖質" value={nutrientForm.sugar} unit="g" color="purple" onIncrement={() => handleGramChange('sugar', 1)} onDecrement={() => handleGramChange('sugar', -1)} isPlaceholder={!dietHistory.length && nutrientForm.sugar === DEFAULT_SUGAR} />
-                                                <AdminStatCard label="食物繊維" value={nutrientForm.fiber} unit="g" color="rose" onIncrement={() => handleGramChange('fiber', 1)} onDecrement={() => handleGramChange('fiber', -1)} isPlaceholder={!dietHistory.length && nutrientForm.fiber === DEFAULT_FIBER} />
-                                                <AdminStatCard label="塩分" value={nutrientForm.salt} unit="g" color="gray" onIncrement={() => handleGramChange('salt', 0.5)} onDecrement={() => handleGramChange('salt', -0.5)} isPlaceholder={!dietHistory.length && nutrientForm.salt === DEFAULT_SALT} />
-                                            </div>
-                                        </div>
-
-                                        <div className="space-y-8 pt-8 border-t border-gray-50">
-                                            <div className="space-y-1"><h3 className="text-[10px] font-normal text-gray-400 uppercase tracking-widest pl-1">生活習慣の目標</h3></div>
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <AdminStatCard label="糖質/繊維比率" value={intakeHistory.length ? Math.round((intakeHistory[0]?.sugar / (intakeHistory[0]?.fiber || 1)) * 10) / 10 : null} unit="ratio" color="sky" onIncrement={() => {}} onDecrement={() => {}} isPlaceholder={true} />
-                                                <AdminStatCard label="水分摂取" value={habitTargets.water ?? DEFAULT_HABIT_TARGETS.water} isPlaceholder={habitTargets.water === null} unit="L" color="sky" onIncrement={() => setHabitTargets((prev: any) => ({ ...prev, water: (prev.water ?? DEFAULT_HABIT_TARGETS.water) + 0.5 }))} onDecrement={() => setHabitTargets((prev: any) => ({ ...prev, water: Math.max(0, (prev.water ?? DEFAULT_HABIT_TARGETS.water) - 0.5) }))} />
-                                                <AdminStatCard label="目標歩数" value={habitTargets.steps ?? DEFAULT_HABIT_TARGETS.steps} isPlaceholder={habitTargets.steps === null} unit="歩" color="emerald" onIncrement={() => setHabitTargets((prev: any) => ({ ...prev, steps: (prev.steps ?? DEFAULT_HABIT_TARGETS.steps) + 500 }))} onDecrement={() => setHabitTargets((prev: any) => ({ ...prev, steps: Math.max(0, (prev.steps ?? DEFAULT_HABIT_TARGETS.steps) - 500) }))} />
-                                                <AdminStatCard label="筋トレ回数" value={habitTargets.workout ?? DEFAULT_HABIT_TARGETS.workout} isPlaceholder={habitTargets.workout === null} unit="回/週" color="orange" onIncrement={() => setHabitTargets((prev: any) => ({ ...prev, workout: (prev.workout ?? DEFAULT_HABIT_TARGETS.workout) + 1 }))} onDecrement={() => setHabitTargets((prev: any) => ({ ...prev, workout: Math.max(0, (prev.workout ?? DEFAULT_HABIT_TARGETS.workout) - 1) }))} />
-                                                <AdminStatCard label="睡眠時間" value={habitTargets.sleep ?? DEFAULT_HABIT_TARGETS.sleep} isPlaceholder={habitTargets.sleep === null} unit="時間" color="indigo" onIncrement={() => setHabitTargets((prev: any) => ({ ...prev, sleep: (prev.sleep ?? DEFAULT_HABIT_TARGETS.sleep) + 0.5 }))} onDecrement={() => setHabitTargets((prev: any) => ({ ...prev, sleep: Math.max(0, (prev.sleep ?? DEFAULT_HABIT_TARGETS.sleep) - 0.5) }))} />
-                                            </div>
-                                        </div>
-
-                                        <div className="pt-4">
-                                            <button onClick={handleSave} disabled={saving} className="w-full py-5 rounded-2xl bg-gray-900 text-white text-sm font-normal hover:bg-black transition-all shadow-xl flex items-center justify-center gap-3 disabled:opacity-50">
-                                                {saving ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>}
-                                                設定を保存
-                                            </button>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="bg-white rounded-[2.5rem] p-8 sm:p-10 shadow-sm border border-gray-100 space-y-10">
-                                        <div className="flex items-center justify-between">
-                                            <h2 className="text-xl font-normal text-gray-800">新規プランの作成</h2>
-                                            <button onClick={() => setIsSettingNewGoal(false)} className="text-xs text-gray-400 hover:text-gray-600">キャンセル</button>
-                                        </div>
-                                        <div className="space-y-6">
-                                            <div className="space-y-2">
-                                                <label className="text-xs font-normal text-gray-400 uppercase tracking-widest pl-1">開始日</label>
-                                                <input type="date" value={nutrientForm.startDate} onChange={(e) => setNutrientForm({ ...nutrientForm, startDate: e.target.value })} className="w-full bg-gray-50 border-none rounded-2xl p-4 text-sm font-normal focus:ring-2 focus:ring-rose-500" />
-                                            </div>
-                                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                                                <AdminStatCard label="タンパク質" value={nutrientForm.protein} unit="g" color="amber" onIncrement={() => handleGramChange('protein', 1)} onDecrement={() => handleGramChange('protein', -1)} />
-                                                <AdminStatCard label="脂質" value={nutrientForm.fat} unit="g" color="emerald" onIncrement={() => handleGramChange('fat', 1)} onDecrement={() => handleGramChange('fat', -1)} />
-                                                <AdminStatCard label="炭水化物" value={nutrientForm.carbs} unit="g" color="blue" onIncrement={() => handleGramChange('carbs', 1)} onDecrement={() => handleGramChange('carbs', -1)} />
-                                            </div>
-                                            <button onClick={handleSave} disabled={saving} className="w-full py-5 rounded-2xl bg-rose-500 text-white text-sm font-normal hover:bg-rose-600 transition-all shadow-xl">新しいプランとして保存</button>
-                                        </div>
-                                    </div>
-                                )}
-
+                                {/* K-1/K-2/L-1: 統合グラフ（ホバー/タップでツールチップ→編集は2段階）。履歴表は廃止 */}
                                 {goalChartData.length > 0 && (
-                                    <GoalHistoryCharts data={goalChartData} />
-                                )}
-
-                                {dietHistory.length > 0 && (
-                                    <div className="bg-white rounded-[2.5rem] p-8 sm:p-10 shadow-sm border border-gray-100 overflow-hidden">
-                                        <div className="flex items-center justify-between mb-8">
-                                            <div className="flex items-center gap-2">
-                                                <div className="w-1.5 h-5 bg-gray-300 rounded-full"></div>
-                                                <h3 className="text-xl font-normal text-gray-800">目標設定の履歴</h3>
-                                            </div>
-                                            {!isSettingNewGoal && <button onClick={() => { handleNewPlan(); setIsSettingNewGoal(true); }} className="text-xs text-blue-600 hover:text-blue-700 bg-blue-50 px-4 py-2 rounded-full">新しいプランを作成</button>}
-                                        </div>
-                                        <div className="overflow-x-auto -mx-8 px-8">
-                                            <table className="w-full text-left">
-                                                <thead>
-                                                    <tr className="border-b border-gray-50">
-                                                        <th className="py-4 text-[10px] font-normal text-gray-400 uppercase tracking-widest text-center">開始日</th>
-                                                        <th className="py-4 text-[10px] font-normal text-gray-400 uppercase tracking-widest text-center">カロリー</th>
-                                                        <th className="py-4 text-[10px] font-normal text-gray-400 uppercase tracking-widest text-center">P/F/C</th>
-                                                        <th className="py-4 text-[10px] font-normal text-gray-400 uppercase tracking-widest text-center">操作</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="divide-y divide-gray-50">
-                                                    {dietHistory.map((h, i) => (
-                                                        <tr key={i} className="group hover:bg-gray-50/50 transition-colors text-center">
-                                                            <td className="py-4 text-xs font-normal text-gray-700 whitespace-nowrap">{h.start_date.slice(2).replace(/-/g, '/')}</td>
-                                                            <td className="py-4 text-xs font-normal text-gray-900">{h.calories?.toLocaleString()} kcal</td>
-                                                            <td className="py-4 text-xs font-normal text-gray-600">{h.protein}/{h.fat}/{h.carbs}</td>
-                                                            <td className="py-4"><div className="flex items-center justify-center gap-2"><button onClick={() => handleEditHistory(h)} className="p-2 text-gray-400 hover:text-blue-600"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button><button onClick={() => handleDeleteHistory(h.id)} className="p-2 text-gray-400 hover:text-rose-600"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button></div></td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
+                                    <GoalHistoryCharts
+                                        data={goalChartData}
+                                        onEditRequest={(date) => {
+                                            const record = dietHistory.find(h => h.start_date === date)
+                                            if (record) openEditGoalModal(record)
+                                        }}
+                                    />
                                 )}
                             </div>
                         )}
@@ -865,44 +816,20 @@ function DietPlanPageContent() {
                 )}
             </div>
             {message && <div className="fixed bottom-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-8 py-4 rounded-2xl font-normal shadow-2xl z-50 animate-slideUp">{message}</div>}
+
+            {/* K-2: 履歴バーのタップ編集・新規プラン作成モーダル */}
+            {goalModal && (
+                <GoalEditModal
+                    title={goalModal.mode === 'new' ? '新規プランの作成' : 'プランの編集'}
+                    initialValues={goalModal.initialValues}
+                    initialHabitTargets={goalModal.initialHabitTargets}
+                    onClose={() => setGoalModal(null)}
+                    onSave={handleModalSave}
+                    onDelete={goalModal.mode === 'edit' ? handleModalDelete : undefined}
+                />
+            )}
         </div>
     );
-}
-
-function AdminStatCard({ label, value, unit, color, onIncrement, onDecrement, isPlaceholder }: { 
-    label: string, value: number | null, unit: string, color: string, onIncrement: () => void, onDecrement: () => void, isPlaceholder?: boolean
-}) {
-    const colorMap: any = {
-        amber: 'text-amber-500 bg-amber-50 border-amber-100',
-        emerald: 'text-emerald-500 bg-emerald-50 border-emerald-100',
-        blue: 'text-blue-500 bg-blue-50 border-blue-100',
-        purple: 'text-purple-500 bg-purple-50 border-purple-100',
-        rose: 'text-rose-500 bg-rose-50 border-rose-100',
-        gray: 'text-gray-500 bg-gray-50 border-gray-100',
-        sky: 'text-sky-500 bg-sky-50 border-sky-100',
-        orange: 'text-orange-500 bg-orange-50 border-orange-100',
-        indigo: 'text-indigo-500 bg-indigo-50 border-indigo-100'
-    }
-    const style = colorMap[color] || colorMap.gray;
-    const [baseColor, bgColor, borderColor] = style.split(' ');
-
-    return (
-        <div className={`${bgColor} rounded-[2rem] p-5 border ${borderColor} transition-all hover:shadow-md group relative overflow-hidden`}>
-            <p className="text-[9px] font-normal text-gray-400 mb-2 uppercase tracking-widest leading-none">{label}</p>
-            <div className="flex items-center justify-between">
-                <div className="flex items-baseline gap-1">
-                    <span className={`text-2xl font-normal tabular-nums leading-none ${isPlaceholder ? 'text-gray-300' : baseColor}`}>
-                        {value === null ? '-' : unit === 'L' ? value.toFixed(1) : value}
-                    </span>
-                    <span className="text-[9px] font-normal text-gray-300 uppercase tracking-tighter">{unit}</span>
-                </div>
-                <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
-                    <button onClick={(e) => { e.preventDefault(); onIncrement(); }} className="p-1 hover:bg-white rounded-lg text-gray-400 hover:text-gray-600"><svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 15l7-7 7 7" /></svg></button>
-                    <button onClick={(e) => { e.preventDefault(); onDecrement(); }} className="p-1 hover:bg-white rounded-lg text-gray-400 hover:text-gray-600"><svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg></button>
-                </div>
-            </div>
-        </div>
-    )
 }
 
 function DietProfileStat({ label, value }: { label: string, value: string }) {
@@ -914,240 +841,95 @@ function DietProfileStat({ label, value }: { label: string, value: string }) {
     )
 }
 
-function CalorieEstimateCard({ label, value, description, onApply, primary }: {
-    label: string
-    value: number
-    description: string
-    onApply?: () => void
-    primary?: boolean
-}) {
-    return (
-        <div className={`rounded-[2rem] border p-5 ${primary ? 'bg-blue-50 border-blue-100' : 'bg-gray-50 border-gray-100'}`}>
-            <div className={`text-[10px] uppercase tracking-widest ${primary ? 'text-blue-500' : 'text-gray-400'}`}>{label}</div>
-            <div className="mt-2 flex items-baseline gap-1">
-                <span className={`text-3xl tabular-nums ${primary ? 'text-blue-700' : 'text-gray-900'}`}>{value.toLocaleString()}</span>
-                <span className="text-xs text-gray-400">kcal</span>
-            </div>
-            <p className="mt-2 text-[11px] leading-relaxed text-gray-500">{description}</p>
-            {onApply && (
-                <button
-                    type="button"
-                    onClick={onApply}
-                    className={`mt-4 w-full rounded-xl px-3 py-2 text-xs transition-colors ${primary ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'}`}
-                >
-                    目標に反映
-                </button>
-            )}
-        </div>
-    )
-}
-
-function GoalHistoryCharts({ data }: { data: any[] }) {
+/**
+ * N: 目標設定の推移グラフ。各プランの棒の横幅を「実施期間の日数」に比例させる。
+ * recharts標準のBarChartはカテゴリ軸で全バー等幅になり期間の長短が伝わらないため、
+ * flexの幅比率で自前描画する（縦は消費カロリーに応じたPFC積み上げの高さ）。
+ */
+function GoalHistoryCharts({ data, onEditRequest }: { data: any[], onEditRequest: (date: string) => void }) {
+    const [selected, setSelected] = useState<any | null>(null)
     const latest = data[data.length - 1]
     const first = data[0]
     const calorieDiff = latest && first ? latest.calories - first.calories : 0
 
+    const totalDays = data.reduce((sum, d) => sum + d.periodDays, 0) || 1
+    const maxCalories = Math.max(...data.map(d => d.pfcCalories), 1)
+    const CHART_HEIGHT = 220
+
     return (
-        <div className="bg-white rounded-[2.5rem] p-8 sm:p-10 shadow-sm border border-gray-100 space-y-8">
+        <div className="bg-white rounded-[2.5rem] p-8 sm:p-10 shadow-sm border border-gray-100 space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
                 <div className="flex items-center gap-2">
                     <div className="w-1.5 h-6 bg-indigo-500 rounded-full"></div>
                     <div>
                         <h2 className="text-xl font-normal text-gray-800 tracking-tight">目標設定の推移</h2>
-                        <p className="text-[10px] text-gray-400 uppercase tracking-widest mt-1">カロリーとPFCの変更履歴</p>
+                        <p className="text-[10px] text-gray-400 uppercase tracking-widest mt-1">横幅はプランを続けた期間の長さを表します</p>
                     </div>
                 </div>
-                <div className="text-xs text-gray-400">
+                <span className="text-xs text-gray-400 whitespace-nowrap">
                     {data.length}件 / 初回比 {calorieDiff > 0 ? '+' : ''}{calorieDiff.toLocaleString()}kcal
+                </span>
+            </div>
+
+            {/* L-1踏襲: 常時kcalラベルは廃止。タップで詳細情報カードのみ表示 */}
+            <div className="rounded-[2rem] bg-gray-50/80 border border-gray-100 p-5">
+                <div className="flex items-end gap-[2px] overflow-x-auto" style={{ height: CHART_HEIGHT }}>
+                    {data.map((row, i) => {
+                        const widthPct = (row.periodDays / totalDays) * 100
+                        const barHeight = Math.max(6, (row.pfcCalories / maxCalories) * (CHART_HEIGHT - 24))
+                        const proteinH = row.pfcCalories > 0 ? (row.proteinCalories / row.pfcCalories) * barHeight : 0
+                        const fatH = row.pfcCalories > 0 ? (row.fatCalories / row.pfcCalories) * barHeight : 0
+                        const carbH = row.pfcCalories > 0 ? (row.carbCalories / row.pfcCalories) * barHeight : 0
+                        const isSelected = selected?.date === row.date
+                        return (
+                            <button
+                                key={row.date}
+                                onClick={() => setSelected(isSelected ? null : row)}
+                                style={{ width: `${widthPct}%`, minWidth: 14 }}
+                                className={`flex flex-col justify-end shrink-0 rounded-t-md overflow-hidden transition-opacity ${isSelected ? 'ring-2 ring-indigo-400' : 'hover:opacity-80'}`}
+                            >
+                                <div style={{ height: carbH }} className="bg-blue-500 w-full" />
+                                <div style={{ height: fatH }} className="bg-emerald-500 w-full" />
+                                <div style={{ height: proteinH }} className="bg-amber-500 w-full rounded-t-md" />
+                            </button>
+                        )
+                    })}
                 </div>
-            </div>
-
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-                <div className="rounded-[2rem] bg-rose-50/40 border border-rose-100 p-5">
-                    <div className="flex items-center justify-between mb-4">
-                        <div>
-                            <h3 className="text-sm text-gray-800">目標カロリー</h3>
-                            <p className="text-[11px] text-gray-400 mt-1">1日の目標摂取量</p>
-                        </div>
-                        <div className="text-right">
-                            <p className="text-2xl text-gray-900 tabular-nums">{latest?.calories?.toLocaleString()}</p>
-                            <p className="text-[10px] text-gray-400">kcal / 日</p>
-                        </div>
-                    </div>
-                    <div className="h-72">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={data} margin={{ top: 10, right: 8, left: -18, bottom: 0 }}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ffe4e6" />
-                                <XAxis dataKey="displayDate" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8' }} />
-                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#cbd5e1' }} />
-                                <Tooltip
-                                    contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 25px rgb(15 23 42 / 0.12)', padding: '12px' }}
-                                    labelFormatter={(_, payload) => payload?.[0]?.payload?.fullDate || ''}
-                                    formatter={(value: any) => [`${Number(value).toLocaleString()} kcal`, '目標カロリー']}
-                                />
-                                <Bar dataKey="calories" fill="#fb7185" radius={[10, 10, 4, 4]} barSize={28} />
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </div>
+                <div className="flex text-[9px] text-gray-400 mt-2 gap-[2px] overflow-x-auto">
+                    {data.map(row => (
+                        <span key={row.date} style={{ width: `${(row.periodDays / totalDays) * 100}%`, minWidth: 14 }} className="shrink-0 text-center truncate">{row.displayDate}</span>
+                    ))}
                 </div>
-
-                <div className="rounded-[2rem] bg-gray-50/80 border border-gray-100 p-5">
-                    <div className="flex items-center justify-between mb-4">
-                        <div>
-                            <h3 className="text-sm text-gray-800">PFC目標（kcal換算）</h3>
-                            <p className="text-[11px] text-gray-400 mt-1">P/F/Cを積み上げて総カロリーを表示</p>
-                        </div>
-                        <div className="text-right text-[11px] text-gray-500">
-                            <span className="text-amber-500">P {latest?.protein}g</span>
-                            <span className="mx-1 text-gray-300">/</span>
-                            <span className="text-emerald-500">F {latest?.fat}g</span>
-                            <span className="mx-1 text-gray-300">/</span>
-                            <span className="text-blue-500">C {latest?.carbs}g</span>
-                            <p className="mt-1 text-gray-400">{latest?.calories?.toLocaleString()}kcal / 日</p>
-                        </div>
-                    </div>
-                    <div className="h-72">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={data} margin={{ top: 10, right: 8, left: -18, bottom: 0 }}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                                <XAxis dataKey="displayDate" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8' }} />
-                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#cbd5e1' }} />
-                                <Tooltip
-                                    contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 25px rgb(15 23 42 / 0.12)', padding: '12px' }}
-                                    labelFormatter={(_, payload) => payload?.[0]?.payload?.fullDate || ''}
-                                    formatter={(value: any, name: any) => [`${Number(value).toLocaleString()} kcal`, name]}
-                                />
-                                <Legend iconType="circle" wrapperStyle={{ fontSize: 11, color: '#64748b' }} />
-                                <Bar dataKey="proteinCalories" name="タンパク質" stackId="pfc" fill="#f59e0b" radius={[0, 0, 4, 4]} barSize={28} />
-                                <Bar dataKey="fatCalories" name="脂質" stackId="pfc" fill="#10b981" radius={[0, 0, 0, 0]} />
-                                <Bar dataKey="carbCalories" name="炭水化物" stackId="pfc" fill="#3b82f6" radius={[10, 10, 0, 0]} />
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </div>
+                <div className="flex items-center justify-center gap-4 mt-3 text-[10px] text-gray-500">
+                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500 inline-block"></span>タンパク質</span>
+                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>脂質</span>
+                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500 inline-block"></span>炭水化物</span>
                 </div>
-            </div>
-        </div>
-    )
-}
+                <p className="text-[10px] text-gray-400 text-center mt-3">バーをタップすると詳細と編集ボタンを表示します（横幅=実施期間）</p>
 
-function AdminWeeklySummary({
-    summary,
-    targetCalories,
-    weekOffset,
-    onWeekOffsetChange
-}: {
-    summary: any
-    targetCalories: number
-    weekOffset: number
-    onWeekOffsetChange: (updater: (prev: number) => number) => void
-}) {
-    const weightText = !summary.avgWeight
-        ? '今週記録なし'
-        : summary.weightDiff === null
-            ? '先週比較なし'
-            : Math.abs(summary.weightDiff) < 0.05
-                ? '先週と同じ'
-            : summary.weightDiff > 0
-                ? `先週より +${summary.weightDiff.toFixed(1)}kg`
-                : `先週より ${summary.weightDiff.toFixed(1)}kg`
-    const waterText = !summary.avgWater
-        ? '今週記録なし'
-        : summary.waterDiff === null
-            ? '先週比較なし'
-            : Math.abs(summary.waterDiff) < 0.05
-                ? '先週と同じ'
-            : summary.waterDiff > 0
-                ? `先週より +${summary.waterDiff.toFixed(1)}L`
-                : `先週より ${summary.waterDiff.toFixed(1)}L`
-    const weekLabel = weekOffset === 0
-        ? '今週'
-        : weekOffset === -1
-            ? '先週'
-            : `${Math.abs(weekOffset)}週間前`
-    const effectiveTargetCalories = summary.targetCalories || targetCalories
-
-    return (
-        <div className="bg-white rounded-[2.5rem] p-5 sm:p-7 shadow-sm border border-gray-100 space-y-5">
-            <div className="flex items-center justify-center">
-                <div className="flex items-center gap-3 bg-gray-100 rounded-2xl p-1.5 w-full max-w-[340px] shadow-sm">
-                    <button
-                        type="button"
-                        onClick={() => onWeekOffsetChange(prev => prev - 1)}
-                        className="w-10 h-10 flex items-center justify-center hover:bg-white rounded-xl transition-all text-gray-500 active:scale-95"
-                        aria-label="前の週"
-                    >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
-                    </button>
-
-                    <div className="flex-1 text-center leading-tight">
-                        <div className="text-sm text-gray-900">{weekLabel}</div>
-                        <div className="mt-1 text-[10px] text-gray-400 tabular-nums">{summary.dateLabel}</div>
+                {/* L-1踏襲: 2段階タップ — 1回目は情報カード表示のみ、編集ボタンでモーダルを開く */}
+                {selected && (
+                    <div className="mt-4 bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center justify-between gap-3 animate-fadeIn">
+                        <div className="text-xs">
+                            <p className="text-gray-400 mb-1">{selected.periodLabel}</p>
+                            <p className="text-gray-900 text-sm">
+                                {Number(selected.pfcCalories).toLocaleString()} kcal
+                                <span className="ml-2 text-gray-500">
+                                    <span className="text-amber-500">P {selected.protein}g</span>
+                                    <span className="mx-1 text-gray-300">/</span>
+                                    <span className="text-emerald-500">F {selected.fat}g</span>
+                                    <span className="mx-1 text-gray-300">/</span>
+                                    <span className="text-blue-500">C {selected.carbs}g</span>
+                                </span>
+                            </p>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                            <button onClick={() => onEditRequest(selected.date)} className="text-xs text-blue-600 bg-blue-50 px-3 py-2 rounded-full hover:bg-blue-100">このプランを編集</button>
+                            <button onClick={() => setSelected(null)} className="text-xs text-gray-400 hover:text-gray-600 p-2">×</button>
+                        </div>
                     </div>
-
-                    <button
-                        type="button"
-                        onClick={() => onWeekOffsetChange(prev => Math.min(0, prev + 1))}
-                        disabled={weekOffset === 0}
-                        className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all active:scale-95 ${weekOffset === 0 ? 'text-gray-200 cursor-not-allowed' : 'hover:bg-white text-gray-500'}`}
-                        aria-label="次の週"
-                    >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" /></svg>
-                    </button>
-                </div>
+                )}
             </div>
-
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                <SummaryMetric label="平均カロリー" value={summary.avgCalories ? `${Math.round(summary.avgCalories).toLocaleString()}kcal` : '-'} sub={`目標 ${effectiveTargetCalories.toLocaleString()}kcal`} tone={summary.calorieDiff !== null && summary.calorieDiff > 0 ? 'rose' : 'emerald'} />
-                <SummaryMetric label="P平均" value={summary.avgProtein ? `${Math.round(summary.avgProtein)}g` : '-'} sub={`目標 ${summary.targetProtein || '-'}g`} tone="amber" />
-                <SummaryMetric label="脂質平均" value={summary.avgFat ? `${Math.round(summary.avgFat)}g` : '-'} sub={`目標 ${summary.targetFat || '-'}g`} tone="emerald" />
-                <SummaryMetric label="炭水化物平均" value={summary.avgCarbs ? `${Math.round(summary.avgCarbs)}g` : '-'} sub={`目標 ${summary.targetCarbs || '-'}g`} tone="blue" />
-                <SummaryMetric label="食物繊維平均" value={summary.avgFiber ? `${Math.round(summary.avgFiber)}g` : '-'} sub={`目標 ${summary.targetFiber || '-'}g`} tone="rose" />
-                <SummaryMetric label="平均体重" value={summary.avgWeight ? `${summary.avgWeight.toFixed(1)}kg` : '-'} sub={weightText} tone={summary.weightDiff !== null && summary.weightDiff > 0 ? 'amber' : 'blue'} />
-                <SummaryMetric label="水分平均" value={summary.avgWater ? `${summary.avgWater.toFixed(1)}L` : '-'} sub={waterText} tone="sky" />
-                <SummaryMetric label="睡眠平均" value={summary.avgSleep ? `${summary.avgSleep.toFixed(1)}h` : '-'} sub="1日平均" tone="indigo" />
-            </div>
-        </div>
-    )
-}
-
-function FoodWeeklySummary({ summary, targetCalories }: { summary: any; targetCalories: number }) {
-    const effectiveTargetCalories = summary.targetCalories || targetCalories
-
-    return (
-        <div className="bg-white rounded-[2.5rem] p-6 sm:p-8 shadow-sm border border-gray-100 space-y-4">
-            <div>
-                <p className="text-[10px] text-gray-400 uppercase tracking-widest">食事の週平均</p>
-                <h2 className="text-xl text-gray-900 mt-1">{summary.dateLabel}</h2>
-            </div>
-            <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-                <SummaryMetric label="カロリー" value={summary.avgCalories ? `${Math.round(summary.avgCalories).toLocaleString()}kcal` : '-'} sub={`目標 ${effectiveTargetCalories.toLocaleString()}kcal`} tone="rose" />
-                <SummaryMetric label="タンパク質" value={summary.avgProtein ? `${Math.round(summary.avgProtein)}g` : '-'} sub={`目標 ${summary.targetProtein || '-'}g`} tone="amber" />
-                <SummaryMetric label="脂質" value={summary.avgFat ? `${Math.round(summary.avgFat)}g` : '-'} sub={`目標 ${summary.targetFat || '-'}g`} tone="emerald" />
-                <SummaryMetric label="炭水化物" value={summary.avgCarbs ? `${Math.round(summary.avgCarbs)}g` : '-'} sub={`目標 ${summary.targetCarbs || '-'}g`} tone="blue" />
-                <SummaryMetric label="食物繊維" value={summary.avgFiber ? `${Math.round(summary.avgFiber)}g` : '-'} sub={`目標 ${summary.targetFiber || '-'}g`} tone="rose" />
-            </div>
-        </div>
-    )
-}
-
-function SummaryMetric({ label, value, sub, tone }: { label: string; value: string; sub: string; tone: string }) {
-    const toneMap: Record<string, string> = {
-        rose: 'bg-rose-50 border-rose-100 text-rose-600',
-        emerald: 'bg-emerald-50 border-emerald-100 text-emerald-600',
-        amber: 'bg-amber-50 border-amber-100 text-amber-600',
-        blue: 'bg-blue-50 border-blue-100 text-blue-600',
-        sky: 'bg-sky-50 border-sky-100 text-sky-600',
-        indigo: 'bg-indigo-50 border-indigo-100 text-indigo-600',
-        orange: 'bg-orange-50 border-orange-100 text-orange-600',
-        gray: 'bg-gray-50 border-gray-100 text-gray-600',
-    }
-    const classes = toneMap[tone] || toneMap.gray
-
-    return (
-        <div className={`rounded-2xl border p-4 ${classes}`}>
-            <p className="text-[10px] text-gray-400 uppercase tracking-widest">{label}</p>
-            <div className="mt-2 text-lg text-gray-900 tabular-nums leading-tight">{value}</div>
-            <p className="mt-1 text-[11px] leading-relaxed">{sub}</p>
         </div>
     )
 }

@@ -48,8 +48,6 @@ export async function GET(request: NextRequest) {
         const settings = await getMailSettings()
         const dryRun = searchParams.get('dryRun') === 'true'
         const force = searchParams.get('force') === 'true'
-        const configuredGraceMinutes = Number(searchParams.get('graceMinutes') || process.env.ONLINE_REMINDER_GRACE_MINUTES || 10)
-        const graceMinutes = Number.isFinite(configuredGraceMinutes) ? Math.max(0, configuredGraceMinutes) : 10
 
         // Get current JST time. This cron is expected to run once per day at 21:00 JST.
         const nowParam = searchParams.get('now')
@@ -158,6 +156,11 @@ export async function GET(request: NextRequest) {
             }
         }
 
+        // Vercel無料プランではcronを1日1回(21:00 JST)しか実行できない。
+        // オンラインレッスンは「21:00の◯分後」に開催されるケース(例: 火曜21:30開催)を想定し、
+        // 今回のチェック時刻(21:00)から reminder_before_minutes 分後の同日レッスンを対象にする。
+        const configuredGraceMinutes = Number(searchParams.get('graceMinutes') || process.env.ONLINE_REMINDER_GRACE_MINUTES || 10)
+        const graceMinutes = Number.isFinite(configuredGraceMinutes) ? Math.max(0, configuredGraceMinutes) : 10
         const reminderBeforeMinutes = settings.reminder_before_minutes ?? 30
         const onlineTargetTime = addMinutes(jstNow, reminderBeforeMinutes)
         const onlineWindowStart = addMinutes(onlineTargetTime, -graceMinutes)

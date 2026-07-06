@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useOnlineLessons, getJoinStatus, DAYS_JA } from '@/hooks/useOnlineLessons'
 
 interface Reservation {
     id: string
@@ -55,6 +56,7 @@ export default function ReservationTab({ token }: ReservationTabProps) {
     const [pastReservations, setPastReservations] = useState<Reservation[]>([])
     const [loading, setLoading] = useState(true)
     const [showPast, setShowPast] = useState(false)
+    const { lessons } = useOnlineLessons(token)
 
     useEffect(() => {
         const fetchData = async () => {
@@ -87,6 +89,40 @@ export default function ReservationTab({ token }: ReservationTabProps) {
 
     return (
         <div className="space-y-6 pb-24">
+            {/* 0. Online Lesson Schedule (moved from the former オンライン tab) */}
+            {lessons.length > 0 && (
+                <section className="space-y-3">
+                    <h3 className="text-sm font-normal text-gray-500 px-1">オンラインレッスンの開催枠</h3>
+                    <div className="space-y-3">
+                        {lessons.map(lesson => {
+                            const status = getJoinStatus(lesson)
+                            return (
+                                <div key={lesson.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                                    <div className="p-4">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <h4 className="font-normal text-gray-800 text-sm">{lesson.title}</h4>
+                                            <span className="text-[10px] font-normal px-2 py-0.5 bg-blue-50 text-blue-600 rounded-full">{lesson.difficulty}</span>
+                                        </div>
+                                        <p className="text-xs font-normal text-blue-600 mb-2">
+                                            毎週{lesson.day_of_week?.map(d => DAYS_JA[d]).join('・')} {lesson.start_time?.substring(0, 5)}〜{lesson.end_time?.substring(0, 5)}
+                                        </p>
+                                        {status.isToday && (
+                                            <button
+                                                onClick={() => window.open(lesson.meet_url, '_blank')}
+                                                disabled={!status.canJoin}
+                                                className={`w-full py-2.5 rounded-xl text-sm font-normal transition-all ${status.canJoin ? 'bg-blue-600 text-white active:scale-95' : 'bg-gray-100 text-gray-400'}`}
+                                            >
+                                                {status.canJoin ? '参加する' : status.label}
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            )
+                        })}
+                    </div>
+                </section>
+            )}
+
             {/* 1. Future Reservations */}
             <section>
                 {futureReservations.length === 0 ? (

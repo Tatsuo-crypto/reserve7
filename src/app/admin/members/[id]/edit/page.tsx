@@ -143,7 +143,6 @@ export default function EditMemberPage() {
     gender: '',
     heightCm: '',
     activityLevel: '',
-    targetWeightKg: '',
   })
 
   const [settings, setSettings] = useState({
@@ -198,7 +197,6 @@ export default function EditMemberPage() {
             gender: member.gender || '',
             heightCm: member.height_cm ? member.height_cm.toString() : '',
             activityLevel: member.activity_level ? member.activity_level.toString() : '',
-            targetWeightKg: member.target_weight_kg ? member.target_weight_kg.toString() : '',
           })
         }
 
@@ -288,7 +286,6 @@ export default function EditMemberPage() {
             gender: formData.gender,
             heightCm: formData.heightCm,
             activityLevel: formData.activityLevel,
-            targetWeightKg: formData.targetWeightKg,
           }),
         }),
         fetch('/api/lifestyle/settings', {
@@ -499,7 +496,6 @@ export default function EditMemberPage() {
                     <TextField label="目標減量" type="number" name="targetLossKg" value={valueOf(counseling.targetLossKg)} onValue={updateCounseling} unit="kg" placeholder="5" />
                     <TextField label="目標期限" name="targetDeadline" value={valueOf(counseling.targetDeadline)} onValue={updateCounseling} placeholder="3ヶ月後、健康診断まで" />
                   </div>
-                  <TextField label="目標体重" type="number" name="targetWeightKg" value={formData.targetWeightKg} onChange={handleChange} unit="kg" placeholder="55" />
                   <CheckGroup label="体重が増えたきっかけ" name="weightGainTriggers" values={arrayOf(counseling.weightGainTriggers)} options={choices.weightGainTriggers} onToggle={toggleCounseling} />
                   <CheckGroup label="食べすぎやすいタイミング" name="overeatingTiming" values={arrayOf(counseling.overeatingTiming)} options={choices.overeatingTiming} onToggle={toggleCounseling} />
                   <CheckGroup label="減らすのが難しそうなもの" name="hardToReduce" values={arrayOf(counseling.hardToReduce)} options={choices.hardToReduce} onToggle={toggleCounseling} />

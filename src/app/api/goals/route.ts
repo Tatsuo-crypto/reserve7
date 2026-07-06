@@ -3,12 +3,13 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-config';
 import { supabase, supabaseAdmin } from '@/lib/supabase';
 
-// Get diet goals history for current user
+// Get goals (weight/habit) for a user. Optional ?status=active filter.
 export async function GET(req: NextRequest) {
     try {
         const { searchParams } = new URL(req.url);
         const token = searchParams.get('token');
         const queryUserId = searchParams.get('userId');
+        const status = searchParams.get('status');
 
         let userId: string;
         let client = supabase;
@@ -37,29 +38,35 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { data: goals, error } = await client
-            .from('diet_goals')
+        let query = client
+            .from('goals')
             .select('*')
             .eq('user_id', userId)
-            .order('start_date', { ascending: false });
+            .order('created_at', { ascending: false });
+
+        if (status) {
+            query = query.eq('status', status);
+        }
+
+        const { data: goals, error } = await query;
 
         if (error) throw error;
 
         return NextResponse.json({ data: goals });
     } catch (error: any) {
-        console.error('Diet goals fetch error:', error);
+        console.error('Goals fetch error:', error);
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }
 
-// Create new diet goal
+// Create a new goal (weight or habit)
 export async function POST(req: NextRequest) {
     try {
         const { searchParams } = new URL(req.url);
         const tokenFromQuery = searchParams.get('token');
 
         const body = await req.json();
-        const { startDate, token: tokenFromBody, ...goals } = body;
+        const { token: tokenFromBody, userId: bodyUserId, ...goal } = body;
         const token = tokenFromQuery || tokenFromBody;
 
         let userId: string;
@@ -78,47 +85,37 @@ export async function POST(req: NextRequest) {
             userId = user.id;
             client = supabaseAdmin;
         } else if (session && session.user) {
-            userId = (session.user as any).id;
+            const isAdmin = (session.user as any).role === 'ADMIN';
+            if (bodyUserId && isAdmin) {
+                userId = bodyUserId;
+                client = supabaseAdmin;
+            } else {
+                userId = (session.user as any).id;
+            }
         } else {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        // Check if goal for this date already exists
-        const { data: existing } = await client
-            .from('diet_goals')
-            .select('id')
-            .eq('user_id', userId)
-            .eq('start_date', startDate)
-            .maybeSingle();
-
-        let result;
-        if (existing) {
-            result = await client
-                .from('diet_goals')
-                .update({
-                    ...goals,
-                    updated_at: new Date().toISOString(),
-                })
-                .eq('id', existing.id)
-                .select()
-                .single();
-        } else {
-            result = await client
-                .from('diet_goals')
-                .insert({
-                    user_id: userId,
-                    start_date: startDate || new Date().toISOString().split('T')[0],
-                    ...goals,
-                })
-                .select()
-                .single();
-        }
+        const result = await client
+            .from('goals')
+            .insert({
+                user_id: userId,
+                start_date: goal.startDate || new Date().toISOString().split('T')[0],
+                type: goal.type,
+                title: goal.title,
+                target_value: goal.targetValue ?? null,
+                deadline: goal.deadline ?? null,
+                status: goal.status || 'active',
+                note: goal.note ?? null,
+            })
+            .select()
+            .single();
 
         if (result.error) throw result.error;
 
         return NextResponse.json({ success: true, data: result.data });
     } catch (error: any) {
-        console.error('Diet goal save error:', error);
+        console.error('Goal create error:', error);
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }

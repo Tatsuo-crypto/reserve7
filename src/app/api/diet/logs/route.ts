@@ -11,6 +11,7 @@ export async function GET(req: NextRequest) {
         const endDate = searchParams.get('endDate');
         const date = searchParams.get('date');
         const token = searchParams.get('token');
+        const queryUserId = searchParams.get('userId');
 
         let userId: string;
         let client = supabase;
@@ -28,7 +29,13 @@ export async function GET(req: NextRequest) {
             userId = user.id;
             client = supabaseAdmin;
         } else if (session && session.user) {
-            userId = (session.user as any).id;
+            const isAdmin = (session.user as any).role === 'ADMIN';
+            if (queryUserId && isAdmin) {
+                userId = queryUserId;
+                client = supabaseAdmin;
+            } else {
+                userId = (session.user as any).id;
+            }
         } else {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
