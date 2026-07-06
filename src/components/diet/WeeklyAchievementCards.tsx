@@ -17,6 +17,34 @@ export function achievementColor(pct: number): { bar: string; text: string } {
     return { bar: 'bg-state-success-500', text: 'text-state-success-700' }
 }
 
+export type DisplayMode = 'total' | 'average'
+
+/**
+ * オーナー確認後の修正（2026-07-06）: 「週合計」「記録日平均」どちらか一方に固定せず、
+ * ボタンで切り替えられるようにする。WeeklyProgressPanel/WeeklySummaryPanelそれぞれで
+ * mode stateを持ち、このトグルとCalorieHeroCard/AchievementItemCardに渡す。
+ */
+export function DisplayModeToggle({ mode, onChange }: { mode: DisplayMode; onChange: (mode: DisplayMode) => void }) {
+    return (
+        <div className="px-2 flex justify-center">
+            <div className="inline-flex bg-gray-100 rounded-full p-1">
+                <button
+                    onClick={() => onChange('total')}
+                    className={`px-4 py-1.5 rounded-full text-xs font-normal transition-all ${mode === 'total' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-400'}`}
+                >
+                    週の合計
+                </button>
+                <button
+                    onClick={() => onChange('average')}
+                    className={`px-4 py-1.5 rounded-full text-xs font-normal transition-all ${mode === 'average' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-400'}`}
+                >
+                    記録日平均
+                </button>
+            </div>
+        </div>
+    )
+}
+
 /** O-5: 記録チェック表。7日分の食事記録の有無を丸アイコンで見せる。 */
 export function RecordCheckTable({ weekDays }: { weekDays: WeekDayRecordFlag[] }) {
     return (
@@ -40,25 +68,40 @@ export function RecordCheckTable({ weekDays }: { weekDays: WeekDayRecordFlag[] }
 
 /**
  * O-5: カロリー主役行。stat-value/stat-unitで数値ファーストに見せる。
- * オーナー確認後の修正（2026-07-06）: 当初は週合計/週目標で表示していたが、
- * 「週合計は不要、入力日で割った平均摂取量が知りたい」との指摘を受け、
- * 記録日平均/1日あたりの目安に変更した（他の栄養項目のaverageモードと表記を統一）。
+ * オーナー確認後の修正（2026-07-06）: 「週合計」「記録日平均」をボタンで切替可能にした
+ * （DisplayModeToggleでmodeを親から受け取る）。
  */
-export function CalorieHeroCard({ avg, target }: { avg: number; target: number }) {
-    const pct = target > 0 ? Math.round((avg / target) * 100) : 0
-    const over = avg > target
-    const diffAbs = Math.round(Math.abs(target - avg)).toLocaleString()
+export function CalorieHeroCard({
+    mode, actualTotal, weekTarget, avg, perDayTarget,
+}: {
+    mode: DisplayMode
+    actualTotal: number
+    weekTarget: number
+    avg: number
+    perDayTarget: number
+}) {
+    const isTotal = mode === 'total'
+    const baseVal = isTotal ? actualTotal : avg
+    const targetVal = isTotal ? weekTarget : perDayTarget
+    const pct = targetVal > 0 ? Math.round((baseVal / targetVal) * 100) : 0
+    const over = baseVal > targetVal
+    const diffAbs = Math.round(Math.abs(targetVal - baseVal)).toLocaleString()
     const { bar } = achievementColor(pct)
+    const unitSuffix = isTotal ? 'kcal' : 'kcal/日'
 
     return (
         <Card padding="sm">
             <div className="flex items-center justify-between mb-2">
                 <h3 className="text-sm font-semibold text-gray-800">カロリー</h3>
-                <Badge tone={over ? 'danger' : 'success'}>{over ? `+${diffAbs}kcal/日` : `あと${diffAbs}kcal/日`}</Badge>
+                <Badge tone={over ? 'danger' : 'success'}>{over ? `+${diffAbs}${unitSuffix}` : `あと${diffAbs}${unitSuffix}`}</Badge>
             </div>
             <div className="flex items-baseline gap-1.5 mb-2">
-                <span className="stat-value">{Math.round(avg).toLocaleString()}</span>
-                <span className="stat-unit">kcal/日（目標 {Math.round(target).toLocaleString()}kcal/日・記録日平均）</span>
+                <span className="stat-value">{Math.round(baseVal).toLocaleString()}</span>
+                <span className="stat-unit">
+                    {isTotal
+                        ? `/ ${Math.round(targetVal).toLocaleString()} kcal（週合計）`
+                        : `kcal/日（目標 ${Math.round(targetVal).toLocaleString()}kcal/日・記録日平均）`}
+                </span>
             </div>
             <div className="h-2.5 rounded-full bg-gray-100 overflow-hidden">
                 <div className={`h-full rounded-full transition-all ${bar}`} style={{ width: `${Math.min(100, pct)}%` }} />
@@ -68,31 +111,43 @@ export function CalorieHeroCard({ avg, target }: { avg: number; target: number }
 }
 
 /**
- * O-5: 2列グリッド用の項目カード。「記録日平均 / 1日あたりの目安」表記
- * （＝入力した日数で割った平均摂取量）で統一する。isFrequency（筋トレ等）のみ
- * 「今週 X/Y回」の専用表示。
+ * O-5: 2列グリッド用の項目カード。mode='total'/'average'をCalorieHeroCardと
+ * 同じ切替ボタンで統一表示する。isFrequency（筋トレ等）はmodeによらず
+ * 「今週 X/Y回」の専用表示のまま。
  */
 export function AchievementItemCard({
-    label, unit, target, avg, prevAvg, prevRecordedDays, isFrequency, actual,
+    label, unit, mode, perDayTarget, weekTarget, avg, prevAvg, actualTotal, prevActualTotal, prevRecordedDays, isFrequency, actual, target,
 }: {
     label: string
     unit: string
-    /** isFrequency時は週目標回数、それ以外は1日あたりの目安値。 */
-    target: number
-    /** 記録日平均。 */
+    mode: DisplayMode
+    /** mode='average'時の1日あたりの目安値。 */
+    perDayTarget?: number
+    /** mode='total'時の週合計目標値。 */
+    weekTarget?: number
+    /** mode='average'時: 記録日平均。 */
     avg?: number
     prevAvg?: number
+    /** mode='total'時: 週合計実績。 */
+    actualTotal?: number
+    prevActualTotal?: number
     prevRecordedDays?: number
     isFrequency?: boolean
     /** isFrequency時: 今週の実施回数。 */
     actual?: number
+    /** isFrequency時: 週目標回数。 */
+    target?: number
 }) {
-    const roundVal = (v: number) => (isFrequency ? Math.round(v) : Math.round(v * 10) / 10)
-    const baseVal = isFrequency ? (actual || 0) : (avg || 0)
-    const pct = target > 0 ? Math.round((baseVal / target) * 100) : 0
+    const useTotal = !isFrequency && mode === 'total'
+    const roundVal = (v: number) => (isFrequency || useTotal ? Math.round(v) : Math.round(v * 10) / 10)
+    const targetVal = isFrequency ? (target || 0) : (useTotal ? (weekTarget || 0) : (perDayTarget || 0))
+    const baseVal = isFrequency ? (actual || 0) : (useTotal ? (actualTotal || 0) : (avg || 0))
+    const pct = targetVal > 0 ? Math.round((baseVal / targetVal) * 100) : 0
     const { bar, text } = achievementColor(pct)
     const hasPrevWeek = !isFrequency && (prevRecordedDays || 0) > 0
-    const diff = hasPrevWeek && avg !== undefined && prevAvg !== undefined ? avg - prevAvg : null
+    const curBase = useTotal ? actualTotal : avg
+    const prevBase = useTotal ? prevActualTotal : prevAvg
+    const diff = hasPrevWeek && curBase !== undefined && prevBase !== undefined ? curBase - prevBase : null
 
     return (
         <Card padding="sm">
@@ -106,10 +161,15 @@ export function AchievementItemCard({
                     <span className="stat-value !text-xl">{actual}</span>
                     <span className="stat-unit">/{target}{unit}</span>
                 </div>
+            ) : useTotal ? (
+                <div className="flex items-baseline gap-1">
+                    <span className="stat-value !text-xl">{actualTotal !== undefined ? Math.round(actualTotal).toLocaleString() : '-'}</span>
+                    <span className="stat-unit">/ {Math.round(targetVal).toLocaleString()}{unit}（週合計）</span>
+                </div>
             ) : (
                 <div className="flex items-baseline gap-1">
                     <span className="stat-value !text-xl">{avg !== undefined ? roundVal(avg).toLocaleString() : '-'}</span>
-                    <span className="stat-unit">{unit}（目標{target}{unit}）</span>
+                    <span className="stat-unit">{unit}（目標{targetVal}{unit}）</span>
                 </div>
             )}
 
