@@ -238,7 +238,7 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
             <button
               onClick={handleAddMonth}
               title="プランを追加・復帰"
-              className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-blue-500 text-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 flex items-center justify-center hover:scale-105 active:scale-95 group"
+              className="w-12 h-12 bg-gradient-to-br from-brand-600 to-brand-800 text-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 flex items-center justify-center hover:scale-105 active:scale-95 group"
             >
               <svg className="w-6 h-6 group-hover:rotate-90 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
@@ -272,7 +272,7 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
                       return (
                         <tr
                           key={`${p.month}-${idx}`}
-                          className={`group transition-colors ${isFutureMonth ? 'bg-blue-50/30 hover:bg-blue-50/50' : 'hover:bg-gray-50/50'}`}
+                          className={`group transition-colors ${isFutureMonth ? 'bg-brand-50/30 hover:bg-brand-50/50' : 'hover:bg-gray-50/50'}`}
                         >
                           <td className="px-3 sm:px-8 py-4">
                             <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
@@ -281,7 +281,7 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
                               </span>
                               <div className="flex gap-1">
                                 {isFutureMonth && (
-                                  <span className="text-[8px] font-normal bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full uppercase tracking-tighter">予定</span>
+                                  <span className="text-[8px] font-normal bg-brand-100 text-brand-600 px-1.5 py-0.5 rounded-full uppercase tracking-tighter">予定</span>
                                 )}
                                 {isCurrentMonth && (
                                   <span className="text-[8px] font-normal bg-green-100 text-green-600 px-1.5 py-0.5 rounded-full uppercase tracking-tighter">今月</span>
@@ -308,8 +308,8 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
                             <button
                               className={`text-[10px] font-normal uppercase tracking-widest px-3 py-2 rounded-xl border transition-all ${
                                 isFutureMonth 
-                                  ? 'bg-blue-50 text-blue-600 border-blue-100 hover:bg-blue-100' 
-                                  : 'bg-white text-indigo-600 border-gray-100 hover:border-indigo-200 hover:bg-indigo-50'
+                                  ? 'bg-brand-50 text-brand-600 border-brand-100 hover:bg-brand-100' 
+                                  : 'bg-white text-brand-600 border-gray-100 hover:border-brand-200 hover:bg-brand-50'
                               }`}
                               onClick={() => handleEditClick(p)}
                             >
@@ -334,14 +334,14 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
               <div className="flex items-center gap-2 mb-4">
                 <h3 className="text-lg font-normal">{formatMonth(editingItem.month)} の設定</h3>
                 {editingItem.status === 'future' && (
-                  <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded font-normal">翌月以降の予定</span>
+                  <span className="text-xs bg-brand-100 text-brand-700 px-2 py-0.5 rounded font-normal">翌月以降の予定</span>
                 )}
               </div>
 
               {editingItem.status === 'future' && (
-                <div className="mb-4 bg-blue-50 border border-blue-200 rounded-md p-3 text-sm text-blue-800">
+                <div className="mb-4 bg-brand-50 border border-brand-200 rounded-md p-3 text-sm text-brand-800">
                   📅 <strong>{formatMonth(editingItem.month)}</strong> からのプラン変更予定を設定します。<br />
-                  <span className="text-xs text-blue-600 mt-1 block">現在のプランは今月末まで継続されます。</span>
+                  <span className="text-xs text-brand-600 mt-1 block">現在のプランは今月末まで継続されます。</span>
                 </div>
               )}
               
@@ -427,8 +427,8 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
                 <button
                   className={`px-4 py-2 text-sm rounded-md text-white disabled:opacity-50 ${
                     editingItem.status === 'future'
-                      ? 'bg-blue-600 hover:bg-blue-700'
-                      : 'bg-indigo-600 hover:bg-indigo-700'
+                      ? 'bg-brand-600 hover:bg-brand-700'
+                      : 'bg-brand-600 hover:bg-brand-700'
                   }`}
                   onClick={handleSaveMonth}
                   disabled={saving}

@@ -261,7 +261,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
 
         {/* メッセージ */}
         {message && (
-          <div className="mx-6 mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700">
+          <div className="mx-6 mt-4 p-3 bg-brand-50 border border-brand-200 rounded-lg text-sm text-brand-700">
             {message}
           </div>
         )}
@@ -301,7 +301,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                 onClick={() => setActiveTab(tab.key as any)}
                 className={`py-2.5 px-2 sm:px-3 text-xs sm:text-sm font-normal border-b-2 transition-colors flex flex-row items-center gap-1.5 whitespace-nowrap ${
                   activeTab === tab.key
-                    ? 'border-blue-500 text-blue-600'
+                    ? 'border-brand-500 text-brand-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700'
                 }`}
                 style={{ writingMode: 'horizontal-tb' }}
@@ -342,7 +342,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                   <button
                     onClick={() => handleSubmit('yearly_goal', yearlyForm)}
                     disabled={loading || !yearlyForm.goal_text}
-                    className="w-full bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-normal hover:bg-blue-700 disabled:opacity-50"
+                    className="w-full bg-brand-600 text-white px-4 py-2 rounded-md text-sm font-normal hover:bg-brand-700 disabled:opacity-50"
                   >
                     保存
                   </button>
@@ -374,7 +374,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                             <div className="flex gap-2">
                               <button
                                 onClick={() => handleUpdate('yearly_goal', goal.id)}
-                                className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
+                                className="px-3 py-1 bg-brand-600 text-white rounded text-sm hover:bg-brand-700"
                               >
                                 保存
                               </button>
@@ -398,7 +398,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                                   setEditingId(goal.id)
                                   setEditForm({ year: goal.year, goal_text: goal.goal_text })
                                 }}
-                                className="text-blue-600 hover:text-blue-800 text-sm"
+                                className="text-brand-600 hover:text-brand-800 text-sm"
                               >
                                 編集
                               </button>
@@ -518,7 +518,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                       }
                     }}
                     disabled={loading || (!monthlyForm.goal_text_1 && !monthlyForm.goal_text_2 && !monthlyForm.goal_text_3)}
-                    className="w-full bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-normal hover:bg-blue-700 disabled:opacity-50"
+                    className="w-full bg-brand-600 text-white px-4 py-2 rounded-md text-sm font-normal hover:bg-brand-700 disabled:opacity-50"
                   >
                     まとめて保存
                   </button>
@@ -532,7 +532,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                 ) : (
                   <div className="space-y-2">
                     {monthlyGoals.map((goal) => (
-                      <div key={goal.id} className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                      <div key={goal.id} className="p-3 bg-brand-50 border border-brand-200 rounded-lg">
                         {editingId === goal.id ? (
                           <div className="space-y-2">
                             <div className="grid grid-cols-2 gap-2">
@@ -561,7 +561,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                             <div className="flex gap-2">
                               <button
                                 onClick={() => handleUpdate('monthly_goal', goal.id)}
-                                className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
+                                className="px-3 py-1 bg-brand-600 text-white rounded text-sm hover:bg-brand-700"
                               >
                                 保存
                               </button>
@@ -576,7 +576,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                         ) : (
                           <div className="flex items-center justify-between">
                             <div>
-                              <div className="text-sm font-normal text-blue-700">{goal.year}年{goal.month}月</div>
+                              <div className="text-sm font-normal text-brand-700">{goal.year}年{goal.month}月</div>
                               <div className="text-sm text-gray-900">{goal.goal_text}</div>
                             </div>
                             <div className="flex gap-2">
@@ -585,7 +585,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                                   setEditingId(goal.id)
                                   setEditForm({ year: goal.year, month: goal.month, goal_text: goal.goal_text })
                                 }}
-                                className="text-blue-600 hover:text-blue-800 text-sm"
+                                className="text-brand-600 hover:text-brand-800 text-sm"
                               >
                                 編集
                               </button>
@@ -643,7 +643,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                   <button
                     onClick={() => handleSubmit('weight_record', { ...weightForm, weight_kg: parseFloat(weightForm.weight_kg) })}
                     disabled={loading || !weightForm.weight_kg}
-                    className="w-full bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-normal hover:bg-blue-700 disabled:opacity-50"
+                    className="w-full bg-brand-600 text-white px-4 py-2 rounded-md text-sm font-normal hover:bg-brand-700 disabled:opacity-50"
                   >
                     保存
                   </button>
@@ -683,7 +683,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                             <div className="flex gap-2">
                               <button
                                 onClick={() => handleUpdate('weight_record', record.id)}
-                                className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
+                                className="px-3 py-1 bg-brand-600 text-white rounded text-sm hover:bg-brand-700"
                               >
                                 保存
                               </button>
@@ -707,7 +707,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                                   setEditingId(record.id)
                                   setEditForm({ recorded_date: record.recorded_date, weight_kg: record.weight_kg, notes: record.notes || '' })
                                 }}
-                                className="text-blue-600 hover:text-blue-800 text-sm"
+                                className="text-brand-600 hover:text-brand-800 text-sm"
                               >
                                 編集
                               </button>
@@ -790,7 +790,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                       reps: squatForm.reps ? parseInt(squatForm.reps) : undefined,
                     })}
                     disabled={loading || !squatForm.weight_kg}
-                    className="w-full bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-normal hover:bg-blue-700 disabled:opacity-50"
+                    className="w-full bg-brand-600 text-white px-4 py-2 rounded-md text-sm font-normal hover:bg-brand-700 disabled:opacity-50"
                   >
                     保存
                   </button>
@@ -847,7 +847,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                             <div className="flex gap-2">
                               <button
                                 onClick={() => handleUpdate('squat_record', record.id)}
-                                className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
+                                className="px-3 py-1 bg-brand-600 text-white rounded text-sm hover:bg-brand-700"
                               >
                                 保存
                               </button>
@@ -882,7 +882,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                                     notes: record.notes || '' 
                                   })
                                 }}
-                                className="text-blue-600 hover:text-blue-800 text-sm"
+                                className="text-brand-600 hover:text-brand-800 text-sm"
                               >
                                 編集
                               </button>
@@ -907,12 +907,12 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
             <div className="space-y-8">
               <div>
                 <h3 className="text-sm font-normal text-gray-900 mb-4 flex items-center gap-2">
-                  <span className="w-1 h-4 bg-blue-600 rounded-full"></span>
+                  <span className="w-1 h-4 bg-brand-600 rounded-full"></span>
                   食事管理機能の設定
                 </h3>
                 <p className="text-xs text-gray-500 mb-4">会員用アプリに食事管理に関連する全機能（入力・分析・進捗・各項目）を表示します</p>
                 
-                <label className="flex items-center gap-4 p-6 bg-blue-50/50 border border-blue-100 rounded-2xl cursor-pointer hover:bg-blue-50 transition-all active:scale-[0.98]">
+                <label className="flex items-center gap-4 p-6 bg-brand-50/50 border border-brand-100 rounded-2xl cursor-pointer hover:bg-brand-50 transition-all active:scale-[0.98]">
                   <input
                     type="checkbox"
                     checked={settings.visible_tabs.input && settings.visible_tabs.analyze && settings.visible_tabs.progress}
@@ -923,10 +923,10 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                         visible_items: { steps: isChecked, sleep: isChecked, water: isChecked, alcohol: isChecked, workout: isChecked }
                       });
                     }}
-                    className="w-8 h-8 text-blue-600 border-gray-300 rounded-lg focus:ring-blue-500 transition-all"
+                    className="w-8 h-8 text-brand-600 border-gray-300 rounded-lg focus:ring-brand-500 transition-all"
                   />
                   <div>
-                    <div className="text-lg font-normal text-gray-900">食事管理機能を表示する <span className="text-blue-600 ml-1">(ダイエットプラン限定)</span></div>
+                    <div className="text-lg font-normal text-gray-900">食事管理機能を表示する <span className="text-brand-600 ml-1">(ダイエットプラン限定)</span></div>
                     <div className="text-sm text-gray-600 mt-1 italic">チェックを入れると全ての管理機能（入力・分析・進捗）が会員アプリに表示されます</div>
                   </div>
                 </label>
@@ -936,7 +936,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                 <button
                   onClick={handleSettingsSave}
                   disabled={loading}
-                  className="w-full bg-blue-600 text-white py-4 rounded-2xl font-normal shadow-lg hover:bg-blue-700 transition-all active:scale-95 disabled:opacity-50 text-lg"
+                  className="w-full bg-brand-600 text-white py-4 rounded-2xl font-normal shadow-lg hover:bg-brand-700 transition-all active:scale-95 disabled:opacity-50 text-lg"
                 >
                   {loading ? '保存中...' : '設定を保存する'}
                 </button>

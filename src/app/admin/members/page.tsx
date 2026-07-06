@@ -205,7 +205,7 @@ function MembersPageContent() {
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
             <div className="text-[10px] font-normal text-gray-400 uppercase tracking-widest mb-1">現在の在籍者</div>
             <div className="flex items-baseline gap-2">
-              <span className="text-4xl font-normal text-blue-600 tracking-tight">{totalActive}</span>
+              <span className="text-4xl font-normal text-brand-600 tracking-tight">{totalActive}</span>
               <span className="text-sm font-normal text-gray-400">名</span>
             </div>
           </div>
@@ -228,13 +228,13 @@ function MembersPageContent() {
             <div className="flex items-center gap-2 bg-gray-50 p-1 rounded-xl border border-gray-100">
               <button
                 onClick={() => setShowOnlyActive(true)}
-                className={`px-4 py-2 rounded-lg text-xs font-normal transition-all ${showOnlyActive ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                className={`px-4 py-2 rounded-lg text-xs font-normal transition-all ${showOnlyActive ? 'bg-white text-brand-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
               >
                 在籍のみ
               </button>
               <button
                 onClick={() => setShowOnlyActive(false)}
-                className={`px-4 py-2 rounded-lg text-xs font-normal transition-all ${!showOnlyActive ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                className={`px-4 py-2 rounded-lg text-xs font-normal transition-all ${!showOnlyActive ? 'bg-white text-brand-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
               >
                 全員表示
               </button>
@@ -244,7 +244,7 @@ function MembersPageContent() {
               <select
                 value={sortKey || ''}
                 onChange={(e) => setSortKey(e.target.value as any || null)}
-                className="bg-gray-50 border border-gray-100 rounded-xl px-4 py-2 text-xs font-normal text-gray-600 focus:ring-2 focus:ring-blue-500 outline-none"
+                className="bg-gray-50 border border-gray-100 rounded-xl px-4 py-2 text-xs font-normal text-gray-600 focus:ring-2 focus:ring-brand-500 outline-none"
               >
                 <option value="">標準並び替え</option>
                 <option value="plan">プラン順</option>
@@ -253,7 +253,7 @@ function MembersPageContent() {
               </select>
               <button
                 onClick={() => setSortAsc(!sortAsc)}
-                className="p-2 bg-gray-50 text-gray-400 hover:text-blue-600 rounded-xl border border-gray-100 transition-all"
+                className="p-2 bg-gray-50 text-gray-400 hover:text-brand-600 rounded-xl border border-gray-100 transition-all"
               >
                 <svg className={`w-4 h-4 transition-transform ${sortAsc ? '' : 'rotate-180'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -264,7 +264,7 @@ function MembersPageContent() {
 
           <Link
             href="/admin/members/new"
-            className="px-5 py-2.5 bg-blue-600 text-white text-[10px] font-normal rounded-2xl hover:bg-blue-700 transition-all shadow-md flex items-center gap-2 uppercase tracking-widest"
+            className="px-5 py-2.5 bg-brand-600 text-white text-[10px] font-normal rounded-2xl hover:bg-brand-700 transition-all shadow-md flex items-center gap-2 uppercase tracking-widest"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
@@ -275,7 +275,7 @@ function MembersPageContent() {
 
         {error && (
           <div className="mb-6 p-4 rounded-2xl bg-gray-900 text-white font-normal text-sm shadow-xl flex items-center gap-3 animate-fadeIn">
-            <div className="w-1.5 h-4 bg-rose-500 rounded-full"></div>
+            <div className="w-1.5 h-4 bg-brand-500 rounded-full"></div>
             {error}
           </div>
         )}
@@ -305,12 +305,12 @@ function MembersPageContent() {
                         const lastName = (member.full_name || '').split(/[\s　]+/)[0]
                         router.push(`/admin/members/${member.id}?name=${encodeURIComponent(lastName)}`)
                       }}
-                      className="hover:bg-blue-50/30 transition-colors cursor-pointer group"
+                      className="hover:bg-brand-50/30 transition-colors cursor-pointer group"
                     >
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-2">
                           <div className={`flex-shrink-0 w-2 h-2 rounded-full ${getStatusDotColor(member.status)} shadow-sm`}></div>
-                          <div className="text-sm font-normal text-gray-900 group-hover:text-blue-600 transition-colors truncate max-w-[120px] sm:max-w-none">
+                          <div className="text-sm font-normal text-gray-900 group-hover:text-brand-600 transition-colors truncate max-w-[120px] sm:max-w-none">
                             {member.full_name}
                           </div>
                         </div>
@@ -326,7 +326,7 @@ function MembersPageContent() {
                         </span>
                       </td>
                       <td className="px-4 py-4 text-right">
-                        <div className="inline-flex items-center text-gray-200 group-hover:text-blue-500 transition-colors">
+                        <div className="inline-flex items-center text-gray-200 group-hover:text-brand-500 transition-colors">
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                           </svg>
@@ -362,7 +362,7 @@ export default function MembersPage() {
     <Suspense fallback={
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600 mx-auto"></div>
           <p className="mt-4 text-gray-600">読み込み中...</p>
         </div>
       </div>

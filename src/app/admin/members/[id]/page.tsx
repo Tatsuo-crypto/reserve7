@@ -106,15 +106,15 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
                 setCopySuccess('コピー完了')
                 setTimeout(() => setCopySuccess(''), 2000)
               }}
-              className="group relative bg-gradient-to-br from-white to-blue-50/50 p-6 rounded-3xl shadow-sm border border-blue-100 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1.5 flex flex-col items-center justify-center overflow-hidden"
+              className="group relative bg-gradient-to-br from-white to-brand-50/50 p-6 rounded-3xl shadow-sm border border-brand-100 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1.5 flex flex-col items-center justify-center overflow-hidden"
             >
-              <div className="h-14 w-14 bg-gradient-to-br from-blue-100 to-blue-200 text-blue-600 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-sm">
+              <div className="h-14 w-14 bg-gradient-to-br from-brand-100 to-brand-200 text-brand-600 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-sm">
                 <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                 </svg>
               </div>
               <span className="text-sm font-normal text-gray-900 tracking-tight">{copySuccess || 'URLをコピー'}</span>
-              <div className="absolute -bottom-4 -right-4 w-16 h-16 bg-blue-100/30 rounded-full blur-2xl group-hover:bg-blue-200/50 transition-colors"></div>
+              <div className="absolute -bottom-4 -right-4 w-16 h-16 bg-brand-100/30 rounded-full blur-2xl group-hover:bg-brand-200/50 transition-colors"></div>
             </button>
           ) : (
             <div className="bg-gray-50/50 p-6 rounded-3xl shadow-sm border border-gray-100 flex flex-col items-center justify-center opacity-50 cursor-not-allowed">

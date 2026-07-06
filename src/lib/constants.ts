@@ -78,16 +78,17 @@ export const STATUS_LABELS: Record<string, string> = {
   [STATUS.WITHDRAWN]: '退会',
 };
 
+// O-1の状態色トークン(state.success/state.danger)に統一。休会はBadgeのwarningトーン(amber)に合わせる。
 export const STATUS_COLORS: Record<string, string> = {
-  [STATUS.ACTIVE]: 'bg-green-100 text-green-800',
-  [STATUS.SUSPENDED]: 'bg-yellow-100 text-yellow-800',
-  [STATUS.WITHDRAWN]: 'bg-red-100 text-red-800',
+  [STATUS.ACTIVE]: 'bg-state-success-100 text-state-success-700',
+  [STATUS.SUSPENDED]: 'bg-amber-100 text-amber-800',
+  [STATUS.WITHDRAWN]: 'bg-state-danger-100 text-state-danger-700',
 };
 
 export const STATUS_DOT_COLORS: Record<string, string> = {
-  [STATUS.ACTIVE]: 'bg-green-500',
-  [STATUS.SUSPENDED]: 'bg-yellow-500',
-  [STATUS.WITHDRAWN]: 'bg-red-500',
+  [STATUS.ACTIVE]: 'bg-state-success-500',
+  [STATUS.SUSPENDED]: 'bg-amber-500',
+  [STATUS.WITHDRAWN]: 'bg-state-danger-500',
 };
 
 // Status priority for sorting

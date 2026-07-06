@@ -167,7 +167,7 @@ export default function NewMemberPage() {
                 name="lastName"
                 value={formData.lastName}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                 placeholder="山田"
               />
             </div>
@@ -181,7 +181,7 @@ export default function NewMemberPage() {
                 name="firstName"
                 value={formData.firstName}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                 placeholder="太郎"
               />
             </div>
@@ -198,7 +198,7 @@ export default function NewMemberPage() {
               name="email"
               value={formData.email}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
               placeholder="example@email.com"
             />
             <p className="mt-1 text-sm text-gray-500">会員専用URLの発行にはメールアドレスが必要ですが、空欄でも登録可能です（システムがダミーアドレスを生成します）</p>
@@ -215,7 +215,7 @@ export default function NewMemberPage() {
               value={formData.storeId}
               onChange={handleChange}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
             >
               <option value="">店舗を選択してください</option>
               {stores.map(store => (
@@ -234,7 +234,7 @@ export default function NewMemberPage() {
               name="plan"
               value={formData.plan}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
             >
               {// @ts-ignore
                 PLAN_LIST.map(plan => (
@@ -254,7 +254,7 @@ export default function NewMemberPage() {
               name="monthlyFee"
               value={formData.monthlyFee}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
               placeholder="13200"
             />
             <p className="mt-1 text-sm text-gray-500">空欄の場合は0円として登録されます</p>
@@ -271,7 +271,7 @@ export default function NewMemberPage() {
               name="startMonth"
               value={formData.startMonth}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
             />
             <p className="mt-1 text-sm text-gray-500">
               指定した月から売上に計上されます。
@@ -289,7 +289,7 @@ export default function NewMemberPage() {
               name="registrationDate"
               value={formData.registrationDate}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
             />
           </div>
 
@@ -303,7 +303,7 @@ export default function NewMemberPage() {
               name="status"
               value={formData.status}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
             >
               <option value="active">有効</option>
               <option value="suspended">休会</option>
@@ -324,7 +324,7 @@ export default function NewMemberPage() {
                   name="birthDate"
                   value={formData.birthDate}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                 />
               </div>
               <div>
@@ -334,7 +334,7 @@ export default function NewMemberPage() {
                   name="gender"
                   value={formData.gender}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                 >
                   <option value="">未設定</option>
                   <option value="female">女性</option>
@@ -351,7 +351,7 @@ export default function NewMemberPage() {
                   onChange={handleChange}
                   min="0"
                   step="0.1"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                   placeholder="160"
                 />
               </div>
@@ -365,7 +365,7 @@ export default function NewMemberPage() {
                   onChange={handleChange}
                   min="0"
                   step="0.1"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                   placeholder="55"
                 />
               </div>
@@ -376,7 +376,7 @@ export default function NewMemberPage() {
                   name="activityLevel"
                   value={formData.activityLevel}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                 >
                   <option value="">未設定</option>
                   <option value="1.2">低い: デスクワーク中心</option>
@@ -393,14 +393,14 @@ export default function NewMemberPage() {
           <div className="pt-6 border-t border-gray-100">
             <h3 className="text-lg font-normal text-gray-900 mb-4">通知設定</h3>
             <div className="space-y-4">
-              <label className="flex items-center gap-4 p-4 bg-blue-50/50 border border-blue-100 rounded-xl cursor-pointer hover:bg-blue-50 transition-colors">
+              <label className="flex items-center gap-4 p-4 bg-brand-50/50 border border-brand-100 rounded-xl cursor-pointer hover:bg-brand-50 transition-colors">
                 <input
                   type="checkbox"
                   id="onlineReminderEnabled"
                   name="onlineReminderEnabled"
                   checked={formData.onlineReminderEnabled}
                   onChange={handleChange}
-                  className="w-6 h-6 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  className="w-6 h-6 text-brand-600 border-gray-300 rounded focus:ring-brand-500"
                 />
                 <div>
                   <div className="font-normal text-gray-900">メール通知（予約確定・変更・リマインダー）を送信する</div>
@@ -435,7 +435,7 @@ export default function NewMemberPage() {
               value={formData.memo}
               onChange={handleChange}
               rows={4}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
               placeholder="特記事項があれば入力してください"
             />
           </div>
@@ -452,7 +452,7 @@ export default function NewMemberPage() {
             <button
               type="submit"
               disabled={loading}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-6 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {loading ? '追加中...' : '会員を追加'}
             </button>
@@ -460,9 +460,9 @@ export default function NewMemberPage() {
         </form>
 
         {/* Info Box */}
-        <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <h3 className="text-sm font-normal text-blue-900 mb-2">会員追加について</h3>
-          <ul className="text-sm text-blue-800 space-y-1">
+        <div className="mt-6 bg-brand-50 border border-brand-200 rounded-lg p-4">
+          <h3 className="text-sm font-normal text-brand-900 mb-2">会員追加について</h3>
+          <ul className="text-sm text-brand-800 space-y-1">
             <li>• 会員追加後、会員管理ページから専用URLを発行できます</li>
             <li>• メールアドレスは専用URL発行時に必要です</li>
             <li>• プランとステータスは後から変更できます</li>

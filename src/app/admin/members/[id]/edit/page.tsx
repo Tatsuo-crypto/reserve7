@@ -421,7 +421,7 @@ export default function EditMemberPage() {
                 title={tab}
                 className={`h-11 rounded-lg border text-sm font-normal transition-colors ${
                   activeTab === index
-                    ? 'border-blue-600 text-white bg-blue-600 shadow-sm'
+                    ? 'border-brand-600 text-white bg-brand-600 shadow-sm'
                     : 'border-gray-200 text-gray-600 bg-white hover:text-gray-900 hover:bg-gray-50'
                 }`}
               >
@@ -557,7 +557,7 @@ export default function EditMemberPage() {
 
               <div className="pt-4 border-t border-gray-100">
                 <h3 className="text-lg font-normal text-gray-900 mb-4">機能表示設定</h3>
-                <label className="flex items-center gap-4 p-4 bg-blue-50/50 border border-blue-100 rounded-lg cursor-pointer hover:bg-blue-50">
+                <label className="flex items-center gap-4 p-4 bg-brand-50/50 border border-brand-100 rounded-lg cursor-pointer hover:bg-brand-50">
                   <input
                     type="checkbox"
                     checked={settings.visible_tabs.input && settings.visible_tabs.analyze && settings.visible_tabs.progress}
@@ -569,7 +569,7 @@ export default function EditMemberPage() {
                         visible_items: { steps: isChecked, sleep: isChecked, water: isChecked, alcohol: isChecked, workout: isChecked },
                       }))
                     }}
-                    className="w-6 h-6 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    className="w-6 h-6 text-brand-600 border-gray-300 rounded focus:ring-brand-500"
                   />
                   <div>
                     <div className="font-normal text-gray-900">食事管理機能を表示する</div>
@@ -674,7 +674,7 @@ function TextField({
         required={required}
         min={type === 'number' ? '0' : undefined}
         step={type === 'number' ? '0.1' : undefined}
-        className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
         placeholder={placeholder}
       />
     </label>
@@ -707,7 +707,7 @@ function TextArea({
         onChange={onChange || ((e) => onValue?.(name, e.target.value))}
         required={required}
         rows={4}
-        className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
         placeholder={placeholder}
       />
     </label>
@@ -737,7 +737,7 @@ function SelectField({
         value={value}
         onChange={onChange}
         required={required}
-        className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
       >
         {children}
       </select>
@@ -751,13 +751,13 @@ function ChoiceGroup({ label, name, value, options, onValue, required }: { label
       <FieldLabel label={label} required={required} />
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         {options.map(option => (
-          <label key={option.value} className={`flex items-center gap-3 px-3 py-3 border rounded-lg cursor-pointer ${value === option.value ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:bg-gray-50'}`}>
+          <label key={option.value} className={`flex items-center gap-3 px-3 py-3 border rounded-lg cursor-pointer ${value === option.value ? 'border-brand-500 bg-brand-50' : 'border-gray-200 hover:bg-gray-50'}`}>
             <input
               type="radio"
               name={name}
               checked={value === option.value}
               onChange={() => onValue(name, option.value)}
-              className="w-5 h-5 text-blue-600 border-gray-300 focus:ring-blue-500"
+              className="w-5 h-5 text-brand-600 border-gray-300 focus:ring-brand-500"
             />
             <span className="text-sm text-gray-800">{option.label}</span>
           </label>
@@ -773,12 +773,12 @@ function CheckGroup({ label, name, values, options, onToggle, required }: { labe
       <FieldLabel label={label} required={required} />
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
         {options.map(option => (
-          <label key={option.value} className={`flex items-center gap-3 px-3 py-3 border rounded-lg cursor-pointer ${values.includes(option.value) ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:bg-gray-50'}`}>
+          <label key={option.value} className={`flex items-center gap-3 px-3 py-3 border rounded-lg cursor-pointer ${values.includes(option.value) ? 'border-brand-500 bg-brand-50' : 'border-gray-200 hover:bg-gray-50'}`}>
             <input
               type="checkbox"
               checked={values.includes(option.value)}
               onChange={() => onToggle(name, option.value)}
-              className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              className="w-5 h-5 text-brand-600 border-gray-300 rounded focus:ring-brand-500"
             />
             <span className="text-sm text-gray-800">{option.label}</span>
           </label>
@@ -789,7 +789,7 @@ function CheckGroup({ label, name, values, options, onToggle, required }: { labe
 }
 
 function SwitchCard({ name, checked, onChange, title, description, color = 'blue' }: { name: string; checked: boolean; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void; title: string; description: string; color?: 'blue' | 'emerald' }) {
-  const colorClass = color === 'emerald' ? 'text-emerald-600 focus:ring-emerald-500 bg-emerald-50/50 border-emerald-100 hover:bg-emerald-50' : 'text-blue-600 focus:ring-blue-500 bg-blue-50/50 border-blue-100 hover:bg-blue-50'
+  const colorClass = color === 'emerald' ? 'text-emerald-600 focus:ring-emerald-500 bg-emerald-50/50 border-emerald-100 hover:bg-emerald-50' : 'text-brand-600 focus:ring-brand-500 bg-brand-50/50 border-brand-100 hover:bg-brand-50'
   return (
     <label className={`flex items-center gap-4 p-4 border rounded-lg cursor-pointer ${colorClass}`}>
       <input
@@ -797,7 +797,7 @@ function SwitchCard({ name, checked, onChange, title, description, color = 'blue
         name={name}
         checked={checked}
         onChange={onChange}
-        className={`w-6 h-6 border-gray-300 rounded ${color === 'emerald' ? 'text-emerald-600 focus:ring-emerald-500' : 'text-blue-600 focus:ring-blue-500'}`}
+        className={`w-6 h-6 border-gray-300 rounded ${color === 'emerald' ? 'text-emerald-600 focus:ring-emerald-500' : 'text-brand-600 focus:ring-brand-500'}`}
       />
       <span>
         <span className="block font-normal text-gray-900">{title}</span>
@@ -809,9 +809,9 @@ function SwitchCard({ name, checked, onChange, title, description, color = 'blue
 
 function SummaryBox({ summaryText, formData, counseling }: { summaryText: string; formData: { fullName: string; gender: string; heightCm: string }; counseling: CounselingData }) {
   return (
-    <div className="mt-6 rounded-lg border border-blue-200 bg-blue-50 p-4">
-      <h3 className="text-base font-normal text-blue-950 mb-3">保存後のカウンセリング要約</h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-blue-950">
+    <div className="mt-6 rounded-lg border border-brand-200 bg-brand-50 p-4">
+      <h3 className="text-base font-normal text-brand-900 mb-3">保存後のカウンセリング要約</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-brand-900">
         <SummaryItem label="氏名" value={formData.fullName} />
         <SummaryItem label="性別" value={genderLabel(formData.gender)} />
         <SummaryItem label="身長" value={formData.heightCm ? `${formData.heightCm}cm` : ''} />
@@ -825,7 +825,7 @@ function SummaryBox({ summaryText, formData, counseling }: { summaryText: string
         <SummaryItem label="優先改善ポイント" value={listText(counseling.improvementPriorities)} />
         <SummaryItem label="提案プラン" value={valueOf(counseling.suggestedPlan)} />
       </div>
-      <p className="mt-4 text-sm leading-6 text-blue-950">{summaryText}</p>
+      <p className="mt-4 text-sm leading-6 text-brand-900">{summaryText}</p>
     </div>
   )
 }
@@ -833,7 +833,7 @@ function SummaryBox({ summaryText, formData, counseling }: { summaryText: string
 function SummaryItem({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-md bg-white/70 px-3 py-2">
-      <span className="text-xs text-blue-700">{label}</span>
+      <span className="text-xs text-brand-700">{label}</span>
       <div className="text-sm text-gray-900">{value || '-'}</div>
     </div>
   )
