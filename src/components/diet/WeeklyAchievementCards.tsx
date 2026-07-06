@@ -20,9 +20,11 @@ export function achievementColor(pct: number): { bar: string; text: string } {
 export type DisplayMode = 'total' | 'average'
 
 /**
- * オーナー確認後の修正（2026-07-06）: 「週合計」「記録日平均」どちらか一方に固定せず、
+ * オーナー確認後の修正（2026-07-06）: 「週の合計」「平均値」どちらか一方に固定せず、
  * ボタンで切り替えられるようにする。WeeklyProgressPanel/WeeklySummaryPanelそれぞれで
  * mode stateを持ち、このトグルとCalorieHeroCard/AchievementItemCardに渡す。
+ * トグル自体がどちらのモードか示しているため、各カード内には「週合計」「記録日平均」
+ * といった重複する文言は表示しない。
  */
 export function DisplayModeToggle({ mode, onChange }: { mode: DisplayMode; onChange: (mode: DisplayMode) => void }) {
     return (
@@ -38,7 +40,7 @@ export function DisplayModeToggle({ mode, onChange }: { mode: DisplayMode; onCha
                     onClick={() => onChange('average')}
                     className={`px-4 py-1.5 rounded-full text-xs font-normal transition-all ${mode === 'average' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-400'}`}
                 >
-                    記録日平均
+                    平均値
                 </button>
             </div>
         </div>
@@ -99,8 +101,8 @@ export function CalorieHeroCard({
                 <span className="stat-value">{Math.round(baseVal).toLocaleString()}</span>
                 <span className="stat-unit">
                     {isTotal
-                        ? `/ ${Math.round(targetVal).toLocaleString()} kcal（週合計）`
-                        : `kcal/日（目標 ${Math.round(targetVal).toLocaleString()}kcal/日・記録日平均）`}
+                        ? `/ ${Math.round(targetVal).toLocaleString()} kcal`
+                        : `kcal/日（目標 ${Math.round(targetVal).toLocaleString()}kcal/日）`}
                 </span>
             </div>
             <div className="h-2.5 rounded-full bg-gray-100 overflow-hidden">
@@ -164,7 +166,7 @@ export function AchievementItemCard({
             ) : useTotal ? (
                 <div className="flex items-baseline gap-1">
                     <span className="stat-value !text-xl">{actualTotal !== undefined ? Math.round(actualTotal).toLocaleString() : '-'}</span>
-                    <span className="stat-unit">/ {Math.round(targetVal).toLocaleString()}{unit}（週合計）</span>
+                    <span className="stat-unit">/ {Math.round(targetVal).toLocaleString()}{unit}</span>
                 </div>
             ) : (
                 <div className="flex items-baseline gap-1">
