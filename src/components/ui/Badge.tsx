@@ -18,7 +18,8 @@ const TONE_CLASSES: Record<Tone, string> = {
 
 /**
  * N-2: バッジ・チップ用の共通コンポーネント。角丸はN-4のトークンどおり常に rounded-full。
- * warning/dangerはA-4の原則(未達に警告色を使わない)に沿って、状態表示が明確に必要な場面のみで使う。
+ * success/dangerはO-1の「状態色」レイヤーそのもの(緑=達成/安全圏、赤=明確な超過・警告)。
+ * O-2の原則により、分析・状態表示の文脈でのみ使う(ホーム等の励ましの文脈では使わない)。
  */
 export default function Badge({ tone = 'neutral', children, className = '' }: BadgeProps) {
     return (

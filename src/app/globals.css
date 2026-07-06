@@ -9,6 +9,21 @@
   今後は各コンポーネント側でfont-semibold(見出し・主数値)/font-normal(本文)を明示的に使い分ける。
 */
 
+@layer components {
+  /*
+    O-4: 「数値ファースト」タイポグラフィトークン。
+    実績値(主数値)は現状のfont-semibold見出しよりさらに一段強調し、目標値・単位は
+    小さくグレーの添え物にする。参考画像2点に共通する「数字が主役」という特徴の反映。
+    stat-value = 実績値、stat-unit = 単位・目標値などの添え物。
+  */
+  .stat-value {
+    @apply text-3xl font-bold tabular-nums text-gray-900;
+  }
+  .stat-unit {
+    @apply text-xs font-normal text-gray-400;
+  }
+}
+
 @layer utilities {
   .animate-fadeIn {
     animation: fadeIn 0.3s ease-out;
