@@ -76,15 +76,15 @@ export default function WeeklySummaryPanel({
                 <div className="space-y-4">
                     <RecordCheckTable weekDays={weeklyStats.weekDays} />
 
-                    <CalorieHeroCard actual={weeklyStats.actual.calories} target={weeklyStats.targets.calories} />
+                    <CalorieHeroCard avg={weeklyStats.avgOnRecordedDays.calories} target={weeklyStats.dietTargetPerDay.calories} />
 
                     <div className="grid grid-cols-2 gap-3">
-                        <AchievementItemCard label="タンパク質 (P)" unit="g" mode="total" actual={weeklyStats.actual.protein} target={weeklyStats.targets.protein} prevActual={weeklyStats.previousActual.protein} prevRecordedDays={weeklyStats.previousCounts.protein} />
-                        <AchievementItemCard label="脂質 (F)" unit="g" mode="total" actual={weeklyStats.actual.fat} target={weeklyStats.targets.fat} prevActual={weeklyStats.previousActual.fat} prevRecordedDays={weeklyStats.previousCounts.fat} />
-                        <AchievementItemCard label="炭水化物 (C)" unit="g" mode="total" actual={weeklyStats.actual.carbs} target={weeklyStats.targets.carbs} prevActual={weeklyStats.previousActual.carbs} prevRecordedDays={weeklyStats.previousCounts.carbs} />
-                        <AchievementItemCard label="糖質" unit="g" mode="total" actual={weeklyStats.actual.sugar} target={weeklyStats.targets.sugar} prevActual={weeklyStats.previousActual.sugar} prevRecordedDays={weeklyStats.previousCounts.sugar} />
-                        <AchievementItemCard label="食物繊維" unit="g" mode="total" actual={weeklyStats.actual.fiber} target={weeklyStats.targets.fiber} prevActual={weeklyStats.previousActual.fiber} prevRecordedDays={weeklyStats.previousCounts.fiber} />
-                        <AchievementItemCard label="塩分" unit="g" mode="total" actual={weeklyStats.actual.salt} target={weeklyStats.targets.salt} prevActual={weeklyStats.previousActual.salt} prevRecordedDays={weeklyStats.previousCounts.salt} />
+                        <AchievementItemCard label="タンパク質 (P)" unit="g" target={weeklyStats.dietTargetPerDay.protein} avg={weeklyStats.avgOnRecordedDays.protein} prevAvg={weeklyStats.previousAvgOnRecordedDays.protein} prevRecordedDays={weeklyStats.previousCounts.protein} />
+                        <AchievementItemCard label="脂質 (F)" unit="g" target={weeklyStats.dietTargetPerDay.fat} avg={weeklyStats.avgOnRecordedDays.fat} prevAvg={weeklyStats.previousAvgOnRecordedDays.fat} prevRecordedDays={weeklyStats.previousCounts.fat} />
+                        <AchievementItemCard label="炭水化物 (C)" unit="g" target={weeklyStats.dietTargetPerDay.carbs} avg={weeklyStats.avgOnRecordedDays.carbs} prevAvg={weeklyStats.previousAvgOnRecordedDays.carbs} prevRecordedDays={weeklyStats.previousCounts.carbs} />
+                        <AchievementItemCard label="糖質" unit="g" target={weeklyStats.dietTargetPerDay.sugar} avg={weeklyStats.avgOnRecordedDays.sugar} prevAvg={weeklyStats.previousAvgOnRecordedDays.sugar} prevRecordedDays={weeklyStats.previousCounts.sugar} />
+                        <AchievementItemCard label="食物繊維" unit="g" target={weeklyStats.dietTargetPerDay.fiber} avg={weeklyStats.avgOnRecordedDays.fiber} prevAvg={weeklyStats.previousAvgOnRecordedDays.fiber} prevRecordedDays={weeklyStats.previousCounts.fiber} />
+                        <AchievementItemCard label="塩分" unit="g" target={weeklyStats.dietTargetPerDay.salt} avg={weeklyStats.avgOnRecordedDays.salt} prevAvg={weeklyStats.previousAvgOnRecordedDays.salt} prevRecordedDays={weeklyStats.previousCounts.salt} />
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
