@@ -89,8 +89,8 @@ export default function GoalPlanForm({
             <div className="bg-gray-50/80 rounded-[2rem] p-8 text-center border border-gray-100/50 relative space-y-4">
                 <p className="text-[10px] font-normal text-gray-400 mb-1 uppercase tracking-widest">目標摂取カロリー（PFCからの導出値）</p>
                 <div className="flex items-baseline justify-center gap-1">
-                    <span className="text-5xl font-semibold text-gray-900 tabular-nums">{Math.round(values.targetCalories).toLocaleString()}</span>
-                    <span className="text-sm font-normal text-gray-400">kcal / 日</span>
+                    <span className="stat-value">{Math.round(values.targetCalories).toLocaleString()}</span>
+                    <span className="stat-unit">kcal / 日</span>
                 </div>
                 <div className="flex items-center justify-center gap-2 pt-2">
                     <input

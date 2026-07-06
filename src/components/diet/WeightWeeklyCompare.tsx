@@ -24,9 +24,12 @@ export default function WeightWeeklyCompare({ weight, compact = false }: WeightW
         <p className="text-sm text-gray-400">今週の体重記録がありません</p>
     ) : (
         <div className="flex items-baseline gap-2 flex-wrap">
-            <span className="text-2xl font-semibold text-gray-800 tabular-nums">{weight!.thisWeekAvg!.toFixed(1)}kg</span>
+            <span className="flex items-baseline gap-1">
+                <span className="stat-value">{weight!.thisWeekAvg!.toFixed(1)}</span>
+                <span className="stat-unit">kg</span>
+            </span>
             {hasLastWeek && weight!.diffAbs !== null && (
-                <span className="text-sm font-normal text-gray-500">
+                <span className="text-xs font-normal text-gray-400">
                     先週比 {weight!.diffAbs! > 0 ? '+' : ''}{weight!.diffAbs!.toFixed(1)}kg
                     {weight!.diffPercent !== null && (
                         <>（{weight!.diffPercent! > 0 ? '+' : ''}{weight!.diffPercent!.toFixed(1)}%）</>
