@@ -1,6 +1,7 @@
 'use client'
 
 import type { WeightWeeklyStats } from '@/hooks/useWeeklyProgress'
+import Card from '@/components/ui/Card'
 
 interface WeightWeeklyCompareProps {
     weight: WeightWeeklyStats | null | undefined
@@ -23,7 +24,7 @@ export default function WeightWeeklyCompare({ weight, compact = false }: WeightW
         <p className="text-sm text-gray-400">今週の体重記録がありません</p>
     ) : (
         <div className="flex items-baseline gap-2 flex-wrap">
-            <span className="text-2xl font-normal text-gray-800 tabular-nums">{weight!.thisWeekAvg!.toFixed(1)}kg</span>
+            <span className="text-2xl font-semibold text-gray-800 tabular-nums">{weight!.thisWeekAvg!.toFixed(1)}kg</span>
             {hasLastWeek && weight!.diffAbs !== null && (
                 <span className="text-sm font-normal text-gray-500">
                     先週比 {weight!.diffAbs! > 0 ? '+' : ''}{weight!.diffAbs!.toFixed(1)}kg
@@ -45,9 +46,9 @@ export default function WeightWeeklyCompare({ weight, compact = false }: WeightW
     }
 
     return (
-        <div className="bg-white rounded-3xl p-5 border border-gray-100 shadow-sm">
+        <Card padding="sm">
             <p className="text-[11px] font-normal text-gray-400 tracking-widest uppercase mb-1">体重（今週平均）</p>
             {body}
-        </div>
+        </Card>
     )
 }

@@ -523,7 +523,7 @@ function DietPlanPageContent() {
     }
 
     if (status === 'loading' || loadingMembers) {
-        return <div className="min-h-screen flex items-center justify-center bg-gray-50"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-rose-600"></div></div>
+        return <div className="min-h-screen flex items-center justify-center bg-gray-50"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600"></div></div>
     }
 
     const filteredMembers = members.filter(m => 
@@ -538,7 +538,7 @@ function DietPlanPageContent() {
                     <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden">
                         <div className="p-8 border-b border-gray-50">
                             <h2 className="text-xl font-normal mb-6 flex items-center gap-2">
-                                <span className="w-1.5 h-6 bg-rose-500 rounded-full"></span>
+                                <span className="w-1.5 h-6 bg-brand-500 rounded-full"></span>
                                 会員を選択
                             </h2>
                             <div className="relative">
@@ -547,22 +547,22 @@ function DietPlanPageContent() {
                                     placeholder="名前やメールアドレスで検索..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-rose-500 outline-none transition-all font-normal"
+                                    className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-brand-500 outline-none transition-all font-normal"
                                 />
                                 <svg className="absolute left-4 top-4.5 w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                             </div>
                         </div>
                         <div className="divide-y divide-gray-50 max-h-[60vh] overflow-y-auto px-4 pb-4">
                             {filteredMembers.map(member => (
-                                <button key={member.id} onClick={() => setSelectedMember(member)} className="w-full flex items-center px-6 py-5 hover:bg-rose-50/50 transition-all rounded-[2rem] group mt-2">
+                                <button key={member.id} onClick={() => setSelectedMember(member)} className="w-full flex items-center px-6 py-5 hover:bg-brand-50/50 transition-all rounded-[2rem] group mt-2">
                                     <div className="flex-1 flex items-center gap-4 text-left">
                                         <div className={`w-3 h-3 rounded-full ${getStatusDotColor(member.status)} shadow-sm`} />
                                         <div>
-                                            <div className="font-normal text-gray-800 group-hover:text-rose-600 transition-colors">{member.full_name}</div>
+                                            <div className="font-normal text-gray-800 group-hover:text-brand-600 transition-colors">{member.full_name}</div>
                                             <div className="text-[10px] font-normal text-gray-400 uppercase tracking-widest">{member.email}</div>
                                         </div>
                                     </div>
-                                    <div className="text-[10px] font-normal text-gray-400 bg-gray-50 px-4 py-2 rounded-full group-hover:bg-rose-500 group-hover:text-white transition-all uppercase tracking-widest">選択</div>
+                                    <div className="text-[10px] font-normal text-gray-400 bg-gray-50 px-4 py-2 rounded-full group-hover:bg-brand-500 group-hover:text-white transition-all uppercase tracking-widest">選択</div>
                                 </button>
                             ))}
                         </div>
@@ -609,7 +609,7 @@ function DietPlanPageContent() {
                                         className="w-full flex items-center justify-between px-8 py-6"
                                     >
                                         <div className="flex items-center gap-2">
-                                            <div className="w-1.5 h-6 bg-rose-500 rounded-full"></div>
+                                            <div className="w-1.5 h-6 bg-brand-500 rounded-full"></div>
                                             <h2 className="text-base font-normal text-gray-800">日別の記録</h2>
                                         </div>
                                         <svg className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${showDailyRecords ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -699,15 +699,15 @@ function DietPlanPageContent() {
                                                 <DietProfileStat label="現在の体重" value={`${latestWeight}kg`} />
                                                 <div className="space-y-1">
                                                     <label className="text-[10px] font-normal text-gray-400 uppercase tracking-widest pl-1">最終目標体重(kg)</label>
-                                                    <input type="number" value={aragonInput.targetWeight} onChange={(e) => setAragonInput(prev => ({ ...prev, targetWeight: e.target.value }))} placeholder="例: 65" className="w-full bg-gray-50 border-none rounded-xl px-3 py-3 text-sm font-normal focus:ring-2 focus:ring-rose-500" />
+                                                    <input type="number" value={aragonInput.targetWeight} onChange={(e) => setAragonInput(prev => ({ ...prev, targetWeight: e.target.value }))} placeholder="例: 65" className="w-full bg-gray-50 border-none rounded-xl px-3 py-3 text-sm font-normal focus:ring-2 focus:ring-brand-500" />
                                                 </div>
                                                 <div className="space-y-1">
                                                     <label className="text-[10px] font-normal text-gray-400 uppercase tracking-widest pl-1">目標期間(週間)</label>
-                                                    <input type="number" value={aragonInput.periodWeeks} onChange={(e) => setAragonInput(prev => ({ ...prev, periodWeeks: e.target.value }))} className="w-full bg-gray-50 border-none rounded-xl px-3 py-3 text-sm font-normal focus:ring-2 focus:ring-rose-500" />
+                                                    <input type="number" value={aragonInput.periodWeeks} onChange={(e) => setAragonInput(prev => ({ ...prev, periodWeeks: e.target.value }))} className="w-full bg-gray-50 border-none rounded-xl px-3 py-3 text-sm font-normal focus:ring-2 focus:ring-brand-500" />
                                                 </div>
                                                 <div className="space-y-1">
                                                     <label className="text-[10px] font-normal text-gray-400 uppercase tracking-widest pl-1">週のトレーニング時間</label>
-                                                    <input type="number" value={aragonInput.weeklyTrainingHours} onChange={(e) => setAragonInput(prev => ({ ...prev, weeklyTrainingHours: e.target.value }))} className="w-full bg-gray-50 border-none rounded-xl px-3 py-3 text-sm font-normal focus:ring-2 focus:ring-rose-500" />
+                                                    <input type="number" value={aragonInput.weeklyTrainingHours} onChange={(e) => setAragonInput(prev => ({ ...prev, weeklyTrainingHours: e.target.value }))} className="w-full bg-gray-50 border-none rounded-xl px-3 py-3 text-sm font-normal focus:ring-2 focus:ring-brand-500" />
                                                 </div>
                                             </div>
 
@@ -860,7 +860,7 @@ function GoalHistoryCharts({ data, onEditRequest }: { data: any[], onEditRequest
         <div className="bg-white rounded-[2.5rem] p-8 sm:p-10 shadow-sm border border-gray-100 space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
                 <div className="flex items-center gap-2">
-                    <div className="w-1.5 h-6 bg-indigo-500 rounded-full"></div>
+                    <div className="w-1.5 h-6 bg-brand-500 rounded-full"></div>
                     <div>
                         <h2 className="text-xl font-normal text-gray-800 tracking-tight">目標設定の推移</h2>
                         <p className="text-[10px] text-gray-400 uppercase tracking-widest mt-1">横幅はプランを続けた期間の長さを表します</p>
@@ -886,7 +886,7 @@ function GoalHistoryCharts({ data, onEditRequest }: { data: any[], onEditRequest
                                 key={row.date}
                                 onClick={() => setSelected(isSelected ? null : row)}
                                 style={{ width: `${widthPct}%`, minWidth: 14 }}
-                                className={`flex flex-col justify-end shrink-0 rounded-t-md overflow-hidden transition-opacity ${isSelected ? 'ring-2 ring-indigo-400' : 'hover:opacity-80'}`}
+                                className={`flex flex-col justify-end shrink-0 rounded-t-md overflow-hidden transition-opacity ${isSelected ? 'ring-2 ring-brand-400' : 'hover:opacity-80'}`}
                             >
                                 <div style={{ height: carbH }} className="bg-blue-500 w-full" />
                                 <div style={{ height: fatH }} className="bg-emerald-500 w-full" />

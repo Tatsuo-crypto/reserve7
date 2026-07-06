@@ -12,6 +12,27 @@ module.exports = {
         'gradient-conic':
           'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
       },
+      fontFamily: {
+        // N-4: 日本語UIのための日本語フォント。next/font側で読み込んだCSS変数を参照する。
+        sans: ['var(--font-noto-sans-jp)', 'sans-serif'],
+      },
+      colors: {
+        // N-4: アクセントカラーを1色に一元管理する。値はTailwind標準のblueスケールをそのまま採用し、
+        // 将来色そのものを変える場合もこの1箇所を差し替えるだけで全画面に反映されるようにする。
+        // (indigo/roseの個別使用は今後このbrandスケールへ置き換えていく — N-7 PR-N3以降で段階適用)
+        brand: {
+          50: '#eff6ff',
+          100: '#dbeafe',
+          200: '#bfdbfe',
+          300: '#93c5fd',
+          400: '#60a5fa',
+          500: '#3b82f6',
+          600: '#2563eb',
+          700: '#1d4ed8',
+          800: '#1e40af',
+          900: '#1e3a8a',
+        },
+      },
     },
   },
   plugins: [],

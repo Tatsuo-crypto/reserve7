@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import type { WeeklyProgressStats } from '@/hooks/useWeeklyProgress'
 import WeightWeeklyCompare from './WeightWeeklyCompare'
+import Card from '@/components/ui/Card'
+import Icon from '@/components/ui/icons'
 
 interface WeeklySummaryPanelProps {
     weeklyStats: WeeklyProgressStats | null
@@ -34,7 +36,7 @@ export default function WeeklySummaryPanel({
                             onClick={() => setWeekOffset(prev => prev - 1)}
                             className="w-9 h-9 flex items-center justify-center hover:bg-white rounded-xl transition-all text-gray-500 active:scale-90"
                         >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
+                            <Icon name="chevronLeft" size={16} />
                         </button>
 
                         <div className="flex-1 text-center">
@@ -53,7 +55,7 @@ export default function WeeklySummaryPanel({
                             className={`w-9 h-9 flex items-center justify-center rounded-xl transition-all active:scale-90 ${weekOffset === 0 ? 'text-gray-100 cursor-not-allowed' : 'hover:bg-white text-gray-500'}`}
                             disabled={weekOffset === 0}
                         >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" /></svg>
+                            <Icon name="chevronRight" size={16} />
                         </button>
                     </div>
                 </div>
@@ -77,21 +79,21 @@ export default function WeeklySummaryPanel({
             </div>
 
             {!weeklyStats ? (
-                <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-12 text-center">
+                <Card padding="lg" className="text-center">
                     <p className="text-gray-400 font-normal italic">今週の記録または目標がありません</p>
-                </div>
+                </Card>
             ) : (
                 <div className="space-y-4">
                     <WeightWeeklyCompare weight={weeklyStats.weight} />
 
-                    <div className="bg-white rounded-3xl p-5 border border-gray-100 shadow-sm">
+                    <Card padding="sm">
                         <div className="flex items-center gap-2 mb-4">
-                            <div className="w-1 h-4 bg-rose-500 rounded-full"></div>
-                            <h3 className="text-sm font-normal text-gray-800">食事・栄養</h3>
+                            <div className="w-1 h-4 bg-purple-500 rounded-full"></div>
+                            <h3 className="text-sm font-semibold text-gray-800">食事・栄養</h3>
                         </div>
 
                         <div className="space-y-5">
-                            <WeeklySummaryItem mode={mode} label="合計摂取カロリー" actual={weeklyStats.actual.calories} target={weeklyStats.targets.calories} unit="kcal" color="rose" perDay={weeklyStats.dietTargetPerDay.calories} recordedDays={weeklyStats.counts.calories} avg={weeklyStats.avgOnRecordedDays.calories} prevAvg={weeklyStats.previousAvgOnRecordedDays.calories} prevRecordedDays={weeklyStats.previousCounts.calories} />
+                            <WeeklySummaryItem mode={mode} label="合計摂取カロリー" actual={weeklyStats.actual.calories} target={weeklyStats.targets.calories} unit="kcal" color="purple" perDay={weeklyStats.dietTargetPerDay.calories} recordedDays={weeklyStats.counts.calories} avg={weeklyStats.avgOnRecordedDays.calories} prevAvg={weeklyStats.previousAvgOnRecordedDays.calories} prevRecordedDays={weeklyStats.previousCounts.calories} />
                             <div className="grid gap-5">
                                 <WeeklySummaryItem mode={mode} label="タンパク質 (P)" actual={weeklyStats.actual.protein} target={weeklyStats.targets.protein} unit="g" color="amber" perDay={weeklyStats.dietTargetPerDay.protein} recordedDays={weeklyStats.counts.protein} avg={weeklyStats.avgOnRecordedDays.protein} prevAvg={weeklyStats.previousAvgOnRecordedDays.protein} prevRecordedDays={weeklyStats.previousCounts.protein} />
                                 <WeeklySummaryItem mode={mode} label="脂質 (F)" actual={weeklyStats.actual.fat} target={weeklyStats.targets.fat} unit="g" color="emerald" perDay={weeklyStats.dietTargetPerDay.fat} recordedDays={weeklyStats.counts.fat} avg={weeklyStats.avgOnRecordedDays.fat} prevAvg={weeklyStats.previousAvgOnRecordedDays.fat} prevRecordedDays={weeklyStats.previousCounts.fat} />
@@ -101,21 +103,21 @@ export default function WeeklySummaryPanel({
                                 <WeeklySummaryItem mode={mode} label="└ 塩分" actual={weeklyStats.actual.salt} target={weeklyStats.targets.salt} unit="g" color="gray" perDay={weeklyStats.dietTargetPerDay.salt} recordedDays={weeklyStats.counts.salt} avg={weeklyStats.avgOnRecordedDays.salt} prevAvg={weeklyStats.previousAvgOnRecordedDays.salt} prevRecordedDays={weeklyStats.previousCounts.salt} />
                             </div>
                         </div>
-                    </div>
+                    </Card>
 
-                    <div className="bg-white rounded-3xl p-5 border border-gray-100 shadow-sm">
+                    <Card padding="sm">
                         <div className="flex items-center gap-2 mb-4">
-                            <div className="w-1 h-4 bg-blue-600 rounded-full"></div>
-                            <h3 className="text-sm font-normal text-gray-800">運動・生活</h3>
+                            <div className="w-1 h-4 bg-brand-600 rounded-full"></div>
+                            <h3 className="text-sm font-semibold text-gray-800">運動・生活</h3>
                         </div>
 
                         <div className="space-y-5">
                             <WeeklySummaryItem mode={mode} label="合計歩数" actual={weeklyStats.actual.steps} target={weeklyStats.targets.steps} unit="歩" color="emerald" perDay={weeklyStats.lifeTargetPerDay.steps} recordedDays={weeklyStats.counts.steps} avg={weeklyStats.avgOnRecordedDays.steps} prevAvg={weeklyStats.previousAvgOnRecordedDays.steps} prevRecordedDays={weeklyStats.previousCounts.steps} />
                             <WeeklySummaryItem mode={mode} label="水分摂取量" actual={weeklyStats.actual.water} target={weeklyStats.targets.water} unit="L" color="sky" perDay={weeklyStats.lifeTargetPerDay.water} recordedDays={weeklyStats.counts.water} avg={weeklyStats.avgOnRecordedDays.water} prevAvg={weeklyStats.previousAvgOnRecordedDays.water} prevRecordedDays={weeklyStats.previousCounts.water} />
-                            <WeeklySummaryItem mode={mode} label="睡眠時間" actual={weeklyStats.actual.sleep} target={weeklyStats.targets.sleep} unit="h" color="indigo" perDay={weeklyStats.lifeTargetPerDay.sleep} recordedDays={weeklyStats.counts.sleep} avg={weeklyStats.avgOnRecordedDays.sleep} prevAvg={weeklyStats.previousAvgOnRecordedDays.sleep} prevRecordedDays={weeklyStats.previousCounts.sleep} />
+                            <WeeklySummaryItem mode={mode} label="睡眠時間" actual={weeklyStats.actual.sleep} target={weeklyStats.targets.sleep} unit="h" color="violet" perDay={weeklyStats.lifeTargetPerDay.sleep} recordedDays={weeklyStats.counts.sleep} avg={weeklyStats.avgOnRecordedDays.sleep} prevAvg={weeklyStats.previousAvgOnRecordedDays.sleep} prevRecordedDays={weeklyStats.previousCounts.sleep} />
                             <WeeklySummaryItem mode={mode} label="筋トレ実施回数" actual={weeklyStats.actual.workout} target={weeklyStats.targets.workout} unit="回" color="orange" perDay={weeklyStats.lifeTargetPerDay.workout} isFrequency recordedDays={weeklyStats.counts.workout} avg={weeklyStats.avgOnRecordedDays.workout} prevAvg={weeklyStats.previousAvgOnRecordedDays.workout} prevRecordedDays={weeklyStats.previousCounts.workout} />
                         </div>
-                    </div>
+                    </Card>
                 </div>
             )}
         </div>
@@ -148,12 +150,12 @@ function WeeklySummaryItem({
     const roundVal = (v: number) => (isFrequency ? Math.round(v) : Math.round(v * 10) / 10)
 
     const colors: Record<string, string> = {
-        rose: 'bg-rose-500', amber: 'bg-amber-500', emerald: 'bg-emerald-500', blue: 'bg-blue-500',
-        sky: 'bg-sky-500', teal: 'bg-teal-500', orange: 'bg-orange-500', indigo: 'bg-indigo-500', gray: 'bg-gray-500',
+        purple: 'bg-purple-500', amber: 'bg-amber-500', emerald: 'bg-emerald-500', blue: 'bg-blue-500',
+        sky: 'bg-sky-500', teal: 'bg-teal-500', orange: 'bg-orange-500', violet: 'bg-violet-500', gray: 'bg-gray-500',
     }
     const textColors: Record<string, string> = {
-        rose: 'text-rose-600', amber: 'text-amber-600', emerald: 'text-emerald-600', blue: 'text-blue-600',
-        sky: 'text-sky-600', teal: 'text-teal-600', orange: 'text-orange-600', indigo: 'text-indigo-600', gray: 'text-gray-600',
+        purple: 'text-purple-600', amber: 'text-amber-600', emerald: 'text-emerald-600', blue: 'text-blue-600',
+        sky: 'text-sky-600', teal: 'text-teal-600', orange: 'text-orange-600', violet: 'text-violet-600', gray: 'text-gray-600',
     }
 
     if (mode === 'average' && !isFrequency) {
@@ -165,7 +167,7 @@ function WeeklySummaryItem({
                     <p className={`text-sm font-normal tabular-nums leading-none ${avgPct >= 100 ? 'text-emerald-500' : textColors[color]}`}>{avgPct}%</p>
                 </div>
                 <div className="flex items-baseline gap-1.5">
-                    <span className="text-lg font-normal text-gray-800 tabular-nums leading-none">{avg !== undefined ? roundVal(avg).toLocaleString() : '-'}</span>
+                    <span className="text-lg font-semibold text-gray-800 tabular-nums leading-none">{avg !== undefined ? roundVal(avg).toLocaleString() : '-'}</span>
                     <span className="text-[9px] font-normal text-gray-300">{unit}/日（目安 {perDay}{unit}/日）</span>
                     {avgDiff !== null ? (
                         <span className="text-[10px] font-normal text-gray-400 tabular-nums">
@@ -191,7 +193,7 @@ function WeeklySummaryItem({
                 <p className={`text-sm font-normal tabular-nums leading-none ${pct >= 100 ? 'text-emerald-500' : textColors[color]}`}>{pct}%</p>
             </div>
             <div className="flex items-baseline gap-1">
-                <span className="text-lg font-normal text-gray-800 tabular-nums leading-none">{isFrequency ? actual : actual.toLocaleString()}</span>
+                <span className="text-lg font-semibold text-gray-800 tabular-nums leading-none">{isFrequency ? actual : actual.toLocaleString()}</span>
                 <span className="text-[9px] font-normal text-gray-300">/ {target.toLocaleString()} {unit}</span>
             </div>
             <div

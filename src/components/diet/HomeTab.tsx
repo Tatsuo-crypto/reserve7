@@ -4,6 +4,8 @@ import { useState, useEffect, useMemo } from 'react'
 import { useOnlineLessons, getJoinStatus } from '@/hooks/useOnlineLessons'
 import { useWeeklyProgress } from '@/hooks/useWeeklyProgress'
 import WeightWeeklyCompare from './WeightWeeklyCompare'
+import Button from '@/components/ui/Button'
+import Icon from '@/components/ui/icons'
 
 interface HomeTabProps {
     token: string
@@ -121,7 +123,7 @@ export default function HomeTab({ token, userName, todayDraft, onNavigate, onOpe
         return title
     }
 
-    if (loading) return <div className="h-64 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>
+    if (loading) return <div className="h-64 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"></div></div>
 
     const showNotifBanner = notifPermission === 'default'
 
@@ -129,17 +131,17 @@ export default function HomeTab({ token, userName, todayDraft, onNavigate, onOpe
         <div className="space-y-4 animate-fadeIn">
             {/* Card 1: 本日のオンラインレッスン（当日開催時のみ） */}
             {todayLesson && (
-                <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-3xl p-5 text-white shadow-lg overflow-hidden relative">
+                <div className="bg-gradient-to-r from-brand-600 to-brand-800 rounded-2xl p-5 text-white shadow-lg overflow-hidden relative">
                     <div className="relative z-10">
-                        <p className="text-[11px] font-normal text-blue-100 tracking-widest uppercase mb-1">本日のオンラインレッスン</p>
-                        <h3 className="text-lg font-normal mb-1">{todayLesson.lesson.title}</h3>
-                        <p className="text-sm text-blue-100 mb-4">
+                        <p className="text-[11px] font-normal text-brand-100 tracking-widest uppercase mb-1">本日のオンラインレッスン</p>
+                        <h3 className="text-lg font-semibold mb-1">{todayLesson.lesson.title}</h3>
+                        <p className="text-sm text-brand-100 mb-4">
                             {todayLesson.lesson.start_time?.substring(0, 5)}〜{todayLesson.lesson.end_time?.substring(0, 5)}
                         </p>
                         <button
                             onClick={() => window.open(todayLesson.lesson.meet_url, '_blank')}
                             disabled={!todayLesson.status.canJoin}
-                            className={`w-full py-3 rounded-xl font-normal transition-all ${todayLesson.status.canJoin ? 'bg-white text-blue-700 active:scale-95 shadow' : 'bg-white/20 text-white/70'}`}
+                            className={`w-full py-3 rounded-xl font-normal transition-all ${todayLesson.status.canJoin ? 'bg-white text-brand-700 active:scale-95 shadow' : 'bg-white/20 text-white/70'}`}
                         >
                             {todayLesson.status.canJoin ? '参加する' : todayLesson.status.label}
                         </button>
@@ -150,21 +152,21 @@ export default function HomeTab({ token, userName, todayDraft, onNavigate, onOpe
             {/* Card 2: 次回予約（常時） */}
             <button
                 onClick={() => onNavigate?.('res')}
-                className="w-full text-left bg-white rounded-3xl p-5 border border-gray-100 shadow-sm active:scale-[0.99] transition-transform"
+                className="w-full text-left bg-white rounded-2xl p-5 border border-gray-100 shadow-sm active:scale-[0.99] transition-transform"
             >
                 <p className="text-[11px] font-normal text-gray-400 tracking-widest uppercase mb-1">次回予約</p>
                 {nextReservation ? (
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-base font-normal text-gray-800">{formatReservationDate(nextReservation.start_time)}</p>
+                            <p className="text-base font-semibold text-gray-800">{formatReservationDate(nextReservation.start_time)}</p>
                             <p className="text-sm text-gray-400">{formatReservationTitle(nextReservation.title)}</p>
                         </div>
-                        <svg className="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                        <Icon name="chevronRight" className="text-gray-300" />
                     </div>
                 ) : (
                     <div className="flex items-center justify-between">
                         <p className="text-sm text-gray-400">今後の予約はありません</p>
-                        <span className="text-xs font-normal text-blue-600 bg-blue-50 px-3 py-1.5 rounded-full">予約する</span>
+                        <span className="text-xs font-normal text-brand-600 bg-brand-50 px-3 py-1.5 rounded-full">予約する</span>
                     </div>
                 )}
             </button>
@@ -173,19 +175,19 @@ export default function HomeTab({ token, userName, todayDraft, onNavigate, onOpe
             {weeklyStats?.weight?.thisWeekAvg !== null && weeklyStats?.weight?.thisWeekAvg !== undefined && (
                 <button
                     onClick={() => onNavigate?.('analyze')}
-                    className="w-full text-left bg-white rounded-3xl p-5 border border-gray-100 shadow-sm active:scale-[0.99] transition-transform"
+                    className="w-full text-left bg-white rounded-2xl p-5 border border-gray-100 shadow-sm active:scale-[0.99] transition-transform"
                 >
                     <WeightWeeklyCompare weight={weeklyStats.weight} compact />
                 </button>
             )}
 
             {/* Card 4: 今日の記録（常時） */}
-            <div className="bg-white rounded-3xl p-5 border border-gray-100 shadow-sm">
+            <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
                 <p className="text-[11px] font-normal text-gray-400 tracking-widest uppercase mb-3">今日の記録</p>
                 <div className="flex items-center gap-4">
                     {todayCalorie.hasRecord ? (
                         <div className="shrink-0 w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center">
-                            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                            <Icon name="check" size={20} className="text-white" />
                         </div>
                     ) : (
                         <div className="shrink-0 w-10 h-10 rounded-full border-2 border-gray-200" />
@@ -194,12 +196,9 @@ export default function HomeTab({ token, userName, todayDraft, onNavigate, onOpe
                         {todayCalorie.hasRecord ? '今日の記録は完了しています' : '今日の記録はまだです'}
                     </p>
                 </div>
-                <button
-                    onClick={() => onNavigate?.('record')}
-                    className="w-full mt-4 py-3 rounded-xl font-normal bg-blue-600 text-white active:scale-[0.98] transition-transform"
-                >
+                <Button onClick={() => onNavigate?.('record')} fullWidth className="mt-4">
                     記録する
-                </button>
+                </Button>
             </div>
 
             {/* 通知未許可バナー */}
@@ -209,14 +208,12 @@ export default function HomeTab({ token, userName, todayDraft, onNavigate, onOpe
                     className="w-full text-left flex items-center gap-3 bg-gray-50 rounded-2xl p-4 border border-gray-100 active:scale-[0.99] transition-transform"
                 >
                     <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-gray-400 shadow-sm">
-                        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0a3 3 0 11-6 0m6 0H9" />
-                        </svg>
+                        <Icon name="bell" size={20} />
                     </div>
                     <div className="flex-1">
                         <p className="text-xs font-normal text-gray-600">通知を許可すると予約やレッスンのお知らせが届きます</p>
                     </div>
-                    <svg className="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                    <Icon name="chevronRight" size={16} className="text-gray-300" />
                 </button>
             )}
         </div>

@@ -110,7 +110,7 @@ export default function PlanTab({ token }: PlanTabProps) {
                             <PFCStatCard label="脂質" value={currentGoal?.f} unit="g" color="emerald" />
                             <PFCStatCard label="炭水化物" value={currentGoal?.c} unit="g" color="blue" />
                             <PFCStatCard label="糖質" value={currentGoal?.sugar} unit="g" color="purple" />
-                            <PFCStatCard label="食物繊維" value={currentGoal?.fiber} unit="g" color="rose" />
+                            <PFCStatCard label="食物繊維" value={currentGoal?.fiber} unit="g" color="teal" />
                             <PFCStatCard label="塩分" value={currentGoal?.salt} unit="g" color="gray" />
                         </div>
                     </div>
@@ -122,7 +122,7 @@ export default function PlanTab({ token }: PlanTabProps) {
                             <PFCStatCard label="水分摂取" value={lifestyleSettings?.habit_targets?.water} unit="L" color="sky" />
                             <PFCStatCard label="目標歩数" value={lifestyleSettings?.habit_targets?.steps} unit="歩" color="emerald" />
                             <PFCStatCard label="筋トレ回数" value={lifestyleSettings?.habit_targets?.workout} unit="回/週" color="orange" />
-                            <PFCStatCard label="睡眠時間" value={lifestyleSettings?.habit_targets?.sleep} unit="時間" color="indigo" />
+                            <PFCStatCard label="睡眠時間" value={lifestyleSettings?.habit_targets?.sleep} unit="時間" color="violet" />
                         </div>
                     </div>
                 </div>
@@ -217,11 +217,11 @@ function PFCStatCard({ label, value, unit, color }: { label: string, value: numb
         emerald: 'text-emerald-500 bg-emerald-50',
         blue: 'text-blue-500 bg-blue-50',
         purple: 'text-purple-500 bg-purple-50',
-        rose: 'text-rose-500 bg-rose-50',
+        teal: 'text-teal-500 bg-teal-50',
         gray: 'text-gray-500 bg-gray-50',
         sky: 'text-sky-500 bg-sky-50',
         orange: 'text-orange-500 bg-orange-50',
-        indigo: 'text-indigo-500 bg-indigo-50'
+        violet: 'text-violet-500 bg-violet-50'
     }
 
     return (

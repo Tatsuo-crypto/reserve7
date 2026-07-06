@@ -1,14 +1,18 @@
 import './globals.css'
-import { Inter } from 'next/font/google'
+import { Noto_Sans_JP } from 'next/font/google'
 import { Providers } from './providers'
 import Navigation from './components/Navigation'
 import BottomNavigation from './components/BottomNavigation'
 import MainWrapper from './components/MainWrapper'
 
-const inter = Inter({ 
+// N-4: 日本語UIに日本語フォントを使う（Interは日本語グリフを持たずOSフォールバック任せになっていたため廃止）。
+// ウェイトは見出し/主数値用の600と本文用の400のみ（N-4の「太さでヒエラルキーを作る」方針に合わせ絞る）。
+const notoSansJP = Noto_Sans_JP({
   subsets: ['latin'],
+  weight: ['400', '600'],
   display: 'swap',
   preload: true,
+  variable: '--font-noto-sans-jp',
 })
 
 // Use build-time timestamp to force cache refresh
@@ -42,8 +46,8 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="ja">
-      <body className={inter.className}>
+    <html lang="ja" className={notoSansJP.variable}>
+      <body className={notoSansJP.className}>
         <Providers>
           <div className="min-h-screen bg-gray-50">
             <Navigation />

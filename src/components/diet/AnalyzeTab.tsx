@@ -233,10 +233,10 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
         setCalendarDate(d)
     }
 
-    if (loading) return <div className="h-64 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>
+    if (loading) return <div className="h-64 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"></div></div>
     if (fetchError) {
         return (
-            <div className="bg-white rounded-3xl border border-rose-100 p-6 text-sm text-rose-600">
+            <div className="bg-white rounded-2xl border border-red-100 p-6 text-sm text-red-600">
                 分析データを取得できませんでした。画面を再読み込みしてください。
             </div>
         )
@@ -317,7 +317,7 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
             </AnalysisChartCard>
 
             {/* 2. Calories Chart */}
-            <AnalysisChartCard title="摂取カロリー" color="rose">
+            <AnalysisChartCard title="摂取カロリー" color="purple">
                 <ResponsiveContainer width="100%" height="100%">
                     <ComposedChart data={analysisData} syncId="analyzeSync" margin={chartMargin}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
@@ -480,7 +480,7 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 {/* 8. Sleep Chart */}
-                <AnalysisChartCard title="睡眠時間" color="indigo">
+                <AnalysisChartCard title="睡眠時間" color="violet">
                     <ResponsiveContainer width="100%" height="100%">
                         <ComposedChart data={analysisData} syncId="analyzeSync" margin={chartMargin}>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
@@ -615,11 +615,11 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
             {settings?.quit_goals?.length > 0 && (
                 <div className="space-y-4">
                     <div className="flex items-center gap-2 px-1 pt-4">
-                        <div className="w-1.5 h-5 bg-rose-500 rounded-full"></div>
+                        <div className="w-1.5 h-5 bg-purple-500 rounded-full"></div>
                         <h2 className="text-sm font-normal text-gray-800 uppercase tracking-widest">習慣の達成状況</h2>
                     </div>
                     {settings.quit_goals.map((goal: string) => (
-                        <AnalysisChartCard key={goal} title={`習慣: ${goal}`} color="rose">
+                        <AnalysisChartCard key={goal} title={`習慣: ${goal}`} color="purple">
                             <ResponsiveContainer width="100%" height="100%">
                                 <ComposedChart data={analysisData} syncId="analyzeSync" margin={chartMargin}>
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
@@ -652,9 +652,9 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
 function AnalysisChartCard({ title, children, color }: { title: string, children: React.ReactNode, color: string }) {
     const colorStyles: Record<string, string> = {
         blue: 'bg-blue-50/30 border-blue-100',
-        rose: 'bg-rose-50/30 border-rose-100',
+        purple: 'bg-purple-50/30 border-purple-100',
         emerald: 'bg-emerald-50/30 border-emerald-100',
-        indigo: 'bg-indigo-50/30 border-indigo-100',
+        violet: 'bg-violet-50/30 border-violet-100',
         sky: 'bg-sky-50/30 border-sky-100',
         teal: 'bg-teal-50/30 border-teal-100',
         gray: 'bg-gray-50/50 border-gray-100',

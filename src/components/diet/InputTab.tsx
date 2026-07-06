@@ -432,7 +432,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
 
                 {/* Large Upload Button - Only show if no data */}
                 {!ocrResult && (
-                    <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl shadow-lg p-6 text-white overflow-hidden relative group">
+                    <div className="bg-gradient-to-br from-brand-600 to-brand-800 rounded-2xl shadow-lg p-6 text-white overflow-hidden relative group">
                         <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 bg-white bg-opacity-10 rounded-full group-hover:scale-150 transition-transform duration-700"></div>
                         <div className="relative z-10 flex flex-col items-center">
                             <div className="w-16 h-16 bg-white bg-opacity-20 rounded-2xl flex items-center justify-center mb-4">
@@ -538,8 +538,8 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                             value={sleep ?? '0'}
                             target={target?.sleep_target != null ? String(target.sleep_target) : undefined}
                             unit="h"
-                            iconBg="bg-indigo-50"
-                            iconColor="text-indigo-500"
+                            iconBg="bg-violet-50"
+                            iconColor="text-violet-500"
                             step={0.5}
                             isDefault={!touchedFields.includes('sleep')}
                             onChange={(v) => {
@@ -599,12 +599,12 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                 {(quitGoals?.length || 0) > 0 && (
                     <div className="mt-8 space-y-4">
                         <div className="flex items-center gap-2">
-                            <div className="w-1 h-4 bg-rose-500 rounded-full"></div>
+                            <div className="w-1 h-4 bg-purple-500 rounded-full"></div>
                             <h2 className="text-sm font-normal text-gray-400 uppercase tracking-widest">その他の目標</h2>
                         </div>
                         <div className="grid grid-cols-1 gap-3">
                             {quitGoals.map((goal: string) => (
-                                <div key={goal} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-transparent hover:border-rose-100 transition-all">
+                                <div key={goal} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-transparent hover:border-purple-100 transition-all">
                                     <span className="text-sm font-normal text-gray-700">{goal}</span>
                                     <button
                                         onClick={() => {

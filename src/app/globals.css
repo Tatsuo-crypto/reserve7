@@ -2,10 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Aggressive Global Bold Removal */
-*:not(.keep-design) {
-  font-weight: 400 !important;
-}
+/*
+  N-4/PR-N1: 以前はここで全要素のfont-weightを400に強制していたが、
+  これだと見出し・主数値にfont-semiboldを指定しても効かず、
+  「太さでヒエラルキーを作る」というN-4の方針そのものが機能しなくなるため撤去した。
+  今後は各コンポーネント側でfont-semibold(見出し・主数値)/font-normal(本文)を明示的に使い分ける。
+*/
 
 @layer utilities {
   .animate-fadeIn {

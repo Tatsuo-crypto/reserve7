@@ -1,6 +1,9 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import Card from '@/components/ui/Card'
+import Button from '@/components/ui/Button'
+import Badge from '@/components/ui/Badge'
 
 interface GoalsTabProps {
     userId?: string
@@ -163,16 +166,16 @@ export default function GoalsTab({ userId, token, isAdmin }: GoalsTabProps) {
     }
 
     if (loading) {
-        return <div className="h-64 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-rose-600"></div></div>
+        return <div className="h-64 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"></div></div>
     }
 
     return (
         <div className="space-y-6 pb-24 animate-fadeIn">
             {/* 1. 今の目標 */}
-            <div className="bg-white rounded-[2.5rem] p-8 sm:p-10 shadow-sm border border-gray-100 space-y-4">
-                <div className="flex items-center gap-2">
-                    <div className="w-1.5 h-6 bg-orange-500 rounded-full"></div>
-                    <h2 className="text-xl font-normal text-gray-800 tracking-tight">今の目標</h2>
+            <Card padding="lg">
+                <div className="flex items-center gap-2 mb-4">
+                    <div className="w-1.5 h-6 bg-brand-500 rounded-full"></div>
+                    <h2 className="text-xl font-semibold text-gray-800 tracking-tight">今の目標</h2>
                 </div>
 
                 {activeGoals.length === 0 ? (
@@ -186,7 +189,7 @@ export default function GoalsTab({ userId, token, isAdmin }: GoalsTabProps) {
                                 <div key={goal.id} className="rounded-2xl bg-gray-50 border border-gray-100 p-5 flex items-center justify-between gap-3">
                                     <div>
                                         <p className="text-[10px] font-normal text-gray-400 uppercase tracking-widest mb-1">{goal.type === 'weight' ? '体重' : '習慣'}</p>
-                                        <p className="text-base font-normal text-gray-900">
+                                        <p className="text-base font-semibold text-gray-900">
                                             {goal.title}
                                             {goal.type === 'weight' && goal.target_value != null && (
                                                 <span className="ml-2 text-sm text-gray-500">目標 {goal.target_value}kg</span>
@@ -210,13 +213,13 @@ export default function GoalsTab({ userId, token, isAdmin }: GoalsTabProps) {
                         })}
                     </div>
                 )}
-            </div>
+            </Card>
 
             {/* 2. 新しい目標を追加 */}
             {!creating ? (
-                <button onClick={() => setCreating(true)} className="w-full text-sm text-white bg-blue-600 hover:bg-blue-700 px-4 py-4 rounded-2xl shadow-sm transition-colors">新しい目標を追加</button>
+                <Button onClick={() => setCreating(true)} fullWidth className="py-4">新しい目標を追加</Button>
             ) : (
-                <div className="bg-white rounded-[2.5rem] p-8 sm:p-10 shadow-sm border border-gray-100 space-y-5">
+                <Card padding="lg" className="space-y-5">
                     <div className="flex gap-2">
                         <button onClick={() => setNewGoal(prev => ({ ...prev, type: 'weight' }))} className={`flex-1 py-3 rounded-xl text-sm transition-colors ${newGoal.type === 'weight' ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}`}>体重の目標</button>
                         <button onClick={() => setNewGoal(prev => ({ ...prev, type: 'habit' }))} className={`flex-1 py-3 rounded-xl text-sm transition-colors ${newGoal.type === 'habit' ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}`}>習慣の目標</button>
@@ -224,34 +227,34 @@ export default function GoalsTab({ userId, token, isAdmin }: GoalsTabProps) {
 
                     <div className="space-y-1">
                         <label className="text-[10px] font-normal text-gray-400 uppercase tracking-widest pl-1">{newGoal.type === 'weight' ? '目標のタイトル（任意）' : '目標（例: 砂糖をやめる）'}</label>
-                        <input type="text" value={newGoal.title} onChange={e => setNewGoal(prev => ({ ...prev, title: e.target.value }))} placeholder={newGoal.type === 'weight' ? '目標体重' : '砂糖をやめる'} className="w-full bg-gray-50 border-none rounded-xl px-3 py-3 text-sm font-normal focus:ring-2 focus:ring-rose-500" />
+                        <input type="text" value={newGoal.title} onChange={e => setNewGoal(prev => ({ ...prev, title: e.target.value }))} placeholder={newGoal.type === 'weight' ? '目標体重' : '砂糖をやめる'} className="w-full bg-gray-50 border-none rounded-xl px-3 py-3 text-sm font-normal focus:ring-2 focus:ring-brand-500" />
                     </div>
 
                     {newGoal.type === 'weight' && (
                         <div className="space-y-1">
                             <label className="text-[10px] font-normal text-gray-400 uppercase tracking-widest pl-1">目標体重(kg)</label>
-                            <input type="number" value={newGoal.targetValue} onChange={e => setNewGoal(prev => ({ ...prev, targetValue: e.target.value }))} placeholder="60" className="w-full bg-gray-50 border-none rounded-xl px-3 py-3 text-sm font-normal focus:ring-2 focus:ring-rose-500" />
+                            <input type="number" value={newGoal.targetValue} onChange={e => setNewGoal(prev => ({ ...prev, targetValue: e.target.value }))} placeholder="60" className="w-full bg-gray-50 border-none rounded-xl px-3 py-3 text-sm font-normal focus:ring-2 focus:ring-brand-500" />
                         </div>
                     )}
 
                     <div className="space-y-1">
                         <label className="text-[10px] font-normal text-gray-400 uppercase tracking-widest pl-1">期限（任意）</label>
-                        <input type="date" value={newGoal.deadline} onChange={e => setNewGoal(prev => ({ ...prev, deadline: e.target.value }))} className="w-full bg-gray-50 border-none rounded-xl px-3 py-3 text-sm font-normal focus:ring-2 focus:ring-rose-500" />
+                        <input type="date" value={newGoal.deadline} onChange={e => setNewGoal(prev => ({ ...prev, deadline: e.target.value }))} className="w-full bg-gray-50 border-none rounded-xl px-3 py-3 text-sm font-normal focus:ring-2 focus:ring-brand-500" />
                     </div>
 
                     <div className="flex gap-2">
-                        <button onClick={handleCreate} disabled={saving} className="flex-1 text-sm text-white bg-blue-600 hover:bg-blue-700 px-4 py-3 rounded-xl transition-colors disabled:opacity-50">{saving ? '保存中...' : '目標を追加'}</button>
-                        <button onClick={() => setCreating(false)} className="px-4 py-3 rounded-xl text-sm text-gray-500 hover:bg-gray-50">キャンセル</button>
+                        <Button onClick={handleCreate} loading={saving} className="flex-1">{saving ? '保存中...' : '目標を追加'}</Button>
+                        <Button onClick={() => setCreating(false)} variant="ghost">キャンセル</Button>
                     </div>
-                </div>
+                </Card>
             )}
 
             {/* 3. 過去の目標（達成/未達成の履歴。グラフなし） */}
             {pastGoals.length > 0 && (
-                <div className="bg-white rounded-[2.5rem] p-8 sm:p-10 shadow-sm border border-gray-100 space-y-4">
-                    <div className="flex items-center gap-2">
-                        <div className="w-1.5 h-6 bg-indigo-500 rounded-full"></div>
-                        <h2 className="text-xl font-normal text-gray-800 tracking-tight">過去の目標</h2>
+                <Card padding="lg">
+                    <div className="flex items-center gap-2 mb-4">
+                        <div className="w-1.5 h-6 bg-brand-500 rounded-full"></div>
+                        <h2 className="text-xl font-semibold text-gray-800 tracking-tight">過去の目標</h2>
                     </div>
                     <div className="divide-y divide-gray-50">
                         {pastGoals.map(goal => (
@@ -260,16 +263,16 @@ export default function GoalsTab({ userId, token, isAdmin }: GoalsTabProps) {
                                     <p className="text-[10px] font-normal text-gray-400 uppercase tracking-widest">{goal.type === 'weight' ? '体重' : '習慣'}</p>
                                     <p className="text-sm font-normal text-gray-800">{goal.title}{goal.type === 'weight' && goal.target_value != null && <span className="ml-2 text-xs text-gray-400">{goal.target_value}kg</span>}</p>
                                 </div>
-                                <span className={`text-xs px-3 py-1.5 rounded-full ${goal.status === 'achieved' ? 'text-emerald-700 bg-emerald-50' : 'text-gray-400 bg-gray-50'}`}>
+                                <Badge tone={goal.status === 'achieved' ? 'success' : 'neutral'}>
                                     {goal.status === 'achieved' ? '達成 ✓' : '未達成 ×'}
-                                </span>
+                                </Badge>
                             </div>
                         ))}
                     </div>
-                </div>
+                </Card>
             )}
 
-            {message && <div className="fixed bottom-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-8 py-4 rounded-2xl font-normal shadow-2xl z-50 animate-slideUp">{message}</div>}
+            {message && <div className="fixed bottom-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-8 py-4 rounded-2xl font-normal shadow-xl z-50 animate-slideUp">{message}</div>}
         </div>
     )
 }

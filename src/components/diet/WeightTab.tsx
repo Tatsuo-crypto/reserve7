@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useWeeklyProgress } from '@/hooks/useWeeklyProgress'
 import WeightWeeklyCompare from './WeightWeeklyCompare'
+import Card from '@/components/ui/Card'
 
 interface WeightTabProps {
     userId?: string
@@ -89,31 +90,31 @@ export default function WeightTab({ userId, token, isAdmin }: WeightTabProps) {
         return rows
     }, [lifestyleLogs])
 
-    if (loading) return <div className="h-64 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-rose-600"></div></div>
+    if (loading) return <div className="h-64 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"></div></div>
 
     return (
         <div className="space-y-4 pb-24 animate-fadeIn">
             <WeightWeeklyCompare weight={weeklyStats?.weight} />
 
-            <div className="bg-white rounded-3xl p-5 border border-gray-100 shadow-sm">
+            <Card padding="sm">
                 <div className="flex items-center gap-2 mb-4">
-                    <div className="w-1 h-4 bg-blue-500 rounded-full"></div>
-                    <h3 className="text-sm font-normal text-gray-800">週別の体重平均</h3>
+                    <div className="w-1 h-4 bg-brand-500 rounded-full"></div>
+                    <h3 className="text-sm font-semibold text-gray-800">週別の体重平均</h3>
                 </div>
 
                 {historyLoading ? (
-                    <div className="py-8 flex justify-center"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-rose-600"></div></div>
+                    <div className="py-8 flex justify-center"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-brand-600"></div></div>
                 ) : (
                     <div className="divide-y divide-gray-50">
                         {weekHistory.map((row, i) => (
                             <div key={i} className="py-3">
                                 <p className="text-[10px] font-normal text-gray-400 tabular-nums mb-1">{row.rangeStr}</p>
                                 <div className="flex items-baseline gap-3 flex-wrap">
-                                    <span className="text-base font-normal text-gray-800 tabular-nums">
+                                    <span className="text-base font-semibold text-gray-800 tabular-nums">
                                         {row.avg !== null ? `平均 ${row.avg.toFixed(1)}kg` : '記録なし'}
                                     </span>
                                     {row.diffAbs !== null && (
-                                        <span className={`text-base font-normal tabular-nums whitespace-nowrap ${row.diffAbs < 0 ? 'text-blue-600' : row.diffAbs > 0 ? 'text-rose-600' : 'text-gray-400'}`}>
+                                        <span className={`text-base font-semibold tabular-nums whitespace-nowrap ${row.diffAbs < 0 ? 'text-blue-600' : row.diffAbs > 0 ? 'text-rose-600' : 'text-gray-400'}`}>
                                             先週差 {row.diffAbs > 0 ? '+' : ''}{row.diffAbs.toFixed(1)}kg
                                             {row.diffPercent !== null && (
                                                 <span className="ml-1">（{row.diffPercent > 0 ? '+' : ''}{row.diffPercent.toFixed(1)}%）</span>
@@ -125,7 +126,7 @@ export default function WeightTab({ userId, token, isAdmin }: WeightTabProps) {
                         ))}
                     </div>
                 )}
-            </div>
+            </Card>
         </div>
     )
 }
