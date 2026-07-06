@@ -7,20 +7,14 @@ import type { WeekDayRecordFlag } from '@/hooks/useWeeklyProgress'
  * O-5: 週間パネル（週間目標／週間まとめ）共通の達成色ロジックと表示部品。
  * WeeklyProgressPanel / WeeklySummaryPanel の両方から使う（ロジックの二重管理を避けるため集約）。
  *
- * O-2: 項目タイプごとの達成色ロジック。
- * 上限型(超えたくない): calories/fat/carbs/sugar/salt → 超過=赤、圏内=緑。
- * 下限型(満たしたい): protein/fiber/water/steps/sleep/workout → 達成=緑、未達=グレー（赤は使わない）。
- * O-3が求める「連続的なグラデーション」の簡易近似として、上限型のみ3段階（緑/黄/赤）の
- * ステップカラーで代替している（実装コストと視認性のバランスを取った簡略化）。
+ * オーナー確認後の修正（2026-07-06）: 当初はO-2の「上限型/下限型」で色ロジックを
+ * 分けていた（下限型は未達=グレー）が、グレーだと進捗バーが背景と同化して
+ * 「進んでいるのか分からない」という指摘を受けた。以後は項目タイプを問わず
+ * 「目標以内(100%以下)=緑、超過(100%超)=赤」のシンプルな二値ルールに統一する。
  */
-export function upperBoundColors(pct: number): { bar: string; text: string } {
+export function achievementColor(pct: number): { bar: string; text: string } {
     if (pct > 100) return { bar: 'bg-state-danger-500', text: 'text-state-danger-600' }
-    if (pct >= 90) return { bar: 'bg-amber-500', text: 'text-amber-600' }
     return { bar: 'bg-state-success-500', text: 'text-state-success-700' }
-}
-export function lowerBoundColors(pct: number): { bar: string; text: string } {
-    if (pct >= 100) return { bar: 'bg-state-success-500', text: 'text-state-success-700' }
-    return { bar: 'bg-gray-300', text: 'text-gray-400' }
 }
 
 /** O-5: 記録チェック表。7日分の食事記録の有無を丸アイコンで見せる。 */
@@ -49,7 +43,7 @@ export function CalorieHeroCard({ actual, target }: { actual: number; target: nu
     const pct = target > 0 ? Math.round((actual / target) * 100) : 0
     const over = actual > target
     const diffAbs = Math.round(Math.abs(target - actual)).toLocaleString()
-    const { bar } = upperBoundColors(pct)
+    const { bar } = achievementColor(pct)
 
     return (
         <Card padding="sm">
@@ -69,7 +63,7 @@ export function CalorieHeroCard({ actual, target }: { actual: number; target: nu
 }
 
 /**
- * O-5: 2列グリッド用の項目カード。上限型/下限型で達成色ロジックを切り替える。
+ * O-5: 2列グリッド用の項目カード。
  *
  * mode:
  *   - 'total'   : カロリー主役行と同じ「週合計 / 週目標」表記（食事・栄養系の項目で使用。
@@ -80,10 +74,9 @@ export function CalorieHeroCard({ actual, target }: { actual: number; target: nu
  * isFrequency（筋トレ等）は上記どちらとも異なる「今週 X/Y回」の専用表示のまま。
  */
 export function AchievementItemCard({
-    label, type, unit, target, avg, prevAvg, prevRecordedDays, isFrequency, actual, mode = 'average', prevActual,
+    label, unit, target, avg, prevAvg, prevRecordedDays, isFrequency, actual, mode = 'average', prevActual,
 }: {
     label: string
-    type: 'upper' | 'lower'
     unit: string
     /** mode='total'/'frequency'时は週合計の目標値、mode='average'時は1日あたりの目安値。 */
     target: number
@@ -102,7 +95,7 @@ export function AchievementItemCard({
     const useTotal = isFrequency || mode === 'total'
     const baseVal = useTotal ? (actual || 0) : (avg || 0)
     const pct = target > 0 ? Math.round((baseVal / target) * 100) : 0
-    const { bar, text } = type === 'upper' ? upperBoundColors(pct) : lowerBoundColors(pct)
+    const { bar, text } = achievementColor(pct)
     const hasPrevWeek = !isFrequency && (prevRecordedDays || 0) > 0
     const prevBase = mode === 'total' ? prevActual : prevAvg
     const curBase = mode === 'total' ? actual : avg
