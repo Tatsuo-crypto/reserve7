@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import GoalModal from './GoalModal'
+import Card from '@/components/ui/Card'
 
 interface InputTabProps {
     userId: string;
@@ -332,12 +333,12 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
             )}
 
             {/* 1. Date Selection Section */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+            <Card padding="md">
                 <div className="space-y-4">
                     <div className="flex items-center justify-between">
                         <h2 className="text-sm font-normal text-gray-400 uppercase tracking-widest">記録する日を選択</h2>
                         {isAdmin && (
-                            <button className="text-xs font-normal text-blue-600 px-3 py-1 bg-blue-50 rounded-full">項目編集</button>
+                            <button className="text-xs font-normal text-brand-600 px-3 py-1 bg-brand-50 rounded-full">項目編集</button>
                         )}
                     </div>
 
@@ -346,31 +347,31 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                             type="date"
                             value={selectedDate}
                             onChange={(e) => setSelectedDate(e.target.value)}
-                            className="flex-1 bg-gray-50 border-none rounded-xl font-normal text-gray-700 px-4 py-2 focus:ring-2 focus:ring-blue-500"
+                            className="flex-1 bg-gray-50 border-none rounded-xl font-normal text-gray-700 px-4 py-2 focus:ring-2 focus:ring-brand-500"
                         />
                         <button
                             onClick={() => setSelectedDate(new Date().toISOString().split('T')[0])}
-                            className={`px-4 py-2 rounded-xl text-xs font-normal transition-all ${selectedDate === new Date().toISOString().split('T')[0] ? 'bg-blue-600 text-white shadow-md' : 'bg-gray-100 text-gray-500'}`}
+                            className={`px-4 py-2 rounded-xl text-xs font-normal transition-all ${selectedDate === new Date().toISOString().split('T')[0] ? 'bg-brand-600 text-white shadow-md' : 'bg-gray-100 text-gray-500'}`}
                         >
                             今日
                         </button>
                     </div>
                 </div>
-            </div>
+            </Card>
 
             {/* 2. Diet Record Section */}
             <div className="space-y-4">
                 {/* Meal Result Section - Show prominently if data exists */}
                 {ocrResult && (
-                    <div className={`bg-white rounded-2xl shadow-lg p-6 animate-slideUp border-2 ${isSaved ? 'border-emerald-100' : 'border-blue-500'}`}>
+                    <div className={`bg-white rounded-2xl shadow-lg p-6 animate-slideUp border-2 ${isSaved ? 'border-emerald-100' : 'border-brand-500'}`}>
                         <div className="flex items-center justify-between mb-4">
                             <h2 className="text-lg font-normal text-gray-900">
                                 {analyzing ? '解析中...' : isSaved ? '食事の記録' : '解析結果'}
                             </h2>
                             {!analyzing && (
                                 <div className="flex items-center gap-2">
-                                    <div className={`w-2 h-2 rounded-full ${isSaved ? 'bg-emerald-500' : 'bg-blue-500 animate-pulse'}`}></div>
-                                    <span className={`text-[10px] font-normal uppercase tracking-widest ${isSaved ? 'text-emerald-600' : 'text-blue-600'}`}>
+                                    <div className={`w-2 h-2 rounded-full ${isSaved ? 'bg-emerald-500' : 'bg-brand-500 animate-pulse'}`}></div>
+                                    <span className={`text-[10px] font-normal uppercase tracking-widest ${isSaved ? 'text-emerald-600' : 'text-brand-600'}`}>
                                         {isSaved ? 'Saved' : 'Draft'}
                                     </span>
                                 </div>
@@ -388,8 +389,8 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                         )}
 
                         <div className="grid grid-cols-2 gap-4">
-                            <div className={`col-span-2 p-4 rounded-xl transition-colors ${isSaved ? 'bg-emerald-50/50' : 'bg-blue-50/50'}`}>
-                                <div className={`text-[10px] font-normal uppercase mb-2 tracking-widest text-center ${isSaved ? 'text-emerald-600' : 'text-blue-600'}`}>総エネルギー</div>
+                            <div className={`col-span-2 p-4 rounded-xl transition-colors ${isSaved ? 'bg-emerald-50/50' : 'bg-brand-50/50'}`}>
+                                <div className={`text-[10px] font-normal uppercase mb-2 tracking-widest text-center ${isSaved ? 'text-emerald-600' : 'text-brand-600'}`}>総エネルギー</div>
                                 <div className="flex items-center justify-center space-x-3">
                                     <div className="text-3xl font-normal text-gray-900">{ocrResult.calories}</div>
                                     <div className="text-xl font-normal text-gray-300">/</div>
@@ -409,7 +410,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                             <div className="flex items-center gap-2">
                                 <button 
                                     onClick={() => fileInputRef.current?.click()}
-                                    className="text-xs font-normal text-blue-600 px-3 py-1.5 bg-blue-50 rounded-full hover:bg-blue-100 transition-colors flex items-center gap-2"
+                                    className="text-xs font-normal text-brand-600 px-3 py-1.5 bg-brand-50 rounded-full hover:bg-brand-100 transition-colors flex items-center gap-2"
                                 >
                                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
                                     写真を再アップロード
@@ -442,12 +443,12 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                                 </svg>
                             </div>
                             <h2 className="text-lg font-normal mb-1">食事写真を解析</h2>
-                            <p className="text-blue-100 text-xs mb-6 text-center opacity-80">スクリーンショットを読み取って栄養バランスを一律入力します</p>
+                            <p className="text-brand-100 text-xs mb-6 text-center opacity-80">スクリーンショットを読み取って栄養バランスを一律入力します</p>
 
                             <button
                                 onClick={() => fileInputRef.current?.click()}
                                 disabled={analyzing}
-                                className={`w-full bg-white text-blue-600 py-3 rounded-xl font-normal shadow-md hover:bg-blue-50 transition-colors disabled:opacity-50 flex items-center justify-center ${analyzing ? 'animate-pulse' : ''}`}
+                                className={`w-full bg-white text-brand-600 py-3 rounded-xl font-normal shadow-md hover:bg-brand-50 transition-colors disabled:opacity-50 flex items-center justify-center ${analyzing ? 'animate-pulse' : ''}`}
                             >
                                 {analyzing ? '解析中...' : '写真をアップロード'}
                             </button>
@@ -465,14 +466,14 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
             </div>
 
             {/* 3. Metrics Input Section */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+            <Card padding="md">
                 <div className="space-y-3">
                     <h2 className="text-sm font-normal text-gray-400 uppercase tracking-widest mb-4">各項目の詳細入力</h2>
                     
                     {/* Weight Input Row */}
-                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl mb-4 group focus-within:ring-2 focus-within:ring-blue-100 transition-all">
+                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl mb-4 group focus-within:ring-2 focus-within:ring-brand-100 transition-all">
                         <div className="flex items-center space-x-4">
-                            <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm text-blue-500">
+                            <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm text-brand-500">
                                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <rect x="5" y="5" width="14" height="14" rx="2" strokeWidth={2} />
                                     <circle cx="12" cy="12" r="3" strokeWidth={2} />
@@ -506,8 +507,8 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                             value={water}
                             target={target?.water_target != null ? String(target.water_target) : undefined}
                             unit="L"
-                            iconBg="bg-blue-50"
-                            iconColor="text-blue-500"
+                            iconBg="bg-brand-50"
+                            iconColor="text-brand-500"
                             step={0.5}
                             isDefault={!touchedFields.includes('water')}
                             onChange={(v) => {
@@ -591,7 +592,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                             setNotes(e.target.value)
                         }}
                         placeholder="今日の体調や食事の感想など"
-                        className="w-full bg-gray-50 border-none rounded-2xl p-4 text-sm font-normal text-gray-700 focus:ring-2 focus:ring-blue-500 min-h-[100px]"
+                        className="w-full bg-gray-50 border-none rounded-2xl p-4 text-sm font-normal text-gray-700 focus:ring-2 focus:ring-brand-500 min-h-[100px]"
                     />
                 </div>
 
@@ -636,7 +637,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                         onClick={handleAllSave}
                         disabled={saving}
                         className={`w-full py-4 rounded-2xl font-normal shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 text-lg ${
-                            isSaved && !saving ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-blue-600 text-white hover:bg-blue-700'
+                            isSaved && !saving ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-brand-600 text-white hover:bg-brand-700'
                         }`}
                     >
                         {saving ? (
@@ -694,7 +695,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                         </button>
                     </div>
                 </div>
-            </div>
+            </Card>
         </div>
     )
 }
@@ -759,7 +760,7 @@ function EditableLogItem({ icon, label, value, target, unit, iconBg, iconColor, 
                 <div className="flex items-center bg-gray-100 rounded-xl p-1">
                     <button 
                         onClick={() => handleAdjust('down')}
-                        className="p-1.5 hover:bg-white rounded-lg transition-all text-gray-400 hover:text-blue-500"
+                        className="p-1.5 hover:bg-white rounded-lg transition-all text-gray-400 hover:text-brand-500"
                     >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg>
                     </button>
@@ -780,7 +781,7 @@ function EditableLogItem({ icon, label, value, target, unit, iconBg, iconColor, 
                     </div>
                     <button 
                         onClick={() => handleAdjust('up')}
-                        className="p-1.5 hover:bg-white rounded-lg transition-all text-gray-400 hover:text-blue-500"
+                        className="p-1.5 hover:bg-white rounded-lg transition-all text-gray-400 hover:text-brand-500"
                     >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 15l7-7 7 7" /></svg>
                     </button>

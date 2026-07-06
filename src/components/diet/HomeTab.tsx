@@ -5,6 +5,7 @@ import { useOnlineLessons, getJoinStatus } from '@/hooks/useOnlineLessons'
 import { useWeeklyProgress } from '@/hooks/useWeeklyProgress'
 import WeightWeeklyCompare from './WeightWeeklyCompare'
 import Button from '@/components/ui/Button'
+import Card from '@/components/ui/Card'
 import Icon from '@/components/ui/icons'
 
 interface HomeTabProps {
@@ -152,41 +153,45 @@ export default function HomeTab({ token, userName, todayDraft, onNavigate, onOpe
             {/* Card 2: 次回予約（常時） */}
             <button
                 onClick={() => onNavigate?.('res')}
-                className="w-full text-left bg-white rounded-2xl p-5 border border-gray-100 shadow-sm active:scale-[0.99] transition-transform"
+                className="w-full text-left active:scale-[0.99] transition-transform"
             >
-                <p className="text-[11px] font-normal text-gray-400 tracking-widest uppercase mb-1">次回予約</p>
-                {nextReservation ? (
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-base font-semibold text-gray-800">{formatReservationDate(nextReservation.start_time)}</p>
-                            <p className="text-sm text-gray-400">{formatReservationTitle(nextReservation.title)}</p>
+                <Card padding="sm">
+                    <p className="text-[11px] font-normal text-gray-400 tracking-widest uppercase mb-1">次回予約</p>
+                    {nextReservation ? (
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-base font-semibold text-gray-800">{formatReservationDate(nextReservation.start_time)}</p>
+                                <p className="text-sm text-gray-400">{formatReservationTitle(nextReservation.title)}</p>
+                            </div>
+                            <Icon name="chevronRight" className="text-gray-300" />
                         </div>
-                        <Icon name="chevronRight" className="text-gray-300" />
-                    </div>
-                ) : (
-                    <div className="flex items-center justify-between">
-                        <p className="text-sm text-gray-400">今後の予約はありません</p>
-                        <span className="text-xs font-normal text-brand-600 bg-brand-50 px-3 py-1.5 rounded-full">予約する</span>
-                    </div>
-                )}
+                    ) : (
+                        <div className="flex items-center justify-between">
+                            <p className="text-sm text-gray-400">今後の予約はありません</p>
+                            <span className="text-xs font-normal text-brand-600 bg-brand-50 px-3 py-1.5 rounded-full">予約する</span>
+                        </div>
+                    )}
+                </Card>
             </button>
 
             {/* Card 3: 体重ひとこと（今週平均・先週比。PR3: WeightWeeklyCompareに統一） */}
             {weeklyStats?.weight?.thisWeekAvg !== null && weeklyStats?.weight?.thisWeekAvg !== undefined && (
                 <button
                     onClick={() => onNavigate?.('analyze')}
-                    className="w-full text-left bg-white rounded-2xl p-5 border border-gray-100 shadow-sm active:scale-[0.99] transition-transform"
+                    className="w-full text-left active:scale-[0.99] transition-transform"
                 >
-                    <WeightWeeklyCompare weight={weeklyStats.weight} compact />
+                    <Card padding="sm">
+                        <WeightWeeklyCompare weight={weeklyStats.weight} compact />
+                    </Card>
                 </button>
             )}
 
             {/* Card 4: 今日の記録（常時） */}
-            <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+            <Card padding="sm">
                 <p className="text-[11px] font-normal text-gray-400 tracking-widest uppercase mb-3">今日の記録</p>
                 <div className="flex items-center gap-4">
                     {todayCalorie.hasRecord ? (
-                        <div className="shrink-0 w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center">
+                        <div className="shrink-0 w-10 h-10 rounded-full bg-state-success-500 flex items-center justify-center">
                             <Icon name="check" size={20} className="text-white" />
                         </div>
                     ) : (
@@ -199,7 +204,7 @@ export default function HomeTab({ token, userName, todayDraft, onNavigate, onOpe
                 <Button onClick={() => onNavigate?.('record')} fullWidth className="mt-4">
                     記録する
                 </Button>
-            </div>
+            </Card>
 
             {/* 通知未許可バナー */}
             {showNotifBanner && (
