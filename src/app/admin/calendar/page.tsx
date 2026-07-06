@@ -48,7 +48,7 @@ function AdminCalendarPageContent() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600 mx-auto"></div>
           <p className="mt-4 text-gray-600">読み込み中...</p>
         </div>
       </div>
@@ -91,7 +91,7 @@ function AdminCalendarPageContent() {
                   <span className="text-gray-700 font-normal">
                     {getStoreDisplayName(trainer.storeId)}
                   </span>
-                  <span className="px-3 py-1 rounded-full text-xs font-normal border bg-blue-100 text-blue-700 border-blue-300">
+                  <span className="px-3 py-1 rounded-full text-xs font-normal border bg-brand-100 text-brand-700 border-brand-300">
                     トレーナー
                   </span>
                 </div>
@@ -120,7 +120,7 @@ function AdminCalendarPageContent() {
             {!trainerToken && (
               <Link
                 href="/admin/shifts"
-                className="absolute right-0 flex items-center text-sm text-gray-500 hover:text-indigo-600 transition-colors"
+                className="absolute right-0 flex items-center text-sm text-gray-500 hover:text-brand-600 transition-colors"
               >
                 <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -148,7 +148,7 @@ export default function AdminCalendarPage() {
     <Suspense fallback={
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600 mx-auto"></div>
           <p className="mt-4 text-gray-600">読み込み中...</p>
         </div>
       </div>

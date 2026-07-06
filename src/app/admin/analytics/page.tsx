@@ -161,7 +161,7 @@ export default function AnalyticsPage() {
                 <select
                     value={filterStoreId}
                     onChange={(e) => setFilterStoreId(e.target.value)}
-                    className="text-sm border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-1 pl-2 pr-8"
+                    className="text-sm border-gray-300 rounded-md shadow-sm focus:border-brand-500 focus:ring-brand-500 py-1 pl-2 pr-8"
                 >
                     <option value="all">全店舗</option>
                     {stores.map(store => (
@@ -172,7 +172,7 @@ export default function AnalyticsPage() {
                 <select
                     value={period}
                     onChange={(e) => setPeriod(e.target.value)}
-                    className="text-sm border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-1 pl-2 pr-8"
+                    className="text-sm border-gray-300 rounded-md shadow-sm focus:border-brand-500 focus:ring-brand-500 py-1 pl-2 pr-8"
                 >
                     <option value="all">全期間 (2023/11~)</option>
                     <option value="2023">2023年</option>
@@ -259,11 +259,11 @@ export default function AnalyticsPage() {
                         <h3 className="text-lg font-normal text-gray-900">入会・退会推移</h3>
                         <div className="flex items-center gap-4 text-xs text-gray-500">
                             <span className="flex items-center gap-1.5">
-                                <span className="inline-block w-3 h-3 rounded-sm bg-red-400"></span>
+                                <span className="inline-block w-3 h-3 rounded-sm bg-state-success-500"></span>
                                 新規入会
                             </span>
                             <span className="flex items-center gap-1.5">
-                                <span className="inline-block w-3 h-3 rounded-sm bg-blue-400"></span>
+                                <span className="inline-block w-3 h-3 rounded-sm bg-state-danger-500"></span>
                                 退会
                             </span>
                         </div>
@@ -290,7 +290,7 @@ export default function AnalyticsPage() {
                                         <div className="flex flex-col items-center">
                                         {/* Year label at top for first item */}
                                         {showYear && idx === 0 && (
-                                            <div className="text-[10px] font-normal text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded-full mb-1 whitespace-nowrap">
+                                            <div className="text-[10px] font-normal text-brand-500 bg-brand-50 px-2 py-0.5 rounded-full mb-1 whitespace-nowrap">
                                                 {yearStr}
                                             </div>
                                         )}
@@ -306,7 +306,7 @@ export default function AnalyticsPage() {
                                                 {Array.from({ length: newCount }).map((_, i) => (
                                                     <div
                                                         key={`n-${i}`}
-                                                        className="w-5 h-4 rounded-sm bg-red-400"
+                                                        className="w-5 h-4 rounded-sm bg-state-success-500"
                                                     />
                                                 ))}
                                             </div>
@@ -321,7 +321,7 @@ export default function AnalyticsPage() {
                                                 {Array.from({ length: withdrawnCount }).map((_, i) => (
                                                     <div
                                                         key={`w-${i}`}
-                                                        className="w-5 h-4 rounded-sm bg-blue-400"
+                                                        className="w-5 h-4 rounded-sm bg-state-danger-500"
                                                     />
                                                 ))}
                                             </div>

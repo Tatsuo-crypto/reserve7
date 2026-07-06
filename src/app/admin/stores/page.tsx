@@ -135,7 +135,7 @@ export default function StoresPage() {
 
       {/* Action Button */}
       <div className="flex justify-center mb-6">
-        <button className="inline-flex items-center px-4 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-700" onClick={openCreate}>新規店舗</button>
+        <button className="inline-flex items-center px-4 py-2 rounded-md bg-brand-600 text-white hover:bg-brand-700" onClick={openCreate}>新規店舗</button>
       </div>
 
       {/* Filters (temporarily hidden) */}
@@ -197,12 +197,12 @@ export default function StoresPage() {
                         <div className="text-gray-900">{s.memberCount ?? 0}</div>
                       </td>
                       <td className="px-3 py-2 border-b whitespace-nowrap text-center">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-normal ${s.status === 'active' ? 'bg-indigo-100 text-indigo-800' : 'bg-gray-200 text-gray-700'}`}>{s.status === 'active' ? '有効' : '無効'}</span>
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-normal ${s.status === 'active' ? 'bg-brand-100 text-brand-800' : 'bg-gray-200 text-gray-700'}`}>{s.status === 'active' ? '有効' : '無効'}</span>
                       </td>
                       <td className="px-3 py-2 border-b text-center whitespace-nowrap">
                         <div className="inline-flex items-center gap-2 whitespace-nowrap justify-center">
                           <button className="px-2 py-1 text-xs rounded-md border hover:bg-gray-50" onClick={() => openEdit(s)}>編集</button>
-                          <button className={`px-2 py-1 text-xs rounded-md border ${s.status === 'active' ? 'hover:bg-red-50' : 'hover:bg-indigo-50'}`} onClick={() => toggleActive(s)}>{s.status === 'active' ? '無効化' : '有効化'}</button>
+                          <button className={`px-2 py-1 text-xs rounded-md border ${s.status === 'active' ? 'hover:bg-red-50' : 'hover:bg-brand-50'}`} onClick={() => toggleActive(s)}>{s.status === 'active' ? '無効化' : '有効化'}</button>
                         </div>
                       </td>
                     </tr>
@@ -244,7 +244,7 @@ export default function StoresPage() {
             </div>
             <div className="mt-6 flex justify-end gap-3">
               <button className="px-3 py-2 text-sm rounded-md border" onClick={() => setModalOpen(false)}>キャンセル</button>
-              <button className="px-3 py-2 text-sm rounded-md bg-indigo-600 text-white hover:bg-indigo-700" onClick={saveStore}>保存</button>
+              <button className="px-3 py-2 text-sm rounded-md bg-brand-600 text-white hover:bg-brand-700" onClick={saveStore}>保存</button>
             </div>
           </div>
         </div>

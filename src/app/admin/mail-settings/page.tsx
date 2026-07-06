@@ -262,7 +262,7 @@ export default function AdminMailSettingsPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600" />
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-brand-600" />
       </div>
     )
   }
@@ -278,8 +278,8 @@ export default function AdminMailSettingsPage() {
       <div className="max-w-3xl mx-auto px-4">
         {/* Success Alert */}
         {success && (
-          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-2xl text-sm text-green-700 flex items-center gap-2 animate-fadeIn">
-            <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="mb-6 p-4 bg-state-success-50 border border-state-success-100 rounded-2xl text-sm text-state-success-700 flex items-center gap-2 animate-fadeIn">
+            <svg className="w-5 h-5 text-state-success-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
             <span>{success}</span>
@@ -288,8 +288,8 @@ export default function AdminMailSettingsPage() {
 
         {/* Error Alert */}
         {error && (
-          <div className="mb-6 p-4 bg-rose-50 border border-rose-200 rounded-2xl text-sm text-rose-700 flex items-center gap-2 animate-fadeIn">
-            <svg className="w-5 h-5 text-rose-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="mb-6 p-4 bg-state-danger-50 border border-state-danger-100 rounded-2xl text-sm text-state-danger-700 flex items-center gap-2 animate-fadeIn">
+            <svg className="w-5 h-5 text-state-danger-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <span>{error}</span>
@@ -323,7 +323,7 @@ export default function AdminMailSettingsPage() {
             onClick={() => setActiveTab('members')}
             className={`flex-1 py-3 text-sm font-medium rounded-xl transition-all duration-200 ${
               activeTab === 'members'
-                ? 'bg-white text-blue-600 shadow-sm border border-gray-100'
+                ? 'bg-white text-brand-600 shadow-sm border border-gray-100'
                 : 'text-gray-500 hover:text-gray-700'
             }`}
           >
@@ -334,7 +334,7 @@ export default function AdminMailSettingsPage() {
             onClick={() => setActiveTab('reminder')}
             className={`flex-1 py-3 text-sm font-medium rounded-xl transition-all duration-200 ${
               activeTab === 'reminder'
-                ? 'bg-white text-blue-600 shadow-sm border border-gray-100'
+                ? 'bg-white text-brand-600 shadow-sm border border-gray-100'
                 : 'text-gray-500 hover:text-gray-700'
             }`}
           >
@@ -476,7 +476,7 @@ export default function AdminMailSettingsPage() {
                 type="button"
                 onClick={handleSaveMembers}
                 disabled={membersSaving || membersLoading}
-                className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-medium disabled:opacity-50 disabled:hover:bg-blue-600 transition-colors flex items-center justify-center gap-2 flex-[2] shadow-md shadow-blue-500/10"
+                className="px-6 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-sm font-medium disabled:opacity-50 disabled:hover:bg-brand-600 transition-colors flex items-center justify-center gap-2 flex-[2] shadow-md shadow-brand-500/10"
               >
                 {membersSaving ? (
                   <>
@@ -507,7 +507,7 @@ export default function AdminMailSettingsPage() {
                       disabled={!tableExists}
                       checked={settings.personal_reminder_enabled}
                       onChange={() => handleToggle('personal_reminder_enabled')}
-                      className="w-4.5 h-4.5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer disabled:opacity-50"
+                      className="w-4.5 h-4.5 text-brand-600 border-gray-300 rounded focus:ring-brand-500 cursor-pointer disabled:opacity-50"
                     />
                     <span className="text-sm font-medium text-gray-700">自動リマインダー通知を有効にする</span>
                   </label>
@@ -529,7 +529,7 @@ export default function AdminMailSettingsPage() {
                     disabled={!tableExists}
                     value={settings.reminder_before_minutes}
                     onChange={(e) => handleInputChange('reminder_before_minutes', Number(e.target.value))}
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-400"
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:bg-gray-50 disabled:text-gray-400"
                   >
                     <option value={15}>レッスン開始 15分前</option>
                     <option value={30}>レッスン開始 30分前</option>
@@ -557,7 +557,7 @@ export default function AdminMailSettingsPage() {
               <button
                 type="submit"
                 disabled={saving || !tableExists}
-                className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-medium disabled:opacity-50 disabled:hover:bg-blue-600 transition-colors flex items-center justify-center gap-2 flex-[2] shadow-md shadow-blue-500/10"
+                className="px-6 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-sm font-medium disabled:opacity-50 disabled:hover:bg-brand-600 transition-colors flex items-center justify-center gap-2 flex-[2] shadow-md shadow-brand-500/10"
               >
                 {saving ? (
                   <>

@@ -69,16 +69,16 @@ export default function MemberMovementModal({ isOpen, onClose, data }: MemberMov
                                     </div>
 
                                     {/* Withdrawn Members */}
-                                    <div className="border rounded-lg p-4 bg-blue-50">
-                                        <h4 className="font-normal text-blue-700 mb-3 flex items-center">
+                                    <div className="border rounded-lg p-4 bg-brand-50">
+                                        <h4 className="font-normal text-brand-700 mb-3 flex items-center">
                                             <span>退会</span>
-                                            <span className="ml-2 bg-blue-200 text-blue-800 text-xs px-2 py-0.5 rounded-full">
+                                            <span className="ml-2 bg-brand-200 text-brand-800 text-xs px-2 py-0.5 rounded-full">
                                                 {data.withdrawnMembers.length}名
                                             </span>
                                         </h4>
                                         <div className="max-h-[400px] overflow-y-auto">
                                             {data.withdrawnMembers.length > 0 ? (
-                                                <ul className="divide-y divide-blue-200">
+                                                <ul className="divide-y divide-brand-200">
                                                     {data.withdrawnMembers.map((member) => (
                                                         <li key={member.user_id} className="py-2 text-sm">
                                                             <div className="font-normal text-gray-900">{member.full_name}</div>
@@ -103,7 +103,7 @@ export default function MemberMovementModal({ isOpen, onClose, data }: MemberMov
                     <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
                         <button
                             type="button"
-                            className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-normal text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                            className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-normal text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
                             onClick={onClose}
                         >
                             閉じる

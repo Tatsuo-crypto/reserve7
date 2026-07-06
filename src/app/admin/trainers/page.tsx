@@ -339,7 +339,7 @@ export default function TrainersPage() {
                 <div className="flex items-center gap-2 flex-shrink-0 ml-3">
                   {t.access_token && (
                     <button
-                      className="px-2 py-1 text-[10px] font-normal rounded-full bg-indigo-100 text-indigo-700 hover:bg-indigo-200 transition-colors"
+                      className="px-2 py-1 text-[10px] font-normal rounded-full bg-brand-100 text-brand-700 hover:bg-brand-200 transition-colors"
                       onClick={() => handleCopyAccessUrl(t.access_token!, t.full_name)}
                     >
                       URL
