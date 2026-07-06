@@ -11,6 +11,15 @@ export interface WeightWeeklyStats {
     lastWeekRecordedDays: number
 }
 
+export interface WeekDayRecordFlag {
+    date: string
+    /** 月火水木金土日の1文字ラベル。 */
+    label: string
+    /** その日に食事記録(カロリー>0)が1件でもあるか。 */
+    recorded: boolean
+    isToday: boolean
+}
+
 export interface WeeklyProgressStats {
     actual: Record<string, number>
     targets: Record<string, number>
@@ -26,6 +35,8 @@ export interface WeeklyProgressStats {
     lifeTargetPerDay: Record<string, number>
     /** 体重は「積み上げ量」ではなく週平均同士の比較で見るため、他指標とは別枠で保持する。 */
     weight: WeightWeeklyStats
+    /** O-5: 「記録チェック表」用。月〜日の7日分、食事記録の有無を実際の日付ベースで持つ。 */
+    weekDays: WeekDayRecordFlag[]
 }
 
 interface UseWeeklyProgressOptions {
@@ -233,6 +244,24 @@ export function useWeeklyProgress(token: string, options: UseWeeklyProgressOptio
         const thisWeek = aggregateWeek(monday, sunday)
         const lastWeek = aggregateWeek(prevMonday, prevSunday)
 
+        // O-5: 「記録チェック表」用。今週の月〜日について、実際の日付ごとに食事記録の有無を判定する。
+        const WEEKDAY_LABELS_JA = ['日', '月', '火', '水', '木', '金', '土']
+        const weekDietLogsForCheck = processLogs(dietLogs, true, monday, sunday)
+        const recordedDateSet = new Set(
+            weekDietLogsForCheck.filter(log => (Number(log.calories) || 0) > 0).map(log => log.date)
+        )
+        const weekDays: WeekDayRecordFlag[] = Array.from({ length: 7 }).map((_, i) => {
+            const d = new Date(monday)
+            d.setDate(monday.getDate() + i)
+            const dateStr = d.toLocaleDateString('sv-SE')
+            return {
+                date: dateStr,
+                label: WEEKDAY_LABELS_JA[d.getDay()],
+                recorded: recordedDateSet.has(dateStr),
+                isToday: dateStr === todayStr,
+            }
+        })
+
         const avgOnRecordedDays: Record<string, number> = {}
         const previousAvgOnRecordedDays: Record<string, number> = {}
         for (const key of METRIC_KEYS) {
@@ -286,6 +315,7 @@ export function useWeeklyProgress(token: string, options: UseWeeklyProgressOptio
                 workout: lifeTargets.workout || lifeTargets.habit_targets?.workout || 3
             },
             weight,
+            weekDays,
         }
     }, [dietLogs, lifestyleLogs, dietGoals, lifestyleSettings, weekOffset, todayDraft, todayStr])
 
