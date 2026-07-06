@@ -10,6 +10,7 @@ import {
     CartesianGrid, 
     Tooltip
 } from 'recharts'
+import Card from '@/components/ui/Card'
 
 interface PlanTabProps {
     token: string
@@ -72,22 +73,22 @@ export default function PlanTab({ token }: PlanTabProps) {
     const currentGoal = planHistory[planHistory.length - 1]
     const reversedHistory = [...planHistory].reverse()
 
-    if (loading) return <div className="h-64 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>
+    if (loading) return <div className="h-64 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"></div></div>
 
     return (
         <div className="space-y-8 animate-fadeIn pb-24">
             {/* 1. Current Plan Overview */}
-            <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-sm">
+            <Card padding="lg">
                 <div className="flex items-center justify-between mb-8">
                     <div>
                         <div className="flex items-center gap-2 mb-1">
-                            <div className="w-1.5 h-5 bg-orange-500 rounded-full"></div>
+                            <div className="w-1.5 h-5 bg-brand-500 rounded-full"></div>
                             <h3 className="text-xl font-normal text-gray-800">現在の目標設定</h3>
                         </div>
                         <p className="text-[10px] font-normal text-gray-400 uppercase tracking-widest">目標数値の詳細</p>
                     </div>
-                    <div className="px-4 py-1.5 bg-orange-50 rounded-full">
-                        <span className="text-[10px] font-normal text-orange-600">最終更新: {currentGoal?.date}</span>
+                    <div className="px-4 py-1.5 bg-brand-50 rounded-full">
+                        <span className="text-[10px] font-normal text-brand-600">最終更新: {currentGoal?.date}</span>
                     </div>
                 </div>
 
@@ -126,13 +127,13 @@ export default function PlanTab({ token }: PlanTabProps) {
                         </div>
                     </div>
                 </div>
-            </div>
+            </Card>
 
             {/* 2. Goal Transition Chart */}
-            <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-sm">
+            <Card padding="lg">
                 <div className="mb-8">
                     <div className="flex items-center gap-2 mb-1">
-                        <div className="w-1.5 h-5 bg-blue-600 rounded-full"></div>
+                        <div className="w-1.5 h-5 bg-brand-600 rounded-full"></div>
                         <h3 className="text-xl font-normal text-gray-800">目標カロリーの推移</h3>
                     </div>
                     <p className="text-[10px] font-normal text-gray-400 uppercase tracking-widest">PFCバランスの推移 (kcal換算)</p>
@@ -169,10 +170,10 @@ export default function PlanTab({ token }: PlanTabProps) {
                     <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-emerald-500"></div><span className="text-[10px] font-normal text-gray-500">F</span></div>
                     <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-blue-500"></div><span className="text-[10px] font-normal text-gray-500">C</span></div>
                 </div>
-            </div>
+            </Card>
 
             {/* 3. Detailed Goal History Table */}
-            <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-sm overflow-hidden">
+            <Card padding="lg" className="overflow-hidden">
                 <div className="flex items-center gap-2 mb-6">
                     <div className="w-1.5 h-5 bg-gray-400 rounded-full"></div>
                     <h3 className="text-xl font-normal text-gray-800">目標設定の履歴</h3>
@@ -206,7 +207,7 @@ export default function PlanTab({ token }: PlanTabProps) {
                         </tbody>
                     </table>
                 </div>
-            </div>
+            </Card>
         </div>
     )
 }

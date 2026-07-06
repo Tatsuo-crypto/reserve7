@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import { useOnlineLessons, getJoinStatus, DAYS_JA } from '@/hooks/useOnlineLessons'
+import Card from '@/components/ui/Card'
+import Badge from '@/components/ui/Badge'
+import Icon from '@/components/ui/icons'
 
 interface Reservation {
     id: string
@@ -76,7 +79,7 @@ export default function ReservationTab({ token }: ReservationTabProps) {
         fetchData()
     }, [token])
 
-    if (loading) return <div className="h-64 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>
+    if (loading) return <div className="h-64 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"></div></div>
 
     const futureByMonth = groupByMonth(futureReservations)
     const pastByMonth = groupByMonth(pastReservations)
@@ -97,26 +100,24 @@ export default function ReservationTab({ token }: ReservationTabProps) {
                         {lessons.map(lesson => {
                             const status = getJoinStatus(lesson)
                             return (
-                                <div key={lesson.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                                    <div className="p-4">
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <h4 className="font-normal text-gray-800 text-sm">{lesson.title}</h4>
-                                            <span className="text-[10px] font-normal px-2 py-0.5 bg-blue-50 text-blue-600 rounded-full">{lesson.difficulty}</span>
-                                        </div>
-                                        <p className="text-xs font-normal text-blue-600 mb-2">
-                                            毎週{lesson.day_of_week?.map(d => DAYS_JA[d]).join('・')} {lesson.start_time?.substring(0, 5)}〜{lesson.end_time?.substring(0, 5)}
-                                        </p>
-                                        {status.isToday && (
-                                            <button
-                                                onClick={() => window.open(lesson.meet_url, '_blank')}
-                                                disabled={!status.canJoin}
-                                                className={`w-full py-2.5 rounded-xl text-sm font-normal transition-all ${status.canJoin ? 'bg-blue-600 text-white active:scale-95' : 'bg-gray-100 text-gray-400'}`}
-                                            >
-                                                {status.canJoin ? '参加する' : status.label}
-                                            </button>
-                                        )}
+                                <Card key={lesson.id} padding="sm">
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <h4 className="font-normal text-gray-800 text-sm">{lesson.title}</h4>
+                                        <span className="text-[10px] font-normal px-2 py-0.5 bg-brand-50 text-brand-600 rounded-full">{lesson.difficulty}</span>
                                     </div>
-                                </div>
+                                    <p className="text-xs font-normal text-brand-600 mb-2">
+                                        毎週{lesson.day_of_week?.map(d => DAYS_JA[d]).join('・')} {lesson.start_time?.substring(0, 5)}〜{lesson.end_time?.substring(0, 5)}
+                                    </p>
+                                    {status.isToday && (
+                                        <button
+                                            onClick={() => window.open(lesson.meet_url, '_blank')}
+                                            disabled={!status.canJoin}
+                                            className={`w-full py-2.5 rounded-xl text-sm font-normal transition-all ${status.canJoin ? 'bg-brand-600 text-white active:scale-95' : 'bg-gray-100 text-gray-400'}`}
+                                        >
+                                            {status.canJoin ? '参加する' : status.label}
+                                        </button>
+                                    )}
+                                </Card>
                             )
                         })}
                     </div>
@@ -126,33 +127,31 @@ export default function ReservationTab({ token }: ReservationTabProps) {
             {/* 1. Future Reservations */}
             <section>
                 {futureReservations.length === 0 ? (
-                    <div className="bg-white rounded-3xl p-8 text-center border border-gray-100 shadow-sm">
+                    <Card padding="lg" className="text-center">
                         <p className="text-gray-400 text-sm font-normal">今後の予約はありません</p>
-                    </div>
+                    </Card>
                 ) : (
                     <div className="space-y-6">
                         {sortedFutureMonths.map(([monthKey, reservations]) => (
                             <div key={monthKey} className="space-y-3">
                                 <div className="flex items-center space-x-2 py-2">
-                                    <div className="h-px flex-1 bg-blue-50"></div>
-                                    <div className="text-[10px] font-normal text-blue-500 bg-blue-50 px-4 py-1 rounded-full uppercase tracking-tighter">
+                                    <div className="h-px flex-1 bg-brand-50"></div>
+                                    <div className="text-[10px] font-normal text-brand-500 bg-brand-50 px-4 py-1 rounded-full uppercase tracking-tighter">
                                         {monthKey}
                                     </div>
-                                    <div className="h-px flex-1 bg-blue-50"></div>
+                                    <div className="h-px flex-1 bg-brand-50"></div>
                                 </div>
                                 <div className="space-y-3">
                                     {reservations
                                         .sort((a: Reservation, b: Reservation) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())
                                         .map((res: Reservation) => (
-                                            <div key={res.id} className="bg-white rounded-[2rem] p-5 border border-gray-100 shadow-sm border-l-4 border-l-blue-600 hover:scale-[1.01] transition-transform">
+                                            <Card key={res.id} padding="sm" className="border-l-4 border-l-brand-600 hover:scale-[1.01] transition-transform">
                                                 <div className="flex justify-between items-start mb-2">
                                                     <h3 className="font-normal text-gray-800">{formatTitle(res.title)}</h3>
-                                                    <span className="text-[10px] font-normal text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md">確定</span>
+                                                    <Badge tone="success">確定</Badge>
                                                 </div>
-                                                <div className="flex items-center text-blue-600 text-sm font-normal">
-                                                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                    </svg>
+                                                <div className="flex items-center text-brand-600 text-sm font-normal">
+                                                    <Icon name="calendar" size={16} className="mr-2" />
                                                     {formatDate(res.start_time)}
                                                 </div>
                                                 {res.notes && (
@@ -160,7 +159,7 @@ export default function ReservationTab({ token }: ReservationTabProps) {
                                                         「{res.notes}」
                                                     </p>
                                                 )}
-                                            </div>
+                                            </Card>
                                         ))}
                                 </div>
                             </div>
@@ -178,9 +177,7 @@ export default function ReservationTab({ token }: ReservationTabProps) {
                             className="flex items-center justify-between w-full px-6 py-4 bg-gray-50 rounded-2xl border border-transparent hover:border-gray-200 transition-all group"
                         >
                             <div className="flex items-center gap-2">
-                                <svg className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${showPast ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
-                                </svg>
+                                <Icon name="chevronDown" size={20} className={`text-gray-400 transition-transform duration-300 ${showPast ? 'rotate-180' : ''}`} />
                                 <span className="text-sm font-normal text-gray-500">過去の予約を表示 ({pastReservations.length}回)</span>
                             </div>
                         </button>
