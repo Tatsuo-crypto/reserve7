@@ -334,7 +334,7 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
         >
           <div className="text-sm font-normal mb-1 flex-shrink-0 flex justify-start">
             {isToday ? (
-              <div className="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-normal">
+              <div className="w-6 h-6 bg-brand-500 text-white rounded-full flex items-center justify-center text-xs font-normal">
                 {day}
               </div>
             ) : (
@@ -497,7 +497,7 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
         <div className="px-0 pb-4">
           {loading ? (
             <div className="flex items-center justify-center h-64">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"></div>
               <span className="ml-2 text-gray-600">読み込み中...</span>
             </div>
           ) : (
@@ -544,7 +544,7 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
       <div className="mt-6 pb-8 flex justify-center">
         <Link
           href={trainerToken ? `/admin/reservations?trainerToken=${trainerToken}` : '/admin/reservations'}
-          className="inline-flex items-center px-8 py-3 bg-indigo-50 text-indigo-600 text-[11px] font-normal rounded-2xl hover:bg-indigo-100 transition-all uppercase tracking-widest border border-indigo-100 shadow-sm shadow-indigo-100/50"
+          className="inline-flex items-center px-8 py-3 bg-brand-50 text-brand-600 text-[11px] font-normal rounded-2xl hover:bg-brand-100 transition-all uppercase tracking-widest border border-brand-100 shadow-sm shadow-brand-100/50"
         >
           予約一覧を見る
         </Link>

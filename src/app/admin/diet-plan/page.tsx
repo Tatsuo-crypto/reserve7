@@ -632,7 +632,7 @@ function DietPlanPageContent() {
                                                         <tr key={i} className="group hover:bg-gray-50 transition-colors">
                                                             <td className="py-5 text-sm font-normal text-gray-900">
                                                                 {h.date.slice(5).replace(/-/g, '/')}
-                                                                {h.image_url && <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-[8px] bg-blue-50 text-blue-500 uppercase tracking-tighter font-bold">Image</span>}
+                                                                {h.image_url && <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-[8px] bg-brand-50 text-brand-500 uppercase tracking-tighter font-bold">Image</span>}
                                                             </td>
                                                             <td className="py-5 text-sm font-normal text-gray-900 text-right tabular-nums">{h.calories?.toLocaleString()} <span className="text-[10px] text-gray-300">kcal</span></td>
                                                             <td className="py-5 text-sm font-normal text-gray-600 text-center tabular-nums">
@@ -685,7 +685,7 @@ function DietPlanPageContent() {
                                 {dietHistory.length === 0 && (
                                 <div className="bg-white rounded-[2.5rem] p-8 sm:p-10 shadow-sm border border-gray-100 space-y-6">
                                     <div className="flex items-center gap-2">
-                                        <div className="w-1.5 h-6 bg-blue-500 rounded-full"></div>
+                                        <div className="w-1.5 h-6 bg-brand-500 rounded-full"></div>
                                         <h2 className="text-xl font-normal text-gray-800 tracking-tight">基礎情報からカロリー計算</h2>
                                     </div>
 
@@ -718,7 +718,7 @@ function DietPlanPageContent() {
                                                         <button
                                                             key={level.value}
                                                             onClick={() => setAragonInput(prev => ({ ...prev, neat: level.value }))}
-                                                            className={`text-xs py-3 px-2 rounded-xl transition-colors ${aragonInput.neat === level.value ? 'bg-blue-600 text-white' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}`}
+                                                            className={`text-xs py-3 px-2 rounded-xl transition-colors ${aragonInput.neat === level.value ? 'bg-brand-600 text-white' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}`}
                                                         >
                                                             {level.label}
                                                         </button>
@@ -746,7 +746,7 @@ function DietPlanPageContent() {
                                                             <span className="mx-1 text-gray-300">/</span>
                                                             <span className="text-blue-500">C {aragonResult.carbs}g</span>
                                                         </p>
-                                                        <button onClick={applyAragonPlanToGoal} className="mt-4 w-full sm:w-auto px-6 py-3 rounded-xl bg-blue-600 text-white text-sm hover:bg-blue-700 transition-colors">目標に反映</button>
+                                                        <button onClick={applyAragonPlanToGoal} className="mt-4 w-full sm:w-auto px-6 py-3 rounded-xl bg-brand-600 text-white text-sm hover:bg-brand-700 transition-colors">目標に反映</button>
                                                     </div>
                                                 </>
                                             ) : (
@@ -767,7 +767,7 @@ function DietPlanPageContent() {
                                             <h2 className="text-xl font-normal text-gray-800 tracking-tight">現在の目標設定</h2>
                                         </div>
                                         {!editingCurrentPlan && (
-                                            <button onClick={() => setEditingCurrentPlan(true)} className="text-xs text-blue-600 bg-blue-50 px-4 py-2 rounded-full hover:bg-blue-100">編集</button>
+                                            <button onClick={() => setEditingCurrentPlan(true)} className="text-xs text-brand-600 bg-brand-50 px-4 py-2 rounded-full hover:bg-brand-100">編集</button>
                                         )}
                                     </div>
                                     {editingCurrentPlan ? (
@@ -798,7 +798,7 @@ function DietPlanPageContent() {
                                 </div>
 
                                 {/* L-4: 「新しい目標を追加」はグラフの付属品ではなく同格の機能として独立配置 */}
-                                <button onClick={openNewGoalModal} className="w-full text-sm text-white bg-blue-600 hover:bg-blue-700 px-4 py-4 rounded-2xl shadow-sm transition-colors">新しい目標を追加</button>
+                                <button onClick={openNewGoalModal} className="w-full text-sm text-white bg-brand-600 hover:bg-brand-700 px-4 py-4 rounded-2xl shadow-sm transition-colors">新しい目標を追加</button>
 
                                 {/* K-1/K-2/L-1: 統合グラフ（ホバー/タップでツールチップ→編集は2段階）。履歴表は廃止 */}
                                 {goalChartData.length > 0 && (
@@ -924,7 +924,7 @@ function GoalHistoryCharts({ data, onEditRequest }: { data: any[], onEditRequest
                             </p>
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
-                            <button onClick={() => onEditRequest(selected.date)} className="text-xs text-blue-600 bg-blue-50 px-3 py-2 rounded-full hover:bg-blue-100">このプランを編集</button>
+                            <button onClick={() => onEditRequest(selected.date)} className="text-xs text-brand-600 bg-brand-50 px-3 py-2 rounded-full hover:bg-brand-100">このプランを編集</button>
                             <button onClick={() => setSelected(null)} className="text-xs text-gray-400 hover:text-gray-600 p-2">×</button>
                         </div>
                     </div>

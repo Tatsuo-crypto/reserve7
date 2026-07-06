@@ -137,7 +137,7 @@ function NavigationContent() {
               </Link>
               <button 
                 onClick={handleLogout}
-                className="w-full flex items-center gap-3 p-5 hover:bg-rose-50 rounded-2xl transition-colors text-rose-600 border-t border-gray-50"
+                className="w-full flex items-center gap-3 p-5 hover:bg-state-danger-50 rounded-2xl transition-colors text-state-danger-600 border-t border-gray-50"
               >
                 <span className="text-base font-normal">ログアウト</span>
               </button>

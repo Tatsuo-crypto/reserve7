@@ -103,19 +103,19 @@ function LessonCard({ lesson, onJoin }: { lesson: OnlineLesson; onJoin: (url: st
     return (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             {/* Card header */}
-            <div className={`p-5 ${status.isOngoing ? 'bg-gradient-to-r from-blue-500 to-indigo-600' : 'bg-gradient-to-r from-gray-100 to-gray-50'}`}>
+            <div className={`p-5 ${status.isOngoing ? 'bg-gradient-to-r from-brand-500 to-brand-600' : 'bg-gradient-to-r from-gray-100 to-gray-50'}`}>
                 <div className="flex items-start justify-between">
                     <div className="flex-1">
                         <div className="flex items-center space-x-2">
                             <h3 className={`font-normal text-lg ${status.isOngoing ? 'text-white' : 'text-gray-800'}`}>
                                 {lesson.title}
                             </h3>
-                            <span className="text-xs px-2 py-0.5 rounded-full font-normal bg-blue-100 text-blue-700">
+                            <span className="text-xs px-2 py-0.5 rounded-full font-normal bg-brand-100 text-brand-700">
                                 {lesson.difficulty || '初心者'}
                             </span>
                         </div>
                         {schedule && (
-                            <p className={`text-sm mt-1 ${status.isOngoing ? 'text-blue-100' : 'text-gray-500'}`}>
+                            <p className={`text-sm mt-1 ${status.isOngoing ? 'text-brand-100' : 'text-gray-500'}`}>
                                 📅 {schedule}
                             </p>
                         )}
@@ -148,7 +148,7 @@ function LessonCard({ lesson, onJoin }: { lesson: OnlineLesson; onJoin: (url: st
                         onClick={() => onJoin(lesson.meet_url)}
                         disabled={!status.canJoin}
                         className={`flex items-center space-x-2 px-5 py-2.5 rounded-xl font-normal text-sm transition-all ${status.canJoin
-                            ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-md hover:shadow-lg transform hover:scale-105 active:scale-95'
+                            ? 'bg-brand-600 text-white hover:bg-brand-700 shadow-md hover:shadow-lg transform hover:scale-105 active:scale-95'
                             : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                             }`}
                     >
@@ -218,17 +218,17 @@ export default function OnlineLessonPage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+            <div className="min-h-screen bg-gradient-to-br from-brand-50 to-brand-100 flex items-center justify-center">
                 <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto" />
-                    <p className="mt-4 text-blue-700 text-sm">読み込み中...</p>
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600 mx-auto" />
+                    <p className="mt-4 text-brand-700 text-sm">読み込み中...</p>
                 </div>
             </div>
         )
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+        <div className="min-h-screen bg-gradient-to-br from-brand-50 via-brand-50 to-purple-50">
             {/* Header */}
             <div className="bg-white bg-opacity-80 backdrop-blur-sm border-b border-white border-opacity-50 sticky top-0 z-10">
                 <div className="max-w-lg mx-auto px-4 py-4 flex items-center">
@@ -242,25 +242,25 @@ export default function OnlineLessonPage() {
                     </button>
                     <div>
                         <h1 className="text-lg font-normal text-gray-900">オンラインレッスン</h1>
-                        <p className="text-xs text-blue-600 font-normal">開始5分前から参加できます</p>
+                        <p className="text-xs text-brand-600 font-normal">開始5分前から参加できます</p>
                     </div>
                 </div>
             </div>
 
             {/* iOS App Banner */}
             {isIOS && showIOSBanner && (
-                <div className="bg-blue-600 text-white">
+                <div className="bg-brand-600 text-white">
                     <div className="max-w-lg mx-auto px-4 py-3">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center space-x-3">
                                 <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center flex-shrink-0">
-                                    <svg className="w-6 h-6 text-blue-600" viewBox="0 0 24 24" fill="currentColor">
+                                    <svg className="w-6 h-6 text-brand-600" viewBox="0 0 24 24" fill="currentColor">
                                         <path d="M15 10l4.553-2.069A1 1 0 0121 8.845v6.309a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                                     </svg>
                                 </div>
                                 <div>
                                     <p className="text-sm font-normal">アプリのダウンロードが必要です</p>
-                                    <p className="text-xs text-blue-100">iPhoneではGoogle Meetアプリから参加します</p>
+                                    <p className="text-xs text-brand-100">iPhoneではGoogle Meetアプリから参加します</p>
                                 </div>
                             </div>
                             <div className="flex items-center space-x-2">
@@ -268,13 +268,13 @@ export default function OnlineLessonPage() {
                                     href="https://apps.apple.com/jp/app/google-meet/id1270665395"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="bg-white text-blue-600 text-xs font-normal px-3 py-1.5 rounded-lg whitespace-nowrap"
+                                    className="bg-white text-brand-600 text-xs font-normal px-3 py-1.5 rounded-lg whitespace-nowrap"
                                 >
                                     App Store
                                 </a>
                                 <button
                                     onClick={() => setShowIOSBanner(false)}
-                                    className="text-blue-200 hover:text-white ml-1"
+                                    className="text-brand-200 hover:text-white ml-1"
                                     aria-label="閉じる"
                                 >
                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -298,15 +298,15 @@ export default function OnlineLessonPage() {
                         <p className="text-gray-700 font-normal">{error}</p>
                         <button
                             onClick={fetchLessons}
-                            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm"
+                            className="mt-4 px-4 py-2 bg-brand-600 text-white rounded-lg text-sm"
                         >
                             再試行
                         </button>
                     </div>
                 ) : lessons.length === 0 ? (
                     <div className="text-center py-16">
-                        <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                            <svg className="w-12 h-12 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div className="w-24 h-24 bg-brand-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <svg className="w-12 h-12 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.069A1 1 0 0121 8.845v6.309a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                             </svg>
                         </div>
@@ -325,17 +325,17 @@ export default function OnlineLessonPage() {
                             <div className="space-y-3">
                                 {(isIOS ? [
                                     { step: '1', text: 'App StoreからGoogle Meetアプリをダウンロードしておいてください' },
-                                    { step: '2', text: '開始時間になると「参加する」ボタンが青くなります' },
+                                    { step: '2', text: '開始時間になると「参加する」ボタンの色が変わります' },
                                     { step: '3', text: 'ボタンをタップするとGoogle Meetアプリが開きます' },
                                     { step: '4', text: 'カメラとマイクを確認して「参加」を押してください' },
                                 ] : [
-                                    { step: '1', text: '開始時間になると「参加する」ボタンが青くなります' },
+                                    { step: '1', text: '開始時間になると「参加する」ボタンの色が変わります' },
                                     { step: '2', text: 'ボタンをタップするとGoogle Meetが開きます' },
                                     { step: '3', text: 'カメラとマイクを確認して「参加」を押してください' },
                                 ]).map(item => (
                                     <div key={item.step} className="flex items-start space-x-3">
-                                        <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                                            <span className="text-blue-600 font-normal text-xs">{item.step}</span>
+                                        <div className="w-6 h-6 rounded-full bg-brand-100 flex items-center justify-center flex-shrink-0">
+                                            <span className="text-brand-600 font-normal text-xs">{item.step}</span>
                                         </div>
                                         <p className="text-gray-600 text-sm leading-relaxed pt-0.5">{item.text}</p>
                                     </div>
@@ -345,7 +345,7 @@ export default function OnlineLessonPage() {
                                         href="https://apps.apple.com/jp/app/google-meet/id1270665395"
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="mt-2 flex items-center justify-center w-full py-3 bg-blue-600 text-white rounded-xl font-normal text-sm space-x-2 hover:bg-blue-700 transition-colors"
+                                        className="mt-2 flex items-center justify-center w-full py-3 bg-brand-600 text-white rounded-xl font-normal text-sm space-x-2 hover:bg-brand-700 transition-colors"
                                     >
                                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />

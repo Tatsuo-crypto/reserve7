@@ -189,7 +189,7 @@ export default function PushNotificationPrompt({ token }: PushNotificationPrompt
             type="button"
             onClick={enablePush}
             disabled={loading || permission === 'denied'}
-            className="shrink-0 rounded-lg bg-blue-600 px-3 py-2 text-xs text-white disabled:opacity-50"
+            className="shrink-0 rounded-lg bg-brand-600 px-3 py-2 text-xs text-white disabled:opacity-50"
           >
             許可
           </button>

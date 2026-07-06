@@ -697,7 +697,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
       {isNavigating && (
         <div className="fixed inset-0 bg-gray-900 bg-opacity-50 z-[100] flex items-center justify-center backdrop-blur-sm">
           <div className="bg-white p-6 rounded-xl shadow-2xl flex flex-col items-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600 mb-4"></div>
             <p className="text-gray-800 font-normal">予約画面へ移動中...</p>
             <p className="text-gray-500 text-xs mt-2">少々お待ちください</p>
           </div>
@@ -717,7 +717,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
                     type="text"
                     value={editFormData.title}
                     onChange={(e) => setEditFormData(prev => ({ ...prev, title: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500"
                     required
                   />
                 </div>
@@ -726,7 +726,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
                   <select
                     value={editFormData.trainerId || ''}
                     onChange={(e) => setEditFormData(prev => ({ ...prev, trainerId: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500"
                   >
                     <option value="">指定なし（フリー）</option>
                     {trainers.map(tr => (
@@ -740,7 +740,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
                     type="datetime-local"
                     value={editFormData.startTime}
                     onChange={handleStartTimeChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500"
                     required
                   />
                 </div>
@@ -750,7 +750,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
                     type="datetime-local"
                     value={editFormData.endTime}
                     onChange={(e) => setEditFormData(prev => ({ ...prev, endTime: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500"
                     required
                   />
                 </div>
@@ -760,7 +760,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
                     value={editFormData.notes}
                     onChange={(e) => setEditFormData(prev => ({ ...prev, notes: e.target.value }))}
                     rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500"
                   />
                 </div>
                 <div className="flex items-center justify-between pt-4">
@@ -783,7 +783,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
                     </button>
                     <button
                       type="submit"
-                      className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                      className="px-4 py-2 bg-brand-600 text-white rounded-md hover:bg-brand-700 transition-colors"
                     >
                       更新
                     </button>

@@ -166,9 +166,9 @@ export default function TeamShiftCalendar({
           時間
         </div>
         {weekDays.map(day => (
-          <div key={day.toString()} className={`p-2 text-center border-r border-gray-200 last:border-r-0 ${isSameDay(day, new Date()) ? 'bg-blue-50' : ''}`}>
+          <div key={day.toString()} className={`p-2 text-center border-r border-gray-200 last:border-r-0 ${isSameDay(day, new Date()) ? 'bg-brand-50' : ''}`}>
             <div className="text-xs font-normal text-gray-500">{format(day, 'E', { locale: ja })}</div>
-            <div className={`text-sm font-normal ${isSameDay(day, new Date()) ? 'text-blue-600' : 'text-gray-900'}`}>
+            <div className={`text-sm font-normal ${isSameDay(day, new Date()) ? 'text-brand-600' : 'text-gray-900'}`}>
               {format(day, 'M/d')}
             </div>
           </div>
@@ -324,7 +324,7 @@ export default function TeamShiftCalendar({
 
       {loading && (
         <div className="absolute inset-0 bg-white bg-opacity-50 flex items-center justify-center z-50">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"></div>
         </div>
       )}
 
@@ -459,7 +459,7 @@ function ShiftCreateModal({ trainers, date, initialHour, isOpen, onClose, onSave
           </button>
           <button 
             onClick={handleSave}
-            className="px-3 py-2 bg-indigo-600 text-white text-sm rounded hover:bg-indigo-700"
+            className="px-3 py-2 bg-brand-600 text-white text-sm rounded hover:bg-brand-700"
             disabled={loading}
           >
             保存
@@ -577,7 +577,7 @@ function ShiftEditModal({ shift, trainerName, isOpen, onClose, onSave, onDelete 
             </button>
             <button 
               onClick={handleSave}
-              className="px-3 py-2 bg-indigo-600 text-white text-sm rounded hover:bg-indigo-700"
+              className="px-3 py-2 bg-brand-600 text-white text-sm rounded hover:bg-brand-700"
               disabled={loading}
             >
               保存

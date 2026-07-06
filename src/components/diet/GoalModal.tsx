@@ -84,7 +84,7 @@ export default function GoalModal({ userId, token, onClose, onSave }: GoalModalP
                 <div className="flex-1 overflow-y-auto p-6 space-y-8">
                     {/* New Goal Form */}
                     <section>
-                        <h3 className="text-xs font-normal text-blue-600 uppercase tracking-widest mb-4">新しい目標を設定</h3>
+                        <h3 className="text-xs font-normal text-brand-600 uppercase tracking-widest mb-4">新しい目標を設定</h3>
                         <div className="space-y-4">
                             <div>
                                 <label className="block text-xs font-normal text-gray-400 mb-1">開始日</label>
@@ -117,7 +117,7 @@ export default function GoalModal({ userId, token, onClose, onSave }: GoalModalP
                             <button
                                 onClick={handleSave}
                                 disabled={saving}
-                                className="w-full bg-blue-600 text-white py-4 rounded-xl font-normal shadow-lg shadow-blue-200 active:scale-95 transition-all mt-4"
+                                className="w-full bg-brand-600 text-white py-4 rounded-xl font-normal shadow-lg shadow-brand-200 active:scale-95 transition-all mt-4"
                             >
                                 {saving ? '保存中...' : '目標を更新する'}
                             </button>

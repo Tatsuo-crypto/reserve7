@@ -332,7 +332,7 @@ export default function ReservationsPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600 mx-auto"></div>
           <p className="mt-4 text-gray-600">読み込み中...</p>
         </div>
       </div>
@@ -369,7 +369,7 @@ export default function ReservationsPage() {
             {isAdmin && (
               <Link
                 href="/admin/reservations/new"
-                className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+                className="bg-brand-600 text-white px-4 py-2 rounded-md hover:bg-brand-700 transition-colors"
               >
                 新規予約作成
               </Link>
@@ -411,7 +411,7 @@ export default function ReservationsPage() {
             <div className="px-4 py-5 sm:p-6">
               <div className="overflow-x-auto">
                 <table className="min-w-max divide-y divide-gray-200">
-                  <thead className="bg-gradient-to-r from-blue-50 to-indigo-50">
+                  <thead className="bg-gradient-to-r from-brand-50 to-brand-50">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-normal text-gray-500 uppercase tracking-wider min-w-[120px] border-r border-gray-100">
                         日付
@@ -439,7 +439,7 @@ export default function ReservationsPage() {
                     {reservations && reservations.map((reservation) => (
                       <tr key={reservation.id} className={getRowClassName(reservation)}>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-normal min-w-[120px] border-r border-gray-100">
-                          <div className="bg-blue-50 text-blue-800 px-2 py-1 rounded-md text-center">
+                          <div className="bg-brand-50 text-brand-800 px-2 py-1 rounded-md text-center">
                             {formatDate(reservation.startTime)}
                           </div>
                         </td>
@@ -495,7 +495,7 @@ export default function ReservationsPage() {
                                   e.stopPropagation()
                                   handleEdit(reservation)
                                 }}
-                                className="bg-blue-100 text-blue-600 hover:bg-blue-200 px-3 py-1 rounded-md transition-colors"
+                                className="bg-brand-100 text-brand-600 hover:bg-brand-200 px-3 py-1 rounded-md transition-colors"
                               >
                                 変更
                               </button>
@@ -543,7 +543,7 @@ export default function ReservationsPage() {
                       ...prev,
                       title: e.target.value
                     }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500"
                     placeholder="予約タイトルを入力してください"
                     required
                   />
@@ -556,7 +556,7 @@ export default function ReservationsPage() {
                     type="datetime-local"
                     value={editFormData.startTime}
                     onChange={handleStartTimeChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500"
                     required
                   />
                 </div>
@@ -571,7 +571,7 @@ export default function ReservationsPage() {
                       ...prev,
                       endTime: e.target.value
                     }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500"
                     required
                   />
                 </div>
@@ -586,7 +586,7 @@ export default function ReservationsPage() {
                       notes: e.target.value
                     }))}
                     rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500"
                     placeholder="メモを入力してください（任意）"
                   />
                 </div>
@@ -603,7 +603,7 @@ export default function ReservationsPage() {
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                    className="px-4 py-2 bg-brand-600 text-white rounded-md hover:bg-brand-700 transition-colors"
                   >
                     更新
                   </button>

@@ -16,7 +16,7 @@ import AdminHeader from '@/app/components/AdminHeader'
 function OtherSubCard({ href, label, subLabel, color, icon }: { href: string, label: string, subLabel: string, color: string, icon: React.ReactNode }) {
   const colorMap: any = {
     emerald: 'bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-100',
-    indigo: 'bg-indigo-50 text-indigo-600 border-indigo-100 hover:bg-indigo-100',
+    indigo: 'bg-brand-50 text-brand-600 border-brand-100 hover:bg-brand-100',
     orange: 'bg-orange-50 text-orange-600 border-orange-100 hover:bg-orange-100',
   };
   return (
@@ -84,7 +84,7 @@ const AdminDashboard = () => {
               <div className="space-y-3">
                 {dietLoading ? (
                   <div className="py-10 text-center flex flex-col items-center gap-3">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-rose-500"></div>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500"></div>
                     <span className="text-xs font-normal text-gray-400">読み込み中...</span>
                   </div>
                 ) : dietMembers.length === 0 ? (

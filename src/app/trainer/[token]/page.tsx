@@ -56,7 +56,7 @@ export default function TrainerDashboardPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600 mx-auto"></div>
           <p className="mt-4 text-gray-600">読み込み中...</p>
         </div>
       </div>
@@ -90,7 +90,7 @@ export default function TrainerDashboardPage() {
             {viewMode === 'timeline' && (
               <button
                 onClick={handleBackToMonth}
-                className="w-10 h-10 flex items-center justify-center text-blue-500 bg-white rounded-full shadow-sm border border-gray-100 transition-all active:scale-90"
+                className="w-10 h-10 flex items-center justify-center text-brand-500 bg-white rounded-full shadow-sm border border-gray-100 transition-all active:scale-90"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
@@ -112,7 +112,7 @@ export default function TrainerDashboardPage() {
               <span className="text-gray-700 text-[13px] font-normal truncate max-w-[100px]">
                 {trainer.name}
               </span>
-              <div className="ml-1 px-2 py-0.5 rounded-full text-[10px] font-normal whitespace-nowrap bg-blue-500 text-white">
+              <div className="ml-1 px-2 py-0.5 rounded-full text-[10px] font-normal whitespace-nowrap bg-brand-500 text-white">
                 トレーナー
               </div>
             </div>
@@ -130,7 +130,7 @@ export default function TrainerDashboardPage() {
                   href={`/trainer/${token}/shifts`}
                   className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-full text-sm font-normal text-gray-600 hover:bg-gray-50 transition-all shadow-sm active:scale-95"
                 >
-                  <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   シフト管理
