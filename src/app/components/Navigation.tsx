@@ -78,7 +78,7 @@ function NavigationContent() {
           {isSubPage ? (
             <button
               onClick={handleBack}
-              className="w-10 h-10 flex items-center justify-center text-blue-500 bg-white rounded-full shadow-sm border border-gray-100 transition-all active:scale-90 hover:bg-gray-50"
+              className="w-10 h-10 flex items-center justify-center text-brand-500 bg-white rounded-full shadow-sm border border-gray-100 transition-all active:scale-90 hover:bg-gray-50"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
@@ -116,7 +116,7 @@ function NavigationContent() {
                  {formatName(session.user.name, session.user.role)}
                </span>
                <div className={`ml-1 px-2 py-0.5 rounded-full text-[10px] font-normal whitespace-nowrap ${
-                 session.user.role === 'TRAINER' ? 'bg-blue-500 text-white' : 'bg-gray-500 text-white'
+                 session.user.role === 'TRAINER' ? 'bg-brand-500 text-white' : 'bg-gray-500 text-white'
                }`}>
                  {session.user.role === 'TRAINER' ? 'トレーナー' : '会員'}
                </div>

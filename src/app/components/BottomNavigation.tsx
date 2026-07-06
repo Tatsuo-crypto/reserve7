@@ -70,9 +70,9 @@ const BottomNavigationContent = () => {
               <div
                 className={`flex items-center justify-center transition-all duration-300 ${
                   item.isCenter
-                    ? 'w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg -translate-y-4 border-4 border-white mb-1'
+                    ? 'w-14 h-14 bg-brand-600 text-white rounded-full shadow-lg -translate-y-4 border-4 border-white mb-1'
                     : isActive
-                    ? 'w-10 h-10 text-blue-600'
+                    ? 'w-10 h-10 text-brand-600'
                     : 'w-10 h-10 text-gray-400'
                 }`}
               >
@@ -82,7 +82,7 @@ const BottomNavigationContent = () => {
               <span className={`text-[10px] font-normal transition-colors ${
                 item.isCenter ? 'absolute bottom-1' : '-mt-1'
               } ${
-                isActive ? 'text-blue-600' : 'text-gray-400'
+                isActive ? 'text-brand-600' : 'text-gray-400'
               }`}>
                 {item.label}
               </span>

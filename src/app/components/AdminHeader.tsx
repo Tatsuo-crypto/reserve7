@@ -23,7 +23,7 @@ export default function AdminHeader({ title, subTitle, onBack, rightElement, sho
           {showBack && (
             <button
               onClick={handleBack}
-              className="w-10 h-10 flex items-center justify-center text-blue-500 bg-white rounded-full shadow-sm border border-gray-100 transition-all active:scale-90 hover:bg-gray-50"
+              className="w-10 h-10 flex items-center justify-center text-brand-500 bg-white rounded-full shadow-sm border border-gray-100 transition-all active:scale-90 hover:bg-gray-50"
               aria-label="戻る"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
