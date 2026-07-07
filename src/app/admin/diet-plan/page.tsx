@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, Suspense, useCallback, useMemo } from 'react'
+import { useState, useEffect, Suspense, useCallback, useMemo, useRef } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import type { Member } from '@/types'
@@ -111,6 +111,9 @@ function DietPlanPageContent() {
         weeklyTrainingHours: '3',
         neat: NEAT_LEVELS[0].value,
     })
+    // O-7: スライダー化に伴い、体重が取得できた時点で目標体重の初期値を設定する
+    // (数値入力と違い空欄のままだとスライダーの初期位置を描画できないため)
+    const aragonWeightInitialized = useRef(false)
     const [goalModal, setGoalModal] = useState<{
         mode: 'new' | 'edit'
         recordId?: string
@@ -406,6 +409,41 @@ function DietPlanPageContent() {
         })
     }, [latestWeight, aragonInput])
 
+    // O-7: 目標体重スライダーの初期位置。体重記録が取得できた最初の1回だけ、
+    // 現在体重から2kg減を初期値にする（リアルタイム反映のスライダーは
+    // 数値入力と違い空欄のままだと表示位置を決められないため）
+    useEffect(() => {
+        if (latestWeight && !aragonWeightInitialized.current) {
+            aragonWeightInitialized.current = true
+            setAragonInput(prev => prev.targetWeight
+                ? prev
+                : { ...prev, targetWeight: String(Math.round(Math.max(30, latestWeight - 2) * 2) / 2) }
+            )
+        }
+    }, [latestWeight])
+
+    // O-7: 目標期間スライダー下の推奨帯ゲージ用の計算。
+    // 安全上限(体重の1%/週)に対して現在のペースがどこにあるかを可視化する。
+    const aragonPeriodSliderMin = 1
+    const aragonPeriodSliderMax = 52
+    const aragonPeriodWeeksNum = parseFloat(aragonInput.periodWeeks) || aragonPeriodSliderMin
+    const aragonParsedTargetWeight = parseFloat(aragonInput.targetWeight)
+    const aragonMaxSafeWeeklyLossKg = latestWeight ? Math.round(latestWeight * 0.01 * 100) / 100 : 0
+    const aragonWeightLossNeeded = (latestWeight && !Number.isNaN(aragonParsedTargetWeight))
+        ? latestWeight - aragonParsedTargetWeight
+        : 0
+    const aragonSafeMinPeriodWeeks = (aragonWeightLossNeeded > 0 && aragonMaxSafeWeeklyLossKg > 0)
+        ? Math.ceil(aragonWeightLossNeeded / aragonMaxSafeWeeklyLossKg)
+        : null
+    const aragonSafeBandPct = aragonSafeMinPeriodWeeks !== null
+        ? Math.min(100, Math.max(0, ((aragonSafeMinPeriodWeeks - aragonPeriodSliderMin) / (aragonPeriodSliderMax - aragonPeriodSliderMin)) * 100))
+        : 0
+    const aragonSelectedPeriodPct = Math.min(100, Math.max(0, ((aragonPeriodWeeksNum - aragonPeriodSliderMin) / (aragonPeriodSliderMax - aragonPeriodSliderMin)) * 100))
+    const aragonRequestedPaceKg = (latestWeight && !Number.isNaN(aragonParsedTargetWeight) && aragonPeriodWeeksNum > 0)
+        ? Math.round(((latestWeight - aragonParsedTargetWeight) / aragonPeriodWeeksNum) * 100) / 100
+        : null
+    const aragonPaceExceedsSafe = aragonRequestedPaceKg !== null && aragonRequestedPaceKg > aragonMaxSafeWeeklyLossKg
+
     const weeklySummary = useMemo(() => {
         const { start, end, prevStart, prevEnd } = getWeekRange(summaryWeekOffset)
         const weekIntake = filterByRange(intakeHistory, start, end)
@@ -695,19 +733,67 @@ function DietPlanPageContent() {
                                         </div>
                                     ) : (
                                         <>
-                                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                            <div className="grid grid-cols-2 gap-3">
                                                 <DietProfileStat label="現在の体重" value={`${latestWeight}kg`} />
-                                                <div className="space-y-1">
-                                                    <label className="text-[10px] font-normal text-gray-400 uppercase tracking-widest pl-1">最終目標体重(kg)</label>
-                                                    <input type="number" value={aragonInput.targetWeight} onChange={(e) => setAragonInput(prev => ({ ...prev, targetWeight: e.target.value }))} placeholder="例: 65" className="w-full bg-gray-50 border-none rounded-xl px-3 py-3 text-sm font-normal focus:ring-2 focus:ring-brand-500" />
-                                                </div>
-                                                <div className="space-y-1">
-                                                    <label className="text-[10px] font-normal text-gray-400 uppercase tracking-widest pl-1">目標期間(週間)</label>
-                                                    <input type="number" value={aragonInput.periodWeeks} onChange={(e) => setAragonInput(prev => ({ ...prev, periodWeeks: e.target.value }))} className="w-full bg-gray-50 border-none rounded-xl px-3 py-3 text-sm font-normal focus:ring-2 focus:ring-brand-500" />
-                                                </div>
                                                 <div className="space-y-1">
                                                     <label className="text-[10px] font-normal text-gray-400 uppercase tracking-widest pl-1">週のトレーニング時間</label>
                                                     <input type="number" value={aragonInput.weeklyTrainingHours} onChange={(e) => setAragonInput(prev => ({ ...prev, weeklyTrainingHours: e.target.value }))} className="w-full bg-gray-50 border-none rounded-xl px-3 py-3 text-sm font-normal focus:ring-2 focus:ring-brand-500" />
+                                                </div>
+                                            </div>
+
+                                            {/* O-7: 数値入力→スライダー化。既存の計算ロジック(dietGoalCalc.ts)は無変更 */}
+                                            <div className="space-y-2">
+                                                <div className="flex items-center justify-between px-1">
+                                                    <label className="text-[10px] font-normal text-gray-400 uppercase tracking-widest">最終目標体重</label>
+                                                    <span className="text-sm font-semibold text-gray-800 tabular-nums">
+                                                        {aragonInput.targetWeight || '--'}<span className="text-xs font-normal text-gray-400 ml-0.5">kg</span>
+                                                    </span>
+                                                </div>
+                                                <input
+                                                    type="range"
+                                                    min={Math.max(30, Math.floor(latestWeight - 30))}
+                                                    max={Math.ceil(latestWeight + 10)}
+                                                    step={0.5}
+                                                    value={aragonInput.targetWeight || latestWeight}
+                                                    onChange={(e) => setAragonInput(prev => ({ ...prev, targetWeight: e.target.value }))}
+                                                    className="w-full h-2 accent-brand-600 cursor-pointer"
+                                                />
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <div className="flex items-center justify-between px-1">
+                                                    <label className="text-[10px] font-normal text-gray-400 uppercase tracking-widest">目標期間</label>
+                                                    <span className="text-sm font-semibold text-gray-800 tabular-nums">
+                                                        {aragonInput.periodWeeks}<span className="text-xs font-normal text-gray-400 ml-0.5">週間</span>
+                                                    </span>
+                                                </div>
+                                                <input
+                                                    type="range"
+                                                    min={aragonPeriodSliderMin}
+                                                    max={aragonPeriodSliderMax}
+                                                    step={1}
+                                                    value={aragonInput.periodWeeks}
+                                                    onChange={(e) => setAragonInput(prev => ({ ...prev, periodWeeks: e.target.value }))}
+                                                    className="w-full h-2 accent-brand-600 cursor-pointer"
+                                                />
+                                                {/* O-6: 推奨帯ゲージ。安全上限(体重の1%/週)以内かをペース選択と同時に可視化する */}
+                                                <div className="relative h-1.5 rounded-full bg-gray-100 overflow-hidden">
+                                                    {aragonSafeMinPeriodWeeks !== null && (
+                                                        <>
+                                                            <div className="absolute inset-y-0 left-0 bg-state-danger-100" style={{ width: `${aragonSafeBandPct}%` }} />
+                                                            <div className="absolute inset-y-0 bg-state-success-100" style={{ left: `${aragonSafeBandPct}%`, right: 0 }} />
+                                                        </>
+                                                    )}
+                                                    <div
+                                                        className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-2.5 h-2.5 rounded-full bg-white border-2 border-brand-600 shadow-sm"
+                                                        style={{ left: `${aragonSelectedPeriodPct}%` }}
+                                                    />
+                                                </div>
+                                                <div className="flex items-center justify-between px-1">
+                                                    <span className={`text-[10px] ${aragonPaceExceedsSafe ? 'text-state-danger-600' : 'text-gray-400'}`}>
+                                                        {aragonRequestedPaceKg === null ? '' : aragonRequestedPaceKg > 0 ? `週${aragonRequestedPaceKg}kg減` : aragonRequestedPaceKg < 0 ? `週${Math.abs(aragonRequestedPaceKg)}kg増` : '変化なし'}
+                                                    </span>
+                                                    <span className="text-[10px] text-gray-400">安全上限 週{aragonMaxSafeWeeklyLossKg}kg</span>
                                                 </div>
                                             </div>
 
