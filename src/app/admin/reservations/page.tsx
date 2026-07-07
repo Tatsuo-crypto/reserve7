@@ -481,11 +481,15 @@ function AdminReservationsContent() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm min-w-[120px] border-r border-border-subtle">
                         {reservation.client?.id === 'blocked' ? (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-normal bg-red-500/15 text-red-300">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-normal bg-surface-overlay text-text-muted">
                             予約不可
                           </span>
                         ) : (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-normal bg-green-500/15 text-green-300">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-normal ${
+                            monthlyUsage[reservation.client.id]?.maxCount !== undefined && Number(getMonthlyCount(reservation, reservations)) >= monthlyUsage[reservation.client.id].maxCount
+                              ? 'bg-state-danger-500/15 text-state-danger-300'
+                              : 'bg-surface-overlay text-text-secondary'
+                          }`}>
                             {`${getMonthlyCount(reservation, reservations)}/${monthlyUsage[reservation.client.id]?.maxCount ?? '-'}回（${new Date(reservation.startTime || reservation.start_time).getMonth() + 1}月）`}
                           </span>
                         )}

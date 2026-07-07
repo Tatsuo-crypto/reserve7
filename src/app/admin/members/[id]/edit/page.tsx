@@ -582,7 +582,7 @@ export default function EditMemberPage() {
                 <h3 className="text-lg font-normal text-text-primary mb-4">通知設定</h3>
                 <div className="space-y-4">
                   <SwitchCard name="onlineReminderEnabled" checked={formData.onlineReminderEnabled} onChange={handleChange} title="メール通知を送信する" description="予約確定・変更・リマインダーの自動通知メールを送信します。" />
-                  <SwitchCard name="pushNotificationEnabled" checked={formData.pushNotificationEnabled} onChange={handleChange} title="プッシュ通知を送信する" description="お客様がアプリ通知を許可している場合にスマホへ通知します。" color="emerald" />
+                  <SwitchCard name="pushNotificationEnabled" checked={formData.pushNotificationEnabled} onChange={handleChange} title="プッシュ通知を送信する" description="お客様がアプリ通知を許可している場合にスマホへ通知します。" color="brand" />
                 </div>
               </div>
 
@@ -788,8 +788,8 @@ function CheckGroup({ label, name, values, options, onToggle, required }: { labe
   )
 }
 
-function SwitchCard({ name, checked, onChange, title, description, color = 'blue' }: { name: string; checked: boolean; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void; title: string; description: string; color?: 'blue' | 'emerald' }) {
-  const colorClass = color === 'emerald' ? 'text-emerald-600 focus:ring-emerald-500 bg-emerald-50/50 border-emerald-100 hover:bg-emerald-50' : 'text-brand-600 focus:ring-brand-500 bg-brand-50/50 border-brand-100 hover:bg-brand-50'
+function SwitchCard({ name, checked, onChange, title, description, color = 'blue' }: { name: string; checked: boolean; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void; title: string; description: string; color?: 'blue' | 'brand' }) {
+  const colorClass = color === 'brand' ? 'text-brand-600 focus:ring-brand-500 bg-brand-50/50 border-brand-100 hover:bg-brand-50' : 'text-brand-600 focus:ring-brand-500 bg-brand-50/50 border-brand-100 hover:bg-brand-50'
   return (
     <label className={`flex items-center gap-4 p-4 border rounded-lg cursor-pointer ${colorClass}`}>
       <input
@@ -797,7 +797,7 @@ function SwitchCard({ name, checked, onChange, title, description, color = 'blue
         name={name}
         checked={checked}
         onChange={onChange}
-        className={`w-6 h-6 border-border-strong rounded ${color === 'emerald' ? 'text-emerald-600 focus:ring-emerald-500' : 'text-brand-600 focus:ring-brand-500'}`}
+        className={`w-6 h-6 border-border-strong rounded ${color === 'brand' ? 'text-brand-600 focus:ring-brand-500' : 'text-brand-600 focus:ring-brand-500'}`}
       />
       <span>
         <span className="block font-normal text-text-primary">{title}</span>

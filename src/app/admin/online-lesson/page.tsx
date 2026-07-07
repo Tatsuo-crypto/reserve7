@@ -233,7 +233,7 @@ export default function AdminOnlineLessonPage() {
 
                 {/* Global success */}
                 {success && (
-                    <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-xl text-sm text-green-700">
+                    <div className="mb-4 p-3 bg-state-success-500/15 border border-state-success-500/30 rounded-xl text-sm text-state-success-300">
                         ✓ {success}
                     </div>
                 )}

@@ -240,7 +240,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
         {/* ヘッダー */}
         <div className="sticky top-0 bg-surface-raised border-b border-border-strong px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Icon name="clipboardList" size={24} className="text-green-600" />
+            <Icon name="clipboardList" size={24} className="text-text-secondary" />
             <h2 className="text-xl font-normal text-text-primary">目標・記録管理</h2>
           </div>
           <button
@@ -634,7 +634,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                 ) : (
                   <div className="space-y-2">
                     {weightRecords.map((record) => (
-                      <div key={record.id} className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <div key={record.id} className="p-3 bg-surface-overlay border border-border-subtle rounded-lg">
                         {editingId === record.id ? (
                           <div className="space-y-2">
                             <input
@@ -675,7 +675,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                         ) : (
                           <div className="flex items-center justify-between">
                             <div>
-                              <div className="text-sm font-normal text-green-700">{new Date(record.recorded_date).toLocaleDateString('ja-JP')}</div>
+                              <div className="text-sm font-normal text-text-secondary">{new Date(record.recorded_date).toLocaleDateString('ja-JP')}</div>
                               <div className="text-sm text-text-primary">{record.weight_kg}kg {record.notes && `- ${record.notes}`}</div>
                             </div>
                             <div className="flex gap-2">

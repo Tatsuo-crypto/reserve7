@@ -312,7 +312,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
         <div className="space-y-6">
             {/* Toast Message */}
             {message && (
-                <div className={`fixed top-16 left-4 right-4 z-50 p-4 rounded-xl shadow-lg border text-sm font-normal flex items-center justify-between ${message.type === 'success' ? 'bg-green-50 border-green-200 text-green-700' : 'bg-red-50 border-red-200 text-red-700'
+                <div className={`fixed top-16 left-4 right-4 z-50 p-4 rounded-xl shadow-lg border text-sm font-normal flex items-center justify-between ${message.type === 'success' ? 'bg-state-success-500/15 border-state-success-500/30 text-state-success-300' : 'bg-state-danger-500/15 border-state-danger-500/30 text-state-danger-300'
                     }`}>
                     <span>{message.text}</span>
                     <button onClick={() => setMessage(null)}>×</button>
@@ -364,15 +364,19 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
             <div className="space-y-4">
                 {/* Meal Result Section - Show prominently if data exists */}
                 {ocrResult && (
-                    <div className={`bg-surface-raised rounded-2xl shadow-lg p-6 animate-slideUp border-2 ${isSaved ? 'border-emerald-100' : 'border-brand-500'}`}>
+                    <div className={`bg-surface-raised rounded-2xl shadow-lg p-6 animate-slideUp border-2 ${isSaved ? 'border-border-subtle' : 'border-brand-500'}`}>
                         <div className="flex items-center justify-between mb-4">
                             <h2 className="text-lg font-normal text-text-primary">
                                 {analyzing ? '解析中...' : isSaved ? '食事の記録' : '解析結果'}
                             </h2>
                             {!analyzing && (
                                 <div className="flex items-center gap-2">
-                                    <div className={`w-2 h-2 rounded-full ${isSaved ? 'bg-emerald-500' : 'bg-brand-500 animate-pulse'}`}></div>
-                                    <span className={`text-[10px] font-normal uppercase tracking-widest ${isSaved ? 'text-emerald-600' : 'text-brand-600'}`}>
+                                    {isSaved ? (
+                                        <Icon name="check" size={12} className="text-text-secondary" />
+                                    ) : (
+                                        <div className="w-2 h-2 rounded-full bg-brand-500 animate-pulse"></div>
+                                    )}
+                                    <span className={`text-[10px] font-normal uppercase tracking-widest ${isSaved ? 'text-text-secondary' : 'text-brand-600'}`}>
                                         {isSaved ? 'Saved' : 'Draft'}
                                     </span>
                                 </div>
@@ -390,8 +394,8 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                         )}
 
                         <div className="grid grid-cols-2 gap-4">
-                            <div className={`col-span-2 p-4 rounded-xl transition-colors ${isSaved ? 'bg-emerald-50/50' : 'bg-brand-50/50'}`}>
-                                <div className={`text-[10px] font-normal uppercase mb-2 tracking-widest text-center ${isSaved ? 'text-emerald-600' : 'text-brand-600'}`}>総エネルギー</div>
+                            <div className={`col-span-2 p-4 rounded-xl transition-colors ${isSaved ? 'bg-surface-overlay' : 'bg-brand-50/50'}`}>
+                                <div className={`text-[10px] font-normal uppercase mb-2 tracking-widest text-center ${isSaved ? 'text-text-secondary' : 'text-brand-600'}`}>総エネルギー</div>
                                 <div className="flex items-center justify-center space-x-3">
                                     <div className="text-3xl font-normal text-text-primary">{ocrResult.calories}</div>
                                     <div className="text-xl font-normal text-text-muted">/</div>
@@ -517,8 +521,8 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                             value={steps ?? '0'}
                             target={target?.step_target != null ? String(target.step_target) : undefined}
                             unit="歩"
-                            iconBg="bg-emerald-50"
-                            iconColor="text-emerald-500"
+                            iconBg="bg-cyan-50"
+                            iconColor="text-cyan-500"
                             step={500}
                             isDefault={!touchedFields.includes('steps')}
                             onChange={(v) => {
@@ -603,7 +607,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                                         onClick={() => {
                                             setHabits((prev: any) => ({ ...prev, [goal]: prev[goal] === 1 ? 0 : 1 }))
                                         }}
-                                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-normal transition-all ${habits[goal] === 1 ? 'bg-emerald-500 text-white shadow-md' : 'bg-surface-raised text-text-muted border border-border-subtle'}`}
+                                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-normal transition-all ${habits[goal] === 1 ? 'bg-state-success-500 text-white shadow-md' : 'bg-surface-raised text-text-muted border border-border-subtle'}`}
                                     >
                                         {habits[goal] === 1 ? (
                                             <>
@@ -628,9 +632,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                     <button
                         onClick={handleAllSave}
                         disabled={saving}
-                        className={`w-full py-4 rounded-2xl font-normal shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 text-lg ${
-                            isSaved && !saving ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-brand-600 text-white hover:bg-brand-700'
-                        }`}
+                        className="w-full py-4 rounded-2xl font-normal shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 text-lg bg-brand-600 text-white hover:bg-brand-700"
                     >
                         {saving ? (
                             <>

@@ -283,7 +283,7 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
                                   <span className="text-[8px] font-normal bg-brand-500/15 text-brand-300 px-1.5 py-0.5 rounded-full uppercase tracking-tighter">予定</span>
                                 )}
                                 {isCurrentMonth && (
-                                  <span className="text-[8px] font-normal bg-green-500/15 text-green-300 px-1.5 py-0.5 rounded-full uppercase tracking-tighter">今月</span>
+                                  <span className="text-[8px] font-normal bg-surface-overlay text-text-secondary px-1.5 py-0.5 rounded-full uppercase tracking-tighter">今月</span>
                                 )}
                               </div>
                             </div>

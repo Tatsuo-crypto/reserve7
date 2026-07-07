@@ -182,12 +182,12 @@ export default function ClientReservationsContent() {
                 <div className="text-xl font-normal text-text-primary">{user.name} 様</div>
               </div>
             </div>
-            <div className="flex items-center p-4 bg-green-50 rounded-lg border border-green-100">
-              <div className="flex items-center justify-center w-12 h-12 bg-green-100 rounded-full mr-4">
-                <Icon name="shieldCheck" size={24} className="text-green-600" />
+            <div className="flex items-center p-4 bg-surface-overlay rounded-lg border border-border-subtle">
+              <div className="flex items-center justify-center w-12 h-12 bg-surface-raised rounded-full mr-4">
+                <Icon name="shieldCheck" size={24} className="text-text-secondary" />
               </div>
               <div>
-                <div className="text-sm text-green-600 font-normal mb-1">プラン</div>
+                <div className="text-sm text-text-secondary font-normal mb-1">プラン</div>
                 <div className="text-lg font-normal text-text-primary">{user.plan}</div>
               </div>
             </div>
@@ -236,7 +236,7 @@ export default function ClientReservationsContent() {
                           )}
                         </div>
                         <div className="ml-4">
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-normal bg-green-500/15 text-green-300">
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-normal bg-surface-overlay text-text-secondary">
                             予約済み
                           </span>
                         </div>

@@ -205,7 +205,7 @@ export default function GoalsTab({ userId, token, isAdmin }: GoalsTabProps) {
                                         </p>
                                     </div>
                                     <div className="flex items-center gap-2 shrink-0">
-                                        <button onClick={() => updateStatus(goal, 'achieved')} className="text-xs text-emerald-700 bg-emerald-50 px-3 py-2 rounded-full hover:bg-emerald-100">達成にする</button>
+                                        <button onClick={() => updateStatus(goal, 'achieved')} className="text-xs text-state-success-300 bg-state-success-500/15 px-3 py-2 rounded-full hover:bg-state-success-500/25">達成にする</button>
                                         <button onClick={() => updateStatus(goal, 'missed')} className="text-xs text-text-muted hover:text-text-secondary px-2 py-2">未達成</button>
                                     </div>
                                 </div>

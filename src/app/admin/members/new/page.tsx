@@ -406,14 +406,14 @@ export default function NewMemberPage() {
                   <div className="text-xs text-text-secondary mt-1">チェックを外すと、この会員様宛のすべての自動通知メールが停止されます。</div>
                 </div>
               </label>
-              <label className="flex items-center gap-4 p-4 bg-emerald-50/50 border border-emerald-100 rounded-xl cursor-pointer hover:bg-emerald-50 transition-colors">
+              <label className="flex items-center gap-4 p-4 bg-brand-50/50 border border-brand-100 rounded-xl cursor-pointer hover:bg-brand-50 transition-colors">
                 <input
                   type="checkbox"
                   id="pushNotificationEnabled"
                   name="pushNotificationEnabled"
                   checked={formData.pushNotificationEnabled}
                   onChange={handleChange}
-                  className="w-6 h-6 text-emerald-600 border-border-strong rounded focus:ring-emerald-500"
+                  className="w-6 h-6 text-brand-600 border-border-strong rounded focus:ring-brand-500"
                 />
                 <div>
                   <div className="font-normal text-text-primary">プッシュ通知（アプリ通知）を送信する</div>

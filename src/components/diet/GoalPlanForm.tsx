@@ -113,7 +113,7 @@ export default function GoalPlanForm({
 
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 <AdminStatCard label="タンパク質" value={values.protein} unit="g" color="amber" onIncrement={() => handleGramChange('protein', 1)} onDecrement={() => handleGramChange('protein', -1)} />
-                <AdminStatCard label="脂質" value={values.fat} unit="g" color="emerald" onIncrement={() => handleGramChange('fat', 1)} onDecrement={() => handleGramChange('fat', -1)} />
+                <AdminStatCard label="脂質" value={values.fat} unit="g" color="purple" onIncrement={() => handleGramChange('fat', 1)} onDecrement={() => handleGramChange('fat', -1)} />
                 <AdminStatCard label="炭水化物" value={values.carbs} unit="g" color="blue" onIncrement={() => handleGramChange('carbs', 1)} onDecrement={() => handleGramChange('carbs', -1)} />
                 <AdminStatCard label="糖質" value={values.sugar} unit="g" color="purple" onIncrement={() => handleGramChange('sugar', 1)} onDecrement={() => handleGramChange('sugar', -1)} />
                 <AdminStatCard label="食物繊維" value={values.fiber} unit="g" color="teal" onIncrement={() => handleGramChange('fiber', 1)} onDecrement={() => handleGramChange('fiber', -1)} />
@@ -155,7 +155,6 @@ function AdminStatCard({ label, value, unit, color, onIncrement, onDecrement }: 
 }) {
     const colorMap: any = {
         amber: 'text-amber-500 bg-amber-50 border-amber-100',
-        emerald: 'text-emerald-500 bg-emerald-50 border-emerald-100',
         blue: 'text-blue-500 bg-blue-50 border-blue-100',
         purple: 'text-purple-500 bg-purple-50 border-purple-100',
         teal: 'text-teal-500 bg-teal-50 border-teal-100',

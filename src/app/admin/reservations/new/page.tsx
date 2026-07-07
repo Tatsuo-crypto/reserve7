@@ -647,12 +647,12 @@ function NewReservationContent() {
 
         {/* Success Message */}
         {success && (
-          <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
+          <div className="mb-6 bg-state-success-500/15 border border-state-success-500/30 rounded-lg p-4">
             <div className="flex items-center">
-              <Icon name="check" size={20} className="text-green-600 mr-2" />
-              <p className="text-green-800">{success}</p>
+              <Icon name="check" size={20} className="text-state-success-300 mr-2" />
+              <p className="text-state-success-300">{success}</p>
             </div>
-            <p className="text-green-700 text-sm mt-1">カレンダーに移動します...</p>
+            <p className="text-state-success-300 text-sm mt-1">カレンダーに移動します...</p>
           </div>
         )}
 
@@ -691,7 +691,7 @@ function NewReservationContent() {
                 </label>
 
                 <label className={`relative flex flex-col items-center justify-center p-4 border rounded-lg cursor-pointer transition-all ${formData.isTrial
-                  ? 'border-green-500 bg-green-50 ring-2 ring-green-500'
+                  ? 'border-brand-500 bg-brand-500/10 ring-2 ring-brand-500'
                   : 'border-border-strong hover:border-border-strong hover:bg-surface-base'
                   }`}>
                   <input
@@ -702,7 +702,7 @@ function NewReservationContent() {
                     onChange={() => setFormData(prev => ({ ...prev, isBlocked: false, isTrial: true, isGuest: false, isTraining: false, clientId: '' }))}
                     className="sr-only"
                   />
-                  <div className="w-8 h-8 mb-2 rounded-full bg-green-500/15 text-green-300 flex items-center justify-center">
+                  <div className="w-8 h-8 mb-2 rounded-full bg-blue-500/15 text-blue-300 flex items-center justify-center">
                     <Icon name="star" size={20} />
                   </div>
                   <span className="font-normal text-text-primary">体験</span>
@@ -727,7 +727,7 @@ function NewReservationContent() {
                 </label>
 
                 <label className={`relative flex flex-col items-center justify-center p-4 border rounded-lg cursor-pointer transition-all ${formData.isBlocked
-                  ? 'border-red-500 bg-red-50 ring-2 ring-red-500'
+                  ? 'border-brand-500 bg-brand-500/10 ring-2 ring-brand-500'
                   : 'border-border-strong hover:border-border-strong hover:bg-surface-base'
                   }`}>
                   <input
@@ -760,7 +760,7 @@ function NewReservationContent() {
                     }}
                     className="sr-only"
                   />
-                  <div className="w-8 h-8 mb-2 rounded-full bg-red-500/15 text-red-300 flex items-center justify-center">
+                  <div className="w-8 h-8 mb-2 rounded-full bg-surface-overlay text-text-muted flex items-center justify-center">
                     <Icon name="noSymbol" size={20} />
                   </div>
                   <span className="font-normal text-text-primary">予約不可</span>

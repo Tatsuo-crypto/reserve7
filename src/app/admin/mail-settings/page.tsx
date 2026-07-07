@@ -372,7 +372,7 @@ export default function AdminMailSettingsPage() {
                 <button
                   type="button"
                   onClick={() => setAllMembers(true)}
-                  className="px-4 py-2 text-xs rounded-xl bg-emerald-500/15 text-emerald-300 border border-emerald-500/20 hover:bg-emerald-500/25"
+                  className="px-4 py-2 text-xs rounded-xl bg-brand-500/15 text-brand-300 border border-brand-500/20 hover:bg-brand-500/25"
                 >
                   全員ON
                 </button>
@@ -433,14 +433,14 @@ export default function AdminMailSettingsPage() {
                                     type="checkbox"
                                     checked={member.pushEnabled}
                                     onChange={() => handleMemberToggle(member.id)}
-                                    className="w-5 h-5 text-emerald-600 border-border-strong rounded focus:ring-emerald-500"
+                                    className="w-5 h-5 text-brand-600 border-border-strong rounded focus:ring-brand-500"
                                     aria-label={`${member.fullName}のアプリ通知`}
                                   />
                                 </td>
                                 <td className="px-4 py-3 text-center">
                                   <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] ${
                                     receivable
-                                      ? 'bg-emerald-500/15 text-emerald-300'
+                                      ? 'bg-state-success-500/15 text-state-success-300'
                                       : member.pushEnabled
                                         ? 'bg-amber-500/15 text-amber-300'
                                         : 'bg-surface-overlay text-text-muted'

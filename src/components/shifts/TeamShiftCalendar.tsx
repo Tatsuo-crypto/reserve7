@@ -33,7 +33,7 @@ const generateTimeOptions = () => {
 // Color palette for trainers
 const TRAINER_COLORS = [
   { bg: 'bg-blue-200', border: 'border-blue-400', dot: 'bg-blue-500' },
-  { bg: 'bg-green-200', border: 'border-green-400', dot: 'bg-green-500' },
+  { bg: 'bg-cyan-200', border: 'border-cyan-400', dot: 'bg-cyan-500' },
   { bg: 'bg-orange-200', border: 'border-orange-400', dot: 'bg-orange-500' },
   { bg: 'bg-purple-200', border: 'border-purple-400', dot: 'bg-purple-500' },
   { bg: 'bg-pink-200', border: 'border-pink-400', dot: 'bg-pink-500' },

@@ -358,8 +358,8 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
                   : isTraining
                     ? 'bg-orange-500/15 text-orange-300 border border-orange-500/30' // Training = Orange
                     : event.type === 'reservation'
-                      ? 'bg-green-500/15 text-green-300 border border-green-500/30'  // Regular = Green
-                      : 'bg-red-500/15 text-red-300 border border-red-500/30'        // Blocked = Red
+                      ? 'bg-surface-overlay text-text-secondary border border-border-subtle'  // Regular = Neutral
+                      : 'bg-surface-overlay text-text-muted border border-border-subtle'       // Blocked = Muted neutral (no danger red)
 
               return (
                 <div
@@ -521,15 +521,15 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
         <div className="px-4 py-1">
           <div className="flex items-center justify-center space-x-6 text-sm">
             <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-green-100 border border-green-200 rounded"></div>
+              <div className="w-3 h-3 bg-surface-overlay border border-border-subtle rounded"></div>
               <span className="text-text-secondary">予約</span>
             </div>
             <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-red-100 border border-red-200 rounded"></div>
+              <div className="w-3 h-3 bg-surface-overlay border border-border-subtle rounded"></div>
               <span className="text-text-secondary">予約不可時間</span>
             </div>
             <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-purple-100 border border-purple-200 rounded"></div>
+              <div className="w-3 h-3 bg-purple-500/15 border border-purple-500/30 rounded"></div>
               <span className="text-text-secondary">ゲスト</span>
             </div>
           </div>

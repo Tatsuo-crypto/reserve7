@@ -224,7 +224,7 @@ export default function AnalyticsPage() {
                                 />
                                 <Tooltip formatter={(value: any) => `¥${Number(value).toLocaleString()}`} />
                                 <Legend />
-                                <Bar dataKey="amount" name="月会費売上" fill="#34d399" radius={[4, 4, 0, 0]} />
+                                <Bar dataKey="amount" name="月会費売上" fill="#f97316" radius={[4, 4, 0, 0]} />
                             </BarChart>
                         </ResponsiveContainer>
                     </div>

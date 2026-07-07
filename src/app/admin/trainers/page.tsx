@@ -308,7 +308,7 @@ export default function TrainersPage() {
             </select>
           </div>
           <button
-            className="px-3 py-1.5 bg-emerald-600 text-white text-xs font-normal rounded-full hover:bg-emerald-700 transition-colors flex items-center gap-1"
+            className="px-3 py-1.5 bg-brand-600 text-white text-xs font-normal rounded-full hover:bg-brand-700 transition-colors flex items-center gap-1"
             onClick={openCreate}
           >
             <Icon name="plus" size={14} />
@@ -331,7 +331,7 @@ export default function TrainersPage() {
                 className="flex items-center justify-between px-4 py-3 hover:bg-surface-base transition-colors"
               >
                 <div className="flex items-center gap-3 min-w-0">
-                  <span className={`flex-shrink-0 w-2 h-2 rounded-full ${t.status === 'active' ? 'bg-emerald-500' : 'bg-surface-overlay'}`} />
+                  <span className={`flex-shrink-0 w-2 h-2 rounded-full ${t.status === 'active' ? 'bg-state-success-500' : 'bg-surface-overlay'}`} />
                   <span className="font-normal text-sm text-text-primary truncate">{t.full_name}</span>
                   <span className="text-xs text-text-muted flex-shrink-0">{storeNameById[t.store_id] || ''}</span>
                 </div>
@@ -426,7 +426,7 @@ export default function TrainersPage() {
                 disabled={!editing}
               >削除</button>
               <button
-                className="px-3 py-2 text-sm rounded-md bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed"
+                className="px-3 py-2 text-sm rounded-md bg-brand-600 text-white hover:bg-brand-700 disabled:opacity-60 disabled:cursor-not-allowed"
                 onClick={saveTrainer}
                 disabled={!form.fullName.trim() || !form.storeId.trim()}
               >保存</button>

@@ -396,21 +396,21 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
                 </AnalysisChartCard>
 
                 {/* 4. Fat Chart */}
-                <AnalysisChartCard title="脂質 (F)" color="emerald">
+                <AnalysisChartCard title="脂質 (F)" color="purple">
                     <ResponsiveContainer width="100%" height="100%">
                         <ComposedChart data={analysisData} syncId="analyzeSync" margin={chartMargin}>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                             {commonXAxis}
-                            <YAxis 
-                                width={40} 
-                                axisLine={false} 
-                                tickLine={false} 
+                            <YAxis
+                                width={40}
+                                axisLine={false}
+                                tickLine={false}
                                 tick={{ fontSize: 9, fontWeight: 700, fill: '#cbd5e1' }}
                                 domain={[0, (dataMax: number) => Math.ceil(Math.max(dataMax, analysisData[analysisData.length - 1]?.target_fat || 0) * 1.2)]}
                             />
                             {commonTooltip}
-                            <Bar dataKey="fat" name="摂取量" fill="#10b981" radius={[4, 4, 0, 0]} />
-                            <Line type="stepAfter" dataKey="target_fat" name="目標設定" stroke="#10b981" strokeWidth={2} strokeDasharray="5 5" dot={false} />
+                            <Bar dataKey="fat" name="摂取量" fill="#a855f7" radius={[4, 4, 0, 0]} />
+                            <Line type="stepAfter" dataKey="target_fat" name="目標設定" stroke="#a855f7" strokeWidth={2} strokeDasharray="5 5" dot={false} />
                         </ComposedChart>
                     </ResponsiveContainer>
                 </AnalysisChartCard>
@@ -497,21 +497,21 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
             </div>
 
             {/* 7. Steps Chart */}
-            <AnalysisChartCard title="歩数" color="emerald">
+            <AnalysisChartCard title="歩数" color="cyan">
                 <ResponsiveContainer width="100%" height="100%">
                     <ComposedChart data={analysisData} syncId="analyzeSync" margin={chartMargin}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                         {commonXAxis}
-                        <YAxis 
-                            width={40} 
-                            axisLine={false} 
-                            tickLine={false} 
+                        <YAxis
+                            width={40}
+                            axisLine={false}
+                            tickLine={false}
                             tick={{ fontSize: 9, fontWeight: 700, fill: '#cbd5e1' }}
                             domain={[0, (dataMax: number) => Math.ceil(Math.max(dataMax, analysisData[analysisData.length - 1]?.target_steps || 8000) * 1.2)]}
                         />
                         {commonTooltip}
-                        <Bar dataKey="steps" name="歩数" fill="#10b981" radius={[4, 4, 0, 0]} />
-                        <Line type="stepAfter" dataKey="target_steps" name="目標設定" stroke="#10b981" strokeWidth={2} strokeDasharray="5 5" dot={false} />
+                        <Bar dataKey="steps" name="歩数" fill="#06b6d4" radius={[4, 4, 0, 0]} />
+                        <Line type="stepAfter" dataKey="target_steps" name="目標設定" stroke="#06b6d4" strokeWidth={2} strokeDasharray="5 5" dot={false} />
                     </ComposedChart>
                 </ResponsiveContainer>
             </AnalysisChartCard>
@@ -687,7 +687,7 @@ function AnalysisChartCard({ title, children, color }: { title: string, children
     const colorStyles: Record<string, string> = {
         blue: 'bg-blue-50/30 border-blue-100',
         purple: 'bg-purple-50/30 border-purple-100',
-        emerald: 'bg-emerald-50/30 border-emerald-100',
+        cyan: 'bg-cyan-50/30 border-cyan-100',
         violet: 'bg-violet-50/30 border-violet-100',
         sky: 'bg-sky-50/30 border-sky-100',
         teal: 'bg-teal-50/30 border-teal-100',

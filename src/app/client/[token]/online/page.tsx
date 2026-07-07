@@ -138,8 +138,8 @@ function LessonCard({ lesson, onJoin }: { lesson: OnlineLesson; onJoin: (url: st
                 {/* Status */}
                 <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
-                        <div className={`w-2.5 h-2.5 rounded-full ${status.canJoin ? 'bg-green-500 animate-pulse' : 'bg-surface-overlay'}`} />
-                        <span className={`text-sm font-normal ${status.canJoin ? 'text-green-700' : 'text-text-secondary'}`}>
+                        <div className={`w-2.5 h-2.5 rounded-full ${status.canJoin ? 'bg-state-success-500 animate-pulse' : 'bg-surface-overlay'}`} />
+                        <span className={`text-sm font-normal ${status.canJoin ? 'text-state-success-300' : 'text-text-secondary'}`}>
                             {status.statusLabel}
                         </span>
                     </div>

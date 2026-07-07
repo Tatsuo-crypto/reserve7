@@ -96,7 +96,7 @@ export default function StoreSwitcher({ defaultStoreName }: StoreSwitcherProps) 
                         <button
                             key={store.id}
                             onClick={() => handleSelect(store)}
-                            className={`block w-full text-left px-4 py-3 text-[13px] text-text-secondary hover:bg-surface-overlay transition-colors ${store.name === currentStoreName ? 'bg-surface-overlay text-green-400' : ''
+                            className={`block w-full text-left px-4 py-3 text-[13px] text-text-secondary hover:bg-surface-overlay transition-colors ${store.name === currentStoreName ? 'bg-surface-overlay text-brand-400' : ''
                                 }`}
                         >
                             {simplifyName(store.name)}

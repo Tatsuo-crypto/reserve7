@@ -601,14 +601,14 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
                       const isGuest = event.type === 'guest' || (event.title && event.title.includes('ゲスト'))
                       const isTraining = event.type === 'training'
                       const colorClass = isTrial
-                        ? 'bg-blue-300 bg-opacity-50 border border-blue-500 text-blue-900'
+                        ? 'bg-blue-500/15 border border-blue-500/30 text-blue-300'
                         : isGuest
-                          ? 'bg-purple-300 bg-opacity-50 border border-purple-500 text-purple-900'
+                          ? 'bg-purple-500/15 border border-purple-500/30 text-purple-300'
                           : isTraining
-                            ? 'bg-orange-300 bg-opacity-50 border border-orange-500 text-orange-900'
+                            ? 'bg-orange-500/15 border border-orange-500/30 text-orange-300'
                             : event.type === 'blocked'
-                              ? 'bg-red-300 bg-opacity-50 border border-red-500 text-red-900'
-                              : 'bg-green-300 bg-opacity-50 border border-green-500 text-green-900'
+                              ? 'bg-surface-overlay border border-border-subtle text-text-muted'
+                              : 'bg-surface-overlay border border-border-subtle text-text-secondary'
 
                       return (
                         <div
@@ -672,19 +672,19 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
       <div className="px-6 py-3 border-t border-border-strong bg-surface-base">
         <div className="flex items-center justify-center space-x-6 text-sm">
           <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-green-300 bg-opacity-50 border border-green-500 rounded"></div>
+            <div className="w-3 h-3 bg-surface-overlay border border-border-subtle rounded"></div>
             <span className="text-text-secondary">予約</span>
           </div>
           <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-blue-300 bg-opacity-50 border border-blue-500 rounded"></div>
+            <div className="w-3 h-3 bg-blue-500/15 border border-blue-500/30 rounded"></div>
             <span className="text-text-secondary">体験</span>
           </div>
           <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-red-300 bg-opacity-50 border border-red-500 rounded"></div>
+            <div className="w-3 h-3 bg-surface-overlay border border-border-subtle rounded"></div>
             <span className="text-text-secondary">予約不可時間</span>
           </div>
           <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-purple-300 bg-opacity-50 border border-purple-500 rounded"></div>
+            <div className="w-3 h-3 bg-purple-500/15 border border-purple-500/30 rounded"></div>
             <span className="text-text-secondary">ゲスト</span>
           </div>
         </div>

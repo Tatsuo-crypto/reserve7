@@ -108,7 +108,7 @@ export default function PlanTab({ token }: PlanTabProps) {
                         
                         <div className="grid grid-cols-2 gap-4">
                             <PFCStatCard label="タンパク質" value={currentGoal?.p} unit="g" color="amber" />
-                            <PFCStatCard label="脂質" value={currentGoal?.f} unit="g" color="emerald" />
+                            <PFCStatCard label="脂質" value={currentGoal?.f} unit="g" color="purple" />
                             <PFCStatCard label="炭水化物" value={currentGoal?.c} unit="g" color="blue" />
                             <PFCStatCard label="糖質" value={currentGoal?.sugar} unit="g" color="purple" />
                             <PFCStatCard label="食物繊維" value={currentGoal?.fiber} unit="g" color="teal" />
@@ -121,7 +121,7 @@ export default function PlanTab({ token }: PlanTabProps) {
                         <p className="text-xs font-normal text-text-muted pl-2">生活習慣の目標</p>
                         <div className="grid grid-cols-2 gap-4">
                             <PFCStatCard label="水分摂取" value={lifestyleSettings?.habit_targets?.water} unit="L" color="sky" />
-                            <PFCStatCard label="目標歩数" value={lifestyleSettings?.habit_targets?.steps} unit="歩" color="emerald" />
+                            <PFCStatCard label="目標歩数" value={lifestyleSettings?.habit_targets?.steps} unit="歩" color="cyan" />
                             <PFCStatCard label="筋トレ回数" value={lifestyleSettings?.habit_targets?.workout} unit="回/週" color="orange" />
                             <PFCStatCard label="睡眠時間" value={lifestyleSettings?.habit_targets?.sleep} unit="時間" color="violet" />
                         </div>
@@ -160,14 +160,14 @@ export default function PlanTab({ token }: PlanTabProps) {
                                 formatter={(value: any, name: any) => [`${Math.round(value)} kcal`, name]}
                             />
                             <Bar dataKey="c_cal" name="炭水化物" stackId="a" fill="#3b82f6" radius={[0, 0, 0, 0]} barSize={24} />
-                            <Bar dataKey="f_cal" name="脂質" stackId="a" fill="#10b981" radius={[0, 0, 0, 0]} />
+                            <Bar dataKey="f_cal" name="脂質" stackId="a" fill="#a855f7" radius={[0, 0, 0, 0]} />
                             <Bar dataKey="p_cal" name="タンパク質" stackId="a" fill="#f59e0b" radius={[0, 0, 0, 0]} />
                         </ComposedChart>
                     </ResponsiveContainer>
                 </div>
                 <div className="mt-4 flex justify-center gap-6">
                     <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-amber-500"></div><span className="text-[10px] font-normal text-text-secondary">P</span></div>
-                    <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-emerald-500"></div><span className="text-[10px] font-normal text-text-secondary">F</span></div>
+                    <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-purple-500"></div><span className="text-[10px] font-normal text-text-secondary">F</span></div>
                     <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-blue-500"></div><span className="text-[10px] font-normal text-text-secondary">C</span></div>
                 </div>
             </Card>
@@ -215,7 +215,7 @@ export default function PlanTab({ token }: PlanTabProps) {
 function PFCStatCard({ label, value, unit, color }: { label: string, value: number, unit: string, color: string }) {
     const colorMap: any = {
         amber: 'text-amber-500 bg-amber-50',
-        emerald: 'text-emerald-500 bg-emerald-50',
+        cyan: 'text-cyan-500 bg-cyan-50',
         blue: 'text-blue-500 bg-blue-50',
         purple: 'text-purple-500 bg-purple-50',
         teal: 'text-teal-500 bg-teal-50',

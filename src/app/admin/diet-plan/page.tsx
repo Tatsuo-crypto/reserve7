@@ -675,7 +675,7 @@ function DietPlanPageContent() {
                                                             <td className="py-5 text-sm font-normal text-text-secondary text-center tabular-nums">
                                                                 <span className="text-amber-600">{Math.round(h.protein)}</span>
                                                                 <span className="mx-1 text-text-muted">/</span>
-                                                                <span className="text-emerald-600">{Math.round(h.fat)}</span>
+                                                                <span className="text-purple-500">{Math.round(h.fat)}</span>
                                                                 <span className="mx-1 text-text-muted">/</span>
                                                                 <span className="text-blue-600">{Math.round(h.carbs)}</span>
                                                             </td>
@@ -827,7 +827,7 @@ function DietPlanPageContent() {
                                                         <p className="text-[11px] text-text-secondary">
                                                             <span className="text-amber-500">P {aragonResult.protein}g</span>
                                                             <span className="mx-1 text-text-muted">/</span>
-                                                            <span className="text-emerald-500">F {aragonResult.fat}g</span>
+                                                            <span className="text-purple-500">F {aragonResult.fat}g</span>
                                                             <span className="mx-1 text-text-muted">/</span>
                                                             <span className="text-blue-500">C {aragonResult.carbs}g</span>
                                                         </p>
@@ -974,7 +974,7 @@ function GoalHistoryCharts({ data, onEditRequest }: { data: any[], onEditRequest
                                 className={`flex flex-col justify-end shrink-0 rounded-t-md overflow-hidden transition-opacity ${isSelected ? 'ring-2 ring-brand-400' : 'hover:opacity-80'}`}
                             >
                                 <div style={{ height: carbH }} className="bg-blue-500 w-full" />
-                                <div style={{ height: fatH }} className="bg-emerald-500 w-full" />
+                                <div style={{ height: fatH }} className="bg-purple-500 w-full" />
                                 <div style={{ height: proteinH }} className="bg-amber-500 w-full rounded-t-md" />
                             </button>
                         )
@@ -987,7 +987,7 @@ function GoalHistoryCharts({ data, onEditRequest }: { data: any[], onEditRequest
                 </div>
                 <div className="flex items-center justify-center gap-4 mt-3 text-[10px] text-text-secondary">
                     <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500 inline-block"></span>タンパク質</span>
-                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>脂質</span>
+                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-purple-500 inline-block"></span>脂質</span>
                     <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500 inline-block"></span>炭水化物</span>
                 </div>
                 <p className="text-[10px] text-text-muted text-center mt-3">バーをタップすると詳細と編集ボタンを表示します（横幅=実施期間）</p>
@@ -1002,7 +1002,7 @@ function GoalHistoryCharts({ data, onEditRequest }: { data: any[], onEditRequest
                                 <span className="ml-2 text-text-secondary">
                                     <span className="text-amber-500">P {selected.protein}g</span>
                                     <span className="mx-1 text-text-muted">/</span>
-                                    <span className="text-emerald-500">F {selected.fat}g</span>
+                                    <span className="text-purple-500">F {selected.fat}g</span>
                                     <span className="mx-1 text-text-muted">/</span>
                                     <span className="text-blue-500">C {selected.carbs}g</span>
                                 </span>

@@ -79,8 +79,8 @@ function LoginForm() {
         </div>
 
         {message && (
-          <div className="rounded-md bg-green-50 p-4">
-            <p className="text-sm text-green-800">{message}</p>
+          <div className="rounded-md bg-state-success-500/15 border border-state-success-500/30 p-4">
+            <p className="text-sm text-state-success-300">{message}</p>
           </div>
         )}
         
