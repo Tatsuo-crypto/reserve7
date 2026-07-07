@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { useStoreChange } from '@/hooks/useStoreChange'
+import Icon from '@/components/ui/icons'
 
 type Trainer = {
   id: string
@@ -310,9 +311,7 @@ export default function TrainersPage() {
             className="px-3 py-1.5 bg-emerald-600 text-white text-xs font-normal rounded-full hover:bg-emerald-700 transition-colors flex items-center gap-1"
             onClick={openCreate}
           >
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
+            <Icon name="plus" size={14} />
             新規
           </button>
         </div>

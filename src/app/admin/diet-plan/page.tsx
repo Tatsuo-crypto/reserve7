@@ -16,6 +16,7 @@ import GoalsTab from '@/components/diet/GoalsTab'
 import GoalPlanForm, { type GoalFormValues, type HabitTargetsValues } from '@/components/diet/GoalPlanForm'
 import GoalEditModal from '@/components/diet/GoalEditModal'
 import { calculateAragonPlan, caloriesFromMacros, NEAT_LEVELS } from '@/lib/utils/dietGoalCalc'
+import Icon from '@/components/ui/icons'
 
 const GOAL_SUGGESTIONS = [
     'お酒を週2回までにする',
@@ -587,7 +588,7 @@ function DietPlanPageContent() {
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                     className="w-full pl-12 pr-4 py-4 bg-surface-base border border-border-subtle rounded-2xl focus:ring-2 focus:ring-brand-500 outline-none transition-all font-normal"
                                 />
-                                <svg className="absolute left-4 top-4.5 w-6 h-6 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                                <Icon name="search" size={24} className="absolute left-4 top-4.5 text-text-muted" />
                             </div>
                         </div>
                         <div className="divide-y divide-gray-50 max-h-[60vh] overflow-y-auto px-4 pb-4">
@@ -650,9 +651,7 @@ function DietPlanPageContent() {
                                             <div className="w-1.5 h-6 bg-brand-500 rounded-full"></div>
                                             <h2 className="text-base font-normal text-text-primary">日別の記録</h2>
                                         </div>
-                                        <svg className={`w-5 h-5 text-text-muted transition-transform duration-300 ${showDailyRecords ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
-                                        </svg>
+                                        <Icon name="chevronDown" size={20} className={`text-text-muted transition-transform duration-300 ${showDailyRecords ? 'rotate-180' : ''}`} />
                                     </button>
                                     {showDailyRecords && (
                                         <div className="overflow-x-auto px-8 pb-8 animate-fadeIn">

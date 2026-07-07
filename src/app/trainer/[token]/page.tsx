@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { getStoreDisplayName } from '@/lib/auth-utils'
 import CalendarView from '@/components/CalendarView'
+import Icon from '@/components/ui/icons'
 
 interface Trainer {
   id: string
@@ -92,9 +93,7 @@ export default function TrainerDashboardPage() {
                 onClick={handleBackToMonth}
                 className="w-10 h-10 flex items-center justify-center text-brand-500 bg-surface-raised rounded-full shadow-sm border border-border-subtle transition-all active:scale-90"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
-                </svg>
+                <Icon name="chevronLeft" size={24} />
               </button>
             )}
           </div>
@@ -130,9 +129,7 @@ export default function TrainerDashboardPage() {
                   href={`/trainer/${token}/shifts`}
                   className="inline-flex items-center gap-2 px-4 py-2 bg-surface-raised border border-border-strong rounded-full text-sm font-normal text-text-secondary hover:bg-surface-base transition-all shadow-sm active:scale-95"
                 >
-                  <svg className="w-4 h-4 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
+                  <Icon name="clock" size={16} className="text-brand-500" />
                   シフト管理
                 </Link>
               )}

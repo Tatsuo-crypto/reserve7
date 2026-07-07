@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { PLAN_LIST } from '@/lib/constants'
+import Icon from '@/components/ui/icons'
 
 export default function NewMemberPage() {
   const { data: session, status } = useSession()
@@ -137,9 +138,7 @@ export default function NewMemberPage() {
           className="absolute left-0 p-2 text-text-secondary hover:text-text-secondary hover:bg-surface-overlay rounded-full transition-colors"
           aria-label="戻る"
         >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
+          <Icon name="chevronLeft" size={24} />
         </button>
         <div className="text-center">
           <h1 className="text-2xl font-normal text-text-primary">新規会員追加</h1>

@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { format, addMonths, startOfMonth, parseISO } from 'date-fns'
 import { PLAN_LIST, PLAN_FEES } from '@/lib/constants'
+import Icon from '@/components/ui/icons'
 
 interface PaymentItem {
   month: string
@@ -218,7 +219,7 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
               onClick={() => router.back()}
               className="p-2 text-text-muted hover:text-text-secondary bg-surface-raised rounded-full shadow-sm border border-border-subtle transition-all hover:shadow-md"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+              <Icon name="chevronLeft" size={24} />
             </button>
             <div className="text-center flex-1">
               <h1 className="text-3xl font-normal text-text-primary tracking-tight">月額プラン履歴</h1>
@@ -240,16 +241,14 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
               title="プランを追加・復帰"
               className="w-12 h-12 bg-gradient-to-br from-brand-600 to-brand-800 text-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 flex items-center justify-center hover:scale-105 active:scale-95 group"
             >
-              <svg className="w-6 h-6 group-hover:rotate-90 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
-              </svg>
+              <Icon name="plus" size={24} className="group-hover:rotate-90 transition-transform duration-300" />
             </button>
           </div>
           <div className="p-0">
             {payments.length === 0 ? (
               <div className="py-20 text-center">
                 <div className="w-16 h-16 bg-surface-base rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-8 h-8 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                  <Icon name="clock" size={32} className="text-text-muted" />
                 </div>
                 <p className="text-text-muted font-normal">データがありません</p>
               </div>

@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import TrainerShiftPage from '../TrainerShiftPage'
 import { getStoreDisplayName } from '@/lib/auth-utils'
+import Icon from '@/components/ui/icons'
 
 interface Trainer {
   id: string
@@ -58,9 +59,7 @@ export default function ShiftsPage() {
               href={`/trainer/${token}`}
               className="w-10 h-10 flex items-center justify-center text-brand-500 bg-surface-raised rounded-full shadow-sm border border-border-subtle transition-all active:scale-90 hover:bg-surface-base"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
-              </svg>
+              <Icon name="chevronLeft" size={24} />
             </Link>
           </div>
 

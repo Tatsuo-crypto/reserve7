@@ -5,6 +5,7 @@ import Link from 'next/link'
 import TimelineView from './TimelineView'
 import { useSession } from 'next-auth/react'
 import { useStoreChange } from '@/hooks/useStoreChange'
+import Icon from '@/components/ui/icons'
 
 interface Reservation {
   id: string
@@ -476,9 +477,7 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
               onClick={() => navigateMonth('prev')}
               className="p-3 text-text-muted hover:text-text-secondary hover:bg-surface-overlay rounded-md"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
+              <Icon name="chevronLeft" size={24} />
             </button>
             <h3 className="text-xl sm:text-lg font-normal text-text-primary min-w-[160px] text-center">
               {formatMonth(currentDate)}
@@ -487,9 +486,7 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
               onClick={() => navigateMonth('next')}
               className="p-3 text-text-muted hover:text-text-secondary hover:bg-surface-overlay rounded-md"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
+              <Icon name="chevronRight" size={24} />
             </button>
           </div>
         </div>

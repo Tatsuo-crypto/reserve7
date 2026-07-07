@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import Icon from '@/components/ui/icons'
 
 interface Store {
     id: string
@@ -82,9 +83,7 @@ export default function StoreSwitcher({ defaultStoreName }: StoreSwitcherProps) 
             >
                 <span className="text-[13px] font-normal text-text-secondary flex items-center whitespace-nowrap">
                     {simplifyName(currentStoreName)}
-                    <svg className={`w-3 h-3 ml-1 text-text-muted transform transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
+                    <Icon name="chevronDown" size={12} className={`ml-1 text-text-muted transform transition-transform ${isOpen ? 'rotate-180' : ''}`} />
                 </span>
             </button>
 

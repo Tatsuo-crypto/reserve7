@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
+import Icon from '@/components/ui/icons'
 
 interface User {
   id: string
@@ -161,9 +162,7 @@ export default function ClientReservationsContent() {
               className="p-2 rounded-md text-text-secondary hover:text-text-primary hover:bg-surface-overlay"
               aria-label="メニュー"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
+              <Icon name="menu" size={24} />
             </button>
           </div>
         </div>
@@ -176,9 +175,7 @@ export default function ClientReservationsContent() {
           <div className="space-y-4">
             <div className="flex items-center p-4 bg-blue-50 rounded-lg border border-blue-100">
               <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-full mr-4">
-                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
+                <Icon name="user" size={24} className="text-blue-600" />
               </div>
               <div>
                 <div className="text-sm text-blue-600 font-normal mb-1">お名前</div>
@@ -187,9 +184,7 @@ export default function ClientReservationsContent() {
             </div>
             <div className="flex items-center p-4 bg-green-50 rounded-lg border border-green-100">
               <div className="flex items-center justify-center w-12 h-12 bg-green-100 rounded-full mr-4">
-                <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-                </svg>
+                <Icon name="shieldCheck" size={24} className="text-green-600" />
               </div>
               <div>
                 <div className="text-sm text-green-600 font-normal mb-1">プラン</div>

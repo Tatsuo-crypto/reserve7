@@ -4,6 +4,7 @@ import { Fragment, useState, useEffect, useMemo } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import AdminHeader from '@/app/components/AdminHeader'
+import Icon from '@/components/ui/icons'
 
 // メール送信機能は廃止（2026-07決定）。通知はアプリのプッシュ通知のみ。
 // APIとの互換性のため、これらのフィールドはやり取りするが画面上には出さない。
@@ -279,9 +280,7 @@ export default function AdminMailSettingsPage() {
         {/* Success Alert */}
         {success && (
           <div className="mb-6 p-4 bg-state-success-50 border border-state-success-100 rounded-2xl text-sm text-state-success-700 flex items-center gap-2 animate-fadeIn">
-            <svg className="w-5 h-5 text-state-success-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
+            <Icon name="check" size={20} className="text-state-success-500 shrink-0" />
             <span>{success}</span>
           </div>
         )}
@@ -289,9 +288,7 @@ export default function AdminMailSettingsPage() {
         {/* Error Alert */}
         {error && (
           <div className="mb-6 p-4 bg-state-danger-50 border border-state-danger-100 rounded-2xl text-sm text-state-danger-700 flex items-center gap-2 animate-fadeIn">
-            <svg className="w-5 h-5 text-state-danger-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+            <Icon name="exclamationCircle" size={20} className="text-state-danger-500 shrink-0" />
             <span>{error}</span>
           </div>
         )}
@@ -300,9 +297,7 @@ export default function AdminMailSettingsPage() {
         {!tableExists && (
           <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-2xl text-sm text-amber-800 animate-fadeIn">
             <div className="flex gap-2">
-              <svg className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
+              <Icon name="warning" size={20} className="text-amber-500 shrink-0 mt-0.5" />
               <div>
                 <p className="font-semibold mb-1">データベースの準備ができていません</p>
                 <p className="text-xs text-amber-700 leading-relaxed">

@@ -8,6 +8,7 @@ import Link from 'next/link'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import ErrorMessage from '@/components/ui/ErrorMessage'
 import { Reservation } from '@/types/common'
+import Icon from '@/components/ui/icons'
 
 // Helper function to calculate reservation sequence for a specific client
 function getReservationSequence(targetReservation: any, allReservations: any[]): number {
@@ -386,9 +387,7 @@ function AdminReservationsContent() {
               onClick={() => router.push(trainerToken ? `/trainer/${trainerToken}` : '/dashboard')}
               className="absolute left-0 text-text-muted hover:text-text-secondary"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
+              <Icon name="chevronLeft" size={24} />
             </button>
             <div className="text-center">
               <h1 className="text-2xl font-normal text-text-primary">予約</h1>

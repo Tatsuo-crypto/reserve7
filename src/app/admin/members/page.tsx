@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import TrackingModal from './TrackingModal'
 import type { Member } from '@/types'
+import Icon from '@/components/ui/icons'
 import {
   getPlanRank,
   getStatusRank,
@@ -255,9 +256,7 @@ function MembersPageContent() {
                 onClick={() => setSortAsc(!sortAsc)}
                 className="p-2 bg-surface-base text-text-muted hover:text-brand-600 rounded-xl border border-border-subtle transition-all"
               >
-                <svg className={`w-4 h-4 transition-transform ${sortAsc ? '' : 'rotate-180'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
+                <Icon name="chevronDown" size={16} className={`transition-transform ${sortAsc ? '' : 'rotate-180'}`} />
               </button>
             </div>
           </div>
@@ -266,9 +265,7 @@ function MembersPageContent() {
             href="/admin/members/new"
             className="px-5 py-2.5 bg-brand-600 text-white text-[10px] font-normal rounded-2xl hover:bg-brand-700 transition-all shadow-md flex items-center gap-2 uppercase tracking-widest"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
-            </svg>
+            <Icon name="plus" size={16} />
             新規登録
           </Link>
         </div>
@@ -327,9 +324,7 @@ function MembersPageContent() {
                       </td>
                       <td className="px-4 py-4 text-right">
                         <div className="inline-flex items-center text-text-muted group-hover:text-brand-500 transition-colors">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                          </svg>
+                          <Icon name="chevronRight" size={16} />
                         </div>
                       </td>
                     </tr>

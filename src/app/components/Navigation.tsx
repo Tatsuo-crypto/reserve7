@@ -6,6 +6,7 @@ import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { getStoreDisplayName } from '@/lib/auth-utils'
 import { useState, Suspense, useEffect } from 'react'
 import StoreSwitcher from './StoreSwitcher'
+import Icon from '@/components/ui/icons'
 
 function NavigationContent() {
   const { data: session, status } = useSession()
@@ -80,18 +81,14 @@ function NavigationContent() {
               onClick={handleBack}
               className="w-10 h-10 flex items-center justify-center text-brand-500 bg-surface-raised rounded-full shadow-sm border border-border-subtle transition-all active:scale-90 hover:bg-surface-base"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
-              </svg>
+              <Icon name="chevronLeft" size={24} />
             </button>
           ) : (
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="w-10 h-10 flex items-center justify-center text-text-muted bg-surface-raised rounded-full shadow-sm border border-border-subtle transition-all active:scale-90"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
+              <Icon name="menu" size={24} />
             </button>
           )}
         </div>

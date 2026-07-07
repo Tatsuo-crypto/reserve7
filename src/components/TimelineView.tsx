@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import Icon from '@/components/ui/icons'
 
 interface CalendarEvent {
   id: string
@@ -327,9 +328,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
               className="p-2 text-text-muted hover:text-text-secondary hover:bg-surface-overlay rounded-md flex-shrink-0"
               title="前の日"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
+              <Icon name="chevronLeft" size={20} />
             </button>
             <h2 className="text-xl font-normal text-text-primary whitespace-nowrap">
               {formatSelectedDate(selectedDate)}
@@ -339,9 +338,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
               className="p-2 text-text-muted hover:text-text-secondary hover:bg-surface-overlay rounded-md flex-shrink-0"
               title="次の日"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
+              <Icon name="chevronRight" size={20} />
             </button>
           </div>
         </div>
@@ -801,9 +798,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
           <div className="relative p-6 w-full max-w-sm shadow-xl rounded-2xl bg-surface-raised">
             <div className="text-center">
               <div className="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-red-100 mb-4">
-                <svg className="h-7 w-7 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
+                <Icon name="trash" size={28} className="text-red-600" />
               </div>
               <h3 className="text-xl font-normal text-text-primary mb-2">予約を削除しますか？</h3>
               <p className="text-sm text-text-secondary mb-6">この操作は取り消せません。</p>

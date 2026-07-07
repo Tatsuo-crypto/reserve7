@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { getStoreDisplayName } from '@/lib/auth-utils'
+import Icon from '@/components/ui/icons'
 
 interface Reservation {
   id: string
@@ -357,9 +358,7 @@ export default function ReservationsPage() {
                 onClick={() => router.back()}
                 className="p-2 hover:bg-surface-overlay rounded-full transition-colors"
               >
-                <svg className="h-5 w-5 text-text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
+                <Icon name="chevronLeft" size={20} className="text-text-secondary" />
               </button>
               <p className="text-text-secondary">
                 すべての予約を管理できます
@@ -392,9 +391,7 @@ export default function ReservationsPage() {
         {!reservations || reservations.length === 0 ? (
           <div className="bg-surface-raised rounded-lg shadow p-8 text-center">
             <div className="text-text-muted mb-4">
-              <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
+              <Icon name="calendar" size={48} className="mx-auto" />
             </div>
             <h3 className="text-lg font-normal text-text-primary mb-2">
               予約がありません
@@ -620,9 +617,7 @@ export default function ReservationsPage() {
           <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-surface-raised">
             <div className="mt-3">
               <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
-                <svg className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                </svg>
+                <Icon name="warning" size={24} className="text-red-600" />
               </div>
               <h3 className="text-lg font-normal text-text-primary text-center mb-4">
                 予約をキャンセルしますか？

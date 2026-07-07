@@ -6,6 +6,7 @@ import { useEffect, useState, Suspense } from 'react'
 import CalendarView from '@/components/CalendarView'
 import Link from 'next/link'
 import { getStoreDisplayName } from '@/lib/auth-utils'
+import Icon from '@/components/ui/icons'
 
 function AdminCalendarPageContent() {
   const { data: session, status } = useSession()
@@ -109,9 +110,7 @@ function AdminCalendarPageContent() {
               onClick={handleBackClick}
               className="absolute left-0 text-text-muted hover:text-text-secondary"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
+              <Icon name="chevronLeft" size={24} />
             </button>
             <div className="text-center">
               <h1 className="text-2xl font-normal text-text-primary">予約</h1>
@@ -122,9 +121,7 @@ function AdminCalendarPageContent() {
                 href="/admin/shifts"
                 className="absolute right-0 flex items-center text-sm text-text-secondary hover:text-brand-600 transition-colors"
               >
-                <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+                <Icon name="clock" size={20} className="mr-1" />
                 シフト
               </Link>
             )}
