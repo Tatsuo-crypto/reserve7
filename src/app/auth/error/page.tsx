@@ -35,16 +35,16 @@ function ErrorContent() {
           </p>
         </div>
 
-        <div className="rounded-md bg-red-50 p-4">
+        <div className="rounded-md bg-red-500/15 p-4">
           <div className="flex">
             <div className="flex-shrink-0">
               <Icon name="xCircle" size={20} className="text-red-400" />
             </div>
             <div className="ml-3">
-              <h3 className="text-sm font-normal text-red-800">
+              <h3 className="text-sm font-normal text-red-300">
                 {getErrorMessage(error)}
               </h3>
-              <div className="mt-2 text-sm text-red-700">
+              <div className="mt-2 text-sm text-red-300">
                 <p>もう一度ログインをお試しください。</p>
               </div>
             </div>

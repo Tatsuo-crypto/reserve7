@@ -257,7 +257,7 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
     if (loading) return <div className="h-64 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"></div></div>
     if (fetchError) {
         return (
-            <div className="bg-surface-raised rounded-2xl border border-red-100 p-6 text-sm text-red-600">
+            <div className="bg-surface-raised rounded-2xl border border-red-500/25 p-6 text-sm text-red-400">
                 分析データを取得できませんでした。画面を再読み込みしてください。
             </div>
         )
@@ -570,7 +570,7 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
                             {calendarDate.getFullYear()}年 {calendarDate.getMonth() + 1}月
                         </div>
                     </div>
-                    <div className="flex items-center justify-between sm:justify-center gap-2 bg-orange-50 rounded-full p-1 shadow-inner w-full sm:w-auto">
+                    <div className="flex items-center justify-between sm:justify-center gap-2 bg-orange-500/15 rounded-full p-1 shadow-inner w-full sm:w-auto">
                         <button 
                             onClick={handlePrevMonth}
                             className="w-8 h-8 flex items-center justify-center hover:bg-surface-raised rounded-full transition-all text-orange-500 active:scale-90"
@@ -613,7 +613,7 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
                                 const isCurrentMonth = date.getMonth() === calendarDate.getMonth()
                                 
                                 calendarDays.push(
-                                    <div key={dStr} className={`relative aspect-square flex flex-col items-center justify-center rounded-2xl border-2 transition-all overflow-hidden ${!isCurrentMonth ? 'opacity-10 pointer-events-none' : ''} ${isSelected ? 'border-orange-500 bg-orange-50/50' : 'border-border-subtle bg-surface-base/30 hover:border-border-subtle'}`}>
+                                    <div key={dStr} className={`relative aspect-square flex flex-col items-center justify-center rounded-2xl border-2 transition-all overflow-hidden ${!isCurrentMonth ? 'opacity-10 pointer-events-none' : ''} ${isSelected ? 'border-orange-500 bg-orange-500/10' : 'border-border-subtle bg-surface-base/30 hover:border-border-subtle'}`}>
                                         <span className={`text-[10px] font-normal z-10 ${isDone ? 'text-white opacity-40' : isToday ? 'text-blue-500' : 'text-text-muted'}`}>
                                             {date.getDate()}
                                         </span>

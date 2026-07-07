@@ -121,8 +121,8 @@ function LoginForm() {
           </div>
 
           {error && (
-            <div className="rounded-md bg-red-50 p-4">
-              <p className="text-sm text-red-800">{error}</p>
+            <div className="rounded-md bg-red-500/15 p-4">
+              <p className="text-sm text-red-300">{error}</p>
             </div>
           )}
 

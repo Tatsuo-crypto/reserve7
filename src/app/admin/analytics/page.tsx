@@ -292,7 +292,7 @@ export default function AnalyticsPage() {
                                         <div className="flex flex-col items-center">
                                         {/* Year label at top for first item */}
                                         {showYear && idx === 0 && (
-                                            <div className="text-[10px] font-normal text-brand-500 bg-brand-50 px-2 py-0.5 rounded-full mb-1 whitespace-nowrap">
+                                            <div className="text-[10px] font-normal text-brand-300 bg-brand-500/15 px-2 py-0.5 rounded-full mb-1 whitespace-nowrap">
                                                 {yearStr}
                                             </div>
                                         )}

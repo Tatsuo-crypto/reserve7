@@ -40,16 +40,16 @@ export default function MemberMovementModal({ isOpen, onClose, data }: MemberMov
                                 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     {/* New Members */}
-                                    <div className="border rounded-lg p-4 bg-red-50">
-                                        <h4 className="font-normal text-red-700 mb-3 flex items-center">
+                                    <div className="border rounded-lg p-4 bg-red-500/15">
+                                        <h4 className="font-normal text-red-300 mb-3 flex items-center">
                                             <span>新規入会</span>
-                                            <span className="ml-2 bg-red-200 text-red-800 text-xs px-2 py-0.5 rounded-full">
+                                            <span className="ml-2 bg-red-500/20 text-red-300 text-xs px-2 py-0.5 rounded-full">
                                                 {data.newMembers.length}名
                                             </span>
                                         </h4>
                                         <div className="max-h-[400px] overflow-y-auto">
                                             {data.newMembers.length > 0 ? (
-                                                <ul className="divide-y divide-red-200">
+                                                <ul className="divide-y divide-red-500/20">
                                                     {data.newMembers.map((member) => (
                                                         <li key={member.user_id} className="py-2 text-sm">
                                                             <div className="font-normal text-text-primary">{member.full_name}</div>
@@ -69,16 +69,16 @@ export default function MemberMovementModal({ isOpen, onClose, data }: MemberMov
                                     </div>
 
                                     {/* Withdrawn Members */}
-                                    <div className="border rounded-lg p-4 bg-brand-50">
-                                        <h4 className="font-normal text-brand-700 mb-3 flex items-center">
+                                    <div className="border rounded-lg p-4 bg-brand-500/15">
+                                        <h4 className="font-normal text-brand-300 mb-3 flex items-center">
                                             <span>退会</span>
-                                            <span className="ml-2 bg-brand-200 text-brand-800 text-xs px-2 py-0.5 rounded-full">
+                                            <span className="ml-2 bg-brand-500/20 text-brand-300 text-xs px-2 py-0.5 rounded-full">
                                                 {data.withdrawnMembers.length}名
                                             </span>
                                         </h4>
                                         <div className="max-h-[400px] overflow-y-auto">
                                             {data.withdrawnMembers.length > 0 ? (
-                                                <ul className="divide-y divide-brand-200">
+                                                <ul className="divide-y divide-brand-500/20">
                                                     {data.withdrawnMembers.map((member) => (
                                                         <li key={member.user_id} className="py-2 text-sm">
                                                             <div className="font-normal text-text-primary">{member.full_name}</div>

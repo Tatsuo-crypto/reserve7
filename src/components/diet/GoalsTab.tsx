@@ -256,7 +256,7 @@ export default function GoalsTab({ userId, token, isAdmin }: GoalsTabProps) {
                         <div className="w-1.5 h-6 bg-brand-500 rounded-full"></div>
                         <h2 className="text-xl font-semibold text-text-primary tracking-tight">過去の目標</h2>
                     </div>
-                    <div className="divide-y divide-gray-50">
+                    <div className="divide-y divide-border-subtle">
                         {pastGoals.map(goal => (
                             <div key={goal.id} className="py-4 flex items-center justify-between gap-3">
                                 <div>

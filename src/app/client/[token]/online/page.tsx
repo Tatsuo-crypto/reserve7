@@ -283,8 +283,8 @@ export default function OnlineLessonPage() {
             <div className="max-w-lg mx-auto px-4 py-6">
                 {error ? (
                     <div className="text-center py-16">
-                        <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <Icon name="exclamationCircle" size={32} className="text-red-500" />
+                        <div className="w-16 h-16 bg-red-500/15 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <Icon name="exclamationCircle" size={32} className="text-red-400" />
                         </div>
                         <p className="text-text-secondary font-normal">{error}</p>
                         <button
@@ -296,7 +296,7 @@ export default function OnlineLessonPage() {
                     </div>
                 ) : lessons.length === 0 ? (
                     <div className="text-center py-16">
-                        <div className="w-24 h-24 bg-brand-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <div className="w-24 h-24 bg-brand-500/15 rounded-full flex items-center justify-center mx-auto mb-6">
                             <Icon name="video" size={48} className="text-brand-400" />
                         </div>
                         <h2 className="text-xl font-normal text-text-secondary mb-2">現在準備中です</h2>
@@ -323,8 +323,8 @@ export default function OnlineLessonPage() {
                                     { step: '3', text: 'カメラとマイクを確認して「参加」を押してください' },
                                 ]).map(item => (
                                     <div key={item.step} className="flex items-start space-x-3">
-                                        <div className="w-6 h-6 rounded-full bg-brand-100 flex items-center justify-center flex-shrink-0">
-                                            <span className="text-brand-600 font-normal text-xs">{item.step}</span>
+                                        <div className="w-6 h-6 rounded-full bg-brand-500/15 flex items-center justify-center flex-shrink-0">
+                                            <span className="text-brand-300 font-normal text-xs">{item.step}</span>
                                         </div>
                                         <p className="text-text-secondary text-sm leading-relaxed pt-0.5">{item.text}</p>
                                     </div>

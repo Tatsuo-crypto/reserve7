@@ -202,7 +202,7 @@ export default function StoresPage() {
                       <td className="px-3 py-2 border-b text-center whitespace-nowrap">
                         <div className="inline-flex items-center gap-2 whitespace-nowrap justify-center">
                           <button className="px-2 py-1 text-xs rounded-md border hover:bg-surface-base" onClick={() => openEdit(s)}>編集</button>
-                          <button className={`px-2 py-1 text-xs rounded-md border ${s.status === 'active' ? 'hover:bg-red-50' : 'hover:bg-brand-50'}`} onClick={() => toggleActive(s)}>{s.status === 'active' ? '無効化' : '有効化'}</button>
+                          <button className={`px-2 py-1 text-xs rounded-md border ${s.status === 'active' ? 'hover:bg-red-500/25' : 'hover:bg-brand-500/25'}`} onClick={() => toggleActive(s)}>{s.status === 'active' ? '無効化' : '有効化'}</button>
                         </div>
                       </td>
                     </tr>

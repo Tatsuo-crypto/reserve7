@@ -421,7 +421,7 @@ export default function TrainersPage() {
             <div className="mt-6 flex justify-end gap-3">
               <button className="px-3 py-2 text-sm rounded-md border" onClick={() => setModalOpen(false)}>キャンセル</button>
               <button
-                className="px-3 py-2 text-sm rounded-md border border-red-300 text-red-600 hover:bg-red-50 disabled:opacity-60 disabled:cursor-not-allowed"
+                className="px-3 py-2 text-sm rounded-md border border-red-500/40 text-red-400 hover:bg-red-500/25 disabled:opacity-60 disabled:cursor-not-allowed"
                 onClick={deleteTrainer}
                 disabled={!editing}
               >削除</button>

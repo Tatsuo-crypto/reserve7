@@ -168,7 +168,7 @@ export default function HomeTab({ token, userName, todayDraft, onNavigate, onOpe
                     ) : (
                         <div className="flex items-center justify-between">
                             <p className="text-sm text-text-muted">今後の予約はありません</p>
-                            <span className="text-xs font-normal text-brand-600 bg-brand-50 px-3 py-1.5 rounded-full">予約する</span>
+                            <span className="text-xs font-normal text-brand-300 bg-brand-500/15 px-3 py-1.5 rounded-full">予約する</span>
                         </div>
                     )}
                 </Card>

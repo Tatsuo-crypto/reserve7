@@ -591,9 +591,9 @@ function DietPlanPageContent() {
                                 <Icon name="search" size={24} className="absolute left-4 top-4.5 text-text-muted" />
                             </div>
                         </div>
-                        <div className="divide-y divide-gray-50 max-h-[60vh] overflow-y-auto px-4 pb-4">
+                        <div className="divide-y divide-border-subtle max-h-[60vh] overflow-y-auto px-4 pb-4">
                             {filteredMembers.map(member => (
-                                <button key={member.id} onClick={() => setSelectedMember(member)} className="w-full flex items-center px-6 py-5 hover:bg-brand-50/50 transition-all rounded-[2rem] group mt-2">
+                                <button key={member.id} onClick={() => setSelectedMember(member)} className="w-full flex items-center px-6 py-5 hover:bg-brand-500/10 transition-all rounded-[2rem] group mt-2">
                                     <div className="flex-1 flex items-center gap-4 text-left">
                                         <div className={`w-3 h-3 rounded-full ${getStatusDotColor(member.status)} shadow-sm`} />
                                         <div>
@@ -664,12 +664,12 @@ function DietPlanPageContent() {
                                                         <th className="py-4 text-[10px] font-normal text-text-muted uppercase tracking-widest text-center">糖質/繊維/塩</th>
                                                     </tr>
                                                 </thead>
-                                                <tbody className="divide-y divide-gray-50">
+                                                <tbody className="divide-y divide-border-subtle">
                                                     {intakeHistory.length > 0 ? intakeHistory.map((h, i) => (
                                                         <tr key={i} className="group hover:bg-surface-base transition-colors">
                                                             <td className="py-5 text-sm font-normal text-text-primary">
                                                                 {h.date.slice(5).replace(/-/g, '/')}
-                                                                {h.image_url && <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-[8px] bg-brand-50 text-brand-500 uppercase tracking-tighter font-bold">Image</span>}
+                                                                {h.image_url && <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-[8px] bg-brand-500/15 text-brand-300 uppercase tracking-tighter font-bold">Image</span>}
                                                             </td>
                                                             <td className="py-5 text-sm font-normal text-text-primary text-right tabular-nums">{h.calories?.toLocaleString()} <span className="text-[10px] text-text-muted">kcal</span></td>
                                                             <td className="py-5 text-sm font-normal text-text-secondary text-center tabular-nums">
@@ -779,8 +779,8 @@ function DietPlanPageContent() {
                                                 <div className="relative h-1.5 rounded-full bg-surface-overlay overflow-hidden">
                                                     {aragonSafeMinPeriodWeeks !== null && (
                                                         <>
-                                                            <div className="absolute inset-y-0 left-0 bg-state-danger-100" style={{ width: `${aragonSafeBandPct}%` }} />
-                                                            <div className="absolute inset-y-0 bg-state-success-100" style={{ left: `${aragonSafeBandPct}%`, right: 0 }} />
+                                                            <div className="absolute inset-y-0 left-0 bg-state-danger-500/20" style={{ width: `${aragonSafeBandPct}%` }} />
+                                                            <div className="absolute inset-y-0 bg-state-success-500/20" style={{ left: `${aragonSafeBandPct}%`, right: 0 }} />
                                                         </>
                                                     )}
                                                     <div
@@ -814,7 +814,7 @@ function DietPlanPageContent() {
                                             {aragonResult ? (
                                                 <>
                                                     {aragonResult.paceExceeded && (
-                                                        <div className="rounded-2xl bg-amber-50 border border-amber-100 p-4 text-xs text-amber-800 leading-relaxed">
+                                                        <div className="rounded-2xl bg-amber-500/15 border border-amber-500/25 p-4 text-xs text-amber-300 leading-relaxed">
                                                             希望ペース（週{aragonResult.requestedWeeklyLossKg}kg減）が安全上限（週{aragonResult.maxSafeWeeklyLossKg}kg減）を超えています。筋肉を落とさないため、12週間後の中間目標体重 {aragonResult.tbwKg}kg を採用して計算しています。
                                                         </div>
                                                     )}
@@ -852,7 +852,7 @@ function DietPlanPageContent() {
                                             <h2 className="text-xl font-normal text-text-primary tracking-tight">現在の目標設定</h2>
                                         </div>
                                         {!editingCurrentPlan && (
-                                            <button onClick={() => setEditingCurrentPlan(true)} className="text-xs text-brand-600 bg-brand-50 px-4 py-2 rounded-full hover:bg-brand-100">編集</button>
+                                            <button onClick={() => setEditingCurrentPlan(true)} className="text-xs text-brand-300 bg-brand-500/15 px-4 py-2 rounded-full hover:bg-brand-500/25">編集</button>
                                         )}
                                     </div>
                                     {editingCurrentPlan ? (
@@ -1009,7 +1009,7 @@ function GoalHistoryCharts({ data, onEditRequest }: { data: any[], onEditRequest
                             </p>
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
-                            <button onClick={() => onEditRequest(selected.date)} className="text-xs text-brand-600 bg-brand-50 px-3 py-2 rounded-full hover:bg-brand-100">このプランを編集</button>
+                            <button onClick={() => onEditRequest(selected.date)} className="text-xs text-brand-300 bg-brand-500/15 px-3 py-2 rounded-full hover:bg-brand-500/25">このプランを編集</button>
                             <button onClick={() => setSelected(null)} className="text-xs text-text-muted hover:text-text-secondary p-2">×</button>
                         </div>
                     </div>

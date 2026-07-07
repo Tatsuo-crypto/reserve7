@@ -240,7 +240,7 @@ export default function AdminOnlineLessonPage() {
 
                 {/* Edit / New Form */}
                 {editingId !== null && (
-                    <div className="bg-surface-raised rounded-2xl shadow-sm border border-brand-100 p-6 mb-6">
+                    <div className="bg-surface-raised rounded-2xl shadow-sm border border-brand-500/25 p-6 mb-6">
                         <h2 className="text-lg font-normal text-text-primary mb-5">
                             {editingId === 'new' ? '新しいレッスンを追加' : 'レッスンを編集'}
                         </h2>
@@ -384,7 +384,7 @@ export default function AdminOnlineLessonPage() {
                                                     members.filter(m => (form.userIds || []).includes(m.id)).map(member => (
                                                         <span 
                                                             key={member.id} 
-                                                            className="inline-flex items-center gap-1 bg-brand-50 border border-brand-100 text-brand-700 px-2 py-0.5 rounded-lg text-xs font-normal"
+                                                            className="inline-flex items-center gap-1 bg-brand-500/15 border border-brand-500/25 text-brand-300 px-2 py-0.5 rounded-lg text-xs font-normal"
                                                         >
                                                             {member.full_name}
                                                             <button
@@ -396,7 +396,7 @@ export default function AdminOnlineLessonPage() {
                                                                         userIds: (prev.userIds || []).filter(id => id !== member.id)
                                                                     }))
                                                                 }}
-                                                                className="hover:bg-brand-100 p-0.5 rounded transition-colors text-brand-500 hover:text-brand-700"
+                                                                className="hover:bg-brand-500/25 p-0.5 rounded transition-colors text-brand-500 hover:text-brand-300"
                                                             >
                                                                 <Icon name="close" size={12} />
                                                             </button>
@@ -455,7 +455,7 @@ export default function AdminOnlineLessonPage() {
                             </div>
 
                             {error && (
-                                <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">{error}</div>
+                                <div className="p-3 bg-red-500/15 border border-red-500/30 rounded-xl text-sm text-red-300">{error}</div>
                             )}
 
                             <div className="flex flex-col sm:flex-row gap-3 pt-2">
@@ -464,7 +464,7 @@ export default function AdminOnlineLessonPage() {
                                         type="button"
                                         onClick={() => handleDelete(editingId!)}
                                         disabled={deletingId === editingId}
-                                        className="py-3 px-4 sm:flex-none border border-red-200 text-red-600 rounded-xl hover:bg-red-50 transition-colors font-normal text-sm flex items-center justify-center space-x-2"
+                                        className="py-3 px-4 sm:flex-none border border-red-500/30 text-red-400 rounded-xl hover:bg-red-500/25 transition-colors font-normal text-sm flex items-center justify-center space-x-2"
                                     >
                                         {deletingId === editingId ? (
                                             <div className="animate-spin h-5 w-5 border-b-2 border-red-600 rounded-full" />
@@ -487,7 +487,7 @@ export default function AdminOnlineLessonPage() {
                                             type="button"
                                             onClick={handleSendAnnouncement}
                                             disabled={saving || sendingAnnouncement}
-                                            className="flex-1 py-3 border border-brand-200 text-brand-600 rounded-xl hover:bg-brand-50 transition-colors font-normal text-sm disabled:opacity-50"
+                                            className="flex-1 py-3 border border-brand-500/30 text-brand-400 rounded-xl hover:bg-brand-500/25 transition-colors font-normal text-sm disabled:opacity-50"
                                         >
                                             {sendingAnnouncement ? '送信中...' : '告知メールを送る'}
                                         </button>
@@ -519,7 +519,7 @@ export default function AdminOnlineLessonPage() {
                             <button
                                 key={lesson.id}
                                 onClick={() => startEdit(lesson)}
-                                className="w-full text-left bg-surface-raised rounded-2xl shadow-sm border border-border-subtle p-5 hover:border-brand-300 hover:shadow-md transition-all group focus:outline-none focus:ring-2 focus:ring-brand-500 block"
+                                className="w-full text-left bg-surface-raised rounded-2xl shadow-sm border border-border-subtle p-5 hover:border-brand-500/40 hover:shadow-md transition-all group focus:outline-none focus:ring-2 focus:ring-brand-500 block"
                             >
                                 <div className="flex flex-col space-y-3">
                                     <div className="flex-1 min-w-0">
@@ -537,7 +537,7 @@ export default function AdminOnlineLessonPage() {
                                             <p className="text-xs text-text-secondary mt-1 line-clamp-2">{lesson.description}</p>
                                         )}
                                         {lesson.url_expires_at && new Date(lesson.url_expires_at).getTime() - new Date().getTime() <= 7 * 24 * 60 * 60 * 1000 && (
-                                            <div className="mt-3 p-2 bg-red-50 border border-red-200 rounded-lg text-red-700 text-xs flex items-center">
+                                            <div className="mt-3 p-2 bg-red-500/15 border border-red-500/30 rounded-lg text-red-300 text-xs flex items-center">
                                                 <Icon name="warning" size={16} className="mr-1.5 flex-shrink-0" />
                                                 URLの有効期限が近づいています（{lesson.url_expires_at.substring(0, 10)}）
                                             </div>
@@ -551,7 +551,7 @@ export default function AdminOnlineLessonPage() {
                         {editingId === null && (
                             <button
                                 onClick={() => startEdit()}
-                                className="w-full h-[72px] bg-surface-raised border-2 border-dashed border-border-strong rounded-2xl flex items-center justify-center text-text-muted hover:text-brand-600 hover:border-brand-300 hover:bg-brand-50 transition-all group"
+                                className="w-full h-[72px] bg-surface-raised border-2 border-dashed border-border-strong rounded-2xl flex items-center justify-center text-text-muted hover:text-brand-600 hover:border-brand-500/40 hover:bg-brand-500/25 transition-all group"
                             >
                                 <Icon name="plus" size={32} className="group-hover:scale-110 transition-transform duration-200" />
                             </button>

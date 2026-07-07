@@ -254,7 +254,7 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-50">
+                <table className="min-w-full divide-y divide-border-subtle">
                   <thead className="bg-surface-base/50">
                     <tr>
                       <th className="px-3 sm:px-8 py-4 text-left text-[10px] font-normal text-text-muted uppercase tracking-widest">対象月</th>
@@ -264,14 +264,14 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
                       <th className="px-3 sm:px-8 py-4 text-right text-[10px] font-normal text-text-muted uppercase tracking-widest">操作</th>
                     </tr>
                   </thead>
-                  <tbody className="bg-surface-raised divide-y divide-gray-50">
+                  <tbody className="bg-surface-raised divide-y divide-border-subtle">
                     {payments.map((p, idx) => {
                       const isFutureMonth = p.status === 'future'
                       const isCurrentMonth = p.month === new Date().toISOString().slice(0, 7)
                       return (
                         <tr
                           key={`${p.month}-${idx}`}
-                          className={`group transition-colors ${isFutureMonth ? 'bg-brand-50/30 hover:bg-brand-50/50' : 'hover:bg-surface-base/50'}`}
+                          className={`group transition-colors ${isFutureMonth ? 'bg-brand-500/10 hover:bg-brand-500/15' : 'hover:bg-surface-base/50'}`}
                         >
                           <td className="px-3 sm:px-8 py-4">
                             <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
@@ -308,7 +308,7 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
                               className={`text-[10px] font-normal uppercase tracking-widest px-3 py-2 rounded-xl border transition-all ${
                                 isFutureMonth 
                                   ? 'bg-brand-500/15 text-brand-300 border-brand-500/20 hover:bg-brand-500/25'
-                                  : 'bg-surface-raised text-brand-600 border-border-subtle hover:border-brand-200 hover:bg-brand-50'
+                                  : 'bg-surface-raised text-brand-600 border-border-subtle hover:border-brand-500/30 hover:bg-brand-500/15'
                               }`}
                               onClick={() => handleEditClick(p)}
                             >
@@ -338,9 +338,9 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
               </div>
 
               {editingItem.status === 'future' && (
-                <div className="mb-4 bg-brand-50 border border-brand-200 rounded-md p-3 text-sm text-brand-800">
+                <div className="mb-4 bg-brand-500/15 border border-brand-500/30 rounded-md p-3 text-sm text-brand-300">
                   📅 <strong>{formatMonth(editingItem.month)}</strong> からのプラン変更予定を設定します。<br />
-                  <span className="text-xs text-brand-600 mt-1 block">現在のプランは今月末まで継続されます。</span>
+                  <span className="text-xs text-brand-300 mt-1 block">現在のプランは今月末まで継続されます。</span>
                 </div>
               )}
               
@@ -410,7 +410,7 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
                   />
                 </div>
                 
-                <div className="text-xs text-text-secondary bg-yellow-50 p-2 rounded">
+                <div className="text-xs text-text-secondary bg-yellow-500/15 p-2 rounded">
                   ※ この月の設定のみ変更されます。前後の月には影響しませんが、この変更により会員履歴データが分割される場合があります。
                 </div>
               </div>

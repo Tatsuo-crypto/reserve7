@@ -173,12 +173,12 @@ export default function ClientReservationsContent() {
         <div className="bg-surface-raised rounded-xl shadow-md border border-border-strong p-8 mb-6">
           <h1 className="text-3xl font-normal text-text-primary mb-6 pb-4 border-b border-border-strong">予約一覧</h1>
           <div className="space-y-4">
-            <div className="flex items-center p-4 bg-blue-50 rounded-lg border border-blue-100">
-              <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-full mr-4">
-                <Icon name="user" size={24} className="text-blue-600" />
+            <div className="flex items-center p-4 bg-blue-500/15 rounded-lg border border-blue-500/25">
+              <div className="flex items-center justify-center w-12 h-12 bg-blue-500/15 rounded-full mr-4">
+                <Icon name="user" size={24} className="text-blue-400" />
               </div>
               <div>
-                <div className="text-sm text-blue-600 font-normal mb-1">お名前</div>
+                <div className="text-sm text-blue-300 font-normal mb-1">お名前</div>
                 <div className="text-xl font-normal text-text-primary">{user.name} 様</div>
               </div>
             </div>

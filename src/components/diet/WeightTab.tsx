@@ -105,7 +105,7 @@ export default function WeightTab({ userId, token, isAdmin }: WeightTabProps) {
                 {historyLoading ? (
                     <div className="py-8 flex justify-center"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-brand-600"></div></div>
                 ) : (
-                    <div className="divide-y divide-gray-50">
+                    <div className="divide-y divide-border-subtle">
                         {weekHistory.map((row, i) => (
                             <div key={i} className="py-3">
                                 <p className="text-[10px] font-normal text-text-muted tabular-nums mb-1">{row.rangeStr}</p>

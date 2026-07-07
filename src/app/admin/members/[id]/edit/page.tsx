@@ -404,8 +404,8 @@ export default function EditMemberPage() {
       </div>
 
       {error && (
-        <div className="mb-4 bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-sm text-red-800">{error}</p>
+        <div className="mb-4 bg-red-500/15 border border-red-500/30 rounded-lg p-4">
+          <p className="text-sm text-red-300">{error}</p>
         </div>
       )}
 
@@ -549,15 +549,15 @@ export default function EditMemberPage() {
               </SelectField>
 
               {isChanged && (
-                <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                <div className="bg-yellow-500/15 p-4 rounded-lg border border-yellow-500/30">
                   <TextField label="変更適用日" type="date" name="changeDate" value={formData.changeDate} onChange={handleChange} />
-                  <p className="mt-2 text-sm text-yellow-700">指定した日付から新しいプラン・会費が適用されます。</p>
+                  <p className="mt-2 text-sm text-yellow-300">指定した日付から新しいプラン・会費が適用されます。</p>
                 </div>
               )}
 
               <div className="pt-4 border-t border-border-subtle">
                 <h3 className="text-lg font-normal text-text-primary mb-4">機能表示設定</h3>
-                <label className="flex items-center gap-4 p-4 bg-brand-50/50 border border-brand-100 rounded-lg cursor-pointer hover:bg-brand-50">
+                <label className="flex items-center gap-4 p-4 bg-brand-500/10 border border-brand-500/25 rounded-lg cursor-pointer hover:bg-brand-500/15">
                   <input
                     type="checkbox"
                     checked={settings.visible_tabs.input && settings.visible_tabs.analyze && settings.visible_tabs.progress}
@@ -751,7 +751,7 @@ function ChoiceGroup({ label, name, value, options, onValue, required }: { label
       <FieldLabel label={label} required={required} />
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         {options.map(option => (
-          <label key={option.value} className={`flex items-center gap-3 px-3 py-3 border rounded-lg cursor-pointer ${value === option.value ? 'border-brand-500 bg-brand-50' : 'border-border-strong hover:bg-surface-base'}`}>
+          <label key={option.value} className={`flex items-center gap-3 px-3 py-3 border rounded-lg cursor-pointer ${value === option.value ? 'border-brand-500 bg-brand-500/10' : 'border-border-strong hover:bg-surface-base'}`}>
             <input
               type="radio"
               name={name}
@@ -773,7 +773,7 @@ function CheckGroup({ label, name, values, options, onToggle, required }: { labe
       <FieldLabel label={label} required={required} />
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
         {options.map(option => (
-          <label key={option.value} className={`flex items-center gap-3 px-3 py-3 border rounded-lg cursor-pointer ${values.includes(option.value) ? 'border-brand-500 bg-brand-50' : 'border-border-strong hover:bg-surface-base'}`}>
+          <label key={option.value} className={`flex items-center gap-3 px-3 py-3 border rounded-lg cursor-pointer ${values.includes(option.value) ? 'border-brand-500 bg-brand-500/10' : 'border-border-strong hover:bg-surface-base'}`}>
             <input
               type="checkbox"
               checked={values.includes(option.value)}
@@ -789,7 +789,7 @@ function CheckGroup({ label, name, values, options, onToggle, required }: { labe
 }
 
 function SwitchCard({ name, checked, onChange, title, description, color = 'blue' }: { name: string; checked: boolean; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void; title: string; description: string; color?: 'blue' | 'brand' }) {
-  const colorClass = color === 'brand' ? 'text-brand-600 focus:ring-brand-500 bg-brand-50/50 border-brand-100 hover:bg-brand-50' : 'text-brand-600 focus:ring-brand-500 bg-brand-50/50 border-brand-100 hover:bg-brand-50'
+  const colorClass = color === 'brand' ? 'text-brand-600 focus:ring-brand-500 bg-brand-500/10 border-brand-500/25 hover:bg-brand-500/15' : 'text-brand-600 focus:ring-brand-500 bg-brand-500/10 border-brand-500/25 hover:bg-brand-500/15'
   return (
     <label className={`flex items-center gap-4 p-4 border rounded-lg cursor-pointer ${colorClass}`}>
       <input
@@ -809,9 +809,9 @@ function SwitchCard({ name, checked, onChange, title, description, color = 'blue
 
 function SummaryBox({ summaryText, formData, counseling }: { summaryText: string; formData: { fullName: string; gender: string; heightCm: string }; counseling: CounselingData }) {
   return (
-    <div className="mt-6 rounded-lg border border-brand-200 bg-brand-50 p-4">
-      <h3 className="text-base font-normal text-brand-900 mb-3">保存後のカウンセリング要約</h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-brand-900">
+    <div className="mt-6 rounded-lg border border-brand-500/30 bg-brand-500/15 p-4">
+      <h3 className="text-base font-normal text-brand-300 mb-3">保存後のカウンセリング要約</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-brand-300">
         <SummaryItem label="氏名" value={formData.fullName} />
         <SummaryItem label="性別" value={genderLabel(formData.gender)} />
         <SummaryItem label="身長" value={formData.heightCm ? `${formData.heightCm}cm` : ''} />

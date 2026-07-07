@@ -206,8 +206,8 @@ export default function RegisterPage() {
           </div>
 
           {errors.submit && (
-            <div className="rounded-md bg-red-50 p-4">
-              <p className="text-sm text-red-800">{errors.submit}</p>
+            <div className="rounded-md bg-red-500/15 p-4">
+              <p className="text-sm text-red-300">{errors.submit}</p>
             </div>
           )}
 

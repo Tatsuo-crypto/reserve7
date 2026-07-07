@@ -188,7 +188,7 @@ export default function PlanTab({ token }: PlanTabProps) {
                                 <th className="py-4 text-[10px] font-normal text-text-muted uppercase tracking-widest text-center">P / F / C</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-50">
+                        <tbody className="divide-y divide-border-subtle">
                             {reversedHistory.map((h, i) => {
                                 const [y, m, d] = h.date.split('-')
                                 const shortDate = `${y.slice(2)}/${parseInt(m, 10)}/${parseInt(d, 10)}`

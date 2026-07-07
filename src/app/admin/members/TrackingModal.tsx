@@ -258,7 +258,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
 
         {/* メッセージ */}
         {message && (
-          <div className="mx-6 mt-4 p-3 bg-brand-50 border border-brand-200 rounded-lg text-sm text-brand-700">
+          <div className="mx-6 mt-4 p-3 bg-brand-500/15 border border-brand-500/30 rounded-lg text-sm text-brand-300">
             {message}
           </div>
         )}
@@ -333,7 +333,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                 ) : (
                   <div className="space-y-2">
                     {yearlyGoals.map((goal) => (
-                      <div key={goal.id} className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                      <div key={goal.id} className="p-3 bg-yellow-500/15 border border-yellow-500/30 rounded-lg">
                         {editingId === goal.id ? (
                           <div className="space-y-2">
                             <input
@@ -509,7 +509,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                 ) : (
                   <div className="space-y-2">
                     {monthlyGoals.map((goal) => (
-                      <div key={goal.id} className="p-3 bg-brand-50 border border-brand-200 rounded-lg">
+                      <div key={goal.id} className="p-3 bg-brand-500/15 border border-brand-500/30 rounded-lg">
                         {editingId === goal.id ? (
                           <div className="space-y-2">
                             <div className="grid grid-cols-2 gap-2">
@@ -781,7 +781,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                 ) : (
                   <div className="space-y-2">
                     {squatRecords.map((record) => (
-                      <div key={record.id} className="p-3 bg-purple-50 border border-purple-200 rounded-lg">
+                      <div key={record.id} className="p-3 bg-purple-500/15 border border-purple-500/30 rounded-lg">
                         {editingId === record.id ? (
                           <div className="space-y-2">
                             <input
@@ -889,7 +889,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                 </h3>
                 <p className="text-xs text-text-secondary mb-4">会員用アプリに食事管理に関連する全機能（入力・分析・進捗・各項目）を表示します</p>
                 
-                <label className="flex items-center gap-4 p-6 bg-brand-50/50 border border-brand-100 rounded-2xl cursor-pointer hover:bg-brand-50 transition-all active:scale-[0.98]">
+                <label className="flex items-center gap-4 p-6 bg-brand-500/10 border border-brand-500/25 rounded-2xl cursor-pointer hover:bg-brand-500/15 transition-all active:scale-[0.98]">
                   <input
                     type="checkbox"
                     checked={settings.visible_tabs.input && settings.visible_tabs.analyze && settings.visible_tabs.progress}

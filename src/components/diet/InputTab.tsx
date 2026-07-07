@@ -339,7 +339,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                     <div className="flex items-center justify-between">
                         <h2 className="text-sm font-normal text-text-muted uppercase tracking-widest">記録する日を選択</h2>
                         {isAdmin && (
-                            <button className="text-xs font-normal text-brand-600 px-3 py-1 bg-brand-50 rounded-full">項目編集</button>
+                            <button className="text-xs font-normal text-brand-300 px-3 py-1 bg-brand-500/15 rounded-full">項目編集</button>
                         )}
                     </div>
 
@@ -394,8 +394,8 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                         )}
 
                         <div className="grid grid-cols-2 gap-4">
-                            <div className={`col-span-2 p-4 rounded-xl transition-colors ${isSaved ? 'bg-surface-overlay' : 'bg-brand-50/50'}`}>
-                                <div className={`text-[10px] font-normal uppercase mb-2 tracking-widest text-center ${isSaved ? 'text-text-secondary' : 'text-brand-600'}`}>総エネルギー</div>
+                            <div className={`col-span-2 p-4 rounded-xl transition-colors ${isSaved ? 'bg-surface-overlay' : 'bg-brand-500/10'}`}>
+                                <div className={`text-[10px] font-normal uppercase mb-2 tracking-widest text-center ${isSaved ? 'text-text-secondary' : 'text-brand-300'}`}>総エネルギー</div>
                                 <div className="flex items-center justify-center space-x-3">
                                     <div className="text-3xl font-normal text-text-primary">{ocrResult.calories}</div>
                                     <div className="text-xl font-normal text-text-muted">/</div>
@@ -415,7 +415,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                             <div className="flex items-center gap-2">
                                 <button 
                                     onClick={() => fileInputRef.current?.click()}
-                                    className="text-xs font-normal text-brand-600 px-3 py-1.5 bg-brand-50 rounded-full hover:bg-brand-100 transition-colors flex items-center gap-2"
+                                    className="text-xs font-normal text-brand-300 px-3 py-1.5 bg-brand-500/15 rounded-full hover:bg-brand-500/25 transition-colors flex items-center gap-2"
                                 >
                                     <Icon name="upload" size={12} />
                                     写真を再アップロード
@@ -505,7 +505,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                             value={water}
                             target={target?.water_target != null ? String(target.water_target) : undefined}
                             unit="L"
-                            iconBg="bg-brand-50"
+                            iconBg="bg-brand-500/15"
                             iconColor="text-brand-500"
                             step={0.5}
                             isDefault={!touchedFields.includes('water')}
@@ -521,7 +521,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                             value={steps ?? '0'}
                             target={target?.step_target != null ? String(target.step_target) : undefined}
                             unit="歩"
-                            iconBg="bg-cyan-50"
+                            iconBg="bg-cyan-500/15"
                             iconColor="text-cyan-500"
                             step={500}
                             isDefault={!touchedFields.includes('steps')}
@@ -537,7 +537,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                             value={sleep ?? '0'}
                             target={target?.sleep_target != null ? String(target.sleep_target) : undefined}
                             unit="h"
-                            iconBg="bg-violet-50"
+                            iconBg="bg-violet-500/15"
                             iconColor="text-violet-500"
                             step={0.5}
                             isDefault={!touchedFields.includes('sleep')}
@@ -550,7 +550,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                         <div className="space-y-3">
                             <div className="flex items-center justify-between p-3 border border-border-subtle rounded-2xl hover:bg-surface-base transition-colors">
                                 <div className="flex items-center space-x-3">
-                                    <div className="w-10 h-10 bg-orange-50 text-orange-500 rounded-xl flex items-center justify-center shadow-sm">
+                                    <div className="w-10 h-10 bg-orange-500/15 text-orange-400 rounded-xl flex items-center justify-center shadow-sm">
                                         <Icon name="tableCells" size={20} />
                                     </div>
                                     <span className="text-sm font-normal text-text-secondary">筋トレ</span>
@@ -601,7 +601,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                         </div>
                         <div className="grid grid-cols-1 gap-3">
                             {quitGoals.map((goal: string) => (
-                                <div key={goal} className="flex items-center justify-between p-4 bg-surface-base rounded-2xl border border-transparent hover:border-purple-100 transition-all">
+                                <div key={goal} className="flex items-center justify-between p-4 bg-surface-base rounded-2xl border border-transparent hover:border-purple-500/25 transition-all">
                                     <span className="text-sm font-normal text-text-secondary">{goal}</span>
                                     <button
                                         onClick={() => {

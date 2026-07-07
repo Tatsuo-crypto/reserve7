@@ -797,8 +797,8 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
         <div className="fixed inset-0 bg-gray-900 bg-opacity-60 overflow-y-auto h-full w-full z-[200] flex items-center justify-center p-4 backdrop-blur-sm">
           <div className="relative p-6 w-full max-w-sm shadow-xl rounded-2xl bg-surface-raised">
             <div className="text-center">
-              <div className="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-red-100 mb-4">
-                <Icon name="trash" size={28} className="text-red-600" />
+              <div className="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-red-500/15 mb-4">
+                <Icon name="trash" size={28} className="text-red-400" />
               </div>
               <h3 className="text-xl font-normal text-text-primary mb-2">予約を削除しますか？</h3>
               <p className="text-sm text-text-secondary mb-6">この操作は取り消せません。</p>

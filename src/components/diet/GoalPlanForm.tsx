@@ -103,7 +103,7 @@ export default function GoalPlanForm({
                     <button
                         type="button"
                         onClick={handleDistribute}
-                        className="text-xs font-normal text-brand-600 bg-brand-50 px-4 py-2 rounded-full hover:bg-brand-100 transition-colors"
+                        className="text-xs font-normal text-brand-300 bg-brand-500/15 px-4 py-2 rounded-full hover:bg-brand-500/25 transition-colors"
                     >
                         カロリーから配分
                     </button>

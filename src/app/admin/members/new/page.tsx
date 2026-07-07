@@ -148,8 +148,8 @@ export default function NewMemberPage() {
 
       <div className="bg-surface-raised shadow-sm border border-border-strong rounded-lg p-6">
         {error && (
-          <div className="mb-4 bg-red-50 border border-red-200 rounded-lg p-4">
-            <p className="text-sm text-red-800">{error}</p>
+          <div className="mb-4 bg-red-500/15 border border-red-500/30 rounded-lg p-4">
+            <p className="text-sm text-red-300">{error}</p>
           </div>
         )}
 
@@ -392,7 +392,7 @@ export default function NewMemberPage() {
           <div className="pt-6 border-t border-border-subtle">
             <h3 className="text-lg font-normal text-text-primary mb-4">通知設定</h3>
             <div className="space-y-4">
-              <label className="flex items-center gap-4 p-4 bg-brand-50/50 border border-brand-100 rounded-xl cursor-pointer hover:bg-brand-50 transition-colors">
+              <label className="flex items-center gap-4 p-4 bg-brand-500/10 border border-brand-500/25 rounded-xl cursor-pointer hover:bg-brand-500/15 transition-colors">
                 <input
                   type="checkbox"
                   id="onlineReminderEnabled"
@@ -406,7 +406,7 @@ export default function NewMemberPage() {
                   <div className="text-xs text-text-secondary mt-1">チェックを外すと、この会員様宛のすべての自動通知メールが停止されます。</div>
                 </div>
               </label>
-              <label className="flex items-center gap-4 p-4 bg-brand-50/50 border border-brand-100 rounded-xl cursor-pointer hover:bg-brand-50 transition-colors">
+              <label className="flex items-center gap-4 p-4 bg-brand-500/10 border border-brand-500/25 rounded-xl cursor-pointer hover:bg-brand-500/15 transition-colors">
                 <input
                   type="checkbox"
                   id="pushNotificationEnabled"
@@ -459,9 +459,9 @@ export default function NewMemberPage() {
         </form>
 
         {/* Info Box */}
-        <div className="mt-6 bg-brand-50 border border-brand-200 rounded-lg p-4">
-          <h3 className="text-sm font-normal text-brand-900 mb-2">会員追加について</h3>
-          <ul className="text-sm text-brand-800 space-y-1">
+        <div className="mt-6 bg-brand-500/15 border border-brand-500/30 rounded-lg p-4">
+          <h3 className="text-sm font-normal text-brand-300 mb-2">会員追加について</h3>
+          <ul className="text-sm text-brand-300 space-y-1">
             <li>• 会員追加後、会員管理ページから専用URLを発行できます</li>
             <li>• メールアドレスは専用URL発行時に必要です</li>
             <li>• プランとステータスは後から変更できます</li>

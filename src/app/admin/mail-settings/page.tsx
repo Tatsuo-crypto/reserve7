@@ -279,7 +279,7 @@ export default function AdminMailSettingsPage() {
       <div className="max-w-3xl mx-auto px-4">
         {/* Success Alert */}
         {success && (
-          <div className="mb-6 p-4 bg-state-success-50 border border-state-success-100 rounded-2xl text-sm text-state-success-700 flex items-center gap-2 animate-fadeIn">
+          <div className="mb-6 p-4 bg-state-success-500/15 border border-state-success-500/25 rounded-2xl text-sm text-state-success-300 flex items-center gap-2 animate-fadeIn">
             <Icon name="check" size={20} className="text-state-success-500 shrink-0" />
             <span>{success}</span>
           </div>
@@ -287,7 +287,7 @@ export default function AdminMailSettingsPage() {
 
         {/* Error Alert */}
         {error && (
-          <div className="mb-6 p-4 bg-state-danger-50 border border-state-danger-100 rounded-2xl text-sm text-state-danger-700 flex items-center gap-2 animate-fadeIn">
+          <div className="mb-6 p-4 bg-state-danger-500/15 border border-state-danger-500/25 rounded-2xl text-sm text-state-danger-300 flex items-center gap-2 animate-fadeIn">
             <Icon name="exclamationCircle" size={20} className="text-state-danger-500 shrink-0" />
             <span>{error}</span>
           </div>
@@ -295,15 +295,15 @@ export default function AdminMailSettingsPage() {
 
         {/* Table Migration Warning */}
         {!tableExists && (
-          <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-2xl text-sm text-amber-800 animate-fadeIn">
+          <div className="mb-6 p-4 bg-amber-500/15 border border-amber-500/30 rounded-2xl text-sm text-amber-300 animate-fadeIn">
             <div className="flex gap-2">
               <Icon name="warning" size={20} className="text-amber-500 shrink-0 mt-0.5" />
               <div>
                 <p className="font-semibold mb-1">データベースの準備ができていません</p>
-                <p className="text-xs text-amber-700 leading-relaxed">
+                <p className="text-xs text-amber-300 leading-relaxed">
                   <code>mail_settings</code> テーブルがデータベースに存在しません。管理者ユーザーが Supabase の SQL Editor などで、以下のマイグレーションファイルの内容を実行するまで、この設定画面はデフォルト値の読み取り専用となります。
                 </p>
-                <p className="mt-2 text-xs font-mono bg-amber-100/50 p-2 rounded-lg border border-amber-200/50 select-all overflow-x-auto">
+                <p className="mt-2 text-xs font-mono bg-amber-500/10 p-2 rounded-lg border border-amber-500/15 select-all overflow-x-auto">
                   supabase/migrations/20260604_create_mail_settings.sql
                 </p>
               </div>

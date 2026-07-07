@@ -297,7 +297,7 @@ function NavBtn({ active, onClick, iconName, label }: { active: boolean, onClick
       className={`flex flex-col items-center justify-between w-full h-16 py-1 transition-all duration-300 ${active ? 'text-brand-600' : 'text-text-muted'}`}
     >
       <div className="flex flex-col items-center justify-center flex-1">
-        <div className={`p-1.5 rounded-xl transition-all duration-300 ${active ? 'bg-brand-50 scale-105' : 'bg-transparent'}`}>
+        <div className={`p-1.5 rounded-xl transition-all duration-300 ${active ? 'bg-brand-500/20 scale-105' : 'bg-transparent'}`}>
           <Icon name={iconName} size={24} />
         </div>
         <span className="text-[10px] font-normal tracking-tighter mt-0.5">{label}</span>

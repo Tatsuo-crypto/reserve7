@@ -31,6 +31,10 @@ const generateTimeOptions = () => {
 }
 
 // Color palette for trainers
+// Q-4/dark-sweep: bg-*-200 here is intentionally left as a literal light shade (NOT converted to
+// bg-*-500/NN) because the sibling label text is hardcoded `text-black`/`text-orange-900` (a
+// separate, out-of-scope legacy issue). Converting only the background would make the label
+// unreadable against the dark base without a matching text-color fix; out of scope for this sweep.
 const TRAINER_COLORS = [
   { bg: 'bg-blue-200', border: 'border-blue-400', dot: 'bg-blue-500' },
   { bg: 'bg-cyan-200', border: 'border-cyan-400', dot: 'bg-cyan-500' },
@@ -166,7 +170,7 @@ export default function TeamShiftCalendar({
           時間
         </div>
         {weekDays.map(day => (
-          <div key={day.toString()} className={`p-2 text-center border-r border-border-strong last:border-r-0 ${isSameDay(day, new Date()) ? 'bg-brand-50' : ''}`}>
+          <div key={day.toString()} className={`p-2 text-center border-r border-border-strong last:border-r-0 ${isSameDay(day, new Date()) ? 'bg-brand-500/15' : ''}`}>
             <div className="text-xs font-normal text-text-secondary">{format(day, 'E', { locale: ja })}</div>
             <div className={`text-sm font-normal ${isSameDay(day, new Date()) ? 'text-brand-600' : 'text-text-primary'}`}>
               {format(day, 'M/d')}
@@ -300,8 +304,8 @@ export default function TeamShiftCalendar({
                     return (
                       <div
                         key={item.id}
-                        className={`absolute rounded ${isSelected 
-                          ? 'bg-orange-100 border-orange-400 ring-2 ring-orange-400 ring-opacity-50 z-20' 
+                        className={`absolute rounded ${isSelected
+                          ? 'bg-orange-100 border-orange-400 ring-2 ring-orange-400 ring-opacity-50 z-20'
                           : `${colors.bg} ${colors.border}`} border hover:opacity-90 cursor-pointer shadow-sm transition-all flex items-center justify-center overflow-hidden`}
                         style={getItemStyle(item, dayItems)}
                         onClick={(e) => handleShiftClick(e, shift)}
@@ -562,7 +566,7 @@ function ShiftEditModal({ shift, trainerName, isOpen, onClose, onSave, onDelete 
         <div className="flex justify-between">
           <button 
             onClick={handleDelete}
-            className="px-3 py-2 text-red-600 text-sm hover:bg-red-50 rounded"
+            className="px-3 py-2 text-red-400 text-sm hover:bg-red-500/25 rounded"
             disabled={loading}
           >
             削除

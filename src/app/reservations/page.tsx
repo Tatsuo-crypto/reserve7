@@ -376,11 +376,11 @@ export default function ReservationsPage() {
           </div>
         </div>
         {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
-            <p className="text-red-800">{error}</p>
+          <div className="mb-6 bg-red-500/15 border border-red-500/30 rounded-lg p-4">
+            <p className="text-red-300">{error}</p>
             <button
               onClick={fetchReservations}
-              className="mt-2 text-red-600 hover:text-red-800 underline"
+              className="mt-2 text-red-400 hover:text-red-300 underline"
             >
               再試行
             </button>
@@ -620,8 +620,8 @@ export default function ReservationsPage() {
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
           <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-surface-raised">
             <div className="mt-3">
-              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
-                <Icon name="warning" size={24} className="text-red-600" />
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-500/15 mb-4">
+                <Icon name="warning" size={24} className="text-red-400" />
               </div>
               <h3 className="text-lg font-normal text-text-primary text-center mb-4">
                 予約をキャンセルしますか？

@@ -658,8 +658,8 @@ function NewReservationContent() {
 
         {/* Error Message */}
         {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
-            <p className="text-red-800">{error}</p>
+          <div className="mb-6 bg-red-500/15 border border-red-500/30 rounded-lg p-4">
+            <p className="text-red-300">{error}</p>
           </div>
         )}
 
@@ -709,7 +709,7 @@ function NewReservationContent() {
                 </label>
 
                 <label className={`relative flex flex-col items-center justify-center p-4 border rounded-lg cursor-pointer transition-all ${formData.isGuest
-                  ? 'border-purple-500 bg-purple-50 ring-2 ring-purple-500'
+                  ? 'border-purple-500 bg-purple-500/10 ring-2 ring-purple-500'
                   : 'border-border-strong hover:border-border-strong hover:bg-surface-base'
                   }`}>
                   <input
@@ -767,7 +767,7 @@ function NewReservationContent() {
                 </label>
 
                 <label className={`relative flex flex-col items-center justify-center p-4 border rounded-lg cursor-pointer transition-all ${formData.isTraining
-                  ? 'border-orange-500 bg-orange-50 ring-2 ring-orange-500'
+                  ? 'border-orange-500 bg-orange-500/10 ring-2 ring-orange-500'
                   : 'border-border-strong hover:border-border-strong hover:bg-surface-base'
                   }`}>
                   <input
@@ -804,7 +804,7 @@ function NewReservationContent() {
                   <div className="space-y-2">
                     {trainers.map(trainer => (
                       <label key={trainer.id} className={`flex items-center p-3 border rounded-lg cursor-pointer transition-all ${formData.trainingTrainerIds.includes(trainer.id)
-                        ? 'border-orange-500 bg-orange-50'
+                        ? 'border-orange-500 bg-orange-500/10'
                         : 'border-border-strong hover:border-border-strong'
                         }`}>
                         <input
@@ -1155,8 +1155,8 @@ function NewReservationContent() {
         <div className="fixed inset-0 bg-gray-900 bg-opacity-50 overflow-y-auto h-full w-full z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
           <div className="relative p-6 w-full max-w-sm shadow-xl rounded-2xl bg-surface-raised scale-100 transition-transform">
             <div className="text-center">
-              <div className="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-yellow-100 mb-4">
-                <Icon name="warning" size={28} className="text-yellow-600" />
+              <div className="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-yellow-500/15 mb-4">
+                <Icon name="warning" size={28} className="text-yellow-400" />
               </div>
               <h3 className="text-xl font-normal text-text-primary mb-2">
                 シフト外の予約
@@ -1190,8 +1190,8 @@ function NewReservationContent() {
         <div className="fixed inset-0 bg-gray-900 bg-opacity-50 overflow-y-auto h-full w-full z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
           <div className="relative p-6 w-full max-w-sm shadow-xl rounded-2xl bg-surface-raised">
             <div className="text-center">
-              <div className="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-orange-100 mb-4">
-                <Icon name="warning" size={28} className="text-orange-600" />
+              <div className="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-orange-500/15 mb-4">
+                <Icon name="warning" size={28} className="text-orange-400" />
               </div>
               <h3 className="text-xl font-normal text-text-primary mb-2">
                 シフト外のトレーナー

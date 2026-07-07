@@ -135,11 +135,11 @@ export default function ReservationTab({ token }: ReservationTabProps) {
                         {sortedFutureMonths.map(([monthKey, reservations]) => (
                             <div key={monthKey} className="space-y-3">
                                 <div className="flex items-center space-x-2 py-2">
-                                    <div className="h-px flex-1 bg-brand-50"></div>
-                                    <div className="text-[10px] font-normal text-brand-500 bg-brand-50 px-4 py-1 rounded-full uppercase tracking-tighter">
+                                    <div className="h-px flex-1 bg-brand-500/15"></div>
+                                    <div className="text-[10px] font-normal text-brand-300 bg-brand-500/15 px-4 py-1 rounded-full uppercase tracking-tighter">
                                         {monthKey}
                                     </div>
-                                    <div className="h-px flex-1 bg-brand-50"></div>
+                                    <div className="h-px flex-1 bg-brand-500/15"></div>
                                 </div>
                                 <div className="space-y-3">
                                     {reservations

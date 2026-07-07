@@ -83,8 +83,8 @@ export default function StaffPage() {
             className="bg-surface-raised p-8 rounded-xl shadow-md border border-border-strong hover:shadow-lg transition-shadow text-left"
           >
             <div className="flex items-center mb-4">
-              <div className="w-12 h-12 bg-brand-100 rounded-lg flex items-center justify-center mr-4">
-                <Icon name="calendar" size={24} className="text-brand-600" />
+              <div className="w-12 h-12 bg-brand-500/15 rounded-lg flex items-center justify-center mr-4">
+                <Icon name="calendar" size={24} className="text-brand-400" />
               </div>
               <h2 className="text-2xl font-normal text-text-primary">予約管理</h2>
             </div>

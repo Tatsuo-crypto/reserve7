@@ -302,7 +302,7 @@ function MembersPageContent() {
                         const lastName = (member.full_name || '').split(/[\s　]+/)[0]
                         router.push(`/admin/members/${member.id}?name=${encodeURIComponent(lastName)}`)
                       }}
-                      className="hover:bg-brand-50/30 transition-colors cursor-pointer group"
+                      className="hover:bg-brand-500/10 transition-colors cursor-pointer group"
                     >
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-2">

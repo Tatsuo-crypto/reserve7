@@ -100,7 +100,7 @@ export default function ShiftCalendar({
           時間
         </div>
         {weekDays.map(day => (
-          <div key={day.toString()} className={`p-2 text-center border-r border-border-strong last:border-r-0 ${isSameDay(day, new Date()) ? 'bg-brand-50' : ''}`}>
+          <div key={day.toString()} className={`p-2 text-center border-r border-border-strong last:border-r-0 ${isSameDay(day, new Date()) ? 'bg-brand-500/15' : ''}`}>
             <div className="text-xs font-normal text-text-secondary">{format(day, 'E', { locale: ja })}</div>
             <div className={`text-sm font-normal ${isSameDay(day, new Date()) ? 'text-brand-600' : 'text-text-primary'}`}>
               {format(day, 'M/d')}
@@ -159,11 +159,11 @@ export default function ShiftCalendar({
                   return (
                     <div
                       key={`tmpl-${idx}`}
-                      className="absolute inset-x-1 rounded bg-indigo-50 border border-indigo-200 pointer-events-none z-0 flex items-center justify-center overflow-hidden"
+                      className="absolute inset-x-1 rounded bg-indigo-500/15 border border-indigo-500/30 pointer-events-none z-0 flex items-center justify-center overflow-hidden"
                       style={getShiftStyle(start, end)}
                     >
                       <div className="w-full text-center px-0.5">
-                        <div className="text-[10px] text-indigo-900 leading-tight break-words font-normal">
+                        <div className="text-[10px] text-indigo-300 leading-tight break-words font-normal">
                           {surname}
                         </div>
                         {/* 
@@ -186,14 +186,14 @@ export default function ShiftCalendar({
                       key={shift.id}
                       className={`absolute inset-x-1 rounded border cursor-pointer z-10 shadow-sm transition-colors overflow-hidden flex items-center justify-center
                         ${isSelected
-                          ? 'bg-orange-100 border-orange-400 hover:bg-orange-200 ring-2 ring-orange-400 ring-opacity-50'
-                          : 'bg-indigo-100 border-indigo-300 hover:bg-indigo-200'
+                          ? 'bg-orange-500/20 border-orange-400 hover:bg-orange-500/30 ring-2 ring-orange-400 ring-opacity-50'
+                          : 'bg-indigo-500/15 border-indigo-500/40 hover:bg-indigo-500/25'
                         }`}
                       style={getShiftStyle(new Date(shift.start_time), new Date(shift.end_time))}
                       onClick={(e) => handleShiftClick(e, shift)}
                     >
                       <div className="w-full px-0.5 text-center">
-                        <span className={`relative z-50 text-[10px] leading-tight break-words block ${isSelected ? 'text-orange-900 font-normal' : 'text-indigo-900'}`}>
+                        <span className={`relative z-50 text-[10px] leading-tight break-words block ${isSelected ? 'text-orange-300 font-normal' : 'text-indigo-300'}`}>
                           {surname}
                         </span>
                       </div>
@@ -332,7 +332,7 @@ function ShiftEditModal({ shift, isOpen, onClose, onSave, onDelete }: {
         <div className="flex justify-between">
           <button
             onClick={handleDelete}
-            className="px-3 py-2 text-red-600 text-sm hover:bg-red-50 rounded"
+            className="px-3 py-2 text-red-400 text-sm hover:bg-red-500/25 rounded"
             disabled={loading}
           >
             削除
