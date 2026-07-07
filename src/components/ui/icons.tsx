@@ -57,6 +57,7 @@ import {
     ArchiveBoxIcon,
     HeartIcon,
     Bars3BottomRightIcon,
+    ScaleIcon,
 } from '@heroicons/react/24/outline'
 
 // N-3: 頻出上位のアイコン(戻る矢印・開閉シェブロン・閉じる・カレンダー等)をまず統一する。
@@ -122,6 +123,7 @@ const ICONS = {
     archiveBox: ArchiveBoxIcon,
     heart: HeartIcon,
     listMenu: Bars3BottomRightIcon,
+    scale: ScaleIcon,
 } as const
 
 export type IconName = keyof typeof ICONS
