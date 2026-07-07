@@ -822,6 +822,24 @@ R-5で合意した「棚卸しは即時実施」を本PRの時点で実行した
 
 これらの残数はPR-Q2（ベース色の黒転換・機械置換）およびPR-R2（Icon未導入ファイルの一括置換）でゼロ化する対象として、そのままバックログ数値に用いる。
 
+### R-9. PR-R2実施記録（Icon未導入ファイル一括置換の実施結果）
+
+R-5で確定した「Q2直後にIcon未導入ファイルを一括置換」を実施。棚卸し時点で34ファイル(手作業grepでR-7時点の36から再カウント)の生SVGをIconコンポーネントへ置換し、対応するアイコンが未登録だった約30種類を`icons.tsx`に追加登録した(trash/chartBar/star/shieldCheck/menu/user/userCircle/refresh/logout/xCircle/exclamationCircle/camera/photo/currencyYen/userGroup/userPlus/ellipsisVertical/funnel/share/flag/mapPin/phone/listBullet/squares2x2/bolt/megaphone/home/checkCircle/informationCircle/documentText/creditCard/archiveBox/heart/listMenu/scale/noSymbol/bookOpen/upload/tableCells/water/moon/download)。
+
+複数のraw icon propを受け取っていた既存の共通ラッパー(`client/[token]/page.tsx`のNavBtn、`BottomNavigation.tsx`のnavItems、`TrackingModal.tsx`のタブ配列、`InputTab.tsx`のEditableLogItem)は、`icon: React.ReactNode`から`iconName: IconName`へシグネチャを変更し、内部で`<Icon name={iconName} />`を呼ぶ形に統一した(呼び出し側の可読性も向上)。
+
+**意図的に置換しなかったもの(2件)**:
+- `InputTab.tsx`の保存ボタン内アニメーションスピナー(circle+path、animate-spin): 静的アイコンではなくローディングアニメーションのため、heroicons outlineの固定strokeWidthモデルに乗らない。N-3のIcon統一方針はアイコンの絵柄統一が目的であり、アニメーション実装まで対象にしていないため対象外とした
+- 各所のモーダル背後の暗転スクリム・ブランドグラデーションヒーローカード内の白い装飾円/ボタン(PR-Q2のQ-8で既に対象外と記録済み): これらはアイコンではなく背景演出のため無関係
+
+**実施後の数値**(`src/`配下、grep実測):
+
+- Iconラッパー導入済み: 44ファイル(R-7時点の11から+33)
+- 生SVGが残るファイル: 1件(上記の意図的な例外のみ)
+- 参考: PR-Q2由来の残数もあわせて再計測 — `bg-white` 3件(いずれもブランドグラデーション上の装飾)、`text-gray-*`/`border-gray-*` 0件、`bg-gray-*` 7件(いずれもモーダルスクリム)
+
+tsc --noEmit / eslint(変更ファイル全体)ともにエラーなし(既存警告のみ、本PR起因の新規warning無し)。
+
 ---
 
 ## C. 決定サマリー（1画面版）

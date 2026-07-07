@@ -60,6 +60,11 @@ import {
     ScaleIcon,
     NoSymbolIcon,
     BookOpenIcon,
+    ArrowUpTrayIcon,
+    ArrowDownTrayIcon,
+    TableCellsIcon,
+    BeakerIcon,
+    MoonIcon,
 } from '@heroicons/react/24/outline'
 
 // N-3: 頻出上位のアイコン(戻る矢印・開閉シェブロン・閉じる・カレンダー等)をまず統一する。
@@ -128,6 +133,11 @@ const ICONS = {
     scale: ScaleIcon,
     noSymbol: NoSymbolIcon,
     bookOpen: BookOpenIcon,
+    upload: ArrowUpTrayIcon,
+    download: ArrowDownTrayIcon,
+    tableCells: TableCellsIcon,
+    water: BeakerIcon,
+    moon: MoonIcon,
 } as const
 
 export type IconName = keyof typeof ICONS

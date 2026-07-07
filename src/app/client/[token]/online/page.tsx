@@ -153,9 +153,7 @@ function LessonCard({ lesson, onJoin }: { lesson: OnlineLesson; onJoin: (url: st
                             : 'bg-surface-overlay text-text-muted cursor-not-allowed'
                             }`}
                     >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.069A1 1 0 0121 8.845v6.309a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                        </svg>
+                        <Icon name="video" size={16} />
                         <span>参加する</span>
                     </button>
                 </div>
@@ -253,9 +251,7 @@ export default function OnlineLessonPage() {
                         <div className="flex items-center justify-between">
                             <div className="flex items-center space-x-3">
                                 <div className="w-10 h-10 bg-surface-raised rounded-xl flex items-center justify-center flex-shrink-0">
-                                    <svg className="w-6 h-6 text-brand-600" viewBox="0 0 24 24" fill="currentColor">
-                                        <path d="M15 10l4.553-2.069A1 1 0 0121 8.845v6.309a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                    </svg>
+                                    <Icon name="video" size={24} className="text-brand-600" />
                                 </div>
                                 <div>
                                     <p className="text-sm font-normal">アプリのダウンロードが必要です</p>
@@ -276,9 +272,7 @@ export default function OnlineLessonPage() {
                                     className="text-brand-200 hover:text-white ml-1"
                                     aria-label="閉じる"
                                 >
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
+                                    <Icon name="close" size={20} />
                                 </button>
                             </div>
                         </div>
@@ -290,9 +284,7 @@ export default function OnlineLessonPage() {
                 {error ? (
                     <div className="text-center py-16">
                         <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
+                            <Icon name="exclamationCircle" size={32} className="text-red-500" />
                         </div>
                         <p className="text-text-secondary font-normal">{error}</p>
                         <button
@@ -305,9 +297,7 @@ export default function OnlineLessonPage() {
                 ) : lessons.length === 0 ? (
                     <div className="text-center py-16">
                         <div className="w-24 h-24 bg-brand-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                            <svg className="w-12 h-12 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.069A1 1 0 0121 8.845v6.309a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                            </svg>
+                            <Icon name="video" size={48} className="text-brand-400" />
                         </div>
                         <h2 className="text-xl font-normal text-text-secondary mb-2">現在準備中です</h2>
                         <p className="text-text-secondary text-sm">オンラインレッスンの詳細は<br />もうしばらくお待ちください</p>
@@ -346,9 +336,7 @@ export default function OnlineLessonPage() {
                                         rel="noopener noreferrer"
                                         className="mt-2 flex items-center justify-center w-full py-3 bg-brand-600 text-white rounded-xl font-normal text-sm space-x-2 hover:bg-brand-700 transition-colors"
                                     >
-                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-                                        </svg>
+                                        <Icon name="download" size={20} />
                                         <span>App StoreでGoogle Meetをダウンロード</span>
                                     </a>
                                 )}

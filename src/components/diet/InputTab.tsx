@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import GoalModal from './GoalModal'
 import Card from '@/components/ui/Card'
+import Icon, { type IconName } from '@/components/ui/icons'
 
 interface InputTabProps {
     userId: string;
@@ -412,7 +413,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                                     onClick={() => fileInputRef.current?.click()}
                                     className="text-xs font-normal text-brand-600 px-3 py-1.5 bg-brand-50 rounded-full hover:bg-brand-100 transition-colors flex items-center gap-2"
                                 >
-                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                                    <Icon name="upload" size={12} />
                                     写真を再アップロード
                                 </button>
                             </div>
@@ -437,10 +438,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                         <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 bg-white bg-opacity-10 rounded-full group-hover:scale-150 transition-transform duration-700"></div>
                         <div className="relative z-10 flex flex-col items-center">
                             <div className="w-16 h-16 bg-white bg-opacity-20 rounded-2xl flex items-center justify-center mb-4">
-                                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812-1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                                </svg>
+                                <Icon name="camera" size={32} className="text-white" />
                             </div>
                             <h2 className="text-lg font-normal mb-1">食事写真を解析</h2>
                             <p className="text-brand-100 text-xs mb-6 text-center opacity-80">スクリーンショットを読み取って栄養バランスを一律入力します</p>
@@ -474,11 +472,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                     <div className="flex items-center justify-between p-4 bg-surface-base rounded-2xl mb-4 group focus-within:ring-2 focus-within:ring-brand-100 transition-all">
                         <div className="flex items-center space-x-4">
                             <div className="w-10 h-10 bg-surface-raised rounded-xl flex items-center justify-center shadow-sm text-brand-500">
-                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <rect x="5" y="5" width="14" height="14" rx="2" strokeWidth={2} />
-                                    <circle cx="12" cy="12" r="3" strokeWidth={2} />
-                                    <path d="M12 12l1.5-1.5" strokeWidth={2} strokeLinecap="round" />
-                                </svg>
+                                <Icon name="scale" size={24} />
                             </div>
                             <span className="text-sm font-normal text-text-secondary">現在の体重</span>
                         </div>
@@ -502,7 +496,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
 
                     {visibleItems.water && (
                         <EditableLogItem
-                            icon={<path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />}
+                            iconName="water"
                             label="水分"
                             value={water}
                             target={target?.water_target != null ? String(target.water_target) : undefined}
@@ -518,7 +512,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                     )}
                     {visibleItems.steps && (
                         <EditableLogItem
-                            icon={<path d="M13 4v16M17 4v16M7 4v16M11 4v16" />}
+                            iconName="chartBar"
                             label="歩数"
                             value={steps ?? '0'}
                             target={target?.step_target != null ? String(target.step_target) : undefined}
@@ -534,7 +528,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                     )}
                     {visibleItems.sleep && (
                         <EditableLogItem
-                            icon={<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />}
+                            iconName="moon"
                             label="睡眠"
                             value={sleep ?? '0'}
                             target={target?.sleep_target != null ? String(target.sleep_target) : undefined}
@@ -553,9 +547,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                             <div className="flex items-center justify-between p-3 border border-border-subtle rounded-2xl hover:bg-surface-base transition-colors">
                                 <div className="flex items-center space-x-3">
                                     <div className="w-10 h-10 bg-orange-50 text-orange-500 rounded-xl flex items-center justify-center shadow-sm">
-                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18M7 6v12M17 6v12" />
-                                        </svg>
+                                        <Icon name="tableCells" size={20} />
                                     </div>
                                     <span className="text-sm font-normal text-text-secondary">筋トレ</span>
                                 </div>
@@ -615,12 +607,12 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                                     >
                                         {habits[goal] === 1 ? (
                                             <>
-                                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M5 13l4 4L19 7" /></svg>
+                                                <Icon name="check" size={12} />
                                                 達成
                                             </>
                                         ) : (
                                             <>
-                                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M6 18L18 6M6 6l12 12" /></svg>
+                                                <Icon name="close" size={12} />
                                                 未達成
                                             </>
                                         )}
@@ -688,9 +680,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                             }}
                             className="text-[10px] font-normal text-text-muted hover:text-text-muted transition-colors flex items-center gap-1 uppercase tracking-widest"
                         >
-                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
+                            <Icon name="trash" size={12} />
                             入力をリセット
                         </button>
                     </div>
@@ -726,8 +716,8 @@ function NutrientItem({ label, value, target, unit, onChange }: { label: string,
     )
 }
 
-function EditableLogItem({ icon, label, value, target, unit, iconBg, iconColor, step, isDefault, onChange }: {
-    icon: React.ReactNode,
+function EditableLogItem({ iconName, label, value, target, unit, iconBg, iconColor, step, isDefault, onChange }: {
+    iconName: IconName,
     label: string,
     value: string,
     target?: string,
@@ -750,9 +740,7 @@ function EditableLogItem({ icon, label, value, target, unit, iconBg, iconColor, 
         <div className="flex items-center justify-between p-3 border border-border-subtle rounded-2xl hover:bg-surface-base transition-colors">
             <div className="flex items-center space-x-3">
                 <div className={`w-10 h-10 ${iconBg} ${iconColor} rounded-xl flex items-center justify-center shadow-sm`}>
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        {icon}
-                    </svg>
+                    <Icon name={iconName} size={20} />
                 </div>
                 <span className="text-sm font-normal text-text-secondary">{label}</span>
             </div>
@@ -762,7 +750,7 @@ function EditableLogItem({ icon, label, value, target, unit, iconBg, iconColor, 
                         onClick={() => handleAdjust('down')}
                         className="p-1.5 hover:bg-surface-raised rounded-lg transition-all text-text-muted hover:text-brand-500"
                     >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg>
+                        <Icon name="chevronDown" size={16} />
                     </button>
                     <div className="flex items-baseline px-2 min-w-[90px] justify-center">
                         <input
@@ -783,7 +771,7 @@ function EditableLogItem({ icon, label, value, target, unit, iconBg, iconColor, 
                         onClick={() => handleAdjust('up')}
                         className="p-1.5 hover:bg-surface-raised rounded-lg transition-all text-text-muted hover:text-brand-500"
                     >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 15l7-7 7 7" /></svg>
+                        <Icon name="chevronUp" size={16} />
                     </button>
                 </div>
                 <span className="text-[10px] font-normal text-text-muted w-4">{unit}</span>

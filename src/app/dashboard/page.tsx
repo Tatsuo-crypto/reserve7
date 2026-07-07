@@ -102,7 +102,7 @@ const AdminDashboard = () => {
                           </span>
                         </div>
                       </div>
-                      <svg className="w-5 h-5 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" /></svg>
+                      <Icon name="chevronRight" size={20} className="text-text-muted" />
                     </Link>
                   ))
                 )}
