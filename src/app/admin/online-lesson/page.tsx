@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Icon from '@/components/ui/icons'
 
 const DAYS_JA = ['日', '月', '火', '水', '木', '金', '土']
 const DAYS_EN = ['日曜', '月曜', '火曜', '水曜', '木曜', '金曜', '土曜']
@@ -397,18 +398,14 @@ export default function AdminOnlineLessonPage() {
                                                                 }}
                                                                 className="hover:bg-brand-100 p-0.5 rounded transition-colors text-brand-500 hover:text-brand-700"
                                                             >
-                                                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                                                </svg>
+                                                                <Icon name="close" size={12} />
                                                             </button>
                                                         </span>
                                                     ))
                                                 )}
                                             </div>
                                             <div className="text-text-muted ml-2 flex-shrink-0">
-                                                <svg className={`w-4 h-4 transform transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                                </svg>
+                                                <Icon name="chevronDown" size={16} className={`transform transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''}`} />
                                             </div>
                                         </div>
 
@@ -472,9 +469,7 @@ export default function AdminOnlineLessonPage() {
                                         {deletingId === editingId ? (
                                             <div className="animate-spin h-5 w-5 border-b-2 border-red-600 rounded-full" />
                                         ) : (
-                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                            </svg>
+                                            <Icon name="trash" size={20} />
                                         )}
                                         <span className="sm:hidden">削除する</span>
                                     </button>
@@ -514,9 +509,7 @@ export default function AdminOnlineLessonPage() {
                 {/* Lesson List */}
                 {lessons.length === 0 && editingId === null ? (
                     <div className="text-center py-16 text-text-muted">
-                        <svg className="w-16 h-16 mx-auto mb-4 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.069A1 1 0 0121 8.845v6.309a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                        </svg>
+                        <Icon name="video" size={64} className="mx-auto mb-4 text-text-muted" />
                         <p className="text-sm font-normal">レッスンがありません</p>
                         <p className="text-xs mt-1">「追加」ボタンからレッスンを登録してください</p>
                     </div>
@@ -545,7 +538,7 @@ export default function AdminOnlineLessonPage() {
                                         )}
                                         {lesson.url_expires_at && new Date(lesson.url_expires_at).getTime() - new Date().getTime() <= 7 * 24 * 60 * 60 * 1000 && (
                                             <div className="mt-3 p-2 bg-red-50 border border-red-200 rounded-lg text-red-700 text-xs flex items-center">
-                                                <svg className="w-4 h-4 mr-1.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                                                <Icon name="warning" size={16} className="mr-1.5 flex-shrink-0" />
                                                 URLの有効期限が近づいています（{lesson.url_expires_at.substring(0, 10)}）
                                             </div>
                                         )}
@@ -560,9 +553,7 @@ export default function AdminOnlineLessonPage() {
                                 onClick={() => startEdit()}
                                 className="w-full h-[72px] bg-surface-raised border-2 border-dashed border-border-strong rounded-2xl flex items-center justify-center text-text-muted hover:text-brand-600 hover:border-brand-300 hover:bg-brand-50 transition-all group"
                             >
-                                <svg className="w-8 h-8 group-hover:scale-110 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                                </svg>
+                                <Icon name="plus" size={32} className="group-hover:scale-110 transition-transform duration-200" />
                             </button>
                         )}
                     </div>
