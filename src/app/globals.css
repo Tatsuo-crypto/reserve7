@@ -26,7 +26,10 @@
     --color-surface-overlay: 39 39 42;    /* zinc-800相当。モーダル・ドロップダウン */
     --color-text-primary: 244 244 245;    /* zinc-100相当 */
     --color-text-secondary: 161 161 170;  /* zinc-400相当 */
-    --color-text-muted: 113 113 122;      /* zinc-500相当 */
+    --color-text-muted: 132 132 140;      /* zinc-500よりわずかに明るいカスタム値。
+      Q-3のAA検証でzinc-500(113 113 122)がzinc-950/zinc-900背景に対し
+      4.5:1を割り込む(4.12/3.67)ことが判明したため、4.5:1を満たす最小限の明度まで
+      引き上げた(5.36/4.78)。text-secondaryとの階調差は維持。 */
     --color-border-subtle: 255 255 255;   /* white、tailwind.config側で/10固定 */
     --color-border-strong: 255 255 255;   /* white、tailwind.config側で/20固定 */
   }

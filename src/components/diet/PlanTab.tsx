@@ -87,8 +87,8 @@ export default function PlanTab({ token }: PlanTabProps) {
                         </div>
                         <p className="text-[10px] font-normal text-text-muted uppercase tracking-widest">目標数値の詳細</p>
                     </div>
-                    <div className="px-4 py-1.5 bg-brand-50 rounded-full">
-                        <span className="text-[10px] font-normal text-brand-600">最終更新: {currentGoal?.date}</span>
+                    <div className="px-4 py-1.5 bg-brand-500/15 rounded-full">
+                        <span className="text-[10px] font-normal text-brand-300">最終更新: {currentGoal?.date}</span>
                     </div>
                 </div>
 
@@ -142,17 +142,17 @@ export default function PlanTab({ token }: PlanTabProps) {
                 <div className="h-[300px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
                         <ComposedChart data={planHistory} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#3f3f46" />
                             <XAxis 
                                 dataKey="displayDate" 
                                 axisLine={false} 
                                 tickLine={false} 
-                                tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} 
+                                tick={{ fontSize: 10, fontWeight: 700, fill: '#a1a1aa' }} 
                             />
                             <YAxis 
                                 axisLine={false} 
                                 tickLine={false} 
-                                tick={{ fontSize: 10, fontWeight: 700, fill: '#cbd5e1' }} 
+                                tick={{ fontSize: 10, fontWeight: 700, fill: '#a1a1aa' }} 
                             />
                             <Tooltip 
                                 contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', padding: '12px' }}

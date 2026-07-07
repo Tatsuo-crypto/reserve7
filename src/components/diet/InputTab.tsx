@@ -352,7 +352,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                         />
                         <button
                             onClick={() => setSelectedDate(new Date().toISOString().split('T')[0])}
-                            className={`px-4 py-2 rounded-xl text-xs font-normal transition-all ${selectedDate === new Date().toISOString().split('T')[0] ? 'bg-brand-600 text-white shadow-md' : 'bg-surface-overlay text-text-secondary'}`}
+                            className={`px-4 py-2 rounded-xl text-xs font-normal transition-all ${selectedDate === new Date().toISOString().split('T')[0] ? 'bg-brand-700 text-white shadow-md' : 'bg-surface-overlay text-text-secondary'}`}
                         >
                             今日
                         </button>
@@ -632,7 +632,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                     <button
                         onClick={handleAllSave}
                         disabled={saving}
-                        className="w-full py-4 rounded-2xl font-normal shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 text-lg bg-brand-600 text-white hover:bg-brand-700"
+                        className="w-full py-4 rounded-2xl font-normal shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 text-lg bg-brand-700 text-white hover:bg-brand-800"
                     >
                         {saving ? (
                             <>

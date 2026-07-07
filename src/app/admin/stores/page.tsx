@@ -135,7 +135,7 @@ export default function StoresPage() {
 
       {/* Action Button */}
       <div className="flex justify-center mb-6">
-        <button className="inline-flex items-center px-4 py-2 rounded-md bg-brand-600 text-white hover:bg-brand-700" onClick={openCreate}>新規店舗</button>
+        <button className="inline-flex items-center px-4 py-2 rounded-md bg-brand-700 text-white hover:bg-brand-800" onClick={openCreate}>新規店舗</button>
       </div>
 
       {/* Filters (temporarily hidden) */}
@@ -244,7 +244,7 @@ export default function StoresPage() {
             </div>
             <div className="mt-6 flex justify-end gap-3">
               <button className="px-3 py-2 text-sm rounded-md border" onClick={() => setModalOpen(false)}>キャンセル</button>
-              <button className="px-3 py-2 text-sm rounded-md bg-brand-600 text-white hover:bg-brand-700" onClick={saveStore}>保存</button>
+              <button className="px-3 py-2 text-sm rounded-md bg-brand-700 text-white hover:bg-brand-800" onClick={saveStore}>保存</button>
             </div>
           </div>
         </div>

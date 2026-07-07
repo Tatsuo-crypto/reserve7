@@ -263,7 +263,7 @@ function MembersPageContent() {
 
           <Link
             href="/admin/members/new"
-            className="px-5 py-2.5 bg-brand-600 text-white text-[10px] font-normal rounded-2xl hover:bg-brand-700 transition-all shadow-md flex items-center gap-2 uppercase tracking-widest"
+            className="px-5 py-2.5 bg-brand-700 text-white text-[10px] font-normal rounded-2xl hover:bg-brand-800 transition-all shadow-md flex items-center gap-2 uppercase tracking-widest"
           >
             <Icon name="plus" size={16} />
             新規登録

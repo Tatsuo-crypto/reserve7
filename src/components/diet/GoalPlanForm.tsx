@@ -153,16 +153,19 @@ export default function GoalPlanForm({
 function AdminStatCard({ label, value, unit, color, onIncrement, onDecrement }: {
     label: string, value: number | null, unit: string, color: string, onIncrement: () => void, onDecrement: () => void
 }) {
+    // Q-3: bg-*-50(ほぼ白)+border-*-100(不透明)というライトモードの配色が黒背景の
+    // まま残っており、カードが白く浮いて見える不具合だったため、ダークバッジパターン
+    // (bg-*-500/15 + border-*-500/25 + 明るめのtext-*-300)に統一する。
     const colorMap: any = {
-        amber: 'text-amber-500 bg-amber-50 border-amber-100',
-        blue: 'text-blue-500 bg-blue-50 border-blue-100',
-        purple: 'text-purple-500 bg-purple-50 border-purple-100',
-        teal: 'text-teal-500 bg-teal-50 border-teal-100',
+        amber: 'text-amber-300 bg-amber-500/15 border-amber-500/25',
+        blue: 'text-blue-300 bg-blue-500/15 border-blue-500/25',
+        purple: 'text-purple-300 bg-purple-500/15 border-purple-500/25',
+        teal: 'text-teal-300 bg-teal-500/15 border-teal-500/25',
         gray: 'text-text-secondary bg-surface-base border-border-subtle',
-        sky: 'text-sky-500 bg-sky-50 border-sky-100',
-        cyan: 'text-cyan-500 bg-cyan-50 border-cyan-100',
-        orange: 'text-orange-500 bg-orange-50 border-orange-100',
-        violet: 'text-violet-500 bg-violet-50 border-violet-100'
+        sky: 'text-sky-300 bg-sky-500/15 border-sky-500/25',
+        cyan: 'text-cyan-300 bg-cyan-500/15 border-cyan-500/25',
+        orange: 'text-orange-300 bg-orange-500/15 border-orange-500/25',
+        violet: 'text-violet-300 bg-violet-500/15 border-violet-500/25'
     }
     const style = colorMap[color] || colorMap.gray;
     const [baseColor, bgColor, borderColor] = style.split(' ');

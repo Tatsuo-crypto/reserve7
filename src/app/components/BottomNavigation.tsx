@@ -51,7 +51,7 @@ const BottomNavigationContent = () => {
               <div
                 className={`flex items-center justify-center transition-all duration-300 ${
                   item.isCenter
-                    ? 'w-14 h-14 bg-brand-600 text-white rounded-full shadow-lg -translate-y-4 border-4 border-surface-raised mb-1'
+                    ? 'w-14 h-14 bg-brand-700 text-white rounded-full shadow-lg -translate-y-4 border-4 border-surface-raised mb-1'
                     : isActive
                     ? 'w-10 h-10 text-brand-600'
                     : 'w-10 h-10 text-text-muted'

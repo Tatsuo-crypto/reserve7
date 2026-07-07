@@ -54,7 +54,7 @@ function ErrorContent() {
         <div className="text-center">
           <Link 
             href="/login" 
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-normal rounded-md text-white bg-brand-600 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500"
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-normal rounded-md text-white bg-brand-700 hover:bg-brand-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500"
           >
             ログインページに戻る
           </Link>

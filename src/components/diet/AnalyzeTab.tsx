@@ -268,17 +268,17 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
     const commonXAxis = (
         <XAxis 
             dataKey="displayDate" 
-            axisLine={{ stroke: '#000000', strokeWidth: 0.3 }} 
+            axisLine={{ stroke: '#3f3f46', strokeWidth: 0.5 }} 
             tickLine={false} 
-            tick={{ fontSize: 9, fontWeight: 700, fill: '#94a3b8' }} 
+            tick={{ fontSize: 9, fontWeight: 700, fill: '#a1a1aa' }} 
             interval="preserveStartEnd"
             minTickGap={20}
         />
     )
     // Fixed width YAxis ensures all charts have the same plotting area width
-    const commonYAxis = <YAxis width={40} axisLine={false} tickLine={false} tick={{ fontSize: 9, fontWeight: 700, fill: '#cbd5e1' }} />
+    const commonYAxis = <YAxis width={40} axisLine={false} tickLine={false} tick={{ fontSize: 9, fontWeight: 700, fill: '#a1a1aa' }} />
     // Unified Tooltip cursor (Line) for all chart types
-    const commonTooltip = <Tooltip cursor={{ stroke: '#cbd5e1', strokeWidth: 1 }} contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', padding: '12px', fontSize: '10px' }} />
+    const commonTooltip = <Tooltip cursor={{ stroke: '#52525b', strokeWidth: 1 }} contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', padding: '12px', fontSize: '10px' }} />
 
     return (
         <div className="space-y-6 pb-24">
@@ -345,9 +345,9 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
             <AnalysisChartCard title="体重推移" color="blue">
                 <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={analysisData} syncId="analyzeSync" margin={chartMargin}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#3f3f46" />
                         {commonXAxis}
-                        <YAxis width={40} axisLine={false} tickLine={false} domain={['dataMin - 1', 'dataMax + 1']} tick={{ fontSize: 9, fontWeight: 700, fill: '#cbd5e1' }} />
+                        <YAxis width={40} axisLine={false} tickLine={false} domain={['dataMin - 1', 'dataMax + 1']} tick={{ fontSize: 9, fontWeight: 700, fill: '#a1a1aa' }} />
                         {commonTooltip}
                         <Line type="monotone" dataKey="weight" name="体重" stroke="#3b82f6" strokeWidth={4} dot={!showAvg ? { r: 4, strokeWidth: 2, fill: '#fff' } : false} connectNulls />
                     </LineChart>
@@ -358,13 +358,13 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
             <AnalysisChartCard title="摂取カロリー" color="purple">
                 <ResponsiveContainer width="100%" height="100%">
                     <ComposedChart data={analysisData} syncId="analyzeSync" margin={chartMargin}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#3f3f46" />
                         {commonXAxis}
                         <YAxis 
                             width={40} 
                             axisLine={false} 
                             tickLine={false} 
-                            tick={{ fontSize: 9, fontWeight: 700, fill: '#cbd5e1' }}
+                            tick={{ fontSize: 9, fontWeight: 700, fill: '#a1a1aa' }}
                             domain={[0, (dataMax: number) => Math.ceil(Math.max(dataMax, analysisData[analysisData.length - 1]?.target_calories || 0) * 1.2)]}
                         />
                         {commonTooltip}
@@ -379,13 +379,13 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
                 <AnalysisChartCard title="タンパク質 (P)" color="amber">
                     <ResponsiveContainer width="100%" height="100%">
                         <ComposedChart data={analysisData} syncId="analyzeSync" margin={chartMargin}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#3f3f46" />
                             {commonXAxis}
                             <YAxis 
                                 width={40} 
                                 axisLine={false} 
                                 tickLine={false} 
-                                tick={{ fontSize: 9, fontWeight: 700, fill: '#cbd5e1' }}
+                                tick={{ fontSize: 9, fontWeight: 700, fill: '#a1a1aa' }}
                                 domain={[0, (dataMax: number) => Math.ceil(Math.max(dataMax, analysisData[analysisData.length - 1]?.target_protein || 0) * 1.2)]}
                             />
                             {commonTooltip}
@@ -399,13 +399,13 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
                 <AnalysisChartCard title="脂質 (F)" color="purple">
                     <ResponsiveContainer width="100%" height="100%">
                         <ComposedChart data={analysisData} syncId="analyzeSync" margin={chartMargin}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#3f3f46" />
                             {commonXAxis}
                             <YAxis
                                 width={40}
                                 axisLine={false}
                                 tickLine={false}
-                                tick={{ fontSize: 9, fontWeight: 700, fill: '#cbd5e1' }}
+                                tick={{ fontSize: 9, fontWeight: 700, fill: '#a1a1aa' }}
                                 domain={[0, (dataMax: number) => Math.ceil(Math.max(dataMax, analysisData[analysisData.length - 1]?.target_fat || 0) * 1.2)]}
                             />
                             {commonTooltip}
@@ -419,13 +419,13 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
                 <AnalysisChartCard title="炭水化物 (C)" color="blue">
                     <ResponsiveContainer width="100%" height="100%">
                         <ComposedChart data={analysisData} syncId="analyzeSync" margin={chartMargin}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#3f3f46" />
                             {commonXAxis}
                             <YAxis 
                                 width={40} 
                                 axisLine={false} 
                                 tickLine={false} 
-                                tick={{ fontSize: 9, fontWeight: 700, fill: '#cbd5e1' }}
+                                tick={{ fontSize: 9, fontWeight: 700, fill: '#a1a1aa' }}
                                 domain={[0, (dataMax: number) => Math.ceil(Math.max(dataMax, analysisData[analysisData.length - 1]?.target_carbs || 0) * 1.2)]}
                             />
                             {commonTooltip}
@@ -439,13 +439,13 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
                 <AnalysisChartCard title="糖質" color="sky">
                     <ResponsiveContainer width="100%" height="100%">
                         <ComposedChart data={analysisData} syncId="analyzeSync" margin={chartMargin}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#3f3f46" />
                             {commonXAxis}
                             <YAxis 
                                 width={40} 
                                 axisLine={false} 
                                 tickLine={false} 
-                                tick={{ fontSize: 9, fontWeight: 700, fill: '#cbd5e1' }}
+                                tick={{ fontSize: 9, fontWeight: 700, fill: '#a1a1aa' }}
                                 domain={[0, (dataMax: number) => Math.ceil(Math.max(dataMax, analysisData[analysisData.length - 1]?.target_sugar || 0) * 1.2)]}
                             />
                             {commonTooltip}
@@ -459,13 +459,13 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
                 <AnalysisChartCard title="食物繊維" color="teal">
                     <ResponsiveContainer width="100%" height="100%">
                         <ComposedChart data={analysisData} syncId="analyzeSync" margin={chartMargin}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#3f3f46" />
                             {commonXAxis}
                             <YAxis 
                                 width={40} 
                                 axisLine={false} 
                                 tickLine={false} 
-                                tick={{ fontSize: 9, fontWeight: 700, fill: '#cbd5e1' }}
+                                tick={{ fontSize: 9, fontWeight: 700, fill: '#a1a1aa' }}
                                 domain={[0, (dataMax: number) => Math.ceil(Math.max(dataMax, analysisData[analysisData.length - 1]?.target_fiber || 0) * 1.2)]}
                             />
                             {commonTooltip}
@@ -479,13 +479,13 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
                 <AnalysisChartCard title="塩分" color="gray">
                     <ResponsiveContainer width="100%" height="100%">
                         <ComposedChart data={analysisData} syncId="analyzeSync" margin={chartMargin}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#3f3f46" />
                             {commonXAxis}
                             <YAxis 
                                 width={40} 
                                 axisLine={false} 
                                 tickLine={false} 
-                                tick={{ fontSize: 9, fontWeight: 700, fill: '#cbd5e1' }}
+                                tick={{ fontSize: 9, fontWeight: 700, fill: '#a1a1aa' }}
                                 domain={[0, (dataMax: number) => Math.ceil(Math.max(dataMax, analysisData[analysisData.length - 1]?.target_salt || 0) * 1.2)]}
                             />
                             {commonTooltip}
@@ -500,13 +500,13 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
             <AnalysisChartCard title="歩数" color="cyan">
                 <ResponsiveContainer width="100%" height="100%">
                     <ComposedChart data={analysisData} syncId="analyzeSync" margin={chartMargin}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#3f3f46" />
                         {commonXAxis}
                         <YAxis
                             width={40}
                             axisLine={false}
                             tickLine={false}
-                            tick={{ fontSize: 9, fontWeight: 700, fill: '#cbd5e1' }}
+                            tick={{ fontSize: 9, fontWeight: 700, fill: '#a1a1aa' }}
                             domain={[0, (dataMax: number) => Math.ceil(Math.max(dataMax, analysisData[analysisData.length - 1]?.target_steps || 8000) * 1.2)]}
                         />
                         {commonTooltip}
@@ -521,13 +521,13 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
                 <AnalysisChartCard title="睡眠時間" color="violet">
                     <ResponsiveContainer width="100%" height="100%">
                         <ComposedChart data={analysisData} syncId="analyzeSync" margin={chartMargin}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#3f3f46" />
                             {commonXAxis}
                             <YAxis 
                                 width={40} 
                                 axisLine={false} 
                                 tickLine={false} 
-                                tick={{ fontSize: 9, fontWeight: 700, fill: '#cbd5e1' }}
+                                tick={{ fontSize: 9, fontWeight: 700, fill: '#a1a1aa' }}
                                 domain={[0, (dataMax: number) => Math.ceil(Math.max(dataMax, analysisData[analysisData.length - 1]?.target_sleep || 8) * 1.2)]}
                             />
                             {commonTooltip}
@@ -541,13 +541,13 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
                 <AnalysisChartCard title="水分摂取量" color="sky">
                     <ResponsiveContainer width="100%" height="100%">
                         <ComposedChart data={analysisData} syncId="analyzeSync" margin={chartMargin}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#3f3f46" />
                             {commonXAxis}
                             <YAxis 
                                 width={40} 
                                 axisLine={false} 
                                 tickLine={false} 
-                                tick={{ fontSize: 9, fontWeight: 700, fill: '#cbd5e1' }}
+                                tick={{ fontSize: 9, fontWeight: 700, fill: '#a1a1aa' }}
                                 domain={[0, (dataMax: number) => Math.ceil(Math.max(dataMax, analysisData[analysisData.length - 1]?.target_water || 2) * 1.2)]}
                             />
                             {commonTooltip}
@@ -656,11 +656,11 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
                         <AnalysisChartCard key={goal} title={`習慣: ${goal}`} color="purple">
                             <ResponsiveContainer width="100%" height="100%">
                                 <ComposedChart data={analysisData} syncId="analyzeSync" margin={chartMargin}>
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#3f3f46" />
                                     {commonXAxis}
                                     {commonYAxis}
                                     <Tooltip 
-                                        cursor={{ stroke: '#cbd5e1', strokeWidth: 1 }}
+                                        cursor={{ stroke: '#52525b', strokeWidth: 1 }}
                                         formatter={(value: any, name: any) => [value === 1 ? '○ 達成' : value === 0 ? '× 未達成' : '-', '状況']}
                                         contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', padding: '12px', fontSize: '10px' }} 
                                     />
@@ -684,13 +684,16 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
 }
 
 function AnalysisChartCard({ title, children, color }: { title: string, children: React.ReactNode, color: string }) {
+    // Q-3: 旧ライトモードの bg-*-50/30 + border-*-100(不透明) は、黒背景では
+    // カード面がグレーに沈む一方で枠線だけ明るく浮いてしまいコントラストが不揃いだったため、
+    // 他画面のダークバッジパターンに揃えて bg-*-500/10 + border-*-500/20 に統一する。
     const colorStyles: Record<string, string> = {
-        blue: 'bg-blue-50/30 border-blue-100',
-        purple: 'bg-purple-50/30 border-purple-100',
-        cyan: 'bg-cyan-50/30 border-cyan-100',
-        violet: 'bg-violet-50/30 border-violet-100',
-        sky: 'bg-sky-50/30 border-sky-100',
-        teal: 'bg-teal-50/30 border-teal-100',
+        blue: 'bg-blue-500/10 border-blue-500/20',
+        purple: 'bg-purple-500/10 border-purple-500/20',
+        cyan: 'bg-cyan-500/10 border-cyan-500/20',
+        violet: 'bg-violet-500/10 border-violet-500/20',
+        sky: 'bg-sky-500/10 border-sky-500/20',
+        teal: 'bg-teal-500/10 border-teal-500/20',
         gray: 'bg-surface-base/50 border-border-subtle',
     }
     return (

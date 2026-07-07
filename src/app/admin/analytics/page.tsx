@@ -216,10 +216,12 @@ export default function AnalyticsPage() {
                     <div className="h-[300px]">
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={salesHistory}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                <XAxis dataKey="month" style={{ fontSize: '12px' }} />
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#3f3f46" />
+                                <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#a1a1aa' }} axisLine={{ stroke: '#3f3f46' }} tickLine={{ stroke: '#3f3f46' }} />
                                 <YAxis
-                                    style={{ fontSize: '12px' }}
+                                    tick={{ fontSize: 12, fill: '#a1a1aa' }}
+                                    axisLine={{ stroke: '#3f3f46' }}
+                                    tickLine={{ stroke: '#3f3f46' }}
                                     tickFormatter={(value) => `¥${value / 10000}万`}
                                 />
                                 <Tooltip formatter={(value: any) => `¥${Number(value).toLocaleString()}`} />
@@ -241,9 +243,9 @@ export default function AnalyticsPage() {
                                 data={memberHistory} 
                                 className="outline-none focus:outline-none"
                             >
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                <XAxis dataKey="month" style={{ fontSize: '12px' }} />
-                                <YAxis style={{ fontSize: '12px' }} />
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#3f3f46" />
+                                <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#a1a1aa' }} axisLine={{ stroke: '#3f3f46' }} tickLine={{ stroke: '#3f3f46' }} />
+                                <YAxis tick={{ fontSize: 12, fill: '#a1a1aa' }} axisLine={{ stroke: '#3f3f46' }} tickLine={{ stroke: '#3f3f46' }} />
                                 <Tooltip formatter={(value: any, name: any) => [`${value}名`, name]} />
                                 <Legend />
                                 <Area type="monotone" dataKey="active" name="在籍会員" fill="#818cf8" stroke="#4f46e5" fillOpacity={0.1} />

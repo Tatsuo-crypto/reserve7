@@ -172,7 +172,7 @@ export default function TemplateModal({ isOpen, onClose, trainerId, onSave }: Te
           <button
             onClick={handleSave}
             disabled={loading}
-            className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-normal text-white bg-brand-600 hover:bg-brand-700 focus:outline-none disabled:opacity-50"
+            className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-normal text-white bg-brand-700 hover:bg-brand-800 focus:outline-none disabled:opacity-50"
           >
             {loading ? '保存中...' : '設定を保存'}
           </button>

@@ -358,7 +358,7 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
                   : isTraining
                     ? 'bg-orange-500/15 text-orange-300 border border-orange-500/30' // Training = Orange
                     : event.type === 'reservation'
-                      ? 'bg-brand-600 text-white border border-brand-700'  // Regular = Brand orange, white text
+                      ? 'bg-brand-700 text-white border border-brand-800'  // Regular = Brand orange(AA準拠の700), white text
                       : 'bg-surface-overlay text-text-secondary border border-border-strong'  // Blocked = Neutral(視認性を上げた濃さ)
 
               return (
@@ -521,7 +521,7 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
         <div className="px-4 py-1">
           <div className="flex items-center justify-center space-x-6 text-sm">
             <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-brand-600 border border-brand-700 rounded"></div>
+              <div className="w-3 h-3 bg-brand-700 border border-brand-800 rounded"></div>
               <span className="text-text-secondary">予約</span>
             </div>
             <div className="flex items-center space-x-2">

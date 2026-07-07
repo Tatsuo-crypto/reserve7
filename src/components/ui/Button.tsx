@@ -18,7 +18,7 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 // destructiveはQ-4のダークバッジパターン(bg-*-500/15 + text-*-300)に合わせ、
 // hover/disabledも同系の半透明レッドで揃える(黒地での淡色ボタンのコントラスト確保)。
 const VARIANT_CLASSES: Record<Variant, string> = {
-    primary: 'bg-brand-600 text-white hover:bg-brand-700 disabled:bg-brand-300',
+    primary: 'bg-brand-700 text-white hover:bg-brand-800 disabled:bg-brand-300',
     secondary: 'bg-surface-base text-text-secondary border border-border-subtle hover:bg-surface-raised disabled:text-text-muted',
     destructive: 'bg-red-500/15 text-red-300 hover:bg-red-500/25 disabled:text-red-500/40',
     ghost: 'bg-transparent text-text-secondary hover:bg-surface-base hover:text-text-primary disabled:text-text-muted',

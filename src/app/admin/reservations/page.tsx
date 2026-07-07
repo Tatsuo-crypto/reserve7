@@ -400,7 +400,7 @@ function AdminReservationsContent() {
         <div className="mb-6 flex justify-center">
           <Link
             href={trainerToken ? `/admin/reservations/new?trainerToken=${trainerToken}` : '/admin/reservations/new'}
-            className="bg-brand-600 text-white px-4 py-2 rounded-md hover:bg-brand-700 transition-colors"
+            className="bg-brand-700 text-white px-4 py-2 rounded-md hover:bg-brand-800 transition-colors"
           >
             新規予約作成
           </Link>
@@ -536,7 +536,7 @@ function AdminReservationsContent() {
             <p className="text-text-secondary">予約が見つかりません</p>
             <Link
               href={trainerToken ? `/admin/reservations/new?trainerToken=${trainerToken}` : '/admin/reservations/new'}
-              className="mt-4 inline-block bg-brand-600 text-white px-4 py-2 rounded-md hover:bg-brand-700"
+              className="mt-4 inline-block bg-brand-700 text-white px-4 py-2 rounded-md hover:bg-brand-800"
             >
               新規予約を作成
             </Link>
@@ -640,7 +640,7 @@ function AdminReservationsContent() {
                     </button>
                     <button
                       type="submit"
-                      className="px-4 py-2 bg-brand-600 text-white rounded-md hover:bg-brand-700 transition-colors"
+                      className="px-4 py-2 bg-brand-700 text-white rounded-md hover:bg-brand-800 transition-colors"
                     >
                       更新
                     </button>

@@ -117,7 +117,7 @@ export default function GoalModal({ userId, token, onClose, onSave }: GoalModalP
                             <button
                                 onClick={handleSave}
                                 disabled={saving}
-                                className="w-full bg-brand-600 text-white py-4 rounded-xl font-normal shadow-lg shadow-brand-200 active:scale-95 transition-all mt-4"
+                                className="w-full bg-brand-700 text-white py-4 rounded-xl font-normal shadow-lg shadow-brand-200 active:scale-95 transition-all mt-4"
                             >
                                 {saving ? '保存中...' : '目標を更新する'}
                             </button>

@@ -112,7 +112,7 @@ export default function ReservationTab({ token }: ReservationTabProps) {
                                         <button
                                             onClick={() => window.open(lesson.meet_url, '_blank')}
                                             disabled={!status.canJoin}
-                                            className={`w-full py-2.5 rounded-xl text-sm font-normal transition-all ${status.canJoin ? 'bg-brand-600 text-white active:scale-95' : 'bg-surface-overlay text-text-muted'}`}
+                                            className={`w-full py-2.5 rounded-xl text-sm font-normal transition-all ${status.canJoin ? 'bg-brand-700 text-white active:scale-95' : 'bg-surface-overlay text-text-muted'}`}
                                         >
                                             {status.canJoin ? '参加する' : status.label}
                                         </button>

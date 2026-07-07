@@ -426,8 +426,8 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
                 <button
                   className={`px-4 py-2 text-sm rounded-md text-white disabled:opacity-50 ${
                     editingItem.status === 'future'
-                      ? 'bg-brand-600 hover:bg-brand-700'
-                      : 'bg-brand-600 hover:bg-brand-700'
+                      ? 'bg-brand-600 hover:bg-brand-800'
+                      : 'bg-brand-600 hover:bg-brand-800'
                   }`}
                   onClick={handleSaveMonth}
                   disabled={saving}

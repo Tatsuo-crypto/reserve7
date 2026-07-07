@@ -803,7 +803,7 @@ function DietPlanPageContent() {
                                                         <button
                                                             key={level.value}
                                                             onClick={() => setAragonInput(prev => ({ ...prev, neat: level.value }))}
-                                                            className={`text-xs py-3 px-2 rounded-xl transition-colors ${aragonInput.neat === level.value ? 'bg-brand-600 text-white' : 'bg-surface-base text-text-secondary hover:bg-surface-overlay'}`}
+                                                            className={`text-xs py-3 px-2 rounded-xl transition-colors ${aragonInput.neat === level.value ? 'bg-brand-700 text-white' : 'bg-surface-base text-text-secondary hover:bg-surface-overlay'}`}
                                                         >
                                                             {level.label}
                                                         </button>
@@ -831,7 +831,7 @@ function DietPlanPageContent() {
                                                             <span className="mx-1 text-text-muted">/</span>
                                                             <span className="text-blue-500">C {aragonResult.carbs}g</span>
                                                         </p>
-                                                        <button onClick={applyAragonPlanToGoal} className="mt-4 w-full sm:w-auto px-6 py-3 rounded-xl bg-brand-600 text-white text-sm hover:bg-brand-700 transition-colors">目標に反映</button>
+                                                        <button onClick={applyAragonPlanToGoal} className="mt-4 w-full sm:w-auto px-6 py-3 rounded-xl bg-brand-700 text-white text-sm hover:bg-brand-800 transition-colors">目標に反映</button>
                                                     </div>
                                                 </>
                                             ) : (
@@ -883,7 +883,7 @@ function DietPlanPageContent() {
                                 </div>
 
                                 {/* L-4: 「新しい目標を追加」はグラフの付属品ではなく同格の機能として独立配置 */}
-                                <button onClick={openNewGoalModal} className="w-full text-sm text-white bg-brand-600 hover:bg-brand-700 px-4 py-4 rounded-2xl shadow-sm transition-colors">新しい目標を追加</button>
+                                <button onClick={openNewGoalModal} className="w-full text-sm text-white bg-brand-700 hover:bg-brand-800 px-4 py-4 rounded-2xl shadow-sm transition-colors">新しい目標を追加</button>
 
                                 {/* K-1/K-2/L-1: 統合グラフ（ホバー/タップでツールチップ→編集は2段階）。履歴表は廃止 */}
                                 {goalChartData.length > 0 && (

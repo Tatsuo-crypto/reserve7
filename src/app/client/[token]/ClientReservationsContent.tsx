@@ -236,7 +236,7 @@ export default function ClientReservationsContent() {
                           )}
                         </div>
                         <div className="ml-4">
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-normal bg-brand-600 text-white">
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-normal bg-brand-700 text-white">
                             予約済み
                           </span>
                         </div>

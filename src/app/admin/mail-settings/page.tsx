@@ -471,7 +471,7 @@ export default function AdminMailSettingsPage() {
                 type="button"
                 onClick={handleSaveMembers}
                 disabled={membersSaving || membersLoading}
-                className="px-6 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-sm font-medium disabled:opacity-50 disabled:hover:bg-brand-600 transition-colors flex items-center justify-center gap-2 flex-[2] shadow-md shadow-brand-500/10"
+                className="px-6 py-2.5 bg-brand-700 hover:bg-brand-800 text-white rounded-xl text-sm font-medium disabled:opacity-50 disabled:hover:bg-brand-700 transition-colors flex items-center justify-center gap-2 flex-[2] shadow-md shadow-brand-500/10"
               >
                 {membersSaving ? (
                   <>
@@ -552,7 +552,7 @@ export default function AdminMailSettingsPage() {
               <button
                 type="submit"
                 disabled={saving || !tableExists}
-                className="px-6 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-sm font-medium disabled:opacity-50 disabled:hover:bg-brand-600 transition-colors flex items-center justify-center gap-2 flex-[2] shadow-md shadow-brand-500/10"
+                className="px-6 py-2.5 bg-brand-700 hover:bg-brand-800 text-white rounded-xl text-sm font-medium disabled:opacity-50 disabled:hover:bg-brand-700 transition-colors flex items-center justify-center gap-2 flex-[2] shadow-md shadow-brand-500/10"
               >
                 {saving ? (
                   <>

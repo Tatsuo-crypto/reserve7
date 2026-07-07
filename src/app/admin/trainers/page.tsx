@@ -308,7 +308,7 @@ export default function TrainersPage() {
             </select>
           </div>
           <button
-            className="px-3 py-1.5 bg-brand-600 text-white text-xs font-normal rounded-full hover:bg-brand-700 transition-colors flex items-center gap-1"
+            className="px-3 py-1.5 bg-brand-700 text-white text-xs font-normal rounded-full hover:bg-brand-800 transition-colors flex items-center gap-1"
             onClick={openCreate}
           >
             <Icon name="plus" size={14} />
@@ -426,7 +426,7 @@ export default function TrainersPage() {
                 disabled={!editing}
               >削除</button>
               <button
-                className="px-3 py-2 text-sm rounded-md bg-brand-600 text-white hover:bg-brand-700 disabled:opacity-60 disabled:cursor-not-allowed"
+                className="px-3 py-2 text-sm rounded-md bg-brand-700 text-white hover:bg-brand-800 disabled:opacity-60 disabled:cursor-not-allowed"
                 onClick={saveTrainer}
                 disabled={!form.fullName.trim() || !form.storeId.trim()}
               >保存</button>

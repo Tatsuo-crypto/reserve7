@@ -459,7 +459,7 @@ function ShiftCreateModal({ trainers, date, initialHour, isOpen, onClose, onSave
           </button>
           <button 
             onClick={handleSave}
-            className="px-3 py-2 bg-brand-600 text-white text-sm rounded hover:bg-brand-700"
+            className="px-3 py-2 bg-brand-700 text-white text-sm rounded hover:bg-brand-800"
             disabled={loading}
           >
             保存
@@ -577,7 +577,7 @@ function ShiftEditModal({ shift, trainerName, isOpen, onClose, onSave, onDelete 
             </button>
             <button 
               onClick={handleSave}
-              className="px-3 py-2 bg-brand-600 text-white text-sm rounded hover:bg-brand-700"
+              className="px-3 py-2 bg-brand-700 text-white text-sm rounded hover:bg-brand-800"
               disabled={loading}
             >
               保存

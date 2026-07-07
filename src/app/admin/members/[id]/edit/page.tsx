@@ -421,7 +421,7 @@ export default function EditMemberPage() {
                 title={tab}
                 className={`h-11 rounded-lg border text-sm font-normal transition-colors ${
                   activeTab === index
-                    ? 'border-brand-600 text-white bg-brand-600 shadow-sm'
+                    ? 'border-brand-700 text-white bg-brand-700 shadow-sm'
                     : 'border-border-strong text-text-secondary bg-surface-raised hover:text-text-primary hover:bg-surface-base'
                 }`}
               >

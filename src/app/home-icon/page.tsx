@@ -32,7 +32,7 @@ export default function HomeIconSetupPage() {
             <h2 className="text-lg font-normal text-text-primary mb-3">手順</h2>
             <ol className="space-y-4">
               <li className="flex items-start">
-                <span className="flex-shrink-0 w-8 h-8 bg-brand-600 text-white rounded-full flex items-center justify-center font-normal mr-3">1</span>
+                <span className="flex-shrink-0 w-8 h-8 bg-brand-700 text-white rounded-full flex items-center justify-center font-normal mr-3">1</span>
                 <div className="flex-1">
                   <p className="font-normal text-text-primary">古いアイコンを削除</p>
                   <p className="text-sm text-text-secondary mt-1">ホーム画面の古い「T&J GYM」を長押し → 「Appを削除」</p>
@@ -40,7 +40,7 @@ export default function HomeIconSetupPage() {
               </li>
               
               <li className="flex items-start">
-                <span className="flex-shrink-0 w-8 h-8 bg-brand-600 text-white rounded-full flex items-center justify-center font-normal mr-3">2</span>
+                <span className="flex-shrink-0 w-8 h-8 bg-brand-700 text-white rounded-full flex items-center justify-center font-normal mr-3">2</span>
                 <div className="flex-1">
                   <p className="font-normal text-text-primary">Safariのキャッシュをクリア（推奨）</p>
                   <p className="text-sm text-text-secondary mt-1">設定 → Safari → 履歴とWebサイトデータを消去</p>
@@ -48,7 +48,7 @@ export default function HomeIconSetupPage() {
               </li>
               
               <li className="flex items-start">
-                <span className="flex-shrink-0 w-8 h-8 bg-brand-600 text-white rounded-full flex items-center justify-center font-normal mr-3">3</span>
+                <span className="flex-shrink-0 w-8 h-8 bg-brand-700 text-white rounded-full flex items-center justify-center font-normal mr-3">3</span>
                 <div className="flex-1">
                   <p className="font-normal text-text-primary">Safariで再度開く</p>
                   <p className="text-sm text-text-secondary mt-1">このページをSafariで開き直す</p>
@@ -56,7 +56,7 @@ export default function HomeIconSetupPage() {
               </li>
               
               <li className="flex items-start">
-                <span className="flex-shrink-0 w-8 h-8 bg-brand-600 text-white rounded-full flex items-center justify-center font-normal mr-3">4</span>
+                <span className="flex-shrink-0 w-8 h-8 bg-brand-700 text-white rounded-full flex items-center justify-center font-normal mr-3">4</span>
                 <div className="flex-1">
                   <p className="font-normal text-text-primary">共有ボタンをタップ</p>
                   <p className="text-sm text-text-secondary mt-1">画面下部の共有アイコン（□↑）をタップ</p>
@@ -64,7 +64,7 @@ export default function HomeIconSetupPage() {
               </li>
               
               <li className="flex items-start">
-                <span className="flex-shrink-0 w-8 h-8 bg-brand-600 text-white rounded-full flex items-center justify-center font-normal mr-3">5</span>
+                <span className="flex-shrink-0 w-8 h-8 bg-brand-700 text-white rounded-full flex items-center justify-center font-normal mr-3">5</span>
                 <div className="flex-1">
                   <p className="font-normal text-text-primary">ホーム画面に追加</p>
                   <p className="text-sm text-text-secondary mt-1">「ホーム画面に追加」を選択して「追加」をタップ</p>
