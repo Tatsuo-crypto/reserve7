@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect } from 'react'
 import { getStoreDisplayName } from '@/lib/auth-utils'
 import { getPlanRank } from '@/lib/utils/member'
+import Icon from '@/components/ui/icons'
 
 interface Client {
   id: string
@@ -634,9 +635,7 @@ function NewReservationContent() {
                 onClick={() => router.back()}
                 className="absolute left-4 text-text-secondary hover:text-text-primary transition-colors"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
+                <Icon name="chevronLeft" size={24} />
               </button>
               <div className="text-center">
                 <h1 className="text-3xl font-normal text-text-primary">新規予約作成</h1>
@@ -650,9 +649,7 @@ function NewReservationContent() {
         {success && (
           <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
             <div className="flex items-center">
-              <svg className="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
+              <Icon name="check" size={20} className="text-green-600 mr-2" />
               <p className="text-green-800">{success}</p>
             </div>
             <p className="text-green-700 text-sm mt-1">カレンダーに移動します...</p>
@@ -688,9 +685,7 @@ function NewReservationContent() {
                     className="sr-only"
                   />
                   <div className="w-8 h-8 mb-2 rounded-full bg-brand-500/15 text-brand-300 flex items-center justify-center">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
+                    <Icon name="user" size={20} />
                   </div>
                   <span className="font-normal text-text-primary">予約</span>
                 </label>
@@ -708,9 +703,7 @@ function NewReservationContent() {
                     className="sr-only"
                   />
                   <div className="w-8 h-8 mb-2 rounded-full bg-green-500/15 text-green-300 flex items-center justify-center">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-                    </svg>
+                    <Icon name="star" size={20} />
                   </div>
                   <span className="font-normal text-text-primary">体験</span>
                 </label>
@@ -728,9 +721,7 @@ function NewReservationContent() {
                     className="sr-only"
                   />
                   <div className="w-8 h-8 mb-2 rounded-full bg-purple-500/15 text-purple-300 flex items-center justify-center">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
+                    <Icon name="userGroup" size={20} />
                   </div>
                   <span className="font-normal text-text-primary">ゲスト</span>
                 </label>
@@ -770,9 +761,7 @@ function NewReservationContent() {
                     className="sr-only"
                   />
                   <div className="w-8 h-8 mb-2 rounded-full bg-red-500/15 text-red-300 flex items-center justify-center">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                    </svg>
+                    <Icon name="noSymbol" size={20} />
                   </div>
                   <span className="font-normal text-text-primary">予約不可</span>
                 </label>
@@ -790,9 +779,7 @@ function NewReservationContent() {
                     className="sr-only"
                   />
                   <div className="w-8 h-8 mb-2 rounded-full bg-orange-500/15 text-orange-300 flex items-center justify-center">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                    </svg>
+                    <Icon name="bookOpen" size={20} />
                   </div>
                   <span className="font-normal text-text-primary">研修</span>
                 </label>
@@ -1169,9 +1156,7 @@ function NewReservationContent() {
           <div className="relative p-6 w-full max-w-sm shadow-xl rounded-2xl bg-surface-raised scale-100 transition-transform">
             <div className="text-center">
               <div className="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-yellow-100 mb-4">
-                <svg className="h-7 w-7 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                </svg>
+                <Icon name="warning" size={28} className="text-yellow-600" />
               </div>
               <h3 className="text-xl font-normal text-text-primary mb-2">
                 シフト外の予約
@@ -1206,9 +1191,7 @@ function NewReservationContent() {
           <div className="relative p-6 w-full max-w-sm shadow-xl rounded-2xl bg-surface-raised">
             <div className="text-center">
               <div className="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-orange-100 mb-4">
-                <svg className="h-7 w-7 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                </svg>
+                <Icon name="warning" size={28} className="text-orange-600" />
               </div>
               <h3 className="text-xl font-normal text-text-primary mb-2">
                 シフト外のトレーナー

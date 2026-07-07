@@ -58,6 +58,8 @@ import {
     HeartIcon,
     Bars3BottomRightIcon,
     ScaleIcon,
+    NoSymbolIcon,
+    BookOpenIcon,
 } from '@heroicons/react/24/outline'
 
 // N-3: 頻出上位のアイコン(戻る矢印・開閉シェブロン・閉じる・カレンダー等)をまず統一する。
@@ -124,6 +126,8 @@ const ICONS = {
     heart: HeartIcon,
     listMenu: Bars3BottomRightIcon,
     scale: ScaleIcon,
+    noSymbol: NoSymbolIcon,
+    bookOpen: BookOpenIcon,
 } as const
 
 export type IconName = keyof typeof ICONS
