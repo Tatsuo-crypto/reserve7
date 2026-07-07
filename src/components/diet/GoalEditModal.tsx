@@ -46,10 +46,10 @@ export default function GoalEditModal({ title, initialValues, initialHabitTarget
 
     return (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black bg-opacity-50">
-            <div className="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh] animate-slideUp">
-                <div className="p-6 border-b border-gray-100 flex items-center justify-between shrink-0">
-                    <h2 className="text-xl font-semibold text-gray-900">{title}</h2>
-                    <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600" aria-label="閉じる">
+            <div className="bg-surface-raised w-full max-w-lg rounded-t-3xl sm:rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh] animate-slideUp">
+                <div className="p-6 border-b border-border-subtle flex items-center justify-between shrink-0">
+                    <h2 className="text-xl font-semibold text-text-primary">{title}</h2>
+                    <button onClick={onClose} className="p-2 text-text-muted hover:text-text-secondary" aria-label="閉じる">
                         <Icon name="close" />
                     </button>
                 </div>

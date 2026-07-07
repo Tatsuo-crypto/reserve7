@@ -67,13 +67,13 @@ function LoginForm() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50 pt-20 pb-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex flex-col bg-surface-base pt-20 pb-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full mx-auto space-y-4">
         <div>
-          <h2 className="text-center text-3xl font-normal text-gray-900 keep-design">
+          <h2 className="text-center text-3xl font-normal text-text-primary keep-design">
             T&J GYM
           </h2>
-          <p className="mt-1 text-center text-lg text-gray-700">
+          <p className="mt-1 text-center text-lg text-text-secondary">
             予約確認フォーム
           </p>
         </div>
@@ -88,7 +88,7 @@ function LoginForm() {
         <form className="mt-4 space-y-3" onSubmit={handleSubmit}>
           <div className="space-y-3">
             <div>
-              <label htmlFor="email" className="block text-sm font-normal text-gray-700">
+              <label htmlFor="email" className="block text-sm font-normal text-text-secondary">
                 メールアドレス
               </label>
               <input
@@ -96,7 +96,7 @@ function LoginForm() {
                 name="email"
                 type="email"
                 required
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-brand-500 focus:border-brand-500 focus:z-10 sm:text-sm"
+                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-border-strong placeholder-gray-500 text-text-primary rounded-md focus:outline-none focus:ring-brand-500 focus:border-brand-500 focus:z-10 sm:text-sm"
                 placeholder="example@email.com"
                 value={formData.email}
                 onChange={handleChange}
@@ -104,7 +104,7 @@ function LoginForm() {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-normal text-gray-700">
+              <label htmlFor="password" className="block text-sm font-normal text-text-secondary">
                 パスワード
               </label>
               <input
@@ -112,7 +112,7 @@ function LoginForm() {
                 name="password"
                 type="password"
                 required
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-brand-500 focus:border-brand-500 focus:z-10 sm:text-sm"
+                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-border-strong placeholder-gray-500 text-text-primary rounded-md focus:outline-none focus:ring-brand-500 focus:border-brand-500 focus:z-10 sm:text-sm"
                 placeholder="パスワード"
                 value={formData.password}
                 onChange={handleChange}

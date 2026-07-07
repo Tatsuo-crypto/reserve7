@@ -18,9 +18,9 @@ const TrackingModal = dynamic(() => import('@/app/admin/members/TrackingModal'),
   ssr: false,
   loading: () => (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6">
+      <div className="bg-surface-raised rounded-lg p-6">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600 mx-auto"></div>
-        <p className="mt-2 text-sm text-gray-600">読み込み中...</p>
+        <p className="mt-2 text-sm text-text-secondary">読み込み中...</p>
       </div>
     </div>
   )
@@ -101,11 +101,11 @@ export default function ClientReservationsPage() {
 
   if (loading || !userId) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-surface-base flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600 mx-auto"></div>
           {loading ? (
-            <p className="mt-4 text-gray-600">読み込み中...</p>
+            <p className="mt-4 text-text-secondary">読み込み中...</p>
           ) : (
             <p className="mt-4 text-red-600">ユーザー情報の取得に失敗しました。再読み込みしてください。</p>
           )}
@@ -132,7 +132,7 @@ export default function ClientReservationsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="min-h-screen bg-surface-base pb-20">
       {/* Universal AirPAY Header */}
       <AdminHeader 
         title={tabTitles[activeTab]} 
@@ -143,18 +143,18 @@ export default function ClientReservationsPage() {
             <button
               onClick={() => setActiveTab('settings')}
               aria-label="設定"
-              className={`h-10 w-10 flex items-center justify-center rounded-full shadow-sm border border-gray-100 transition-all active:scale-95 ${activeTab === 'settings' ? 'bg-brand-50 text-brand-600' : 'bg-white text-gray-500'}`}
+              className={`h-10 w-10 flex items-center justify-center rounded-full shadow-sm border border-border-subtle transition-all active:scale-95 ${activeTab === 'settings' ? 'bg-brand-500/15 text-brand-300' : 'bg-surface-raised text-text-secondary'}`}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
             </button>
-            <div className="h-10 px-4 flex items-center gap-2 bg-white rounded-full shadow-sm border border-gray-100 transition-all active:scale-95">
-              <span className="text-gray-700 text-[13px] font-normal truncate max-w-[100px]">
+            <div className="h-10 px-4 flex items-center gap-2 bg-surface-raised rounded-full shadow-sm border border-border-subtle transition-all active:scale-95">
+              <span className="text-text-secondary text-[13px] font-normal truncate max-w-[100px]">
                 {formatName(userName)}
               </span>
-              <div className="px-2 py-0.5 rounded-full text-[10px] font-normal bg-gray-500 text-white whitespace-nowrap">
+              <div className="px-2 py-0.5 rounded-full text-[10px] font-normal bg-surface-overlay text-text-primary whitespace-nowrap">
                 会員
               </div>
             </div>
@@ -215,7 +215,7 @@ export default function ClientReservationsPage() {
       )}
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-gray-100 shadow-[0_-5px_25px_rgba(0,0,0,0.05)] z-40 pb-safe">
+      <nav className="fixed bottom-0 left-0 right-0 bg-surface-raised/95 backdrop-blur-xl border-t border-border-subtle shadow-[0_-5px_25px_rgba(0,0,0,0.05)] z-40 pb-safe">
         <div className={`grid ${isDietPlan ? 'grid-cols-5' : 'grid-cols-3'} items-center max-w-lg mx-auto h-20`}>
           <NavBtn
             active={activeTab === 'res'}
@@ -247,7 +247,7 @@ export default function ClientReservationsPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
               </svg>
             </button>
-            <span className={`absolute bottom-2 text-[10px] font-normal transition-colors duration-300 ${activeTab === 'home' ? 'text-brand-600' : 'text-gray-400'}`}>ホーム</span>
+            <span className={`absolute bottom-2 text-[10px] font-normal transition-colors duration-300 ${activeTab === 'home' ? 'text-brand-600' : 'text-text-muted'}`}>ホーム</span>
           </div>
 
           {isDietPlan && (
@@ -277,16 +277,16 @@ function SettingsTab({ token }: { token: string }) {
     <div className="space-y-4 animate-fadeIn">
       <PushNotificationPrompt token={token} />
 
-      <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+      <div className="rounded-2xl border border-border-subtle bg-surface-raised p-5 shadow-sm">
         <div className="flex items-start gap-3">
-          <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
+          <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-500/15 text-brand-300">
             <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
           <div>
-            <div className="text-sm text-gray-900">通知の受け取り</div>
-            <p className="mt-1 text-xs leading-relaxed text-gray-500">
+            <div className="text-sm text-text-primary">通知の受け取り</div>
+            <p className="mt-1 text-xs leading-relaxed text-text-secondary">
               予約のお知らせやオンラインレッスン開始前の通知を、この端末で受け取れます。
             </p>
           </div>
@@ -300,7 +300,7 @@ function NavBtn({ active, onClick, icon, label }: { active: boolean, onClick: ()
   return (
     <button
       onClick={onClick}
-      className={`flex flex-col items-center justify-between w-full h-16 py-1 transition-all duration-300 ${active ? 'text-brand-600' : 'text-gray-300'}`}
+      className={`flex flex-col items-center justify-between w-full h-16 py-1 transition-all duration-300 ${active ? 'text-brand-600' : 'text-text-muted'}`}
     >
       <div className="flex flex-col items-center justify-center flex-1">
         <div className={`p-1.5 rounded-xl transition-all duration-300 ${active ? 'bg-brand-50 scale-105' : 'bg-transparent'}`}>

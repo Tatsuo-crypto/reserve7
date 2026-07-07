@@ -125,7 +125,7 @@ export default function AnalyticsPage() {
     }, [data.memberHistory])
 
     if (loading && data.memberHistory.length === 0) {
-        return <div className="p-8 text-center text-gray-500">データを読み込み中...</div>
+        return <div className="p-8 text-center text-text-secondary">データを読み込み中...</div>
     }
 
     const { memberHistory, salesHistory, projectedSales } = data
@@ -161,7 +161,7 @@ export default function AnalyticsPage() {
                 <select
                     value={filterStoreId}
                     onChange={(e) => setFilterStoreId(e.target.value)}
-                    className="text-sm border-gray-300 rounded-md shadow-sm focus:border-brand-500 focus:ring-brand-500 py-1 pl-2 pr-8"
+                    className="text-sm border-border-strong rounded-md shadow-sm focus:border-brand-500 focus:ring-brand-500 py-1 pl-2 pr-8"
                 >
                     <option value="all">全店舗</option>
                     {stores.map(store => (
@@ -172,7 +172,7 @@ export default function AnalyticsPage() {
                 <select
                     value={period}
                     onChange={(e) => setPeriod(e.target.value)}
-                    className="text-sm border-gray-300 rounded-md shadow-sm focus:border-brand-500 focus:ring-brand-500 py-1 pl-2 pr-8"
+                    className="text-sm border-border-strong rounded-md shadow-sm focus:border-brand-500 focus:ring-brand-500 py-1 pl-2 pr-8"
                 >
                     <option value="all">全期間 (2023/11~)</option>
                     <option value="2023">2023年</option>
@@ -186,21 +186,21 @@ export default function AnalyticsPage() {
 
             {/* Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                    <h3 className="text-sm font-normal text-gray-500">現在の月額会員数</h3>
+                <div className="bg-surface-raised p-6 rounded-xl shadow-sm border border-border-subtle">
+                    <h3 className="text-sm font-normal text-text-secondary">現在の月額会員数</h3>
                     <div className="mt-2 flex items-baseline">
-                        <span className="text-3xl font-normal text-gray-900">{activeCount}</span>
-                        <span className="ml-1 text-sm text-gray-500">名</span>
+                        <span className="text-3xl font-normal text-text-primary">{activeCount}</span>
+                        <span className="ml-1 text-sm text-text-secondary">名</span>
                         <span className={`ml-2 text-sm font-normal ${Number(growth) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                             {Number(growth) >= 0 ? '+' : ''}{growth}%
                         </span>
-                        <span className="ml-2 text-xs text-gray-400">前月比</span>
+                        <span className="ml-2 text-xs text-text-muted">前月比</span>
                     </div>
                 </div>
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                    <h3 className="text-sm font-normal text-gray-500">今月の売上見込み (概算)</h3>
+                <div className="bg-surface-raised p-6 rounded-xl shadow-sm border border-border-subtle">
+                    <h3 className="text-sm font-normal text-text-secondary">今月の売上見込み (概算)</h3>
                     <div className="mt-2 flex items-baseline">
-                        <span className="text-3xl font-normal text-gray-900">¥{projectedSales.toLocaleString()}</span>
+                        <span className="text-3xl font-normal text-text-primary">¥{projectedSales.toLocaleString()}</span>
                     </div>
                 </div>
             </div>
@@ -209,9 +209,9 @@ export default function AnalyticsPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8" key={`${filterStoreId}-${period}`}>
 
                 {/* Sales Chart */}
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <div className="bg-surface-raised p-6 rounded-xl shadow-sm border border-border-subtle">
                     <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-lg font-normal text-gray-900">売上推移</h3>
+                        <h3 className="text-lg font-normal text-text-primary">売上推移</h3>
                     </div>
                     <div className="h-[300px]">
                         <ResponsiveContainer width="100%" height="100%">
@@ -231,9 +231,9 @@ export default function AnalyticsPage() {
                 </div>
 
                 {/* Member Growth Chart */}
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <div className="bg-surface-raised p-6 rounded-xl shadow-sm border border-border-subtle">
                     <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-lg font-normal text-gray-900">会員数推移</h3>
+                        <h3 className="text-lg font-normal text-text-primary">会員数推移</h3>
                     </div>
                     <div className="h-[300px]">
                         <ResponsiveContainer width="100%" height="100%">
@@ -254,10 +254,10 @@ export default function AnalyticsPage() {
                 </div>
 
                 {/* Member Movement (Join/Withdraw) - Custom Block Chart */}
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 lg:col-span-2">
+                <div className="bg-surface-raised p-6 rounded-xl shadow-sm border border-border-subtle lg:col-span-2">
                     <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-lg font-normal text-gray-900">入会・退会推移</h3>
-                        <div className="flex items-center gap-4 text-xs text-gray-500">
+                        <h3 className="text-lg font-normal text-text-primary">入会・退会推移</h3>
+                        <div className="flex items-center gap-4 text-xs text-text-secondary">
                             <span className="flex items-center gap-1.5">
                                 <span className="inline-block w-3 h-3 rounded-sm bg-state-success-500"></span>
                                 新規入会
@@ -283,8 +283,8 @@ export default function AnalyticsPage() {
                                         {/* Vertical year divider */}
                                         {showYear && idx > 0 && (
                                             <div className="flex flex-col items-center mr-1">
-                                                <div className="text-[9px] font-normal text-gray-400 whitespace-nowrap mb-1">{yearStr}</div>
-                                                <div className="w-px bg-gray-300 flex-1" />
+                                                <div className="text-[9px] font-normal text-text-muted whitespace-nowrap mb-1">{yearStr}</div>
+                                                <div className="w-px bg-surface-overlay flex-1" />
                                             </div>
                                         )}
                                         <div className="flex flex-col items-center">
@@ -297,7 +297,7 @@ export default function AnalyticsPage() {
                                         {(!showYear || idx === 0) && !showYear && <div className="h-[22px]" />}
                                         {showYear && idx > 0 && <div className="h-[22px]" />}
                                         <div
-                                            className="flex flex-col items-center cursor-pointer hover:bg-gray-50 rounded-lg transition-colors px-1"
+                                            className="flex flex-col items-center cursor-pointer hover:bg-surface-base rounded-lg transition-colors px-1"
                                             style={{ minWidth: `${Math.max(40, 600 / memberHistory.length)}px` }}
                                             onClick={() => handleMonthClick(item)}
                                         >
@@ -311,11 +311,11 @@ export default function AnalyticsPage() {
                                                 ))}
                                             </div>
                                             {/* Center line + month label */}
-                                            <div className="w-full border-t border-gray-200 my-1" />
-                                            <div className="text-[10px] text-gray-500 leading-none mb-1 font-normal">
+                                            <div className="w-full border-t border-border-strong my-1" />
+                                            <div className="text-[10px] text-text-secondary leading-none mb-1 font-normal">
                                                 {monthLabel}
                                             </div>
-                                            <div className="w-full border-t border-gray-200 mb-1" />
+                                            <div className="w-full border-t border-border-strong mb-1" />
                                             {/* Withdrawn blocks (below center line) */}
                                             <div className="flex flex-col items-center gap-[2px]" style={{ minHeight: `${maxBlocks * 20}px`, justifyContent: 'flex-start' }}>
                                                 {Array.from({ length: withdrawnCount }).map((_, i) => (
@@ -332,7 +332,7 @@ export default function AnalyticsPage() {
                             })}
                         </div>
                     </div>
-                    <p className="text-[11px] text-gray-400 mt-2 text-center">※ 月をタップすると詳細を表示します</p>
+                    <p className="text-[11px] text-text-muted mt-2 text-center">※ 月をタップすると詳細を表示します</p>
                 </div>
             </div>
 

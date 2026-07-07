@@ -30,11 +30,11 @@ export default function MemberMovementModal({ isOpen, onClose, data }: MemberMov
 
                 <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
 
-                <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
-                    <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div className="inline-block align-bottom bg-surface-raised rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
+                    <div className="bg-surface-raised px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                         <div className="sm:flex sm:items-start">
                             <div className="mt-3 text-center sm:mt-0 sm:text-left w-full">
-                                <h3 className="text-lg leading-6 font-normal text-gray-900 mb-4">
+                                <h3 className="text-lg leading-6 font-normal text-text-primary mb-4">
                                     {data.month} の入退会詳細
                                 </h3>
                                 
@@ -52,18 +52,18 @@ export default function MemberMovementModal({ isOpen, onClose, data }: MemberMov
                                                 <ul className="divide-y divide-red-200">
                                                     {data.newMembers.map((member) => (
                                                         <li key={member.user_id} className="py-2 text-sm">
-                                                            <div className="font-normal text-gray-900">{member.full_name}</div>
-                                                            <div className="text-gray-500 text-xs">
+                                                            <div className="font-normal text-text-primary">{member.full_name}</div>
+                                                            <div className="text-text-secondary text-xs">
                                                                 {member.plan}
                                                             </div>
-                                                            <div className="text-gray-400 text-xs mt-0.5">
+                                                            <div className="text-text-muted text-xs mt-0.5">
                                                                 入会日: {format(new Date(member.date), 'yyyy/MM/dd', { locale: ja })}
                                                             </div>
                                                         </li>
                                                     ))}
                                                 </ul>
                                             ) : (
-                                                <p className="text-sm text-gray-500 text-center py-4">該当者なし</p>
+                                                <p className="text-sm text-text-secondary text-center py-4">該当者なし</p>
                                             )}
                                         </div>
                                     </div>
@@ -81,18 +81,18 @@ export default function MemberMovementModal({ isOpen, onClose, data }: MemberMov
                                                 <ul className="divide-y divide-brand-200">
                                                     {data.withdrawnMembers.map((member) => (
                                                         <li key={member.user_id} className="py-2 text-sm">
-                                                            <div className="font-normal text-gray-900">{member.full_name}</div>
-                                                            <div className="text-gray-500 text-xs">
+                                                            <div className="font-normal text-text-primary">{member.full_name}</div>
+                                                            <div className="text-text-secondary text-xs">
                                                                 {member.plan}
                                                             </div>
-                                                            <div className="text-gray-400 text-xs mt-0.5">
+                                                            <div className="text-text-muted text-xs mt-0.5">
                                                                 退会日: {format(new Date(member.date), 'yyyy/MM/dd', { locale: ja })}
                                                             </div>
                                                         </li>
                                                     ))}
                                                 </ul>
                                             ) : (
-                                                <p className="text-sm text-gray-500 text-center py-4">該当者なし</p>
+                                                <p className="text-sm text-text-secondary text-center py-4">該当者なし</p>
                                             )}
                                         </div>
                                     </div>
@@ -100,10 +100,10 @@ export default function MemberMovementModal({ isOpen, onClose, data }: MemberMov
                             </div>
                         </div>
                     </div>
-                    <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <div className="bg-surface-base px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
                         <button
                             type="button"
-                            className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-normal text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                            className="mt-3 w-full inline-flex justify-center rounded-md border border-border-strong shadow-sm px-4 py-2 bg-surface-raised text-base font-normal text-text-secondary hover:bg-surface-base focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
                             onClick={onClose}
                         >
                             閉じる

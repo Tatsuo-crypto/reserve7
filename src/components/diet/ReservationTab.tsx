@@ -95,15 +95,15 @@ export default function ReservationTab({ token }: ReservationTabProps) {
             {/* 0. Online Lesson Schedule (moved from the former オンライン tab) */}
             {lessons.length > 0 && (
                 <section className="space-y-3">
-                    <h3 className="text-sm font-normal text-gray-500 px-1">オンラインレッスンの開催枠</h3>
+                    <h3 className="text-sm font-normal text-text-secondary px-1">オンラインレッスンの開催枠</h3>
                     <div className="space-y-3">
                         {lessons.map(lesson => {
                             const status = getJoinStatus(lesson)
                             return (
                                 <Card key={lesson.id} padding="sm">
                                     <div className="flex items-center gap-2 mb-1">
-                                        <h4 className="font-normal text-gray-800 text-sm">{lesson.title}</h4>
-                                        <span className="text-[10px] font-normal px-2 py-0.5 bg-brand-50 text-brand-600 rounded-full">{lesson.difficulty}</span>
+                                        <h4 className="font-normal text-text-primary text-sm">{lesson.title}</h4>
+                                        <span className="text-[10px] font-normal px-2 py-0.5 bg-brand-500/15 text-brand-300 rounded-full">{lesson.difficulty}</span>
                                     </div>
                                     <p className="text-xs font-normal text-brand-600 mb-2">
                                         毎週{lesson.day_of_week?.map(d => DAYS_JA[d]).join('・')} {lesson.start_time?.substring(0, 5)}〜{lesson.end_time?.substring(0, 5)}
@@ -112,7 +112,7 @@ export default function ReservationTab({ token }: ReservationTabProps) {
                                         <button
                                             onClick={() => window.open(lesson.meet_url, '_blank')}
                                             disabled={!status.canJoin}
-                                            className={`w-full py-2.5 rounded-xl text-sm font-normal transition-all ${status.canJoin ? 'bg-brand-600 text-white active:scale-95' : 'bg-gray-100 text-gray-400'}`}
+                                            className={`w-full py-2.5 rounded-xl text-sm font-normal transition-all ${status.canJoin ? 'bg-brand-600 text-white active:scale-95' : 'bg-surface-overlay text-text-muted'}`}
                                         >
                                             {status.canJoin ? '参加する' : status.label}
                                         </button>
@@ -128,7 +128,7 @@ export default function ReservationTab({ token }: ReservationTabProps) {
             <section>
                 {futureReservations.length === 0 ? (
                     <Card padding="lg" className="text-center">
-                        <p className="text-gray-400 text-sm font-normal">今後の予約はありません</p>
+                        <p className="text-text-muted text-sm font-normal">今後の予約はありません</p>
                     </Card>
                 ) : (
                     <div className="space-y-6">
@@ -147,7 +147,7 @@ export default function ReservationTab({ token }: ReservationTabProps) {
                                         .map((res: Reservation) => (
                                             <Card key={res.id} padding="sm" className="border-l-4 border-l-brand-600 hover:scale-[1.01] transition-transform">
                                                 <div className="flex justify-between items-start mb-2">
-                                                    <h3 className="font-normal text-gray-800">{formatTitle(res.title)}</h3>
+                                                    <h3 className="font-normal text-text-primary">{formatTitle(res.title)}</h3>
                                                     <Badge tone="success">確定</Badge>
                                                 </div>
                                                 <div className="flex items-center text-brand-600 text-sm font-normal">
@@ -155,7 +155,7 @@ export default function ReservationTab({ token }: ReservationTabProps) {
                                                     {formatDate(res.start_time)}
                                                 </div>
                                                 {res.notes && (
-                                                    <p className="text-[11px] font-normal text-gray-400 mt-3 bg-gray-50 p-3 rounded-2xl italic leading-relaxed">
+                                                    <p className="text-[11px] font-normal text-text-muted mt-3 bg-surface-base p-3 rounded-2xl italic leading-relaxed">
                                                         「{res.notes}」
                                                     </p>
                                                 )}
@@ -174,11 +174,11 @@ export default function ReservationTab({ token }: ReservationTabProps) {
                     <div className="space-y-4">
                         <button
                             onClick={() => setShowPast(!showPast)}
-                            className="flex items-center justify-between w-full px-6 py-4 bg-gray-50 rounded-2xl border border-transparent hover:border-gray-200 transition-all group"
+                            className="flex items-center justify-between w-full px-6 py-4 bg-surface-base rounded-2xl border border-transparent hover:border-border-strong transition-all group"
                         >
                             <div className="flex items-center gap-2">
-                                <Icon name="chevronDown" size={20} className={`text-gray-400 transition-transform duration-300 ${showPast ? 'rotate-180' : ''}`} />
-                                <span className="text-sm font-normal text-gray-500">過去の予約を表示 ({pastReservations.length}回)</span>
+                                <Icon name="chevronDown" size={20} className={`text-text-muted transition-transform duration-300 ${showPast ? 'rotate-180' : ''}`} />
+                                <span className="text-sm font-normal text-text-secondary">過去の予約を表示 ({pastReservations.length}回)</span>
                             </div>
                         </button>
 
@@ -187,18 +187,18 @@ export default function ReservationTab({ token }: ReservationTabProps) {
                                 {sortedPastMonths.map(([monthKey, reservations]) => (
                                     <div key={monthKey} className="space-y-3">
                                         <div className="flex items-center space-x-2">
-                                            <div className="text-[10px] font-normal text-gray-400 px-3 py-1 rounded-full bg-gray-100">
+                                            <div className="text-[10px] font-normal text-text-muted px-3 py-1 rounded-full bg-surface-overlay">
                                                 {monthKey}
                                             </div>
-                                            <div className="h-px flex-1 bg-gray-100"></div>
+                                            <div className="h-px flex-1 bg-surface-overlay"></div>
                                         </div>
                                         <div className="space-y-2">
                                             {reservations
                                                 .sort((a: Reservation, b: Reservation) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime())
                                                 .map((res: Reservation) => (
-                                                    <div key={res.id} className="flex items-center justify-between p-4 bg-white/50 rounded-2xl border border-gray-50 opacity-60">
-                                                        <span className="text-xs font-normal text-gray-600">{formatTitle(res.title)}</span>
-                                                        <span className="text-[10px] font-normal text-gray-400">{formatDate(res.start_time).split(' ')[0]}</span>
+                                                    <div key={res.id} className="flex items-center justify-between p-4 bg-surface-raised/50 rounded-2xl border border-border-subtle opacity-60">
+                                                        <span className="text-xs font-normal text-text-secondary">{formatTitle(res.title)}</span>
+                                                        <span className="text-[10px] font-normal text-text-muted">{formatDate(res.start_time).split(' ')[0]}</span>
                                                     </div>
                                                 ))}
                                         </div>

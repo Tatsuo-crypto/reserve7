@@ -81,28 +81,28 @@ const AdminDashboard = () => {
         {/* DIET TAB */}
         {activeTab === 'diet' && (
           <div className="space-y-6 animate-slideUp">
-            <div className="bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-6">
+            <div className="bg-surface-raised p-6 rounded-[2.5rem] border border-border-subtle shadow-sm space-y-6">
               <div className="space-y-3">
                 {dietLoading ? (
                   <div className="py-10 text-center flex flex-col items-center gap-3">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500"></div>
-                    <span className="text-xs font-normal text-gray-400">読み込み中...</span>
+                    <span className="text-xs font-normal text-text-muted">読み込み中...</span>
                   </div>
                 ) : dietMembers.length === 0 ? (
-                  <div className="py-10 text-center text-gray-400 italic text-sm">対象者がいません</div>
+                  <div className="py-10 text-center text-text-muted italic text-sm">対象者がいません</div>
                 ) : (
                   dietMembers.map(member => (
-                    <Link key={member.id} href={`/admin/diet-plan?userId=${member.id}`} className="flex items-center gap-4 p-5 hover:bg-gray-50 rounded-3xl border border-gray-50 transition-all shadow-sm">
+                    <Link key={member.id} href={`/admin/diet-plan?userId=${member.id}`} className="flex items-center gap-4 p-5 hover:bg-surface-base rounded-3xl border border-border-subtle transition-all shadow-sm">
                       <div className={`w-3 h-3 rounded-full ${getStatusDotColor(member.status)}`} />
                       <div className="flex-1">
-                        <div className="text-base font-normal text-gray-900">{member.full_name}</div>
+                        <div className="text-base font-normal text-text-primary">{member.full_name}</div>
                         <div className="flex items-center gap-2 mt-0.5">
-                          <span className="text-[10px] font-normal text-gray-400 bg-gray-100 px-2 py-0.5 rounded-md uppercase">
+                          <span className="text-[10px] font-normal text-text-muted bg-surface-overlay px-2 py-0.5 rounded-md uppercase">
                             {member.stores?.name || '店舗未設定'}
                           </span>
                         </div>
                       </div>
-                      <svg className="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" /></svg>
+                      <svg className="w-5 h-5 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" /></svg>
                     </Link>
                   ))
                 )}
@@ -114,7 +114,7 @@ const AdminDashboard = () => {
         {/* HOME / RESERVATION TAB */}
         {activeTab === 'home' && (
           <div className="animate-slideUp -mt-2">
-            <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden">
+            <div className="bg-surface-raised rounded-[2.5rem] border border-border-subtle shadow-sm overflow-hidden">
               <div className="p-0">
                 <CalendarView key={searchParams.get('_t') || 'initial'} />
               </div>
@@ -126,7 +126,7 @@ const AdminDashboard = () => {
         {activeTab === 'others' && (
           <div className="space-y-8 animate-slideUp">
             <div className="space-y-3">
-              <h3 className="px-1 text-xs font-normal text-gray-400 uppercase tracking-widest">日々の運用</h3>
+              <h3 className="px-1 text-xs font-normal text-text-muted uppercase tracking-widest">日々の運用</h3>
               <div className="grid grid-cols-1 gap-4">
                 <OtherSubCard href="/admin/shifts" label="シフト管理" subLabel="勤務スケジュールの作成" iconName="clock" />
                 <OtherSubCard href="/admin/online-lesson" label="オンライン" subLabel="スケジュールの管理" iconName="video" />
@@ -134,7 +134,7 @@ const AdminDashboard = () => {
             </div>
 
             <div className="space-y-3">
-              <h3 className="px-1 text-xs font-normal text-gray-400 uppercase tracking-widest">設定</h3>
+              <h3 className="px-1 text-xs font-normal text-text-muted uppercase tracking-widest">設定</h3>
               <div className="grid grid-cols-1 gap-4">
                 <OtherSubCard href="/admin/trainers" label="トレーナー管理" subLabel="スタッフの登録・編集" iconName="academicCap" />
                 <OtherSubCard href="/admin/stores" label="店舗管理" subLabel="店舗情報の変更・設定" iconName="building" />

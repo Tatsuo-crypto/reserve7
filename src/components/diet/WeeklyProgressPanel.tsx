@@ -40,20 +40,20 @@ export default function WeeklyProgressPanel({
         <div className="space-y-4">
             {showWeekSwitcher && (
                 <div className="px-2 flex flex-col items-center">
-                    <div className="flex items-center gap-3 bg-gray-100 rounded-2xl p-1.5 w-full max-w-[300px] shadow-sm">
+                    <div className="flex items-center gap-3 bg-surface-overlay rounded-2xl p-1.5 w-full max-w-[300px] shadow-sm">
                         <button
                             onClick={() => setWeekOffset(prev => prev - 1)}
-                            className="w-9 h-9 flex items-center justify-center hover:bg-white rounded-xl transition-all text-gray-500 active:scale-90"
+                            className="w-9 h-9 flex items-center justify-center hover:bg-surface-raised rounded-xl transition-all text-text-secondary active:scale-90"
                         >
                             <Icon name="chevronLeft" size={16} />
                         </button>
 
                         <div className="flex-1 text-center">
                             <div className="flex items-center justify-center gap-2">
-                                <span className="text-sm font-normal text-gray-800">
+                                <span className="text-sm font-normal text-text-primary">
                                     {weekOffset === 0 ? '今週' : weekOffset === -1 ? '先週' : `${Math.abs(weekOffset)}週間前`}
                                 </span>
-                                <span className="text-[10px] font-normal text-gray-500 tabular-nums">
+                                <span className="text-[10px] font-normal text-text-secondary tabular-nums">
                                     ({weeklyStats?.weekRangeStr})
                                 </span>
                             </div>
@@ -61,7 +61,7 @@ export default function WeeklyProgressPanel({
 
                         <button
                             onClick={() => setWeekOffset(prev => Math.min(0, prev + 1))}
-                            className={`w-9 h-9 flex items-center justify-center rounded-xl transition-all active:scale-90 ${weekOffset === 0 ? 'text-gray-100 cursor-not-allowed' : 'hover:bg-white text-gray-500'}`}
+                            className={`w-9 h-9 flex items-center justify-center rounded-xl transition-all active:scale-90 ${weekOffset === 0 ? 'text-text-muted cursor-not-allowed' : 'hover:bg-surface-raised text-text-secondary'}`}
                             disabled={weekOffset === 0}
                         >
                             <Icon name="chevronRight" size={16} />
@@ -72,7 +72,7 @@ export default function WeeklyProgressPanel({
 
             {!weeklyStats ? (
                 <Card padding="lg" className="text-center">
-                    <p className="text-gray-400 font-normal italic">今週の記録または目標がありません</p>
+                    <p className="text-text-muted font-normal italic">今週の記録または目標がありません</p>
                 </Card>
             ) : (
                 <div className="space-y-4">
@@ -122,10 +122,10 @@ export default function WeeklyProgressPanel({
         <div className="space-y-4">
             <button
                 onClick={() => setOpen(!open)}
-                className="flex items-center justify-between w-full px-6 py-4 bg-gray-50 rounded-2xl border border-transparent hover:border-gray-200 transition-all"
+                className="flex items-center justify-between w-full px-6 py-4 bg-surface-base rounded-2xl border border-transparent hover:border-border-strong transition-all"
             >
-                <span className="text-sm font-normal text-gray-700">週間目標{weeklyStats ? `（${weeklyStats.weekRangeStr}）` : ''}</span>
-                <Icon name="chevronDown" size={20} className={`text-gray-400 transition-transform duration-300 ${open ? 'rotate-180' : ''}`} />
+                <span className="text-sm font-normal text-text-secondary">週間目標{weeklyStats ? `（${weeklyStats.weekRangeStr}）` : ''}</span>
+                <Icon name="chevronDown" size={20} className={`text-text-muted transition-transform duration-300 ${open ? 'rotate-180' : ''}`} />
             </button>
             {open && <div className="animate-fadeIn">{body}</div>}
         </div>

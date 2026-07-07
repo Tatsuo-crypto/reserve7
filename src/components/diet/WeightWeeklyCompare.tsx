@@ -21,7 +21,7 @@ export default function WeightWeeklyCompare({ weight, compact = false }: WeightW
     const hasLastWeek = weight?.lastWeekAvg !== null && weight?.lastWeekAvg !== undefined
 
     const body = !hasThisWeek ? (
-        <p className="text-sm text-gray-400">今週の体重記録がありません</p>
+        <p className="text-sm text-text-muted">今週の体重記録がありません</p>
     ) : (
         <div className="flex items-baseline gap-2 flex-wrap">
             <span className="flex items-baseline gap-1">
@@ -29,7 +29,7 @@ export default function WeightWeeklyCompare({ weight, compact = false }: WeightW
                 <span className="stat-unit">kg</span>
             </span>
             {hasLastWeek && weight!.diffAbs !== null && (
-                <span className="text-xs font-normal text-gray-400">
+                <span className="text-xs font-normal text-text-muted">
                     先週比 {weight!.diffAbs! > 0 ? '+' : ''}{weight!.diffAbs!.toFixed(1)}kg
                     {weight!.diffPercent !== null && (
                         <>（{weight!.diffPercent! > 0 ? '+' : ''}{weight!.diffPercent!.toFixed(1)}%）</>
@@ -42,7 +42,7 @@ export default function WeightWeeklyCompare({ weight, compact = false }: WeightW
     if (compact) {
         return (
             <div>
-                <p className="text-[11px] font-normal text-gray-400 tracking-widest uppercase mb-1">体重（今週平均）</p>
+                <p className="text-[11px] font-normal text-text-muted tracking-widest uppercase mb-1">体重（今週平均）</p>
                 {body}
             </div>
         )
@@ -50,7 +50,7 @@ export default function WeightWeeklyCompare({ weight, compact = false }: WeightW
 
     return (
         <Card padding="sm">
-            <p className="text-[11px] font-normal text-gray-400 tracking-widest uppercase mb-1">体重（今週平均）</p>
+            <p className="text-[11px] font-normal text-text-muted tracking-widest uppercase mb-1">体重（今週平均）</p>
             {body}
         </Card>
     )

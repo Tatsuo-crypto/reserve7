@@ -38,25 +38,25 @@ export default function ShiftsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-surface-base flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">読み込み中...</p>
+          <p className="mt-4 text-text-secondary">読み込み中...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-surface-base">
       {/* Top Navigation */}
-      <header className="bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-50 h-16">
+      <header className="bg-surface-raised/80 backdrop-blur-md border-b border-border-subtle sticky top-0 z-50 h-16">
         <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between relative">
           {/* Left: Back Button */}
           <div className="z-10 min-w-[44px]">
             <Link
               href={`/trainer/${token}`}
-              className="w-10 h-10 flex items-center justify-center text-brand-500 bg-white rounded-full shadow-sm border border-gray-100 transition-all active:scale-90 hover:bg-gray-50"
+              className="w-10 h-10 flex items-center justify-center text-brand-500 bg-surface-raised rounded-full shadow-sm border border-border-subtle transition-all active:scale-90 hover:bg-surface-base"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
@@ -66,7 +66,7 @@ export default function ShiftsPage() {
 
           {/* Center: Title */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <h1 className="text-[17px] font-normal text-gray-900 tracking-tight whitespace-nowrap pointer-events-auto">
+            <h1 className="text-[17px] font-normal text-text-primary tracking-tight whitespace-nowrap pointer-events-auto">
               シフト管理
             </h1>
           </div>
@@ -74,8 +74,8 @@ export default function ShiftsPage() {
           {/* Right: Account Pill */}
           <div className="z-10 flex justify-end min-w-[44px]">
             {trainer && (
-              <div className="h-10 px-4 flex items-center gap-1 bg-white rounded-full shadow-sm border border-gray-100 transition-all">
-                <span className="text-gray-700 text-[13px] font-normal truncate max-w-[100px]">
+              <div className="h-10 px-4 flex items-center gap-1 bg-surface-raised rounded-full shadow-sm border border-border-subtle transition-all">
+                <span className="text-text-secondary text-[13px] font-normal truncate max-w-[100px]">
                   {trainer.name}
                 </span>
                 <div className="ml-1 px-2 py-0.5 rounded-full text-[10px] font-normal whitespace-nowrap bg-brand-500 text-white">

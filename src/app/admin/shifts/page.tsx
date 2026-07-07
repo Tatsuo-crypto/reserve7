@@ -406,14 +406,14 @@ export default function ShiftManagementPage() {
       <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         
         {/* View Mode Switcher */}
-        <div className="flex bg-gray-100 p-1 rounded-lg">
+        <div className="flex bg-surface-overlay p-1 rounded-lg">
           <button
             type="button"
             onClick={() => setViewMode('individual')}
             className={`px-4 py-2 text-sm font-normal rounded-md transition-all ${
               viewMode === 'individual' 
-                ? 'bg-white text-gray-900 shadow-sm' 
-                : 'text-gray-500 hover:text-gray-900'
+                ? 'bg-surface-raised text-text-primary shadow-sm' 
+                : 'text-text-secondary hover:text-text-primary'
             }`}
           >
             個人
@@ -423,8 +423,8 @@ export default function ShiftManagementPage() {
             onClick={() => setViewMode('team')}
             className={`px-4 py-2 text-sm font-normal rounded-md transition-all ${
               viewMode === 'team' 
-                ? 'bg-white text-gray-900 shadow-sm' 
-                : 'text-gray-500 hover:text-gray-900'
+                ? 'bg-surface-raised text-text-primary shadow-sm' 
+                : 'text-text-secondary hover:text-text-primary'
             }`}
           >
             店舗
@@ -434,7 +434,7 @@ export default function ShiftManagementPage() {
         {/* Trainer Selector (Only for individual view) */}
         {viewMode === 'individual' && (
           <div className="w-full md:w-64">
-            <label className="block text-xs text-gray-500 mb-1 text-center md:text-left">対象トレーナー</label>
+            <label className="block text-xs text-text-secondary mb-1 text-center md:text-left">対象トレーナー</label>
             <select
               className="w-full border rounded-md px-3 py-2 text-sm"
               value={selectedTrainerId}
@@ -449,15 +449,15 @@ export default function ShiftManagementPage() {
       </div>
 
       {/* Toolbar */}
-      <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 mb-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div className="bg-surface-raised p-4 rounded-lg shadow-sm border border-border-strong mb-6 flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-center justify-center w-full sm:w-auto space-x-2">
-          <button type="button" onClick={handlePrevWeek} className="p-2 hover:bg-gray-100 rounded-full text-gray-600">
+          <button type="button" onClick={handlePrevWeek} className="p-2 hover:bg-surface-overlay rounded-full text-text-secondary">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
           </button>
-          <span className="text-lg font-normal text-gray-900 min-w-[120px] text-center">
+          <span className="text-lg font-normal text-text-primary min-w-[120px] text-center">
             {format(currentDate, 'yyyy年M月', { locale: ja })}
           </span>
-          <button type="button" onClick={handleNextWeek} className="p-2 hover:bg-gray-100 rounded-full text-gray-600">
+          <button type="button" onClick={handleNextWeek} className="p-2 hover:bg-surface-overlay rounded-full text-text-secondary">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
           </button>
         </div>
@@ -468,10 +468,10 @@ export default function ShiftManagementPage() {
               <button
                 type="button"
                 onClick={() => setSelectionMode(true)}
-                className="inline-flex items-center justify-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-normal rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex items-center justify-center px-3 py-2 border border-border-strong shadow-sm text-sm font-normal rounded-md text-text-secondary bg-surface-raised hover:bg-surface-base disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={viewMode === 'individual' && !selectedTrainerId}
               >
-                <svg className="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 mr-2 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 複数選択
@@ -482,20 +482,20 @@ export default function ShiftManagementPage() {
                   <button
                     type="button"
                     onClick={handleCopyPrevWeek}
-                    className="inline-flex items-center justify-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-normal rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="inline-flex items-center justify-center px-3 py-2 border border-border-strong shadow-sm text-sm font-normal rounded-md text-text-secondary bg-surface-raised hover:bg-surface-base disabled:opacity-50 disabled:cursor-not-allowed"
                     disabled={!selectedTrainerId || loading}
                   >
-                    <svg className="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" /></svg>
+                    <svg className="w-4 h-4 mr-2 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" /></svg>
                     先週コピー
                   </button>
 
                   <button
                     type="button"
                     onClick={handleApplyTemplates}
-                    className="inline-flex items-center justify-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-normal rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="inline-flex items-center justify-center px-3 py-2 border border-border-strong shadow-sm text-sm font-normal rounded-md text-text-secondary bg-surface-raised hover:bg-surface-base disabled:opacity-50 disabled:cursor-not-allowed"
                     disabled={!selectedTrainerId || loading}
                   >
-                    <svg className="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4 mr-2 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.001 0 01-15.357-2m15.357 2H15" />
                     </svg>
                     固定シフト反映
@@ -504,10 +504,10 @@ export default function ShiftManagementPage() {
                   <button
                     type="button"
                     onClick={() => setTemplateModalOpen(true)}
-                    className="inline-flex items-center justify-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-normal rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="inline-flex items-center justify-center px-3 py-2 border border-border-strong shadow-sm text-sm font-normal rounded-md text-text-secondary bg-surface-raised hover:bg-surface-base disabled:opacity-50 disabled:cursor-not-allowed"
                     disabled={!selectedTrainerId || loading}
                   >
-                    <svg className="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                    <svg className="w-4 h-4 mr-2 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                     固定シフト設定
                   </button>
                 </>
@@ -515,7 +515,7 @@ export default function ShiftManagementPage() {
             </>
           ) : (
             <>
-              <span className="text-sm text-gray-600 font-normal mr-2">{selectedShiftIds.length}件選択中</span>
+              <span className="text-sm text-text-secondary font-normal mr-2">{selectedShiftIds.length}件選択中</span>
               <button
                 type="button"
                 onClick={handleBulkDelete}
@@ -533,9 +533,9 @@ export default function ShiftManagementPage() {
                   setSelectionMode(false)
                   setSelectedShiftIds([])
                 }}
-                className="inline-flex items-center justify-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-normal rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                className="inline-flex items-center justify-center px-3 py-2 border border-border-strong shadow-sm text-sm font-normal rounded-md text-text-secondary bg-surface-raised hover:bg-surface-base"
               >
-                <svg className="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 mr-2 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
                 キャンセル
@@ -546,7 +546,7 @@ export default function ShiftManagementPage() {
       </div>
 
       {/* Calendar Area */}
-      <div className="bg-white shadow rounded-lg">
+      <div className="bg-surface-raised shadow rounded-lg">
         {viewMode === 'individual' ? (
           selectedTrainerId ? (
             <ShiftCalendar
@@ -563,7 +563,7 @@ export default function ShiftManagementPage() {
               onShiftSelect={handleShiftSelect}
             />
           ) : (
-            <div className="h-64 flex items-center justify-center text-gray-500">
+            <div className="h-64 flex items-center justify-center text-text-secondary">
               トレーナーを選択してください
             </div>
           )

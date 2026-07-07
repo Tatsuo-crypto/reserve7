@@ -9,13 +9,14 @@ export interface BadgeProps {
 }
 
 // Q-6: neutralのみベーステーマ依存のためトークン参照化。brand/success/warning/dangerは
-// アクセント・状態色そのもの(黒ベース化に伴うシェード調整はQ-4/PR-Q3で別途対応)。
+// アクセント・状態色そのもの。Q-4/PR-Q2: 淡色バッジパターン(bg-*-100 text-*-800系)を
+// 「bg-*-500/15 text-*-300」の暗地パターンへ機械的に総置換(黒ベースでのコントラスト確保)。
 const TONE_CLASSES: Record<Tone, string> = {
     neutral: 'bg-surface-base text-text-secondary',
-    brand: 'bg-brand-50 text-brand-600',
-    success: 'bg-emerald-50 text-emerald-700',
-    warning: 'bg-amber-50 text-amber-700',
-    danger: 'bg-red-50 text-red-600',
+    brand: 'bg-brand-500/15 text-brand-300',
+    success: 'bg-emerald-500/15 text-emerald-300',
+    warning: 'bg-amber-500/15 text-amber-300',
+    danger: 'bg-red-500/15 text-red-300',
 }
 
 /**

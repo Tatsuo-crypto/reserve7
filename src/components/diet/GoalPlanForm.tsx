@@ -73,21 +73,21 @@ export default function GoalPlanForm({
         <div className="space-y-8">
             {showStartDate && (
                 <div className="space-y-2">
-                    <label className="text-xs font-normal text-gray-400 uppercase tracking-widest pl-1">開始日</label>
+                    <label className="text-xs font-normal text-text-muted uppercase tracking-widest pl-1">開始日</label>
                     <input
                         type="date"
                         value={values.startDate}
                         onChange={(e) => onValuesChange(prev => ({ ...prev, startDate: e.target.value }))}
-                        className="w-full bg-gray-50 border-none rounded-2xl p-4 text-sm font-normal focus:ring-2 focus:ring-brand-500"
+                        className="w-full bg-surface-base border-none rounded-2xl p-4 text-sm font-normal focus:ring-2 focus:ring-brand-500"
                     />
                 </div>
             )}
 
-            <div className="space-y-1"><h3 className="text-[10px] font-normal text-gray-400 uppercase tracking-widest pl-1">食事・栄養の目標</h3></div>
+            <div className="space-y-1"><h3 className="text-[10px] font-normal text-text-muted uppercase tracking-widest pl-1">食事・栄養の目標</h3></div>
 
             {/* K-3: 目標カロリーは常にPFCからの導出値（読み取り専用）。カロリーを起点に決めたい場合はこちらから配分する */}
-            <div className="bg-gray-50/80 rounded-[2rem] p-8 text-center border border-gray-100/50 relative space-y-4">
-                <p className="text-[10px] font-normal text-gray-400 mb-1 uppercase tracking-widest">目標摂取カロリー（PFCからの導出値）</p>
+            <div className="bg-surface-base/80 rounded-[2rem] p-8 text-center border border-border-subtle/50 relative space-y-4">
+                <p className="text-[10px] font-normal text-text-muted mb-1 uppercase tracking-widest">目標摂取カロリー（PFCからの導出値）</p>
                 <div className="flex items-baseline justify-center gap-1">
                     <span className="stat-value">{Math.round(values.targetCalories).toLocaleString()}</span>
                     <span className="stat-unit">kcal / 日</span>
@@ -97,7 +97,7 @@ export default function GoalPlanForm({
                         type="number"
                         value={distributeInput}
                         onChange={(e) => setDistributeInput(e.target.value)}
-                        className="w-28 bg-white border border-gray-200 rounded-xl px-3 py-2 text-sm text-center font-normal"
+                        className="w-28 bg-surface-raised border border-border-strong rounded-xl px-3 py-2 text-sm text-center font-normal"
                         placeholder="kcal"
                     />
                     <button
@@ -108,7 +108,7 @@ export default function GoalPlanForm({
                         カロリーから配分
                     </button>
                 </div>
-                <p className="text-[10px] text-gray-400 leading-relaxed">タンパク質は現状維持し、残りを脂質・炭水化物の今の比率で自動配分します</p>
+                <p className="text-[10px] text-text-muted leading-relaxed">タンパク質は現状維持し、残りを脂質・炭水化物の今の比率で自動配分します</p>
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
@@ -120,8 +120,8 @@ export default function GoalPlanForm({
                 <AdminStatCard label="塩分" value={values.salt} unit="g" color="gray" onIncrement={() => onValuesChange(prev => ({ ...prev, salt: Math.max(0, prev.salt + 0.5) }))} onDecrement={() => onValuesChange(prev => ({ ...prev, salt: Math.max(0, prev.salt - 0.5) }))} />
             </div>
 
-            <div className="space-y-8 pt-8 border-t border-gray-50">
-                <div className="space-y-1"><h3 className="text-[10px] font-normal text-gray-400 uppercase tracking-widest pl-1">生活習慣の目標</h3></div>
+            <div className="space-y-8 pt-8 border-t border-border-subtle">
+                <div className="space-y-1"><h3 className="text-[10px] font-normal text-text-muted uppercase tracking-widest pl-1">生活習慣の目標</h3></div>
                 <div className="grid grid-cols-2 gap-4">
                     <AdminStatCard label="水分摂取" value={habitTargets.water ?? DEFAULT_HABIT_TARGETS.water} unit="L" color="sky" onIncrement={() => handleHabitChange('water', 0.5, DEFAULT_HABIT_TARGETS.water)} onDecrement={() => handleHabitChange('water', -0.5, DEFAULT_HABIT_TARGETS.water)} />
                     <AdminStatCard label="目標歩数" value={habitTargets.steps ?? DEFAULT_HABIT_TARGETS.steps} unit="歩" color="cyan" onIncrement={() => handleHabitChange('steps', 500, DEFAULT_HABIT_TARGETS.steps)} onDecrement={() => handleHabitChange('steps', -500, DEFAULT_HABIT_TARGETS.steps)} />
@@ -159,7 +159,7 @@ function AdminStatCard({ label, value, unit, color, onIncrement, onDecrement }: 
         blue: 'text-blue-500 bg-blue-50 border-blue-100',
         purple: 'text-purple-500 bg-purple-50 border-purple-100',
         teal: 'text-teal-500 bg-teal-50 border-teal-100',
-        gray: 'text-gray-500 bg-gray-50 border-gray-100',
+        gray: 'text-text-secondary bg-surface-base border-border-subtle',
         sky: 'text-sky-500 bg-sky-50 border-sky-100',
         cyan: 'text-cyan-500 bg-cyan-50 border-cyan-100',
         orange: 'text-orange-500 bg-orange-50 border-orange-100',
@@ -170,17 +170,17 @@ function AdminStatCard({ label, value, unit, color, onIncrement, onDecrement }: 
 
     return (
         <div className={`${bgColor} rounded-[2rem] p-5 border ${borderColor} transition-all hover:shadow-md group relative overflow-hidden`}>
-            <p className="text-[9px] font-normal text-gray-400 mb-2 uppercase tracking-widest leading-none">{label}</p>
+            <p className="text-[9px] font-normal text-text-muted mb-2 uppercase tracking-widest leading-none">{label}</p>
             <div className="flex items-center justify-between">
                 <div className="flex items-baseline gap-1">
                     <span className={`text-2xl font-semibold tabular-nums leading-none ${baseColor}`}>
                         {value === null ? '-' : unit === 'L' ? value.toFixed(1) : value}
                     </span>
-                    <span className="text-[9px] font-normal text-gray-300 uppercase tracking-tighter">{unit}</span>
+                    <span className="text-[9px] font-normal text-text-muted uppercase tracking-tighter">{unit}</span>
                 </div>
                 <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
-                    <button onClick={(e) => { e.preventDefault(); onIncrement(); }} className="p-1 hover:bg-white rounded-lg text-gray-400 hover:text-gray-600"><Icon name="chevronUp" size={12} /></button>
-                    <button onClick={(e) => { e.preventDefault(); onDecrement(); }} className="p-1 hover:bg-white rounded-lg text-gray-400 hover:text-gray-600"><Icon name="chevronDown" size={12} /></button>
+                    <button onClick={(e) => { e.preventDefault(); onIncrement(); }} className="p-1 hover:bg-surface-raised rounded-lg text-text-muted hover:text-text-secondary"><Icon name="chevronUp" size={12} /></button>
+                    <button onClick={(e) => { e.preventDefault(); onDecrement(); }} className="p-1 hover:bg-surface-raised rounded-lg text-text-muted hover:text-text-secondary"><Icon name="chevronDown" size={12} /></button>
                 </div>
             </div>
         </div>

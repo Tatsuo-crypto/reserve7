@@ -235,18 +235,18 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-surface-raised rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         {/* ヘッダー */}
-        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+        <div className="sticky top-0 bg-surface-raised border-b border-border-strong px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
             </svg>
-            <h2 className="text-xl font-normal text-gray-900">目標・記録管理</h2>
+            <h2 className="text-xl font-normal text-text-primary">目標・記録管理</h2>
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-text-muted hover:text-text-secondary transition-colors"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -255,8 +255,8 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
         </div>
 
         {/* 会員名表示 */}
-        <div className="px-6 py-3 bg-gray-50 border-b border-gray-200">
-          <p className="text-sm text-gray-600">会員名: <span className="font-normal text-gray-900">{memberName}</span></p>
+        <div className="px-6 py-3 bg-surface-base border-b border-border-strong">
+          <p className="text-sm text-text-secondary">会員名: <span className="font-normal text-text-primary">{memberName}</span></p>
         </div>
 
         {/* メッセージ */}
@@ -267,7 +267,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
         )}
 
         {/* タブ */}
-        <div className="border-b border-gray-200 px-2 sm:px-6">
+        <div className="border-b border-border-strong px-2 sm:px-6">
           <div className="flex space-x-1 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300">
             {[
               { 
@@ -302,7 +302,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                 className={`py-2.5 px-2 sm:px-3 text-xs sm:text-sm font-normal border-b-2 transition-colors flex flex-row items-center gap-1.5 whitespace-nowrap ${
                   activeTab === tab.key
                     ? 'border-brand-500 text-brand-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                    : 'border-transparent text-text-secondary hover:text-text-secondary'
                 }`}
                 style={{ writingMode: 'horizontal-tb' }}
               >
@@ -318,24 +318,24 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
           {/* 年次目標 */}
           {activeTab === 'yearly' && (
             <div className="space-y-6">
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="text-sm font-normal text-gray-700 mb-3">新規登録</h3>
+              <div className="bg-surface-base p-4 rounded-lg">
+                <h3 className="text-sm font-normal text-text-secondary mb-3">新規登録</h3>
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-sm font-normal text-gray-700 mb-1">年</label>
+                    <label className="block text-sm font-normal text-text-secondary mb-1">年</label>
                     <input
                       type="number"
                       value={yearlyForm.year}
                       onChange={(e) => setYearlyForm({ ...yearlyForm, year: parseInt(e.target.value) })}
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                      className="w-full border border-border-strong rounded-md px-3 py-2 text-sm"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-normal text-gray-700 mb-1">目標</label>
+                    <label className="block text-sm font-normal text-text-secondary mb-1">目標</label>
                     <textarea
                       value={yearlyForm.goal_text}
                       onChange={(e) => setYearlyForm({ ...yearlyForm, goal_text: e.target.value })}
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                      className="w-full border border-border-strong rounded-md px-3 py-2 text-sm"
                       rows={3}
                     />
                   </div>
@@ -350,9 +350,9 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
               </div>
 
               <div>
-                <h3 className="text-sm font-normal text-gray-700 mb-3">既存データ</h3>
+                <h3 className="text-sm font-normal text-text-secondary mb-3">既存データ</h3>
                 {yearlyGoals.length === 0 ? (
-                  <p className="text-sm text-gray-500">データがありません</p>
+                  <p className="text-sm text-text-secondary">データがありません</p>
                 ) : (
                   <div className="space-y-2">
                     {yearlyGoals.map((goal) => (
@@ -363,12 +363,12 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                               type="number"
                               value={editForm.year || goal.year}
                               onChange={(e) => setEditForm({ ...editForm, year: parseInt(e.target.value) })}
-                              className="w-full border border-gray-300 rounded-md px-2 py-1 text-sm"
+                              className="w-full border border-border-strong rounded-md px-2 py-1 text-sm"
                             />
                             <textarea
                               value={editForm.goal_text || goal.goal_text}
                               onChange={(e) => setEditForm({ ...editForm, goal_text: e.target.value })}
-                              className="w-full border border-gray-300 rounded-md px-2 py-1 text-sm"
+                              className="w-full border border-border-strong rounded-md px-2 py-1 text-sm"
                               rows={2}
                             />
                             <div className="flex gap-2">
@@ -380,7 +380,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                               </button>
                               <button
                                 onClick={() => setEditingId(null)}
-                                className="px-3 py-1 bg-gray-300 text-gray-700 rounded text-sm hover:bg-gray-400"
+                                className="px-3 py-1 bg-surface-overlay text-text-secondary rounded text-sm hover:bg-surface-overlay"
                               >
                                 キャンセル
                               </button>
@@ -390,7 +390,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                           <div className="flex items-center justify-between">
                             <div>
                               <div className="text-sm font-normal text-yellow-700">{goal.year}年</div>
-                              <div className="text-sm text-gray-900">{goal.goal_text}</div>
+                              <div className="text-sm text-text-primary">{goal.goal_text}</div>
                             </div>
                             <div className="flex gap-2">
                               <button
@@ -422,25 +422,25 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
           {/* 月次目標 */}
           {activeTab === 'monthly' && (
             <div className="space-y-6">
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="text-sm font-normal text-gray-700 mb-3">新規登録（最大3つまで）</h3>
+              <div className="bg-surface-base p-4 rounded-lg">
+                <h3 className="text-sm font-normal text-text-secondary mb-3">新規登録（最大3つまで）</h3>
                 <div className="space-y-3">
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-sm font-normal text-gray-700 mb-1">年</label>
+                      <label className="block text-sm font-normal text-text-secondary mb-1">年</label>
                       <input
                         type="number"
                         value={monthlyForm.year}
                         onChange={(e) => setMonthlyForm({ ...monthlyForm, year: parseInt(e.target.value) })}
-                        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                        className="w-full border border-border-strong rounded-md px-3 py-2 text-sm"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-normal text-gray-700 mb-1">月</label>
+                      <label className="block text-sm font-normal text-text-secondary mb-1">月</label>
                       <select
                         value={monthlyForm.month}
                         onChange={(e) => setMonthlyForm({ ...monthlyForm, month: parseInt(e.target.value) })}
-                        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                        className="w-full border border-border-strong rounded-md px-3 py-2 text-sm"
                       >
                         {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
                           <option key={m} value={m}>{m}月</option>
@@ -449,32 +449,32 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-normal text-gray-700 mb-1">目標1</label>
+                    <label className="block text-sm font-normal text-text-secondary mb-1">目標1</label>
                     <input
                       type="text"
                       value={monthlyForm.goal_text_1}
                       onChange={(e) => setMonthlyForm({ ...monthlyForm, goal_text_1: e.target.value })}
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                      className="w-full border border-border-strong rounded-md px-3 py-2 text-sm"
                       placeholder="例: 水2L飲む"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-normal text-gray-700 mb-1">目標2</label>
+                    <label className="block text-sm font-normal text-text-secondary mb-1">目標2</label>
                     <input
                       type="text"
                       value={monthlyForm.goal_text_2}
                       onChange={(e) => setMonthlyForm({ ...monthlyForm, goal_text_2: e.target.value })}
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                      className="w-full border border-border-strong rounded-md px-3 py-2 text-sm"
                       placeholder="例: 毎日10000歩歩く"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-normal text-gray-700 mb-1">目標3</label>
+                    <label className="block text-sm font-normal text-text-secondary mb-1">目標3</label>
                     <input
                       type="text"
                       value={monthlyForm.goal_text_3}
                       onChange={(e) => setMonthlyForm({ ...monthlyForm, goal_text_3: e.target.value })}
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                      className="w-full border border-border-strong rounded-md px-3 py-2 text-sm"
                       placeholder="例: カロリー2000kcal以内"
                     />
                   </div>
@@ -526,9 +526,9 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
               </div>
 
               <div>
-                <h3 className="text-sm font-normal text-gray-700 mb-3">既存データ</h3>
+                <h3 className="text-sm font-normal text-text-secondary mb-3">既存データ</h3>
                 {monthlyGoals.length === 0 ? (
-                  <p className="text-sm text-gray-500">データがありません</p>
+                  <p className="text-sm text-text-secondary">データがありません</p>
                 ) : (
                   <div className="space-y-2">
                     {monthlyGoals.map((goal) => (
@@ -540,12 +540,12 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                                 type="number"
                                 value={editForm.year || goal.year}
                                 onChange={(e) => setEditForm({ ...editForm, year: parseInt(e.target.value) })}
-                                className="border border-gray-300 rounded-md px-2 py-1 text-sm"
+                                className="border border-border-strong rounded-md px-2 py-1 text-sm"
                               />
                               <select
                                 value={editForm.month || goal.month}
                                 onChange={(e) => setEditForm({ ...editForm, month: parseInt(e.target.value) })}
-                                className="border border-gray-300 rounded-md px-2 py-1 text-sm"
+                                className="border border-border-strong rounded-md px-2 py-1 text-sm"
                               >
                                 {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
                                   <option key={m} value={m}>{m}月</option>
@@ -556,7 +556,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                               type="text"
                               value={editForm.goal_text || goal.goal_text}
                               onChange={(e) => setEditForm({ ...editForm, goal_text: e.target.value })}
-                              className="w-full border border-gray-300 rounded-md px-2 py-1 text-sm"
+                              className="w-full border border-border-strong rounded-md px-2 py-1 text-sm"
                             />
                             <div className="flex gap-2">
                               <button
@@ -567,7 +567,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                               </button>
                               <button
                                 onClick={() => setEditingId(null)}
-                                className="px-3 py-1 bg-gray-300 text-gray-700 rounded text-sm hover:bg-gray-400"
+                                className="px-3 py-1 bg-surface-overlay text-text-secondary rounded text-sm hover:bg-surface-overlay"
                               >
                                 キャンセル
                               </button>
@@ -577,7 +577,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                           <div className="flex items-center justify-between">
                             <div>
                               <div className="text-sm font-normal text-brand-700">{goal.year}年{goal.month}月</div>
-                              <div className="text-sm text-gray-900">{goal.goal_text}</div>
+                              <div className="text-sm text-text-primary">{goal.goal_text}</div>
                             </div>
                             <div className="flex gap-2">
                               <button
@@ -609,35 +609,35 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
           {/* 体重記録 */}
           {activeTab === 'weight' && (
             <div className="space-y-6">
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="text-sm font-normal text-gray-700 mb-3">新規登録</h3>
+              <div className="bg-surface-base p-4 rounded-lg">
+                <h3 className="text-sm font-normal text-text-secondary mb-3">新規登録</h3>
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-sm font-normal text-gray-700 mb-1">記録日</label>
+                    <label className="block text-sm font-normal text-text-secondary mb-1">記録日</label>
                     <input
                       type="date"
                       value={weightForm.recorded_date}
                       onChange={(e) => setWeightForm({ ...weightForm, recorded_date: e.target.value })}
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                      className="w-full border border-border-strong rounded-md px-3 py-2 text-sm"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-normal text-gray-700 mb-1">体重 (kg)</label>
+                    <label className="block text-sm font-normal text-text-secondary mb-1">体重 (kg)</label>
                     <input
                       type="number"
                       step="0.1"
                       value={weightForm.weight_kg}
                       onChange={(e) => setWeightForm({ ...weightForm, weight_kg: e.target.value })}
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                      className="w-full border border-border-strong rounded-md px-3 py-2 text-sm"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-normal text-gray-700 mb-1">メモ</label>
+                    <label className="block text-sm font-normal text-text-secondary mb-1">メモ</label>
                     <input
                       type="text"
                       value={weightForm.notes}
                       onChange={(e) => setWeightForm({ ...weightForm, notes: e.target.value })}
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                      className="w-full border border-border-strong rounded-md px-3 py-2 text-sm"
                     />
                   </div>
                   <button
@@ -651,9 +651,9 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
               </div>
 
               <div>
-                <h3 className="text-sm font-normal text-gray-700 mb-3">既存データ</h3>
+                <h3 className="text-sm font-normal text-text-secondary mb-3">既存データ</h3>
                 {weightRecords.length === 0 ? (
-                  <p className="text-sm text-gray-500">データがありません</p>
+                  <p className="text-sm text-text-secondary">データがありません</p>
                 ) : (
                   <div className="space-y-2">
                     {weightRecords.map((record) => (
@@ -664,21 +664,21 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                               type="date"
                               value={editForm.recorded_date || record.recorded_date}
                               onChange={(e) => setEditForm({ ...editForm, recorded_date: e.target.value })}
-                              className="w-full border border-gray-300 rounded-md px-2 py-1 text-sm"
+                              className="w-full border border-border-strong rounded-md px-2 py-1 text-sm"
                             />
                             <input
                               type="number"
                               step="0.1"
                               value={editForm.weight_kg !== undefined ? editForm.weight_kg : record.weight_kg}
                               onChange={(e) => setEditForm({ ...editForm, weight_kg: parseFloat(e.target.value) })}
-                              className="w-full border border-gray-300 rounded-md px-2 py-1 text-sm"
+                              className="w-full border border-border-strong rounded-md px-2 py-1 text-sm"
                             />
                             <input
                               type="text"
                               value={editForm.notes !== undefined ? editForm.notes : record.notes || ''}
                               onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
                               placeholder="メモ"
-                              className="w-full border border-gray-300 rounded-md px-2 py-1 text-sm"
+                              className="w-full border border-border-strong rounded-md px-2 py-1 text-sm"
                             />
                             <div className="flex gap-2">
                               <button
@@ -689,7 +689,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                               </button>
                               <button
                                 onClick={() => setEditingId(null)}
-                                className="px-3 py-1 bg-gray-300 text-gray-700 rounded text-sm hover:bg-gray-400"
+                                className="px-3 py-1 bg-surface-overlay text-text-secondary rounded text-sm hover:bg-surface-overlay"
                               >
                                 キャンセル
                               </button>
@@ -699,7 +699,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                           <div className="flex items-center justify-between">
                             <div>
                               <div className="text-sm font-normal text-green-700">{new Date(record.recorded_date).toLocaleDateString('ja-JP')}</div>
-                              <div className="text-sm text-gray-900">{record.weight_kg}kg {record.notes && `- ${record.notes}`}</div>
+                              <div className="text-sm text-text-primary">{record.weight_kg}kg {record.notes && `- ${record.notes}`}</div>
                             </div>
                             <div className="flex gap-2">
                               <button
@@ -731,55 +731,55 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
           {/* SQ記録 */}
           {activeTab === 'squat' && (
             <div className="space-y-6">
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="text-sm font-normal text-gray-700 mb-3">新規登録</h3>
+              <div className="bg-surface-base p-4 rounded-lg">
+                <h3 className="text-sm font-normal text-text-secondary mb-3">新規登録</h3>
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-sm font-normal text-gray-700 mb-1">記録日</label>
+                    <label className="block text-sm font-normal text-text-secondary mb-1">記録日</label>
                     <input
                       type="date"
                       value={squatForm.recorded_date}
                       onChange={(e) => setSquatForm({ ...squatForm, recorded_date: e.target.value })}
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                      className="w-full border border-border-strong rounded-md px-3 py-2 text-sm"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-normal text-gray-700 mb-1">重量 (kg)</label>
+                    <label className="block text-sm font-normal text-text-secondary mb-1">重量 (kg)</label>
                     <input
                       type="number"
                       step="0.5"
                       value={squatForm.weight_kg}
                       onChange={(e) => setSquatForm({ ...squatForm, weight_kg: e.target.value })}
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                      className="w-full border border-border-strong rounded-md px-3 py-2 text-sm"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-sm font-normal text-gray-700 mb-1">セット数</label>
+                      <label className="block text-sm font-normal text-text-secondary mb-1">セット数</label>
                       <input
                         type="number"
                         value={squatForm.sets}
                         onChange={(e) => setSquatForm({ ...squatForm, sets: e.target.value })}
-                        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                        className="w-full border border-border-strong rounded-md px-3 py-2 text-sm"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-normal text-gray-700 mb-1">回数</label>
+                      <label className="block text-sm font-normal text-text-secondary mb-1">回数</label>
                       <input
                         type="number"
                         value={squatForm.reps}
                         onChange={(e) => setSquatForm({ ...squatForm, reps: e.target.value })}
-                        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                        className="w-full border border-border-strong rounded-md px-3 py-2 text-sm"
                       />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-normal text-gray-700 mb-1">メモ</label>
+                    <label className="block text-sm font-normal text-text-secondary mb-1">メモ</label>
                     <input
                       type="text"
                       value={squatForm.notes}
                       onChange={(e) => setSquatForm({ ...squatForm, notes: e.target.value })}
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                      className="w-full border border-border-strong rounded-md px-3 py-2 text-sm"
                     />
                   </div>
                   <button
@@ -798,9 +798,9 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
               </div>
 
               <div>
-                <h3 className="text-sm font-normal text-gray-700 mb-3">既存データ</h3>
+                <h3 className="text-sm font-normal text-text-secondary mb-3">既存データ</h3>
                 {squatRecords.length === 0 ? (
-                  <p className="text-sm text-gray-500">データがありません</p>
+                  <p className="text-sm text-text-secondary">データがありません</p>
                 ) : (
                   <div className="space-y-2">
                     {squatRecords.map((record) => (
@@ -811,7 +811,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                               type="date"
                               value={editForm.recorded_date || record.recorded_date}
                               onChange={(e) => setEditForm({ ...editForm, recorded_date: e.target.value })}
-                              className="w-full border border-gray-300 rounded-md px-2 py-1 text-sm"
+                              className="w-full border border-border-strong rounded-md px-2 py-1 text-sm"
                             />
                             <input
                               type="number"
@@ -819,7 +819,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                               value={editForm.weight_kg !== undefined ? editForm.weight_kg : record.weight_kg}
                               onChange={(e) => setEditForm({ ...editForm, weight_kg: parseFloat(e.target.value) })}
                               placeholder="重量 (kg)"
-                              className="w-full border border-gray-300 rounded-md px-2 py-1 text-sm"
+                              className="w-full border border-border-strong rounded-md px-2 py-1 text-sm"
                             />
                             <div className="grid grid-cols-2 gap-2">
                               <input
@@ -827,14 +827,14 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                                 value={editForm.sets !== undefined ? editForm.sets : record.sets || ''}
                                 onChange={(e) => setEditForm({ ...editForm, sets: e.target.value ? parseInt(e.target.value) : null })}
                                 placeholder="セット数"
-                                className="border border-gray-300 rounded-md px-2 py-1 text-sm"
+                                className="border border-border-strong rounded-md px-2 py-1 text-sm"
                               />
                               <input
                                 type="number"
                                 value={editForm.reps !== undefined ? editForm.reps : record.reps || ''}
                                 onChange={(e) => setEditForm({ ...editForm, reps: e.target.value ? parseInt(e.target.value) : null })}
                                 placeholder="回数"
-                                className="border border-gray-300 rounded-md px-2 py-1 text-sm"
+                                className="border border-border-strong rounded-md px-2 py-1 text-sm"
                               />
                             </div>
                             <input
@@ -842,7 +842,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                               value={editForm.notes !== undefined ? editForm.notes : record.notes || ''}
                               onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
                               placeholder="メモ"
-                              className="w-full border border-gray-300 rounded-md px-2 py-1 text-sm"
+                              className="w-full border border-border-strong rounded-md px-2 py-1 text-sm"
                             />
                             <div className="flex gap-2">
                               <button
@@ -853,7 +853,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                               </button>
                               <button
                                 onClick={() => setEditingId(null)}
-                                className="px-3 py-1 bg-gray-300 text-gray-700 rounded text-sm hover:bg-gray-400"
+                                className="px-3 py-1 bg-surface-overlay text-text-secondary rounded text-sm hover:bg-surface-overlay"
                               >
                                 キャンセル
                               </button>
@@ -863,7 +863,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                           <div className="flex items-center justify-between">
                             <div>
                               <div className="text-sm font-normal text-purple-700">{new Date(record.recorded_date).toLocaleDateString('ja-JP')}</div>
-                              <div className="text-sm text-gray-900">
+                              <div className="text-sm text-text-primary">
                                 {record.weight_kg}kg
                                 {record.sets && ` | ${record.sets}セット`}
                                 {record.reps && ` | ${record.reps}回`}
@@ -906,11 +906,11 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
           {activeTab === 'settings' && (
             <div className="space-y-8">
               <div>
-                <h3 className="text-sm font-normal text-gray-900 mb-4 flex items-center gap-2">
+                <h3 className="text-sm font-normal text-text-primary mb-4 flex items-center gap-2">
                   <span className="w-1 h-4 bg-brand-600 rounded-full"></span>
                   食事管理機能の設定
                 </h3>
-                <p className="text-xs text-gray-500 mb-4">会員用アプリに食事管理に関連する全機能（入力・分析・進捗・各項目）を表示します</p>
+                <p className="text-xs text-text-secondary mb-4">会員用アプリに食事管理に関連する全機能（入力・分析・進捗・各項目）を表示します</p>
                 
                 <label className="flex items-center gap-4 p-6 bg-brand-50/50 border border-brand-100 rounded-2xl cursor-pointer hover:bg-brand-50 transition-all active:scale-[0.98]">
                   <input
@@ -923,11 +923,11 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                         visible_items: { steps: isChecked, sleep: isChecked, water: isChecked, alcohol: isChecked, workout: isChecked }
                       });
                     }}
-                    className="w-8 h-8 text-brand-600 border-gray-300 rounded-lg focus:ring-brand-500 transition-all"
+                    className="w-8 h-8 text-brand-600 border-border-strong rounded-lg focus:ring-brand-500 transition-all"
                   />
                   <div>
-                    <div className="text-lg font-normal text-gray-900">食事管理機能を表示する <span className="text-brand-600 ml-1">(ダイエットプラン限定)</span></div>
-                    <div className="text-sm text-gray-600 mt-1 italic">チェックを入れると全ての管理機能（入力・分析・進捗）が会員アプリに表示されます</div>
+                    <div className="text-lg font-normal text-text-primary">食事管理機能を表示する <span className="text-brand-600 ml-1">(ダイエットプラン限定)</span></div>
+                    <div className="text-sm text-text-secondary mt-1 italic">チェックを入れると全ての管理機能（入力・分析・進捗）が会員アプリに表示されます</div>
                   </div>
                 </label>
               </div>
@@ -946,10 +946,10 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
         </div>
 
         {/* フッター */}
-        <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 px-6 py-4 flex justify-end">
+        <div className="sticky bottom-0 bg-surface-base border-t border-border-strong px-6 py-4 flex justify-end">
           <button
             onClick={onClose}
-            className="px-6 py-2 bg-gray-600 text-white rounded-md text-sm font-normal hover:bg-gray-700"
+            className="px-6 py-2 bg-surface-overlay text-text-primary rounded-md text-sm font-normal hover:bg-border-strong"
           >
             閉じる
           </button>

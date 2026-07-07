@@ -220,14 +220,14 @@ export default function AdminOnlineLessonPage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+            <div className="min-h-screen bg-surface-base flex items-center justify-center">
                 <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-brand-600" />
             </div>
         )
     }
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-surface-base">
             <div className="max-w-2xl mx-auto px-4 pt-4 pb-12">
 
                 {/* Global success */}
@@ -239,57 +239,57 @@ export default function AdminOnlineLessonPage() {
 
                 {/* Edit / New Form */}
                 {editingId !== null && (
-                    <div className="bg-white rounded-2xl shadow-sm border border-brand-100 p-6 mb-6">
-                        <h2 className="text-lg font-normal text-gray-800 mb-5">
+                    <div className="bg-surface-raised rounded-2xl shadow-sm border border-brand-100 p-6 mb-6">
+                        <h2 className="text-lg font-normal text-text-primary mb-5">
                             {editingId === 'new' ? '新しいレッスンを追加' : 'レッスンを編集'}
                         </h2>
 
                         <div className="space-y-5">
                             {/* Title */}
                             <div>
-                                <label className="block text-sm font-normal text-gray-700 mb-1.5">タイトル <span className="text-red-500">*</span></label>
+                                <label className="block text-sm font-normal text-text-secondary mb-1.5">タイトル <span className="text-red-500">*</span></label>
                                 <input
                                     type="text"
                                     value={form.title}
                                     onChange={e => setForm(p => ({ ...p, title: e.target.value }))}
                                     placeholder="例: 朝ヨガ、夜のHIIT、ストレッチ..."
-                                    className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                                    className="w-full px-4 py-3 border border-border-strong rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                                 />
                             </div>
 
                             {/* Meet URL */}
                             <div>
-                                <label className="block text-sm font-normal text-gray-700 mb-1.5">Google Meet URL <span className="text-red-500">*</span></label>
+                                <label className="block text-sm font-normal text-text-secondary mb-1.5">Google Meet URL <span className="text-red-500">*</span></label>
                                 <input
                                     type="url"
                                     value={form.meet_url}
                                     onChange={e => setForm(p => ({ ...p, meet_url: e.target.value }))}
                                     placeholder="https://meet.google.com/xxx-xxxx-xxx"
-                                    className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                                    className="w-full px-4 py-3 border border-border-strong rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                                 />
                             </div>
 
                             {/* Day of Week */}
                             <div>
-                                <label className="block text-sm font-normal text-gray-700 mb-2">開催曜日</label>
+                                <label className="block text-sm font-normal text-text-secondary mb-2">開催曜日</label>
                                 <div className="flex space-x-2">
                                     {[0, 1, 2, 3, 4, 5, 6].map(d => {
                                         const selected = (form.day_of_week || []).includes(d)
                                         const colors = [
-                                            'bg-red-100 text-red-700 border-red-300',
-                                            'bg-brand-100 text-brand-700 border-brand-300',
-                                            'bg-brand-100 text-brand-700 border-brand-300',
-                                            'bg-brand-100 text-brand-700 border-brand-300',
-                                            'bg-brand-100 text-brand-700 border-brand-300',
-                                            'bg-brand-100 text-brand-700 border-brand-300',
-                                            'bg-orange-100 text-orange-700 border-orange-300',
+                                            'bg-red-500/15 text-red-300 border-red-500/30',
+                                            'bg-brand-500/15 text-brand-300 border-brand-500/30',
+                                            'bg-brand-500/15 text-brand-300 border-brand-500/30',
+                                            'bg-brand-500/15 text-brand-300 border-brand-500/30',
+                                            'bg-brand-500/15 text-brand-300 border-brand-500/30',
+                                            'bg-brand-500/15 text-brand-300 border-brand-500/30',
+                                            'bg-orange-500/15 text-orange-300 border-orange-500/30',
                                         ]
                                         return (
                                             <button
                                                 key={d}
                                                 type="button"
                                                 onClick={() => toggleDay(d)}
-                                                className={`w-10 h-10 rounded-xl border-2 text-sm font-normal transition-all ${selected ? colors[d] + ' border-current' : 'bg-gray-100 text-gray-400 border-gray-200'}`}
+                                                className={`w-10 h-10 rounded-xl border-2 text-sm font-normal transition-all ${selected ? colors[d] + ' border-current' : 'bg-surface-overlay text-text-muted border-border-strong'}`}
                                             >
                                                 {DAYS_JA[d]}
                                             </button>
@@ -301,40 +301,40 @@ export default function AdminOnlineLessonPage() {
                             {/* Start / End Time */}
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-normal text-gray-700 mb-1.5">開始時刻</label>
+                                    <label className="block text-sm font-normal text-text-secondary mb-1.5">開始時刻</label>
                                     <input
                                         type="time"
                                         value={form.start_time || ''}
                                         onChange={e => setForm(p => ({ ...p, start_time: e.target.value }))}
-                                        className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                                        className="w-full px-4 py-3 border border-border-strong rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-normal text-gray-700 mb-1.5">終了時刻</label>
+                                    <label className="block text-sm font-normal text-text-secondary mb-1.5">終了時刻</label>
                                     <input
                                         type="time"
                                         value={form.end_time || ''}
                                         onChange={e => setForm(p => ({ ...p, end_time: e.target.value }))}
-                                        className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                                        className="w-full px-4 py-3 border border-border-strong rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                                     />
                                 </div>
                             </div>
 
                             {/* Description */}
                             <div>
-                                <label className="block text-sm font-normal text-gray-700 mb-1.5">説明・備考</label>
+                                <label className="block text-sm font-normal text-text-secondary mb-1.5">説明・備考</label>
                                 <textarea
                                     value={form.description}
                                     onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
                                     placeholder="参加方法、準備するもの、レッスン内容など..."
                                     rows={3}
-                                    className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
+                                    className="w-full px-4 py-3 border border-border-strong rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
                                 />
                             </div>
 
                             {/* Difficulty */}
                             <div>
-                                <label className="block text-sm font-normal text-gray-700 mb-2">難易度</label>
+                                <label className="block text-sm font-normal text-text-secondary mb-2">難易度</label>
                                 <div className="flex space-x-4">
                                     {['初心者', '中級', '上級'].map(diff => (
                                         <label key={diff} className="flex items-center space-x-2 cursor-pointer">
@@ -344,9 +344,9 @@ export default function AdminOnlineLessonPage() {
                                                 value={diff}
                                                 checked={form.difficulty === diff}
                                                 onChange={e => setForm(p => ({ ...p, difficulty: e.target.value }))}
-                                                className="w-4 h-4 text-brand-600 focus:ring-brand-500 border-gray-300"
+                                                className="w-4 h-4 text-brand-600 focus:ring-brand-500 border-border-strong"
                                             />
-                                            <span className="text-sm text-gray-700">{diff}</span>
+                                            <span className="text-sm text-text-secondary">{diff}</span>
                                         </label>
                                     ))}
                                 </div>
@@ -354,31 +354,31 @@ export default function AdminOnlineLessonPage() {
 
                             {/* URL Expiration */}
                             <div>
-                                <label className="block text-sm font-normal text-gray-700 mb-1.5">URL有効期限</label>
+                                <label className="block text-sm font-normal text-text-secondary mb-1.5">URL有効期限</label>
                                 <input
                                     type="date"
                                     value={form.url_expires_at || ''}
                                     onChange={e => setForm(p => ({ ...p, url_expires_at: e.target.value }))}
-                                    className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                                    className="w-full px-4 py-3 border border-border-strong rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                                 />
-                                <p className="text-xs text-gray-500 mt-1">※設定した期限の1週間前からアラートが表示されます</p>
+                                <p className="text-xs text-text-secondary mt-1">※設定した期限の1週間前からアラートが表示されます</p>
                             </div>
 
                             {/* Target Members for Reminders */}
                             <div className="relative">
-                                <label className="block text-sm font-normal text-gray-700 mb-2">送信対象会員（オンラインレッスン通知先）</label>
+                                <label className="block text-sm font-normal text-text-secondary mb-2">送信対象会員（オンラインレッスン通知先）</label>
                                 {members.length === 0 ? (
-                                    <p className="text-sm text-gray-400">登録されている有効な会員がいません</p>
+                                    <p className="text-sm text-text-muted">登録されている有効な会員がいません</p>
                                 ) : (
                                     <>
                                         {/* Trigger Area / Selected List */}
                                         <div 
                                             onClick={() => setDropdownOpen(!dropdownOpen)}
-                                            className="min-h-[46px] w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus-within:ring-2 focus-within:ring-brand-500 bg-white flex flex-wrap gap-1.5 items-center justify-between cursor-pointer"
+                                            className="min-h-[46px] w-full px-3 py-2 border border-border-strong rounded-xl text-sm focus-within:ring-2 focus-within:ring-brand-500 bg-surface-raised flex flex-wrap gap-1.5 items-center justify-between cursor-pointer"
                                         >
                                             <div className="flex flex-wrap gap-1.5 items-center flex-1">
                                                 {(form.userIds || []).length === 0 ? (
-                                                    <span className="text-gray-400">会員を選択してください（複数選択可）</span>
+                                                    <span className="text-text-muted">会員を選択してください（複数選択可）</span>
                                                 ) : (
                                                     members.filter(m => (form.userIds || []).includes(m.id)).map(member => (
                                                         <span 
@@ -405,7 +405,7 @@ export default function AdminOnlineLessonPage() {
                                                     ))
                                                 )}
                                             </div>
-                                            <div className="text-gray-400 ml-2 flex-shrink-0">
+                                            <div className="text-text-muted ml-2 flex-shrink-0">
                                                 <svg className={`w-4 h-4 transform transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                                                 </svg>
@@ -420,13 +420,13 @@ export default function AdminOnlineLessonPage() {
                                                     className="fixed inset-0 z-40" 
                                                     onClick={() => setDropdownOpen(false)}
                                                 />
-                                                <div className="absolute left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl max-h-56 overflow-y-auto p-2 space-y-0.5 z-50">
+                                                <div className="absolute left-0 right-0 mt-1 bg-surface-raised border border-border-strong rounded-xl shadow-xl max-h-56 overflow-y-auto p-2 space-y-0.5 z-50">
                                                     {members.map(member => {
                                                         const isChecked = (form.userIds || []).includes(member.id)
                                                         return (
                                                             <label 
                                                                 key={member.id} 
-                                                                className="flex items-center space-x-3 cursor-pointer p-2 hover:bg-gray-50 rounded-lg transition-colors select-none"
+                                                                className="flex items-center space-x-3 cursor-pointer p-2 hover:bg-surface-base rounded-lg transition-colors select-none"
                                                             >
                                                                 <input
                                                                     type="checkbox"
@@ -440,11 +440,11 @@ export default function AdminOnlineLessonPage() {
                                                                             return { ...prev, userIds: next }
                                                                         })
                                                                     }}
-                                                                    className="w-4 h-4 text-brand-600 focus:ring-brand-500 border-gray-300 rounded cursor-pointer"
+                                                                    className="w-4 h-4 text-brand-600 focus:ring-brand-500 border-border-strong rounded cursor-pointer"
                                                                 />
                                                                 <div className="flex flex-col">
-                                                                    <span className="text-sm text-gray-700 font-normal">{member.full_name}</span>
-                                                                    <span className="text-[10px] text-gray-400">{member.email}</span>
+                                                                    <span className="text-sm text-text-secondary font-normal">{member.full_name}</span>
+                                                                    <span className="text-[10px] text-text-muted">{member.email}</span>
                                                                 </div>
                                                             </label>
                                                         )
@@ -454,7 +454,7 @@ export default function AdminOnlineLessonPage() {
                                         )}
                                     </>
                                 )}
-                                <p className="text-xs text-gray-500 mt-1">※チェックを入れた会員に対し、レッスン開始30分前にリマインダーが自動送信されます</p>
+                                <p className="text-xs text-text-secondary mt-1">※チェックを入れた会員に対し、レッスン開始30分前にリマインダーが自動送信されます</p>
                             </div>
 
                             {error && (
@@ -483,7 +483,7 @@ export default function AdminOnlineLessonPage() {
                                     <button
                                         type="button"
                                         onClick={cancelEdit}
-                                        className="flex-1 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors font-normal text-sm"
+                                        className="flex-1 py-3 border border-border-strong text-text-secondary rounded-xl hover:bg-surface-base transition-colors font-normal text-sm"
                                     >
                                         キャンセル
                                     </button>
@@ -513,8 +513,8 @@ export default function AdminOnlineLessonPage() {
 
                 {/* Lesson List */}
                 {lessons.length === 0 && editingId === null ? (
-                    <div className="text-center py-16 text-gray-400">
-                        <svg className="w-16 h-16 mx-auto mb-4 text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="text-center py-16 text-text-muted">
+                        <svg className="w-16 h-16 mx-auto mb-4 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.069A1 1 0 0121 8.845v6.309a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                         </svg>
                         <p className="text-sm font-normal">レッスンがありません</p>
@@ -526,22 +526,22 @@ export default function AdminOnlineLessonPage() {
                             <button
                                 key={lesson.id}
                                 onClick={() => startEdit(lesson)}
-                                className="w-full text-left bg-white rounded-2xl shadow-sm border border-gray-100 p-5 hover:border-brand-300 hover:shadow-md transition-all group focus:outline-none focus:ring-2 focus:ring-brand-500 block"
+                                className="w-full text-left bg-surface-raised rounded-2xl shadow-sm border border-border-subtle p-5 hover:border-brand-300 hover:shadow-md transition-all group focus:outline-none focus:ring-2 focus:ring-brand-500 block"
                             >
                                 <div className="flex flex-col space-y-3">
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center space-x-2 mb-1">
-                                            <h3 className="font-normal text-gray-900 text-lg group-hover:text-brand-600 transition-colors">{lesson.title}</h3>
-                                            <span className="text-xs px-2 py-0.5 rounded-full font-normal bg-brand-100 text-brand-700">
+                                            <h3 className="font-normal text-text-primary text-lg group-hover:text-brand-600 transition-colors">{lesson.title}</h3>
+                                            <span className="text-xs px-2 py-0.5 rounded-full font-normal bg-brand-500/15 text-brand-300">
                                                 {lesson.difficulty || '初心者'}
                                             </span>
                                         </div>
                                         <p className="text-sm text-brand-600 mb-1">
                                             📅 {formatSchedule(lesson)}
                                         </p>
-                                        <p className="text-xs text-gray-400 truncate">{lesson.meet_url}</p>
+                                        <p className="text-xs text-text-muted truncate">{lesson.meet_url}</p>
                                         {lesson.description && (
-                                            <p className="text-xs text-gray-500 mt-1 line-clamp-2">{lesson.description}</p>
+                                            <p className="text-xs text-text-secondary mt-1 line-clamp-2">{lesson.description}</p>
                                         )}
                                         {lesson.url_expires_at && new Date(lesson.url_expires_at).getTime() - new Date().getTime() <= 7 * 24 * 60 * 60 * 1000 && (
                                             <div className="mt-3 p-2 bg-red-50 border border-red-200 rounded-lg text-red-700 text-xs flex items-center">
@@ -558,7 +558,7 @@ export default function AdminOnlineLessonPage() {
                         {editingId === null && (
                             <button
                                 onClick={() => startEdit()}
-                                className="w-full h-[72px] bg-white border-2 border-dashed border-gray-200 rounded-2xl flex items-center justify-center text-gray-400 hover:text-brand-600 hover:border-brand-300 hover:bg-brand-50 transition-all group"
+                                className="w-full h-[72px] bg-surface-raised border-2 border-dashed border-border-strong rounded-2xl flex items-center justify-center text-text-muted hover:text-brand-600 hover:border-brand-300 hover:bg-brand-50 transition-all group"
                             >
                                 <svg className="w-8 h-8 group-hover:scale-110 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />

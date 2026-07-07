@@ -83,9 +83,9 @@ export default function PlanTab({ token }: PlanTabProps) {
                     <div>
                         <div className="flex items-center gap-2 mb-1">
                             <div className="w-1.5 h-5 bg-brand-500 rounded-full"></div>
-                            <h3 className="text-xl font-normal text-gray-800">現在の目標設定</h3>
+                            <h3 className="text-xl font-normal text-text-primary">現在の目標設定</h3>
                         </div>
-                        <p className="text-[10px] font-normal text-gray-400 uppercase tracking-widest">目標数値の詳細</p>
+                        <p className="text-[10px] font-normal text-text-muted uppercase tracking-widest">目標数値の詳細</p>
                     </div>
                     <div className="px-4 py-1.5 bg-brand-50 rounded-full">
                         <span className="text-[10px] font-normal text-brand-600">最終更新: {currentGoal?.date}</span>
@@ -95,13 +95,13 @@ export default function PlanTab({ token }: PlanTabProps) {
                 <div className="space-y-8">
                     {/* Diet Section */}
                     <div className="space-y-4">
-                        <p className="text-xs font-normal text-gray-400 pl-2">食事・栄養の目標</p>
-                        <div className="bg-gray-50 rounded-3xl p-6 flex items-center justify-center">
+                        <p className="text-xs font-normal text-text-muted pl-2">食事・栄養の目標</p>
+                        <div className="bg-surface-base rounded-3xl p-6 flex items-center justify-center">
                             <div className="text-center">
-                                <p className="text-xs font-normal text-gray-400 mb-1">目標摂取カロリー</p>
+                                <p className="text-xs font-normal text-text-muted mb-1">目標摂取カロリー</p>
                                 <div className="flex items-baseline gap-1 justify-center">
-                                    <span className="text-4xl font-normal text-gray-800">{currentGoal?.calories.toLocaleString()}</span>
-                                    <span className="text-sm font-normal text-gray-400">kcal / 日</span>
+                                    <span className="text-4xl font-normal text-text-primary">{currentGoal?.calories.toLocaleString()}</span>
+                                    <span className="text-sm font-normal text-text-muted">kcal / 日</span>
                                 </div>
                             </div>
                         </div>
@@ -117,8 +117,8 @@ export default function PlanTab({ token }: PlanTabProps) {
                     </div>
 
                     {/* Lifestyle Section */}
-                    <div className="space-y-4 pt-4 border-t border-gray-50">
-                        <p className="text-xs font-normal text-gray-400 pl-2">生活習慣の目標</p>
+                    <div className="space-y-4 pt-4 border-t border-border-subtle">
+                        <p className="text-xs font-normal text-text-muted pl-2">生活習慣の目標</p>
                         <div className="grid grid-cols-2 gap-4">
                             <PFCStatCard label="水分摂取" value={lifestyleSettings?.habit_targets?.water} unit="L" color="sky" />
                             <PFCStatCard label="目標歩数" value={lifestyleSettings?.habit_targets?.steps} unit="歩" color="emerald" />
@@ -134,9 +134,9 @@ export default function PlanTab({ token }: PlanTabProps) {
                 <div className="mb-8">
                     <div className="flex items-center gap-2 mb-1">
                         <div className="w-1.5 h-5 bg-brand-600 rounded-full"></div>
-                        <h3 className="text-xl font-normal text-gray-800">目標カロリーの推移</h3>
+                        <h3 className="text-xl font-normal text-text-primary">目標カロリーの推移</h3>
                     </div>
-                    <p className="text-[10px] font-normal text-gray-400 uppercase tracking-widest">PFCバランスの推移 (kcal換算)</p>
+                    <p className="text-[10px] font-normal text-text-muted uppercase tracking-widest">PFCバランスの推移 (kcal換算)</p>
                 </div>
 
                 <div className="h-[300px] w-full">
@@ -166,26 +166,26 @@ export default function PlanTab({ token }: PlanTabProps) {
                     </ResponsiveContainer>
                 </div>
                 <div className="mt-4 flex justify-center gap-6">
-                    <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-amber-500"></div><span className="text-[10px] font-normal text-gray-500">P</span></div>
-                    <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-emerald-500"></div><span className="text-[10px] font-normal text-gray-500">F</span></div>
-                    <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-blue-500"></div><span className="text-[10px] font-normal text-gray-500">C</span></div>
+                    <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-amber-500"></div><span className="text-[10px] font-normal text-text-secondary">P</span></div>
+                    <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-emerald-500"></div><span className="text-[10px] font-normal text-text-secondary">F</span></div>
+                    <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-blue-500"></div><span className="text-[10px] font-normal text-text-secondary">C</span></div>
                 </div>
             </Card>
 
             {/* 3. Detailed Goal History Table */}
             <Card padding="lg" className="overflow-hidden">
                 <div className="flex items-center gap-2 mb-6">
-                    <div className="w-1.5 h-5 bg-gray-400 rounded-full"></div>
-                    <h3 className="text-xl font-normal text-gray-800">目標設定の履歴</h3>
+                    <div className="w-1.5 h-5 bg-surface-overlay rounded-full"></div>
+                    <h3 className="text-xl font-normal text-text-primary">目標設定の履歴</h3>
                 </div>
                 
                 <div className="overflow-x-auto -mx-8 px-8">
                     <table className="w-full text-left">
                         <thead>
-                            <tr className="border-b border-gray-50">
-                                <th className="py-4 text-[10px] font-normal text-gray-400 uppercase tracking-widest text-center">開始日</th>
-                                <th className="py-4 text-[10px] font-normal text-gray-400 uppercase tracking-widest text-center">カロリー</th>
-                                <th className="py-4 text-[10px] font-normal text-gray-400 uppercase tracking-widest text-center">P / F / C</th>
+                            <tr className="border-b border-border-subtle">
+                                <th className="py-4 text-[10px] font-normal text-text-muted uppercase tracking-widest text-center">開始日</th>
+                                <th className="py-4 text-[10px] font-normal text-text-muted uppercase tracking-widest text-center">カロリー</th>
+                                <th className="py-4 text-[10px] font-normal text-text-muted uppercase tracking-widest text-center">P / F / C</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50">
@@ -193,12 +193,12 @@ export default function PlanTab({ token }: PlanTabProps) {
                                 const [y, m, d] = h.date.split('-')
                                 const shortDate = `${y.slice(2)}/${parseInt(m, 10)}/${parseInt(d, 10)}`
                                 return (
-                                    <tr key={i} className="group hover:bg-gray-50/50 transition-colors">
-                                        <td className="py-4 text-xs font-normal text-gray-700 whitespace-nowrap text-center">{shortDate}</td>
-                                        <td className="py-4 text-xs font-normal text-gray-900 text-center">
-                                            {h.calories.toLocaleString()}<span className="text-[10px] font-normal text-gray-400 ml-0.5">kcal</span>
+                                    <tr key={i} className="group hover:bg-surface-base/50 transition-colors">
+                                        <td className="py-4 text-xs font-normal text-text-secondary whitespace-nowrap text-center">{shortDate}</td>
+                                        <td className="py-4 text-xs font-normal text-text-primary text-center">
+                                            {h.calories.toLocaleString()}<span className="text-[10px] font-normal text-text-muted ml-0.5">kcal</span>
                                         </td>
-                                        <td className="py-4 text-xs font-normal text-gray-600 text-center">
+                                        <td className="py-4 text-xs font-normal text-text-secondary text-center">
                                             {h.p}/{h.f}/{h.c}
                                         </td>
                                     </tr>
@@ -219,18 +219,18 @@ function PFCStatCard({ label, value, unit, color }: { label: string, value: numb
         blue: 'text-blue-500 bg-blue-50',
         purple: 'text-purple-500 bg-purple-50',
         teal: 'text-teal-500 bg-teal-50',
-        gray: 'text-gray-500 bg-gray-50',
+        gray: 'text-text-secondary bg-surface-base',
         sky: 'text-sky-500 bg-sky-50',
         orange: 'text-orange-500 bg-orange-50',
         violet: 'text-violet-500 bg-violet-50'
     }
 
     return (
-        <div className="bg-gray-50 rounded-3xl p-5 border border-transparent hover:border-gray-200 transition-all">
-            <p className="text-[10px] font-normal text-gray-400 mb-2 uppercase tracking-widest">{label}</p>
+        <div className="bg-surface-base rounded-3xl p-5 border border-transparent hover:border-border-strong transition-all">
+            <p className="text-[10px] font-normal text-text-muted mb-2 uppercase tracking-widest">{label}</p>
             <div className="flex items-baseline gap-1">
                 <span className={`text-2xl font-normal ${colorMap[color]?.split(' ')[0]}`}>{value || 0}</span>
-                <span className="text-[10px] font-normal text-gray-300">{unit}</span>
+                <span className="text-[10px] font-normal text-text-muted">{unit}</span>
             </div>
         </div>
     )

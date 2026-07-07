@@ -607,10 +607,10 @@ function NewReservationContent() {
 
   if (status === 'loading') {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-surface-base flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">読み込み中...</p>
+          <p className="mt-4 text-text-secondary">読み込み中...</p>
         </div>
       </div>
     )
@@ -624,7 +624,7 @@ function NewReservationContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-surface-base py-8">
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
@@ -632,15 +632,15 @@ function NewReservationContent() {
             <div className="flex items-center justify-center">
               <button
                 onClick={() => router.back()}
-                className="absolute left-4 text-gray-600 hover:text-gray-900 transition-colors"
+                className="absolute left-4 text-text-secondary hover:text-text-primary transition-colors"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
               </button>
               <div className="text-center">
-                <h1 className="text-3xl font-normal text-gray-900">新規予約作成</h1>
-                <p className="mt-2 text-gray-600">会員の予約を作成します</p>
+                <h1 className="text-3xl font-normal text-text-primary">新規予約作成</h1>
+                <p className="mt-2 text-text-secondary">会員の予約を作成します</p>
               </div>
             </div>
           </div>
@@ -667,17 +667,17 @@ function NewReservationContent() {
         )}
 
         {/* Form */}
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-surface-raised rounded-lg shadow p-6">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Reservation Type */}
             <div>
-              <label className="block text-sm font-normal text-gray-700 mb-2">
+              <label className="block text-sm font-normal text-text-secondary mb-2">
                 予約タイプ *
               </label>
               <div className="grid grid-cols-2 gap-4">
                 <label className={`relative flex flex-col items-center justify-center p-4 border rounded-lg cursor-pointer transition-all ${!formData.isBlocked && !formData.isTrial && !formData.isGuest && !formData.isTraining
                   ? 'border-brand-500 bg-brand-50 ring-2 ring-brand-500'
-                  : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                  : 'border-border-strong hover:border-border-strong hover:bg-surface-base'
                   }`}>
                   <input
                     type="radio"
@@ -687,17 +687,17 @@ function NewReservationContent() {
                     onChange={() => setFormData(prev => ({ ...prev, isBlocked: false, isTrial: false, isGuest: false, isTraining: false, clientId: '' }))}
                     className="sr-only"
                   />
-                  <div className="w-8 h-8 mb-2 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center">
+                  <div className="w-8 h-8 mb-2 rounded-full bg-brand-500/15 text-brand-300 flex items-center justify-center">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                   </div>
-                  <span className="font-normal text-gray-900">予約</span>
+                  <span className="font-normal text-text-primary">予約</span>
                 </label>
 
                 <label className={`relative flex flex-col items-center justify-center p-4 border rounded-lg cursor-pointer transition-all ${formData.isTrial
                   ? 'border-green-500 bg-green-50 ring-2 ring-green-500'
-                  : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                  : 'border-border-strong hover:border-border-strong hover:bg-surface-base'
                   }`}>
                   <input
                     type="radio"
@@ -707,17 +707,17 @@ function NewReservationContent() {
                     onChange={() => setFormData(prev => ({ ...prev, isBlocked: false, isTrial: true, isGuest: false, isTraining: false, clientId: '' }))}
                     className="sr-only"
                   />
-                  <div className="w-8 h-8 mb-2 rounded-full bg-green-100 text-green-600 flex items-center justify-center">
+                  <div className="w-8 h-8 mb-2 rounded-full bg-green-500/15 text-green-300 flex items-center justify-center">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
                     </svg>
                   </div>
-                  <span className="font-normal text-gray-900">体験</span>
+                  <span className="font-normal text-text-primary">体験</span>
                 </label>
 
                 <label className={`relative flex flex-col items-center justify-center p-4 border rounded-lg cursor-pointer transition-all ${formData.isGuest
                   ? 'border-purple-500 bg-purple-50 ring-2 ring-purple-500'
-                  : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                  : 'border-border-strong hover:border-border-strong hover:bg-surface-base'
                   }`}>
                   <input
                     type="radio"
@@ -727,17 +727,17 @@ function NewReservationContent() {
                     onChange={() => setFormData(prev => ({ ...prev, isBlocked: false, isTrial: false, isGuest: true, isTraining: false, clientId: '' }))}
                     className="sr-only"
                   />
-                  <div className="w-8 h-8 mb-2 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center">
+                  <div className="w-8 h-8 mb-2 rounded-full bg-purple-500/15 text-purple-300 flex items-center justify-center">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>
                   </div>
-                  <span className="font-normal text-gray-900">ゲスト</span>
+                  <span className="font-normal text-text-primary">ゲスト</span>
                 </label>
 
                 <label className={`relative flex flex-col items-center justify-center p-4 border rounded-lg cursor-pointer transition-all ${formData.isBlocked
                   ? 'border-red-500 bg-red-50 ring-2 ring-red-500'
-                  : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                  : 'border-border-strong hover:border-border-strong hover:bg-surface-base'
                   }`}>
                   <input
                     type="radio"
@@ -769,17 +769,17 @@ function NewReservationContent() {
                     }}
                     className="sr-only"
                   />
-                  <div className="w-8 h-8 mb-2 rounded-full bg-red-100 text-red-600 flex items-center justify-center">
+                  <div className="w-8 h-8 mb-2 rounded-full bg-red-500/15 text-red-300 flex items-center justify-center">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
                     </svg>
                   </div>
-                  <span className="font-normal text-gray-900">予約不可</span>
+                  <span className="font-normal text-text-primary">予約不可</span>
                 </label>
 
                 <label className={`relative flex flex-col items-center justify-center p-4 border rounded-lg cursor-pointer transition-all ${formData.isTraining
                   ? 'border-orange-500 bg-orange-50 ring-2 ring-orange-500'
-                  : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                  : 'border-border-strong hover:border-border-strong hover:bg-surface-base'
                   }`}>
                   <input
                     type="radio"
@@ -789,12 +789,12 @@ function NewReservationContent() {
                     onChange={() => setFormData(prev => ({ ...prev, isBlocked: false, isTrial: false, isGuest: false, isTraining: true, clientId: '' }))}
                     className="sr-only"
                   />
-                  <div className="w-8 h-8 mb-2 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center">
+                  <div className="w-8 h-8 mb-2 rounded-full bg-orange-500/15 text-orange-300 flex items-center justify-center">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                     </svg>
                   </div>
-                  <span className="font-normal text-gray-900">研修</span>
+                  <span className="font-normal text-text-primary">研修</span>
                 </label>
               </div>
             </div>
@@ -802,15 +802,15 @@ function NewReservationContent() {
             {/* Training Trainer Selection - Multi-select */}
             {formData.isTraining && (
               <div>
-                <label className="block text-sm font-normal text-gray-700 mb-2">
+                <label className="block text-sm font-normal text-text-secondary mb-2">
                   参加トレーナー *
                 </label>
                 {loadingTrainers ? (
-                  <div className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500">
+                  <div className="w-full px-3 py-2 border border-border-strong rounded-lg bg-surface-base text-text-secondary">
                     トレーナー情報を読み込み中...
                   </div>
                 ) : trainers.length === 0 ? (
-                  <div className="w-full px-3 py-2 border border-yellow-300 rounded-lg bg-yellow-50 text-yellow-800">
+                  <div className="w-full px-3 py-2 border border-yellow-500/30 rounded-lg bg-yellow-500/15 text-yellow-300">
                     ⚠️ アクティブなトレーナーが見つかりません
                   </div>
                 ) : (
@@ -818,7 +818,7 @@ function NewReservationContent() {
                     {trainers.map(trainer => (
                       <label key={trainer.id} className={`flex items-center p-3 border rounded-lg cursor-pointer transition-all ${formData.trainingTrainerIds.includes(trainer.id)
                         ? 'border-orange-500 bg-orange-50'
-                        : 'border-gray-200 hover:border-gray-300'
+                        : 'border-border-strong hover:border-border-strong'
                         }`}>
                         <input
                           type="checkbox"
@@ -877,14 +877,14 @@ function NewReservationContent() {
                               setFormData(prev => ({ ...prev, trainingTrainerIds: prev.trainingTrainerIds.filter(id => id !== trainer.id) }))
                             }
                           }}
-                          className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
+                          className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-border-strong rounded"
                         />
-                        <span className="ml-3 text-gray-900">{trainer.full_name}</span>
+                        <span className="ml-3 text-text-primary">{trainer.full_name}</span>
                       </label>
                     ))}
                   </div>
                 )}
-                <p className="mt-1 text-sm text-gray-500">
+                <p className="mt-1 text-sm text-text-secondary">
                   研修に参加するトレーナーを選択してください（複数選択可）
                 </p>
               </div>
@@ -893,15 +893,15 @@ function NewReservationContent() {
             {/* Client Selection - Only show when not blocked */}
             {!formData.isBlocked && !formData.isTrial && !formData.isGuest && !formData.isTraining && (
               <div>
-                <label htmlFor="clientId" className="block text-sm font-normal text-gray-700 mb-2">
+                <label htmlFor="clientId" className="block text-sm font-normal text-text-secondary mb-2">
                   会員選択 *
                 </label>
                 {loadingClients ? (
-                  <div className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500">
+                  <div className="w-full px-3 py-2 border border-border-strong rounded-lg bg-surface-base text-text-secondary">
                     会員情報を読み込み中...
                   </div>
                 ) : clients.length === 0 ? (
-                  <div className="w-full px-3 py-2 border border-yellow-300 rounded-lg bg-yellow-50 text-yellow-800">
+                  <div className="w-full px-3 py-2 border border-yellow-500/30 rounded-lg bg-yellow-500/15 text-yellow-300">
                     ⚠️ 登録されている会員が見つかりません
                   </div>
                 ) : (
@@ -912,7 +912,7 @@ function NewReservationContent() {
                       value={formData.clientId}
                       onChange={handleInputChange}
                       required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+                      className="w-full px-3 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                     >
                       <option value="">会員を選択してください</option>
                       {clients && clients.map(client => (
@@ -923,7 +923,7 @@ function NewReservationContent() {
                     </select>
                   </>
                 )}
-                <p className="mt-1 text-sm text-gray-500">
+                <p className="mt-1 text-sm text-text-secondary">
                   予約を作成する会員を選択してください
                 </p>
               </div>
@@ -932,7 +932,7 @@ function NewReservationContent() {
             {/* Trial Client Name - Manual text input for trial */}
             {formData.isTrial && (
               <div>
-                <label htmlFor="trialClientName" className="block text-sm font-normal text-gray-700 mb-2">
+                <label htmlFor="trialClientName" className="block text-sm font-normal text-text-secondary mb-2">
                   体験者名 *
                 </label>
                 <input
@@ -942,10 +942,10 @@ function NewReservationContent() {
                   value={formData.trialClientName}
                   onChange={handleInputChange}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+                  className="w-full px-3 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                   placeholder="体験者の名前を入力してください"
                 />
-                <p className="mt-1 text-sm text-gray-500">
+                <p className="mt-1 text-sm text-text-secondary">
                   体験予約を作成する方の名前を入力してください
                 </p>
               </div>
@@ -954,7 +954,7 @@ function NewReservationContent() {
             {/* Guest Name - Manual text input for guest */}
             {formData.isGuest && (
               <div>
-                <label htmlFor="guestName" className="block text-sm font-normal text-gray-700 mb-2">
+                <label htmlFor="guestName" className="block text-sm font-normal text-text-secondary mb-2">
                   ゲスト名 *
                 </label>
                 <input
@@ -964,10 +964,10 @@ function NewReservationContent() {
                   value={formData.guestName}
                   onChange={handleInputChange}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+                  className="w-full px-3 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                   placeholder="ゲストの名前を入力してください"
                 />
-                <p className="mt-1 text-sm text-gray-500">
+                <p className="mt-1 text-sm text-text-secondary">
                   ゲスト予約を作成する方の名前を入力してください
                 </p>
               </div>
@@ -977,13 +977,13 @@ function NewReservationContent() {
             {/* On-duty Trainer Display */}
             {!formData.isBlocked && !formData.isTraining && detectedTrainer && (
               <div>
-                <label className="block text-sm font-normal text-gray-700 mb-2">
+                <label className="block text-sm font-normal text-text-secondary mb-2">
                   担当トレーナー
                 </label>
-                <div className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-brand-50 text-brand-800 font-normal">
+                <div className="w-full px-3 py-2 border border-border-strong rounded-lg bg-brand-500/15 text-brand-300 font-normal">
                   {detectedTrainer.name}
                 </div>
-                <p className="mt-1 text-sm text-gray-500">
+                <p className="mt-1 text-sm text-text-secondary">
                   シフトから自動判定されます
                 </p>
               </div>
@@ -994,7 +994,7 @@ function NewReservationContent() {
               // Training: separate date, start time, end time
               <div className="space-y-4">
                 <div>
-                  <label htmlFor="trainingDate" className="block text-sm font-normal text-gray-700 mb-2">
+                  <label htmlFor="trainingDate" className="block text-sm font-normal text-text-secondary mb-2">
                     日付 *
                   </label>
                   <input
@@ -1002,14 +1002,14 @@ function NewReservationContent() {
                     id="trainingDate"
                     value={formData.trainingDate}
                     onChange={(e) => setFormData({ ...formData, trainingDate: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                     required
                   />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label htmlFor="trainingStartTime" className="block text-sm font-normal text-gray-700 mb-2">
+                    <label htmlFor="trainingStartTime" className="block text-sm font-normal text-text-secondary mb-2">
                       開始時刻 *
                     </label>
                     <input
@@ -1017,13 +1017,13 @@ function NewReservationContent() {
                       id="trainingStartTime"
                       value={formData.trainingStartTime}
                       onChange={(e) => setFormData({ ...formData, trainingStartTime: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                       required
                     />
                   </div>
 
                   <div>
-                    <label htmlFor="trainingEndTime" className="block text-sm font-normal text-gray-700 mb-2">
+                    <label htmlFor="trainingEndTime" className="block text-sm font-normal text-text-secondary mb-2">
                       終了時刻 *
                     </label>
                     <input
@@ -1031,7 +1031,7 @@ function NewReservationContent() {
                       id="trainingEndTime"
                       value={formData.trainingEndTime}
                       onChange={(e) => setFormData({ ...formData, trainingEndTime: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                       required
                     />
                   </div>
@@ -1041,7 +1041,7 @@ function NewReservationContent() {
               // Blocked time: separate date and time inputs
               <div className="space-y-4">
                 <div>
-                  <label htmlFor="blockedDate" className="block text-sm font-normal text-gray-700 mb-2">
+                  <label htmlFor="blockedDate" className="block text-sm font-normal text-text-secondary mb-2">
                     日付 *
                   </label>
                   <input
@@ -1049,14 +1049,14 @@ function NewReservationContent() {
                     id="blockedDate"
                     value={formData.blockedDate}
                     onChange={(e) => setFormData({ ...formData, blockedDate: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                     required
                   />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label htmlFor="blockedStartTime" className="block text-sm font-normal text-gray-700 mb-2">
+                    <label htmlFor="blockedStartTime" className="block text-sm font-normal text-text-secondary mb-2">
                       開始時刻 *
                     </label>
                     <input
@@ -1064,13 +1064,13 @@ function NewReservationContent() {
                       id="blockedStartTime"
                       value={formData.blockedStartTime}
                       onChange={(e) => setFormData({ ...formData, blockedStartTime: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                       required
                     />
                   </div>
 
                   <div>
-                    <label htmlFor="blockedEndTime" className="block text-sm font-normal text-gray-700 mb-2">
+                    <label htmlFor="blockedEndTime" className="block text-sm font-normal text-text-secondary mb-2">
                       終了時刻 *
                     </label>
                     <input
@@ -1078,7 +1078,7 @@ function NewReservationContent() {
                       id="blockedEndTime"
                       value={formData.blockedEndTime}
                       onChange={(e) => setFormData({ ...formData, blockedEndTime: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                       required
                     />
                   </div>
@@ -1087,7 +1087,7 @@ function NewReservationContent() {
             ) : (
               // Regular reservation: datetime-local only (no duration needed)
               <div>
-                <label htmlFor="startTime" className="block text-sm font-normal text-gray-700 mb-2">
+                <label htmlFor="startTime" className="block text-sm font-normal text-text-secondary mb-2">
                   開始日時 *
                 </label>
                 <input
@@ -1095,7 +1095,7 @@ function NewReservationContent() {
                   id="startTime"
                   value={formData.startTime}
                   onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                   required
                 />
               </div>
@@ -1104,14 +1104,14 @@ function NewReservationContent() {
             {/* Session Duration - Only show for regular reservations (client/trial/guest) */}
             {!formData.isBlocked && !formData.isTraining && (
               <div>
-                <label htmlFor="duration" className="block text-sm font-normal text-gray-700 mb-2">
+                <label htmlFor="duration" className="block text-sm font-normal text-text-secondary mb-2">
                   セッション時間 *
                 </label>
                 <select
                   id="duration"
                   value={formData.duration}
                   onChange={(e) => setFormData({ ...formData, duration: parseInt(e.target.value) })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                   required
                 >
                   <option value={30}>30分</option>
@@ -1124,7 +1124,7 @@ function NewReservationContent() {
 
             {/* Notes */}
             <div>
-              <label htmlFor="notes" className="block text-sm font-normal text-gray-700 mb-2">
+              <label htmlFor="notes" className="block text-sm font-normal text-text-secondary mb-2">
                 {formData.isBlocked ? '理由（任意）' : 'メモ（任意）'}
               </label>
               <textarea
@@ -1134,10 +1134,10 @@ function NewReservationContent() {
                 onChange={handleInputChange}
                 rows={4}
                 maxLength={1000}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+                className="w-full px-3 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                 placeholder={formData.isBlocked ? "予約不可の理由を入力してください（例：定期メンテナンス、休業日）" : "特記事項があれば入力してください"}
               />
-              <p className="mt-1 text-sm text-gray-500">
+              <p className="mt-1 text-sm text-text-secondary">
                 {formData.notes.length}/1000文字
               </p>
             </div>
@@ -1147,7 +1147,7 @@ function NewReservationContent() {
               <button
                 type="button"
                 onClick={() => router.back()}
-                className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                className="px-6 py-2 border border-border-strong rounded-lg text-text-secondary hover:bg-surface-base transition-colors"
               >
                 キャンセル
               </button>
@@ -1166,24 +1166,24 @@ function NewReservationContent() {
       {/* Custom Confirm Modal for Mobile PWA Support */}
       {showShiftConfirmModal && (
         <div className="fixed inset-0 bg-gray-900 bg-opacity-50 overflow-y-auto h-full w-full z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="relative p-6 w-full max-w-sm shadow-xl rounded-2xl bg-white scale-100 transition-transform">
+          <div className="relative p-6 w-full max-w-sm shadow-xl rounded-2xl bg-surface-raised scale-100 transition-transform">
             <div className="text-center">
               <div className="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-yellow-100 mb-4">
                 <svg className="h-7 w-7 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-normal text-gray-900 mb-2">
+              <h3 className="text-xl font-normal text-text-primary mb-2">
                 シフト外の予約
               </h3>
-              <p className="text-sm text-gray-600 mb-6 leading-relaxed">
+              <p className="text-sm text-text-secondary mb-6 leading-relaxed">
                 この時間帯に出勤しているトレーナーがいません（シフト外）。<br /><br />それでも予約を作成しますか？
               </p>
               <div className="flex justify-center space-x-3 w-full">
                 <button
                   type="button"
                   onClick={cancelShiftConfirm}
-                  className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 bg-white rounded-xl hover:bg-gray-50 transition-colors font-normal shadow-sm"
+                  className="flex-1 px-4 py-3 border border-border-strong text-text-secondary bg-surface-raised rounded-xl hover:bg-surface-base transition-colors font-normal shadow-sm"
                 >
                   キャンセル
                 </button>
@@ -1203,17 +1203,17 @@ function NewReservationContent() {
       {/* Custom Confirm Modal for Training Trainer Shift Warning */}
       {showTrainingShiftModal && (
         <div className="fixed inset-0 bg-gray-900 bg-opacity-50 overflow-y-auto h-full w-full z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="relative p-6 w-full max-w-sm shadow-xl rounded-2xl bg-white">
+          <div className="relative p-6 w-full max-w-sm shadow-xl rounded-2xl bg-surface-raised">
             <div className="text-center">
               <div className="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-orange-100 mb-4">
                 <svg className="h-7 w-7 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-normal text-gray-900 mb-2">
+              <h3 className="text-xl font-normal text-text-primary mb-2">
                 シフト外のトレーナー
               </h3>
-              <p className="text-sm text-gray-600 mb-6 leading-relaxed">
+              <p className="text-sm text-text-secondary mb-6 leading-relaxed">
                 <span className="font-normal">{pendingTrainerName}</span> はこの時間帯にシフトがありません。<br /><br />それでも研修に追加しますか？
               </p>
               <div className="flex justify-center space-x-3 w-full">
@@ -1224,7 +1224,7 @@ function NewReservationContent() {
                     setPendingTrainerId(null)
                     setPendingTrainerName('')
                   }}
-                  className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 bg-white rounded-xl hover:bg-gray-50 transition-colors font-normal shadow-sm"
+                  className="flex-1 px-4 py-3 border border-border-strong text-text-secondary bg-surface-raised rounded-xl hover:bg-surface-base transition-colors font-normal shadow-sm"
                 >
                   キャンセル
                 </button>
@@ -1254,10 +1254,10 @@ function NewReservationContent() {
 export default function NewReservationPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-surface-base flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">読み込み中...</p>
+          <p className="mt-4 text-text-secondary">読み込み中...</p>
         </div>
       </div>
     }>

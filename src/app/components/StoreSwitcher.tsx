@@ -78,33 +78,33 @@ export default function StoreSwitcher({ defaultStoreName }: StoreSwitcherProps) 
         <div className="relative" ref={dropdownRef}>
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="flex items-center space-x-1.5 px-3 py-1.5 border border-gray-100 rounded-full hover:bg-gray-50 transition-all bg-white/50 shadow-sm active:scale-95"
+                className="flex items-center space-x-1.5 px-3 py-1.5 border border-border-subtle rounded-full hover:bg-surface-overlay transition-colors bg-surface-raised/50 shadow-sm active:scale-95"
             >
-                <span className="text-[13px] font-normal text-gray-700 flex items-center whitespace-nowrap">
+                <span className="text-[13px] font-normal text-text-secondary flex items-center whitespace-nowrap">
                     {simplifyName(currentStoreName)}
-                    <svg className={`w-3 h-3 ml-1 text-gray-400 transform transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className={`w-3 h-3 ml-1 text-text-muted transform transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                 </span>
             </button>
 
             {isOpen && (
-                <div className="absolute right-0 mt-2 w-40 bg-white rounded-2xl shadow-xl py-1 z-50 border border-gray-100 animate-fadeIn overflow-hidden">
-                    <div className="px-4 py-2 text-[10px] font-normal text-gray-400 uppercase tracking-widest border-b border-gray-50">
+                <div className="absolute right-0 mt-2 w-40 bg-surface-raised rounded-2xl shadow-xl py-1 z-50 border border-border-subtle animate-fadeIn overflow-hidden">
+                    <div className="px-4 py-2 text-[10px] font-normal text-text-muted uppercase tracking-widest border-b border-border-subtle">
                         店舗選択
                     </div>
                     {stores.map(store => (
                         <button
                             key={store.id}
                             onClick={() => handleSelect(store)}
-                            className={`block w-full text-left px-4 py-3 text-[13px] text-gray-700 hover:bg-gray-50 transition-colors ${store.name === currentStoreName ? 'bg-gray-50 text-green-600' : ''
+                            className={`block w-full text-left px-4 py-3 text-[13px] text-text-secondary hover:bg-surface-overlay transition-colors ${store.name === currentStoreName ? 'bg-surface-overlay text-green-400' : ''
                                 }`}
                         >
                             {simplifyName(store.name)}
                         </button>
                     ))}
                     {stores.length === 0 && (
-                        <div className="px-4 py-3 text-sm text-gray-400">
+                        <div className="px-4 py-3 text-sm text-text-muted">
                             店舗が見つかりません
                         </div>
                     )}

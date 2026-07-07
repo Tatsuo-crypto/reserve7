@@ -34,19 +34,19 @@ export default function DesignSystemPage() {
     }, [status, session, router])
 
     if (status !== 'authenticated' || session?.user?.role !== 'ADMIN') {
-        return <div className="min-h-screen flex items-center justify-center bg-gray-50"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600"></div></div>
+        return <div className="min-h-screen flex items-center justify-center bg-surface-base"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600"></div></div>
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 pb-16 pt-8">
+        <div className="min-h-screen bg-surface-base pb-16 pt-8">
             <div className="max-w-2xl mx-auto px-4 sm:px-6 space-y-8">
                 <div>
-                    <h1 className="text-xl font-semibold text-gray-900">デザインシステム確認ページ</h1>
-                    <p className="text-xs text-gray-400 mt-1">N-2: ui/配下の共通コンポーネント一覧(管理者専用)</p>
+                    <h1 className="text-xl font-semibold text-text-primary">デザインシステム確認ページ</h1>
+                    <p className="text-xs text-text-muted mt-1">N-2: ui/配下の共通コンポーネント一覧(管理者専用)</p>
                 </div>
 
                 <Card>
-                    <h2 className="text-base font-semibold text-gray-800 mb-4">Button</h2>
+                    <h2 className="text-base font-semibold text-text-primary mb-4">Button</h2>
                     <div className="space-y-3">
                         <div className="flex flex-wrap gap-2">
                             <Button variant="primary">primary</Button>
@@ -64,12 +64,12 @@ export default function DesignSystemPage() {
                 </Card>
 
                 <Card>
-                    <h2 className="text-base font-semibold text-gray-800 mb-4">Card(このカード自体もCardコンポーネント)</h2>
-                    <p className="text-sm font-normal text-gray-600">rounded-2xl / border-gray-100 / shadow-sm で統一。</p>
+                    <h2 className="text-base font-semibold text-text-primary mb-4">Card(このカード自体もCardコンポーネント)</h2>
+                    <p className="text-sm font-normal text-text-secondary">rounded-2xl / border-border-subtle / shadow-sm で統一。</p>
                 </Card>
 
                 <Card>
-                    <h2 className="text-base font-semibold text-gray-800 mb-4">Badge</h2>
+                    <h2 className="text-base font-semibold text-text-primary mb-4">Badge</h2>
                     <div className="flex flex-wrap gap-2">
                         <Badge tone="neutral">neutral</Badge>
                         <Badge tone="brand">brand</Badge>
@@ -80,30 +80,30 @@ export default function DesignSystemPage() {
                 </Card>
 
                 <Card>
-                    <h2 className="text-base font-semibold text-gray-800 mb-4">Icon</h2>
+                    <h2 className="text-base font-semibold text-text-primary mb-4">Icon</h2>
                     <div className="grid grid-cols-4 sm:grid-cols-6 gap-4">
                         {ICON_NAMES.map(name => (
                             <div key={name} className="flex flex-col items-center gap-1">
-                                <div className="w-10 h-10 rounded-lg bg-gray-50 flex items-center justify-center text-gray-700">
+                                <div className="w-10 h-10 rounded-lg bg-surface-base flex items-center justify-center text-text-secondary">
                                     <Icon name={name} />
                                 </div>
-                                <span className="text-[10px] text-gray-400">{name}</span>
+                                <span className="text-[10px] text-text-muted">{name}</span>
                             </div>
                         ))}
                     </div>
                 </Card>
 
                 <Card>
-                    <h2 className="text-base font-semibold text-gray-800 mb-4">タイポグラフィ(N-4)</h2>
+                    <h2 className="text-base font-semibold text-text-primary mb-4">タイポグラフィ(N-4)</h2>
                     <div className="space-y-2">
-                        <p className="text-xl font-semibold text-gray-900">見出し・主数値 = font-semibold</p>
-                        <p className="text-sm font-normal text-gray-600">本文 = font-normal</p>
-                        <p className="text-xs text-gray-400">補足 = text-xs text-gray-400/500</p>
+                        <p className="text-xl font-semibold text-text-primary">見出し・主数値 = font-semibold</p>
+                        <p className="text-sm font-normal text-text-secondary">本文 = font-normal</p>
+                        <p className="text-xs text-text-muted">補足 = text-xs text-text-muted/500</p>
                     </div>
                 </Card>
 
                 <Card>
-                    <h2 className="text-base font-semibold text-gray-800 mb-4">アクセントカラー(brand)</h2>
+                    <h2 className="text-base font-semibold text-text-primary mb-4">アクセントカラー(brand)</h2>
                     <div className="flex gap-2">
                         <div className="w-10 h-10 rounded-lg bg-brand-50" title="brand-50" />
                         <div className="w-10 h-10 rounded-lg bg-brand-100" title="brand-100" />
@@ -116,7 +116,7 @@ export default function DesignSystemPage() {
                         <div className="w-10 h-10 rounded-lg bg-brand-800" title="brand-800" />
                         <div className="w-10 h-10 rounded-lg bg-brand-900" title="brand-900" />
                     </div>
-                    <p className="text-xs text-gray-400 mt-2">indigo/roseの新規使用は今後禁止。既存箇所は画面を触るタイミングでbrandに置き換える。</p>
+                    <p className="text-xs text-text-muted mt-2">indigo/roseの新規使用は今後禁止。既存箇所は画面を触るタイミングでbrandに置き換える。</p>
                 </Card>
             </div>
         </div>

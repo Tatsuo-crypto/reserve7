@@ -140,10 +140,10 @@ export default function StoresPage() {
 
       {/* Filters (temporarily hidden) */}
       {SHOW_FILTERS && (
-        <div className="bg-white shadow-sm border border-gray-200 rounded-lg mb-3">
+        <div className="bg-surface-raised shadow-sm border border-border-strong rounded-lg mb-3">
           <div className="px-6 py-4 grid grid-cols-1 md:grid-cols-3 gap-3">
             <div>
-              <label className="block text-xs text-gray-500 mb-1">ステータス</label>
+              <label className="block text-xs text-text-secondary mb-1">ステータス</label>
               <select className="w-full border rounded-md px-2 py-2 text-sm" value={status} onChange={(e) => setStatus(e.target.value as any)}>
                 <option value="all">すべて</option>
                 <option value="active">有効（active）</option>
@@ -151,10 +151,10 @@ export default function StoresPage() {
               </select>
             </div>
             <div className="md:col-span-2">
-              <label className="block text-xs text-gray-500 mb-1">検索（店舗名・カレンダーID）</label>
+              <label className="block text-xs text-text-secondary mb-1">検索（店舗名・カレンダーID）</label>
               <div className="flex gap-2">
                 <input className="flex-1 border rounded-md px-3 py-2 text-sm" placeholder="例: 一号店 or calendar-id@group.calendar.google.com" value={query} onChange={(e) => setQuery(e.target.value)} />
-                <button onClick={fetchList} className="px-3 py-2 text-sm rounded-md border bg-gray-50 hover:bg-gray-100">検索</button>
+                <button onClick={fetchList} className="px-3 py-2 text-sm rounded-md border bg-surface-base hover:bg-surface-overlay">検索</button>
               </div>
             </div>
           </div>
@@ -162,17 +162,17 @@ export default function StoresPage() {
       )}
 
       {/* Table */}
-      <div className="bg-white shadow-sm border border-gray-200 rounded-lg">
+      <div className="bg-surface-raised shadow-sm border border-border-strong rounded-lg">
         <div className="px-6 py-4">
           {loading ? (
-            <div className="text-center py-12 text-gray-500 text-sm">読み込み中...</div>
+            <div className="text-center py-12 text-text-secondary text-sm">読み込み中...</div>
           ) : stores.length === 0 ? (
-            <div className="text-center py-12 text-gray-500 text-sm">該当の店舗がありません</div>
+            <div className="text-center py-12 text-text-secondary text-sm">該当の店舗がありません</div>
           ) : (
             <div className="overflow-x-auto">
               <table className="min-w-[980px] sm:min-w-[1100px] text-sm">
                 <thead>
-                  <tr className="bg-gray-50 text-gray-600">
+                  <tr className="bg-surface-base text-text-secondary">
                     <th className="text-center px-3 py-2 border-b whitespace-nowrap min-w-[180px]">店舗名</th>
                     <th className="text-center px-3 py-2 border-b whitespace-nowrap min-w-[220px]">メール</th>
                     <th className="text-center px-3 py-2 border-b whitespace-nowrap min-w-[260px]">カレンダーID</th>
@@ -183,25 +183,25 @@ export default function StoresPage() {
                 </thead>
                 <tbody>
                   {stores.map(s => (
-                    <tr key={s.id} className="hover:bg-gray-50">
+                    <tr key={s.id} className="hover:bg-surface-base">
                       <td className="px-3 py-2 border-b whitespace-nowrap text-center">
-                        <div className="font-normal text-gray-900 whitespace-nowrap">{s.name}</div>
+                        <div className="font-normal text-text-primary whitespace-nowrap">{s.name}</div>
                       </td>
                       <td className="px-3 py-2 border-b whitespace-nowrap text-center">
-                        <div className="text-gray-800 truncate max-w-[240px] mx-auto" title={s.email || ''}>{s.email || '-'}</div>
+                        <div className="text-text-primary truncate max-w-[240px] mx-auto" title={s.email || ''}>{s.email || '-'}</div>
                       </td>
                       <td className="px-3 py-2 border-b whitespace-nowrap text-center">
-                        <div className="text-gray-800 truncate max-w-[300px] mx-auto" title={s.calendar_id}>{s.calendar_id}</div>
+                        <div className="text-text-primary truncate max-w-[300px] mx-auto" title={s.calendar_id}>{s.calendar_id}</div>
                       </td>
                       <td className="px-3 py-2 border-b text-center whitespace-nowrap">
-                        <div className="text-gray-900">{s.memberCount ?? 0}</div>
+                        <div className="text-text-primary">{s.memberCount ?? 0}</div>
                       </td>
                       <td className="px-3 py-2 border-b whitespace-nowrap text-center">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-normal ${s.status === 'active' ? 'bg-brand-100 text-brand-800' : 'bg-gray-200 text-gray-700'}`}>{s.status === 'active' ? '有効' : '無効'}</span>
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-normal ${s.status === 'active' ? 'bg-brand-500/15 text-brand-300' : 'bg-surface-overlay text-text-secondary'}`}>{s.status === 'active' ? '有効' : '無効'}</span>
                       </td>
                       <td className="px-3 py-2 border-b text-center whitespace-nowrap">
                         <div className="inline-flex items-center gap-2 whitespace-nowrap justify-center">
-                          <button className="px-2 py-1 text-xs rounded-md border hover:bg-gray-50" onClick={() => openEdit(s)}>編集</button>
+                          <button className="px-2 py-1 text-xs rounded-md border hover:bg-surface-base" onClick={() => openEdit(s)}>編集</button>
                           <button className={`px-2 py-1 text-xs rounded-md border ${s.status === 'active' ? 'hover:bg-red-50' : 'hover:bg-brand-50'}`} onClick={() => toggleActive(s)}>{s.status === 'active' ? '無効化' : '有効化'}</button>
                         </div>
                       </td>
@@ -218,23 +218,23 @@ export default function StoresPage() {
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/30" onClick={() => setModalOpen(false)} />
-          <div className="relative bg-white rounded-lg border border-gray-200 shadow-lg w-full max-w-lg p-6">
+          <div className="relative bg-surface-raised rounded-lg border border-border-strong shadow-lg w-full max-w-lg p-6">
             <h3 className="text-lg font-normal mb-4">{editing ? '店舗編集' : '新規店舗'}</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
-                <label className="block text-xs text-gray-500 mb-1">店舗名</label>
+                <label className="block text-xs text-text-secondary mb-1">店舗名</label>
                 <input className="w-full border rounded-md px-3 py-2 text-sm" value={form.name} onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))} />
               </div>
               <div className="md:col-span-2">
-                <label className="block text-xs text-gray-500 mb-1">カレンダーID</label>
+                <label className="block text-xs text-text-secondary mb-1">カレンダーID</label>
                 <input className="w-full border rounded-md px-3 py-2 text-sm" value={form.calendarId} onChange={(e) => setForm(f => ({ ...f, calendarId: e.target.value }))} />
               </div>
               <div className="md:col-span-2">
-                <label className="block text-xs text-gray-500 mb-1">店舗メール</label>
+                <label className="block text-xs text-text-secondary mb-1">店舗メール</label>
                 <input className="w-full border rounded-md px-3 py-2 text-sm" value={form.email} onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))} />
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">ステータス</label>
+                <label className="block text-xs text-text-secondary mb-1">ステータス</label>
                 <select className="w-full border rounded-md px-2 py-2 text-sm" value={form.status} onChange={(e) => setForm(f => ({ ...f, status: e.target.value as any }))}>
                   <option value="active">有効（active）</option>
                   <option value="inactive">無効（inactive）</option>

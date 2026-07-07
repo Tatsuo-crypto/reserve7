@@ -99,7 +99,7 @@ export default function WeightTab({ userId, token, isAdmin }: WeightTabProps) {
             <Card padding="sm">
                 <div className="flex items-center gap-2 mb-4">
                     <div className="w-1 h-4 bg-brand-500 rounded-full"></div>
-                    <h3 className="text-sm font-semibold text-gray-800">週別の体重平均</h3>
+                    <h3 className="text-sm font-semibold text-text-primary">週別の体重平均</h3>
                 </div>
 
                 {historyLoading ? (
@@ -108,13 +108,13 @@ export default function WeightTab({ userId, token, isAdmin }: WeightTabProps) {
                     <div className="divide-y divide-gray-50">
                         {weekHistory.map((row, i) => (
                             <div key={i} className="py-3">
-                                <p className="text-[10px] font-normal text-gray-400 tabular-nums mb-1">{row.rangeStr}</p>
+                                <p className="text-[10px] font-normal text-text-muted tabular-nums mb-1">{row.rangeStr}</p>
                                 <div className="flex items-baseline gap-3 flex-wrap">
-                                    <span className="text-base font-semibold text-gray-800 tabular-nums">
+                                    <span className="text-base font-semibold text-text-primary tabular-nums">
                                         {row.avg !== null ? `平均 ${row.avg.toFixed(1)}kg` : '記録なし'}
                                     </span>
                                     {row.diffAbs !== null && (
-                                        <span className={`text-base font-semibold tabular-nums whitespace-nowrap ${row.diffAbs < 0 ? 'text-blue-600' : row.diffAbs > 0 ? 'text-rose-600' : 'text-gray-400'}`}>
+                                        <span className={`text-base font-semibold tabular-nums whitespace-nowrap ${row.diffAbs < 0 ? 'text-blue-600' : row.diffAbs > 0 ? 'text-rose-600' : 'text-text-muted'}`}>
                                             先週差 {row.diffAbs > 0 ? '+' : ''}{row.diffAbs.toFixed(1)}kg
                                             {row.diffPercent !== null && (
                                                 <span className="ml-1">（{row.diffPercent > 0 ? '+' : ''}{row.diffPercent.toFixed(1)}%）</span>

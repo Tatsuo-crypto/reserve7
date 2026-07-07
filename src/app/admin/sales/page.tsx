@@ -83,40 +83,40 @@ function SalesPageContent() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 py-8">
+        <div className="min-h-screen bg-surface-base py-8">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 {/* Header */}
                 <div className="mb-6">
                     <div className="relative flex items-center justify-center">
                         <button
                             onClick={() => router.push('/dashboard')}
-                            className="absolute left-0 text-gray-400 hover:text-gray-600"
+                            className="absolute left-0 text-text-muted hover:text-text-secondary"
                         >
                             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                             </svg>
                         </button>
                         <div className="text-center">
-                            <h1 className="text-2xl font-normal text-gray-900">売上管理</h1>
-                            <p className="mt-1 text-sm text-gray-500">月会費の管理・確認</p>
+                            <h1 className="text-2xl font-normal text-text-primary">売上管理</h1>
+                            <p className="mt-1 text-sm text-text-secondary">月会費の管理・確認</p>
                         </div>
                     </div>
                 </div>
 
                 {/* Compact filters + summary in one bar */}
-                <div className="bg-white shadow rounded-lg p-4 mb-4">
+                <div className="bg-surface-raised shadow rounded-lg p-4 mb-4">
                     <div className="flex items-center justify-between flex-wrap gap-3">
                         <div className="flex items-center gap-3">
                             <input
                                 type="month"
                                 value={month}
                                 onChange={(e) => setMonth(e.target.value)}
-                                className="border border-gray-300 rounded-md px-2 py-1.5 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+                                className="border border-border-strong rounded-md px-2 py-1.5 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                             />
                             <select
                                 value={selectedStore}
                                 onChange={(e) => setSelectedStore(e.target.value)}
-                                className="border border-gray-300 rounded-md px-2 py-1.5 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+                                className="border border-border-strong rounded-md px-2 py-1.5 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                             >
                                 <option value="all">全店舗</option>
                                 <option value="77439c86-679a-409a-8000-2e5297e5c0e8">1号店</option>
@@ -124,30 +124,30 @@ function SalesPageContent() {
                             </select>
                         </div>
                         <div className="text-right">
-                            <span className="text-xs text-gray-500">売上総額</span>
-                            <span className="ml-2 text-lg font-normal text-gray-900">¥{totalAmount.toLocaleString()}</span>
+                            <span className="text-xs text-text-secondary">売上総額</span>
+                            <span className="ml-2 text-lg font-normal text-text-primary">¥{totalAmount.toLocaleString()}</span>
                         </div>
                     </div>
                 </div>
 
                 {/* List */}
-                <div className="bg-white shadow rounded-lg overflow-hidden">
+                <div className="bg-surface-raised shadow rounded-lg overflow-hidden">
                     {loading ? (
-                        <p className="text-center py-8 text-gray-500 text-sm">読み込み中...</p>
+                        <p className="text-center py-8 text-text-secondary text-sm">読み込み中...</p>
                     ) : members.length === 0 ? (
-                        <p className="text-center py-8 text-gray-500 text-sm">該当するデータはありません</p>
+                        <p className="text-center py-8 text-text-secondary text-sm">該当するデータはありません</p>
                     ) : (
                         <div className="divide-y divide-gray-100">
                             {members.map((item, index) => (
                                 <Link
                                     key={`${item.user_id}-${index}`}
                                     href={`/admin/members/${item.user_id}?from=sales`}
-                                    className="flex items-center px-3 py-2.5 hover:bg-gray-50 transition-colors"
+                                    className="flex items-center px-3 py-2.5 hover:bg-surface-base transition-colors"
                                 >
-                                    <span className="flex-shrink-0 w-1.5 h-1.5 rounded-full mr-2 bg-gray-400" />
-                                    <span className="font-normal text-[13px] text-gray-900 truncate" style={{flex: '1 1 35%'}}>{item.full_name}</span>
-                                    <span className="text-[11px] text-gray-500 whitespace-nowrap text-left" style={{flex: '1 1 35%'}}>{item.plan}</span>
-                                    <span className="text-[13px] font-normal text-gray-900 whitespace-nowrap text-right" style={{flex: '0 0 auto'}}>¥{item.amount.toLocaleString()}</span>
+                                    <span className="flex-shrink-0 w-1.5 h-1.5 rounded-full mr-2 bg-surface-overlay" />
+                                    <span className="font-normal text-[13px] text-text-primary truncate" style={{flex: '1 1 35%'}}>{item.full_name}</span>
+                                    <span className="text-[11px] text-text-secondary whitespace-nowrap text-left" style={{flex: '1 1 35%'}}>{item.plan}</span>
+                                    <span className="text-[13px] font-normal text-text-primary whitespace-nowrap text-right" style={{flex: '0 0 auto'}}>¥{item.amount.toLocaleString()}</span>
                                 </Link>
                             ))}
                         </div>

@@ -32,7 +32,7 @@ export default function ProgressTab({ userId, token, weekOffset: controlledWeekO
             />
 
             <div className="text-center pt-4">
-                <p className="text-[10px] font-normal text-gray-300 uppercase tracking-widest italic">Weekly Progress Metrics - Trainer View</p>
+                <p className="text-[10px] font-normal text-text-muted uppercase tracking-widest italic">Weekly Progress Metrics - Trainer View</p>
             </div>
         </div>
     )

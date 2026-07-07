@@ -80,9 +80,9 @@ export const STATUS_LABELS: Record<string, string> = {
 
 // O-1の状態色トークン(state.success/state.danger)に統一。休会はBadgeのwarningトーン(amber)に合わせる。
 export const STATUS_COLORS: Record<string, string> = {
-  [STATUS.ACTIVE]: 'bg-state-success-100 text-state-success-700',
-  [STATUS.SUSPENDED]: 'bg-amber-100 text-amber-800',
-  [STATUS.WITHDRAWN]: 'bg-state-danger-100 text-state-danger-700',
+  [STATUS.ACTIVE]: 'bg-state-success-500/15 text-state-success-300',
+  [STATUS.SUSPENDED]: 'bg-amber-500/15 text-amber-300',
+  [STATUS.WITHDRAWN]: 'bg-state-danger-500/15 text-state-danger-300',
 };
 
 export const STATUS_DOT_COLORS: Record<string, string> = {

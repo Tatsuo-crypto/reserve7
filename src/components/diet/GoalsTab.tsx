@@ -175,27 +175,27 @@ export default function GoalsTab({ userId, token, isAdmin }: GoalsTabProps) {
             <Card padding="lg">
                 <div className="flex items-center gap-2 mb-4">
                     <div className="w-1.5 h-6 bg-brand-500 rounded-full"></div>
-                    <h2 className="text-xl font-semibold text-gray-800 tracking-tight">今の目標</h2>
+                    <h2 className="text-xl font-semibold text-text-primary tracking-tight">今の目標</h2>
                 </div>
 
                 {activeGoals.length === 0 ? (
-                    <p className="text-sm text-gray-400">まだ目標が設定されていません。</p>
+                    <p className="text-sm text-text-muted">まだ目標が設定されていません。</p>
                 ) : (
                     <div className="space-y-3">
                         {activeGoals.map(goal => {
                             const remain = daysUntil(goal.deadline)
                             const streak = daysSince(goal.start_date)
                             return (
-                                <div key={goal.id} className="rounded-2xl bg-gray-50 border border-gray-100 p-5 flex items-center justify-between gap-3">
+                                <div key={goal.id} className="rounded-2xl bg-surface-base border border-border-subtle p-5 flex items-center justify-between gap-3">
                                     <div>
-                                        <p className="text-[10px] font-normal text-gray-400 uppercase tracking-widest mb-1">{goal.type === 'weight' ? '体重' : '習慣'}</p>
-                                        <p className="text-base font-semibold text-gray-900">
+                                        <p className="text-[10px] font-normal text-text-muted uppercase tracking-widest mb-1">{goal.type === 'weight' ? '体重' : '習慣'}</p>
+                                        <p className="text-base font-semibold text-text-primary">
                                             {goal.title}
                                             {goal.type === 'weight' && goal.target_value != null && (
-                                                <span className="ml-2 text-sm text-gray-500">目標 {goal.target_value}kg</span>
+                                                <span className="ml-2 text-sm text-text-secondary">目標 {goal.target_value}kg</span>
                                             )}
                                         </p>
-                                        <p className="text-xs text-gray-400 mt-1">
+                                        <p className="text-xs text-text-muted mt-1">
                                             {goal.type === 'habit' && `${streak}日目`}
                                             {goal.deadline && remain !== null && (
                                                 <span className={goal.type === 'habit' ? 'ml-2' : ''}>
@@ -206,7 +206,7 @@ export default function GoalsTab({ userId, token, isAdmin }: GoalsTabProps) {
                                     </div>
                                     <div className="flex items-center gap-2 shrink-0">
                                         <button onClick={() => updateStatus(goal, 'achieved')} className="text-xs text-emerald-700 bg-emerald-50 px-3 py-2 rounded-full hover:bg-emerald-100">達成にする</button>
-                                        <button onClick={() => updateStatus(goal, 'missed')} className="text-xs text-gray-400 hover:text-gray-600 px-2 py-2">未達成</button>
+                                        <button onClick={() => updateStatus(goal, 'missed')} className="text-xs text-text-muted hover:text-text-secondary px-2 py-2">未達成</button>
                                     </div>
                                 </div>
                             )
@@ -221,25 +221,25 @@ export default function GoalsTab({ userId, token, isAdmin }: GoalsTabProps) {
             ) : (
                 <Card padding="lg" className="space-y-5">
                     <div className="flex gap-2">
-                        <button onClick={() => setNewGoal(prev => ({ ...prev, type: 'weight' }))} className={`flex-1 py-3 rounded-xl text-sm transition-colors ${newGoal.type === 'weight' ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}`}>体重の目標</button>
-                        <button onClick={() => setNewGoal(prev => ({ ...prev, type: 'habit' }))} className={`flex-1 py-3 rounded-xl text-sm transition-colors ${newGoal.type === 'habit' ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}`}>習慣の目標</button>
+                        <button onClick={() => setNewGoal(prev => ({ ...prev, type: 'weight' }))} className={`flex-1 py-3 rounded-xl text-sm transition-colors ${newGoal.type === 'weight' ? 'bg-surface-overlay text-text-primary' : 'bg-surface-base text-text-secondary hover:bg-surface-overlay'}`}>体重の目標</button>
+                        <button onClick={() => setNewGoal(prev => ({ ...prev, type: 'habit' }))} className={`flex-1 py-3 rounded-xl text-sm transition-colors ${newGoal.type === 'habit' ? 'bg-surface-overlay text-text-primary' : 'bg-surface-base text-text-secondary hover:bg-surface-overlay'}`}>習慣の目標</button>
                     </div>
 
                     <div className="space-y-1">
-                        <label className="text-[10px] font-normal text-gray-400 uppercase tracking-widest pl-1">{newGoal.type === 'weight' ? '目標のタイトル（任意）' : '目標（例: 砂糖をやめる）'}</label>
-                        <input type="text" value={newGoal.title} onChange={e => setNewGoal(prev => ({ ...prev, title: e.target.value }))} placeholder={newGoal.type === 'weight' ? '目標体重' : '砂糖をやめる'} className="w-full bg-gray-50 border-none rounded-xl px-3 py-3 text-sm font-normal focus:ring-2 focus:ring-brand-500" />
+                        <label className="text-[10px] font-normal text-text-muted uppercase tracking-widest pl-1">{newGoal.type === 'weight' ? '目標のタイトル（任意）' : '目標（例: 砂糖をやめる）'}</label>
+                        <input type="text" value={newGoal.title} onChange={e => setNewGoal(prev => ({ ...prev, title: e.target.value }))} placeholder={newGoal.type === 'weight' ? '目標体重' : '砂糖をやめる'} className="w-full bg-surface-base border-none rounded-xl px-3 py-3 text-sm font-normal focus:ring-2 focus:ring-brand-500" />
                     </div>
 
                     {newGoal.type === 'weight' && (
                         <div className="space-y-1">
-                            <label className="text-[10px] font-normal text-gray-400 uppercase tracking-widest pl-1">目標体重(kg)</label>
-                            <input type="number" value={newGoal.targetValue} onChange={e => setNewGoal(prev => ({ ...prev, targetValue: e.target.value }))} placeholder="60" className="w-full bg-gray-50 border-none rounded-xl px-3 py-3 text-sm font-normal focus:ring-2 focus:ring-brand-500" />
+                            <label className="text-[10px] font-normal text-text-muted uppercase tracking-widest pl-1">目標体重(kg)</label>
+                            <input type="number" value={newGoal.targetValue} onChange={e => setNewGoal(prev => ({ ...prev, targetValue: e.target.value }))} placeholder="60" className="w-full bg-surface-base border-none rounded-xl px-3 py-3 text-sm font-normal focus:ring-2 focus:ring-brand-500" />
                         </div>
                     )}
 
                     <div className="space-y-1">
-                        <label className="text-[10px] font-normal text-gray-400 uppercase tracking-widest pl-1">期限（任意）</label>
-                        <input type="date" value={newGoal.deadline} onChange={e => setNewGoal(prev => ({ ...prev, deadline: e.target.value }))} className="w-full bg-gray-50 border-none rounded-xl px-3 py-3 text-sm font-normal focus:ring-2 focus:ring-brand-500" />
+                        <label className="text-[10px] font-normal text-text-muted uppercase tracking-widest pl-1">期限（任意）</label>
+                        <input type="date" value={newGoal.deadline} onChange={e => setNewGoal(prev => ({ ...prev, deadline: e.target.value }))} className="w-full bg-surface-base border-none rounded-xl px-3 py-3 text-sm font-normal focus:ring-2 focus:ring-brand-500" />
                     </div>
 
                     <div className="flex gap-2">
@@ -254,14 +254,14 @@ export default function GoalsTab({ userId, token, isAdmin }: GoalsTabProps) {
                 <Card padding="lg">
                     <div className="flex items-center gap-2 mb-4">
                         <div className="w-1.5 h-6 bg-brand-500 rounded-full"></div>
-                        <h2 className="text-xl font-semibold text-gray-800 tracking-tight">過去の目標</h2>
+                        <h2 className="text-xl font-semibold text-text-primary tracking-tight">過去の目標</h2>
                     </div>
                     <div className="divide-y divide-gray-50">
                         {pastGoals.map(goal => (
                             <div key={goal.id} className="py-4 flex items-center justify-between gap-3">
                                 <div>
-                                    <p className="text-[10px] font-normal text-gray-400 uppercase tracking-widest">{goal.type === 'weight' ? '体重' : '習慣'}</p>
-                                    <p className="text-sm font-normal text-gray-800">{goal.title}{goal.type === 'weight' && goal.target_value != null && <span className="ml-2 text-xs text-gray-400">{goal.target_value}kg</span>}</p>
+                                    <p className="text-[10px] font-normal text-text-muted uppercase tracking-widest">{goal.type === 'weight' ? '体重' : '習慣'}</p>
+                                    <p className="text-sm font-normal text-text-primary">{goal.title}{goal.type === 'weight' && goal.target_value != null && <span className="ml-2 text-xs text-text-muted">{goal.target_value}kg</span>}</p>
                                 </div>
                                 <Badge tone={goal.status === 'achieved' ? 'success' : 'neutral'}>
                                     {goal.status === 'achieved' ? '達成 ✓' : '未達成 ×'}
@@ -272,7 +272,7 @@ export default function GoalsTab({ userId, token, isAdmin }: GoalsTabProps) {
                 </Card>
             )}
 
-            {message && <div className="fixed bottom-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-8 py-4 rounded-2xl font-normal shadow-xl z-50 animate-slideUp">{message}</div>}
+            {message && <div className="fixed bottom-10 left-1/2 -translate-x-1/2 bg-surface-overlay text-text-primary border border-border-strong px-8 py-4 rounded-2xl font-normal shadow-xl z-50 animate-slideUp">{message}</div>}
         </div>
     )
 }

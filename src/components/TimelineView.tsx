@@ -317,26 +317,26 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
   }
 
   return (
-    <div className="bg-white shadow-sm border border-gray-200 rounded-lg">
+    <div className="bg-surface-raised shadow-sm border border-border-strong rounded-lg">
       {/* Header */}
       <div className="px-4 py-4">
         <div className="flex flex-col items-center space-y-2">
           <div className="flex items-center space-x-3">
             <button
               onClick={() => changeDate(-1)}
-              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md flex-shrink-0"
+              className="p-2 text-text-muted hover:text-text-secondary hover:bg-surface-overlay rounded-md flex-shrink-0"
               title="前の日"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            <h2 className="text-xl font-normal text-gray-900 whitespace-nowrap">
+            <h2 className="text-xl font-normal text-text-primary whitespace-nowrap">
               {formatSelectedDate(selectedDate)}
             </h2>
             <button
               onClick={() => changeDate(1)}
-              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md flex-shrink-0"
+              className="p-2 text-text-muted hover:text-text-secondary hover:bg-surface-overlay rounded-md flex-shrink-0"
               title="次の日"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -350,9 +350,9 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
       {/* Timeline Body */}
       <div className="flex flex-col h-full">
         {/* Trainer Headers */}
-        <div className="flex border-b border-gray-200 ml-12">
+        <div className="flex border-b border-border-strong ml-12">
           {trainers.map((trainer) => (
-            <div key={trainer.id} className="flex-1 text-center py-2 font-normal text-gray-700 border-l border-gray-200 bg-gray-50">
+            <div key={trainer.id} className="flex-1 text-center py-2 font-normal text-text-secondary border-l border-border-strong bg-surface-base">
               {trainer.name}
             </div>
           ))}
@@ -364,11 +364,11 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
         <div className="flex-1 overflow-y-auto touch-pan-y" style={{ WebkitOverflowScrolling: 'touch' }}>
           <div className="flex relative min-h-[768px]"> {/* 16 hours * 48px */}
             {/* Time Labels */}
-            <div className="w-12 flex-shrink-0 relative bg-white z-10">
+            <div className="w-12 flex-shrink-0 relative bg-surface-raised z-10">
               {timeSlots.map((time, index) => (
                 <div
                   key={time}
-                  className="absolute right-2 text-xs text-gray-500 transform -translate-y-2"
+                  className="absolute right-2 text-xs text-text-secondary transform -translate-y-2"
                   style={{ top: `${index * 48}px` }}
                 >
                   {time}
@@ -377,11 +377,11 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
             </div>
 
             {/* Trainer Columns */}
-            <div className="flex flex-1 relative bg-gray-300">
+            <div className="flex flex-1 relative bg-surface-overlay">
               {trainers.map((trainer, trainerIndex) => (
                 <div
                   key={trainer.id}
-                  className="flex-1 relative border-l border-gray-200 transition-colors"
+                  className="flex-1 relative border-l border-border-strong transition-colors"
                   style={{ height: `${timeSlots.length * 48}px` }}
                   onTouchStart={(e) => {
                     touchStartYRef.current = e.touches[0].clientY
@@ -464,7 +464,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
                       return (
                         <div
                           key={`avail-${idx}`}
-                          className="absolute w-full bg-white z-0 pointer-events-none"
+                          className="absolute w-full bg-surface-raised z-0 pointer-events-none"
                           style={{
                             top: `${top}px`,
                             height: `${height}px`,
@@ -639,7 +639,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
                 {timeSlots.map((time, index) => (
                   <div
                     key={`grid-${time}`}
-                    className="absolute left-0 right-0 border-t border-gray-300"
+                    className="absolute left-0 right-0 border-t border-border-strong"
                     style={{ top: `${index * 48}px` }}
                   />
                 ))}
@@ -672,23 +672,23 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
       </div>
 
       {/* Legend */}
-      <div className="px-6 py-3 border-t border-gray-200 bg-gray-50">
+      <div className="px-6 py-3 border-t border-border-strong bg-surface-base">
         <div className="flex items-center justify-center space-x-6 text-sm">
           <div className="flex items-center space-x-2">
             <div className="w-3 h-3 bg-green-300 bg-opacity-50 border border-green-500 rounded"></div>
-            <span className="text-gray-600">予約</span>
+            <span className="text-text-secondary">予約</span>
           </div>
           <div className="flex items-center space-x-2">
             <div className="w-3 h-3 bg-blue-300 bg-opacity-50 border border-blue-500 rounded"></div>
-            <span className="text-gray-600">体験</span>
+            <span className="text-text-secondary">体験</span>
           </div>
           <div className="flex items-center space-x-2">
             <div className="w-3 h-3 bg-red-300 bg-opacity-50 border border-red-500 rounded"></div>
-            <span className="text-gray-600">予約不可時間</span>
+            <span className="text-text-secondary">予約不可時間</span>
           </div>
           <div className="flex items-center space-x-2">
             <div className="w-3 h-3 bg-purple-300 bg-opacity-50 border border-purple-500 rounded"></div>
-            <span className="text-gray-600">ゲスト</span>
+            <span className="text-text-secondary">ゲスト</span>
           </div>
         </div>
       </div>
@@ -696,10 +696,10 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
       {/* Loading Overlay for Navigation */}
       {isNavigating && (
         <div className="fixed inset-0 bg-gray-900 bg-opacity-50 z-[100] flex items-center justify-center backdrop-blur-sm">
-          <div className="bg-white p-6 rounded-xl shadow-xl flex flex-col items-center">
+          <div className="bg-surface-raised p-6 rounded-xl shadow-xl flex flex-col items-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600 mb-4"></div>
-            <p className="text-gray-800 font-normal">予約画面へ移動中...</p>
-            <p className="text-gray-500 text-xs mt-2">少々お待ちください</p>
+            <p className="text-text-primary font-normal">予約画面へ移動中...</p>
+            <p className="text-text-secondary text-xs mt-2">少々お待ちください</p>
           </div>
         </div>
       )}
@@ -707,26 +707,26 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
       {/* Edit Modal */}
       {showEditModal && editingReservation && (
         <div className="fixed inset-0 bg-gray-900 bg-opacity-60 z-[200] flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="relative w-full max-w-md bg-white shadow-xl rounded-xl max-h-[90vh] flex flex-col border border-gray-100">
+          <div className="relative w-full max-w-md bg-surface-raised shadow-xl rounded-xl max-h-[90vh] flex flex-col border border-border-subtle">
             <div className="p-6 overflow-y-auto">
-              <h3 className="text-lg font-normal text-gray-900 mb-4">予約の変更</h3>
+              <h3 className="text-lg font-normal text-text-primary mb-4">予約の変更</h3>
               <form onSubmit={handleEditSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-normal text-gray-700 mb-1">タイトル</label>
+                  <label className="block text-sm font-normal text-text-secondary mb-1">タイトル</label>
                   <input
                     type="text"
                     value={editFormData.title}
                     onChange={(e) => setEditFormData(prev => ({ ...prev, title: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    className="w-full px-3 py-2 border border-border-strong rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-normal text-gray-700 mb-1">担当トレーナー</label>
+                  <label className="block text-sm font-normal text-text-secondary mb-1">担当トレーナー</label>
                   <select
                     value={editFormData.trainerId || ''}
                     onChange={(e) => setEditFormData(prev => ({ ...prev, trainerId: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    className="w-full px-3 py-2 border border-border-strong rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500"
                   >
                     <option value="">指定なし（フリー）</option>
                     {trainers.map(tr => (
@@ -735,32 +735,32 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-normal text-gray-700 mb-1">開始時刻</label>
+                  <label className="block text-sm font-normal text-text-secondary mb-1">開始時刻</label>
                   <input
                     type="datetime-local"
                     value={editFormData.startTime}
                     onChange={handleStartTimeChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    className="w-full px-3 py-2 border border-border-strong rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-normal text-gray-700 mb-1">終了時刻</label>
+                  <label className="block text-sm font-normal text-text-secondary mb-1">終了時刻</label>
                   <input
                     type="datetime-local"
                     value={editFormData.endTime}
                     onChange={(e) => setEditFormData(prev => ({ ...prev, endTime: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    className="w-full px-3 py-2 border border-border-strong rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-normal text-gray-700 mb-1">メモ</label>
+                  <label className="block text-sm font-normal text-text-secondary mb-1">メモ</label>
                   <textarea
                     value={editFormData.notes}
                     onChange={(e) => setEditFormData(prev => ({ ...prev, notes: e.target.value }))}
                     rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    className="w-full px-3 py-2 border border-border-strong rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500"
                   />
                 </div>
                 <div className="flex items-center justify-between pt-4">
@@ -777,7 +777,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
                     <button
                       type="button"
                       onClick={() => { setShowEditModal(false); setEditingReservation(null) }}
-                      className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors"
+                      className="px-4 py-2 bg-surface-overlay text-text-secondary rounded-md hover:bg-surface-overlay transition-colors"
                     >
                       キャンセル
                     </button>
@@ -798,20 +798,20 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
       {/* Custom Delete Confirmation Modal */}
       {showDeleteConfirmModal && (
         <div className="fixed inset-0 bg-gray-900 bg-opacity-60 overflow-y-auto h-full w-full z-[200] flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="relative p-6 w-full max-w-sm shadow-xl rounded-2xl bg-white">
+          <div className="relative p-6 w-full max-w-sm shadow-xl rounded-2xl bg-surface-raised">
             <div className="text-center">
               <div className="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-red-100 mb-4">
                 <svg className="h-7 w-7 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                 </svg>
               </div>
-              <h3 className="text-xl font-normal text-gray-900 mb-2">予約を削除しますか？</h3>
-              <p className="text-sm text-gray-600 mb-6">この操作は取り消せません。</p>
+              <h3 className="text-xl font-normal text-text-primary mb-2">予約を削除しますか？</h3>
+              <p className="text-sm text-text-secondary mb-6">この操作は取り消せません。</p>
               <div className="flex justify-center space-x-3 w-full">
                 <button
                   type="button"
                   onClick={() => setShowDeleteConfirmModal(false)}
-                  className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 bg-white rounded-xl hover:bg-gray-50 transition-colors font-normal shadow-sm"
+                  className="flex-1 px-4 py-3 border border-border-strong text-text-secondary bg-surface-raised rounded-xl hover:bg-surface-base transition-colors font-normal shadow-sm"
                 >
                   キャンセル
                 </button>

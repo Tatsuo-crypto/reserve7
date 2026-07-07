@@ -285,11 +285,11 @@ export default function TrainersPage() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-12">
 
       {/* Compact toolbar: Filters + New button */}
-      <div className="bg-white shadow rounded-lg p-4 mb-4">
+      <div className="bg-surface-raised shadow rounded-lg p-4 mb-4">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-2">
             <select
-              className="border border-gray-300 rounded-md px-2 py-1.5 text-sm"
+              className="border border-border-strong rounded-md px-2 py-1.5 text-sm"
               value={storeScope}
               onChange={(e) => setStoreScope(e.target.value as 'mine' | 'all')}
             >
@@ -297,7 +297,7 @@ export default function TrainersPage() {
               <option value="all">全店舗</option>
             </select>
             <select
-              className="border border-gray-300 rounded-md px-2 py-1.5 text-sm"
+              className="border border-border-strong rounded-md px-2 py-1.5 text-sm"
               value={status}
               onChange={(e) => setStatus(e.target.value as any)}
             >
@@ -319,34 +319,34 @@ export default function TrainersPage() {
       </div>
 
       {/* Trainer List */}
-      <div className="bg-white shadow rounded-lg overflow-hidden">
+      <div className="bg-surface-raised shadow rounded-lg overflow-hidden">
         {loading ? (
-          <div className="text-center py-8 text-gray-500 text-sm">読み込み中...</div>
+          <div className="text-center py-8 text-text-secondary text-sm">読み込み中...</div>
         ) : trainers.length === 0 ? (
-          <div className="text-center py-8 text-gray-500 text-sm">該当のトレーナーがいません</div>
+          <div className="text-center py-8 text-text-secondary text-sm">該当のトレーナーがいません</div>
         ) : (
           <div className="divide-y divide-gray-100">
             {trainers.map(t => (
               <div
                 key={t.id}
-                className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors"
+                className="flex items-center justify-between px-4 py-3 hover:bg-surface-base transition-colors"
               >
                 <div className="flex items-center gap-3 min-w-0">
-                  <span className={`flex-shrink-0 w-2 h-2 rounded-full ${t.status === 'active' ? 'bg-emerald-500' : 'bg-gray-400'}`} />
-                  <span className="font-normal text-sm text-gray-900 truncate">{t.full_name}</span>
-                  <span className="text-xs text-gray-400 flex-shrink-0">{storeNameById[t.store_id] || ''}</span>
+                  <span className={`flex-shrink-0 w-2 h-2 rounded-full ${t.status === 'active' ? 'bg-emerald-500' : 'bg-surface-overlay'}`} />
+                  <span className="font-normal text-sm text-text-primary truncate">{t.full_name}</span>
+                  <span className="text-xs text-text-muted flex-shrink-0">{storeNameById[t.store_id] || ''}</span>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0 ml-3">
                   {t.access_token && (
                     <button
-                      className="px-2 py-1 text-[10px] font-normal rounded-full bg-brand-100 text-brand-700 hover:bg-brand-200 transition-colors"
+                      className="px-2 py-1 text-[10px] font-normal rounded-full bg-brand-500/15 text-brand-300 hover:bg-brand-500/25 transition-colors"
                       onClick={() => handleCopyAccessUrl(t.access_token!, t.full_name)}
                     >
                       URL
                     </button>
                   )}
                   <button
-                    className="px-2 py-1 text-[10px] font-normal rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
+                    className="px-2 py-1 text-[10px] font-normal rounded-full bg-surface-overlay text-text-secondary hover:bg-surface-overlay transition-colors"
                     onClick={() => openEdit(t)}
                   >
                     編集
@@ -362,29 +362,29 @@ export default function TrainersPage() {
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/30" onClick={() => setModalOpen(false)} />
-          <div className="relative bg-white rounded-lg border border-gray-200 shadow-lg w-full max-w-lg p-6">
+          <div className="relative bg-surface-raised rounded-lg border border-border-strong shadow-lg w-full max-w-lg p-6">
             <h3 className="text-lg font-normal mb-4">{editing ? 'トレーナー編集' : '新規トレーナー'}</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
-                <label className="block text-xs text-gray-500 mb-1">氏名</label>
+                <label className="block text-xs text-text-secondary mb-1">氏名</label>
                 <input className="w-full border rounded-md px-3 py-2 text-sm" required value={form.fullName} onChange={(e) => setForm(f => ({ ...f, fullName: e.target.value }))} />
               </div>
               <div className="md:col-span-2">
-                <label className="block text-xs text-gray-500 mb-1">メール</label>
+                <label className="block text-xs text-text-secondary mb-1">メール</label>
                 <input className="w-full border rounded-md px-3 py-2 text-sm" type="email" value={form.email} onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))} />
               </div>
               <div className="md:col-span-2">
-                <label className="block text-xs text-gray-500 mb-1">GoogleカレンダーID（任意）</label>
+                <label className="block text-xs text-text-secondary mb-1">GoogleカレンダーID（任意）</label>
                 <input 
                   className="w-full border rounded-md px-3 py-2 text-sm" 
                   placeholder="example@group.calendar.google.com"
                   value={form.googleCalendarId} 
                   onChange={(e) => setForm(f => ({ ...f, googleCalendarId: e.target.value }))} 
                 />
-                <p className="text-[10px] text-gray-400 mt-1">※設定すると、このトレーナーの予約が自動的にGoogleカレンダーに連携されます。</p>
+                <p className="text-[10px] text-text-muted mt-1">※設定すると、このトレーナーの予約が自動的にGoogleカレンダーに連携されます。</p>
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">担当店舗</label>
+                <label className="block text-xs text-text-secondary mb-1">担当店舗</label>
                 <select
                   className="w-full border rounded-md px-2 py-2 text-sm"
                   required
@@ -404,18 +404,18 @@ export default function TrainersPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">ステータス</label>
+                <label className="block text-xs text-text-secondary mb-1">ステータス</label>
                 <select className="w-full border rounded-md px-2 py-2 text-sm" value={form.status} onChange={(e) => setForm(f => ({ ...f, status: e.target.value as any }))}>
                   <option value="active">在籍（active）</option>
                   <option value="inactive">無効（inactive）</option>
                 </select>
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">電話</label>
+                <label className="block text-xs text-text-secondary mb-1">電話</label>
                 <input className="w-full border rounded-md px-3 py-2 text-sm" value={form.phone} onChange={(e) => setForm(f => ({ ...f, phone: e.target.value }))} />
               </div>
               <div className="md:col-span-2">
-                <label className="block text-xs text-gray-500 mb-1">メモ</label>
+                <label className="block text-xs text-text-secondary mb-1">メモ</label>
                 <textarea className="w-full border rounded-md px-3 py-2 text-sm" rows={3} value={form.notes} onChange={(e) => setForm(f => ({ ...f, notes: e.target.value }))} />
               </div>
             </div>

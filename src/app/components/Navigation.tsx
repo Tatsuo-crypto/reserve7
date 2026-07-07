@@ -71,14 +71,14 @@ function NavigationContent() {
   }
 
   return (
-    <header className="bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-50 h-16">
+    <header className="bg-surface-raised/80 backdrop-blur-md border-b border-border-subtle sticky top-0 z-50 h-16">
       <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between relative">
         {/* Left: Menu or Back Button */}
         <div className="z-10 min-w-[44px]">
           {isSubPage ? (
             <button
               onClick={handleBack}
-              className="w-10 h-10 flex items-center justify-center text-brand-500 bg-white rounded-full shadow-sm border border-gray-100 transition-all active:scale-90 hover:bg-gray-50"
+              className="w-10 h-10 flex items-center justify-center text-brand-500 bg-surface-raised rounded-full shadow-sm border border-border-subtle transition-all active:scale-90 hover:bg-surface-base"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
@@ -87,7 +87,7 @@ function NavigationContent() {
           ) : (
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="w-10 h-10 flex items-center justify-center text-gray-400 bg-white rounded-full shadow-sm border border-gray-100 transition-all active:scale-90"
+              className="w-10 h-10 flex items-center justify-center text-text-muted bg-surface-raised rounded-full shadow-sm border border-border-subtle transition-all active:scale-90"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -98,7 +98,7 @@ function NavigationContent() {
 
         {/* Center: Dynamic Page Title */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <h1 className="text-[17px] font-normal text-gray-900 tracking-tight whitespace-nowrap pointer-events-auto">
+          <h1 className="text-[17px] font-normal text-text-primary tracking-tight whitespace-nowrap pointer-events-auto">
             {getPageTitle()}
           </h1>
         </div>
@@ -110,13 +110,13 @@ function NavigationContent() {
           ) : session?.user ? (
              <button 
                onClick={handleLogout}
-               className="h-10 px-4 flex items-center gap-1 bg-white rounded-full shadow-sm border border-gray-100 transition-all active:scale-95"
+               className="h-10 px-4 flex items-center gap-1 bg-surface-raised rounded-full shadow-sm border border-border-subtle transition-all active:scale-95"
              >
-               <span className="text-gray-700 text-[13px] font-normal truncate max-w-[100px]">
+               <span className="text-text-secondary text-[13px] font-normal truncate max-w-[100px]">
                  {formatName(session.user.name, session.user.role)}
                </span>
                <div className={`ml-1 px-2 py-0.5 rounded-full text-[10px] font-normal whitespace-nowrap ${
-                 session.user.role === 'TRAINER' ? 'bg-brand-500 text-white' : 'bg-gray-500 text-white'
+                 session.user.role === 'TRAINER' ? 'bg-brand-500 text-white' : 'bg-surface-overlay text-text-primary'
                }`}>
                  {session.user.role === 'TRAINER' ? 'トレーナー' : '会員'}
                </div>
@@ -126,18 +126,18 @@ function NavigationContent() {
 
         {/* Mobile Menu Overlay */}
         {isMobileMenuOpen && (
-          <div className="absolute top-16 left-4 right-4 bg-white rounded-3xl shadow-xl border border-gray-100 p-2 z-50 animate-fadeIn overflow-hidden">
+          <div className="absolute top-16 left-4 right-4 bg-surface-raised rounded-3xl shadow-xl border border-border-subtle p-2 z-50 animate-fadeIn overflow-hidden">
              <div className="flex flex-col">
               <Link 
                 href="/dashboard" 
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="flex items-center gap-3 p-5 hover:bg-gray-50 rounded-2xl transition-colors text-gray-700"
+                className="flex items-center gap-3 p-5 hover:bg-surface-base rounded-2xl transition-colors text-text-secondary"
               >
                 <span className="text-base font-normal">ダッシュボード</span>
               </Link>
               <button 
                 onClick={handleLogout}
-                className="w-full flex items-center gap-3 p-5 hover:bg-state-danger-50 rounded-2xl transition-colors text-state-danger-600 border-t border-gray-50"
+                className="w-full flex items-center gap-3 p-5 hover:bg-state-danger-50 rounded-2xl transition-colors text-state-danger-600 border-t border-border-subtle"
               >
                 <span className="text-base font-normal">ログアウト</span>
               </button>

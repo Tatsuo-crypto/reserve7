@@ -314,7 +314,7 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
     // Empty cells for days before the first day of the month
     for (let i = 0; i < firstDay; i++) {
       days.push(
-        <div key={`empty-${i}`} className="h-[85px] bg-gray-50 border border-gray-100"></div>
+        <div key={`empty-${i}`} className="h-[85px] bg-surface-base border border-border-subtle"></div>
       )
     }
 
@@ -329,7 +329,7 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
       days.push(
         <div
           key={day}
-          className="h-[85px] p-1 overflow-hidden cursor-pointer flex flex-col bg-white hover:bg-gray-50 border border-gray-100"
+          className="h-[85px] p-1 overflow-hidden cursor-pointer flex flex-col bg-surface-raised hover:bg-surface-base border border-border-subtle"
           onClick={() => handleDateClick(dateStr)}
         >
           <div className="text-sm font-normal mb-1 flex-shrink-0 flex justify-start">
@@ -338,7 +338,7 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
                 {day}
               </div>
             ) : (
-              <div className="w-6 h-6 flex items-center justify-center text-gray-900 font-normal">
+              <div className="w-6 h-6 flex items-center justify-center text-text-primary font-normal">
                 {day}
               </div>
             )}
@@ -351,14 +351,14 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
               const isGuest = event.type === 'guest'
               const isTraining = event.type === 'training'
               const colorClass = isTrial
-                ? 'bg-blue-100 text-blue-800 border border-blue-200'    // Trial = Blue (highest priority)
+                ? 'bg-blue-500/15 text-blue-300 border border-blue-500/30'    // Trial = Blue (highest priority)
                 : isGuest
-                  ? 'bg-purple-100 text-purple-800 border border-purple-200'   // Guest = Purple
+                  ? 'bg-purple-500/15 text-purple-300 border border-purple-500/30'   // Guest = Purple
                   : isTraining
-                    ? 'bg-orange-100 text-orange-800 border border-orange-200' // Training = Orange
+                    ? 'bg-orange-500/15 text-orange-300 border border-orange-500/30' // Training = Orange
                     : event.type === 'reservation'
-                      ? 'bg-green-100 text-green-800 border border-green-200'  // Regular = Green
-                      : 'bg-red-100 text-red-800 border border-red-200'        // Blocked = Red
+                      ? 'bg-green-500/15 text-green-300 border border-green-500/30'  // Regular = Green
+                      : 'bg-red-500/15 text-red-300 border border-red-500/30'        // Blocked = Red
 
               return (
                 <div
@@ -371,7 +371,7 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
               )
             })}
             {dayEvents.length > 4 && (
-              <div className="text-[8px] text-gray-500 px-0.5">
+              <div className="text-[8px] text-text-secondary px-0.5">
                 +{dayEvents.length - 4}
               </div>
             )}
@@ -468,24 +468,24 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
   return (
     <div className="w-full">
       {/* White container: Month title -> Calendar grid -> Legend */}
-      <div className="bg-white p-0">
+      <div className="bg-surface-raised p-0">
         {/* Month Navigation */}
         <div className="py-2 px-4">
           <div className="flex items-center justify-center space-x-6">
             <button
               onClick={() => navigateMonth('prev')}
-              className="p-3 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md"
+              className="p-3 text-text-muted hover:text-text-secondary hover:bg-surface-overlay rounded-md"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            <h3 className="text-xl sm:text-lg font-normal text-gray-900 min-w-[160px] text-center">
+            <h3 className="text-xl sm:text-lg font-normal text-text-primary min-w-[160px] text-center">
               {formatMonth(currentDate)}
             </h3>
             <button
               onClick={() => navigateMonth('next')}
-              className="p-3 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md"
+              className="p-3 text-text-muted hover:text-text-secondary hover:bg-surface-overlay rounded-md"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -498,14 +498,14 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
           {loading ? (
             <div className="flex items-center justify-center h-64">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"></div>
-              <span className="ml-2 text-gray-600">読み込み中...</span>
+              <span className="ml-2 text-text-secondary">読み込み中...</span>
             </div>
           ) : (
             <div className="">
               {/* Days of week header (no divider line) */}
               <div className="grid grid-cols-7 mb-1">
                 {['月', '火', '水', '木', '金', '土', '日'].map((day, index) => (
-                  <div key={day} className={`p-2 text-center text-sm font-normal ${index === 5 ? 'text-blue-500' : index === 6 ? 'text-red-500' : 'text-gray-700'
+                  <div key={day} className={`p-2 text-center text-sm font-normal ${index === 5 ? 'text-blue-500' : index === 6 ? 'text-red-500' : 'text-text-secondary'
                     }`}>
                     {day}
                   </div>
@@ -525,15 +525,15 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
           <div className="flex items-center justify-center space-x-6 text-sm">
             <div className="flex items-center space-x-2">
               <div className="w-3 h-3 bg-green-100 border border-green-200 rounded"></div>
-              <span className="text-gray-600">予約</span>
+              <span className="text-text-secondary">予約</span>
             </div>
             <div className="flex items-center space-x-2">
               <div className="w-3 h-3 bg-red-100 border border-red-200 rounded"></div>
-              <span className="text-gray-600">予約不可時間</span>
+              <span className="text-text-secondary">予約不可時間</span>
             </div>
             <div className="flex items-center space-x-2">
               <div className="w-3 h-3 bg-purple-100 border border-purple-200 rounded"></div>
-              <span className="text-gray-600">ゲスト</span>
+              <span className="text-text-secondary">ゲスト</span>
             </div>
           </div>
         </div>
@@ -544,7 +544,7 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
       <div className="mt-6 pb-8 flex justify-center">
         <Link
           href={trainerToken ? `/admin/reservations?trainerToken=${trainerToken}` : '/admin/reservations'}
-          className="inline-flex items-center px-8 py-3 bg-brand-50 text-brand-600 text-[11px] font-normal rounded-2xl hover:bg-brand-100 transition-all uppercase tracking-widest border border-brand-100 shadow-sm shadow-brand-100/50"
+          className="inline-flex items-center px-8 py-3 bg-brand-500/15 text-brand-300 text-[11px] font-normal rounded-2xl hover:bg-brand-500/25 transition-colors uppercase tracking-widest border border-brand-500/20"
         >
           予約一覧を見る
         </Link>

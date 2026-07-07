@@ -49,7 +49,7 @@ export default function RootLayout({
     <html lang="ja" className={notoSansJP.variable}>
       <body className={notoSansJP.className}>
         <Providers>
-          <div className="min-h-screen bg-gray-50">
+          <div className="min-h-screen bg-surface-base">
             <Navigation />
             <MainWrapper>
               {children}

@@ -129,10 +129,10 @@ export default function ClientReservationsContent() {
   // Prevent hydration error by showing loading during mount
   if (!mounted || loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-surface-base flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">読み込み中...</p>
+          <p className="mt-4 text-text-secondary">読み込み中...</p>
         </div>
       </div>
     )
@@ -140,25 +140,25 @@ export default function ClientReservationsContent() {
 
   if (error || !user) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-surface-base flex items-center justify-center">
         <div className="text-center">
           <div className="text-red-500 text-6xl mb-4">⚠️</div>
-          <h1 className="text-2xl font-normal text-gray-900 mb-2">アクセスエラー</h1>
-          <p className="text-gray-600">{error || '無効なURLです'}</p>
+          <h1 className="text-2xl font-normal text-text-primary mb-2">アクセスエラー</h1>
+          <p className="text-text-secondary">{error || '無効なURLです'}</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-surface-base">
       {/* Fixed Header */}
-      <header className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
+      <header className="bg-surface-raised border-b border-border-strong shadow-sm sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <h1 className="text-xl font-normal text-gray-900">T&J GYM</h1>
+            <h1 className="text-xl font-normal text-text-primary">T&J GYM</h1>
             <button
-              className="p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+              className="p-2 rounded-md text-text-secondary hover:text-text-primary hover:bg-surface-overlay"
               aria-label="メニュー"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -171,8 +171,8 @@ export default function ClientReservationsContent() {
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* User Info */}
-        <div className="bg-white rounded-xl shadow-md border border-gray-200 p-8 mb-6">
-          <h1 className="text-3xl font-normal text-gray-900 mb-6 pb-4 border-b border-gray-200">予約一覧</h1>
+        <div className="bg-surface-raised rounded-xl shadow-md border border-border-strong p-8 mb-6">
+          <h1 className="text-3xl font-normal text-text-primary mb-6 pb-4 border-b border-border-strong">予約一覧</h1>
           <div className="space-y-4">
             <div className="flex items-center p-4 bg-blue-50 rounded-lg border border-blue-100">
               <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-full mr-4">
@@ -182,7 +182,7 @@ export default function ClientReservationsContent() {
               </div>
               <div>
                 <div className="text-sm text-blue-600 font-normal mb-1">お名前</div>
-                <div className="text-xl font-normal text-gray-900">{user.name} 様</div>
+                <div className="text-xl font-normal text-text-primary">{user.name} 様</div>
               </div>
             </div>
             <div className="flex items-center p-4 bg-green-50 rounded-lg border border-green-100">
@@ -193,17 +193,17 @@ export default function ClientReservationsContent() {
               </div>
               <div>
                 <div className="text-sm text-green-600 font-normal mb-1">プラン</div>
-                <div className="text-lg font-normal text-gray-900">{user.plan}</div>
+                <div className="text-lg font-normal text-text-primary">{user.plan}</div>
               </div>
             </div>
           </div>
         </div>
 
         {/* Future Reservations */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-          <h2 className="text-xl font-normal text-gray-900 mb-4">今後の予約</h2>
+        <div className="bg-surface-raised rounded-lg shadow-sm border border-border-strong p-6 mb-6">
+          <h2 className="text-xl font-normal text-text-primary mb-4">今後の予約</h2>
           {futureReservations.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-text-secondary">
               今後の予約はありません
             </div>
           ) : (
@@ -224,24 +224,24 @@ export default function ClientReservationsContent() {
                     .map((reservation) => (
                     <div
                       key={reservation.id}
-                      className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow ml-4"
+                      className="border border-border-strong rounded-lg p-4 hover:shadow-md transition-shadow ml-4"
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
-                          <h3 className="text-lg font-normal text-gray-900 mb-1">
+                          <h3 className="text-lg font-normal text-text-primary mb-1">
                             {formatTitle(reservation.title)}
                           </h3>
-                          <p className="text-gray-600 mb-2">
+                          <p className="text-text-secondary mb-2">
                             📅 {formatDate(reservation.start_time)}
                           </p>
                           {reservation.notes && (
-                            <p className="text-sm text-gray-500 mt-2">
+                            <p className="text-sm text-text-secondary mt-2">
                               💬 {reservation.notes}
                             </p>
                           )}
                         </div>
                         <div className="ml-4">
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-normal bg-green-100 text-green-800">
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-normal bg-green-500/15 text-green-300">
                             予約済み
                           </span>
                         </div>
@@ -255,10 +255,10 @@ export default function ClientReservationsContent() {
         </div>
 
         {/* Past Reservations */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h2 className="text-xl font-normal text-gray-900 mb-4">過去の予約</h2>
+        <div className="bg-surface-raised rounded-lg shadow-sm border border-border-strong p-6">
+          <h2 className="text-xl font-normal text-text-primary mb-4">過去の予約</h2>
           {pastReservations.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-text-secondary">
               過去の予約はありません
             </div>
           ) : (
@@ -271,32 +271,32 @@ export default function ClientReservationsContent() {
                 })
                 .map(([monthKey, reservations]) => (
                 <div key={monthKey} className="space-y-3">
-                  <div className="bg-gradient-to-r from-gray-50 to-gray-100 border-l-4 border-gray-400 px-4 py-2 rounded">
-                    <h3 className="text-lg font-normal text-gray-700">{monthKey}</h3>
+                  <div className="bg-gradient-to-r from-gray-50 to-gray-100 border-l-4 border-border-strong px-4 py-2 rounded">
+                    <h3 className="text-lg font-normal text-text-secondary">{monthKey}</h3>
                   </div>
                   {reservations
                     .sort((a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime())
                     .map((reservation) => (
                     <div
                       key={reservation.id}
-                      className="border border-gray-200 rounded-lg p-4 bg-gray-50 ml-4"
+                      className="border border-border-strong rounded-lg p-4 bg-surface-base ml-4"
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
-                          <h3 className="text-lg font-normal text-gray-700 mb-1">
+                          <h3 className="text-lg font-normal text-text-secondary mb-1">
                             {formatTitle(reservation.title)}
                           </h3>
-                          <p className="text-gray-500 mb-2">
+                          <p className="text-text-secondary mb-2">
                             📅 {formatDate(reservation.start_time)}
                           </p>
                           {reservation.notes && (
-                            <p className="text-sm text-gray-400 mt-2">
+                            <p className="text-sm text-text-muted mt-2">
                               💬 {reservation.notes}
                             </p>
                           )}
                         </div>
                         <div className="ml-4">
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-normal bg-gray-200 text-gray-600">
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-normal bg-surface-overlay text-text-secondary">
                             完了
                           </span>
                         </div>

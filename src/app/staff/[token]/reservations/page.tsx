@@ -14,10 +14,10 @@ export default function StaffReservationsPage() {
   }, [router])
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+    <div className="min-h-screen bg-surface-base flex items-center justify-center">
       <div className="text-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600 mx-auto"></div>
-        <p className="mt-4 text-gray-600">読み込み中...</p>
+        <p className="mt-4 text-text-secondary">読み込み中...</p>
       </div>
     </div>
   )

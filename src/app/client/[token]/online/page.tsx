@@ -102,21 +102,21 @@ function LessonCard({ lesson, onJoin }: { lesson: OnlineLesson; onJoin: (url: st
     const schedule = formatSchedule(lesson)
 
     return (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="bg-surface-raised rounded-2xl shadow-sm border border-border-subtle overflow-hidden">
             {/* Card header */}
             <div className={`p-5 ${status.isOngoing ? 'bg-gradient-to-r from-brand-500 to-brand-600' : 'bg-gradient-to-r from-gray-100 to-gray-50'}`}>
                 <div className="flex items-start justify-between">
                     <div className="flex-1">
                         <div className="flex items-center space-x-2">
-                            <h3 className={`font-normal text-lg ${status.isOngoing ? 'text-white' : 'text-gray-800'}`}>
+                            <h3 className={`font-normal text-lg ${status.isOngoing ? 'text-white' : 'text-text-primary'}`}>
                                 {lesson.title}
                             </h3>
-                            <span className="text-xs px-2 py-0.5 rounded-full font-normal bg-brand-100 text-brand-700">
+                            <span className="text-xs px-2 py-0.5 rounded-full font-normal bg-brand-500/15 text-brand-300">
                                 {lesson.difficulty || '初心者'}
                             </span>
                         </div>
                         {schedule && (
-                            <p className={`text-sm mt-1 ${status.isOngoing ? 'text-brand-100' : 'text-gray-500'}`}>
+                            <p className={`text-sm mt-1 ${status.isOngoing ? 'text-brand-100' : 'text-text-secondary'}`}>
                                 📅 {schedule}
                             </p>
                         )}
@@ -132,14 +132,14 @@ function LessonCard({ lesson, onJoin }: { lesson: OnlineLesson; onJoin: (url: st
             {/* Card body */}
             <div className="p-5">
                 {lesson.description && (
-                    <p className="text-sm text-gray-600 mb-4 leading-relaxed">{lesson.description}</p>
+                    <p className="text-sm text-text-secondary mb-4 leading-relaxed">{lesson.description}</p>
                 )}
 
                 {/* Status */}
                 <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
-                        <div className={`w-2.5 h-2.5 rounded-full ${status.canJoin ? 'bg-green-500 animate-pulse' : 'bg-gray-300'}`} />
-                        <span className={`text-sm font-normal ${status.canJoin ? 'text-green-700' : 'text-gray-500'}`}>
+                        <div className={`w-2.5 h-2.5 rounded-full ${status.canJoin ? 'bg-green-500 animate-pulse' : 'bg-surface-overlay'}`} />
+                        <span className={`text-sm font-normal ${status.canJoin ? 'text-green-700' : 'text-text-secondary'}`}>
                             {status.statusLabel}
                         </span>
                     </div>
@@ -150,7 +150,7 @@ function LessonCard({ lesson, onJoin }: { lesson: OnlineLesson; onJoin: (url: st
                         disabled={!status.canJoin}
                         className={`flex items-center space-x-2 px-5 py-2.5 rounded-xl font-normal text-sm transition-all ${status.canJoin
                             ? 'bg-brand-600 text-white hover:bg-brand-700 shadow-md hover:shadow-lg transform hover:scale-105 active:scale-95'
-                            : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                            : 'bg-surface-overlay text-text-muted cursor-not-allowed'
                             }`}
                     >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -231,16 +231,16 @@ export default function OnlineLessonPage() {
     return (
         <div className="min-h-screen bg-surface-base">
             {/* Header */}
-            <div className="bg-white bg-opacity-80 backdrop-blur-sm border-b border-white border-opacity-50 sticky top-0 z-10">
+            <div className="bg-surface-raised bg-opacity-80 backdrop-blur-sm border-b border-border-subtle sticky top-0 z-10">
                 <div className="max-w-lg mx-auto px-4 py-4 flex items-center">
                     <button
                         onClick={() => router.push(`/client/${token}`)}
-                        className="mr-3 text-gray-400 hover:text-gray-600 transition-colors"
+                        className="mr-3 text-text-muted hover:text-text-secondary transition-colors"
                     >
                         <Icon name="back" size={24} />
                     </button>
                     <div>
-                        <h1 className="text-lg font-normal text-gray-900">オンラインレッスン</h1>
+                        <h1 className="text-lg font-normal text-text-primary">オンラインレッスン</h1>
                         <p className="text-xs text-brand-600 font-normal">開始5分前から参加できます</p>
                     </div>
                 </div>
@@ -252,7 +252,7 @@ export default function OnlineLessonPage() {
                     <div className="max-w-lg mx-auto px-4 py-3">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center space-x-3">
-                                <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center flex-shrink-0">
+                                <div className="w-10 h-10 bg-surface-raised rounded-xl flex items-center justify-center flex-shrink-0">
                                     <svg className="w-6 h-6 text-brand-600" viewBox="0 0 24 24" fill="currentColor">
                                         <path d="M15 10l4.553-2.069A1 1 0 0121 8.845v6.309a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                                     </svg>
@@ -267,7 +267,7 @@ export default function OnlineLessonPage() {
                                     href="https://apps.apple.com/jp/app/google-meet/id1270665395"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="bg-white text-brand-600 text-xs font-normal px-3 py-1.5 rounded-lg whitespace-nowrap"
+                                    className="bg-surface-raised text-brand-600 text-xs font-normal px-3 py-1.5 rounded-lg whitespace-nowrap"
                                 >
                                     App Store
                                 </a>
@@ -294,7 +294,7 @@ export default function OnlineLessonPage() {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                         </div>
-                        <p className="text-gray-700 font-normal">{error}</p>
+                        <p className="text-text-secondary font-normal">{error}</p>
                         <button
                             onClick={fetchLessons}
                             className="mt-4 px-4 py-2 bg-brand-600 text-white rounded-lg text-sm"
@@ -309,8 +309,8 @@ export default function OnlineLessonPage() {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.069A1 1 0 0121 8.845v6.309a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                             </svg>
                         </div>
-                        <h2 className="text-xl font-normal text-gray-700 mb-2">現在準備中です</h2>
-                        <p className="text-gray-500 text-sm">オンラインレッスンの詳細は<br />もうしばらくお待ちください</p>
+                        <h2 className="text-xl font-normal text-text-secondary mb-2">現在準備中です</h2>
+                        <p className="text-text-secondary text-sm">オンラインレッスンの詳細は<br />もうしばらくお待ちください</p>
                     </div>
                 ) : (
                     <div className="space-y-4">
@@ -319,8 +319,8 @@ export default function OnlineLessonPage() {
                         ))}
 
                         {/* How to join */}
-                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mt-2">
-                            <h3 className="font-normal text-gray-800 mb-3">参加方法</h3>
+                        <div className="bg-surface-raised rounded-2xl shadow-sm border border-border-subtle p-5 mt-2">
+                            <h3 className="font-normal text-text-primary mb-3">参加方法</h3>
                             <div className="space-y-3">
                                 {(isIOS ? [
                                     { step: '1', text: 'App StoreからGoogle Meetアプリをダウンロードしておいてください' },
@@ -336,7 +336,7 @@ export default function OnlineLessonPage() {
                                         <div className="w-6 h-6 rounded-full bg-brand-100 flex items-center justify-center flex-shrink-0">
                                             <span className="text-brand-600 font-normal text-xs">{item.step}</span>
                                         </div>
-                                        <p className="text-gray-600 text-sm leading-relaxed pt-0.5">{item.text}</p>
+                                        <p className="text-text-secondary text-sm leading-relaxed pt-0.5">{item.text}</p>
                                     </div>
                                 ))}
                                 {isIOS && (

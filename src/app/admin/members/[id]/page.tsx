@@ -84,7 +84,7 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
 
   if (status === 'loading' || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-gray-600 font-normal tracking-widest uppercase">読み込み中...</div>
+      <div className="min-h-screen flex items-center justify-center text-text-secondary font-normal tracking-widest uppercase">読み込み中...</div>
     )
   }
 

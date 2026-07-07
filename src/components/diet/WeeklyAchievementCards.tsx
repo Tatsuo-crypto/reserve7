@@ -29,16 +29,16 @@ export type DisplayMode = 'total' | 'average'
 export function DisplayModeToggle({ mode, onChange }: { mode: DisplayMode; onChange: (mode: DisplayMode) => void }) {
     return (
         <div className="px-2 flex justify-center">
-            <div className="inline-flex bg-gray-100 rounded-full p-1">
+            <div className="inline-flex bg-surface-overlay rounded-full p-1">
                 <button
                     onClick={() => onChange('total')}
-                    className={`px-4 py-1.5 rounded-full text-xs font-normal transition-all ${mode === 'total' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-400'}`}
+                    className={`px-4 py-1.5 rounded-full text-xs font-normal transition-all ${mode === 'total' ? 'bg-surface-raised text-text-primary shadow-sm' : 'text-text-muted'}`}
                 >
                     週の合計
                 </button>
                 <button
                     onClick={() => onChange('average')}
-                    className={`px-4 py-1.5 rounded-full text-xs font-normal transition-all ${mode === 'average' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-400'}`}
+                    className={`px-4 py-1.5 rounded-full text-xs font-normal transition-all ${mode === 'average' ? 'bg-surface-raised text-text-primary shadow-sm' : 'text-text-muted'}`}
                 >
                     平均値
                 </button>
@@ -51,13 +51,13 @@ export function DisplayModeToggle({ mode, onChange }: { mode: DisplayMode; onCha
 export function RecordCheckTable({ weekDays }: { weekDays: WeekDayRecordFlag[] }) {
     return (
         <Card padding="sm">
-            <h3 className="text-sm font-semibold text-gray-800 mb-3">記録チェック表</h3>
+            <h3 className="text-sm font-semibold text-text-primary mb-3">記録チェック表</h3>
             <div className="grid grid-cols-7 gap-1.5">
                 {weekDays.map(day => (
                     <div key={day.date} className="flex flex-col items-center gap-1">
-                        <span className={`text-[10px] font-normal ${day.isToday ? 'text-brand-600' : 'text-gray-400'}`}>{day.label}</span>
+                        <span className={`text-[10px] font-normal ${day.isToday ? 'text-brand-600' : 'text-text-muted'}`}>{day.label}</span>
                         <div
-                            className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${day.recorded ? 'bg-state-success-500 text-white' : 'bg-gray-100 text-gray-300'} ${day.isToday ? 'ring-2 ring-brand-500 ring-offset-1' : ''}`}
+                            className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${day.recorded ? 'bg-state-success-500 text-white' : 'bg-surface-overlay text-text-muted'} ${day.isToday ? 'ring-2 ring-brand-500 ring-offset-1' : ''}`}
                         >
                             {day.recorded ? <Icon name="check" size={14} /> : <Icon name="plus" size={12} />}
                         </div>
@@ -94,7 +94,7 @@ export function CalorieHeroCard({
     return (
         <Card padding="sm">
             <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-semibold text-gray-800">カロリー</h3>
+                <h3 className="text-sm font-semibold text-text-primary">カロリー</h3>
                 <Badge tone={over ? 'danger' : 'success'}>{over ? `+${diffAbs}${unitSuffix}` : `あと${diffAbs}${unitSuffix}`}</Badge>
             </div>
             <div className="flex items-baseline gap-1.5 mb-2">
@@ -105,7 +105,7 @@ export function CalorieHeroCard({
                         : `kcal/日（目標 ${Math.round(targetVal).toLocaleString()}kcal/日）`}
                 </span>
             </div>
-            <div className="h-2.5 rounded-full bg-gray-100 overflow-hidden">
+            <div className="h-2.5 rounded-full bg-surface-overlay overflow-hidden">
                 <div className={`h-full rounded-full transition-all ${bar}`} style={{ width: `${Math.min(100, pct)}%` }} />
             </div>
         </Card>
@@ -154,7 +154,7 @@ export function AchievementItemCard({
     return (
         <Card padding="sm">
             <div className="flex justify-between items-center mb-1">
-                <p className="text-[10px] font-normal text-gray-400 uppercase tracking-widest leading-none">{label}</p>
+                <p className="text-[10px] font-normal text-text-muted uppercase tracking-widest leading-none">{label}</p>
                 <p className={`text-xs font-normal tabular-nums leading-none ${text}`}>{pct}%</p>
             </div>
 
@@ -175,12 +175,12 @@ export function AchievementItemCard({
                 </div>
             )}
 
-            <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden mt-2">
+            <div className="h-1.5 rounded-full bg-surface-overlay overflow-hidden mt-2">
                 <div className={`h-full rounded-full transition-all ${bar}`} style={{ width: `${Math.min(100, pct)}%` }} />
             </div>
 
             {/* 前週比: H-2の「判断色をつけずグレー表示」ルールを維持 */}
-            <p className="mt-1.5 text-[10px] font-normal text-gray-400 tabular-nums">
+            <p className="mt-1.5 text-[10px] font-normal text-text-muted tabular-nums">
                 {!isFrequency ? (
                     diff !== null ? (
                         <>{diff === 0 ? '±0' : diff > 0 ? `↑+${roundVal(diff).toLocaleString()}` : `↓${roundVal(diff).toLocaleString()}`} 前週比</>

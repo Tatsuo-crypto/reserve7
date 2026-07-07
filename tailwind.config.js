@@ -35,12 +35,15 @@ module.exports = {
         },
         // O-1: 「状態色」レイヤー。達成度・状態表示の文脈でのみ使う(装飾には使わない)。
         // 緑=達成/安全圏、赤=明確な超過・警告。実体はTailwind標準スケールのエイリアス。
+        // Q-4: 黒ベースでのバッジ用に300番台を追加(bg-state-*-500/15 + text-state-*-300の
+        // ダークバッジパターンで使用)。400番台はグラフ系列色など、300よりやや強調したい
+        // 個別用途向けに追加(Q-3のグラフ調整で使用予定)。
         state: {
           success: {
-            50: '#ecfdf5', 100: '#d1fae5', 500: '#10b981', 600: '#059669', 700: '#047857',
+            50: '#ecfdf5', 100: '#d1fae5', 300: '#6ee7b7', 400: '#34d399', 500: '#10b981', 600: '#059669', 700: '#047857',
           },
           danger: {
-            50: '#fef2f2', 100: '#fee2e2', 500: '#ef4444', 600: '#dc2626', 700: '#b91c1c',
+            50: '#fef2f2', 100: '#fee2e2', 300: '#fca5a5', 400: '#f87171', 500: '#ef4444', 600: '#dc2626', 700: '#b91c1c',
           },
         },
         // Q-6: ベース色(白/黒どちらにも対応)のセマンティックトークン。
@@ -57,9 +60,12 @@ module.exports = {
           secondary: 'rgb(var(--color-text-secondary) / <alpha-value>)',
           muted: 'rgb(var(--color-text-muted) / <alpha-value>)',
         },
+        // Q-2: 境界線は「white/10」「white/20」という固定の不透明度指定のため、
+        // 他トークンと違い<alpha-value>プレースホルダーを使わずアルファ値を固定する
+        // (border-border-subtle/50のような呼び出し側での上書きは想定しない)。
         border: {
-          subtle: 'rgb(var(--color-border-subtle) / <alpha-value>)',
-          strong: 'rgb(var(--color-border-strong) / <alpha-value>)',
+          subtle: 'rgb(var(--color-border-subtle) / 0.1)',
+          strong: 'rgb(var(--color-border-strong) / 0.2)',
         },
       },
     },

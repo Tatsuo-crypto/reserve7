@@ -391,13 +391,13 @@ export default function EditMemberPage() {
     <div ref={pageTopRef} className="max-w-5xl mx-auto py-6 px-4">
       <div className="mb-6 flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-normal text-gray-900">会員情報編集</h1>
-          <p className="mt-1 text-sm text-gray-600">カウンセリング内容と入会情報を管理します</p>
+          <h1 className="text-2xl font-normal text-text-primary">会員情報編集</h1>
+          <p className="mt-1 text-sm text-text-secondary">カウンセリング内容と入会情報を管理します</p>
         </div>
         <button
           type="button"
           onClick={() => router.push('/admin/members')}
-          className="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50"
+          className="px-4 py-2 border border-border-strong rounded-lg text-sm text-text-secondary hover:bg-surface-base"
         >
           一覧へ戻る
         </button>
@@ -409,8 +409,8 @@ export default function EditMemberPage() {
         </div>
       )}
 
-      <form onSubmit={(e) => e.preventDefault()} className="bg-white shadow-sm border border-gray-200 rounded-lg">
-        <div className="border-b border-gray-200 p-4">
+      <form onSubmit={(e) => e.preventDefault()} className="bg-surface-raised shadow-sm border border-border-strong rounded-lg">
+        <div className="border-b border-border-strong p-4">
           <div className="grid grid-cols-6 gap-2">
             {tabs.map((tab, index) => (
               <button
@@ -422,14 +422,14 @@ export default function EditMemberPage() {
                 className={`h-11 rounded-lg border text-sm font-normal transition-colors ${
                   activeTab === index
                     ? 'border-brand-600 text-white bg-brand-600 shadow-sm'
-                    : 'border-gray-200 text-gray-600 bg-white hover:text-gray-900 hover:bg-gray-50'
+                    : 'border-border-strong text-text-secondary bg-surface-raised hover:text-text-primary hover:bg-surface-base'
                 }`}
               >
                 {index + 1}
               </button>
             ))}
           </div>
-          <div className="mt-3 text-center text-sm text-gray-700">
+          <div className="mt-3 text-center text-sm text-text-secondary">
             {activeTab + 1}. {tabs[activeTab]}
           </div>
         </div>
@@ -489,8 +489,8 @@ export default function EditMemberPage() {
               <TextArea label="合わなかった方法・もうやりたくない方法" name="dislikedMethods" value={valueOf(counseling.dislikedMethods)} onValue={updateCounseling} placeholder="例：糖質制限は一時的に痩せたが、続かずリバウンドした" />
 
               {isDietSelected ? (
-                <div className="mt-6 pt-6 border-t border-gray-100 space-y-5">
-                  <h3 className="text-base font-normal text-gray-900">ダイエット詳細</h3>
+                <div className="mt-6 pt-6 border-t border-border-subtle space-y-5">
+                  <h3 className="text-base font-normal text-text-primary">ダイエット詳細</h3>
                   <ChoiceGroup label="ダイエット意欲" name="dietMotivation" value={valueOf(counseling.dietMotivation)} options={choices.dietMotivation} onValue={updateCounseling} />
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <TextField label="目標減量" type="number" name="targetLossKg" value={valueOf(counseling.targetLossKg)} onValue={updateCounseling} unit="kg" placeholder="5" />
@@ -504,7 +504,7 @@ export default function EditMemberPage() {
                   <TextArea label="ダイエット詳細メモ" name="dietDetailMemo" value={valueOf(counseling.dietDetailMemo)} onValue={updateCounseling} placeholder="例：お酒と夜の食事が課題。厳しい糖質制限は過去に続かなかった。" />
                 </div>
               ) : (
-                <div className="mt-6 rounded-lg bg-gray-50 border border-gray-200 p-4 text-sm text-gray-600">
+                <div className="mt-6 rounded-lg bg-surface-base border border-border-strong p-4 text-sm text-text-secondary">
                   タブ2で「ダイエット」を選択すると、目標減量や食事管理希望などの詳細項目が表示されます。
                 </div>
               )}
@@ -555,8 +555,8 @@ export default function EditMemberPage() {
                 </div>
               )}
 
-              <div className="pt-4 border-t border-gray-100">
-                <h3 className="text-lg font-normal text-gray-900 mb-4">機能表示設定</h3>
+              <div className="pt-4 border-t border-border-subtle">
+                <h3 className="text-lg font-normal text-text-primary mb-4">機能表示設定</h3>
                 <label className="flex items-center gap-4 p-4 bg-brand-50/50 border border-brand-100 rounded-lg cursor-pointer hover:bg-brand-50">
                   <input
                     type="checkbox"
@@ -569,17 +569,17 @@ export default function EditMemberPage() {
                         visible_items: { steps: isChecked, sleep: isChecked, water: isChecked, alcohol: isChecked, workout: isChecked },
                       }))
                     }}
-                    className="w-6 h-6 text-brand-600 border-gray-300 rounded focus:ring-brand-500"
+                    className="w-6 h-6 text-brand-600 border-border-strong rounded focus:ring-brand-500"
                   />
                   <div>
-                    <div className="font-normal text-gray-900">食事管理機能を表示する</div>
-                    <div className="text-xs text-gray-500 mt-1">ダイエット会員向けの入力・分析・進捗タブを有効にします。</div>
+                    <div className="font-normal text-text-primary">食事管理機能を表示する</div>
+                    <div className="text-xs text-text-secondary mt-1">ダイエット会員向けの入力・分析・進捗タブを有効にします。</div>
                   </div>
                 </label>
               </div>
 
-              <div className="pt-4 border-t border-gray-100">
-                <h3 className="text-lg font-normal text-gray-900 mb-4">通知設定</h3>
+              <div className="pt-4 border-t border-border-subtle">
+                <h3 className="text-lg font-normal text-text-primary mb-4">通知設定</h3>
                 <div className="space-y-4">
                   <SwitchCard name="onlineReminderEnabled" checked={formData.onlineReminderEnabled} onChange={handleChange} title="メール通知を送信する" description="予約確定・変更・リマインダーの自動通知メールを送信します。" />
                   <SwitchCard name="pushNotificationEnabled" checked={formData.pushNotificationEnabled} onChange={handleChange} title="プッシュ通知を送信する" description="お客様がアプリ通知を許可している場合にスマホへ通知します。" color="emerald" />
@@ -591,13 +591,13 @@ export default function EditMemberPage() {
           )}
         </div>
 
-        <div className="px-5 md:px-6 py-4 border-t border-gray-200 flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
+        <div className="px-5 md:px-6 py-4 border-t border-border-strong flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
           <div className="flex gap-3">
             <button
               type="button"
               onClick={() => changeTab(activeTab - 1)}
               disabled={activeTab === 0}
-              className="px-5 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-40"
+              className="px-5 py-2 border border-border-strong rounded-lg text-text-secondary hover:bg-surface-base disabled:opacity-40"
             >
               戻る
             </button>
@@ -605,12 +605,12 @@ export default function EditMemberPage() {
               type="button"
               onClick={() => changeTab(activeTab + 1)}
               disabled={activeTab === tabs.length - 1}
-              className="px-5 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-40"
+              className="px-5 py-2 border border-border-strong rounded-lg text-text-secondary hover:bg-surface-base disabled:opacity-40"
             >
               次のタブへ
             </button>
           </div>
-          <div className="text-sm text-gray-500">
+          <div className="text-sm text-text-secondary">
             {saveStatus === 'saving' && '自動保存中...'}
             {saveStatus === 'saved' && '自動保存済み'}
             {saveStatus === 'error' && '自動保存に失敗しました'}
@@ -626,8 +626,8 @@ function Section({ title, description, children }: { title: string; description?
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="text-xl font-normal text-gray-900">{title}</h2>
-        {description && <p className="mt-1 text-sm text-gray-600">{description}</p>}
+        <h2 className="text-xl font-normal text-text-primary">{title}</h2>
+        {description && <p className="mt-1 text-sm text-text-secondary">{description}</p>}
       </div>
       {children}
     </div>
@@ -636,7 +636,7 @@ function Section({ title, description, children }: { title: string; description?
 
 function FieldLabel({ label, required, unit }: { label: string; required?: boolean; unit?: string }) {
   return (
-    <span className="block text-sm font-normal text-gray-700 mb-2">
+    <span className="block text-sm font-normal text-text-secondary mb-2">
       {label}{unit ? `（${unit}）` : ''}{required && <span className="text-red-500"> *</span>}
     </span>
   )
@@ -674,7 +674,7 @@ function TextField({
         required={required}
         min={type === 'number' ? '0' : undefined}
         step={type === 'number' ? '0.1' : undefined}
-        className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+        className="w-full px-3 py-3 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
         placeholder={placeholder}
       />
     </label>
@@ -707,7 +707,7 @@ function TextArea({
         onChange={onChange || ((e) => onValue?.(name, e.target.value))}
         required={required}
         rows={4}
-        className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+        className="w-full px-3 py-3 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
         placeholder={placeholder}
       />
     </label>
@@ -737,7 +737,7 @@ function SelectField({
         value={value}
         onChange={onChange}
         required={required}
-        className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+        className="w-full px-3 py-3 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
       >
         {children}
       </select>
@@ -751,15 +751,15 @@ function ChoiceGroup({ label, name, value, options, onValue, required }: { label
       <FieldLabel label={label} required={required} />
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         {options.map(option => (
-          <label key={option.value} className={`flex items-center gap-3 px-3 py-3 border rounded-lg cursor-pointer ${value === option.value ? 'border-brand-500 bg-brand-50' : 'border-gray-200 hover:bg-gray-50'}`}>
+          <label key={option.value} className={`flex items-center gap-3 px-3 py-3 border rounded-lg cursor-pointer ${value === option.value ? 'border-brand-500 bg-brand-50' : 'border-border-strong hover:bg-surface-base'}`}>
             <input
               type="radio"
               name={name}
               checked={value === option.value}
               onChange={() => onValue(name, option.value)}
-              className="w-5 h-5 text-brand-600 border-gray-300 focus:ring-brand-500"
+              className="w-5 h-5 text-brand-600 border-border-strong focus:ring-brand-500"
             />
-            <span className="text-sm text-gray-800">{option.label}</span>
+            <span className="text-sm text-text-primary">{option.label}</span>
           </label>
         ))}
       </div>
@@ -773,14 +773,14 @@ function CheckGroup({ label, name, values, options, onToggle, required }: { labe
       <FieldLabel label={label} required={required} />
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
         {options.map(option => (
-          <label key={option.value} className={`flex items-center gap-3 px-3 py-3 border rounded-lg cursor-pointer ${values.includes(option.value) ? 'border-brand-500 bg-brand-50' : 'border-gray-200 hover:bg-gray-50'}`}>
+          <label key={option.value} className={`flex items-center gap-3 px-3 py-3 border rounded-lg cursor-pointer ${values.includes(option.value) ? 'border-brand-500 bg-brand-50' : 'border-border-strong hover:bg-surface-base'}`}>
             <input
               type="checkbox"
               checked={values.includes(option.value)}
               onChange={() => onToggle(name, option.value)}
-              className="w-5 h-5 text-brand-600 border-gray-300 rounded focus:ring-brand-500"
+              className="w-5 h-5 text-brand-600 border-border-strong rounded focus:ring-brand-500"
             />
-            <span className="text-sm text-gray-800">{option.label}</span>
+            <span className="text-sm text-text-primary">{option.label}</span>
           </label>
         ))}
       </div>
@@ -797,11 +797,11 @@ function SwitchCard({ name, checked, onChange, title, description, color = 'blue
         name={name}
         checked={checked}
         onChange={onChange}
-        className={`w-6 h-6 border-gray-300 rounded ${color === 'emerald' ? 'text-emerald-600 focus:ring-emerald-500' : 'text-brand-600 focus:ring-brand-500'}`}
+        className={`w-6 h-6 border-border-strong rounded ${color === 'emerald' ? 'text-emerald-600 focus:ring-emerald-500' : 'text-brand-600 focus:ring-brand-500'}`}
       />
       <span>
-        <span className="block font-normal text-gray-900">{title}</span>
-        <span className="block text-xs text-gray-500 mt-1">{description}</span>
+        <span className="block font-normal text-text-primary">{title}</span>
+        <span className="block text-xs text-text-secondary mt-1">{description}</span>
       </span>
     </label>
   )
@@ -832,9 +832,9 @@ function SummaryBox({ summaryText, formData, counseling }: { summaryText: string
 
 function SummaryItem({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-md bg-white/70 px-3 py-2">
+    <div className="rounded-md bg-surface-raised/70 px-3 py-2">
       <span className="text-xs text-brand-700">{label}</span>
-      <div className="text-sm text-gray-900">{value || '-'}</div>
+      <div className="text-sm text-text-primary">{value || '-'}</div>
     </div>
   )
 }

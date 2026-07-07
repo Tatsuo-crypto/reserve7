@@ -40,10 +40,10 @@ export default function StaffPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-surface-base flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">読み込み中...</p>
+          <p className="mt-4 text-text-secondary">読み込み中...</p>
         </div>
       </div>
     )
@@ -51,24 +51,24 @@ export default function StaffPage() {
 
   if (error || !staff) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-surface-base flex items-center justify-center">
         <div className="text-center">
           <div className="text-red-500 text-6xl mb-4">⚠️</div>
-          <h1 className="text-2xl font-normal text-gray-900 mb-2">アクセスエラー</h1>
-          <p className="text-gray-600">{error || '無効なURLです'}</p>
+          <h1 className="text-2xl font-normal text-text-primary mb-2">アクセスエラー</h1>
+          <p className="text-text-secondary">{error || '無効なURLです'}</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-surface-base">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
+      <header className="bg-surface-raised border-b border-border-strong shadow-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <h1 className="text-xl font-normal text-gray-900">T&J GYM - スタッフページ</h1>
-            <div className="text-sm text-gray-600">{staff.name} さん</div>
+            <h1 className="text-xl font-normal text-text-primary">T&J GYM - スタッフページ</h1>
+            <div className="text-sm text-text-secondary">{staff.name} さん</div>
           </div>
         </div>
       </header>
@@ -79,7 +79,7 @@ export default function StaffPage() {
           {/* 予約管理カード */}
           <button
             onClick={() => router.push(`/staff/${token}/reservations`)}
-            className="bg-white p-8 rounded-xl shadow-md border border-gray-200 hover:shadow-lg transition-shadow text-left"
+            className="bg-surface-raised p-8 rounded-xl shadow-md border border-border-strong hover:shadow-lg transition-shadow text-left"
           >
             <div className="flex items-center mb-4">
               <div className="w-12 h-12 bg-brand-100 rounded-lg flex items-center justify-center mr-4">
@@ -87,9 +87,9 @@ export default function StaffPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
               </div>
-              <h2 className="text-2xl font-normal text-gray-900">予約管理</h2>
+              <h2 className="text-2xl font-normal text-text-primary">予約管理</h2>
             </div>
-            <p className="text-gray-600">予約の確認・作成・編集・削除</p>
+            <p className="text-text-secondary">予約の確認・作成・編集・削除</p>
           </button>
         </div>
       </div>

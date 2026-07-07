@@ -159,16 +159,16 @@ export default function TeamShiftCalendar({
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-250px)] min-h-[600px] border border-gray-200 rounded-lg bg-white overflow-hidden">
+    <div className="flex flex-col h-[calc(100vh-250px)] min-h-[600px] border border-border-strong rounded-lg bg-surface-raised overflow-hidden">
       {/* Header: Days of week */}
-      <div className="grid grid-cols-8 border-b border-gray-200 bg-gray-50 flex-shrink-0">
-        <div className="p-2 border-r border-gray-200 text-center text-xs font-normal text-gray-500 sticky left-0 bg-gray-50 z-10">
+      <div className="grid grid-cols-8 border-b border-border-strong bg-surface-base flex-shrink-0">
+        <div className="p-2 border-r border-border-strong text-center text-xs font-normal text-text-secondary sticky left-0 bg-surface-base z-10">
           時間
         </div>
         {weekDays.map(day => (
-          <div key={day.toString()} className={`p-2 text-center border-r border-gray-200 last:border-r-0 ${isSameDay(day, new Date()) ? 'bg-brand-50' : ''}`}>
-            <div className="text-xs font-normal text-gray-500">{format(day, 'E', { locale: ja })}</div>
-            <div className={`text-sm font-normal ${isSameDay(day, new Date()) ? 'text-brand-600' : 'text-gray-900'}`}>
+          <div key={day.toString()} className={`p-2 text-center border-r border-border-strong last:border-r-0 ${isSameDay(day, new Date()) ? 'bg-brand-50' : ''}`}>
+            <div className="text-xs font-normal text-text-secondary">{format(day, 'E', { locale: ja })}</div>
+            <div className={`text-sm font-normal ${isSameDay(day, new Date()) ? 'text-brand-600' : 'text-text-primary'}`}>
               {format(day, 'M/d')}
             </div>
           </div>
@@ -180,9 +180,9 @@ export default function TeamShiftCalendar({
         <div className="grid grid-cols-8 relative min-h-full">
           
           {/* Time axis */}
-          <div className="border-r border-gray-200 bg-white sticky left-0 z-10 w-full">
+          <div className="border-r border-border-strong bg-surface-raised sticky left-0 z-10 w-full">
             {hours.map(hour => (
-              <div key={hour} className="h-[40px] border-b border-gray-100 text-xs text-gray-400 text-center relative">
+              <div key={hour} className="h-[40px] border-b border-border-subtle text-xs text-text-muted text-center relative">
                 <span className="absolute top-1 left-0 right-0">{hour}:00</span>
               </div>
             ))}
@@ -238,12 +238,12 @@ export default function TeamShiftCalendar({
             dayItems.sort((a, b) => a.start.getTime() - b.start.getTime())
             
             return (
-              <div key={day.toString()} className="relative border-r border-gray-200 last:border-r-0 bg-white group">
+              <div key={day.toString()} className="relative border-r border-border-strong last:border-r-0 bg-surface-raised group">
                 {/* Background grid lines */}
                 {hours.map(hour => (
                   <div 
                     key={`${day}-${hour}`} 
-                    className="h-[40px] border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
+                    className="h-[40px] border-b border-border-subtle hover:bg-surface-base cursor-pointer"
                     onClick={() => handleTimeSlotClick(day, hour)}
                   />
                 ))}
@@ -284,7 +284,7 @@ export default function TeamShiftCalendar({
                             {displayName}
                           </div>
                           {/* 
-                          <div className="text-[9px] text-gray-600 font-normal leading-tight">
+                          <div className="text-[9px] text-text-secondary font-normal leading-tight">
                             (固定)
                           </div>
                           */}
@@ -323,7 +323,7 @@ export default function TeamShiftCalendar({
       </div>
 
       {loading && (
-        <div className="absolute inset-0 bg-white bg-opacity-50 flex items-center justify-center z-50">
+        <div className="absolute inset-0 bg-surface-raised bg-opacity-50 flex items-center justify-center z-50">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"></div>
         </div>
       )}
@@ -406,13 +406,13 @@ function ShiftCreateModal({ trainers, date, initialHour, isOpen, onClose, onSave
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-30 z-50 flex items-center justify-center">
-      <div className="bg-white rounded-lg shadow-xl p-6 w-80">
+      <div className="bg-surface-raised rounded-lg shadow-xl p-6 w-80">
         <h3 className="text-lg font-normal mb-1">シフト追加</h3>
-        <p className="text-sm text-gray-500 mb-4">{format(date, 'yyyy/MM/dd (E)', { locale: ja })}</p>
+        <p className="text-sm text-text-secondary mb-4">{format(date, 'yyyy/MM/dd (E)', { locale: ja })}</p>
         
         <div className="space-y-4 mb-6">
           <div>
-            <label className="block text-xs text-gray-500 mb-1">トレーナー</label>
+            <label className="block text-xs text-text-secondary mb-1">トレーナー</label>
             <select
               className="w-full border rounded p-2"
               value={trainerId}
@@ -424,7 +424,7 @@ function ShiftCreateModal({ trainers, date, initialHour, isOpen, onClose, onSave
             </select>
           </div>
           <div>
-            <label className="block text-xs text-gray-500 mb-1">開始</label>
+            <label className="block text-xs text-text-secondary mb-1">開始</label>
             <select
               className="w-full border rounded p-2"
               value={startTime}
@@ -436,7 +436,7 @@ function ShiftCreateModal({ trainers, date, initialHour, isOpen, onClose, onSave
             </select>
           </div>
           <div>
-            <label className="block text-xs text-gray-500 mb-1">終了</label>
+            <label className="block text-xs text-text-secondary mb-1">終了</label>
             <select
               className="w-full border rounded p-2"
               value={endTime}
@@ -452,7 +452,7 @@ function ShiftCreateModal({ trainers, date, initialHour, isOpen, onClose, onSave
         <div className="flex justify-end gap-2">
           <button 
             onClick={onClose}
-            className="px-3 py-2 text-gray-600 text-sm hover:bg-gray-100 rounded"
+            className="px-3 py-2 text-text-secondary text-sm hover:bg-surface-overlay rounded"
             disabled={loading}
           >
             キャンセル
@@ -527,14 +527,14 @@ function ShiftEditModal({ shift, trainerName, isOpen, onClose, onSave, onDelete 
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-30 z-50 flex items-center justify-center">
-      <div className="bg-white rounded-lg shadow-xl p-6 w-80">
+      <div className="bg-surface-raised rounded-lg shadow-xl p-6 w-80">
         <h3 className="text-lg font-normal mb-1">シフト編集</h3>
-        <p className="text-sm text-gray-500 mb-1">{trainerName}</p>
-        <p className="text-sm text-gray-500 mb-4">{format(parseISO(shift.start_time), 'yyyy/MM/dd (E)', { locale: ja })}</p>
+        <p className="text-sm text-text-secondary mb-1">{trainerName}</p>
+        <p className="text-sm text-text-secondary mb-4">{format(parseISO(shift.start_time), 'yyyy/MM/dd (E)', { locale: ja })}</p>
         
         <div className="space-y-4 mb-6">
           <div>
-            <label className="block text-xs text-gray-500 mb-1">開始</label>
+            <label className="block text-xs text-text-secondary mb-1">開始</label>
             <select
               className="w-full border rounded p-2"
               value={startTime}
@@ -546,7 +546,7 @@ function ShiftEditModal({ shift, trainerName, isOpen, onClose, onSave, onDelete 
             </select>
           </div>
           <div>
-            <label className="block text-xs text-gray-500 mb-1">終了</label>
+            <label className="block text-xs text-text-secondary mb-1">終了</label>
             <select
               className="w-full border rounded p-2"
               value={endTime}
@@ -570,7 +570,7 @@ function ShiftEditModal({ shift, trainerName, isOpen, onClose, onSave, onDelete 
           <div className="flex gap-2">
             <button 
               onClick={onClose}
-              className="px-3 py-2 text-gray-600 text-sm hover:bg-gray-100 rounded"
+              className="px-3 py-2 text-text-secondary text-sm hover:bg-surface-overlay rounded"
               disabled={loading}
             >
               キャンセル

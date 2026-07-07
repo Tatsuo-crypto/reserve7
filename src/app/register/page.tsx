@@ -87,13 +87,13 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-surface-base py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
-          <h2 className="mt-6 text-center text-3xl font-normal text-gray-900">
+          <h2 className="mt-6 text-center text-3xl font-normal text-text-primary">
             新規会員登録
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
+          <p className="mt-2 text-center text-sm text-text-secondary">
             または{' '}
             <Link href="/login" className="font-normal text-brand-600 hover:text-brand-500">
               ログインはこちら
@@ -104,7 +104,7 @@ export default function RegisterPage() {
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
-              <label htmlFor="storeId" className="block text-sm font-normal text-gray-700">
+              <label htmlFor="storeId" className="block text-sm font-normal text-text-secondary">
                 利用店舗を選択してください
               </label>
               <div className="relative mt-1">
@@ -112,7 +112,7 @@ export default function RegisterPage() {
                   id="storeId"
                   name="storeId"
                   required
-                  className="appearance-none relative block w-full px-3 py-2 pr-10 border border-gray-300 text-gray-900 rounded-md focus:outline-none focus:ring-brand-500 focus:border-brand-500 focus:z-10 sm:text-sm bg-white"
+                  className="appearance-none relative block w-full px-3 py-2 pr-10 border border-border-strong text-text-primary rounded-md focus:outline-none focus:ring-brand-500 focus:border-brand-500 focus:z-10 sm:text-sm bg-surface-raised"
                   value={formData.storeId}
                   onChange={handleChange}
                 >
@@ -120,7 +120,7 @@ export default function RegisterPage() {
                   <option value="2">T&J GYM 2号店</option>
                 </select>
                 <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                  <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                  <svg className="h-5 w-5 text-text-muted" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
                   </svg>
                 </div>
@@ -131,7 +131,7 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label htmlFor="fullName" className="block text-sm font-normal text-gray-700">
+              <label htmlFor="fullName" className="block text-sm font-normal text-text-secondary">
                 氏名
               </label>
               <input
@@ -139,7 +139,7 @@ export default function RegisterPage() {
                 name="fullName"
                 type="text"
                 required
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-brand-500 focus:border-brand-500 focus:z-10 sm:text-sm"
+                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-border-strong placeholder-gray-500 text-text-primary rounded-md focus:outline-none focus:ring-brand-500 focus:border-brand-500 focus:z-10 sm:text-sm"
                 placeholder="山田太郎"
                 value={formData.fullName}
                 onChange={handleChange}
@@ -150,14 +150,14 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-sm font-normal text-gray-700">
+              <label htmlFor="email" className="block text-sm font-normal text-text-secondary">
                 メールアドレス（任意）
               </label>
               <input
                 id="email"
                 name="email"
                 type="email"
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-brand-500 focus:border-brand-500 focus:z-10 sm:text-sm"
+                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-border-strong placeholder-gray-500 text-text-primary rounded-md focus:outline-none focus:ring-brand-500 focus:border-brand-500 focus:z-10 sm:text-sm"
                 placeholder="example@email.com"
                 value={formData.email}
                 onChange={handleChange}
@@ -168,7 +168,7 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-normal text-gray-700">
+              <label htmlFor="password" className="block text-sm font-normal text-text-secondary">
                 パスワード
               </label>
               <input
@@ -176,7 +176,7 @@ export default function RegisterPage() {
                 name="password"
                 type="password"
                 required
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-brand-500 focus:border-brand-500 focus:z-10 sm:text-sm"
+                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-border-strong placeholder-gray-500 text-text-primary rounded-md focus:outline-none focus:ring-brand-500 focus:border-brand-500 focus:z-10 sm:text-sm"
                 placeholder="8文字以上"
                 value={formData.password}
                 onChange={handleChange}
@@ -187,7 +187,7 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-normal text-gray-700">
+              <label htmlFor="confirmPassword" className="block text-sm font-normal text-text-secondary">
                 パスワード（確認）
               </label>
               <input
@@ -195,7 +195,7 @@ export default function RegisterPage() {
                 name="confirmPassword"
                 type="password"
                 required
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-brand-500 focus:border-brand-500 focus:z-10 sm:text-sm"
+                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-border-strong placeholder-gray-500 text-text-primary rounded-md focus:outline-none focus:ring-brand-500 focus:border-brand-500 focus:z-10 sm:text-sm"
                 placeholder="パスワードを再入力"
                 value={formData.confirmPassword}
                 onChange={handleChange}

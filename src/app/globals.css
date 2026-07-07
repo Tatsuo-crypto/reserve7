@@ -10,23 +10,25 @@
 */
 
 /*
-  Q-6: ベース色（白/黒どちらにも対応する）のセマンティックトークン。
-  値はRGB triplet(スペース区切り)で持ち、Tailwind側で `rgb(var(--x) / <alpha-value>)` として
-  参照することで、bg-surface-base/50 のような不透明度指定も使えるようにする。
-  PR-Q1時点ではライトテーマの値のまま（見た目は変えない安全な準備PR）。
-  PR-Q2でこの値だけをzinc系の黒に差し替えることで、直書きクラスを一切触らずに
-  黒ベース化する（4回目の色変更が来ても同じ方式で対応できる状態を目指す）。
+  Q-2/PR-Q2: 黒ベース化。zinc系3段のサーフェス+white/10〜20の境界線に切替。
+  純黒(#000)は不採用(有機ELの黒つぶれ・残像・目の疲れ、かつsurface.baseから
+  raised/overlayへ持ち上がる余地を残すため)。
+  Q-6で用意したCSS変数の値だけをここで差し替えており、Card/Button/Badge等の
+  トークン参照コンポーネント側は無修正で黒ベースに切り替わる。
+  border.subtle/strongは「white/10」「white/20」という固定の不透明度指定のため、
+  他トークンと異なりtailwind.config.js側でアルファ値を固定している
+  (<alpha-value>プレースホルダーを使わない。理由はtailwind.config.jsのコメント参照)。
 */
 @layer base {
   :root {
-    --color-surface-base: 249 250 251;    /* gray-50 相当。ページ地色 */
-    --color-surface-raised: 255 255 255;  /* white相当。カード */
-    --color-surface-overlay: 255 255 255; /* white相当。モーダル・ドロップダウン */
-    --color-text-primary: 17 24 39;       /* gray-900相当 */
-    --color-text-secondary: 107 114 128;  /* gray-500相当 */
-    --color-text-muted: 156 163 175;      /* gray-400相当 */
-    --color-border-subtle: 243 244 246;   /* gray-100相当 */
-    --color-border-strong: 209 213 219;   /* gray-300相当 */
+    --color-surface-base: 9 9 11;         /* zinc-950相当。画面地 */
+    --color-surface-raised: 24 24 27;     /* zinc-900相当。カード */
+    --color-surface-overlay: 39 39 42;    /* zinc-800相当。モーダル・ドロップダウン */
+    --color-text-primary: 244 244 245;    /* zinc-100相当 */
+    --color-text-secondary: 161 161 170;  /* zinc-400相当 */
+    --color-text-muted: 113 113 122;      /* zinc-500相当 */
+    --color-border-subtle: 255 255 255;   /* white、tailwind.config側で/10固定 */
+    --color-border-strong: 255 255 255;   /* white、tailwind.config側で/20固定 */
   }
 }
 
@@ -36,12 +38,13 @@
     実績値(主数値)は現状のfont-semibold見出しよりさらに一段強調し、目標値・単位は
     小さくグレーの添え物にする。参考画像2点に共通する「数字が主役」という特徴の反映。
     stat-value = 実績値、stat-unit = 単位・目標値などの添え物。
+    Q-6/第7ゲート: ベース色直書きをやめ、セマンティックトークン参照にする。
   */
   .stat-value {
-    @apply text-3xl font-bold tabular-nums text-gray-900;
+    @apply text-3xl font-bold tabular-nums text-text-primary;
   }
   .stat-unit {
-    @apply text-xs font-normal text-gray-400;
+    @apply text-xs font-normal text-text-muted;
   }
 }
 

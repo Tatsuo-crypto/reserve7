@@ -377,22 +377,22 @@ function AdminReservationsContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-surface-base py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-6">
           <div className="relative flex items-center justify-center">
             <button
               onClick={() => router.push(trainerToken ? `/trainer/${trainerToken}` : '/dashboard')}
-              className="absolute left-0 text-gray-400 hover:text-gray-600"
+              className="absolute left-0 text-text-muted hover:text-text-secondary"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
             <div className="text-center">
-              <h1 className="text-2xl font-normal text-gray-900">予約</h1>
-              <p className="mt-1 text-sm text-gray-500">予約のステータス管理</p>
+              <h1 className="text-2xl font-normal text-text-primary">予約</h1>
+              <p className="mt-1 text-sm text-text-secondary">予約のステータス管理</p>
             </div>
           </div>
         </div>
@@ -412,65 +412,65 @@ function AdminReservationsContent() {
         )}
 
         {/* Reservations Table */}
-        <div className="bg-white shadow overflow-hidden sm:rounded-md">
+        <div className="bg-surface-raised shadow overflow-hidden sm:rounded-md">
           <div className="px-4 py-5 sm:p-6">
             <div className="overflow-x-auto">
               <table className="min-w-max divide-y divide-gray-200">
                 <thead className="bg-gradient-to-r from-brand-50 to-brand-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-normal text-gray-500 uppercase tracking-wider min-w-[120px] border-r border-gray-100">
+                    <th className="px-6 py-3 text-left text-xs font-normal text-text-secondary uppercase tracking-wider min-w-[120px] border-r border-border-subtle">
                       日付
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-normal text-gray-500 uppercase tracking-wider min-w-[140px] border-r border-gray-100">
+                    <th className="px-6 py-3 text-left text-xs font-normal text-text-secondary uppercase tracking-wider min-w-[140px] border-r border-border-subtle">
                       時間
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-normal text-gray-500 uppercase tracking-wider min-w-[150px] border-r border-gray-100">
+                    <th className="px-6 py-3 text-left text-xs font-normal text-text-secondary uppercase tracking-wider min-w-[150px] border-r border-border-subtle">
                       会員名
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-normal text-gray-500 uppercase tracking-wider min-w-[120px] border-r border-gray-100">
+                    <th className="px-6 py-3 text-left text-xs font-normal text-text-secondary uppercase tracking-wider min-w-[120px] border-r border-border-subtle">
                       回数
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-normal text-gray-500 uppercase tracking-wider min-w-[150px] border-r border-gray-100">
+                    <th className="px-6 py-3 text-left text-xs font-normal text-text-secondary uppercase tracking-wider min-w-[150px] border-r border-border-subtle">
                       メモ
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-normal text-gray-500 uppercase tracking-wider min-w-[120px]">
+                    <th className="px-6 py-3 text-left text-xs font-normal text-text-secondary uppercase tracking-wider min-w-[120px]">
                       操作
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-surface-raised divide-y divide-gray-200">
                   {reservations.map((reservation) => (
                     <tr
                       key={reservation.id}
                       className={isPastReservation(reservation.startTime || reservation.start_time, reservation.endTime || reservation.end_time)
-                        ? 'bg-gray-50 text-gray-600'
+                        ? 'bg-surface-base text-text-secondary'
                         : ''
                       }
                     >
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-normal min-w-[120px] border-r border-gray-100">
-                        <div className="bg-brand-50 text-brand-800 px-2 py-1 rounded-md text-center">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-normal min-w-[120px] border-r border-border-subtle">
+                        <div className="bg-brand-500/15 text-brand-300 px-2 py-1 rounded-md text-center">
                           {formatDate(reservation.startTime || reservation.start_time)}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm min-w-[140px] border-r border-gray-100">
-                        <div className="bg-gray-50 text-gray-800 px-2 py-1 rounded-md text-center">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm min-w-[140px] border-r border-border-subtle">
+                        <div className="bg-surface-base text-text-primary px-2 py-1 rounded-md text-center">
                           {formatTime(reservation.startTime || reservation.start_time)} - {formatTime(reservation.endTime || reservation.end_time)}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm min-w-[150px] border-r border-gray-100">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm min-w-[150px] border-r border-border-subtle">
                         <div className="flex items-center">
                           <div className="flex-shrink-0 h-8 w-8">
-                            <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
-                              <span className="text-sm font-normal text-gray-700">
+                            <div className="h-8 w-8 rounded-full bg-surface-overlay flex items-center justify-center">
+                              <span className="text-sm font-normal text-text-secondary">
                                 {reservation.client?.id === 'blocked' ? 'B' : (reservation.client?.fullName || reservation.client?.full_name || reservation.client_name || '-').charAt(0)}
                               </span>
                             </div>
                           </div>
                           <div className="ml-3">
-                            <div className="font-normal text-gray-900">
+                            <div className="font-normal text-text-primary">
                               {reservation.client?.id === 'blocked' ? '予約不可時間' : (reservation.client?.fullName || reservation.client?.full_name || reservation.client_name || '-')}
                             </div>
-                            <div className="text-gray-500 text-xs">
+                            <div className="text-text-secondary text-xs">
                               {reservation.client?.id === 'blocked'
                                 ? 'システム'
                                 : reservation.client?.email === 'guest@system'
@@ -480,18 +480,18 @@ function AdminReservationsContent() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm min-w-[120px] border-r border-gray-100">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm min-w-[120px] border-r border-border-subtle">
                         {reservation.client?.id === 'blocked' ? (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-normal bg-red-100 text-red-800">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-normal bg-red-500/15 text-red-300">
                             予約不可
                           </span>
                         ) : (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-normal bg-green-100 text-green-800">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-normal bg-green-500/15 text-green-300">
                             {`${getMonthlyCount(reservation, reservations)}/${monthlyUsage[reservation.client.id]?.maxCount ?? '-'}回（${new Date(reservation.startTime || reservation.start_time).getMonth() + 1}月）`}
                           </span>
                         )}
                       </td>
-                      <td className="px-6 py-4 text-sm min-w-[150px] border-r border-gray-100">
+                      <td className="px-6 py-4 text-sm min-w-[150px] border-r border-border-subtle">
                         {reservation.memo || reservation.notes || '-'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-normal min-w-[120px]">
@@ -503,7 +503,7 @@ function AdminReservationsContent() {
                               e.stopPropagation();
                               handleEdit(reservation);
                             }}
-                            className="bg-brand-100 text-brand-600 hover:bg-brand-200 px-3 py-1 rounded-md transition-colors"
+                            className="bg-brand-500/15 text-brand-300 hover:bg-brand-500/25 px-3 py-1 rounded-md transition-colors"
                           >
                             変更
                           </button>
@@ -514,7 +514,7 @@ function AdminReservationsContent() {
                               e.stopPropagation();
                               handleDeleteReservation(reservation.id);
                             }}
-                            className="bg-red-100 text-red-600 hover:bg-red-200 px-3 py-1 rounded-md transition-colors"
+                            className="bg-red-500/15 text-red-300 hover:bg-red-500/25 px-3 py-1 rounded-md transition-colors"
                           >
                             キャンセル
                           </button>
@@ -530,7 +530,7 @@ function AdminReservationsContent() {
 
         {reservations.length === 0 && !loading && (
           <div className="text-center py-12">
-            <p className="text-gray-500">予約が見つかりません</p>
+            <p className="text-text-secondary">予約が見つかりません</p>
             <Link
               href={trainerToken ? `/admin/reservations/new?trainerToken=${trainerToken}` : '/admin/reservations/new'}
               className="mt-4 inline-block bg-brand-600 text-white px-4 py-2 rounded-md hover:bg-brand-700"
@@ -544,14 +544,14 @@ function AdminReservationsContent() {
       {/* Edit Modal */}
       {showEditModal && editingReservation && (
         <div className="fixed inset-0 bg-gray-900 bg-opacity-60 z-[200] flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="relative w-full max-w-md bg-white shadow-xl rounded-xl max-h-[90vh] flex flex-col border border-gray-100">
+          <div className="relative w-full max-w-md bg-surface-raised shadow-xl rounded-xl max-h-[90vh] flex flex-col border border-border-subtle">
             <div className="p-6 overflow-y-auto">
-              <h3 className="text-lg font-normal text-gray-900 mb-4">
+              <h3 className="text-lg font-normal text-text-primary mb-4">
                 予約の変更
               </h3>
               <form onSubmit={handleEditSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-normal text-gray-700 mb-1">
+                  <label className="block text-sm font-normal text-text-secondary mb-1">
                     タイトル
                   </label>
                   <input
@@ -561,24 +561,24 @@ function AdminReservationsContent() {
                       ...prev,
                       title: e.target.value
                     }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    className="w-full px-3 py-2 border border-border-strong rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-normal text-gray-700 mb-1">
+                  <label className="block text-sm font-normal text-text-secondary mb-1">
                     開始時刻
                   </label>
                   <input
                     type="datetime-local"
                     value={editFormData.startTime}
                     onChange={handleStartTimeChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    className="w-full px-3 py-2 border border-border-strong rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-normal text-gray-700 mb-1">
+                  <label className="block text-sm font-normal text-text-secondary mb-1">
                     終了時刻
                   </label>
                   <input
@@ -588,12 +588,12 @@ function AdminReservationsContent() {
                       ...prev,
                       endTime: e.target.value
                     }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    className="w-full px-3 py-2 border border-border-strong rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-normal text-gray-700 mb-1">
+                  <label className="block text-sm font-normal text-text-secondary mb-1">
                     メモ
                   </label>
                   <textarea
@@ -603,7 +603,7 @@ function AdminReservationsContent() {
                       notes: e.target.value
                     }))}
                     rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    className="w-full px-3 py-2 border border-border-strong rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500"
                   />
                 </div>
                 <div className="flex justify-between space-x-3 pt-4">
@@ -631,7 +631,7 @@ function AdminReservationsContent() {
                         setShowEditModal(false);
                         setEditingReservation(null);
                       }}
-                      className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors"
+                      className="px-4 py-2 bg-surface-overlay text-text-secondary rounded-md hover:bg-surface-overlay transition-colors"
                     >
                       キャンセル
                     </button>

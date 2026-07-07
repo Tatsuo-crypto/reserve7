@@ -198,24 +198,24 @@ function MembersPageContent() {
   const sortedPlans = Object.keys(planCounts).sort()
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-4 pb-12">
+    <div className="min-h-screen bg-surface-base pt-4 pb-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-            <div className="text-[10px] font-normal text-gray-400 uppercase tracking-widest mb-1">現在の在籍者</div>
+          <div className="bg-surface-raised rounded-2xl p-6 shadow-sm border border-border-subtle">
+            <div className="text-[10px] font-normal text-text-muted uppercase tracking-widest mb-1">現在の在籍者</div>
             <div className="flex items-baseline gap-2">
               <span className="text-4xl font-normal text-brand-600 tracking-tight">{totalActive}</span>
-              <span className="text-sm font-normal text-gray-400">名</span>
+              <span className="text-sm font-normal text-text-muted">名</span>
             </div>
           </div>
-          <div className="md:col-span-3 bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-            <div className="text-[10px] font-normal text-gray-400 uppercase tracking-widest mb-4">プラン別内訳</div>
+          <div className="md:col-span-3 bg-surface-raised rounded-2xl p-6 shadow-sm border border-border-subtle">
+            <div className="text-[10px] font-normal text-text-muted uppercase tracking-widest mb-4">プラン別内訳</div>
             <div className="flex flex-wrap gap-2">
               {sortedPlans.map(plan => (
-                <div key={plan} className="bg-gray-50 rounded-lg px-3 py-1.5 border border-gray-100 flex items-center gap-2">
-                  <span className="text-[10px] font-normal text-gray-500">{plan}</span>
-                  <span className="text-sm font-normal text-gray-800 tabular-nums">{planCounts[plan]}</span>
+                <div key={plan} className="bg-surface-base rounded-lg px-3 py-1.5 border border-border-subtle flex items-center gap-2">
+                  <span className="text-[10px] font-normal text-text-secondary">{plan}</span>
+                  <span className="text-sm font-normal text-text-primary tabular-nums">{planCounts[plan]}</span>
                 </div>
               ))}
             </div>
@@ -223,18 +223,18 @@ function MembersPageContent() {
         </div>
 
         {/* Toolbar */}
-        <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 mb-6 flex flex-wrap items-center justify-between gap-4">
+        <div className="bg-surface-raised rounded-2xl p-4 shadow-sm border border-border-subtle mb-6 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 bg-gray-50 p-1 rounded-xl border border-gray-100">
+            <div className="flex items-center gap-2 bg-surface-base p-1 rounded-xl border border-border-subtle">
               <button
                 onClick={() => setShowOnlyActive(true)}
-                className={`px-4 py-2 rounded-lg text-xs font-normal transition-all ${showOnlyActive ? 'bg-white text-brand-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                className={`px-4 py-2 rounded-lg text-xs font-normal transition-all ${showOnlyActive ? 'bg-surface-raised text-brand-600 shadow-sm' : 'text-text-muted hover:text-text-secondary'}`}
               >
                 在籍のみ
               </button>
               <button
                 onClick={() => setShowOnlyActive(false)}
-                className={`px-4 py-2 rounded-lg text-xs font-normal transition-all ${!showOnlyActive ? 'bg-white text-brand-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                className={`px-4 py-2 rounded-lg text-xs font-normal transition-all ${!showOnlyActive ? 'bg-surface-raised text-brand-600 shadow-sm' : 'text-text-muted hover:text-text-secondary'}`}
               >
                 全員表示
               </button>
@@ -244,7 +244,7 @@ function MembersPageContent() {
               <select
                 value={sortKey || ''}
                 onChange={(e) => setSortKey(e.target.value as any || null)}
-                className="bg-gray-50 border border-gray-100 rounded-xl px-4 py-2 text-xs font-normal text-gray-600 focus:ring-2 focus:ring-brand-500 outline-none"
+                className="bg-surface-base border border-border-subtle rounded-xl px-4 py-2 text-xs font-normal text-text-secondary focus:ring-2 focus:ring-brand-500 outline-none"
               >
                 <option value="">標準並び替え</option>
                 <option value="plan">プラン順</option>
@@ -253,7 +253,7 @@ function MembersPageContent() {
               </select>
               <button
                 onClick={() => setSortAsc(!sortAsc)}
-                className="p-2 bg-gray-50 text-gray-400 hover:text-brand-600 rounded-xl border border-gray-100 transition-all"
+                className="p-2 bg-surface-base text-text-muted hover:text-brand-600 rounded-xl border border-border-subtle transition-all"
               >
                 <svg className={`w-4 h-4 transition-transform ${sortAsc ? '' : 'rotate-180'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -274,26 +274,26 @@ function MembersPageContent() {
         </div>
 
         {error && (
-          <div className="mb-6 p-4 rounded-2xl bg-gray-900 text-white font-normal text-sm shadow-xl flex items-center gap-3 animate-fadeIn">
+          <div className="mb-6 p-4 rounded-2xl bg-surface-overlay text-text-primary border border-border-strong font-normal text-sm shadow-xl flex items-center gap-3 animate-fadeIn">
             <div className="w-1.5 h-4 bg-brand-500 rounded-full"></div>
             {error}
           </div>
         )}
 
         {/* Member List (Simple Table Format) */}
-        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="bg-surface-raised rounded-3xl shadow-sm border border-border-subtle overflow-hidden">
           {!members || members.length === 0 ? (
             <div className="p-20 text-center">
-              <p className="text-gray-400 font-normal italic">会員データが見つかりません</p>
+              <p className="text-text-muted font-normal italic">会員データが見つかりません</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-gray-50/50 border-b border-gray-100">
-                    <th className="px-4 py-4 text-[10px] font-normal text-gray-400 uppercase tracking-widest">氏名</th>
-                    <th className="px-4 py-4 text-[10px] font-normal text-gray-400 uppercase tracking-widest">プラン</th>
-                    <th className="px-4 py-4 text-[10px] font-normal text-gray-400 uppercase tracking-widest text-center">ステータス</th>
+                  <tr className="bg-surface-base/50 border-b border-border-subtle">
+                    <th className="px-4 py-4 text-[10px] font-normal text-text-muted uppercase tracking-widest">氏名</th>
+                    <th className="px-4 py-4 text-[10px] font-normal text-text-muted uppercase tracking-widest">プラン</th>
+                    <th className="px-4 py-4 text-[10px] font-normal text-text-muted uppercase tracking-widest text-center">ステータス</th>
                     <th className="px-4 py-4 text-right"></th>
                   </tr>
                 </thead>
@@ -310,13 +310,13 @@ function MembersPageContent() {
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-2">
                           <div className={`flex-shrink-0 w-2 h-2 rounded-full ${getStatusDotColor(member.status)} shadow-sm`}></div>
-                          <div className="text-sm font-normal text-gray-900 group-hover:text-brand-600 transition-colors truncate max-w-[120px] sm:max-w-none">
+                          <div className="text-sm font-normal text-text-primary group-hover:text-brand-600 transition-colors truncate max-w-[120px] sm:max-w-none">
                             {member.full_name}
                           </div>
                         </div>
                       </td>
                       <td className="px-4 py-4">
-                        <span className="text-[10px] font-normal text-gray-600 bg-gray-100 px-2 py-0.5 rounded-md whitespace-nowrap">
+                        <span className="text-[10px] font-normal text-text-secondary bg-surface-overlay px-2 py-0.5 rounded-md whitespace-nowrap">
                           {member.plan || '-'}
                         </span>
                       </td>
@@ -326,7 +326,7 @@ function MembersPageContent() {
                         </span>
                       </td>
                       <td className="px-4 py-4 text-right">
-                        <div className="inline-flex items-center text-gray-200 group-hover:text-brand-500 transition-colors">
+                        <div className="inline-flex items-center text-text-muted group-hover:text-brand-500 transition-colors">
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                           </svg>
@@ -360,10 +360,10 @@ function MembersPageContent() {
 export default function MembersPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-surface-base flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">読み込み中...</p>
+          <p className="mt-4 text-text-secondary">読み込み中...</p>
         </div>
       </div>
     }>

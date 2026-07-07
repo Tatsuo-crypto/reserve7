@@ -256,7 +256,7 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
     if (loading) return <div className="h-64 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"></div></div>
     if (fetchError) {
         return (
-            <div className="bg-white rounded-2xl border border-red-100 p-6 text-sm text-red-600">
+            <div className="bg-surface-raised rounded-2xl border border-red-100 p-6 text-sm text-red-600">
                 分析データを取得できませんでした。画面を再読み込みしてください。
             </div>
         )
@@ -282,17 +282,17 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
     return (
         <div className="space-y-6 pb-24">
             {/* O-6/O-7: 30日記録継続ドット。グラフタブ冒頭に1つ、記録継続の俯瞰用 */}
-            <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
+            <div className="bg-surface-raised p-4 rounded-2xl border border-border-subtle shadow-sm">
                 <div className="flex items-center justify-between mb-2 px-1">
-                    <span className="text-[10px] font-normal text-gray-400 uppercase tracking-widest">過去30日の記録</span>
-                    <span className="text-xs font-semibold text-gray-700 tabular-nums">{recordStreak30.filter(d => d.recorded).length}/30日</span>
+                    <span className="text-[10px] font-normal text-text-muted uppercase tracking-widest">過去30日の記録</span>
+                    <span className="text-xs font-semibold text-text-secondary tabular-nums">{recordStreak30.filter(d => d.recorded).length}/30日</span>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                     {recordStreak30.map(d => (
                         <div
                             key={d.date}
                             title={d.date}
-                            className={`w-2.5 h-2.5 rounded-full ${d.recorded ? 'bg-state-success-500' : 'bg-gray-200'} ${d.isToday ? 'ring-2 ring-brand-400 ring-offset-1' : ''}`}
+                            className={`w-2.5 h-2.5 rounded-full ${d.recorded ? 'bg-state-success-500' : 'bg-surface-overlay'} ${d.isToday ? 'ring-2 ring-brand-400 ring-offset-1' : ''}`}
                         />
                     ))}
                 </div>
@@ -311,13 +311,13 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
             )}
 
             {/* Controls */}
-            <div className="bg-white p-3 sm:p-4 rounded-2xl border border-gray-200 shadow-sm flex flex-row items-center gap-4 sm:gap-6 overflow-x-auto whitespace-nowrap">
-                <label className="flex items-center gap-2 text-xs sm:text-sm font-normal text-gray-700 shrink-0">
+            <div className="bg-surface-raised p-3 sm:p-4 rounded-2xl border border-border-strong shadow-sm flex flex-row items-center gap-4 sm:gap-6 overflow-x-auto whitespace-nowrap">
+                <label className="flex items-center gap-2 text-xs sm:text-sm font-normal text-text-secondary shrink-0">
                     期間：
                     <select
                         value={period}
                         onChange={(e) => setPeriod(e.target.value as PeriodType)}
-                        className="bg-gray-50 border border-gray-200 text-gray-900 text-xs sm:text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block py-1.5 px-2 outline-none font-normal"
+                        className="bg-surface-base border border-border-strong text-text-primary text-xs sm:text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block py-1.5 px-2 outline-none font-normal"
                     >
                         <option value="1w">7日間</option>
                         <option value="1m">1ヶ月</option>
@@ -327,12 +327,12 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
                         <option value="all">すべて</option>
                     </select>
                 </label>
-                <label className="flex items-center gap-2 text-xs sm:text-sm font-normal text-gray-700 shrink-0">
+                <label className="flex items-center gap-2 text-xs sm:text-sm font-normal text-text-secondary shrink-0">
                     表示：
                     <select
                         value={showAvg ? 'week' : 'day'}
                         onChange={(e) => setShowAvg(e.target.value === 'week')}
-                        className="bg-gray-50 border border-gray-200 text-gray-900 text-xs sm:text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block py-1.5 px-2 outline-none font-normal"
+                        className="bg-surface-base border border-border-strong text-text-primary text-xs sm:text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block py-1.5 px-2 outline-none font-normal"
                     >
                         <option value="day">日</option>
                         <option value="week">週平均</option>
@@ -558,12 +558,12 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
             </div>
 
             {/* 9. Workout Chart - Spanning full width with enough height */}
-            <div className="bg-white rounded-3xl p-4 sm:p-6 border border-gray-100 shadow-sm flex flex-col min-h-[450px]">
+            <div className="bg-surface-raised rounded-3xl p-4 sm:p-6 border border-border-subtle shadow-sm flex flex-col min-h-[450px]">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
                     <div className="space-y-1">
                         <div className="flex items-center gap-2">
                             <div className="w-1.5 h-6 bg-orange-500 rounded-full"></div>
-                            <h3 className="text-lg font-normal text-gray-800">筋トレカレンダー</h3>
+                            <h3 className="text-lg font-normal text-text-primary">筋トレカレンダー</h3>
                         </div>
                         <div className="pl-3.5 text-sm font-normal text-orange-600">
                             {calendarDate.getFullYear()}年 {calendarDate.getMonth() + 1}月
@@ -572,14 +572,14 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
                     <div className="flex items-center justify-between sm:justify-center gap-2 bg-orange-50 rounded-full p-1 shadow-inner w-full sm:w-auto">
                         <button 
                             onClick={handlePrevMonth}
-                            className="w-8 h-8 flex items-center justify-center hover:bg-white rounded-full transition-all text-orange-500 active:scale-90"
+                            className="w-8 h-8 flex items-center justify-center hover:bg-surface-raised rounded-full transition-all text-orange-500 active:scale-90"
                         >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
                         </button>
                         <span className="text-xs font-normal text-orange-500 min-w-[72px] text-center">月移動</span>
                         <button 
                             onClick={handleNextMonth}
-                            className="w-8 h-8 flex items-center justify-center hover:bg-white rounded-full transition-all text-orange-500 active:scale-90"
+                            className="w-8 h-8 flex items-center justify-center hover:bg-surface-raised rounded-full transition-all text-orange-500 active:scale-90"
                         >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" /></svg>
                         </button>
@@ -589,7 +589,7 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
                 <div className="flex flex-col flex-1">
                     <div className="grid grid-cols-7 gap-3 mb-4">
                         {['日', '月', '火', '水', '木', '金', '土'].map(d => (
-                            <div key={d} className="text-[10px] font-normal text-gray-400 text-center uppercase tracking-widest">{d}</div>
+                            <div key={d} className="text-[10px] font-normal text-text-muted text-center uppercase tracking-widest">{d}</div>
                         ))}
                     </div>
                     <div className="grid grid-cols-7 gap-3 flex-1">
@@ -612,8 +612,8 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
                                 const isCurrentMonth = date.getMonth() === calendarDate.getMonth()
                                 
                                 calendarDays.push(
-                                    <div key={dStr} className={`relative aspect-square flex flex-col items-center justify-center rounded-2xl border-2 transition-all overflow-hidden ${!isCurrentMonth ? 'opacity-10 pointer-events-none' : ''} ${isSelected ? 'border-orange-500 bg-orange-50/50' : 'border-gray-50 bg-gray-50/30 hover:border-gray-100'}`}>
-                                        <span className={`text-[10px] font-normal z-10 ${isDone ? 'text-white opacity-40' : isToday ? 'text-blue-500' : 'text-gray-300'}`}>
+                                    <div key={dStr} className={`relative aspect-square flex flex-col items-center justify-center rounded-2xl border-2 transition-all overflow-hidden ${!isCurrentMonth ? 'opacity-10 pointer-events-none' : ''} ${isSelected ? 'border-orange-500 bg-orange-50/50' : 'border-border-subtle bg-surface-base/30 hover:border-border-subtle'}`}>
+                                        <span className={`text-[10px] font-normal z-10 ${isDone ? 'text-white opacity-40' : isToday ? 'text-blue-500' : 'text-text-muted'}`}>
                                             {date.getDate()}
                                         </span>
                                         {isDone && (
@@ -638,11 +638,11 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M5 13l4 4L19 7" />
                                 </svg>
                             </div>
-                            <span className="text-xs font-normal text-gray-600 uppercase tracking-tighter">実施済み</span>
+                            <span className="text-xs font-normal text-text-secondary uppercase tracking-tighter">実施済み</span>
                         </div>
                         <div className="flex items-center gap-3">
-                            <div className="w-6 h-6 bg-gray-50 rounded-xl border-2 border-gray-100"></div>
-                            <span className="text-xs font-normal text-gray-400 uppercase tracking-tighter">未実施</span>
+                            <div className="w-6 h-6 bg-surface-base rounded-xl border-2 border-border-subtle"></div>
+                            <span className="text-xs font-normal text-text-muted uppercase tracking-tighter">未実施</span>
                         </div>
                     </div>
                 </div>
@@ -653,7 +653,7 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
                 <div className="space-y-4">
                     <div className="flex items-center gap-2 px-1 pt-4">
                         <div className="w-1.5 h-5 bg-purple-500 rounded-full"></div>
-                        <h2 className="text-sm font-normal text-gray-800 uppercase tracking-widest">習慣の達成状況</h2>
+                        <h2 className="text-sm font-normal text-text-primary uppercase tracking-widest">習慣の達成状況</h2>
                     </div>
                     {settings.quit_goals.map((goal: string) => (
                         <AnalysisChartCard key={goal} title={`習慣: ${goal}`} color="purple">
@@ -694,11 +694,11 @@ function AnalysisChartCard({ title, children, color }: { title: string, children
         violet: 'bg-violet-50/30 border-violet-100',
         sky: 'bg-sky-50/30 border-sky-100',
         teal: 'bg-teal-50/30 border-teal-100',
-        gray: 'bg-gray-50/50 border-gray-100',
+        gray: 'bg-surface-base/50 border-border-subtle',
     }
     return (
         <div className={`p-6 rounded-2xl border ${colorStyles[color]} shadow-sm space-y-4`}>
-            <h3 className="text-sm font-normal text-gray-500 tracking-widest">{title}</h3>
+            <h3 className="text-sm font-normal text-text-secondary tracking-widest">{title}</h3>
             <div className="h-[250px] w-full">{children}</div>
         </div>
     )

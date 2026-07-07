@@ -26,16 +26,16 @@ export default function WeeklyTab({ userId, token, isAdmin }: WeeklyTabProps) {
     return (
         <div className="space-y-4 animate-fadeIn pb-24">
             <div className="px-2 flex justify-center">
-                <div className="inline-flex bg-gray-100 rounded-full p-1">
+                <div className="inline-flex bg-surface-overlay rounded-full p-1">
                     <button
                         onClick={() => setView('detail')}
-                        className={`px-4 py-1.5 rounded-full text-xs font-normal transition-all ${view === 'detail' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-400'}`}
+                        className={`px-4 py-1.5 rounded-full text-xs font-normal transition-all ${view === 'detail' ? 'bg-surface-raised text-text-primary shadow-sm' : 'text-text-muted'}`}
                     >
                         詳細
                     </button>
                     <button
                         onClick={() => setView('summary')}
-                        className={`px-4 py-1.5 rounded-full text-xs font-normal transition-all ${view === 'summary' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-400'}`}
+                        className={`px-4 py-1.5 rounded-full text-xs font-normal transition-all ${view === 'summary' ? 'bg-surface-raised text-text-primary shadow-sm' : 'text-text-muted'}`}
                     >
                         週間まとめ
                     </button>

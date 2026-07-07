@@ -336,7 +336,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
             <Card padding="md">
                 <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                        <h2 className="text-sm font-normal text-gray-400 uppercase tracking-widest">記録する日を選択</h2>
+                        <h2 className="text-sm font-normal text-text-muted uppercase tracking-widest">記録する日を選択</h2>
                         {isAdmin && (
                             <button className="text-xs font-normal text-brand-600 px-3 py-1 bg-brand-50 rounded-full">項目編集</button>
                         )}
@@ -347,11 +347,11 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                             type="date"
                             value={selectedDate}
                             onChange={(e) => setSelectedDate(e.target.value)}
-                            className="flex-1 bg-gray-50 border-none rounded-xl font-normal text-gray-700 px-4 py-2 focus:ring-2 focus:ring-brand-500"
+                            className="flex-1 bg-surface-base border-none rounded-xl font-normal text-text-secondary px-4 py-2 focus:ring-2 focus:ring-brand-500"
                         />
                         <button
                             onClick={() => setSelectedDate(new Date().toISOString().split('T')[0])}
-                            className={`px-4 py-2 rounded-xl text-xs font-normal transition-all ${selectedDate === new Date().toISOString().split('T')[0] ? 'bg-brand-600 text-white shadow-md' : 'bg-gray-100 text-gray-500'}`}
+                            className={`px-4 py-2 rounded-xl text-xs font-normal transition-all ${selectedDate === new Date().toISOString().split('T')[0] ? 'bg-brand-600 text-white shadow-md' : 'bg-surface-overlay text-text-secondary'}`}
                         >
                             今日
                         </button>
@@ -363,9 +363,9 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
             <div className="space-y-4">
                 {/* Meal Result Section - Show prominently if data exists */}
                 {ocrResult && (
-                    <div className={`bg-white rounded-2xl shadow-lg p-6 animate-slideUp border-2 ${isSaved ? 'border-emerald-100' : 'border-brand-500'}`}>
+                    <div className={`bg-surface-raised rounded-2xl shadow-lg p-6 animate-slideUp border-2 ${isSaved ? 'border-emerald-100' : 'border-brand-500'}`}>
                         <div className="flex items-center justify-between mb-4">
-                            <h2 className="text-lg font-normal text-gray-900">
+                            <h2 className="text-lg font-normal text-text-primary">
                                 {analyzing ? '解析中...' : isSaved ? '食事の記録' : '解析結果'}
                             </h2>
                             {!analyzing && (
@@ -379,7 +379,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                         </div>
 
                         {dietImageUrl && (
-                            <div className="mb-4 rounded-xl overflow-hidden border border-gray-100 shadow-inner bg-gray-50 aspect-video relative">
+                            <div className="mb-4 rounded-xl overflow-hidden border border-border-subtle shadow-inner bg-surface-base aspect-video relative">
                                 <img 
                                     src={dietImageUrl} 
                                     alt="Uploaded meal" 
@@ -392,10 +392,10 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                             <div className={`col-span-2 p-4 rounded-xl transition-colors ${isSaved ? 'bg-emerald-50/50' : 'bg-brand-50/50'}`}>
                                 <div className={`text-[10px] font-normal uppercase mb-2 tracking-widest text-center ${isSaved ? 'text-emerald-600' : 'text-brand-600'}`}>総エネルギー</div>
                                 <div className="flex items-center justify-center space-x-3">
-                                    <div className="text-3xl font-normal text-gray-900">{ocrResult.calories}</div>
-                                    <div className="text-xl font-normal text-gray-300">/</div>
-                                    <div className="text-2xl font-normal text-gray-400 opacity-60">{ocrResult.calories_target}</div>
-                                    <div className="text-sm font-normal text-gray-400">kcal</div>
+                                    <div className="text-3xl font-normal text-text-primary">{ocrResult.calories}</div>
+                                    <div className="text-xl font-normal text-text-muted">/</div>
+                                    <div className="text-2xl font-normal text-text-muted opacity-60">{ocrResult.calories_target}</div>
+                                    <div className="text-sm font-normal text-text-muted">kcal</div>
                                 </div>
                             </div>
                             <NutrientItem label="たんぱく質 (P)" value={ocrResult.protein} target={ocrResult.protein_target} unit="g" onChange={(v) => setOcrResult({ ...ocrResult, protein: v })} />
@@ -423,7 +423,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                                         setDietImageUrl(null);
                                     }
                                 }}
-                                className="text-[10px] font-normal text-gray-300 hover:text-gray-400 transition-colors flex items-center gap-1 uppercase tracking-widest"
+                                className="text-[10px] font-normal text-text-muted hover:text-text-muted transition-colors flex items-center gap-1 uppercase tracking-widest"
                             >
                                 削除
                             </button>
@@ -468,19 +468,19 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
             {/* 3. Metrics Input Section */}
             <Card padding="md">
                 <div className="space-y-3">
-                    <h2 className="text-sm font-normal text-gray-400 uppercase tracking-widest mb-4">各項目の詳細入力</h2>
+                    <h2 className="text-sm font-normal text-text-muted uppercase tracking-widest mb-4">各項目の詳細入力</h2>
                     
                     {/* Weight Input Row */}
-                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl mb-4 group focus-within:ring-2 focus-within:ring-brand-100 transition-all">
+                    <div className="flex items-center justify-between p-4 bg-surface-base rounded-2xl mb-4 group focus-within:ring-2 focus-within:ring-brand-100 transition-all">
                         <div className="flex items-center space-x-4">
-                            <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm text-brand-500">
+                            <div className="w-10 h-10 bg-surface-raised rounded-xl flex items-center justify-center shadow-sm text-brand-500">
                                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <rect x="5" y="5" width="14" height="14" rx="2" strokeWidth={2} />
                                     <circle cx="12" cy="12" r="3" strokeWidth={2} />
                                     <path d="M12 12l1.5-1.5" strokeWidth={2} strokeLinecap="round" />
                                 </svg>
                             </div>
-                            <span className="text-sm font-normal text-gray-700">現在の体重</span>
+                            <span className="text-sm font-normal text-text-secondary">現在の体重</span>
                         </div>
                         <div className="flex items-center space-x-3">
                             <div className="flex items-baseline space-x-1">
@@ -493,9 +493,9 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                                         setWeight(e.target.value)
                                     }}
                                     placeholder="00.0"
-                                    className="w-20 text-right text-2xl font-normal text-gray-900 bg-transparent border-none p-0 focus:ring-0 placeholder-gray-200"
+                                    className="w-20 text-right text-2xl font-normal text-text-primary bg-transparent border-none p-0 focus:ring-0 placeholder-gray-200"
                                 />
-                                <span className="text-xs font-normal text-gray-400">kg</span>
+                                <span className="text-xs font-normal text-text-muted">kg</span>
                             </div>
                         </div>
                     </div>
@@ -550,24 +550,24 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                     )}
                     {(visibleItems.workout || true) && (
                         <div className="space-y-3">
-                            <div className="flex items-center justify-between p-3 border border-gray-50 rounded-2xl hover:bg-gray-50 transition-colors">
+                            <div className="flex items-center justify-between p-3 border border-border-subtle rounded-2xl hover:bg-surface-base transition-colors">
                                 <div className="flex items-center space-x-3">
                                     <div className="w-10 h-10 bg-orange-50 text-orange-500 rounded-xl flex items-center justify-center shadow-sm">
                                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18M7 6v12M17 6v12" />
                                         </svg>
                                     </div>
-                                    <span className="text-sm font-normal text-gray-700">筋トレ</span>
+                                    <span className="text-sm font-normal text-text-secondary">筋トレ</span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <span className="text-[10px] font-normal text-gray-400">実施</span>
+                                    <span className="text-[10px] font-normal text-text-muted">実施</span>
                                     <button
                                         onClick={() => {
                                             setHabits((prev: any) => ({ ...prev, workout: prev.workout === 1 ? 0 : 1 }))
                                         }}
-                                        className={`w-12 h-6 rounded-full transition-all relative ${habits.workout === 1 ? 'bg-orange-500' : 'bg-gray-200'}`}
+                                        className={`w-12 h-6 rounded-full transition-all relative ${habits.workout === 1 ? 'bg-orange-500' : 'bg-surface-overlay'}`}
                                     >
-                                        <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${habits.workout === 1 ? 'left-7' : 'left-1'}`}></div>
+                                        <div className={`absolute top-1 w-4 h-4 bg-surface-raised rounded-full transition-all ${habits.workout === 1 ? 'left-7' : 'left-1'}`}></div>
                                     </button>
                                 </div>
                             </div>
@@ -576,7 +576,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                                     value={habits.workout_notes || ''}
                                     onChange={(e) => setHabits((prev: any) => ({ ...prev, workout_notes: e.target.value }))}
                                     placeholder="トレーニング内容（例：スクワット 10回×3セットなど）"
-                                    className="w-full p-4 rounded-2xl bg-gray-50 border-none focus:ring-2 focus:ring-orange-200 text-sm font-normal text-gray-700 placeholder:text-gray-300 min-h-[80px] transition-all"
+                                    className="w-full p-4 rounded-2xl bg-surface-base border-none focus:ring-2 focus:ring-orange-200 text-sm font-normal text-text-secondary placeholder:text-text-muted min-h-[80px] transition-all"
                                 />
                             )}
                         </div>
@@ -585,14 +585,14 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
 
                 {/* Notes Section */}
                 <div className="mt-6">
-                    <label className="text-xs font-normal text-gray-400 uppercase tracking-widest mb-2 block">メモ（任意）</label>
+                    <label className="text-xs font-normal text-text-muted uppercase tracking-widest mb-2 block">メモ（任意）</label>
                     <textarea
                         value={notes}
                         onChange={(e) => {
                             setNotes(e.target.value)
                         }}
                         placeholder="今日の体調や食事の感想など"
-                        className="w-full bg-gray-50 border-none rounded-2xl p-4 text-sm font-normal text-gray-700 focus:ring-2 focus:ring-brand-500 min-h-[100px]"
+                        className="w-full bg-surface-base border-none rounded-2xl p-4 text-sm font-normal text-text-secondary focus:ring-2 focus:ring-brand-500 min-h-[100px]"
                     />
                 </div>
 
@@ -601,17 +601,17 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                     <div className="mt-8 space-y-4">
                         <div className="flex items-center gap-2">
                             <div className="w-1 h-4 bg-purple-500 rounded-full"></div>
-                            <h2 className="text-sm font-normal text-gray-400 uppercase tracking-widest">その他の目標</h2>
+                            <h2 className="text-sm font-normal text-text-muted uppercase tracking-widest">その他の目標</h2>
                         </div>
                         <div className="grid grid-cols-1 gap-3">
                             {quitGoals.map((goal: string) => (
-                                <div key={goal} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-transparent hover:border-purple-100 transition-all">
-                                    <span className="text-sm font-normal text-gray-700">{goal}</span>
+                                <div key={goal} className="flex items-center justify-between p-4 bg-surface-base rounded-2xl border border-transparent hover:border-purple-100 transition-all">
+                                    <span className="text-sm font-normal text-text-secondary">{goal}</span>
                                     <button
                                         onClick={() => {
                                             setHabits((prev: any) => ({ ...prev, [goal]: prev[goal] === 1 ? 0 : 1 }))
                                         }}
-                                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-normal transition-all ${habits[goal] === 1 ? 'bg-emerald-500 text-white shadow-md' : 'bg-white text-gray-400 border border-gray-100'}`}
+                                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-normal transition-all ${habits[goal] === 1 ? 'bg-emerald-500 text-white shadow-md' : 'bg-surface-raised text-text-muted border border-border-subtle'}`}
                                     >
                                         {habits[goal] === 1 ? (
                                             <>
@@ -650,7 +650,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                             </>
                         ) : isSaved ? '編集内容を更新する' : '入力内容を保存する'}
                     </button>
-                    <p className="text-center text-[10px] text-gray-400">日付: {selectedDate} の記録として保存されます</p>
+                    <p className="text-center text-[10px] text-text-muted">日付: {selectedDate} の記録として保存されます</p>
 
                     <div className="flex justify-center pt-2">
                         <button
@@ -686,7 +686,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                                     }
                                 }
                             }}
-                            className="text-[10px] font-normal text-gray-300 hover:text-gray-400 transition-colors flex items-center gap-1 uppercase tracking-widest"
+                            className="text-[10px] font-normal text-text-muted hover:text-text-muted transition-colors flex items-center gap-1 uppercase tracking-widest"
                         >
                             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -702,8 +702,8 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
 
 function NutrientItem({ label, value, target, unit, onChange }: { label: string, value: number, target?: number, unit: string, onChange: (v: number) => void }) {
     return (
-        <div className="border border-gray-100 p-3 rounded-xl bg-white shadow-sm">
-            <div className="text-[10px] font-normal text-gray-400 mb-1 uppercase tracking-wider">{label}</div>
+        <div className="border border-border-subtle p-3 rounded-xl bg-surface-raised shadow-sm">
+            <div className="text-[10px] font-normal text-text-muted mb-1 uppercase tracking-wider">{label}</div>
             <div className="flex items-center justify-between">
                 <div className="flex items-baseline space-x-1">
                     <input
@@ -711,16 +711,16 @@ function NutrientItem({ label, value, target, unit, onChange }: { label: string,
                         step="0.1"
                         value={value}
                         onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
-                        className="w-16 text-lg font-normal text-gray-900 border-none p-0 focus:ring-0 leading-none bg-transparent"
+                        className="w-16 text-lg font-normal text-text-primary border-none p-0 focus:ring-0 leading-none bg-transparent"
                     />
                     {target !== undefined && (
                         <>
-                            <span className="text-gray-300 font-normal mx-1">/</span>
-                            <span className="text-gray-400 font-normal">{target}</span>
+                            <span className="text-text-muted font-normal mx-1">/</span>
+                            <span className="text-text-muted font-normal">{target}</span>
                         </>
                     )}
                 </div>
-                <span className="text-[10px] font-normal text-gray-300">{unit}</span>
+                <span className="text-[10px] font-normal text-text-muted">{unit}</span>
             </div>
         </div>
     )
@@ -747,20 +747,20 @@ function EditableLogItem({ icon, label, value, target, unit, iconBg, iconColor, 
     }
 
     return (
-        <div className="flex items-center justify-between p-3 border border-gray-50 rounded-2xl hover:bg-gray-50 transition-colors">
+        <div className="flex items-center justify-between p-3 border border-border-subtle rounded-2xl hover:bg-surface-base transition-colors">
             <div className="flex items-center space-x-3">
                 <div className={`w-10 h-10 ${iconBg} ${iconColor} rounded-xl flex items-center justify-center shadow-sm`}>
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         {icon}
                     </svg>
                 </div>
-                <span className="text-sm font-normal text-gray-700">{label}</span>
+                <span className="text-sm font-normal text-text-secondary">{label}</span>
             </div>
             <div className="flex items-center gap-4">
-                <div className="flex items-center bg-gray-100 rounded-xl p-1">
+                <div className="flex items-center bg-surface-overlay rounded-xl p-1">
                     <button 
                         onClick={() => handleAdjust('down')}
-                        className="p-1.5 hover:bg-white rounded-lg transition-all text-gray-400 hover:text-brand-500"
+                        className="p-1.5 hover:bg-surface-raised rounded-lg transition-all text-text-muted hover:text-brand-500"
                     >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg>
                     </button>
@@ -770,7 +770,7 @@ function EditableLogItem({ icon, label, value, target, unit, iconBg, iconColor, 
                             inputMode="decimal"
                             value={value}
                             onChange={(e) => onChange(e.target.value)}
-                            className={`w-24 text-center text-lg font-normal bg-transparent border-none p-0 focus:ring-0 transition-colors ${isDefault ? 'text-gray-300' : 'text-gray-900'}`}
+                            className={`w-24 text-center text-lg font-normal bg-transparent border-none p-0 focus:ring-0 transition-colors ${isDefault ? 'text-text-muted' : 'text-text-primary'}`}
                         />
                         {target && (
                             <div className="flex items-baseline ml-1 opacity-40">
@@ -781,12 +781,12 @@ function EditableLogItem({ icon, label, value, target, unit, iconBg, iconColor, 
                     </div>
                     <button 
                         onClick={() => handleAdjust('up')}
-                        className="p-1.5 hover:bg-white rounded-lg transition-all text-gray-400 hover:text-brand-500"
+                        className="p-1.5 hover:bg-surface-raised rounded-lg transition-all text-text-muted hover:text-brand-500"
                     >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 15l7-7 7 7" /></svg>
                     </button>
                 </div>
-                <span className="text-[10px] font-normal text-gray-400 w-4">{unit}</span>
+                <span className="text-[10px] font-normal text-text-muted w-4">{unit}</span>
             </div>
         </div>
     )

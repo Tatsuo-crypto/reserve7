@@ -156,18 +156,18 @@ export default function HomeTab({ token, userName, todayDraft, onNavigate, onOpe
                 className="w-full text-left active:scale-[0.99] transition-transform"
             >
                 <Card padding="sm">
-                    <p className="text-[11px] font-normal text-gray-400 tracking-widest uppercase mb-1">次回予約</p>
+                    <p className="text-[11px] font-normal text-text-muted tracking-widest uppercase mb-1">次回予約</p>
                     {nextReservation ? (
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-base font-semibold text-gray-800">{formatReservationDate(nextReservation.start_time)}</p>
-                                <p className="text-sm text-gray-400">{formatReservationTitle(nextReservation.title)}</p>
+                                <p className="text-base font-semibold text-text-primary">{formatReservationDate(nextReservation.start_time)}</p>
+                                <p className="text-sm text-text-muted">{formatReservationTitle(nextReservation.title)}</p>
                             </div>
-                            <Icon name="chevronRight" className="text-gray-300" />
+                            <Icon name="chevronRight" className="text-text-muted" />
                         </div>
                     ) : (
                         <div className="flex items-center justify-between">
-                            <p className="text-sm text-gray-400">今後の予約はありません</p>
+                            <p className="text-sm text-text-muted">今後の予約はありません</p>
                             <span className="text-xs font-normal text-brand-600 bg-brand-50 px-3 py-1.5 rounded-full">予約する</span>
                         </div>
                     )}
@@ -188,16 +188,16 @@ export default function HomeTab({ token, userName, todayDraft, onNavigate, onOpe
 
             {/* Card 4: 今日の記録（常時） */}
             <Card padding="sm">
-                <p className="text-[11px] font-normal text-gray-400 tracking-widest uppercase mb-3">今日の記録</p>
+                <p className="text-[11px] font-normal text-text-muted tracking-widest uppercase mb-3">今日の記録</p>
                 <div className="flex items-center gap-4">
                     {todayCalorie.hasRecord ? (
                         <div className="shrink-0 w-10 h-10 rounded-full bg-state-success-500 flex items-center justify-center">
                             <Icon name="check" size={20} className="text-white" />
                         </div>
                     ) : (
-                        <div className="shrink-0 w-10 h-10 rounded-full border-2 border-gray-200" />
+                        <div className="shrink-0 w-10 h-10 rounded-full border-2 border-border-strong" />
                     )}
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-text-secondary">
                         {todayCalorie.hasRecord ? '今日の記録は完了しています' : '今日の記録はまだです'}
                     </p>
                 </div>
@@ -210,15 +210,15 @@ export default function HomeTab({ token, userName, todayDraft, onNavigate, onOpe
             {showNotifBanner && (
                 <button
                     onClick={() => onOpenSettings?.()}
-                    className="w-full text-left flex items-center gap-3 bg-gray-50 rounded-2xl p-4 border border-gray-100 active:scale-[0.99] transition-transform"
+                    className="w-full text-left flex items-center gap-3 bg-surface-base rounded-2xl p-4 border border-border-subtle active:scale-[0.99] transition-transform"
                 >
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-gray-400 shadow-sm">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-surface-raised text-text-muted shadow-sm">
                         <Icon name="bell" size={20} />
                     </div>
                     <div className="flex-1">
-                        <p className="text-xs font-normal text-gray-600">通知を許可すると予約やレッスンのお知らせが届きます</p>
+                        <p className="text-xs font-normal text-text-secondary">通知を許可すると予約やレッスンのお知らせが届きます</p>
                     </div>
-                    <Icon name="chevronRight" size={16} className="text-gray-300" />
+                    <Icon name="chevronRight" size={16} className="text-text-muted" />
                 </button>
             )}
         </div>

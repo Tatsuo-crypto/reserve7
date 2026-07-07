@@ -261,14 +261,14 @@ export default function AdminMailSettingsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-surface-base flex items-center justify-center">
         <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-brand-600" />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-12">
+    <div className="min-h-screen bg-surface-base pb-12">
       <AdminHeader
         title="配信設定"
         subTitle="PUSH NOTIFICATION SETTINGS"
@@ -317,14 +317,14 @@ export default function AdminMailSettingsPage() {
         )}
 
         {/* Main Tab Bar */}
-        <div className="flex bg-gray-200/60 p-1.5 rounded-2xl mb-8 border border-gray-200/50 shadow-inner">
+        <div className="flex bg-surface-overlay/60 p-1.5 rounded-2xl mb-8 border border-border-strong/50 shadow-inner">
           <button
             type="button"
             onClick={() => setActiveTab('members')}
             className={`flex-1 py-3 text-sm font-medium rounded-xl transition-all duration-200 ${
               activeTab === 'members'
-                ? 'bg-white text-brand-600 shadow-sm border border-gray-100'
-                : 'text-gray-500 hover:text-gray-700'
+                ? 'bg-surface-raised text-brand-600 shadow-sm border border-border-subtle'
+                : 'text-text-secondary hover:text-text-secondary'
             }`}
           >
             会員別の通知
@@ -334,8 +334,8 @@ export default function AdminMailSettingsPage() {
             onClick={() => setActiveTab('reminder')}
             className={`flex-1 py-3 text-sm font-medium rounded-xl transition-all duration-200 ${
               activeTab === 'reminder'
-                ? 'bg-white text-brand-600 shadow-sm border border-gray-100'
-                : 'text-gray-500 hover:text-gray-700'
+                ? 'bg-surface-raised text-brand-600 shadow-sm border border-border-subtle'
+                : 'text-text-secondary hover:text-text-secondary'
             }`}
           >
             リマインダーの時間
@@ -345,26 +345,26 @@ export default function AdminMailSettingsPage() {
         {/* TAB: Members */}
         {activeTab === 'members' && (
           <div className="space-y-6 animate-fadeIn">
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-5">
+            <div className="bg-surface-raised rounded-2xl shadow-sm border border-border-subtle p-6 space-y-5">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                  <h2 className="text-base font-semibold text-gray-900">会員ごとのアプリ通知</h2>
-                  <p className="mt-1 text-xs text-gray-500">このスイッチ1つで、予約の確定・変更連絡と前日リマインダー、オンラインレッスン開始前の通知すべてを制御します。</p>
-                  <p className="mt-0.5 text-xs text-gray-400">メール送信は行わず、アプリのプッシュ通知だけで届きます。</p>
+                  <h2 className="text-base font-semibold text-text-primary">会員ごとのアプリ通知</h2>
+                  <p className="mt-1 text-xs text-text-secondary">このスイッチ1つで、予約の確定・変更連絡と前日リマインダー、オンラインレッスン開始前の通知すべてを制御します。</p>
+                  <p className="mt-0.5 text-xs text-text-muted">メール送信は行わず、アプリのプッシュ通知だけで届きます。</p>
                 </div>
                 <button
                   type="button"
                   onClick={fetchMembers}
                   disabled={membersLoading}
-                  className="px-4 py-2 text-xs border border-gray-200 rounded-xl text-gray-600 hover:bg-gray-50 disabled:opacity-50 shrink-0"
+                  className="px-4 py-2 text-xs border border-border-strong rounded-xl text-text-secondary hover:bg-surface-base disabled:opacity-50 shrink-0"
                 >
                   再読み込み
                 </button>
               </div>
 
-              <div className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
-                <p className="text-sm text-gray-700">
-                  通知を受け取れる会員: <span className="font-semibold text-gray-900 tabular-nums">{notificationStats.readyCount}</span> / {notificationStats.total}名
+              <div className="rounded-2xl border border-border-subtle bg-surface-base p-4">
+                <p className="text-sm text-text-secondary">
+                  通知を受け取れる会員: <span className="font-semibold text-text-primary tabular-nums">{notificationStats.readyCount}</span> / {notificationStats.total}名
                 </p>
                 {notificationStats.missingDeviceCount > 0 && (
                   <p className="mt-1 text-xs text-amber-700">
@@ -377,57 +377,57 @@ export default function AdminMailSettingsPage() {
                 <button
                   type="button"
                   onClick={() => setAllMembers(true)}
-                  className="px-4 py-2 text-xs rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-100 hover:bg-emerald-100"
+                  className="px-4 py-2 text-xs rounded-xl bg-emerald-500/15 text-emerald-300 border border-emerald-500/20 hover:bg-emerald-500/25"
                 >
                   全員ON
                 </button>
                 <button
                   type="button"
                   onClick={() => setAllMembers(false)}
-                  className="px-4 py-2 text-xs rounded-xl bg-gray-50 text-gray-600 border border-gray-100 hover:bg-gray-100"
+                  className="px-4 py-2 text-xs rounded-xl bg-surface-base text-text-secondary border border-border-subtle hover:bg-surface-overlay"
                 >
                   全員OFF
                 </button>
               </div>
 
-              <div className="overflow-x-auto border border-gray-100 rounded-2xl">
+              <div className="overflow-x-auto border border-border-subtle rounded-2xl">
                 <table className="w-full text-left border-collapse">
-                  <thead className="bg-gray-50 border-b border-gray-100">
+                  <thead className="bg-surface-base border-b border-border-subtle">
                     <tr>
-                      <th className="px-4 py-3 text-[10px] font-semibold text-gray-400 uppercase tracking-widest">会員</th>
-                      <th className="px-4 py-3 text-center text-[10px] font-semibold text-gray-400 uppercase tracking-widest">通知</th>
-                      <th className="px-4 py-3 text-center text-[10px] font-semibold text-gray-400 uppercase tracking-widest">状態</th>
+                      <th className="px-4 py-3 text-[10px] font-semibold text-text-muted uppercase tracking-widest">会員</th>
+                      <th className="px-4 py-3 text-center text-[10px] font-semibold text-text-muted uppercase tracking-widest">通知</th>
+                      <th className="px-4 py-3 text-center text-[10px] font-semibold text-text-muted uppercase tracking-widest">状態</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
                     {membersLoading ? (
                       <tr>
-                        <td colSpan={3} className="px-4 py-10 text-center text-sm text-gray-400">読み込み中...</td>
+                        <td colSpan={3} className="px-4 py-10 text-center text-sm text-text-muted">読み込み中...</td>
                       </tr>
                     ) : members.length === 0 ? (
                       <tr>
-                        <td colSpan={3} className="px-4 py-10 text-center text-sm text-gray-400">会員が見つかりません</td>
+                        <td colSpan={3} className="px-4 py-10 text-center text-sm text-text-muted">会員が見つかりません</td>
                       </tr>
                     ) : (
                       memberStoreGroups.map(group => (
                         <Fragment key={group.storeName}>
-                          <tr className="bg-gray-50/80">
+                          <tr className="bg-surface-base/80">
                             <td colSpan={3} className="px-4 py-2">
                               <div className="flex items-center justify-between gap-3">
-                                <span className="text-xs font-semibold text-gray-600">{group.storeName}</span>
-                                <span className="text-[10px] text-gray-400">{group.members.length}名</span>
+                                <span className="text-xs font-semibold text-text-secondary">{group.storeName}</span>
+                                <span className="text-[10px] text-text-muted">{group.members.length}名</span>
                               </div>
                             </td>
                           </tr>
                           {group.members.map(member => {
                             const receivable = member.pushEnabled && member.pushSubscriptionCount > 0
                             return (
-                              <tr key={member.id} className="hover:bg-gray-50/70">
+                              <tr key={member.id} className="hover:bg-surface-base/70">
                                 <td className="px-4 py-3">
                                   <div className="flex items-center gap-2">
-                                    <div className="text-sm text-gray-900">{member.fullName}</div>
+                                    <div className="text-sm text-text-primary">{member.fullName}</div>
                                     {member.status !== 'active' && (
-                                      <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] text-gray-500">
+                                      <span className="rounded-full bg-surface-overlay px-2 py-0.5 text-[10px] text-text-secondary">
                                         {member.status === 'suspended' ? '休会' : '退会'}
                                       </span>
                                     )}
@@ -438,17 +438,17 @@ export default function AdminMailSettingsPage() {
                                     type="checkbox"
                                     checked={member.pushEnabled}
                                     onChange={() => handleMemberToggle(member.id)}
-                                    className="w-5 h-5 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500"
+                                    className="w-5 h-5 text-emerald-600 border-border-strong rounded focus:ring-emerald-500"
                                     aria-label={`${member.fullName}のアプリ通知`}
                                   />
                                 </td>
                                 <td className="px-4 py-3 text-center">
                                   <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] ${
                                     receivable
-                                      ? 'bg-emerald-50 text-emerald-700'
+                                      ? 'bg-emerald-500/15 text-emerald-300'
                                       : member.pushEnabled
-                                        ? 'bg-amber-50 text-amber-700'
-                                        : 'bg-gray-100 text-gray-400'
+                                        ? 'bg-amber-500/15 text-amber-300'
+                                        : 'bg-surface-overlay text-text-muted'
                                   }`}>
                                     {receivable ? '受信可能' : member.pushEnabled ? '未許可' : 'OFF'}
                                   </span>
@@ -464,11 +464,11 @@ export default function AdminMailSettingsPage() {
               </div>
             </div>
 
-            <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex justify-between gap-3">
+            <div className="bg-surface-raised p-4 rounded-2xl shadow-sm border border-border-subtle flex justify-between gap-3">
               <button
                 type="button"
                 onClick={() => router.push('/dashboard?tab=others')}
-                className="px-5 py-2.5 border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-xl text-sm font-medium transition-colors flex-1 text-center"
+                className="px-5 py-2.5 border border-border-strong hover:bg-surface-base text-text-secondary rounded-xl text-sm font-medium transition-colors flex-1 text-center"
               >
                 戻る
               </button>
@@ -494,63 +494,63 @@ export default function AdminMailSettingsPage() {
         {/* TAB: Reminder timing */}
         {activeTab === 'reminder' && (
           <form onSubmit={handleSave} className="space-y-6 animate-fadeIn">
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-6">
-              <div className="space-y-4 border-b border-gray-100 pb-6">
-                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+            <div className="bg-surface-raised rounded-2xl shadow-sm border border-border-subtle p-6 space-y-6">
+              <div className="space-y-4 border-b border-border-subtle pb-6">
+                <h3 className="text-xs font-bold text-text-muted uppercase tracking-wider">
                   パーソナルセッション前日リマインダー
                 </h3>
 
-                <div className="p-4 bg-gray-50/50 rounded-xl border border-gray-100 space-y-3">
+                <div className="p-4 bg-surface-base/50 rounded-xl border border-border-subtle space-y-3">
                   <label className="flex items-center gap-3 cursor-pointer select-none">
                     <input
                       type="checkbox"
                       disabled={!tableExists}
                       checked={settings.personal_reminder_enabled}
                       onChange={() => handleToggle('personal_reminder_enabled')}
-                      className="w-4.5 h-4.5 text-brand-600 border-gray-300 rounded focus:ring-brand-500 cursor-pointer disabled:opacity-50"
+                      className="w-4.5 h-4.5 text-brand-600 border-border-strong rounded focus:ring-brand-500 cursor-pointer disabled:opacity-50"
                     />
-                    <span className="text-sm font-medium text-gray-700">自動リマインダー通知を有効にする</span>
+                    <span className="text-sm font-medium text-text-secondary">自動リマインダー通知を有効にする</span>
                   </label>
-                  <p className="pl-7 text-xs text-gray-400">※ 通知ONかつスマホ側で許可済みの会員様にのみ届きます。</p>
-                  <p className="pl-7 text-xs text-gray-400">毎晩21:00に、翌日ご予約のある会員様へまとめて送信します（サーバー側の制約で1日1回のみ）。</p>
+                  <p className="pl-7 text-xs text-text-muted">※ 通知ONかつスマホ側で許可済みの会員様にのみ届きます。</p>
+                  <p className="pl-7 text-xs text-text-muted">毎晩21:00に、翌日ご予約のある会員様へまとめて送信します（サーバー側の制約で1日1回のみ）。</p>
                 </div>
               </div>
 
               <div className="space-y-4 pt-2">
-                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                <h3 className="text-xs font-bold text-text-muted uppercase tracking-wider">
                   オンラインレッスン用自動リマインダー設定
                 </h3>
 
                 <div>
-                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+                  <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1.5">
                     リマインダー自動送信タイミング
                   </label>
                   <select
                     disabled={!tableExists}
                     value={settings.reminder_before_minutes}
                     onChange={(e) => handleInputChange('reminder_before_minutes', Number(e.target.value))}
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:bg-gray-50 disabled:text-gray-400"
+                    className="w-full px-4 py-2.5 border border-border-strong rounded-xl text-sm bg-surface-raised focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:bg-surface-base disabled:text-text-muted"
                   >
                     <option value={15}>レッスン開始 15分前</option>
                     <option value={30}>レッスン開始 30分前</option>
                     <option value={60}>レッスン開始 60分前</option>
                     <option value={120}>レッスン開始 120分前</option>
                   </select>
-                  <p className="mt-1 text-xs text-gray-400 leading-normal">
+                  <p className="mt-1 text-xs text-text-muted leading-normal">
                     毎晩21:00のチェックから「◯分後」に開催されるレッスンの参加者へ通知します（例: 30分前を選ぶと、21:30開始のレッスンに通知）。
                   </p>
-                  <p className="mt-1 text-xs text-gray-400 leading-normal">
+                  <p className="mt-1 text-xs text-text-muted leading-normal">
                     ※ サーバー側の制約でチェックは1日1回(21:00)のみのため、21:00からこの時間だけ後の枠しか通知できません。それより前や翌日以降の時間帯のレッスンには対応できません。
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex justify-between gap-3">
+            <div className="bg-surface-raised p-4 rounded-2xl shadow-sm border border-border-subtle flex justify-between gap-3">
               <button
                 type="button"
                 onClick={() => router.push('/dashboard?tab=others')}
-                className="px-5 py-2.5 border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-xl text-sm font-medium transition-colors flex-1 text-center"
+                className="px-5 py-2.5 border border-border-strong hover:bg-surface-base text-text-secondary rounded-xl text-sm font-medium transition-colors flex-1 text-center"
               >
                 キャンセル
               </button>

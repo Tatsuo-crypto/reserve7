@@ -49,7 +49,7 @@ function AdminCalendarPageContent() {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">読み込み中...</p>
+          <p className="mt-4 text-text-secondary">読み込み中...</p>
         </div>
       </div>
     )
@@ -77,21 +77,21 @@ function AdminCalendarPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-surface-base">
       {/* Trainer Header */}
       {trainerToken && (
-        <header className="bg-gradient-to-b from-white to-gray-50 border-b border-gray-100 shadow mb-6">
+        <header className="bg-gradient-to-b from-white to-gray-50 border-b border-border-subtle shadow mb-6">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-16">
-              <div className="text-xl font-normal text-gray-900">
+              <div className="text-xl font-normal text-text-primary">
                 T&J GYM
               </div>
               {trainer && (
-                <div className="bg-white border border-gray-300 px-4 py-2 rounded-lg shadow-sm text-sm flex items-center space-x-3">
-                  <span className="text-gray-700 font-normal">
+                <div className="bg-surface-raised border border-border-strong px-4 py-2 rounded-lg shadow-sm text-sm flex items-center space-x-3">
+                  <span className="text-text-secondary font-normal">
                     {getStoreDisplayName(trainer.storeId)}
                   </span>
-                  <span className="px-3 py-1 rounded-full text-xs font-normal border bg-brand-100 text-brand-700 border-brand-300">
+                  <span className="px-3 py-1 rounded-full text-xs font-normal border bg-brand-500/15 text-brand-300 border-brand-500/30">
                     トレーナー
                   </span>
                 </div>
@@ -107,20 +107,20 @@ function AdminCalendarPageContent() {
           <div className="relative flex items-center justify-center">
             <button
               onClick={handleBackClick}
-              className="absolute left-0 text-gray-400 hover:text-gray-600"
+              className="absolute left-0 text-text-muted hover:text-text-secondary"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
             <div className="text-center">
-              <h1 className="text-2xl font-normal text-gray-900">予約</h1>
-              <p className="mt-1 text-sm text-gray-500">予約のステータス管理</p>
+              <h1 className="text-2xl font-normal text-text-primary">予約</h1>
+              <p className="mt-1 text-sm text-text-secondary">予約のステータス管理</p>
             </div>
             {!trainerToken && (
               <Link
                 href="/admin/shifts"
-                className="absolute right-0 flex items-center text-sm text-gray-500 hover:text-brand-600 transition-colors"
+                className="absolute right-0 flex items-center text-sm text-text-secondary hover:text-brand-600 transition-colors"
               >
                 <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -146,10 +146,10 @@ function AdminCalendarPageContent() {
 export default function AdminCalendarPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-surface-base flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">読み込み中...</p>
+          <p className="mt-4 text-text-secondary">読み込み中...</p>
         </div>
       </div>
     }>
