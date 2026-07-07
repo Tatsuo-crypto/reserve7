@@ -5,30 +5,31 @@ import { useSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import CalendarView from '@/components/CalendarView'
-import { 
+import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts'
 import { getStatusDotColor, getStatusText, getStatusColor } from '@/lib/utils/member'
 import AdminHeader from '@/app/components/AdminHeader'
+import Card from '@/components/ui/Card'
+import Icon, { IconName } from '@/components/ui/icons'
 
 // --- Sub Components ---
 
-function OtherSubCard({ href, label, subLabel, color, icon }: { href: string, label: string, subLabel: string, color: string, icon: React.ReactNode }) {
-  const colorMap: any = {
-    emerald: 'bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-100',
-    indigo: 'bg-brand-50 text-brand-600 border-brand-100 hover:bg-brand-100',
-    orange: 'bg-orange-50 text-orange-600 border-orange-100 hover:bg-orange-100',
-  };
+// R-2: アイコン背景は装飾色ではなく常にニュートラル(surface.overlay相当)。
+// 項目同士の区別はラベルとアイコン形状のみに任せ、色は使わない。
+function OtherSubCard({ href, label, subLabel, iconName }: { href: string, label: string, subLabel: string, iconName: IconName }) {
   return (
-    <Link href={href} className="flex items-center gap-4 p-5 rounded-3xl border transition-all shadow-sm bg-white hover:shadow-md transform hover:-translate-y-1">
-      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${colorMap[color]?.split(' ')[0]} ${colorMap[color]?.split(' ')[1]}`}>
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">{icon}</svg>
-      </div>
-      <div className="flex-1">
-        <div className="text-base font-normal text-gray-900">{label}</div>
-        <div className="text-xs font-normal text-gray-400">{subLabel}</div>
-      </div>
-      <svg className="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" /></svg>
+    <Link href={href} className="block">
+      <Card padding="sm" className="flex items-center gap-4 hover:bg-surface-base transition-colors">
+        <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-surface-overlay text-text-secondary shrink-0">
+          <Icon name={iconName} size={24} />
+        </div>
+        <div className="flex-1">
+          <div className="text-base font-normal text-text-primary">{label}</div>
+          <div className="text-xs font-normal text-text-muted">{subLabel}</div>
+        </div>
+        <Icon name="chevronRight" size={20} className="text-text-muted" />
+      </Card>
     </Link>
   );
 }
@@ -127,22 +128,21 @@ const AdminDashboard = () => {
             <div className="space-y-3">
               <h3 className="px-1 text-xs font-normal text-gray-400 uppercase tracking-widest">日々の運用</h3>
               <div className="grid grid-cols-1 gap-4">
-                <OtherSubCard href="/admin/shifts" label="シフト管理" subLabel="勤務スケジュールの作成" color="emerald" icon={<path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />} />
-                <OtherSubCard href="/admin/online-lesson" label="オンライン" subLabel="スケジュールの管理" color="orange" icon={<path d="M15 10l4.553-2.069A1 1 0 0121 8.845v6.309a1 1 0 01-1.447.894L15 14" />} />
+                <OtherSubCard href="/admin/shifts" label="シフト管理" subLabel="勤務スケジュールの作成" iconName="clock" />
+                <OtherSubCard href="/admin/online-lesson" label="オンライン" subLabel="スケジュールの管理" iconName="video" />
               </div>
             </div>
 
             <div className="space-y-3">
               <h3 className="px-1 text-xs font-normal text-gray-400 uppercase tracking-widest">設定</h3>
               <div className="grid grid-cols-1 gap-4">
-                <OtherSubCard href="/admin/trainers" label="トレーナー管理" subLabel="スタッフの登録・編集" color="emerald" icon={<path d="M12 14l9-5-9-5-9 5 9 5z" />} />
-                <OtherSubCard href="/admin/stores" label="店舗管理" subLabel="店舗情報の変更・設定" color="indigo" icon={<path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />} />
+                <OtherSubCard href="/admin/trainers" label="トレーナー管理" subLabel="スタッフの登録・編集" iconName="academicCap" />
+                <OtherSubCard href="/admin/stores" label="店舗管理" subLabel="店舗情報の変更・設定" iconName="building" />
                 <OtherSubCard
                   href="/admin/mail-settings"
                   label="配信設定"
                   subLabel="メール・アプリ通知の管理"
-                  color="indigo"
-                  icon={<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />}
+                  iconName="envelope"
                 />
               </div>
             </div>

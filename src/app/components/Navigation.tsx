@@ -126,7 +126,7 @@ function NavigationContent() {
 
         {/* Mobile Menu Overlay */}
         {isMobileMenuOpen && (
-          <div className="absolute top-16 left-4 right-4 bg-white rounded-3xl shadow-2xl border border-gray-100 p-2 z-50 animate-fadeIn overflow-hidden">
+          <div className="absolute top-16 left-4 right-4 bg-white rounded-3xl shadow-xl border border-gray-100 p-2 z-50 animate-fadeIn overflow-hidden">
              <div className="flex flex-col">
               <Link 
                 href="/dashboard" 

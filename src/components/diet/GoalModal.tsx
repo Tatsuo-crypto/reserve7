@@ -75,7 +75,7 @@ export default function GoalModal({ userId, token, onClose, onSave }: GoalModalP
 
     return (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black bg-opacity-50">
-            <div className="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-slideUp">
+            <div className="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh] animate-slideUp">
                 <div className="p-6 border-b border-gray-100 flex items-center justify-between">
                     <h2 className="text-xl font-normal text-gray-900">目標設定</h2>
                     <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600">×</button>

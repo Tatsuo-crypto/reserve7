@@ -901,7 +901,7 @@ function DietPlanPageContent() {
                     </div>
                 )}
             </div>
-            {message && <div className="fixed bottom-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-8 py-4 rounded-2xl font-normal shadow-2xl z-50 animate-slideUp">{message}</div>}
+            {message && <div className="fixed bottom-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-8 py-4 rounded-2xl font-normal shadow-xl z-50 animate-slideUp">{message}</div>}
 
             {/* K-2: 履歴バーのタップ編集・新規プラン作成モーダル */}
             {goalModal && (

@@ -12,10 +12,22 @@ import {
     BellIcon,
     ExclamationTriangleIcon,
     MagnifyingGlassIcon,
+    ClockIcon,
+    VideoCameraIcon,
+    AcademicCapIcon,
+    BuildingOfficeIcon,
+    EnvelopeIcon,
+    DocumentDuplicateIcon,
+    LockClosedIcon,
+    PencilSquareIcon,
+    EyeIcon,
+    LinkSlashIcon,
+    ClipboardDocumentListIcon,
 } from '@heroicons/react/24/outline'
 
 // N-3: 頻出上位のアイコン(戻る矢印・開閉シェブロン・閉じる・カレンダー等)をまず統一する。
 // 残りの手書きSVGは画面を触るタイミングで随時ここに追加して置き換えていく。
+// R-5: 取り残し3画面(その他設定・会員詳細・オンラインレッスン)対応で追加した分。
 const ICONS = {
     back: ArrowLeftIcon,
     chevronDown: ChevronDownIcon,
@@ -30,6 +42,17 @@ const ICONS = {
     bell: BellIcon,
     warning: ExclamationTriangleIcon,
     search: MagnifyingGlassIcon,
+    clock: ClockIcon,
+    video: VideoCameraIcon,
+    academicCap: AcademicCapIcon,
+    building: BuildingOfficeIcon,
+    envelope: EnvelopeIcon,
+    copy: DocumentDuplicateIcon,
+    lock: LockClosedIcon,
+    pencil: PencilSquareIcon,
+    eye: EyeIcon,
+    linkSlash: LinkSlashIcon,
+    clipboardList: ClipboardDocumentListIcon,
 } as const
 
 export type IconName = keyof typeof ICONS

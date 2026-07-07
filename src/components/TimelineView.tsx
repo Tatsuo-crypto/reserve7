@@ -696,7 +696,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
       {/* Loading Overlay for Navigation */}
       {isNavigating && (
         <div className="fixed inset-0 bg-gray-900 bg-opacity-50 z-[100] flex items-center justify-center backdrop-blur-sm">
-          <div className="bg-white p-6 rounded-xl shadow-2xl flex flex-col items-center">
+          <div className="bg-white p-6 rounded-xl shadow-xl flex flex-col items-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600 mb-4"></div>
             <p className="text-gray-800 font-normal">予約画面へ移動中...</p>
             <p className="text-gray-500 text-xs mt-2">少々お待ちください</p>
@@ -798,7 +798,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
       {/* Custom Delete Confirmation Modal */}
       {showDeleteConfirmModal && (
         <div className="fixed inset-0 bg-gray-900 bg-opacity-60 overflow-y-auto h-full w-full z-[200] flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="relative p-6 w-full max-w-sm shadow-2xl rounded-2xl bg-white">
+          <div className="relative p-6 w-full max-w-sm shadow-xl rounded-2xl bg-white">
             <div className="text-center">
               <div className="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-red-100 mb-4">
                 <svg className="h-7 w-7 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">

@@ -1166,7 +1166,7 @@ function NewReservationContent() {
       {/* Custom Confirm Modal for Mobile PWA Support */}
       {showShiftConfirmModal && (
         <div className="fixed inset-0 bg-gray-900 bg-opacity-50 overflow-y-auto h-full w-full z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="relative p-6 w-full max-w-sm shadow-2xl rounded-2xl bg-white scale-100 transition-transform">
+          <div className="relative p-6 w-full max-w-sm shadow-xl rounded-2xl bg-white scale-100 transition-transform">
             <div className="text-center">
               <div className="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-yellow-100 mb-4">
                 <svg className="h-7 w-7 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1203,7 +1203,7 @@ function NewReservationContent() {
       {/* Custom Confirm Modal for Training Trainer Shift Warning */}
       {showTrainingShiftModal && (
         <div className="fixed inset-0 bg-gray-900 bg-opacity-50 overflow-y-auto h-full w-full z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="relative p-6 w-full max-w-sm shadow-2xl rounded-2xl bg-white">
+          <div className="relative p-6 w-full max-w-sm shadow-xl rounded-2xl bg-white">
             <div className="text-center">
               <div className="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-orange-100 mb-4">
                 <svg className="h-7 w-7 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">

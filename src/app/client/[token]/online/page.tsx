@@ -2,6 +2,7 @@
 
 import { useParams, useRouter } from 'next/navigation'
 import { useState, useEffect, useRef } from 'react'
+import Icon from '@/components/ui/icons'
 
 const DAYS_JA = ['日', '月', '火', '水', '木', '金', '土']
 const DAYS_FULL = ['日曜日', '月曜日', '火曜日', '水曜日', '木曜日', '金曜日', '土曜日']
@@ -218,7 +219,7 @@ export default function OnlineLessonPage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-brand-50 to-brand-100 flex items-center justify-center">
+            <div className="min-h-screen bg-surface-base flex items-center justify-center">
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600 mx-auto" />
                     <p className="mt-4 text-brand-700 text-sm">読み込み中...</p>
@@ -228,7 +229,7 @@ export default function OnlineLessonPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-brand-50 via-brand-50 to-purple-50">
+        <div className="min-h-screen bg-surface-base">
             {/* Header */}
             <div className="bg-white bg-opacity-80 backdrop-blur-sm border-b border-white border-opacity-50 sticky top-0 z-10">
                 <div className="max-w-lg mx-auto px-4 py-4 flex items-center">
@@ -236,9 +237,7 @@ export default function OnlineLessonPage() {
                         onClick={() => router.push(`/client/${token}`)}
                         className="mr-3 text-gray-400 hover:text-gray-600 transition-colors"
                     >
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                        </svg>
+                        <Icon name="back" size={24} />
                     </button>
                     <div>
                         <h1 className="text-lg font-normal text-gray-900">オンラインレッスン</h1>
