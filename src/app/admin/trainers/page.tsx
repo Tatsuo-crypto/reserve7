@@ -331,7 +331,7 @@ export default function TrainersPage() {
                 className="flex items-center justify-between px-4 py-3 hover:bg-surface-base transition-colors"
               >
                 <div className="flex items-center gap-3 min-w-0">
-                  <span className={`flex-shrink-0 w-2 h-2 rounded-full ${t.status === 'active' ? 'bg-state-success-500' : 'bg-surface-overlay'}`} />
+                  <span className={`flex-shrink-0 w-2 h-2 rounded-full ${t.status === 'active' ? 'bg-brand-500' : 'bg-surface-overlay'}`} />
                   <span className="font-normal text-sm text-text-primary truncate">{t.full_name}</span>
                   <span className="text-xs text-text-muted flex-shrink-0">{storeNameById[t.store_id] || ''}</span>
                 </div>

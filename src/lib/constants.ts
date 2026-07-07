@@ -78,15 +78,17 @@ export const STATUS_LABELS: Record<string, string> = {
   [STATUS.WITHDRAWN]: '退会',
 };
 
-// O-1の状態色トークン(state.success/state.danger)に統一。休会はBadgeのwarningトーン(amber)に合わせる。
+// オーナー指示によりO-1/S章の「在籍=state.success(緑)」を上書き: 在籍はbrand(オレンジ)に統一。
+// stores/page.tsxの「有効」ステータスも元々brandだったため、これで在籍系ステータス表示の配色が揃う。
+// 休会=amber、退会=state.danger(赤)はそのまま(緑を抜くだけで、状態の意味自体は変えない)。
 export const STATUS_COLORS: Record<string, string> = {
-  [STATUS.ACTIVE]: 'bg-state-success-500/15 text-state-success-300',
+  [STATUS.ACTIVE]: 'bg-brand-500/15 text-brand-300',
   [STATUS.SUSPENDED]: 'bg-amber-500/15 text-amber-300',
   [STATUS.WITHDRAWN]: 'bg-state-danger-500/15 text-state-danger-300',
 };
 
 export const STATUS_DOT_COLORS: Record<string, string> = {
-  [STATUS.ACTIVE]: 'bg-state-success-500',
+  [STATUS.ACTIVE]: 'bg-brand-500',
   [STATUS.SUSPENDED]: 'bg-amber-500',
   [STATUS.WITHDRAWN]: 'bg-state-danger-500',
 };
