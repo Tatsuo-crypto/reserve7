@@ -470,7 +470,7 @@ export default function ReservationsPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm min-w-[120px] border-r border-border-subtle">
                           {reservation.client.id === 'blocked' ? (
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-normal bg-surface-overlay text-text-muted">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-normal bg-surface-overlay text-text-secondary border border-border-strong">
                               予約不可
                             </span>
                           ) : (

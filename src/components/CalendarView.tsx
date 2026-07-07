@@ -354,12 +354,12 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
               const colorClass = isTrial
                 ? 'bg-blue-500/15 text-blue-300 border border-blue-500/30'    // Trial = Blue (highest priority)
                 : isGuest
-                  ? 'bg-purple-500/15 text-purple-300 border border-purple-500/30'   // Guest = Purple
+                  ? 'bg-purple-500/25 text-purple-200 border border-purple-500/40'   // Guest = Purple(明るめ)
                   : isTraining
                     ? 'bg-orange-500/15 text-orange-300 border border-orange-500/30' // Training = Orange
                     : event.type === 'reservation'
-                      ? 'bg-surface-overlay text-text-secondary border border-border-subtle'  // Regular = Neutral
-                      : 'bg-surface-overlay text-text-muted border border-border-subtle'       // Blocked = Muted neutral (no danger red)
+                      ? 'bg-brand-600 text-white border border-brand-700'  // Regular = Brand orange, white text
+                      : 'bg-surface-overlay text-text-secondary border border-border-strong'  // Blocked = Neutral(視認性を上げた濃さ)
 
               return (
                 <div
@@ -502,7 +502,7 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
               {/* Days of week header (no divider line) */}
               <div className="grid grid-cols-7 mb-1">
                 {['月', '火', '水', '木', '金', '土', '日'].map((day, index) => (
-                  <div key={day} className={`p-2 text-center text-sm font-normal ${index === 5 ? 'text-blue-500' : index === 6 ? 'text-red-500' : 'text-text-secondary'
+                  <div key={day} className={`p-2 text-center text-sm font-normal ${index === 5 ? 'text-brand-300' : index === 6 ? 'text-brand-600' : 'text-text-secondary'
                     }`}>
                     {day}
                   </div>
@@ -521,15 +521,15 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
         <div className="px-4 py-1">
           <div className="flex items-center justify-center space-x-6 text-sm">
             <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-surface-overlay border border-border-subtle rounded"></div>
+              <div className="w-3 h-3 bg-brand-600 border border-brand-700 rounded"></div>
               <span className="text-text-secondary">予約</span>
             </div>
             <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-surface-overlay border border-border-subtle rounded"></div>
+              <div className="w-3 h-3 bg-surface-overlay border border-border-strong rounded"></div>
               <span className="text-text-secondary">予約不可時間</span>
             </div>
             <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-purple-500/15 border border-purple-500/30 rounded"></div>
+              <div className="w-3 h-3 bg-purple-500/25 border border-purple-500/40 rounded"></div>
               <span className="text-text-secondary">ゲスト</span>
             </div>
           </div>

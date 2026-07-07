@@ -673,7 +673,7 @@ function NewReservationContent() {
               </label>
               <div className="grid grid-cols-2 gap-4">
                 <label className={`relative flex flex-col items-center justify-center p-4 border rounded-lg cursor-pointer transition-all ${!formData.isBlocked && !formData.isTrial && !formData.isGuest && !formData.isTraining
-                  ? 'border-brand-500 bg-brand-50 ring-2 ring-brand-500'
+                  ? 'border-brand-500 bg-brand-500/10 ring-2 ring-brand-500'
                   : 'border-border-strong hover:border-border-strong hover:bg-surface-base'
                   }`}>
                   <input
@@ -760,7 +760,7 @@ function NewReservationContent() {
                     }}
                     className="sr-only"
                   />
-                  <div className="w-8 h-8 mb-2 rounded-full bg-surface-overlay text-text-muted flex items-center justify-center">
+                  <div className="w-8 h-8 mb-2 rounded-full bg-surface-overlay text-text-secondary flex items-center justify-center">
                     <Icon name="noSymbol" size={20} />
                   </div>
                   <span className="font-normal text-text-primary">予約不可</span>

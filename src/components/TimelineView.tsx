@@ -603,12 +603,12 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
                       const colorClass = isTrial
                         ? 'bg-blue-500/15 border border-blue-500/30 text-blue-300'
                         : isGuest
-                          ? 'bg-purple-500/15 border border-purple-500/30 text-purple-300'
+                          ? 'bg-purple-500/25 border border-purple-500/40 text-purple-200'
                           : isTraining
                             ? 'bg-orange-500/15 border border-orange-500/30 text-orange-300'
                             : event.type === 'blocked'
-                              ? 'bg-surface-overlay border border-border-subtle text-text-muted'
-                              : 'bg-surface-overlay border border-border-subtle text-text-secondary'
+                              ? 'bg-surface-overlay border border-border-strong text-text-secondary'
+                              : 'bg-brand-600 border border-brand-700 text-white'
 
                       return (
                         <div
@@ -672,7 +672,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
       <div className="px-6 py-3 border-t border-border-strong bg-surface-base">
         <div className="flex items-center justify-center space-x-6 text-sm">
           <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-surface-overlay border border-border-subtle rounded"></div>
+            <div className="w-3 h-3 bg-brand-600 border border-brand-700 rounded"></div>
             <span className="text-text-secondary">予約</span>
           </div>
           <div className="flex items-center space-x-2">
@@ -680,11 +680,11 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
             <span className="text-text-secondary">体験</span>
           </div>
           <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-surface-overlay border border-border-subtle rounded"></div>
+            <div className="w-3 h-3 bg-surface-overlay border border-border-strong rounded"></div>
             <span className="text-text-secondary">予約不可時間</span>
           </div>
           <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-purple-500/15 border border-purple-500/30 rounded"></div>
+            <div className="w-3 h-3 bg-purple-500/25 border border-purple-500/40 rounded"></div>
             <span className="text-text-secondary">ゲスト</span>
           </div>
         </div>
