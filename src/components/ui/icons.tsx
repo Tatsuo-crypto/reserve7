@@ -54,6 +54,7 @@ import {
     InformationCircleIcon,
     DocumentTextIcon,
     CreditCardIcon,
+    ArchiveBoxIcon,
 } from '@heroicons/react/24/outline'
 
 // N-3: 頻出上位のアイコン(戻る矢印・開閉シェブロン・閉じる・カレンダー等)をまず統一する。
@@ -116,6 +117,7 @@ const ICONS = {
     informationCircle: InformationCircleIcon,
     documentText: DocumentTextIcon,
     creditCard: CreditCardIcon,
+    archiveBox: ArchiveBoxIcon,
 } as const
 
 export type IconName = keyof typeof ICONS

@@ -18,6 +18,7 @@ import {
 } from 'recharts'
 import { useWeeklyProgress } from '@/hooks/useWeeklyProgress'
 import WeeklyProgressPanel from './WeeklyProgressPanel'
+import Icon from '@/components/ui/icons'
 
 interface AnalyzeTabProps {
     userId: string
@@ -574,14 +575,14 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
                             onClick={handlePrevMonth}
                             className="w-8 h-8 flex items-center justify-center hover:bg-surface-raised rounded-full transition-all text-orange-500 active:scale-90"
                         >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
+                            <Icon name="chevronLeft" size={20} />
                         </button>
                         <span className="text-xs font-normal text-orange-500 min-w-[72px] text-center">月移動</span>
                         <button 
                             onClick={handleNextMonth}
                             className="w-8 h-8 flex items-center justify-center hover:bg-surface-raised rounded-full transition-all text-orange-500 active:scale-90"
                         >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" /></svg>
+                            <Icon name="chevronRight" size={20} />
                         </button>
                     </div>
                 </div>
@@ -619,9 +620,7 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
                                         {isDone && (
                                             <div className="absolute inset-0 flex items-center justify-center animate-popIn">
                                                 <div className="w-10 h-10 bg-[#FF6B00] rounded-full shadow-lg flex items-center justify-center relative">
-                                                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={5} d="M5 13l4 4L19 7" />
-                                                    </svg>
+                                                    <Icon name="check" size={24} className="text-white" />
                                                 </div>
                                             </div>
                                         )}
@@ -634,9 +633,7 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
                     <div className="mt-10 flex items-center justify-center gap-10 pb-4">
                         <div className="flex items-center gap-3">
                             <div className="w-6 h-6 bg-orange-500 rounded-full shadow-md flex items-center justify-center">
-                                <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M5 13l4 4L19 7" />
-                                </svg>
+                                <Icon name="check" size={14} className="text-white" />
                             </div>
                             <span className="text-xs font-normal text-text-secondary uppercase tracking-tighter">実施済み</span>
                         </div>

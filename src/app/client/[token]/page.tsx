@@ -12,6 +12,7 @@ import PlanTab from '@/components/diet/PlanTab'
 import ReservationTab from '@/components/diet/ReservationTab'
 import AdminHeader from '@/app/components/AdminHeader'
 import PushNotificationPrompt from './PushNotificationPrompt'
+import Icon, { type IconName } from '@/components/ui/icons'
 
 // TrackingModalをアドミン専用に遅延読み込み
 const TrackingModal = dynamic(() => import('@/app/admin/members/TrackingModal'), {
@@ -145,10 +146,7 @@ export default function ClientReservationsPage() {
               aria-label="設定"
               className={`h-10 w-10 flex items-center justify-center rounded-full shadow-sm border border-border-subtle transition-all active:scale-95 ${activeTab === 'settings' ? 'bg-brand-500/15 text-brand-300' : 'bg-surface-raised text-text-secondary'}`}
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
+              <Icon name="settings" size={20} />
             </button>
             <div className="h-10 px-4 flex items-center gap-2 bg-surface-raised rounded-full shadow-sm border border-border-subtle transition-all active:scale-95">
               <span className="text-text-secondary text-[13px] font-normal truncate max-w-[100px]">
@@ -220,7 +218,7 @@ export default function ClientReservationsPage() {
           <NavBtn
             active={activeTab === 'res'}
             onClick={() => setActiveTab('res')}
-            icon={<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />}
+            iconName="calendar"
             label="予約"
           />
 
@@ -228,7 +226,7 @@ export default function ClientReservationsPage() {
             <NavBtn
               active={activeTab === 'weekly' || activeTab === 'record'}
               onClick={() => setActiveTab('weekly')}
-              icon={<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />}
+              iconName="chartBar"
               label="週間"
             />
           )}
@@ -243,9 +241,7 @@ export default function ClientReservationsPage() {
                 : 'bg-brand-500 hover:bg-brand-600 shadow-brand-100'
               }`}
             >
-              <svg className="w-7 h-7 text-white stroke-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-              </svg>
+              <Icon name="home" size={28} className="text-white" />
             </button>
             <span className={`absolute bottom-2 text-[10px] font-normal transition-colors duration-300 ${activeTab === 'home' ? 'text-brand-600' : 'text-text-muted'}`}>ホーム</span>
           </div>
@@ -254,7 +250,7 @@ export default function ClientReservationsPage() {
             <NavBtn
               active={activeTab === 'analyze'}
               onClick={() => setActiveTab('analyze')}
-              icon={<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />}
+              iconName="chartBar"
               label="分析"
             />
           )}
@@ -262,7 +258,7 @@ export default function ClientReservationsPage() {
           <NavBtn
             active={activeTab === 'plan'}
             onClick={() => setActiveTab('plan')}
-            icon={<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />}
+            iconName="archiveBox"
             label="プラン"
           />
         </div>
@@ -280,9 +276,7 @@ function SettingsTab({ token }: { token: string }) {
       <div className="rounded-2xl border border-border-subtle bg-surface-raised p-5 shadow-sm">
         <div className="flex items-start gap-3">
           <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-500/15 text-brand-300">
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+            <Icon name="informationCircle" size={20} />
           </div>
           <div>
             <div className="text-sm text-text-primary">通知の受け取り</div>
@@ -296,7 +290,7 @@ function SettingsTab({ token }: { token: string }) {
   )
 }
 
-function NavBtn({ active, onClick, icon, label }: { active: boolean, onClick: () => void, icon: React.ReactNode, label: string }) {
+function NavBtn({ active, onClick, iconName, label }: { active: boolean, onClick: () => void, iconName: IconName, label: string }) {
   return (
     <button
       onClick={onClick}
@@ -304,9 +298,7 @@ function NavBtn({ active, onClick, icon, label }: { active: boolean, onClick: ()
     >
       <div className="flex flex-col items-center justify-center flex-1">
         <div className={`p-1.5 rounded-xl transition-all duration-300 ${active ? 'bg-brand-50 scale-105' : 'bg-transparent'}`}>
-          <svg className={`w-6 h-6 stroke-2`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            {icon}
-          </svg>
+          <Icon name={iconName} size={24} />
         </div>
         <span className="text-[10px] font-normal tracking-tighter mt-0.5">{label}</span>
       </div>
