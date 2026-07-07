@@ -53,7 +53,11 @@ function NavigationContent() {
     }
     
     if (pathname?.startsWith('/admin/analytics')) return '売上集計'
-    if (pathname?.startsWith('/admin/diet-plan')) return 'ダイエット詳細'
+    if (pathname?.startsWith('/admin/diet-plan')) {
+      // 会員選択中は「ダイエット詳細」という汎用ラベルではなく本人の名前を出す
+      const name = searchParams.get('name')
+      return name || 'ダイエット詳細'
+    }
     if (pathname?.startsWith('/admin/members')) return '会員管理'
     if (pathname?.startsWith('/admin/trainers')) return 'トレーナー管理'
     if (pathname?.startsWith('/admin/stores')) return '店舗管理'

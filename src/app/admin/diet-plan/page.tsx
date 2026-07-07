@@ -261,7 +261,13 @@ function DietPlanPageContent() {
                         const userId = searchParams.get('userId')
                         if (userId) {
                             const member = fetchedMembers.find((m: Member) => m.id === userId)
-                            if (member) setSelectedMember(member)
+                            if (member) {
+                                setSelectedMember(member)
+                                // name未指定でdeep-linkされた場合もヘッダーに会員名を出せるよう補完する
+                                if (!searchParams.get('name')) {
+                                    router.replace(`/admin/diet-plan?userId=${member.id}&name=${encodeURIComponent(member.full_name || '')}`)
+                                }
+                            }
                         }
                     }
                 }
@@ -593,7 +599,15 @@ function DietPlanPageContent() {
                         </div>
                         <div className="divide-y divide-border-subtle max-h-[60vh] overflow-y-auto px-4 pb-4">
                             {filteredMembers.map(member => (
-                                <button key={member.id} onClick={() => setSelectedMember(member)} className="w-full flex items-center px-6 py-5 hover:bg-brand-500/10 transition-all rounded-[2rem] group mt-2">
+                                <button
+                                    key={member.id}
+                                    onClick={() => {
+                                        setSelectedMember(member)
+                                        // ヘッダーのタイトル(Navigation.tsx)が会員名を表示できるよう、URLにも反映しておく
+                                        router.replace(`/admin/diet-plan?userId=${member.id}&name=${encodeURIComponent(member.full_name || '')}`)
+                                    }}
+                                    className="w-full flex items-center px-6 py-5 hover:bg-brand-500/10 transition-all rounded-[2rem] group mt-2"
+                                >
                                     <div className="flex-1 flex items-center gap-4 text-left">
                                         <div className={`w-3 h-3 rounded-full ${getStatusDotColor(member.status)} shadow-sm`} />
                                         <div>
@@ -608,7 +622,9 @@ function DietPlanPageContent() {
                     </div>
                 ) : (
                     <div className="space-y-5 mt-0">
-                        <div className="sticky top-16 z-40 max-w-2xl mx-auto space-y-1 bg-surface-base px-1 pt-1 pb-2 shadow-[0_8px_18px_rgba(249,250,251,0.96)]">
+                        {/* Q-3: ライトモード時代のrgba(249,250,251,...)という白いシャドウが黒背景で
+                            発光ブロブのように見えてしまっていたため、素の背景色のみで区切る形に変更 */}
+                        <div className="sticky top-16 z-40 max-w-2xl mx-auto space-y-1 bg-surface-base px-1 pt-1 pb-2">
                             <div className="flex items-center justify-center gap-2 px-2">
                                 <span className={`w-2.5 h-2.5 rounded-full ${getStatusDotColor(selectedMember.status)}`} />
                                 <p className="text-lg sm:text-xl font-normal text-text-primary">
