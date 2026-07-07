@@ -9,6 +9,27 @@
   今後は各コンポーネント側でfont-semibold(見出し・主数値)/font-normal(本文)を明示的に使い分ける。
 */
 
+/*
+  Q-6: ベース色（白/黒どちらにも対応する）のセマンティックトークン。
+  値はRGB triplet(スペース区切り)で持ち、Tailwind側で `rgb(var(--x) / <alpha-value>)` として
+  参照することで、bg-surface-base/50 のような不透明度指定も使えるようにする。
+  PR-Q1時点ではライトテーマの値のまま（見た目は変えない安全な準備PR）。
+  PR-Q2でこの値だけをzinc系の黒に差し替えることで、直書きクラスを一切触らずに
+  黒ベース化する（4回目の色変更が来ても同じ方式で対応できる状態を目指す）。
+*/
+@layer base {
+  :root {
+    --color-surface-base: 249 250 251;    /* gray-50 相当。ページ地色 */
+    --color-surface-raised: 255 255 255;  /* white相当。カード */
+    --color-surface-overlay: 255 255 255; /* white相当。モーダル・ドロップダウン */
+    --color-text-primary: 17 24 39;       /* gray-900相当 */
+    --color-text-secondary: 107 114 128;  /* gray-500相当 */
+    --color-text-muted: 156 163 175;      /* gray-400相当 */
+    --color-border-subtle: 243 244 246;   /* gray-100相当 */
+    --color-border-strong: 209 213 219;   /* gray-300相当 */
+  }
+}
+
 @layer components {
   /*
     O-4: 「数値ファースト」タイポグラフィトークン。

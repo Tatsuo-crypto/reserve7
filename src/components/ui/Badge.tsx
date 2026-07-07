@@ -8,8 +8,10 @@ export interface BadgeProps {
     className?: string
 }
 
+// Q-6: neutralのみベーステーマ依存のためトークン参照化。brand/success/warning/dangerは
+// アクセント・状態色そのもの(黒ベース化に伴うシェード調整はQ-4/PR-Q3で別途対応)。
 const TONE_CLASSES: Record<Tone, string> = {
-    neutral: 'bg-gray-50 text-gray-500',
+    neutral: 'bg-surface-base text-text-secondary',
     brand: 'bg-brand-50 text-brand-600',
     success: 'bg-emerald-50 text-emerald-700',
     warning: 'bg-amber-50 text-amber-700',

@@ -43,6 +43,24 @@ module.exports = {
             50: '#fef2f2', 100: '#fee2e2', 500: '#ef4444', 600: '#dc2626', 700: '#b91c1c',
           },
         },
+        // Q-6: ベース色(白/黒どちらにも対応)のセマンティックトークン。
+        // globals.cssのCSS変数を参照するため、値そのものはここにハードコードしない。
+        // PR-Q2で変数値をzinc系に差し替えるだけで、bg-surface-*/text-*/border-*を
+        // 使っている全箇所が黒ベースに切り替わる(直書きクラスの再置換をしない)。
+        surface: {
+          base: 'rgb(var(--color-surface-base) / <alpha-value>)',
+          raised: 'rgb(var(--color-surface-raised) / <alpha-value>)',
+          overlay: 'rgb(var(--color-surface-overlay) / <alpha-value>)',
+        },
+        text: {
+          primary: 'rgb(var(--color-text-primary) / <alpha-value>)',
+          secondary: 'rgb(var(--color-text-secondary) / <alpha-value>)',
+          muted: 'rgb(var(--color-text-muted) / <alpha-value>)',
+        },
+        border: {
+          subtle: 'rgb(var(--color-border-subtle) / <alpha-value>)',
+          strong: 'rgb(var(--color-border-strong) / <alpha-value>)',
+        },
       },
     },
   },

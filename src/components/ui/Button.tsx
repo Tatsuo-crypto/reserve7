@@ -12,11 +12,14 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
     loading?: boolean
 }
 
+// Q-6: primary/destructiveはbrand/状態色そのもの(ベーステーマに依存しないため据え置き)。
+// secondary/ghostは背景・文字がベーステーマ依存なのでセマンティックトークン参照に変更。
+// hoverは「1段明るい面に持ち上がる」関係を保つため surface.base → surface.raised とした。
 const VARIANT_CLASSES: Record<Variant, string> = {
     primary: 'bg-brand-600 text-white hover:bg-brand-700 disabled:bg-brand-300',
-    secondary: 'bg-gray-50 text-gray-700 border border-gray-100 hover:bg-gray-100 disabled:text-gray-300',
+    secondary: 'bg-surface-base text-text-secondary border border-border-subtle hover:bg-surface-raised disabled:text-text-muted',
     destructive: 'bg-red-50 text-red-600 hover:bg-red-100 disabled:text-red-200',
-    ghost: 'bg-transparent text-gray-500 hover:bg-gray-50 hover:text-gray-700 disabled:text-gray-300',
+    ghost: 'bg-transparent text-text-secondary hover:bg-surface-base hover:text-text-primary disabled:text-text-muted',
 }
 
 const SIZE_CLASSES: Record<Size, string> = {
