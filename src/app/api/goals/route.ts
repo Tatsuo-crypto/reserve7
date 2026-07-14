@@ -96,13 +96,16 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
+        const title = goal.title?.trim()
+            || (goal.type === 'weight' ? '目標体重' : '習慣の目標');
+
         const result = await client
             .from('goals')
             .insert({
                 user_id: userId,
                 start_date: goal.startDate || new Date().toISOString().split('T')[0],
                 type: goal.type,
-                title: goal.title,
+                title,
                 target_value: goal.targetValue ?? null,
                 deadline: goal.deadline ?? null,
                 status: goal.status || 'active',

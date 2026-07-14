@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
-import Badge from '@/components/ui/Badge'
+import Icon from '@/components/ui/icons'
 
 interface GoalsTabProps {
     userId?: string
@@ -43,6 +43,34 @@ function daysSince(startDate: string): number {
     return Math.max(0, Math.round((today.getTime() - d.getTime()) / (1000 * 60 * 60 * 24)))
 }
 
+function todayInputValue() {
+    const date = new Date()
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+}
+
+function initialGoalForm() {
+    return {
+        type: 'weight' as GoalType,
+        title: '',
+        targetValue: '60',
+        deadline: todayInputValue(),
+        note: '',
+    }
+}
+
+function goalToForm(goal: Goal) {
+    return {
+        type: goal.type,
+        title: goal.type === 'habit' ? goal.title : '',
+        targetValue: goal.target_value != null ? String(goal.target_value) : '60',
+        deadline: goal.deadline || todayInputValue(),
+        note: goal.note || '',
+    }
+}
+
 /**
  * M-2: 「目標」タブ（成果のゴール＝体重・習慣。期限と達成/未達成を持つ）。
  * 3機能に限定してクラターを避ける: 1.今の目標 2.新しい目標を追加 3.過去の目標（履歴、グラフなし）。
@@ -52,14 +80,10 @@ export default function GoalsTab({ userId, token, isAdmin }: GoalsTabProps) {
     const [goals, setGoals] = useState<Goal[]>([])
     const [loading, setLoading] = useState(true)
     const [creating, setCreating] = useState(false)
+    const [editingGoalId, setEditingGoalId] = useState<string | null>(null)
     const [saving, setSaving] = useState(false)
     const [message, setMessage] = useState('')
-    const [newGoal, setNewGoal] = useState({
-        type: 'weight' as GoalType,
-        title: '',
-        targetValue: '',
-        deadline: '',
-    })
+    const [newGoal, setNewGoal] = useState(initialGoalForm)
 
     const query = useMemo(() => (
         isAdmin && userId ? `userId=${encodeURIComponent(userId)}` : `token=${encodeURIComponent(token || '')}`
@@ -113,35 +137,75 @@ export default function GoalsTab({ userId, token, isAdmin }: GoalsTabProps) {
         }
     }
 
-    const handleCreate = async () => {
-        if (!newGoal.title.trim()) return
+    const handleSaveGoal = async () => {
+        if (newGoal.type === 'habit' && !newGoal.title.trim()) return
         if (newGoal.type === 'weight' && !newGoal.targetValue) return
+        const title = newGoal.type === 'weight' ? '目標体重' : newGoal.title.trim()
         setSaving(true)
         try {
-            const res = await fetch(`/api/goals?${isAdmin && userId ? `userId=${encodeURIComponent(userId)}` : `token=${encodeURIComponent(token || '')}`}`, {
-                method: 'POST',
+            const isEditing = Boolean(editingGoalId)
+            const res = await fetch(isEditing ? `/api/goals/${editingGoalId}?${query}` : `/api/goals?${query}`, {
+                method: isEditing ? 'PATCH' : 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     userId: isAdmin ? userId : undefined,
                     token: !isAdmin ? token : undefined,
                     type: newGoal.type,
-                    title: newGoal.title.trim(),
+                    title,
                     targetValue: newGoal.type === 'weight' ? parseFloat(newGoal.targetValue) : null,
                     deadline: newGoal.deadline || null,
+                    note: newGoal.note.trim() || null,
                 })
             })
             if (res.ok) {
-                if (newGoal.type === 'habit') {
-                    await syncQuitGoals(current => current.includes(newGoal.title.trim()) ? current : [...current, newGoal.title.trim()])
+                if (!isEditing && newGoal.type === 'habit') {
+                    await syncQuitGoals(current => current.includes(title) ? current : [...current, title])
                 }
-                setNewGoal({ type: 'weight', title: '', targetValue: '', deadline: '' })
+                setNewGoal(initialGoalForm())
+                setEditingGoalId(null)
                 setCreating(false)
-                setMessage('目標を追加しました')
+                setMessage(isEditing ? '目標を更新しました' : '目標を追加しました')
                 await fetchGoals()
                 setTimeout(() => setMessage(''), 3000)
             }
         } catch (e) {
-            console.error('Create goal error:', e)
+            console.error('Save goal error:', e)
+        } finally {
+            setSaving(false)
+        }
+    }
+
+    const openEditGoal = (goal: Goal) => {
+        setNewGoal(goalToForm(goal))
+        setEditingGoalId(goal.id)
+        setCreating(true)
+    }
+
+    const closeGoalForm = () => {
+        setCreating(false)
+        setEditingGoalId(null)
+        setNewGoal(initialGoalForm())
+    }
+
+    const handleDeleteGoal = async () => {
+        if (!editingGoalId) return
+        const goal = goals.find(g => g.id === editingGoalId)
+        setSaving(true)
+        try {
+            const res = await fetch(`/api/goals/${editingGoalId}?${query}`, {
+                method: 'DELETE',
+            })
+            if (res.ok) {
+                if (goal?.type === 'habit') {
+                    await syncQuitGoals(current => current.filter(g => g !== goal.title))
+                }
+                closeGoalForm()
+                setMessage('目標を削除しました')
+                await fetchGoals()
+                setTimeout(() => setMessage(''), 3000)
+            }
+        } catch (e) {
+            console.error('Delete goal error:', e)
         } finally {
             setSaving(false)
         }
@@ -149,7 +213,7 @@ export default function GoalsTab({ userId, token, isAdmin }: GoalsTabProps) {
 
     const updateStatus = async (goal: Goal, status: GoalStatus) => {
         try {
-            const res = await fetch(`/api/goals/${goal.id}?${isAdmin ? '' : `token=${encodeURIComponent(token || '')}`}`, {
+            const res = await fetch(`/api/goals/${goal.id}?${query}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status })
@@ -186,14 +250,11 @@ export default function GoalsTab({ userId, token, isAdmin }: GoalsTabProps) {
                             const remain = daysUntil(goal.deadline)
                             const streak = daysSince(goal.start_date)
                             return (
-                                <div key={goal.id} className="rounded-2xl bg-surface-base border border-border-subtle p-5 flex items-center justify-between gap-3">
+                                <div key={goal.id} className="rounded-2xl bg-surface-base border-2 border-border-strong p-5 flex items-center justify-between gap-3">
                                     <div>
                                         <p className="text-[10px] font-normal text-text-muted uppercase tracking-widest mb-1">{goal.type === 'weight' ? '体重' : '習慣'}</p>
                                         <p className="text-base font-semibold text-text-primary">
-                                            {goal.title}
-                                            {goal.type === 'weight' && goal.target_value != null && (
-                                                <span className="ml-2 text-sm text-text-secondary">目標 {goal.target_value}kg</span>
-                                            )}
+                                            {goal.type === 'weight' && goal.target_value != null ? `目標 ${goal.target_value}kg` : goal.title}
                                         </p>
                                         <p className="text-xs text-text-muted mt-1">
                                             {goal.type === 'habit' && `${streak}日目`}
@@ -203,10 +264,25 @@ export default function GoalsTab({ userId, token, isAdmin }: GoalsTabProps) {
                                                 </span>
                                             )}
                                         </p>
+                                        {goal.note && <p className="text-xs text-text-secondary mt-2">{goal.note}</p>}
                                     </div>
                                     <div className="flex items-center gap-2 shrink-0">
-                                        <button onClick={() => updateStatus(goal, 'achieved')} className="text-xs text-state-success-300 bg-state-success-500/15 px-3 py-2 rounded-full hover:bg-state-success-500/25">達成にする</button>
-                                        <button onClick={() => updateStatus(goal, 'missed')} className="text-xs text-text-muted hover:text-text-secondary px-2 py-2">未達成</button>
+                                        <label className="flex items-center justify-center h-9 w-9 rounded-full bg-surface-raised border border-border-subtle cursor-pointer hover:bg-surface-overlay" aria-label="達成にする">
+                                            <input
+                                                type="checkbox"
+                                                checked={false}
+                                                onChange={() => updateStatus(goal, 'achieved')}
+                                                className="h-4 w-4 rounded border-border-strong bg-surface-base accent-brand-600"
+                                            />
+                                        </label>
+                                        <button
+                                            type="button"
+                                            onClick={() => openEditGoal(goal)}
+                                            aria-label="目標を編集"
+                                            className="h-9 w-9 rounded-full border border-brand-500/20 bg-brand-500/15 text-brand-300 hover:bg-brand-500/25 flex items-center justify-center"
+                                        >
+                                            <Icon name="pencil" size={16} />
+                                        </button>
                                     </div>
                                 </div>
                             )
@@ -217,7 +293,11 @@ export default function GoalsTab({ userId, token, isAdmin }: GoalsTabProps) {
 
             {/* 2. 新しい目標を追加 */}
             {!creating ? (
-                <Button onClick={() => setCreating(true)} fullWidth className="py-4">新しい目標を追加</Button>
+                <Button onClick={() => {
+                    setNewGoal(initialGoalForm())
+                    setEditingGoalId(null)
+                    setCreating(true)
+                }} fullWidth className="py-4">新しい目標を追加</Button>
             ) : (
                 <Card padding="lg" className="space-y-5">
                     <div className="flex gap-2">
@@ -225,15 +305,17 @@ export default function GoalsTab({ userId, token, isAdmin }: GoalsTabProps) {
                         <button onClick={() => setNewGoal(prev => ({ ...prev, type: 'habit' }))} className={`flex-1 py-3 rounded-xl text-sm transition-colors ${newGoal.type === 'habit' ? 'bg-surface-overlay text-text-primary' : 'bg-surface-base text-text-secondary hover:bg-surface-overlay'}`}>習慣の目標</button>
                     </div>
 
-                    <div className="space-y-1">
-                        <label className="text-[10px] font-normal text-text-muted uppercase tracking-widest pl-1">{newGoal.type === 'weight' ? '目標のタイトル（任意）' : '目標（例: 砂糖をやめる）'}</label>
-                        <input type="text" value={newGoal.title} onChange={e => setNewGoal(prev => ({ ...prev, title: e.target.value }))} placeholder={newGoal.type === 'weight' ? '目標体重' : '砂糖をやめる'} className="w-full bg-surface-base border-none rounded-xl px-3 py-3 text-sm font-normal focus:ring-2 focus:ring-brand-500" />
-                    </div>
+                    {newGoal.type === 'habit' && (
+                        <div className="space-y-1">
+                            <label className="text-[10px] font-normal text-text-muted uppercase tracking-widest pl-1">習慣の目標</label>
+                            <input type="text" value={newGoal.title} onChange={e => setNewGoal(prev => ({ ...prev, title: e.target.value }))} placeholder="砂糖をやめる" className="w-full bg-surface-base border-none rounded-xl px-3 py-3 text-sm font-normal focus:ring-2 focus:ring-brand-500" />
+                        </div>
+                    )}
 
                     {newGoal.type === 'weight' && (
                         <div className="space-y-1">
                             <label className="text-[10px] font-normal text-text-muted uppercase tracking-widest pl-1">目標体重(kg)</label>
-                            <input type="number" value={newGoal.targetValue} onChange={e => setNewGoal(prev => ({ ...prev, targetValue: e.target.value }))} placeholder="60" className="w-full bg-surface-base border-none rounded-xl px-3 py-3 text-sm font-normal focus:ring-2 focus:ring-brand-500" />
+                            <input type="number" step="0.1" value={newGoal.targetValue} onChange={e => setNewGoal(prev => ({ ...prev, targetValue: e.target.value }))} className="w-full bg-surface-base border-none rounded-xl px-3 py-3 text-sm font-normal focus:ring-2 focus:ring-brand-500" />
                         </div>
                     )}
 
@@ -242,32 +324,83 @@ export default function GoalsTab({ userId, token, isAdmin }: GoalsTabProps) {
                         <input type="date" value={newGoal.deadline} onChange={e => setNewGoal(prev => ({ ...prev, deadline: e.target.value }))} className="w-full bg-surface-base border-none rounded-xl px-3 py-3 text-sm font-normal focus:ring-2 focus:ring-brand-500" />
                     </div>
 
-                    <div className="flex gap-2">
-                        <Button onClick={handleCreate} loading={saving} className="flex-1">{saving ? '保存中...' : '目標を追加'}</Button>
-                        <Button onClick={() => setCreating(false)} variant="ghost">キャンセル</Button>
+                    <div className="space-y-1">
+                        <label className="text-[10px] font-normal text-text-muted uppercase tracking-widest pl-1">メモ（任意）</label>
+                        <textarea
+                            value={newGoal.note}
+                            onChange={e => setNewGoal(prev => ({ ...prev, note: e.target.value }))}
+                            placeholder="補足メモ"
+                            rows={3}
+                            className="w-full bg-surface-base border-none rounded-xl px-3 py-3 text-sm font-normal focus:ring-2 focus:ring-brand-500 resize-none"
+                        />
                     </div>
+
+                    <div className="flex gap-2">
+                        <Button onClick={handleSaveGoal} loading={saving} className="flex-1">{saving ? '保存中...' : editingGoalId ? '更新する' : '目標を追加'}</Button>
+                        <Button onClick={closeGoalForm} variant="ghost">キャンセル</Button>
+                    </div>
+                    {editingGoalId && (
+                        <button
+                            type="button"
+                            onClick={handleDeleteGoal}
+                            disabled={saving}
+                            className="w-full rounded-xl border border-state-danger-500/25 bg-state-danger-500/10 px-4 py-3 text-sm text-state-danger-300 hover:bg-state-danger-500/15 disabled:opacity-60"
+                        >
+                            削除
+                        </button>
+                    )}
                 </Card>
             )}
 
             {/* 3. 過去の目標（達成/未達成の履歴。グラフなし） */}
             {pastGoals.length > 0 && (
-                <Card padding="lg">
+                <Card padding="lg" className="bg-transparent border-0 shadow-none">
                     <div className="flex items-center gap-2 mb-4">
-                        <div className="w-1.5 h-6 bg-brand-500 rounded-full"></div>
-                        <h2 className="text-xl font-semibold text-text-primary tracking-tight">過去の目標</h2>
+                        <div className="w-1 h-5 bg-brand-500/70 rounded-full"></div>
+                        <h2 className="text-lg font-normal text-text-secondary tracking-tight">過去の目標</h2>
                     </div>
-                    <div className="divide-y divide-border-subtle">
-                        {pastGoals.map(goal => (
-                            <div key={goal.id} className="py-4 flex items-center justify-between gap-3">
+                    <div className="space-y-3">
+                        {pastGoals.map(goal => {
+                            const remain = daysUntil(goal.deadline)
+                            const streak = daysSince(goal.start_date)
+                            return (
+                            <div key={goal.id} className="rounded-2xl bg-surface-base border-2 border-border-strong p-5 flex items-center justify-between gap-3">
                                 <div>
-                                    <p className="text-[10px] font-normal text-text-muted uppercase tracking-widest">{goal.type === 'weight' ? '体重' : '習慣'}</p>
-                                    <p className="text-sm font-normal text-text-primary">{goal.title}{goal.type === 'weight' && goal.target_value != null && <span className="ml-2 text-xs text-text-muted">{goal.target_value}kg</span>}</p>
+                                    <p className="text-[10px] font-normal text-text-muted uppercase tracking-widest mb-1">{goal.type === 'weight' ? '体重' : '習慣'}</p>
+                                    <p className="text-base font-normal text-text-secondary">
+                                        {goal.type === 'weight' && goal.target_value != null ? `目標 ${goal.target_value}kg` : goal.title}
+                                    </p>
+                                    <p className="text-xs text-text-muted mt-1">
+                                        {goal.type === 'habit' && `${streak}日目`}
+                                        {goal.deadline && remain !== null && (
+                                            <span className={goal.type === 'habit' ? 'ml-2' : ''}>
+                                                期限まであと{remain}日
+                                            </span>
+                                        )}
+                                    </p>
+                                    {goal.note && <p className="text-xs text-text-muted mt-1">{goal.note}</p>}
                                 </div>
-                                <Badge tone={goal.status === 'achieved' ? 'success' : 'neutral'}>
-                                    {goal.status === 'achieved' ? '達成 ✓' : '未達成 ×'}
-                                </Badge>
+                                <div className="flex items-center gap-2 shrink-0">
+                                    <label className="flex items-center justify-center h-9 w-9 rounded-full bg-surface-raised border border-border-subtle cursor-pointer hover:bg-surface-overlay" aria-label={goal.status === 'achieved' ? '未達成にする' : '達成にする'}>
+                                        <input
+                                            type="checkbox"
+                                            checked={goal.status === 'achieved'}
+                                            onChange={(e) => updateStatus(goal, e.target.checked ? 'achieved' : 'missed')}
+                                            className="h-4 w-4 rounded border-border-strong bg-surface-base accent-brand-600"
+                                        />
+                                    </label>
+                                    <button
+                                        type="button"
+                                        onClick={() => openEditGoal(goal)}
+                                        aria-label="目標を編集"
+                                        className="h-9 w-9 rounded-full border border-brand-500/20 bg-brand-500/15 text-brand-300 hover:bg-brand-500/25 flex items-center justify-center"
+                                    >
+                                        <Icon name="pencil" size={16} />
+                                    </button>
+                                </div>
                             </div>
-                        ))}
+                            )
+                        })}
                     </div>
                 </Card>
             )}

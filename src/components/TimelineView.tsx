@@ -461,7 +461,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
                       return (
                         <div
                           key={`avail-${idx}`}
-                          className="absolute w-full bg-surface-raised z-0 pointer-events-none"
+                          className="absolute w-full bg-white/10 border border-white/10 z-0 pointer-events-none"
                           style={{
                             top: `${top}px`,
                             height: `${height}px`,

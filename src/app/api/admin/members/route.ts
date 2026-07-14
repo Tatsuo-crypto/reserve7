@@ -4,6 +4,31 @@ import { supabaseAdmin } from '@/lib/supabase'
 import { getAuthenticatedUser, createErrorResponse, createSuccessResponse } from '@/lib/api-utils'
 import { PLAN_LIST } from '@/lib/constants'
 import { recordStatusChange } from '@/lib/membership-utils'
+import { format } from 'date-fns'
+
+type MembershipHistoryStatus = {
+  user_id: string
+  status: 'active' | 'suspended' | 'withdrawn'
+  start_date: string
+  end_date: string | null
+  plan?: string | null
+  monthly_fee?: number | null
+}
+
+function deriveCurrentStatus(member: any, histories: MembershipHistoryStatus[], today = format(new Date(), 'yyyy-MM-dd')) {
+  const userHistories = histories
+    .filter(history => history.user_id === member.id && history.start_date <= today)
+    .sort((a, b) => b.start_date.localeCompare(a.start_date))
+
+  const latest = userHistories[0]
+  if (!latest) return member.status || 'active'
+
+  if (latest.status === 'withdrawn') return 'withdrawn'
+  if (latest.status === 'active' && latest.end_date && latest.end_date < today) return 'withdrawn'
+  if (latest.status === 'suspended' && latest.end_date && latest.end_date < today) return 'withdrawn'
+
+  return latest.status || member.status || 'active'
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -152,9 +177,27 @@ export async function GET(request: NextRequest) {
     console.log('Stores data:', stores)
     console.log('Sample member store_id:', members?.[0]?.store_id)
 
-    // Map stores to members using store UUID
+    const memberIds = (members || []).map(member => member.id)
+    let membershipHistories: MembershipHistoryStatus[] = []
+
+    if (memberIds.length > 0) {
+      const { data: historyData, error: historyError } = await supabaseAdmin
+        .from('membership_history')
+        .select('user_id, status, start_date, end_date, plan, monthly_fee')
+        .in('user_id', memberIds)
+        .order('start_date', { ascending: true })
+
+      if (historyError) {
+        console.error('Membership history fetch error:', historyError)
+      } else {
+        membershipHistories = (historyData || []) as MembershipHistoryStatus[]
+      }
+    }
+
+    // Map stores to members using store UUID and derive current status from history.
     const membersWithStores = members?.map(member => ({
       ...member,
+      status: deriveCurrentStatus(member, membershipHistories),
       stores: stores?.find(store => store.id === member.store_id) || null
     }))
 

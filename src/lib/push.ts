@@ -35,6 +35,10 @@ export function getVapidPublicKey(): string {
   return process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || process.env.VAPID_PUBLIC_KEY || VAPID_PUBLIC_KEY_FALLBACK
 }
 
+export function isPushConfigured(): boolean {
+  return Boolean(getVapidPublicKey() && process.env.VAPID_PRIVATE_KEY)
+}
+
 export async function sendPushNotificationToUser(userId: string, payload: PushPayload): Promise<number> {
   if (!configureWebPush()) return 0
 

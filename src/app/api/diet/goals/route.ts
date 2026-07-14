@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
         const tokenFromQuery = searchParams.get('token');
 
         const body = await req.json();
-        const { startDate, token: tokenFromBody, ...goals } = body;
+        const { startDate, token: tokenFromBody, targetCalories, ...goals } = body;
         const token = tokenFromQuery || tokenFromBody;
 
         let userId: string;
@@ -83,6 +83,21 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
+        const allowedKeys = [
+            'calories',
+            'protein',
+            'fat',
+            'carbs',
+            'sugar',
+            'fiber',
+            'salt',
+            'title',
+        ];
+        const filteredGoals: any = {};
+        allowedKeys.forEach(key => {
+            if (goals[key] !== undefined) filteredGoals[key] = goals[key];
+        });
+
         // Check if goal for this date already exists
         const { data: existing } = await client
             .from('diet_goals')
@@ -96,7 +111,7 @@ export async function POST(req: NextRequest) {
             result = await client
                 .from('diet_goals')
                 .update({
-                    ...goals,
+                    ...filteredGoals,
                     updated_at: new Date().toISOString(),
                 })
                 .eq('id', existing.id)
@@ -108,7 +123,7 @@ export async function POST(req: NextRequest) {
                 .insert({
                     user_id: userId,
                     start_date: startDate || new Date().toISOString().split('T')[0],
-                    ...goals,
+                    ...filteredGoals,
                 })
                 .select()
                 .single();

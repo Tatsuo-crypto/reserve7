@@ -53,7 +53,7 @@ export default function GoalEditModal({ title, initialValues, initialHabitTarget
                         <Icon name="close" />
                     </button>
                 </div>
-                <div className="flex-1 overflow-y-auto p-6">
+                <div className="flex-1 overflow-y-auto p-6 pb-28">
                     <GoalPlanForm
                         values={values}
                         onValuesChange={setValues}

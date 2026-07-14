@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import GoalModal from './GoalModal'
 import Card from '@/components/ui/Card'
 import Icon, { type IconName } from '@/components/ui/icons'
+import { getDietDayTypeLabel, getEffectiveDietGoal, isDayTypeTargetEnabled, normalizeDietDayType, type DietDayType } from '@/lib/utils/dietDayType'
 
 interface InputTabProps {
     userId: string;
@@ -51,6 +52,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
         notes = '', 
         dietImageUrl = null, 
         ocrResult = null,
+        dayType = null,
         habits = { workout: 0 }, 
         quitGoals = [], 
         isSaved = false,
@@ -80,9 +82,11 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                     habits: { workout: 0 },
                     ocrResult: null,
                     dietImageUrl: null,
+                    dayType: null,
                     isSaved: false,
                     touchedFields: []
                 }
+                let dayTypeTargetSettings: any = null
 
                 if (settingRes && settingRes.ok) {
                     const { data } = await settingRes.json()
@@ -90,6 +94,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                         const items = data.visible_items || {}
                         setVisibleItems({ ...items, workout: true })
                         if (data.quit_goals) updates.quitGoals = data.quit_goals
+                        dayTypeTargetSettings = data.habit_targets?.diet_day_type_targets || null
                         
                         // Default habit targets
                         if (data.habit_targets) {
@@ -105,6 +110,9 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                     const { data } = await goalRes.json()
                     if (data && data.length > 0) {
                         currentPlan = data.find((g: any) => g.start_date <= selectedDate) || data[data.length - 1]
+                        if (dayTypeTargetSettings) {
+                            currentPlan = { ...currentPlan, ...dayTypeTargetSettings }
+                        }
                         setTarget(currentPlan)
                     }
                 }
@@ -124,6 +132,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                         else if (data.alcohol != null) updates.alcohol = String(data.alcohol)
                         if (data.notes) updates.notes = data.notes
                         if (data.habits) updates.habits = data.habits
+                        if (data.habits?.diet_day_type) updates.dayType = normalizeDietDayType(data.habits.diet_day_type)
 
                         // Mark fields as touched if they exist in DB
                         const touched = []
@@ -138,16 +147,26 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                 if (dietRes.ok) {
                     const { data } = await dietRes.json()
                     if (data) {
-                        hasAnyData = true
-                        updates.ocrResult = {
-                            ...data,
-                            calories_target: currentPlan?.calories || data.calories_target || 1600,
-                            protein_target: currentPlan?.protein || data.protein_target || 100,
-                            fat_target: currentPlan?.fat || data.fat_target || 40,
-                            carbs_target: currentPlan?.carbs || data.carbs_target || 200,
-                            sugar_target: currentPlan?.sugar || data.sugar_target || 180,
-                            fiber_target: currentPlan?.fiber || data.fiber_target || 20,
-                            salt_target: currentPlan?.salt || data.salt_target || 6
+                        const hasDietValues = Boolean(
+                            Number(data.calories || 0) > 0
+                            || Number(data.protein || 0) > 0
+                            || data.image_url
+                            || data.notes
+                        )
+                        if (hasDietValues) hasAnyData = true
+                        updates.dayType = updates.dayType || normalizeDietDayType(data.day_type)
+                        if (hasDietValues) {
+                            const effectivePlan = getEffectiveDietGoal(currentPlan, updates.dayType || 'rest')
+                            updates.ocrResult = {
+                                ...data,
+                                calories_target: effectivePlan.calories || data.calories_target || 1600,
+                                protein_target: effectivePlan.protein || data.protein_target || 100,
+                                fat_target: effectivePlan.fat || data.fat_target || 40,
+                                carbs_target: effectivePlan.carbs || data.carbs_target || 200,
+                                sugar_target: effectivePlan.sugar || data.sugar_target || 180,
+                                fiber_target: effectivePlan.fiber || data.fiber_target || 20,
+                                salt_target: effectivePlan.salt || data.salt_target || 6
+                            }
                         }
                         if (data.image_url) updates.dietImageUrl = data.image_url
                     }
@@ -183,19 +202,66 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
     const setOcrResult = (v: any) => updateSharedState({ ocrResult: v })
     const setDietImageUrl = (v: any) => updateSharedState({ dietImageUrl: v })
     const setIsSaved = (v: boolean) => onStateChange({ ...sharedState, isSaved: v })
-    const setSelectedDate = (v: string) => onStateChange({ ...sharedState, selectedDate: v, isSaved: false, touchedFields: [] })
+    const setSelectedDate = (v: string) => onStateChange({ ...sharedState, selectedDate: v, dayType: null, isSaved: false, touchedFields: [] })
     const setQuitGoals = (v: any) => onStateChange({ ...sharedState, quitGoals: v })
+    const selectedDayType = normalizeDietDayType(dayType)
+    const dayTypeEnabled = isDayTypeTargetEnabled(target)
+    const effectiveTarget = getEffectiveDietGoal(target, selectedDayType || 'rest')
+
+    const withCurrentTargets = (data: any, nextDayType: DietDayType | null = selectedDayType) => {
+        const effectivePlan = getEffectiveDietGoal(target, nextDayType || 'rest')
+        return {
+            ...data,
+            calories_target: effectivePlan.calories || data?.calories_target || 1600,
+            protein_target: effectivePlan.protein || data?.protein_target || 100,
+            fat_target: effectivePlan.fat || data?.fat_target || 40,
+            carbs_target: effectivePlan.carbs || data?.carbs_target || 200,
+            sugar_target: effectivePlan.sugar || data?.sugar_target || 180,
+            fiber_target: effectivePlan.fiber || data?.fiber_target || 20,
+            salt_target: effectivePlan.salt || data?.salt_target || 6,
+        }
+    }
+
+    const handleDayTypeSelect = async (nextDayType: DietDayType) => {
+        const nextHabits = { ...(habits || {}), diet_day_type: nextDayType }
+        const nextState = {
+            ...sharedState,
+            dayType: nextDayType,
+            habits: nextHabits,
+            ocrResult: ocrResult ? withCurrentTargets(ocrResult, nextDayType) : ocrResult,
+            isSaved: false,
+        }
+        onStateChange(nextState)
+
+        try {
+            await fetch('/api/lifestyle/logs', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    date: selectedDate,
+                    token,
+                    habits: nextHabits,
+                })
+            })
+        } catch (e) {
+            console.error('Day type save error:', e)
+        }
+    }
 
     const handleAllSave = async () => {
         setSaving(true)
         setMessage(null)
         try {
+            const habitsForSave = dayTypeEnabled && selectedDayType
+                ? { ...(habits || {}), diet_day_type: selectedDayType }
+                : habits
+
             // 1. Save Lifestyle Logs
             const lifestyleBody: any = {
                 date: selectedDate,
                 token: token,
                 notes: notes,
-                habits: habits
+                habits: habitsForSave
             }
 
             if (weight && touchedFields.includes('weight')) lifestyleBody.weight = parseFloat(weight)
@@ -264,13 +330,13 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                 setDietImageUrl(uploadData.url)
                 // Also create a dummy ocrResult to show the preview area
                 setOcrResult({
-                    calories: 0, calories_target: 0,
-                    protein: 0, protein_target: 0,
-                    fat: 0, fat_target: 0,
-                    carbs: 0, carbs_target: 0,
-                    sugar: 0, sugar_target: 0,
-                    fiber: 0, fiber_target: 0,
-                    salt: 0, salt_target: 0
+                    calories: 0, calories_target: effectiveTarget.calories,
+                    protein: 0, protein_target: effectiveTarget.protein,
+                    fat: 0, fat_target: effectiveTarget.fat,
+                    carbs: 0, carbs_target: effectiveTarget.carbs,
+                    sugar: 0, sugar_target: effectiveTarget.sugar,
+                    fiber: 0, fiber_target: effectiveTarget.fiber,
+                    salt: 0, salt_target: effectiveTarget.salt
                 })
             } else {
                 throw new Error(uploadData.error || 'アップロードに失敗しました')
@@ -284,16 +350,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
             const analyzeData = await analyzeRes.json()
             if (analyzeRes.ok) {
                 const data = analyzeData.data
-                setOcrResult({
-                    ...data,
-                    calories_target: target?.calories || data.calories_target || 1600,
-                    protein_target: target?.protein || data.protein_target || 100,
-                    fat_target: target?.fat || data.fat_target || 40,
-                    carbs_target: target?.carbs || data.carbs_target || 200,
-                    sugar_target: target?.sugar || data.sugar_target || 180,
-                    fiber_target: target?.fiber || data.fiber_target || 20,
-                    salt_target: target?.salt || data.salt_target || 6
-                })
+                setOcrResult(withCurrentTargets(data))
                 // Automatic save removed - wait for user to click the main save button
             } else {
                 console.error('Analysis failed:', analyzeData.error, analyzeData.message)
@@ -361,9 +418,51 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
             </Card>
 
             {/* 2. Diet Record Section */}
+            {dayTypeEnabled && (
+                <Card padding="md">
+                    {!selectedDayType ? (
+                        <div className="space-y-4 text-center">
+                            <h2 className="text-base font-normal text-text-primary">今日はどちらですか？</h2>
+                            <div className="grid grid-cols-2 gap-3">
+                                <button
+                                    onClick={() => handleDayTypeSelect('training')}
+                                    className="rounded-2xl bg-brand-700 px-4 py-4 text-sm font-normal text-white active:scale-95 transition-transform"
+                                >
+                                    筋トレ日
+                                </button>
+                                <button
+                                    onClick={() => handleDayTypeSelect('rest')}
+                                    className="rounded-2xl bg-surface-overlay px-4 py-4 text-sm font-normal text-text-primary active:scale-95 transition-transform"
+                                >
+                                    休養日
+                                </button>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="flex items-center justify-between gap-3">
+                            <div>
+                                <p className="text-[10px] text-text-muted uppercase tracking-widest">今日の種別</p>
+                                <p className="mt-1 text-sm font-normal text-text-primary">{getDietDayTypeLabel(selectedDayType)}</p>
+                            </div>
+                            <div className="flex gap-2">
+                                {(['training', 'rest'] as DietDayType[]).map(type => (
+                                    <button
+                                        key={type}
+                                        onClick={() => handleDayTypeSelect(type)}
+                                        className={`rounded-full px-3 py-2 text-xs transition-colors ${selectedDayType === type ? 'bg-brand-700 text-white' : 'bg-surface-overlay text-text-secondary'}`}
+                                    >
+                                        {getDietDayTypeLabel(type)}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </Card>
+            )}
+
             <div className="space-y-4">
                 {/* Meal Result Section - Show prominently if data exists */}
-                {ocrResult && (
+                {(!dayTypeEnabled || selectedDayType) && ocrResult && (
                     <div className={`bg-surface-raised rounded-2xl shadow-lg p-6 animate-slideUp border-2 ${isSaved ? 'border-border-subtle' : 'border-brand-500'}`}>
                         <div className="flex items-center justify-between mb-4">
                             <h2 className="text-lg font-normal text-text-primary">
@@ -437,7 +536,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                 )}
 
                 {/* Large Upload Button - Only show if no data */}
-                {!ocrResult && (
+                {(!dayTypeEnabled || selectedDayType) && !ocrResult && (
                     <div className="bg-gradient-to-br from-brand-600 to-brand-800 rounded-2xl shadow-lg p-6 text-white overflow-hidden relative group">
                         <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 bg-white bg-opacity-10 rounded-full group-hover:scale-150 transition-transform duration-700"></div>
                         <div className="relative z-10 flex flex-col items-center">
@@ -667,6 +766,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                                             habits: { workout: 0 },
                                             ocrResult: null,
                                             dietImageUrl: null,
+                                            dayType: null,
                                             isSaved: false,
                                             touchedFields: []
                                         })

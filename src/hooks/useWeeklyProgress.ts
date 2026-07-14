@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
+import { getEffectiveDietGoal, getGoalForDate, normalizeDietDayType } from '@/lib/utils/dietDayType'
 
 export interface WeightWeeklyStats {
     thisWeekAvg: number | null
@@ -142,13 +143,17 @@ export function useWeeklyProgress(token: string, options: UseWeeklyProgressOptio
                 const isDraftInThisWeek = draftDateObj >= weekMonday && draftDateObj <= weekSunday
 
                 if (isDraftInThisWeek) {
+                    const draftDayType = normalizeDietDayType(todayDraft.dayType || todayDraft.habits?.diet_day_type)
                     const todayData = isDiet ? todayDraft.ocrResult : {
                         date: draftDate,
                         steps: todayDraft.touchedFields?.includes('steps') ? (parseInt(todayDraft.steps) || 0) : null,
                         water: todayDraft.touchedFields?.includes('water') ? (parseFloat(todayDraft.water) || 0) : null,
                         sleep: todayDraft.touchedFields?.includes('sleep') ? (parseFloat(todayDraft.sleep) || 0) : null,
                         weight: todayDraft.touchedFields?.includes('weight') ? (parseFloat(todayDraft.weight) || 0) : null,
-                        habits: todayDraft.habits || { workout: 0 }
+                        habits: {
+                            ...(todayDraft.habits || { workout: 0 }),
+                            ...(draftDayType ? { diet_day_type: draftDayType } : {}),
+                        }
                     }
 
                     if (todayData && (!isDiet || todayDraft.ocrResult)) {
@@ -160,23 +165,6 @@ export function useWeeklyProgress(token: string, options: UseWeeklyProgressOptio
             return processed
         }
 
-        const targetDateStr = sunday.toLocaleDateString('sv-SE')
-        const currentDietGoal = [...dietGoals]
-            .filter(g => g.start_date <= targetDateStr)
-            .sort((a, b) => b.start_date.localeCompare(a.start_date))[0]
-            || dietGoals[dietGoals.length - 1]
-            || { calories: 0, protein: 0, fat: 0, carbs: 0 }
-
-        const dietTargetPerDay = {
-            calories: Number(currentDietGoal.calories || 0),
-            protein: Number(currentDietGoal.protein || 0),
-            fat: Number(currentDietGoal.fat || 0),
-            carbs: Number(currentDietGoal.carbs || 0),
-            sugar: Number(currentDietGoal.sugar ?? 0),
-            fiber: Number(currentDietGoal.fiber ?? 0),
-            salt: Number(currentDietGoal.salt ?? 6.5),
-        }
-
         const lifeTargets = lifestyleSettings?.habit_targets || {
             steps: 8000,
             water: 2.0,
@@ -184,6 +172,66 @@ export function useWeeklyProgress(token: string, options: UseWeeklyProgressOptio
             sleep: 8.0
         }
         const daysInWeek = 7
+
+        const toDateStr = (date: Date) => date.toLocaleDateString('sv-SE')
+        const weekDates = Array.from({ length: daysInWeek }).map((_, i) => {
+            const d = new Date(monday)
+            d.setDate(monday.getDate() + i)
+            return toDateStr(d)
+        })
+        const dietLogByDate = new Map<string, any>()
+        dietLogs.forEach(log => {
+            if (log?.date) dietLogByDate.set(log.date, log)
+        })
+        if (todayDraft?.selectedDate) {
+            dietLogByDate.set(todayDraft.selectedDate, {
+                ...(dietLogByDate.get(todayDraft.selectedDate) || {}),
+            })
+        }
+        const lifeLogByDate = new Map<string, any>()
+        lifestyleLogs.forEach(log => {
+            if (log?.date) lifeLogByDate.set(log.date, log)
+        })
+        if (todayDraft?.selectedDate) {
+            const draftDayType = normalizeDietDayType(todayDraft.dayType || todayDraft.habits?.diet_day_type)
+            lifeLogByDate.set(todayDraft.selectedDate, {
+                ...(lifeLogByDate.get(todayDraft.selectedDate) || {}),
+                habits: {
+                    ...(lifeLogByDate.get(todayDraft.selectedDate)?.habits || {}),
+                    ...(todayDraft.habits || {}),
+                    ...(draftDayType ? { diet_day_type: draftDayType } : {}),
+                },
+            })
+        }
+        const dayTypeSettings = lifestyleSettings?.habit_targets?.diet_day_type_targets || null
+
+        const dietTargets = weekDates.reduce((sum, dateStr) => {
+            const goal = getGoalForDate(dietGoals, dateStr) || { calories: 0, protein: 0, fat: 0, carbs: 0 }
+            const goalWithDayTypeSettings = dayTypeSettings ? { ...goal, ...dayTypeSettings } : goal
+            const log = dietLogByDate.get(dateStr)
+            const lifeLog = lifeLogByDate.get(dateStr)
+            const dayType = normalizeDietDayType(lifeLog?.habits?.diet_day_type || log?.day_type) || 'rest'
+            const effective = getEffectiveDietGoal(goalWithDayTypeSettings, dayType)
+            return {
+                calories: sum.calories + effective.calories,
+                protein: sum.protein + effective.protein,
+                fat: sum.fat + effective.fat,
+                carbs: sum.carbs + effective.carbs,
+                sugar: sum.sugar + effective.sugar,
+                fiber: sum.fiber + effective.fiber,
+                salt: sum.salt + effective.salt,
+            }
+        }, { calories: 0, protein: 0, fat: 0, carbs: 0, sugar: 0, fiber: 0, salt: 0 })
+
+        const dietTargetPerDay = {
+            calories: dietTargets.calories / daysInWeek,
+            protein: dietTargets.protein / daysInWeek,
+            fat: dietTargets.fat / daysInWeek,
+            carbs: dietTargets.carbs / daysInWeek,
+            sugar: dietTargets.sugar / daysInWeek,
+            fiber: dietTargets.fiber / daysInWeek,
+            salt: dietTargets.salt / daysInWeek,
+        }
 
         // 1週間分の実績・記録日数・体重の平均をまとめて計算するヘルパー（今週・前週の両方で使う）
         const aggregateWeek = (weekMonday: Date, weekSunday: Date) => {
@@ -285,13 +333,13 @@ export function useWeeklyProgress(token: string, options: UseWeeklyProgressOptio
         }
 
         const targets = {
-            calories: dietTargetPerDay.calories * daysInWeek,
-            protein: dietTargetPerDay.protein * daysInWeek,
-            fat: dietTargetPerDay.fat * daysInWeek,
-            carbs: dietTargetPerDay.carbs * daysInWeek,
-            sugar: dietTargetPerDay.sugar * daysInWeek,
-            fiber: dietTargetPerDay.fiber * daysInWeek,
-            salt: dietTargetPerDay.salt * daysInWeek,
+            calories: dietTargets.calories,
+            protein: dietTargets.protein,
+            fat: dietTargets.fat,
+            carbs: dietTargets.carbs,
+            sugar: dietTargets.sugar,
+            fiber: dietTargets.fiber,
+            salt: dietTargets.salt,
             steps: (lifeTargets.steps || lifeTargets.step_target || 8000) * daysInWeek,
             water: (lifeTargets.water || lifeTargets.water_target || 2.0) * daysInWeek,
             sleep: (lifeTargets.sleep || lifeTargets.sleep_target || 8.0) * daysInWeek,

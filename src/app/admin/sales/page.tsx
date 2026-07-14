@@ -123,7 +123,7 @@ function SalesPageContent() {
                             </select>
                         </div>
                         <div className="text-right">
-                            <span className="text-xs text-text-secondary">売上総額</span>
+                            <span className="text-xs text-text-secondary">月会費見込み</span>
                             <span className="ml-2 text-lg font-normal text-text-primary">¥{totalAmount.toLocaleString()}</span>
                         </div>
                     </div>

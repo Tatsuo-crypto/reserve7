@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { getAuthenticatedUser, createErrorResponse } from '@/lib/api-utils'
-import { format, subMonths, startOfMonth, endOfMonth, eachMonthOfInterval, addMonths } from 'date-fns'
+import { format, subMonths, startOfMonth, endOfMonth, eachMonthOfInterval, addMonths, endOfDay } from 'date-fns'
 
 export const dynamic = 'force-dynamic'
 
@@ -103,7 +103,8 @@ export async function GET(request: NextRequest) {
             // Active condition: 
             // 1. status == 'active'
             // 2. start_date <= monthEnd
-            // 3. (end_date is null OR end_date > monthEnd)
+            // 3. (end_date is null OR end_date >= monthEnd)
+            // end_date is treated as the last paid/covered membership day.
 
             // Filter active records for this month, then deduplicate by user_id
             const activeRecordsThisMonth = history.filter(h => {
@@ -120,9 +121,9 @@ export async function GET(request: NextRequest) {
                         endStr = format(autoEnd, 'yyyy-MM-dd')
                     }
                 }
-                const end = endStr ? new Date(endStr) : null
+                const end = endStr ? endOfDay(new Date(endStr)) : null
 
-                if (!(start <= monthEnd && (!end || end > monthEnd))) return false
+                if (!(start <= monthEnd && (!end || end >= monthEnd))) return false
 
                 // Exclude months before billing start month
                 const user = Array.isArray((h as any).users) ? (h as any).users[0] : (h as any).users
@@ -140,8 +141,8 @@ export async function GET(request: NextRequest) {
             // Withdrawn in this month
             // Logic:
             // Focus on ACTIVE records ending in this month.
-            // If a user ends Jan 31, they are a Jan withdrawal (unless they renew).
-            const withdrawnMembers = history.filter((h: any) => {
+            // If a user ends Jan 31, they paid/covered January and are counted as a January withdrawal.
+            const withdrawnMembersRaw = history.filter((h: any) => {
                 // Only look at ACTIVE records that have an end date
                 if (h.status === 'active') {
                     const start = new Date(h.start_date)
@@ -157,7 +158,7 @@ export async function GET(request: NextRequest) {
                     }
 
                     if (!endStr) return false
-                    const end = new Date(endStr)
+                    const end = endOfDay(new Date(endStr))
                     if (end < monthStart || end > monthEnd) return false
 
                     // Check for continuity (Renewal / Plan Change / Suspension)
@@ -193,9 +194,18 @@ export async function GET(request: NextRequest) {
                     return true
                 }
 
-                // Explicit withdrawal record also counts
+                // Explicit withdrawal records are status markers. If an active period already
+                // has an end_date, count the withdrawal in that paid month instead.
                 if (h.status === 'withdrawn') {
                     const wDate = new Date(h.start_date)
+
+                    const hasPaidPeriodEnd = history.some((active: any) => {
+                        if (active.user_id !== h.user_id) return false
+                        if (active.status !== 'active' || !active.end_date) return false
+                        return endOfDay(new Date(active.end_date)) <= endOfDay(wDate)
+                    })
+                    if (hasPaidPeriodEnd) return false
+
                     if (wDate >= monthStart && wDate <= monthEnd) return true
                 }
 
@@ -209,15 +219,18 @@ export async function GET(request: NextRequest) {
                     date: h.status === 'withdrawn' ? h.start_date : (h.end_date || h.start_date)
                 }
             })
+            const withdrawnMembers = Array.from(
+                new Map(withdrawnMembersRaw.map((member: any) => [member.user_id, member])).values()
+            )
 
             // Suspended members in this month
             const suspendedMembers = history.filter(h => {
                 if (h.status !== 'suspended') return false
                 const start = new Date(h.start_date)
-                const end = h.end_date ? new Date(h.end_date) : null
+                const end = h.end_date ? endOfDay(new Date(h.end_date)) : null
 
-                // Base condition: Overlaps with this month
-                if (!(start <= monthEnd && (!end || end > monthEnd))) {
+                // Count members who are suspended at month end.
+                if (!(start <= monthEnd && (!end || end >= monthEnd))) {
                     return false
                 }
 

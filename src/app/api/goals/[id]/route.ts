@@ -6,6 +6,7 @@ import { supabase, supabaseAdmin } from '@/lib/supabase';
 async function resolveUser(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const token = searchParams.get('token');
+    const queryUserId = searchParams.get('userId');
 
     const session = await getServerSession(authOptions);
     if (token) {
@@ -17,6 +18,10 @@ async function resolveUser(req: NextRequest) {
         if (userError || !user) return null;
         return { userId: user.id as string, client: supabaseAdmin };
     } else if (session && session.user) {
+        const isAdmin = (session.user as any).role === 'ADMIN';
+        if (queryUserId && isAdmin) {
+            return { userId: queryUserId, client: supabaseAdmin };
+        }
         return { userId: (session.user as any).id as string, client: supabase };
     }
     return null;
@@ -37,7 +42,11 @@ export async function PATCH(
 
         const body = await req.json();
         const update: Record<string, any> = { updated_at: new Date().toISOString() };
-        if (body.title !== undefined) update.title = body.title;
+        if (body.type !== undefined) update.type = body.type;
+        if (body.title !== undefined) {
+            update.title = body.title?.trim()
+                || (body.type === 'weight' ? '目標体重' : '習慣の目標');
+        }
         if (body.targetValue !== undefined) update.target_value = body.targetValue;
         if (body.deadline !== undefined) update.deadline = body.deadline;
         if (body.note !== undefined) update.note = body.note;

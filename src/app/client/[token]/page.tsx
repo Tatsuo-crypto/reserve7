@@ -42,10 +42,13 @@ export default function ClientReservationsPage() {
   const [activeTab, setActiveTab] = useState<TabType>('home')
   const [userId, setUserId] = useState<string | null>(null)
   const [userName, setUserName] = useState<string>('')
+  const [userPlan, setUserPlan] = useState<string>('')
   const [loading, setLoading] = useState(true)
   const [showTrackingModal, setShowTrackingModal] = useState(false)
   const [visibleTabs, setVisibleTabs] = useState({ input: true, analyze: true, progress: true })
-  const isDietPlan = visibleTabs.input || visibleTabs.analyze || visibleTabs.progress
+  const isDietFeatureEnabled = visibleTabs.input || visibleTabs.analyze || visibleTabs.progress
+  const isDietCoursePlan = userPlan.includes('ダイエット')
+  const isDietPlan = isDietCoursePlan && isDietFeatureEnabled
   
   // State for real-time data synchronization between tabs
   const [todayData, setTodayData] = useState<any>({
@@ -57,6 +60,7 @@ export default function ClientReservationsPage() {
     notes: '',
     habits: { workout: 0 },
     ocrResult: null,
+    dayType: null,
     dietImageUrl: null,
     quitGoals: [],
     isSaved: false,
@@ -72,6 +76,7 @@ export default function ClientReservationsPage() {
           const data = await res.json()
           setUserId(data.user.id)
           setUserName(data.user.name)
+          setUserPlan(data.user.plan || '')
         }
       } catch (error) {
         console.error('Failed to fetch user:', error)
@@ -88,7 +93,7 @@ export default function ClientReservationsPage() {
             setVisibleTabs(data.visible_tabs)
             const isDiet = data.visible_tabs.input || data.visible_tabs.analyze || data.visible_tabs.progress
             if (!isDiet) {
-              setActiveTab('res')
+              setActiveTab('home')
             }
           }
         }
@@ -99,6 +104,12 @@ export default function ClientReservationsPage() {
       fetchSettings()
     }
   }, [token])
+
+  useEffect(() => {
+    if (!isDietPlan && activeTab !== 'home' && activeTab !== 'settings') {
+      setActiveTab('home')
+    }
+  }, [isDietPlan, activeTab])
 
   if (loading || !userId) {
     return (
@@ -120,9 +131,9 @@ export default function ClientReservationsPage() {
     home: 'マイページ',
     res: '予約確認',
     record: '記録',
-    weekly: '週間',
+    weekly: '習慣',
     analyze: '分析',
-    plan: '契約プラン',
+    plan: '推移',
     settings: '設定'
   };
 
@@ -162,19 +173,20 @@ export default function ClientReservationsPage() {
 
       {/* Main Content */}
       <main className="flex-1 max-w-lg mx-auto w-full p-4 overflow-x-hidden pb-24">
-        {activeTab === 'home' && (
+        {(activeTab === 'home' || (!isDietPlan && activeTab !== 'settings')) && (
           <HomeTab
             token={token}
             userName={userName}
+            isDietPlan={isDietPlan}
             todayDraft={todayData}
             onNavigate={(tab) => setActiveTab(tab)}
             onOpenSettings={() => setActiveTab('settings')}
           />
         )}
-        {activeTab === 'res' && (
-          <ReservationTab token={token} />
+        {activeTab === 'res' && isDietPlan && (
+          <ReservationTab token={token} userName={userName} />
         )}
-        {activeTab === 'record' && (
+        {activeTab === 'record' && isDietPlan && (
           <InputTab
             userId={userId!}
             token={token}
@@ -183,19 +195,27 @@ export default function ClientReservationsPage() {
             onStateChange={setTodayData}
           />
         )}
-        {activeTab === 'weekly' && (
+        {activeTab === 'weekly' && isDietPlan && (
           <WeeklyTab userId={userId!} token={token} isAdmin={isAdmin} />
         )}
-        {activeTab === 'analyze' && (
+        {activeTab === 'analyze' && isDietPlan && (
           <AnalyzeTab
             userId={userId!}
             token={token}
             isAdmin={isAdmin}
             todayDraft={todayData}
+            showWeeklyGoals={false}
           />
         )}
-        {activeTab === 'plan' && (
-          <PlanTab token={token} />
+        {activeTab === 'plan' && isDietPlan && (
+          <PlanTab
+            token={token}
+            onEditPlan={
+              fromAdmin && isAdmin && userId
+                ? () => router.push(`/admin/diet-plan?userId=${userId}&tab=plan&name=${encodeURIComponent(userName || '')}`)
+                : undefined
+            }
+          />
         )}
         {activeTab === 'settings' && (
           <SettingsTab token={token} />
@@ -214,37 +234,29 @@ export default function ClientReservationsPage() {
 
       {/* Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-surface-raised/95 backdrop-blur-xl border-t border-border-subtle shadow-[0_-5px_25px_rgba(0,0,0,0.05)] z-40 pb-safe">
-        <div className={`grid ${isDietPlan ? 'grid-cols-5' : 'grid-cols-3'} items-center max-w-lg mx-auto h-20`}>
-          <NavBtn
-            active={activeTab === 'res'}
-            onClick={() => setActiveTab('res')}
-            iconName="calendar"
-            label="予約"
-          />
-
+        <div className={`grid ${isDietPlan ? 'grid-cols-5' : 'grid-cols-1'} items-center max-w-lg mx-auto h-20`}>
           {isDietPlan && (
             <NavBtn
-              active={activeTab === 'weekly' || activeTab === 'record'}
-              onClick={() => setActiveTab('weekly')}
-              iconName="chartBar"
-              label="週間"
+              active={activeTab === 'record'}
+              onClick={() => setActiveTab('record')}
+              iconName="camera"
+              label="記録"
             />
           )}
 
-          {/* Central Home Button */}
-          <div className="relative flex flex-col items-center justify-center h-full">
-            <button
-              onClick={() => setActiveTab('home')}
-              className={`absolute top-[-6px] w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 transform ${
-                activeTab === 'home'
-                ? 'bg-brand-600 scale-105 shadow-brand-200'
-                : 'bg-brand-500 hover:bg-brand-600 shadow-brand-100'
-              }`}
-            >
-              <Icon name="home" size={28} className="text-white" />
-            </button>
-            <span className={`absolute bottom-2 text-[10px] font-normal transition-colors duration-300 ${activeTab === 'home' ? 'text-brand-600' : 'text-text-muted'}`}>ホーム</span>
-          </div>
+          {isDietPlan && (
+            <NavBtn
+              active={activeTab === 'weekly'}
+              onClick={() => setActiveTab('weekly')}
+              iconName="clipboardList"
+              label="習慣"
+            />
+          )}
+
+          <CenterHomeBtn
+            active={activeTab === 'home' || activeTab === 'res'}
+            onClick={() => setActiveTab('home')}
+          />
 
           {isDietPlan && (
             <NavBtn
@@ -255,15 +267,32 @@ export default function ClientReservationsPage() {
             />
           )}
 
-          <NavBtn
-            active={activeTab === 'plan'}
-            onClick={() => setActiveTab('plan')}
-            iconName="archiveBox"
-            label="プラン"
-          />
+          {isDietPlan && (
+            <NavBtn
+              active={activeTab === 'plan'}
+              onClick={() => setActiveTab('plan')}
+              iconName="chartBar"
+              label="推移"
+            />
+          )}
         </div>
       </nav>
 
+    </div>
+  )
+}
+
+function CenterHomeBtn({ active, onClick }: { active: boolean, onClick: () => void }) {
+  return (
+    <div className="relative flex h-full flex-col items-center justify-center">
+      <button
+        onClick={onClick}
+        aria-label="ホーム"
+        className={`absolute top-[-8px] flex h-14 w-14 items-center justify-center rounded-full text-white shadow-sm transition-all duration-200 active:scale-95 ${active ? 'bg-brand-600 scale-105' : 'bg-brand-500'}`}
+      >
+        <Icon name="home" size={28} />
+      </button>
+      <span className={`absolute bottom-2 text-[10px] font-normal transition-colors duration-300 ${active ? 'text-brand-300' : 'text-text-muted'}`}>ホーム</span>
     </div>
   )
 }

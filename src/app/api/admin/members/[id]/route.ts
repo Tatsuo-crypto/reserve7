@@ -2,6 +2,26 @@ import { NextRequest, NextResponse } from 'next/server'
 export const dynamic = 'force-dynamic'
 import { supabaseAdmin } from '@/lib/supabase'
 import { getAuthenticatedUser, createErrorResponse, createSuccessResponse } from '@/lib/api-utils'
+import { format } from 'date-fns'
+
+type MembershipHistoryStatus = {
+  status: 'active' | 'suspended' | 'withdrawn'
+  start_date: string
+  end_date: string | null
+}
+
+function deriveCurrentStatus(member: any, histories: MembershipHistoryStatus[], today = format(new Date(), 'yyyy-MM-dd')) {
+  const latest = histories
+    .filter(history => history.start_date <= today)
+    .sort((a, b) => b.start_date.localeCompare(a.start_date))[0]
+
+  if (!latest) return member.status || 'active'
+  if (latest.status === 'withdrawn') return 'withdrawn'
+  if (latest.status === 'active' && latest.end_date && latest.end_date < today) return 'withdrawn'
+  if (latest.status === 'suspended' && latest.end_date && latest.end_date < today) return 'withdrawn'
+
+  return latest.status || member.status || 'active'
+}
 
 export async function GET(
   request: NextRequest,
@@ -52,7 +72,20 @@ export async function GET(
       return createErrorResponse('会員が見つかりません', 404)
     }
 
-    return createSuccessResponse(member)
+    const { data: histories, error: historyError } = await supabaseAdmin
+      .from('membership_history')
+      .select('status, start_date, end_date')
+      .eq('user_id', id)
+      .order('start_date', { ascending: true })
+
+    if (historyError) {
+      console.error('Membership history fetch error:', historyError)
+    }
+
+    return createSuccessResponse({
+      ...member,
+      status: deriveCurrentStatus(member, (histories || []) as MembershipHistoryStatus[])
+    })
   } catch (error) {
     console.error('Member API error:', error)
     return createErrorResponse('Internal server error', 500)

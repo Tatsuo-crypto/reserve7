@@ -3,7 +3,8 @@
 import { useState } from 'react'
 import { useWeeklyProgress } from '@/hooks/useWeeklyProgress'
 import WeeklyProgressPanel from './WeeklyProgressPanel'
-import WeeklySummaryPanel from './WeeklySummaryPanel'
+import RecordCalendar from './RecordCalendar'
+import Icon from '@/components/ui/icons'
 
 interface WeeklyTabProps {
     userId: string
@@ -12,51 +13,36 @@ interface WeeklyTabProps {
 }
 
 /**
- * ボトムナビ「週間」タブ。今日/週間の切り替えは持たず、常に週間サマリーだけを表示する。
- * 日々の記録（食事写真・体重・水分など）はホームの「記録する」ボタンから行う。
- *
- * 上部の「詳細」「週間まとめ」で表示を切り替えられる。デフォルトは既存の「詳細」
- * （＝これまでの週間目標パネル）で、H-6の絶対制約（週間目標パネルを削除・到達困難にしない）
- * を維持したまま、体重・食事・生活を1ページにまとめた新しい「週間まとめ」ビューを追加する。
+ * ボトムナビ「習慣」タブ。分析タブから週間目標パネルを独立させ、
+ * カロリー・栄養・水分・歩数・トレーニングなどの週次確認をまとめる。
  */
 export default function WeeklyTab({ userId, token, isAdmin }: WeeklyTabProps) {
     const { weeklyStats, weekOffset, setWeekOffset } = useWeeklyProgress(token, { userId, isAdmin })
-    const [view, setView] = useState<'detail' | 'summary'>('detail')
+    const [calendarOpen, setCalendarOpen] = useState(false)
 
     return (
         <div className="space-y-4 animate-fadeIn pb-24">
-            <div className="px-2 flex justify-center">
-                <div className="inline-flex bg-surface-overlay rounded-full p-1">
-                    <button
-                        onClick={() => setView('detail')}
-                        className={`px-4 py-1.5 rounded-full text-xs font-normal transition-all ${view === 'detail' ? 'bg-surface-raised text-text-primary shadow-sm' : 'text-text-muted'}`}
-                    >
-                        詳細
-                    </button>
-                    <button
-                        onClick={() => setView('summary')}
-                        className={`px-4 py-1.5 rounded-full text-xs font-normal transition-all ${view === 'summary' ? 'bg-surface-raised text-text-primary shadow-sm' : 'text-text-muted'}`}
-                    >
-                        週間まとめ
-                    </button>
-                </div>
-            </div>
-
-            {view === 'detail' ? (
-                <WeeklyProgressPanel
-                    weeklyStats={weeklyStats}
-                    weekOffset={weekOffset}
-                    setWeekOffset={setWeekOffset}
-                    showWeekSwitcher
-                />
-            ) : (
-                <WeeklySummaryPanel
-                    weeklyStats={weeklyStats}
-                    weekOffset={weekOffset}
-                    setWeekOffset={setWeekOffset}
-                    showWeekSwitcher
-                />
-            )}
+            <WeeklyProgressPanel
+                weeklyStats={weeklyStats}
+                weekOffset={weekOffset}
+                setWeekOffset={setWeekOffset}
+                showWeekSwitcher
+                simpleMemberView
+            />
+            <section className="space-y-3">
+                <button
+                    type="button"
+                    onClick={() => setCalendarOpen(open => !open)}
+                    className="flex w-full items-center justify-between rounded-2xl border border-border-subtle bg-surface-raised px-4 py-3 text-left shadow-sm active:scale-[0.99]"
+                >
+                    <span className="flex items-center gap-2 text-base font-semibold text-text-primary">
+                        <span className="h-5 w-1 rounded-full bg-brand-500" />
+                        記録カレンダー
+                    </span>
+                    <Icon name={calendarOpen ? 'chevronUp' : 'chevronDown'} size={18} className="text-text-muted" />
+                </button>
+                {calendarOpen && <RecordCalendar userId={userId} token={token} isAdmin={isAdmin} />}
+            </section>
         </div>
     )
 }

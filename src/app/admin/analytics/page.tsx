@@ -198,7 +198,7 @@ export default function AnalyticsPage() {
                     </div>
                 </div>
                 <div className="bg-surface-raised p-6 rounded-xl shadow-sm border border-border-subtle">
-                    <h3 className="text-sm font-normal text-text-secondary">今月の売上見込み (概算)</h3>
+                    <h3 className="text-sm font-normal text-text-secondary">今月の月会費見込み</h3>
                     <div className="mt-2 flex items-baseline">
                         <span className="text-3xl font-normal text-text-primary">¥{projectedSales.toLocaleString()}</span>
                     </div>
@@ -226,7 +226,7 @@ export default function AnalyticsPage() {
                                 />
                                 <Tooltip formatter={(value: any) => `¥${Number(value).toLocaleString()}`} />
                                 <Legend />
-                                <Bar dataKey="amount" name="月会費売上" fill="#f97316" radius={[4, 4, 0, 0]} />
+                                <Bar dataKey="amount" name="月会費見込み" fill="#f97316" radius={[4, 4, 0, 0]} />
                             </BarChart>
                         </ResponsiveContainer>
                     </div>

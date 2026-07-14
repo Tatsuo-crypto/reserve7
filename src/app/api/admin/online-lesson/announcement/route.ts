@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 export const dynamic = 'force-dynamic'
 import { supabaseAdmin } from '@/lib/supabase'
 import { requireAdminAuth, handleApiError } from '@/lib/api-utils'
-import { sendOnlineLessonAnnouncement } from '@/lib/email'
+import { sendPushNotificationToUser } from '@/lib/push'
 
 const DAYS_JA = ['日', '月', '火', '水', '木', '金', '土']
 
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
       // 2. Fetch specific users by ID
       const { data: selectedUsers, error: usersError } = await supabaseAdmin
         .from('users')
-        .select('id, full_name, email')
+        .select('id, full_name, access_token, push_notification_enabled')
         .in('id', userIds)
 
       if (usersError) {
@@ -44,12 +44,8 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: '送信対象会員の取得に失敗しました' }, { status: 500 })
       }
 
-      validUsers = (selectedUsers || []).filter((u: any) => 
-        u &&
-        u.email && 
-        u.email.trim() !== '' && 
-        !u.email.endsWith('@gym.internal') && 
-        !u.email.endsWith('@example.com')
+      validUsers = (selectedUsers || []).filter((u: any) =>
+        u?.push_notification_enabled === true && Boolean(u.access_token)
       )
     } else {
       // 2. Fetch users linked to this specific online lesson
@@ -60,7 +56,8 @@ export async function POST(request: NextRequest) {
           users (
             id,
             full_name,
-            email
+            access_token,
+            push_notification_enabled
           )
         `)
         .eq('online_lesson_id', lessonId)
@@ -72,18 +69,14 @@ export async function POST(request: NextRequest) {
 
       validUsers = (lessonUsers || [])
         .map((lu: any) => lu.users)
-        .filter((u: any) => 
-          u &&
-          u.email && 
-          u.email.trim() !== '' && 
-          !u.email.endsWith('@gym.internal') && 
-          !u.email.endsWith('@example.com')
+        .filter((u: any) =>
+          u?.push_notification_enabled === true && Boolean(u.access_token)
         )
     }
 
     if (validUsers.length === 0) {
       return NextResponse.json(
-        { error: '有効なメールアドレスを持つ送信対象会員が選択されていないか、登録されていません。' },
+        { error: 'アプリ通知が有効な送信対象会員が選択されていないか、登録されていません。' },
         { status: 400 }
       )
     }
@@ -94,26 +87,20 @@ export async function POST(request: NextRequest) {
     const end = lesson.end_time ? lesson.end_time.substring(0, 5) : ''
     const scheduleStr = `毎週${days} ${start}${end ? `〜${end}` : ''}`
 
-    // 4. Send emails
+    // 4. Send push notifications
     let successCount = 0
     const errors: string[] = []
 
     for (const user of validUsers) {
       try {
-        const success = await sendOnlineLessonAnnouncement({
-          email: user.email,
-          clientName: user.full_name,
-          title: lesson.title,
-          startTime: start,
-          endTime: end,
-          meetUrl: lesson.meet_url,
-          description: lesson.description || undefined,
-          difficulty: lesson.difficulty || undefined,
-          scheduleStr
+        const pushCount = await sendPushNotificationToUser(user.id, {
+          title: 'オンラインレッスンのお知らせ',
+          body: `${lesson.title}（${scheduleStr}）のお知らせです。`,
+          url: `/client/${user.access_token}?tab=online`
         })
-        if (success) successCount++
+        if (pushCount > 0) successCount++
       } catch (err: any) {
-        console.error(`Failed to send announcement to user ${user.id} (${user.email}):`, err)
+        console.error(`Failed to send announcement to user ${user.id}:`, err)
         errors.push(`${user.full_name}: ${err.message || err}`)
       }
     }

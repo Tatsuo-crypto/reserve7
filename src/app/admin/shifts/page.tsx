@@ -220,12 +220,29 @@ export default function ShiftManagementPage() {
         shouldFetch = true
       }
 
-      if (shouldFetch) {
-        const res = await fetch(`/api/admin/shifts?${params}`, { cache: 'no-store' })
-        if (res.ok) {
-          const data = await res.json()
-          setShifts(data.shifts || [])
-        }
+      const templatesParams = new URLSearchParams({ _t: timestamp.toString() })
+      let templatesUrl = ''
+      if (viewMode === 'individual' && selectedTrainerId) {
+        templatesParams.set('trainerId', selectedTrainerId)
+        templatesUrl = `/api/admin/shifts/templates?${templatesParams}`
+      } else if (storeId) {
+        templatesParams.set('storeId', storeId)
+        templatesUrl = `/api/admin/shifts/templates?${templatesParams}`
+      }
+
+      const [shiftsRes, templatesRes] = await Promise.all([
+        shouldFetch ? fetch(`/api/admin/shifts?${params}`, { cache: 'no-store' }) : Promise.resolve(null),
+        templatesUrl ? fetch(templatesUrl, { cache: 'no-store' }) : Promise.resolve(null)
+      ])
+
+      if (shiftsRes?.ok) {
+        const data = await shiftsRes.json()
+        setShifts(data.shifts || [])
+      }
+
+      if (templatesRes?.ok) {
+        const data = await templatesRes.json()
+        setTemplates(data.templates || [])
       }
     } finally {
       setLoading(false)
@@ -585,14 +602,7 @@ export default function ShiftManagementPage() {
           trainerId={selectedTrainerId}
           onSave={async () => {
             setTemplateModalOpen(false)
-            // Refetch templates to update view
-            if (selectedTrainerId) {
-              const res = await fetch(`/api/admin/shifts/templates?trainerId=${selectedTrainerId}`)
-              if (res.ok) {
-                const data = await res.json()
-                setTemplates(data.templates || [])
-              }
-            }
+            await refreshShifts()
           }}
         />
       )}

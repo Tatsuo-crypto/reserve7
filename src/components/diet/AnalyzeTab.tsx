@@ -220,26 +220,6 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
         }
     }, [analysisData])
 
-    // O-6/O-7: 30日記録継続ドット。グラフタブ冒頭に記録継続の俯瞰を1つ置く。
-    // 期間セレクタとは独立して、直近30日の食事記録有無(カロリー>0)を可視化する。
-    const recordStreak30 = useMemo(() => {
-        const today = new Date()
-        today.setHours(0, 0, 0, 0)
-        const recordedDateSet = new Set(
-            dietLogs.filter(l => (Number(l.calories) || 0) > 0).map(l => l.date)
-        )
-        return Array.from({ length: 30 }).map((_, i) => {
-            const d = new Date(today)
-            d.setDate(today.getDate() - (29 - i))
-            const dateStr = formatDate(d)
-            return {
-                date: dateStr,
-                recorded: recordedDateSet.has(dateStr),
-                isToday: i === 29,
-            }
-        })
-    }, [dietLogs])
-
     const [calendarDate, setCalendarDate] = useState(new Date())
 
     const handlePrevMonth = () => {
@@ -282,23 +262,6 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
 
     return (
         <div className="space-y-6 pb-24">
-            {/* O-6/O-7: 30日記録継続ドット。グラフタブ冒頭に1つ、記録継続の俯瞰用 */}
-            <div className="bg-surface-raised p-4 rounded-2xl border border-border-subtle shadow-sm">
-                <div className="flex items-center justify-between mb-2 px-1">
-                    <span className="text-[10px] font-normal text-text-muted uppercase tracking-widest">過去30日の記録</span>
-                    <span className="text-xs font-semibold text-text-secondary tabular-nums">{recordStreak30.filter(d => d.recorded).length}/30日</span>
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                    {recordStreak30.map(d => (
-                        <div
-                            key={d.date}
-                            title={d.date}
-                            className={`w-2.5 h-2.5 rounded-full ${d.recorded ? 'bg-state-success-500' : 'bg-surface-overlay'} ${d.isToday ? 'ring-2 ring-brand-400 ring-offset-1' : ''}`}
-                        />
-                    ))}
-                </div>
-            </div>
-
             {/* 週間目標（旧ホームタブのバー11本の移設先。デフォルト折りたたみ）
                 管理者側「サマリー」タブには常設表示があるため、showWeeklyGoals=falseで重複を避ける */}
             {showWeeklyGoals && (

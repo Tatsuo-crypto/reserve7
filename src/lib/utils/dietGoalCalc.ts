@@ -63,10 +63,10 @@ export function distributeCaloriesToMacros(targetCalories: number, current: Macr
     const newFatKcal = remainingKcal * fatRatio
     const newCarbKcal = remainingKcal - newFatKcal
 
-    const newFat = Math.round((newFatKcal / 9) * 10) / 10
-    const newCarbs = Math.round((newCarbKcal / 4) * 10) / 10
+    const newFat = Math.round(newFatKcal / 9)
+    const newCarbs = Math.round(newCarbKcal / 4)
     const newFiber = current.fiber
-    const newSugar = Math.max(0, Math.round((newCarbs - newFiber) * 10) / 10)
+    const newSugar = Math.max(0, Math.round(newCarbs - newFiber))
 
     return {
         protein: current.protein,
@@ -147,11 +147,11 @@ export function calculateAragonPlan(input: AragonPlanInput): AragonPlanResult {
     const tbwLbs = tbwKg * 2.2
     const targetCalories = Math.round(tbwLbs * (10 + weeklyTrainingHours) * neat)
 
-    const protein = Math.round(tbwKg * 2.2 * 10) / 10
-    const fat = Math.round(tbwKg * 1.0 * 10) / 10
+    const protein = Math.round(tbwKg * 2.2)
+    const fat = Math.round(tbwKg * 1.0)
     const proteinKcal = protein * 4
     const fatKcal = fat * 9
-    const carbs = Math.max(0, Math.round(((targetCalories - proteinKcal - fatKcal) / 4) * 10) / 10)
+    const carbs = Math.max(0, Math.round((targetCalories - proteinKcal - fatKcal) / 4))
 
     return {
         tbwKg: Math.round(tbwKg * 10) / 10,
