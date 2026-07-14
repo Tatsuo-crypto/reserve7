@@ -42,13 +42,12 @@ export default function ClientReservationsPage() {
   const [activeTab, setActiveTab] = useState<TabType>('home')
   const [userId, setUserId] = useState<string | null>(null)
   const [userName, setUserName] = useState<string>('')
-  const [userPlan, setUserPlan] = useState<string>('')
   const [loading, setLoading] = useState(true)
   const [showTrackingModal, setShowTrackingModal] = useState(false)
-  const [visibleTabs, setVisibleTabs] = useState({ input: true, analyze: true, progress: true })
+  const [settingsLoaded, setSettingsLoaded] = useState(false)
+  const [visibleTabs, setVisibleTabs] = useState({ input: false, analyze: false, progress: false })
   const isDietFeatureEnabled = visibleTabs.input || visibleTabs.analyze || visibleTabs.progress
-  const isDietCoursePlan = userPlan.includes('ダイエット')
-  const isDietPlan = isDietCoursePlan && isDietFeatureEnabled
+  const isDietPlan = isDietFeatureEnabled
   
   // State for real-time data synchronization between tabs
   const [todayData, setTodayData] = useState<any>({
@@ -76,7 +75,6 @@ export default function ClientReservationsPage() {
           const data = await res.json()
           setUserId(data.user.id)
           setUserName(data.user.name)
-          setUserPlan(data.user.plan || '')
         }
       } catch (error) {
         console.error('Failed to fetch user:', error)
@@ -98,8 +96,12 @@ export default function ClientReservationsPage() {
           }
         }
       } catch (e) { console.error(e) }
+      finally {
+        setSettingsLoaded(true)
+      }
     }
     if (token) {
+      setSettingsLoaded(false)
       fetchUser()
       fetchSettings()
     }
@@ -111,7 +113,7 @@ export default function ClientReservationsPage() {
     }
   }, [isDietPlan, activeTab])
 
-  if (loading || !userId) {
+  if (loading || !settingsLoaded || !userId) {
     return (
       <div className="min-h-screen bg-surface-base flex items-center justify-center">
         <div className="text-center">
