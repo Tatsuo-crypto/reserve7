@@ -77,6 +77,19 @@ export default function StaffPage() {
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <button
+            onClick={() => router.push(`/staff/${token}/shifts`)}
+            className="bg-surface-raised p-8 rounded-xl shadow-md border border-border-strong hover:shadow-lg transition-shadow text-left"
+          >
+            <div className="flex items-center mb-4">
+              <div className="w-12 h-12 bg-brand-500/15 rounded-lg flex items-center justify-center mr-4">
+                <Icon name="clock" size={24} className="text-brand-400" />
+              </div>
+              <h2 className="text-2xl font-normal text-text-primary">シフト</h2>
+            </div>
+            <p className="text-text-secondary">希望提出・確定シフトの確認</p>
+          </button>
+
           {/* 予約管理カード */}
           <button
             onClick={() => router.push(`/staff/${token}/reservations`)}

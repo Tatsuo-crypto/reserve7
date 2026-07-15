@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { format, addDays, startOfWeek, eachDayOfInterval, isSameDay, setHours, setMinutes, parseISO, differenceInMinutes, isAfter, parse, getDay } from 'date-fns'
+import { format, isSameDay, setHours, setMinutes, parseISO, differenceInMinutes, isAfter, parse, getDay } from 'date-fns'
 import { ja } from 'date-fns/locale'
 import { Shift, Trainer, ShiftTemplate } from '@/types'
 
@@ -19,32 +19,17 @@ interface TeamShiftCalendarProps {
   onShiftSelect?: (shiftId: string) => void
 }
 
-// Generate time options (30 min intervals)
+// Generate time options (10 min intervals)
 const generateTimeOptions = () => {
   const options = []
   for (let i = 0; i < 24; i++) {
     const hour = i.toString().padStart(2, '0')
-    options.push(`${hour}:00`)
-    options.push(`${hour}:30`)
+    for (let minute = 0; minute < 60; minute += 10) {
+      options.push(`${hour}:${minute.toString().padStart(2, '0')}`)
+    }
   }
   return options
 }
-
-// Color palette for trainers
-// Q-4/dark-sweep: bg-*-200 here is intentionally left as a literal light shade (NOT converted to
-// bg-*-500/NN) because the sibling label text is hardcoded `text-black`/`text-orange-900` (a
-// separate, out-of-scope legacy issue). Converting only the background would make the label
-// unreadable against the dark base without a matching text-color fix; out of scope for this sweep.
-const TRAINER_COLORS = [
-  { bg: 'bg-blue-200', border: 'border-blue-400', dot: 'bg-blue-500' },
-  { bg: 'bg-cyan-200', border: 'border-cyan-400', dot: 'bg-cyan-500' },
-  { bg: 'bg-orange-200', border: 'border-orange-400', dot: 'bg-orange-500' },
-  { bg: 'bg-purple-200', border: 'border-purple-400', dot: 'bg-purple-500' },
-  { bg: 'bg-pink-200', border: 'border-pink-400', dot: 'bg-pink-500' },
-  { bg: 'bg-yellow-200', border: 'border-yellow-400', dot: 'bg-yellow-500' },
-  { bg: 'bg-teal-200', border: 'border-teal-400', dot: 'bg-teal-500' },
-  { bg: 'bg-red-200', border: 'border-red-400', dot: 'bg-red-500' },
-]
 
 interface CalendarItem {
   id: string
@@ -82,6 +67,7 @@ export default function TeamShiftCalendar({
   const [createModalOpen, setCreateModalOpen] = useState(false)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [selectedTime, setSelectedTime] = useState<number | null>(null)
+  const [selectedTrainerForCreate, setSelectedTrainerForCreate] = useState<string>('')
   
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -90,13 +76,7 @@ export default function TeamShiftCalendar({
   const END_HOUR = 23
   const HOUR_HEIGHT = 40 // px per hour
   const hours = Array.from({ length: END_HOUR - START_HOUR + 1 }, (_, i) => START_HOUR + i)
-
-  // Generate days for the week view
-  const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 }) // Monday start
-  const weekDays = eachDayOfInterval({
-    start: weekStart,
-    end: addDays(weekStart, 6)
-  })
+  const selectedDay = currentDate
 
   // Calculate item position
   const getItemStyle = (item: CalendarItem, dayItems: CalendarItem[]) => {
@@ -142,9 +122,10 @@ export default function TeamShiftCalendar({
     }
   }
 
-  const handleTimeSlotClick = (day: Date, hour: number) => {
+  const handleTimeSlotClick = (day: Date, hour: number, trainerId: string) => {
     setSelectedDate(day)
     setSelectedTime(hour)
+    setSelectedTrainerForCreate(trainerId)
     setCreateModalOpen(true)
   }
 
@@ -157,33 +138,68 @@ export default function TeamShiftCalendar({
     }
   }
 
-  const getTrainerColor = (trainerId: string) => {
-    const index = trainers.findIndex(t => t.id === trainerId)
-    return TRAINER_COLORS[index % TRAINER_COLORS.length] || TRAINER_COLORS[0]
+  const buildTrainerItems = (trainerId: string) => {
+    const trainerItems: CalendarItem[] = []
+
+    shifts
+      .filter(s => s.trainer_id === trainerId && isSameDay(parseISO(s.start_time), selectedDay))
+      .forEach(s => {
+        trainerItems.push({
+          id: s.id,
+          trainerId: s.trainer_id,
+          start: parseISO(s.start_time),
+          end: parseISO(s.end_time),
+          type: 'shift',
+          data: s
+        })
+      })
+
+    templates
+      .filter(t => t.trainer_id === trainerId && t.day_of_week === getDay(selectedDay))
+      .forEach(t => {
+        const start = parse(t.start_time, 'HH:mm:ss', selectedDay)
+        const end = parse(t.end_time, 'HH:mm:ss', selectedDay)
+        const hasOverlap = trainerItems.some(item => start < item.end && end > item.start)
+
+        if (!hasOverlap) {
+          trainerItems.push({
+            id: `template-${t.id}-${trainerId}-${selectedDay.toISOString()}`,
+            trainerId: t.trainer_id,
+            start,
+            end,
+            type: 'template',
+            data: t
+          })
+        }
+      })
+
+    return trainerItems.sort((a, b) => a.start.getTime() - b.start.getTime())
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-250px)] min-h-[600px] border border-border-strong rounded-lg bg-surface-raised overflow-hidden">
-      {/* Header: Days of week */}
-      <div className="grid grid-cols-8 border-b border-border-strong bg-surface-base flex-shrink-0">
-        <div className="p-2 border-r border-border-strong text-center text-xs font-normal text-text-secondary sticky left-0 bg-surface-base z-10">
-          時間
-        </div>
-        {weekDays.map(day => (
-          <div key={day.toString()} className={`p-2 text-center border-r border-border-strong last:border-r-0 ${isSameDay(day, new Date()) ? 'bg-brand-500/15' : ''}`}>
-            <div className="text-xs font-normal text-text-secondary">{format(day, 'E', { locale: ja })}</div>
-            <div className={`text-sm font-normal ${isSameDay(day, new Date()) ? 'text-brand-600' : 'text-text-primary'}`}>
-              {format(day, 'M/d')}
-            </div>
+    <div className="flex h-[calc(100vh-250px)] min-h-[600px] flex-col overflow-hidden rounded-lg border border-border-strong bg-surface-raised">
+      <div className="overflow-x-auto">
+        <div
+          className="grid min-w-full border-b border-border-strong bg-surface-base"
+          style={{ gridTemplateColumns: `56px repeat(${Math.max(trainers.length, 1)}, minmax(96px, 1fr))` }}
+        >
+          <div className="sticky left-0 z-20 border-r border-border-strong bg-surface-base p-2 text-center text-xs font-normal text-text-secondary">
+            時間
           </div>
-        ))}
+          {trainers.map(trainer => (
+            <div key={trainer.id} className="border-r border-border-strong p-2 text-center last:border-r-0">
+              <div className="truncate text-sm font-normal text-text-primary">{getSurname(trainer.full_name)}</div>
+            </div>
+          ))}
+        </div>
       </div>
 
-      {/* Body: Scrollable time grid */}
-      <div ref={containerRef} className="flex-1 overflow-y-auto relative">
-        <div className="grid grid-cols-8 relative min-h-full">
+      <div ref={containerRef} className="relative flex-1 overflow-auto">
+        <div
+          className="grid min-w-full"
+          style={{ gridTemplateColumns: `56px repeat(${Math.max(trainers.length, 1)}, minmax(96px, 1fr))` }}
+        >
           
-          {/* Time axis */}
           <div className="border-r border-border-strong bg-surface-raised sticky left-0 z-10 w-full">
             {hours.map(hour => (
               <div key={hour} className="h-[40px] border-b border-border-subtle text-xs text-text-muted text-center relative">
@@ -192,130 +208,50 @@ export default function TeamShiftCalendar({
             ))}
           </div>
 
-          {/* Days columns */}
-          {weekDays.map(day => {
-            // Prepare items for this day
-            const dayItems: CalendarItem[] = []
-
-            // 1. Add Shifts
-            shifts
-              .filter(s => isSameDay(parseISO(s.start_time), day))
-              .forEach(s => {
-                dayItems.push({
-                  id: s.id,
-                  trainerId: s.trainer_id,
-                  start: parseISO(s.start_time),
-                  end: parseISO(s.end_time),
-                  type: 'shift',
-                  data: s
-                })
-              })
-
-            // 2. Add Templates
-            templates
-              .filter(t => t.day_of_week === getDay(day))
-              .forEach((t, idx) => {
-                const start = parse(t.start_time, 'HH:mm:ss', day)
-                const end = parse(t.end_time, 'HH:mm:ss', day)
-                
-                // Check if there is already an actual shift for this trainer that overlaps with this template
-                // If so, don't show the template (Actual shift overrides template)
-                const hasOverlap = dayItems.some(item => 
-                  item.type === 'shift' && 
-                  item.trainerId === t.trainer_id && 
-                  (start < item.end && end > item.start)
-                )
-
-                if (!hasOverlap) {
-                  dayItems.push({
-                    id: `template-${t.id}-${day.toISOString()}`, // Unique ID for this day instance
-                    trainerId: t.trainer_id,
-                    start,
-                    end,
-                    type: 'template',
-                    data: t
-                  })
-                }
-              })
-
-            // Sort items
-            dayItems.sort((a, b) => a.start.getTime() - b.start.getTime())
+          {trainers.map(trainer => {
+            const trainerItems = buildTrainerItems(trainer.id)
             
             return (
-              <div key={day.toString()} className="relative border-r border-border-strong last:border-r-0 bg-surface-raised group">
-                {/* Background grid lines */}
+              <div key={trainer.id} className="relative border-r border-border-strong last:border-r-0 bg-surface-raised group">
                 {hours.map(hour => (
                   <div 
-                    key={`${day}-${hour}`} 
+                    key={`${trainer.id}-${hour}`} 
                     className="h-[40px] border-b border-border-subtle hover:bg-surface-base cursor-pointer"
-                    onClick={() => handleTimeSlotClick(day, hour)}
+                    onClick={() => handleTimeSlotClick(selectedDay, hour, trainer.id)}
                   />
                 ))}
 
-                {/* Render Items */}
-                {dayItems.map(item => {
-                  let displayName = ''
-                  let fullDisplayName = ''
-
-                  // Resolve Trainer Name
-                  if (item.type === 'shift') {
-                    const shift = item.data as Shift
-                    // Try embedded trainer first, then lookup
-                    const rawName = shift.trainer?.full_name || trainers.find(t => t.id === item.trainerId)?.full_name
-                    fullDisplayName = rawName || `ID:${item.trainerId}`
-                    displayName = getSurname(rawName) || (rawName ? rawName : '(不明)')
-                  } else {
-                    // Template only has ID lookup
-                    const trainer = trainers.find(t => t.id === item.trainerId)
-                    const rawName = trainer?.full_name
-                    fullDisplayName = rawName || `ID:${item.trainerId}`
-                    displayName = getSurname(rawName) || (rawName ? rawName : '(不明)')
-                  }
-
+                {trainerItems.map(item => {
+                  const displayTime = `${format(item.start, 'H:mm')}〜${format(item.end, 'H:mm')}`
                   if (item.type === 'template') {
-                    // Template (Fixed) Shift
-                    const template = item.data as ShiftTemplate
-                    const colors = getTrainerColor(template.trainer_id)
-                    
                     return (
                       <div
                         key={item.id}
-                        className={`absolute rounded ${colors.bg} border ${colors.border} hover:opacity-90 pointer-events-none shadow-sm flex items-center justify-center overflow-hidden`}
-                        style={getItemStyle(item, dayItems)}
+                        className="absolute inset-x-1 overflow-hidden rounded-md border-l-2 border-sky-400 bg-surface-overlay/80 shadow-sm pointer-events-none flex items-center justify-center"
+                        style={getItemStyle(item, trainerItems)}
                       >
-                         <div className="w-full text-center px-0.5">
-                          <div className="text-[10px] text-black leading-tight break-words font-normal">
-                            {displayName}
-                          </div>
-                          {/* 
-                          <div className="text-[9px] text-text-secondary font-normal leading-tight">
-                            (固定)
-                          </div>
-                          */}
-                        </div>
+                        <span className="px-1 text-center text-[10px] leading-tight text-sky-200">{displayTime}</span>
                       </div>
                     )
                   } else {
-                    // Actual Shift
                     const shift = item.data as Shift
-                    const colors = getTrainerColor(shift.trainer_id)
                     const isSelected = selectedShiftIds.includes(shift.id)
                     
                     return (
                       <div
                         key={item.id}
-                        className={`absolute rounded ${isSelected
-                          ? 'bg-orange-100 border-orange-400 ring-2 ring-orange-400 ring-opacity-50 z-20'
-                          : `${colors.bg} ${colors.border}`} border hover:opacity-90 cursor-pointer shadow-sm transition-all flex items-center justify-center overflow-hidden`}
-                        style={getItemStyle(item, dayItems)}
+                        className={`absolute inset-x-1 cursor-pointer overflow-hidden rounded-md border-l-2 shadow-sm transition-all flex items-center justify-center ${
+                          isSelected
+                            ? 'border-brand-400 bg-brand-500/25 ring-2 ring-brand-400/70'
+                            : 'border-brand-500 bg-surface-overlay hover:bg-brand-500/15'
+                        }`}
+                        style={getItemStyle(item, trainerItems)}
                         onClick={(e) => handleShiftClick(e, shift)}
-                        title={`${fullDisplayName}: ${format(item.start, 'HH:mm')} - ${format(item.end, 'HH:mm')}`}
+                        title={`${trainer.full_name}: ${format(item.start, 'HH:mm')} - ${format(item.end, 'HH:mm')}`}
                       >
-                        <div className="w-full px-0.5 text-center">
-                          <span className={`relative z-50 text-[10px] ${isSelected ? 'text-orange-900 font-normal' : 'text-black'} leading-tight break-words block`}>
-                            {displayName}
-                          </span>
-                        </div>
+                        <span className={`px-1 text-center text-[10px] leading-tight ${isSelected ? 'text-brand-100' : 'text-text-primary'}`}>
+                          {displayTime}
+                        </span>
                       </div>
                     )
                   }
@@ -338,11 +274,13 @@ export default function TeamShiftCalendar({
           trainers={trainers}
           date={selectedDate}
           initialHour={selectedTime}
+          initialTrainerId={selectedTrainerForCreate}
           isOpen={createModalOpen}
           onClose={() => {
             setCreateModalOpen(false)
             setSelectedDate(null)
             setSelectedTime(null)
+            setSelectedTrainerForCreate('')
           }}
           onSave={onShiftCreate}
         />
@@ -363,15 +301,16 @@ export default function TeamShiftCalendar({
   )
 }
 
-function ShiftCreateModal({ trainers, date, initialHour, isOpen, onClose, onSave }: {
+function ShiftCreateModal({ trainers, date, initialHour, initialTrainerId, isOpen, onClose, onSave }: {
   trainers: Trainer[],
   date: Date,
   initialHour: number,
+  initialTrainerId?: string,
   isOpen: boolean,
   onClose: () => void,
   onSave: (trainerId: string, s: Date, e: Date) => Promise<void>
 }) {
-  const [trainerId, setTrainerId] = useState(trainers[0]?.id || '')
+  const [trainerId, setTrainerId] = useState(initialTrainerId || trainers[0]?.id || '')
   const [startTime, setStartTime] = useState(`${initialHour.toString().padStart(2, '0')}:00`)
   const [endTime, setEndTime] = useState(`${(initialHour + 1).toString().padStart(2, '0')}:00`)
   const [loading, setLoading] = useState(false)

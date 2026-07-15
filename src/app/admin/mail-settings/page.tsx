@@ -3,7 +3,6 @@
 import { Fragment, useState, useEffect, useMemo } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import AdminHeader from '@/app/components/AdminHeader'
 import Icon from '@/components/ui/icons'
 
 // メール送信機能は廃止（2026-07決定）。通知はアプリのプッシュ通知のみ。
@@ -270,13 +269,7 @@ export default function AdminMailSettingsPage() {
 
   return (
     <div className="min-h-screen bg-surface-base pb-12">
-      <AdminHeader
-        title="配信設定"
-        subTitle="PUSH NOTIFICATION SETTINGS"
-        onBack={() => router.push('/dashboard?tab=others')}
-      />
-
-      <div className="max-w-3xl mx-auto px-4">
+      <div className="max-w-3xl mx-auto px-4 pt-4">
         {/* Success Alert */}
         {success && (
           <div className="mb-6 p-4 bg-state-success-500/15 border border-state-success-500/25 rounded-2xl text-sm text-state-success-300 flex items-center gap-2 animate-fadeIn">
@@ -462,16 +455,9 @@ export default function AdminMailSettingsPage() {
             <div className="bg-surface-raised p-4 rounded-2xl shadow-sm border border-border-subtle flex justify-between gap-3">
               <button
                 type="button"
-                onClick={() => router.push('/dashboard?tab=others')}
-                className="px-5 py-2.5 border border-border-strong hover:bg-surface-base text-text-secondary rounded-xl text-sm font-medium transition-colors flex-1 text-center"
-              >
-                戻る
-              </button>
-              <button
-                type="button"
                 onClick={handleSaveMembers}
                 disabled={membersSaving || membersLoading}
-                className="px-6 py-2.5 bg-brand-700 hover:bg-brand-800 text-white rounded-xl text-sm font-medium disabled:opacity-50 disabled:hover:bg-brand-700 transition-colors flex items-center justify-center gap-2 flex-[2] shadow-md shadow-brand-500/10"
+                className="px-6 py-2.5 bg-brand-700 hover:bg-brand-800 text-white rounded-xl text-sm font-medium disabled:opacity-50 disabled:hover:bg-brand-700 transition-colors flex w-full items-center justify-center gap-2 shadow-md shadow-brand-500/10"
               >
                 {membersSaving ? (
                   <>

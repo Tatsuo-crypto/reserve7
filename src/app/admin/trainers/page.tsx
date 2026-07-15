@@ -19,6 +19,14 @@ type Trainer = {
   updated_at: string
   access_token?: string
   google_calendar_id?: string | null
+  payroll_enabled?: boolean
+  daily_transportation_cost?: number
+  trainer_pay_rates?: {
+    id: string
+    hourly_wage: number
+    effective_from: string
+    effective_to?: string | null
+  }[]
 }
 
 type StoreOption = {
@@ -89,6 +97,10 @@ export default function TrainersPage() {
     phone?: string
     notes?: string
     googleCalendarId?: string
+    payrollEnabled: boolean
+    hourlyWage: string
+    hourlyWageEffectiveFrom: string
+    dailyTransportationCost: string
   }>({
     fullName: '',
     email: '',
@@ -96,7 +108,11 @@ export default function TrainersPage() {
     status: 'active',
     phone: '',
     notes: '',
-    googleCalendarId: ''
+    googleCalendarId: '',
+    payrollEnabled: false,
+    hourlyWage: '',
+    hourlyWageEffectiveFrom: new Date().toISOString().slice(0, 10),
+    dailyTransportationCost: '0'
   })
 
   const listUrl = useMemo(() => {
@@ -166,12 +182,26 @@ export default function TrainersPage() {
   const openCreate = () => {
     setEditing(null)
     const initialStoreId = adminStoreId || storeOptions[0]?.id || ''
-    setForm({ fullName: '', email: '', storeId: initialStoreId, status: 'active', phone: '', notes: '', googleCalendarId: '' })
+    setForm({
+      fullName: '',
+      email: '',
+      storeId: initialStoreId,
+      status: 'active',
+      phone: '',
+      notes: '',
+      googleCalendarId: '',
+      payrollEnabled: false,
+      hourlyWage: '',
+      hourlyWageEffectiveFrom: new Date().toISOString().slice(0, 10),
+      dailyTransportationCost: '0'
+    })
     setModalOpen(true)
   }
 
   const openEdit = (t: Trainer) => {
     setEditing(t)
+    const latestRate = [...(t.trainer_pay_rates || [])]
+      .sort((a, b) => b.effective_from.localeCompare(a.effective_from))[0]
     setForm({
       fullName: t.full_name,
       email: t.email || '',
@@ -179,7 +209,11 @@ export default function TrainersPage() {
       status: t.status,
       phone: t.phone || '',
       notes: t.notes || '',
-      googleCalendarId: t.google_calendar_id || ''
+      googleCalendarId: t.google_calendar_id || '',
+      payrollEnabled: t.payroll_enabled === true,
+      hourlyWage: latestRate?.hourly_wage ? String(latestRate.hourly_wage) : '',
+      hourlyWageEffectiveFrom: latestRate?.effective_from || new Date().toISOString().slice(0, 10),
+      dailyTransportationCost: String(t.daily_transportation_cost || 0)
     })
     setModalOpen(true)
   }
@@ -207,7 +241,11 @@ export default function TrainersPage() {
           status: form.status,
           phone: form.phone || null,
           notes: form.notes || null,
-          googleCalendarId: form.googleCalendarId || null
+          googleCalendarId: form.googleCalendarId || null,
+          payrollEnabled: form.payrollEnabled,
+          hourlyWage: form.hourlyWage ? Number(form.hourlyWage) : undefined,
+          hourlyWageEffectiveFrom: form.hourlyWageEffectiveFrom || undefined,
+          dailyTransportationCost: Number(form.dailyTransportationCost || 0)
         })
       })
       if (!res.ok) {
@@ -334,6 +372,9 @@ export default function TrainersPage() {
                   <span className={`flex-shrink-0 w-2 h-2 rounded-full ${t.status === 'active' ? 'bg-brand-500' : 'bg-surface-overlay'}`} />
                   <span className="font-normal text-sm text-text-primary truncate">{t.full_name}</span>
                   <span className="text-xs text-text-muted flex-shrink-0">{storeNameById[t.store_id] || ''}</span>
+                  {t.payroll_enabled && (
+                    <span className="text-[10px] text-brand-300 bg-brand-500/15 px-2 py-0.5 rounded-full flex-shrink-0">給与</span>
+                  )}
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0 ml-3">
                   {t.access_token && (
@@ -417,6 +458,49 @@ export default function TrainersPage() {
                 <label className="block text-xs text-text-secondary mb-1">メモ</label>
                 <textarea className="w-full border rounded-md px-3 py-2 text-sm" rows={3} value={form.notes} onChange={(e) => setForm(f => ({ ...f, notes: e.target.value }))} />
               </div>
+              <div className="md:col-span-2 border-t border-border-subtle pt-4">
+                <label className="flex items-center gap-2 text-sm text-text-primary">
+                  <input
+                    type="checkbox"
+                    checked={form.payrollEnabled}
+                    onChange={(e) => setForm(f => ({ ...f, payrollEnabled: e.target.checked }))}
+                  />
+                  給与計算対象にする
+                </label>
+              </div>
+              {form.payrollEnabled && (
+                <>
+                  <div>
+                    <label className="block text-xs text-text-secondary mb-1">時給</label>
+                    <input
+                      className="w-full border rounded-md px-3 py-2 text-sm"
+                      type="number"
+                      min="0"
+                      value={form.hourlyWage}
+                      onChange={(e) => setForm(f => ({ ...f, hourlyWage: e.target.value }))}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-text-secondary mb-1">時給の適用開始日</label>
+                    <input
+                      className="w-full border rounded-md px-3 py-2 text-sm"
+                      type="date"
+                      value={form.hourlyWageEffectiveFrom}
+                      onChange={(e) => setForm(f => ({ ...f, hourlyWageEffectiveFrom: e.target.value }))}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-text-secondary mb-1">交通費 / 出勤日</label>
+                    <input
+                      className="w-full border rounded-md px-3 py-2 text-sm"
+                      type="number"
+                      min="0"
+                      value={form.dailyTransportationCost}
+                      onChange={(e) => setForm(f => ({ ...f, dailyTransportationCost: e.target.value }))}
+                    />
+                  </div>
+                </>
+              )}
             </div>
             <div className="mt-6 flex justify-end gap-3">
               <button className="px-3 py-2 text-sm rounded-md border" onClick={() => setModalOpen(false)}>キャンセル</button>

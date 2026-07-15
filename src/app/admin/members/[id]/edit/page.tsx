@@ -394,13 +394,6 @@ export default function EditMemberPage() {
           <h1 className="text-2xl font-normal text-text-primary">会員情報編集</h1>
           <p className="mt-1 text-sm text-text-secondary">カウンセリング内容と入会情報を管理します</p>
         </div>
-        <button
-          type="button"
-          onClick={() => router.push('/admin/members')}
-          className="px-4 py-2 border border-border-strong rounded-lg text-sm text-text-secondary hover:bg-surface-base"
-        >
-          一覧へ戻る
-        </button>
       </div>
 
       {error && (

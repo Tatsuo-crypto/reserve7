@@ -214,18 +214,11 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-10">
-          <div className="relative flex items-center justify-between">
-            <button
-              onClick={() => router.back()}
-              className="p-2 text-text-muted hover:text-text-secondary bg-surface-raised rounded-full shadow-sm border border-border-subtle transition-all hover:shadow-md"
-            >
-              <Icon name="chevronLeft" size={24} />
-            </button>
-            <div className="text-center flex-1">
+          <div className="flex items-center justify-center">
+            <div className="text-center">
               <h1 className="text-3xl font-normal text-text-primary tracking-tight">月額プラン履歴</h1>
               <p className="mt-1 text-sm font-normal text-text-muted tracking-wider uppercase">{member.fullName} 様</p>
             </div>
-            <div className="w-10"></div>
           </div>
         </div>
 

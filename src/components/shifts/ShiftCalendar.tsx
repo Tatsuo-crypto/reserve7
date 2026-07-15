@@ -43,7 +43,7 @@ export default function ShiftCalendar({
   const hours = Array.from({ length: END_HOUR - START_HOUR + 1 }, (_, i) => START_HOUR + i)
 
   // Generate days for the week view
-  const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 }) // Monday start
+  const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 })
   const weekDays = eachDayOfInterval({
     start: weekStart,
     end: addDays(weekStart, 6)
@@ -229,13 +229,14 @@ export default function ShiftCalendar({
   )
 }
 
-// Helper to generate time options (30 min intervals)
+// Helper to generate time options (10 min intervals)
 const generateTimeOptions = () => {
   const options = []
   for (let i = 0; i < 24; i++) {
     const hour = i.toString().padStart(2, '0')
-    options.push(`${hour}:00`)
-    options.push(`${hour}:30`)
+    for (let minute = 0; minute < 60; minute += 10) {
+      options.push(`${hour}:${minute.toString().padStart(2, '0')}`)
+    }
   }
   return options
 }

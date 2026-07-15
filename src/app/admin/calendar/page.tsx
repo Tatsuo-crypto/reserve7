@@ -13,8 +13,7 @@ function AdminCalendarPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const trainerToken = searchParams.get('trainerToken')
-  const [viewMode, setViewMode] = useState<'month' | 'timeline'>('month')
-  const [calendarKey, setCalendarKey] = useState(0)
+  const [, setViewMode] = useState<'month' | 'timeline'>('month')
   const [trainer, setTrainer] = useState<{ name: string; storeId: string } | null>(null)
 
   useEffect(() => {
@@ -66,17 +65,6 @@ function AdminCalendarPageContent() {
     return null
   }
 
-  const handleBackClick = () => {
-    if (viewMode === 'timeline') {
-      // タイムライン表示の場合は月表示に戻る
-      setCalendarKey(prev => prev + 1)
-      setViewMode('month')
-    } else {
-      // 月表示の場合はダッシュボードに戻る
-      router.push(trainerToken ? `/trainer/${trainerToken}` : '/dashboard')
-    }
-  }
-
   return (
     <div className="min-h-screen bg-surface-base">
       {/* Trainer Header */}
@@ -105,13 +93,7 @@ function AdminCalendarPageContent() {
       <div className="w-full">
         {/* Header */}
         <div className="mb-6 px-4">
-          <div className="relative flex items-center justify-center">
-            <button
-              onClick={handleBackClick}
-              className="absolute left-0 text-text-muted hover:text-text-secondary"
-            >
-              <Icon name="chevronLeft" size={24} />
-            </button>
+          <div className="flex items-center justify-center">
             <div className="text-center">
               <h1 className="text-2xl font-normal text-text-primary">予約</h1>
               <p className="mt-1 text-sm text-text-secondary">予約のステータス管理</p>
@@ -130,7 +112,6 @@ function AdminCalendarPageContent() {
 
         {/* Calendar Component */}
         <CalendarView 
-          key={calendarKey}
           onViewModeChange={setViewMode}
           onBackToMonth={() => setViewMode('month')}
           trainerToken={trainerToken}

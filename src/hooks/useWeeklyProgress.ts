@@ -49,6 +49,8 @@ interface UseWeeklyProgressOptions {
     onWeekOffsetChange?: (updater: (prev: number) => number) => void
     /** Today's unsaved draft data (used on the member Home/Record screens to reflect not-yet-saved edits). */
     todayDraft?: any
+    /** false の場合は通信も計算も行わない。非表示セクションの無駄な取得を避けるために使う。 */
+    enabled?: boolean
 }
 
 const METRIC_KEYS = ['calories', 'protein', 'fat', 'carbs', 'sugar', 'fiber', 'salt', 'steps', 'water', 'sleep', 'workout'] as const
@@ -59,7 +61,7 @@ const METRIC_KEYS = ['calories', 'protein', 'fat', 'carbs', 'sugar', 'fiber', 's
  * Progress view. Extracted so the three call sites never drift out of sync.
  */
 export function useWeeklyProgress(token: string, options: UseWeeklyProgressOptions = {}) {
-    const { userId, isAdmin, weekOffset: controlledWeekOffset, onWeekOffsetChange, todayDraft } = options
+    const { userId, isAdmin, weekOffset: controlledWeekOffset, onWeekOffsetChange, todayDraft, enabled = true } = options
 
     const [dietLogs, setDietLogs] = useState<any[]>([])
     const [lifestyleLogs, setLifestyleLogs] = useState<any[]>([])
@@ -75,15 +77,37 @@ export function useWeeklyProgress(token: string, options: UseWeeklyProgressOptio
 
     useEffect(() => {
         const fetchData = async () => {
+            if (!enabled) {
+                setLoading(false)
+                return
+            }
+
             setLoading(true)
             try {
                 const params = isAdmin && userId
                     ? `userId=${encodeURIComponent(userId)}`
                     : `token=${encodeURIComponent(token || '')}`
+                const getWeekRange = (offset: number) => {
+                    const now = new Date()
+                    now.setDate(now.getDate() + (offset * 7))
+                    const day = now.getDay()
+                    const diff = now.getDate() - day + (day === 0 ? -6 : 1)
+                    const monday = new Date(now.setDate(diff))
+                    monday.setHours(0, 0, 0, 0)
+                    const sunday = new Date(monday)
+                    sunday.setDate(monday.getDate() + 6)
+                    sunday.setHours(23, 59, 59, 999)
+                    return { monday, sunday }
+                }
+                const { monday: prevMonday } = getWeekRange(weekOffset - 1)
+                const { sunday } = getWeekRange(weekOffset)
+                const logParams = new URLSearchParams(params)
+                logParams.set('startDate', prevMonday.toLocaleDateString('sv-SE'))
+                logParams.set('endDate', sunday.toLocaleDateString('sv-SE'))
 
                 const [dietLogRes, lifeLogRes, dietGoalRes, lifeSettingRes] = await Promise.all([
-                    fetch(`/api/diet/logs?${params}`),
-                    fetch(`/api/lifestyle/logs?${params}`),
+                    fetch(`/api/diet/logs?${logParams.toString()}`),
+                    fetch(`/api/lifestyle/logs?${logParams.toString()}`),
                     fetch(`/api/diet/goals?${params}`),
                     fetch(`/api/lifestyle/settings?${params}`)
                 ])
@@ -106,9 +130,10 @@ export function useWeeklyProgress(token: string, options: UseWeeklyProgressOptio
             }
         }
         if (token || (isAdmin && userId)) fetchData()
-    }, [token, userId, isAdmin])
+    }, [token, userId, isAdmin, enabled, weekOffset])
 
     const weeklyStats: WeeklyProgressStats | null = useMemo(() => {
+        if (!enabled) return null
         if (!dietLogs.length && !lifestyleLogs.length && !dietGoals.length && !todayDraft) return null
 
         const getWeekRange = (offset: number) => {
@@ -365,7 +390,7 @@ export function useWeeklyProgress(token: string, options: UseWeeklyProgressOptio
             weight,
             weekDays,
         }
-    }, [dietLogs, lifestyleLogs, dietGoals, lifestyleSettings, weekOffset, todayDraft, todayStr])
+    }, [dietLogs, lifestyleLogs, dietGoals, lifestyleSettings, weekOffset, todayDraft, todayStr, enabled])
 
     return { weeklyStats, loading, weekOffset, setWeekOffset }
 }

@@ -4,8 +4,7 @@ import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import Link from 'next/link'
-import Card from '@/components/ui/Card'
-import Icon from '@/components/ui/icons'
+import Icon, { IconName } from '@/components/ui/icons'
 
 interface MemberDetail {
   id: string
@@ -17,6 +16,68 @@ interface MemberDetail {
   createdAt?: string
   googleCalendarEmail?: string
   status?: string
+}
+
+function MemberGridItem({
+  label,
+  iconName,
+  href,
+  onClick,
+  disabled = false,
+  external = false,
+}: {
+  label: string
+  iconName: IconName
+  href?: string
+  onClick?: () => void
+  disabled?: boolean
+  external?: boolean
+}) {
+  const className = `group flex min-h-[106px] flex-col items-center justify-start rounded-2xl px-2 py-3 text-center transition-colors ${
+    disabled
+      ? 'cursor-not-allowed opacity-40'
+      : 'active:scale-[0.98] hover:bg-surface-raised/50'
+  }`
+  const content = (
+    <>
+      <div className="flex h-12 items-center justify-center text-text-secondary transition-colors group-hover:text-text-primary">
+        <Icon name={iconName} size={40} />
+      </div>
+      <div className="mt-2 text-[12px] font-normal leading-snug text-text-secondary transition-colors group-hover:text-text-primary">
+        {label}
+      </div>
+    </>
+  )
+
+  if (disabled) {
+    return <div className={className}>{content}</div>
+  }
+
+  if (onClick) {
+    return (
+      <button type="button" onClick={onClick} className={className}>
+        {content}
+      </button>
+    )
+  }
+
+  if (href && external) {
+    return (
+      <a href={href} target="_blank" rel="noopener noreferrer" className={className}>
+        {content}
+      </a>
+    )
+  }
+
+  if (href) {
+    return (
+      <Link href={href} className={className}>
+        {content}
+      </Link>
+    )
+  }
+
+  return <div className={className}>{content}</div>
 }
 
 export default function MemberDetailPage({ params }: { params: { id: string } }) {
@@ -94,85 +155,47 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
     )
   }
 
-  // R-2: アイコン背景は装飾色ではなく常にニュートラル(surface.overlay相当)。
-  // 項目同士の区別はラベルとアイコン形状のみに任せ、色・グラデーション・blurは使わない。
-  // hoverもN-4/R-1の規律どおり「背景色が1段変わる」のみ(拡大・浮き上がりは廃止)。
-  const actionCardClass = 'flex flex-col items-center justify-center hover:bg-surface-base transition-colors'
-  const actionCardDisabledClass = 'flex flex-col items-center justify-center opacity-50 cursor-not-allowed'
-
   return (
     <div className="min-h-screen bg-surface-base pt-4 pb-12">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Action Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-10">
-          {/* Copy URL Card */}
+        <div className="grid grid-cols-3 gap-x-2 gap-y-6 sm:grid-cols-4">
           {member.accessToken ? (
-            <button
+            <MemberGridItem
+              label={copySuccess || 'URLコピー'}
+              iconName="copy"
               onClick={() => {
                 const url = `${window.location.origin}/client/${member.accessToken}`
                 navigator.clipboard.writeText(url)
                 setCopySuccess('コピー完了')
                 setTimeout(() => setCopySuccess(''), 2000)
               }}
-            >
-              <Card padding="sm" className={actionCardClass}>
-                <div className="h-14 w-14 bg-surface-overlay text-text-secondary rounded-2xl flex items-center justify-center mb-4">
-                  <Icon name="copy" size={28} />
-                </div>
-                <span className="text-sm font-normal text-text-primary tracking-tight">{copySuccess || 'URLをコピー'}</span>
-              </Card>
-            </button>
+            />
           ) : (
-            <Card padding="sm" className={actionCardDisabledClass}>
-              <div className="h-14 w-14 bg-surface-overlay text-text-muted rounded-2xl flex items-center justify-center mb-4">
-                <Icon name="lock" size={28} />
-              </div>
-              <span className="text-sm font-normal text-text-muted">URL未設定</span>
-            </Card>
+            <MemberGridItem label="URL未設定" iconName="lock" disabled />
           )}
 
-          {/* Edit Member Card */}
-          <Link href={`/admin/members/${memberId}/edit`}>
-            <Card padding="sm" className={actionCardClass}>
-              <div className="h-14 w-14 bg-surface-overlay text-text-secondary rounded-2xl flex items-center justify-center mb-4">
-                <Icon name="pencil" size={28} />
-              </div>
-              <span className="text-sm font-normal text-text-primary tracking-tight">会員情報</span>
-            </Card>
-          </Link>
+          <MemberGridItem
+            href={`/admin/members/${memberId}/edit`}
+            label="会員情報"
+            iconName="pencil"
+          />
 
-          {/* Check Client View Card */}
           {member.accessToken ? (
-            <a
+            <MemberGridItem
               href={`/client/${member.accessToken}?from=admin`}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Card padding="sm" className={actionCardClass}>
-                <div className="h-14 w-14 bg-surface-overlay text-text-secondary rounded-2xl flex items-center justify-center mb-4">
-                  <Icon name="eye" size={28} />
-                </div>
-                <span className="text-sm font-normal text-text-primary tracking-tight">会員画面確認</span>
-              </Card>
-            </a>
+              label="会員画面"
+              iconName="eye"
+              external
+            />
           ) : (
-            <Card padding="sm" className={actionCardDisabledClass}>
-              <div className="h-14 w-14 bg-surface-overlay text-text-muted rounded-2xl flex items-center justify-center mb-4">
-                <Icon name="linkSlash" size={28} />
-              </div>
-              <span className="text-sm font-normal text-text-muted">会員画面なし</span>
-            </Card>
+            <MemberGridItem label="会員画面なし" iconName="linkSlash" disabled />
           )}
 
-          {/* Monthly Plan History Card */}
-          <Link href={`/admin/members/${memberId}/history`}>
-            <Card padding="sm" className={actionCardClass}>
-              <div className="h-14 w-14 bg-surface-overlay text-text-secondary rounded-2xl flex items-center justify-center mb-4">
-                <Icon name="clipboardList" size={28} />
-              </div>
-              <span className="text-sm font-normal text-text-primary tracking-tight">月額プラン</span>
-            </Card>
-          </Link>
+          <MemberGridItem
+            href={`/admin/members/${memberId}/history`}
+            label="月額プラン"
+            iconName="clipboardList"
+          />
         </div>
       </div>
     </div>

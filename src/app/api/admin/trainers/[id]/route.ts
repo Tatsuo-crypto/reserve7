@@ -23,19 +23,73 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     if (typeof phone === 'string' || phone === null) updates.phone = phone
     if (typeof notes === 'string' || notes === null) updates.notes = notes
     if (typeof googleCalendarId === 'string' || googleCalendarId === null) updates.google_calendar_id = googleCalendarId
+    if (typeof body?.payrollEnabled === 'boolean') updates.payroll_enabled = body.payrollEnabled
+    if (body?.dailyTransportationCost !== undefined) {
+      const dailyTransportationCost = Number(body.dailyTransportationCost)
+      if (Number.isFinite(dailyTransportationCost)) {
+        updates.daily_transportation_cost = Math.max(0, Math.floor(dailyTransportationCost))
+      }
+    }
 
-    if (Object.keys(updates).length === 0) {
+    const hourlyWage = body?.hourlyWage === undefined ? null : Number(body.hourlyWage)
+    const hourlyWageEffectiveFrom = typeof body?.hourlyWageEffectiveFrom === 'string' ? body.hourlyWageEffectiveFrom : null
+    const shouldSaveRate = Number.isFinite(hourlyWage) && hourlyWageEffectiveFrom
+
+    if (Object.keys(updates).length === 0 && !shouldSaveRate) {
       return NextResponse.json({ error: '更新対象のフィールドがありません' }, { status: 400 })
     }
 
-    const { data, error } = await supabaseAdmin
-      .from('trainers')
-      .update(updates)
-      .eq('id', params.id)
-      .select('id, full_name, email, store_id, status, phone, notes, created_at, updated_at, google_calendar_id')
-      .single()
+    let data = null
+    if (Object.keys(updates).length > 0) {
+      const { data: updated, error } = await supabaseAdmin
+        .from('trainers')
+        .update(updates)
+        .eq('id', params.id)
+        .select('id, full_name, email, store_id, status, phone, notes, created_at, updated_at, google_calendar_id, payroll_enabled, daily_transportation_cost')
+        .single()
 
-    if (error) throw error
+      if (error) throw error
+      data = updated
+    }
+
+    if (shouldSaveRate && hourlyWage !== null) {
+      const wage = Math.max(0, Math.floor(hourlyWage))
+      const { data: existingRate, error: existingRateError } = await supabaseAdmin
+        .from('trainer_pay_rates')
+        .select('id')
+        .eq('trainer_id', params.id)
+        .eq('effective_from', hourlyWageEffectiveFrom)
+        .maybeSingle()
+
+      if (existingRateError) throw existingRateError
+
+      if (existingRate?.id) {
+        const { error: rateUpdateError } = await supabaseAdmin
+          .from('trainer_pay_rates')
+          .update({ hourly_wage: wage })
+          .eq('id', existingRate.id)
+        if (rateUpdateError) throw rateUpdateError
+      } else {
+        const { error: rateInsertError } = await supabaseAdmin
+          .from('trainer_pay_rates')
+          .insert({
+            trainer_id: params.id,
+            hourly_wage: wage,
+            effective_from: hourlyWageEffectiveFrom
+          })
+        if (rateInsertError) throw rateInsertError
+      }
+    }
+
+    if (!data) {
+      const { data: current, error: fetchError } = await supabaseAdmin
+        .from('trainers')
+        .select('id, full_name, email, store_id, status, phone, notes, created_at, updated_at, google_calendar_id, payroll_enabled, daily_transportation_cost')
+        .eq('id', params.id)
+        .single()
+      if (fetchError) throw fetchError
+      data = current
+    }
 
     return NextResponse.json({ trainer: data })
   } catch (error) {
@@ -74,7 +128,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
       .from('trainers')
       .update({ status: newStatus })
       .eq('id', params.id)
-      .select('id, full_name, email, store_id, status, phone, notes, created_at, updated_at')
+      .select('id, full_name, email, store_id, status, phone, notes, created_at, updated_at, payroll_enabled, daily_transportation_cost')
       .single()
 
     if (error) throw error

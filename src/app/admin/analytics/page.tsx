@@ -8,8 +8,52 @@ import {
     BarChart, Bar, ComposedChart, Area
 } from 'recharts'
 import { useStoreChange } from '@/hooks/useStoreChange'
-import AdminHeader from '@/app/components/AdminHeader'
 import MemberMovementModal from './MemberMovementModal'
+import { AdminStoreOption, fetchAdminStoresOnce } from '@/lib/admin-stores-client'
+
+type AnalyticsData = {
+    memberHistory: any[],
+    salesHistory: any[],
+    projectedSales: number
+}
+
+const ANALYTICS_CACHE_MS = 30 * 1000
+const analyticsCache = new Map<string, { timestamp: number, data: AnalyticsData }>()
+const analyticsPromises = new Map<string, Promise<AnalyticsData>>()
+
+async function fetchAnalyticsOnce(storeId: string, period: string): Promise<AnalyticsData> {
+    const params = new URLSearchParams()
+    params.append('storeId', storeId || 'all')
+    params.append('period', period)
+
+    const cacheKey = params.toString()
+    const cached = analyticsCache.get(cacheKey)
+    if (cached && Date.now() - cached.timestamp < ANALYTICS_CACHE_MS) {
+        return cached.data
+    }
+
+    const inflight = analyticsPromises.get(cacheKey)
+    if (inflight) return inflight
+
+    const promise = fetch(`/api/admin/analytics?${cacheKey}`)
+        .then(async (res) => {
+            if (!res.ok) throw new Error('Failed to fetch data')
+            return res.json()
+        })
+        .then((json) => {
+            analyticsCache.set(cacheKey, {
+                timestamp: Date.now(),
+                data: json,
+            })
+            return json
+        })
+        .finally(() => {
+            analyticsPromises.delete(cacheKey)
+        })
+
+    analyticsPromises.set(cacheKey, promise)
+    return promise
+}
 
 export default function AnalyticsPage() {
     const { data: session, status } = useSession()
@@ -17,7 +61,7 @@ export default function AnalyticsPage() {
     const { currentStoreId } = useStoreChange()
     const [period, setPeriod] = useState<string>('all')
     const [filterStoreId, setFilterStoreId] = useState<string>(currentStoreId || 'all')
-    const [stores, setStores] = useState<{ id: string, name: string }[]>([])
+    const [stores, setStores] = useState<AdminStoreOption[]>([])
     const [selectedMonthData, setSelectedMonthData] = useState<any>(null)
     const [isModalOpen, setIsModalOpen] = useState(false)
     const movementScrollRef = useRef<HTMLDivElement>(null)
@@ -36,11 +80,7 @@ export default function AnalyticsPage() {
         }
     }, [status, session, router])
 
-    const [data, setData] = useState<{
-        memberHistory: any[],
-        salesHistory: any[],
-        projectedSales: number
-    }>({
+    const [data, setData] = useState<AnalyticsData>({
         memberHistory: [],
         salesHistory: [],
         projectedSales: 0
@@ -49,19 +89,20 @@ export default function AnalyticsPage() {
 
     // Fetch stores list
     useEffect(() => {
+        let ignore = false
         const fetchStores = async () => {
             try {
-                const res = await fetch('/api/admin/stores')
-                if (res.ok) {
-                    const json = await res.json()
-                    const list = json.data?.stores || json.stores || []
-                    setStores(list)
-                }
+                const list = await fetchAdminStoresOnce()
+                if (!ignore) setStores(list)
             } catch (e) {
-                console.error('Failed to fetch stores', e)
+                if (!ignore) console.error('Failed to fetch stores', e)
             }
         }
         fetchStores()
+
+        return () => {
+            ignore = true
+        }
     }, [])
 
     // Sync filterStoreId with currentStoreId when it changes (header selection)
@@ -76,25 +117,9 @@ export default function AnalyticsPage() {
         const fetchData = async () => {
             setLoading(true)
             try {
-                const params = new URLSearchParams()
-                // Explicitly send storeId (even if 'all')
-                // If we don't send it, backend defaults to user.storeId which filters to single store
-                params.append('storeId', filterStoreId || 'all')
-                params.append('period', period)
-                // Add timestamp to prevent caching
-                params.append('_t', Date.now().toString())
-
-                const res = await fetch(`/api/admin/analytics?${params.toString()}`, {
-                    cache: 'no-store',
-                    headers: {
-                        'Pragma': 'no-cache',
-                        'Cache-Control': 'no-cache'
-                    }
-                })
+                const json = await fetchAnalyticsOnce(filterStoreId || 'all', period)
                 if (ignore) return // Check if effect was cleaned up
 
-                if (!res.ok) throw new Error('Failed to fetch data')
-                const json = await res.json()
                 setData(json)
             } catch (error) {
                 if (!ignore) {

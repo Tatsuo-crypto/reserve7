@@ -3,20 +3,50 @@
 import { useState, useEffect, Suspense, useCallback, useMemo, useRef } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import dynamic from 'next/dynamic'
 import type { Member } from '@/types'
+import type { GoalFormValues, HabitTargetsValues } from '@/components/diet/GoalPlanForm'
 
 // Reusing some logic from members page
 import { getStatusDotColor } from '@/lib/utils/member'
-import AdminHeader from '@/app/components/AdminHeader'
-import HomeTab from '@/components/diet/HomeTab'
-import AnalyzeTab from '@/components/diet/AnalyzeTab'
-import WeeklySummaryTab from '@/components/diet/WeeklySummaryTab'
-import WeightTab from '@/components/diet/WeightTab'
-import GoalsTab from '@/components/diet/GoalsTab'
-import GoalPlanForm, { type GoalFormValues, type HabitTargetsValues } from '@/components/diet/GoalPlanForm'
-import GoalEditModal from '@/components/diet/GoalEditModal'
 import { calculateAragonPlan, caloriesFromMacros, NEAT_LEVELS } from '@/lib/utils/dietGoalCalc'
 import Icon from '@/components/ui/icons'
+
+const PanelLoading = () => (
+    <div className="flex h-56 items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-brand-600" />
+    </div>
+)
+
+const AnalyzeTab = dynamic(() => import('@/components/diet/AnalyzeTab'), {
+    ssr: false,
+    loading: PanelLoading,
+})
+
+const WeeklySummaryTab = dynamic(() => import('@/components/diet/WeeklySummaryTab'), {
+    ssr: false,
+    loading: PanelLoading,
+})
+
+const WeightTab = dynamic(() => import('@/components/diet/WeightTab'), {
+    ssr: false,
+    loading: PanelLoading,
+})
+
+const GoalsTab = dynamic(() => import('@/components/diet/GoalsTab'), {
+    ssr: false,
+    loading: PanelLoading,
+})
+
+const GoalPlanForm = dynamic(() => import('@/components/diet/GoalPlanForm'), {
+    ssr: false,
+    loading: PanelLoading,
+})
+
+const GoalEditModal = dynamic(() => import('@/components/diet/GoalEditModal'), {
+    ssr: false,
+    loading: PanelLoading,
+})
 
 const GOAL_SUGGESTIONS = [
     'お酒を週2回までにする',

@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
 
     let q = supabaseAdmin
       .from('trainers')
-      .select('id, full_name, email, store_id, status, phone, notes, created_at, updated_at, access_token, google_calendar_id')
+      .select('id, full_name, email, store_id, status, phone, notes, created_at, updated_at, access_token, google_calendar_id, payroll_enabled, daily_transportation_cost, trainer_pay_rates(id, hourly_wage, effective_from, effective_to)')
       .order('full_name', { ascending: true })
 
     if (storeId) {
@@ -89,6 +89,10 @@ export async function POST(request: NextRequest) {
     const phone = body?.phone
     const notes = body?.notes
     const googleCalendarId = body?.googleCalendarId
+    const payrollEnabled = body?.payrollEnabled === true
+    const dailyTransportationCost = Number.isFinite(Number(body?.dailyTransportationCost)) ? Math.max(0, Math.floor(Number(body?.dailyTransportationCost))) : 0
+    const hourlyWage = Number.isFinite(Number(body?.hourlyWage)) ? Math.max(0, Math.floor(Number(body?.hourlyWage))) : null
+    const hourlyWageEffectiveFrom = typeof body?.hourlyWageEffectiveFrom === 'string' ? body.hourlyWageEffectiveFrom : null
 
     const fullName = typeof rawFullName === 'string' ? rawFullName.trim() : ''
     const emailStr = typeof rawEmail === 'string' ? rawEmail.trim() : ''
@@ -113,12 +117,25 @@ export async function POST(request: NextRequest) {
         status, 
         phone, 
         notes,
-        google_calendar_id: googleCalendarId || null
+        google_calendar_id: googleCalendarId || null,
+        payroll_enabled: payrollEnabled,
+        daily_transportation_cost: dailyTransportationCost
       })
-      .select('id, full_name, email, store_id, status, phone, notes, created_at, updated_at, access_token, google_calendar_id')
+      .select('id, full_name, email, store_id, status, phone, notes, created_at, updated_at, access_token, google_calendar_id, payroll_enabled, daily_transportation_cost')
       .single()
 
     if (error) throw error
+
+    if (data?.id && hourlyWage !== null && hourlyWageEffectiveFrom) {
+      const { error: rateError } = await supabaseAdmin
+        .from('trainer_pay_rates')
+        .insert({
+          trainer_id: data.id,
+          hourly_wage: hourlyWage,
+          effective_from: hourlyWageEffectiveFrom
+        })
+      if (rateError) throw rateError
+    }
 
     return NextResponse.json({ trainer: data })
   } catch (error) {

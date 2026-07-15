@@ -147,3 +147,21 @@ export interface Shift {
     full_name: string;
   };
 }
+
+export type ShiftRequestStatus = 'submitted' | 'approved' | 'rejected' | 'cancelled';
+
+export interface ShiftRequest {
+  id: string;
+  trainer_id: string;
+  start_time: string;
+  end_time: string;
+  status: ShiftRequestStatus;
+  note?: string | null;
+  created_at?: string;
+  updated_at?: string;
+  trainer?: {
+    id: string;
+    full_name: string;
+    store_id?: string;
+  };
+}

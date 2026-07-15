@@ -16,9 +16,7 @@ type MembershipHistoryStatus = {
 }
 
 function deriveCurrentStatus(member: any, histories: MembershipHistoryStatus[], today = format(new Date(), 'yyyy-MM-dd')) {
-  const userHistories = histories
-    .filter(history => history.user_id === member.id && history.start_date <= today)
-    .sort((a, b) => b.start_date.localeCompare(a.start_date))
+  const userHistories = histories.filter(history => history.start_date <= today)
 
   const latest = userHistories[0]
   if (!latest) return member.status || 'active'
@@ -32,8 +30,6 @@ function deriveCurrentStatus(member: any, histories: MembershipHistoryStatus[], 
 
 export async function GET(request: NextRequest) {
   try {
-    console.log('=== Members API GET started ===')
-
     let user = null
     const { searchParams } = new URL(request.url)
     const token = searchParams.get('token')
@@ -59,11 +55,9 @@ export async function GET(request: NextRequest) {
         isTrainer: true,
         storeId: trainer.store_id
       }
-      console.log('Trainer authenticated via token:', user.email, user.storeId)
     } else {
       // Session authentication
       user = await getAuthenticatedUser()
-      console.log('User authenticated:', user ? 'Yes' : 'No', user?.email, user?.storeId)
 
       if (!user) {
         console.error('No user found')
@@ -79,37 +73,16 @@ export async function GET(request: NextRequest) {
     // Check if requesting all stores (for sales page)
     const allStores = searchParams.get('all_stores') === 'true'
     const dietOnly = searchParams.get('diet_only') === 'true'
-    console.log('All stores requested:', allStores, 'Diet only:', dietOnly)
-
-    console.log('Building query...')
-    console.log('User storeId for filtering:', user.storeId)
-    console.log('All stores mode:', allStores)
+    const compact = searchParams.get('compact') === 'true'
 
     // Build base query
+    const compactMemberSelect = 'id, full_name, plan, status, store_id, created_at, lifestyle_settings!left(visible_tabs)'
+    const fullMemberSelect = 'id, full_name, email, plan, status, store_id, monthly_fee, transfer_day, billing_start_month, created_at, memo, access_token, online_reminder_enabled, push_notification_enabled, birth_date, gender, height_cm, activity_level, target_weight_kg, lifestyle_settings!left(visible_tabs)'
+    const memberSelect = compact ? compactMemberSelect : fullMemberSelect
+
     let baseQuery = supabaseAdmin
       .from('users')
-      .select(`
-        id, 
-        full_name, 
-        email, 
-        plan, 
-        status, 
-        store_id,
-        monthly_fee,
-        transfer_day,
-        billing_start_month,
-        created_at, 
-        memo, 
-        access_token,
-        online_reminder_enabled,
-        push_notification_enabled,
-        birth_date,
-        gender,
-        height_cm,
-        activity_level,
-        target_weight_kg,
-        lifestyle_settings!left(visible_tabs)
-      `)
+      .select(memberSelect)
       .neq('email', 'tandjgym@gmail.com')
       .neq('email', 'tandjgym2goutenn@gmail.com')
 
@@ -127,7 +100,6 @@ export async function GET(request: NextRequest) {
       ? baseQuery
       : baseQuery.eq('store_id', user.storeId)
 
-    console.log('Executing members query...')
     let { data: members, error } = await query.order('created_at', { ascending: false })
 
     // If dietOnly, further filter in JS to be safe with JSON nested fields
@@ -142,7 +114,6 @@ export async function GET(request: NextRequest) {
     // If no members found and not all stores mode, try with calendarId
     const calendarId = (user as any).calendarId
     if (!allStores && !error && (!members || members.length === 0) && calendarId && calendarId !== user.storeId) {
-      console.log('No members with storeId, trying calendarId:', calendarId)
       const result = await baseQuery.eq('store_id', calendarId).order('created_at', { ascending: false })
 
       if (!result.error && result.data && result.data.length > 0) {
@@ -161,10 +132,7 @@ export async function GET(request: NextRequest) {
       return createErrorResponse(`Failed to fetch members: ${error.message}`, 500)
     }
 
-    console.log('Members fetched:', members?.length || 0)
-
     // Get stores separately with calendar_id
-    console.log('Fetching stores...')
     const { data: stores, error: storesError } = await supabaseAdmin
       .from('stores')
       .select('id, name, calendar_id')
@@ -174,37 +142,44 @@ export async function GET(request: NextRequest) {
       // Don't fail if stores can't be fetched, just log it
     }
 
-    console.log('Stores data:', stores)
-    console.log('Sample member store_id:', members?.[0]?.store_id)
-
-    const memberIds = (members || []).map(member => member.id)
+    const memberRows = (members || []) as any[]
+    const memberIds = memberRows.map(member => member.id)
     let membershipHistories: MembershipHistoryStatus[] = []
 
     if (memberIds.length > 0) {
       const { data: historyData, error: historyError } = await supabaseAdmin
         .from('membership_history')
-        .select('user_id, status, start_date, end_date, plan, monthly_fee')
+        .select(compact ? 'user_id, status, start_date, end_date' : 'user_id, status, start_date, end_date, plan, monthly_fee')
         .in('user_id', memberIds)
         .order('start_date', { ascending: true })
 
       if (historyError) {
         console.error('Membership history fetch error:', historyError)
       } else {
-        membershipHistories = (historyData || []) as MembershipHistoryStatus[]
+        membershipHistories = (historyData || []) as unknown as MembershipHistoryStatus[]
       }
     }
 
+    const storesById = new Map((stores || []).map(store => [store.id, store]))
+    const historiesByUserId = new Map<string, MembershipHistoryStatus[]>()
+    for (const history of membershipHistories) {
+      const current = historiesByUserId.get(history.user_id) || []
+      current.push(history)
+      historiesByUserId.set(history.user_id, current)
+    }
+    Array.from(historiesByUserId.values()).forEach((userHistories: MembershipHistoryStatus[]) => {
+      userHistories.sort((a: MembershipHistoryStatus, b: MembershipHistoryStatus) => b.start_date.localeCompare(a.start_date))
+    })
+
     // Map stores to members using store UUID and derive current status from history.
-    const membersWithStores = members?.map(member => ({
+    const membersWithStores = memberRows.map(member => ({
       ...member,
-      status: deriveCurrentStatus(member, membershipHistories),
-      stores: stores?.find(store => store.id === member.store_id) || null
+      status: deriveCurrentStatus(member, historiesByUserId.get(member.id) || []),
+      stores: storesById.get(member.store_id) || null
     }))
 
-    console.log('=== Members API GET completed successfully ===')
     return createSuccessResponse({ members: membersWithStores })
   } catch (error) {
-    console.error('=== Members API CATCH ERROR ===')
     console.error('Error:', error)
     console.error('Error message:', (error as Error)?.message)
     console.error('Error stack:', (error as Error)?.stack)

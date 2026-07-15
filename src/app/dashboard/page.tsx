@@ -5,33 +5,26 @@ import { useSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import CalendarView from '@/components/CalendarView'
-import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
-} from 'recharts'
 import { getStatusDotColor, getStatusText, getStatusColor } from '@/lib/utils/member'
 import AdminHeader from '@/app/components/AdminHeader'
-import Card from '@/components/ui/Card'
 import Icon, { IconName } from '@/components/ui/icons'
 
 // --- Sub Components ---
 
-// R-2: アイコン背景は装飾色ではなく常にニュートラル(surface.overlay相当)。
-// 項目同士の区別はラベルとアイコン形状のみに任せ、色は使わない。
-function OtherSubCard({ href, label, subLabel, iconName }: { href: string, label: string, subLabel: string, iconName: IconName }) {
+function OtherGridItem({ href, label, iconName }: { href: string, label: string, iconName: IconName }) {
   return (
-    <Link href={href} className="block">
-      <Card padding="sm" className="flex items-center gap-4 hover:bg-surface-base transition-colors">
-        <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-surface-overlay text-text-secondary shrink-0">
-          <Icon name={iconName} size={24} />
-        </div>
-        <div className="flex-1">
-          <div className="text-base font-normal text-text-primary">{label}</div>
-          <div className="text-xs font-normal text-text-muted">{subLabel}</div>
-        </div>
-        <Icon name="chevronRight" size={20} className="text-text-muted" />
-      </Card>
+    <Link
+      href={href}
+      className="group flex min-h-[106px] flex-col items-center justify-start rounded-2xl px-2 py-3 text-center transition-colors active:scale-[0.98] hover:bg-surface-raised/50"
+    >
+      <div className="flex h-12 items-center justify-center text-text-secondary transition-colors group-hover:text-text-primary">
+        <Icon name={iconName} size={40} />
+      </div>
+      <div className="mt-2 text-[12px] font-normal leading-snug text-text-secondary transition-colors group-hover:text-text-primary">
+        {label}
+      </div>
     </Link>
-  );
+  )
 }
 
 // ハイドレーションエラーを防ぐためのラッパーコンポーネント
@@ -57,7 +50,7 @@ const AdminDashboard = () => {
       const fetchDietMembers = async () => {
         setDietLoading(true);
         try {
-          const res = await fetch('/api/admin/members?diet_only=true');
+          const res = await fetch('/api/admin/members?diet_only=true&compact=true');
           if (res.ok) {
             const data = await res.json();
             setDietMembers(data.members || data.data?.members || []);
@@ -124,27 +117,14 @@ const AdminDashboard = () => {
 
         {/* OTHERS TAB */}
         {activeTab === 'others' && (
-          <div className="space-y-8 animate-slideUp">
-            <div className="space-y-3">
-              <h3 className="px-1 text-xs font-normal text-text-muted uppercase tracking-widest">日々の運用</h3>
-              <div className="grid grid-cols-1 gap-4">
-                <OtherSubCard href="/admin/shifts" label="シフト管理" subLabel="勤務スケジュールの作成" iconName="clock" />
-                <OtherSubCard href="/admin/online-lesson" label="オンライン" subLabel="スケジュールの管理" iconName="video" />
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <h3 className="px-1 text-xs font-normal text-text-muted uppercase tracking-widest">設定</h3>
-              <div className="grid grid-cols-1 gap-4">
-                <OtherSubCard href="/admin/trainers" label="トレーナー管理" subLabel="スタッフの登録・編集" iconName="academicCap" />
-                <OtherSubCard href="/admin/stores" label="店舗管理" subLabel="店舗情報の変更・設定" iconName="building" />
-                <OtherSubCard
-                  href="/admin/mail-settings"
-                  label="配信設定"
-                  subLabel="メール・アプリ通知の管理"
-                  iconName="envelope"
-                />
-              </div>
+          <div className="animate-slideUp">
+            <div className="grid grid-cols-3 gap-x-2 gap-y-6 sm:grid-cols-4">
+              <OtherGridItem href="/admin/shifts" label="シフト管理" iconName="clock" />
+              <OtherGridItem href="/admin/payroll" label="給与計算" iconName="currencyYen" />
+              <OtherGridItem href="/admin/online-lesson" label="オンライン" iconName="video" />
+              <OtherGridItem href="/admin/trainers" label="トレーナー管理" iconName="academicCap" />
+              <OtherGridItem href="/admin/stores" label="店舗管理" iconName="building" />
+              <OtherGridItem href="/admin/mail-settings" label="配信設定" iconName="envelope" />
             </div>
           </div>
         )}

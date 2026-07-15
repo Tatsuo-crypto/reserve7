@@ -631,12 +631,6 @@ function NewReservationContent() {
         <div className="mb-8">
           <div className="flex flex-col space-y-4">
             <div className="flex items-center justify-center">
-              <button
-                onClick={() => router.back()}
-                className="absolute left-4 text-text-secondary hover:text-text-primary transition-colors"
-              >
-                <Icon name="chevronLeft" size={24} />
-              </button>
               <div className="text-center">
                 <h1 className="text-3xl font-normal text-text-primary">新規予約作成</h1>
                 <p className="mt-2 text-text-secondary">会員の予約を作成します</p>

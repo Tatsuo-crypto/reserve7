@@ -3,11 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Icon from '@/components/ui/icons'
-
-interface Store {
-    id: string
-    name: string
-}
+import { AdminStoreOption, fetchAdminStoresOnce } from '@/lib/admin-stores-client'
 
 interface StoreSwitcherProps {
     defaultStoreName: string
@@ -15,7 +11,7 @@ interface StoreSwitcherProps {
 
 export default function StoreSwitcher({ defaultStoreName }: StoreSwitcherProps) {
     const router = useRouter()
-    const [stores, setStores] = useState<Store[]>([])
+    const [stores, setStores] = useState<AdminStoreOption[]>([])
     const [currentStoreName, setCurrentStoreName] = useState(defaultStoreName)
     const [isOpen, setIsOpen] = useState(false)
     const dropdownRef = useRef<HTMLDivElement>(null)
@@ -32,36 +28,39 @@ export default function StoreSwitcher({ defaultStoreName }: StoreSwitcherProps) 
     }, [])
 
     useEffect(() => {
+        let ignore = false
         const fetchStores = async () => {
             try {
-                const res = await fetch('/api/admin/stores')
-                if (res.ok) {
-                    const data = await res.json()
-                    const storesList = data.data?.stores || data.stores || []
-                    setStores(storesList)
+                const storesList = await fetchAdminStoresOnce()
+                if (ignore) return
 
-                    // Check cookie for current selection
-                    const match = document.cookie.match(/(^|;)\s*admin_store_preference=([^;]+)/)
-                    const cookieVal = match ? match[2] : null
+                setStores(storesList)
 
-                    if (cookieVal) {
-                        const found = storesList.find((s: any) => s.id === cookieVal)
-                        if (found) {
-                            setCurrentStoreName(found.name)
-                        }
-                    } else {
-                        // Default to 'all' if no cookie? Or keep defaultStoreName?
-                        // User might want specific default. Keeping defaultStoreName for now unless it's empty.
+                // Check cookie for current selection
+                const match = document.cookie.match(/(^|;)\s*admin_store_preference=([^;]+)/)
+                const cookieVal = match ? match[2] : null
+
+                if (cookieVal) {
+                    const found = storesList.find((s: any) => s.id === cookieVal)
+                    if (found) {
+                        setCurrentStoreName(found.name)
                     }
+                } else {
+                    // Default to 'all' if no cookie? Or keep defaultStoreName?
+                    // User might want specific default. Keeping defaultStoreName for now unless it's empty.
                 }
             } catch (e) {
-                console.error('Failed to fetch stores', e)
+                if (!ignore) console.error('Failed to fetch stores', e)
             }
         }
         fetchStores()
+
+        return () => {
+            ignore = true
+        }
     }, [])
 
-    const handleSelect = (store: Store) => {
+    const handleSelect = (store: AdminStoreOption) => {
         // Set cookie
         document.cookie = `admin_store_preference=${store.id}; path=/; max-age=31536000` // 1 year
         setCurrentStoreName(store.name)

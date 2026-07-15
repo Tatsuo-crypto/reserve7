@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useMemo, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Icon from '@/components/ui/icons'
 
@@ -39,6 +39,26 @@ interface Trainer {
   email: string
 }
 
+const HOUR_HEIGHT = 48
+const TIMELINE_START_HOUR = 8
+const TIME_SLOTS = Array.from({ length: 16 }, (_, index) =>
+  `${String(index + TIMELINE_START_HOUR).padStart(2, '0')}:00`
+)
+
+function formatJstDate(value: string) {
+  return new Date(value).toLocaleDateString('ja-JP', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    timeZone: 'Asia/Tokyo'
+  }).split('/').map(part => part.padStart(2, '0')).join('-')
+}
+
+function parseClockMinutes(value: string) {
+  const [hour, minute] = value.split(':').map(Number)
+  return hour * 60 + minute
+}
+
 interface TimelineViewProps {
   selectedDate: string
   events: CalendarEvent[]
@@ -66,19 +86,10 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
   })
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false)
 
-  // Generate time slots (8:00 - 23:00, hourly)
-  const generateTimeSlots = () => {
-    const slots: string[] = []
-    for (let hour = 8; hour <= 23; hour++) {
-      slots.push(`${String(hour).padStart(2, '0')}:00`)
-    }
-    return slots
-  }
-
-  const timeSlots = generateTimeSlots()
+  const timeSlots = TIME_SLOTS
 
   // Filter events for selected date
-  const dayEvents = events.filter(event => event.date === selectedDate)
+  const dayEvents = useMemo(() => events.filter(event => event.date === selectedDate), [events, selectedDate])
   // Parse event time and calculate position
   const parseEventTime = (timeStr: string) => {
     const [startTime, endTime] = timeStr.split(' - ')
@@ -91,14 +102,181 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
     return { startMinutes, endMinutes, startTime, endTime }
   }
 
+  const selectedDayOfWeek = useMemo(() => {
+    return new Date(`${selectedDate}T00:00:00+09:00`).getDay()
+  }, [selectedDate])
+
+  const shiftsByTrainer = useMemo(() => {
+    const grouped = new Map<string, { id: string; start: Date; end: Date; startMinutes: number; endMinutes: number }[]>()
+
+    for (const shift of shifts) {
+      if (formatJstDate(shift.startTime) !== selectedDate) continue
+
+      const start = new Date(shift.startTime)
+      const end = new Date(shift.endTime)
+      const item = {
+        id: shift.id,
+        start,
+        end,
+        startMinutes: start.getHours() * 60 + start.getMinutes(),
+        endMinutes: end.getHours() * 60 + end.getMinutes(),
+      }
+      const current = grouped.get(shift.trainerId) || []
+      current.push(item)
+      grouped.set(shift.trainerId, current)
+    }
+
+    return grouped
+  }, [selectedDate, shifts])
+
+  const templatesByTrainer = useMemo(() => {
+    const grouped = new Map<string, { id: string; start: Date; end: Date; startMinutes: number; endMinutes: number }[]>()
+
+    for (const template of templates) {
+      if (template.dayOfWeek !== selectedDayOfWeek) continue
+
+      const start = new Date(`${selectedDate}T${template.startTime}+09:00`)
+      const end = new Date(`${selectedDate}T${template.endTime}+09:00`)
+      const item = {
+        id: template.id,
+        start,
+        end,
+        startMinutes: parseClockMinutes(template.startTime),
+        endMinutes: parseClockMinutes(template.endTime),
+      }
+      const current = grouped.get(template.trainerId) || []
+      current.push(item)
+      grouped.set(template.trainerId, current)
+    }
+
+    return grouped
+  }, [selectedDate, selectedDayOfWeek, templates])
+
+  const availabilityByTrainer = useMemo(() => {
+    const grouped = new Map<string, { start: Date, end: Date, type: 'shift' | 'template' }[]>()
+
+    for (const trainer of trainers) {
+      const trainerShifts = shiftsByTrainer.get(trainer.id) || []
+      const items: { start: Date, end: Date, type: 'shift' | 'template' }[] = trainerShifts.map(shift => ({
+        start: shift.start,
+        end: shift.end,
+        type: 'shift'
+      }))
+
+      const trainerTemplates = templatesByTrainer.get(trainer.id) || []
+      for (const template of trainerTemplates) {
+        const hasOverlap = trainerShifts.some(shift => template.start < shift.end && template.end > shift.start)
+        if (!hasOverlap) {
+          items.push({ start: template.start, end: template.end, type: 'template' })
+        }
+      }
+
+      grouped.set(trainer.id, items)
+    }
+
+    return grouped
+  }, [shiftsByTrainer, templatesByTrainer, trainers])
+
+  const eventsByTrainer = useMemo(() => {
+    const grouped = new Map<string, CalendarEvent[]>()
+    const firstTrainer = trainers[0]
+
+    const trainerIsAvailable = (trainerId: string, startMinutes: number, endMinutes: number) => {
+      const trainerShifts = shiftsByTrainer.get(trainerId) || []
+      if (trainerShifts.some(shift => startMinutes < shift.endMinutes && endMinutes > shift.startMinutes)) {
+        return true
+      }
+
+      const trainerTemplates = templatesByTrainer.get(trainerId) || []
+      return trainerTemplates.some(template => startMinutes < template.endMinutes && endMinutes > template.startMinutes)
+    }
+
+    for (const event of dayEvents) {
+      let targetTrainerId = event.trainerId || ''
+
+      if (!targetTrainerId) {
+        if (trainers.length === 1) {
+          targetTrainerId = trainers[0].id
+        } else {
+          const { startMinutes, endMinutes } = parseEventTime(event.time)
+          targetTrainerId = trainers.find(trainer => trainerIsAvailable(trainer.id, startMinutes, endMinutes))?.id || firstTrainer?.id || ''
+        }
+      }
+
+      if (!targetTrainerId) continue
+      const current = grouped.get(targetTrainerId) || []
+      current.push(event)
+      grouped.set(targetTrainerId, current)
+    }
+
+    return grouped
+  }, [dayEvents, shiftsByTrainer, templatesByTrainer, trainers])
+
+  const eventLayoutByTrainer = useMemo(() => {
+    const layouts = new Map<string, Map<string, { column: number, totalColumns: number }>>()
+
+    for (const trainer of trainers) {
+      const trainerEvents = eventsByTrainer.get(trainer.id) || []
+      const sortedEvents = [...trainerEvents].sort((a, b) => {
+        const aStart = parseEventTime(a.time).startMinutes
+        const bStart = parseEventTime(b.time).startMinutes
+        return aStart - bStart
+      })
+
+      const eventColumns = new Map<string, { column: number, totalColumns: number }>()
+
+      sortedEvents.forEach((event) => {
+        const { startMinutes, endMinutes } = parseEventTime(event.time)
+        const usedColumns = new Set<number>()
+        let maxOverlapColumns = 0
+
+        sortedEvents.forEach((otherEvent) => {
+          if (otherEvent.id === event.id) return
+          const { startMinutes: otherStart, endMinutes: otherEnd } = parseEventTime(otherEvent.time)
+          if (startMinutes < otherEnd && endMinutes > otherStart) {
+            const otherColumn = eventColumns.get(otherEvent.id)
+            if (otherColumn) {
+              usedColumns.add(otherColumn.column)
+              maxOverlapColumns = Math.max(maxOverlapColumns, otherColumn.totalColumns)
+            }
+          }
+        })
+
+        let column = 0
+        while (usedColumns.has(column)) column++
+        eventColumns.set(event.id, { column, totalColumns: Math.max(maxOverlapColumns, column + 1) })
+      })
+
+      sortedEvents.forEach((event) => {
+        const { startMinutes, endMinutes } = parseEventTime(event.time)
+        let maxColumns = eventColumns.get(event.id)?.totalColumns || 1
+
+        sortedEvents.forEach((otherEvent) => {
+          if (otherEvent.id === event.id) return
+          const { startMinutes: otherStart, endMinutes: otherEnd } = parseEventTime(otherEvent.time)
+          if (startMinutes < otherEnd && endMinutes > otherStart) {
+            const otherInfo = eventColumns.get(otherEvent.id)
+            if (otherInfo) maxColumns = Math.max(maxColumns, otherInfo.totalColumns)
+          }
+        })
+
+        const current = eventColumns.get(event.id)
+        if (current) eventColumns.set(event.id, { ...current, totalColumns: maxColumns })
+      })
+
+      layouts.set(trainer.id, eventColumns)
+    }
+
+    return layouts
+  }, [eventsByTrainer, trainers])
+
   // Calculate position in timeline (pixel-based) - 8時スタート対応
   const getEventPosition = (startMinutes: number, endMinutes: number) => {
-    const hourHeight = 48 // 1時間あたりのピクセル数
-    const startHour = startMinutes / 60 - 8 // 8時スタートなので8を引く
+    const startHour = startMinutes / 60 - TIMELINE_START_HOUR
     const durationHours = (endMinutes - startMinutes) / 60
 
-    const top = startHour * hourHeight
-    const height = durationHours * hourHeight
+    const top = startHour * HOUR_HEIGHT
+    const height = durationHours * HOUR_HEIGHT
 
     return { top, height }
   }
@@ -405,195 +583,34 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
                   }}
                 >
                   {/* Availability Blocks (Shifts & Templates) */}
-                  {(() => {
-                    // Filter shifts for this trainer
-                    const trainerShifts = shifts.filter(s =>
-                      s.trainerId === trainer.id &&
-                      new Date(s.startTime).toLocaleDateString('ja-JP', {
-                        year: 'numeric', month: '2-digit', day: '2-digit', timeZone: 'Asia/Tokyo'
-                      }).split('/').map(p => p.padStart(2, '0')).join('-') === selectedDate
+                  {(availabilityByTrainer.get(trainer.id) || []).map((item, idx) => {
+                    const startMinutes = item.start.getHours() * 60 + item.start.getMinutes()
+                    const endMinutes = item.end.getHours() * 60 + item.end.getMinutes()
+                    const top = ((startMinutes - (TIMELINE_START_HOUR * 60)) / 60) * HOUR_HEIGHT
+                    const height = ((endMinutes - startMinutes) / 60) * HOUR_HEIGHT
+                    const hourLineOffset = (HOUR_HEIGHT - (top % HOUR_HEIGHT)) % HOUR_HEIGHT
+
+                    return (
+                      <div
+                        key={`avail-${idx}`}
+                        className="absolute w-full rounded-[2px] border border-neutral-900/45 shadow-[inset_0_10px_18px_rgba(0,0,0,0.10)] z-0 pointer-events-none"
+                        style={{
+                          top: `${top}px`,
+                          height: `${height}px`,
+                          backgroundImage: 'repeating-linear-gradient(to bottom, rgba(24,24,27,0.38) 0px, rgba(24,24,27,0.38) 1px, rgba(255,255,255,0.95) 1px, rgba(255,255,255,0.95) 48px)',
+                          backgroundPositionY: `${hourLineOffset}px`,
+                        }}
+                      />
                     )
-
-                    // Filter templates for this trainer
-                    const jstDate = new Date(`${selectedDate}T00:00:00+09:00`)
-                    const dayOfWeek = jstDate.getDay()
-                    const trainerTemplates = templates.filter(t =>
-                      t.trainerId === trainer.id && t.dayOfWeek === dayOfWeek
-                    )
-
-                    // Merge and Deduplicate
-                    const availabilityItems: { start: Date, end: Date, type: 'shift' | 'template' }[] = []
-
-                    // Add shifts
-                    trainerShifts.forEach(s => {
-                      availabilityItems.push({
-                        start: new Date(s.startTime),
-                        end: new Date(s.endTime),
-                        type: 'shift'
-                      })
-                    })
-
-                    // Add templates if no overlap with shifts
-                    trainerTemplates.forEach(t => {
-                      const start = new Date(`${selectedDate}T${t.startTime}+09:00`)
-                      const end = new Date(`${selectedDate}T${t.endTime}+09:00`)
-
-                      const hasOverlap = trainerShifts.some(s => {
-                        const sStart = new Date(s.startTime)
-                        const sEnd = new Date(s.endTime)
-                        return (start < sEnd && end > sStart)
-                      })
-
-                      if (!hasOverlap) {
-                        availabilityItems.push({ start, end, type: 'template' })
-                      }
-                    })
-
-                    return availabilityItems.map((item, idx) => {
-                      const timelineStartMinutes = 8 * 60
-                      const startMinutes = item.start.getHours() * 60 + item.start.getMinutes()
-                      const endMinutes = item.end.getHours() * 60 + item.end.getMinutes()
-
-                      // Handle crossing midnight or just clamp? Assuming 8-23 for now
-                      const top = ((startMinutes - timelineStartMinutes) / 60) * 48
-                      const height = ((endMinutes - startMinutes) / 60) * 48
-
-                      return (
-                        <div
-                          key={`avail-${idx}`}
-                          className="absolute w-full bg-white/10 border border-white/10 z-0 pointer-events-none"
-                          style={{
-                            top: `${top}px`,
-                            height: `${height}px`,
-                          }}
-                        />
-                      )
-                    })
-                  })()}
+                  })}
 
                   {/* Reservations */}
-                  {(() => {
-                    const trainerEvents = dayEvents.filter(event => {
-                      // 1. Explicit Assignment: If event has trainerId, match it strictly
-                      if (event.trainerId) {
-                        return event.trainerId === trainer.id
-                      }
-
-                      // 2. Store 1 Logic (Single Trainer): Show all unassigned events
-                      if (trainers.length === 1) {
-                        return true
-                      }
-
-                      // 3. Store 2 Logic (Multiple Trainers): Assign to first available trainer
-                      const { startMinutes, endMinutes } = parseEventTime(event.time)
-
-                      // Helper to check overlap with a specific trainer (reused logic)
-                      const checkOverlapWithTrainer = (tid: string) => {
-                        // Check shifts
-                        const tShifts = shifts.filter(s => s.trainerId === tid)
-                        const shiftOverlap = tShifts.some(s => {
-                          const sDate = new Date(s.startTime).toLocaleDateString('ja-JP', {
-                            year: 'numeric', month: '2-digit', day: '2-digit', timeZone: 'Asia/Tokyo'
-                          }).split('/').map(p => p.padStart(2, '0')).join('-')
-                          if (sDate !== selectedDate) return false
-
-                          const sStart = new Date(s.startTime)
-                          const sEnd = new Date(s.endTime)
-                          const sStartM = sStart.getHours() * 60 + sStart.getMinutes()
-                          const sEndM = sEnd.getHours() * 60 + sEnd.getMinutes()
-
-                          return (startMinutes < sEndM && endMinutes > sStartM)
-                        })
-                        if (shiftOverlap) return true
-
-                        // Check templates
-                        const jstDate = new Date(`${selectedDate}T00:00:00+09:00`)
-                        const dayOfWeek = jstDate.getDay()
-                        const tTemplates = templates.filter(t => t.trainerId === tid && t.dayOfWeek === dayOfWeek)
-                        const templateOverlap = tTemplates.some(t => {
-                          const tStartH = parseInt(t.startTime.split(':')[0])
-                          const tStartM = parseInt(t.startTime.split(':')[1])
-                          const tEndH = parseInt(t.endTime.split(':')[0])
-                          const tEndM = parseInt(t.endTime.split(':')[1])
-                          const tStartTotal = tStartH * 60 + tStartM
-                          const tEndTotal = tEndH * 60 + tEndM
-
-                          return (startMinutes < tEndTotal && endMinutes > tStartTotal)
-                        })
-                        return templateOverlap
-                      }
-
-                      // Find the FIRST trainer who is available for this time slot
-                      const firstAvailableTrainer = trainers.find(t => checkOverlapWithTrainer(t.id))
-
-                      if (firstAvailableTrainer) {
-                        // If we found an available trainer, show this event ONLY if this column belongs to them
-                        return trainer.id === firstAvailableTrainer.id
-                      } else {
-                        // If NO ONE is available (e.g. completely off-hours), fallback to the first trainer (index 0)
-                        return trainerIndex === 0
-                      }
-                    })
-
-                    // We need to layout overlapping events WITHIN this column if any
-                    // Reuse the column logic but restricted to this container width
-                    // Actually, let's keep it simple: simpler width division if overlaps
-
-                    // Assign columns to events within this trainer column
-                    const sortedEvents = [...trainerEvents].sort((a, b) => {
-                      const aStart = parseEventTime(a.time).startMinutes
-                      const bStart = parseEventTime(b.time).startMinutes
-                      return aStart - bStart
-                    })
-
-                    const eventColumns = new Map<string, { column: number, totalColumns: number }>()
-                    // ... (Reuse the overlap logic) ...
-                    // For brevity, I will copy the logic but scoped here.
-
-                    sortedEvents.forEach((event) => {
-                      const { startMinutes, endMinutes } = parseEventTime(event.time)
-                      const usedColumns = new Set<number>()
-                      let maxOverlapColumns = 0
-                      sortedEvents.forEach((otherEvent) => {
-                        if (otherEvent.id === event.id) return
-                        const { startMinutes: otherStart, endMinutes: otherEnd } = parseEventTime(otherEvent.time)
-                        if (startMinutes < otherEnd && endMinutes > otherStart) {
-                          const otherColumn = eventColumns.get(otherEvent.id)
-                          if (otherColumn) {
-                            usedColumns.add(otherColumn.column)
-                            maxOverlapColumns = Math.max(maxOverlapColumns, otherColumn.totalColumns)
-                          }
-                        }
-                      })
-                      let column = 0
-                      while (usedColumns.has(column)) column++
-                      const totalColumns = Math.max(maxOverlapColumns, column + 1)
-                      eventColumns.set(event.id, { column, totalColumns })
-                    })
-
-                    // Second pass for totalColumns
-                    sortedEvents.forEach((event) => {
-                      const { startMinutes, endMinutes } = parseEventTime(event.time)
-                      let maxColumns = eventColumns.get(event.id)?.totalColumns || 1
-                      sortedEvents.forEach((otherEvent) => {
-                        if (otherEvent.id === event.id) return
-                        const { startMinutes: otherStart, endMinutes: otherEnd } = parseEventTime(otherEvent.time)
-                        if (startMinutes < otherEnd && endMinutes > otherStart) {
-                          const otherInfo = eventColumns.get(otherEvent.id)
-                          if (otherInfo) maxColumns = Math.max(maxColumns, otherInfo.totalColumns)
-                        }
-                      })
-                      const current = eventColumns.get(event.id)
-                      if (current) eventColumns.set(event.id, { ...current, totalColumns: maxColumns })
-                    })
-
-
-                    return trainerEvents.map((event, index) => {
+                  {(eventsByTrainer.get(trainer.id) || []).map((event) => {
                       const { startMinutes, endMinutes, startTime: startStr, endTime: endStr } = parseEventTime(event.time)
-                      const top = ((startMinutes - (8 * 60)) / 60) * 48
-                      const height = ((endMinutes - startMinutes) / 60) * 48
+                      const top = ((startMinutes - (TIMELINE_START_HOUR * 60)) / 60) * HOUR_HEIGHT
+                      const height = ((endMinutes - startMinutes) / 60) * HOUR_HEIGHT
 
-                      const layoutInfo = eventColumns.get(event.id) || { column: 0, totalColumns: 1 }
+                      const layoutInfo = eventLayoutByTrainer.get(trainer.id)?.get(event.id) || { column: 0, totalColumns: 1 }
                       const widthPercent = 100 / layoutInfo.totalColumns
                       const leftPercent = layoutInfo.column * widthPercent
 
@@ -626,8 +643,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
                           <div className="truncate font-normal leading-tight">{formatReservationTitle(event.title, event.plan)}</div>
                         </div>
                       )
-                    })
-                  })()}
+                    })}
                 </div>
               ))}
 

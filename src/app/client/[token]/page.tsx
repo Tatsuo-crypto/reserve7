@@ -5,14 +5,40 @@ import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import dynamic from 'next/dynamic'
 import HomeTab from '@/components/diet/HomeTab'
-import InputTab from '@/components/diet/InputTab'
-import WeeklyTab from '@/components/diet/WeeklyTab'
-import AnalyzeTab from '@/components/diet/AnalyzeTab'
-import PlanTab from '@/components/diet/PlanTab'
-import ReservationTab from '@/components/diet/ReservationTab'
 import AdminHeader from '@/app/components/AdminHeader'
 import PushNotificationPrompt from './PushNotificationPrompt'
 import Icon, { type IconName } from '@/components/ui/icons'
+
+const TabLoading = () => (
+  <div className="h-56 flex items-center justify-center">
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600" />
+  </div>
+)
+
+const InputTab = dynamic(() => import('@/components/diet/InputTab'), {
+  ssr: false,
+  loading: TabLoading,
+})
+
+const WeeklyTab = dynamic(() => import('@/components/diet/WeeklyTab'), {
+  ssr: false,
+  loading: TabLoading,
+})
+
+const AnalyzeTab = dynamic(() => import('@/components/diet/AnalyzeTab'), {
+  ssr: false,
+  loading: TabLoading,
+})
+
+const PlanTab = dynamic(() => import('@/components/diet/PlanTab'), {
+  ssr: false,
+  loading: TabLoading,
+})
+
+const ReservationTab = dynamic(() => import('@/components/diet/ReservationTab'), {
+  ssr: false,
+  loading: TabLoading,
+})
 
 // TrackingModalをアドミン専用に遅延読み込み
 const TrackingModal = dynamic(() => import('@/app/admin/members/TrackingModal'), {
@@ -28,6 +54,13 @@ const TrackingModal = dynamic(() => import('@/app/admin/members/TrackingModal'),
 })
 
 type TabType = 'home' | 'res' | 'record' | 'weekly' | 'analyze' | 'plan' | 'settings'
+
+type ClientBootstrap = {
+  goals: any[]
+  todayDietLog: any | null
+  nextReservation: any | null
+  todayLesson: any | null
+}
 
 export default function ClientReservationsPage() {
   const params = useParams()
@@ -46,6 +79,7 @@ export default function ClientReservationsPage() {
   const [showTrackingModal, setShowTrackingModal] = useState(false)
   const [settingsLoaded, setSettingsLoaded] = useState(false)
   const [visibleTabs, setVisibleTabs] = useState({ input: false, analyze: false, progress: false })
+  const [homeBootstrap, setHomeBootstrap] = useState<ClientBootstrap | null>(null)
   const isDietFeatureEnabled = visibleTabs.input || visibleTabs.analyze || visibleTabs.progress
   const isDietPlan = isDietFeatureEnabled
   
@@ -68,42 +102,38 @@ export default function ClientReservationsPage() {
   })
 
   useEffect(() => {
-    const fetchUser = async () => {
+    const fetchBootstrap = async () => {
+      setLoading(true)
+      setSettingsLoaded(false)
       try {
-        const res = await fetch(`/api/auth/token?token=${token}`)
+        const res = await fetch(`/api/client/bootstrap?token=${token}`)
         if (res.ok) {
           const data = await res.json()
           setUserId(data.user.id)
           setUserName(data.user.name)
-        }
-      } catch (error) {
-        console.error('Failed to fetch user:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-    const fetchSettings = async () => {
-      try {
-        const res = await fetch(`/api/lifestyle/settings?token=${token}`)
-        if (res.ok) {
-          const { data } = await res.json()
-          if (data && data.visible_tabs) {
-            setVisibleTabs(data.visible_tabs)
-            const isDiet = data.visible_tabs.input || data.visible_tabs.analyze || data.visible_tabs.progress
+          setHomeBootstrap({
+            goals: data.goals || [],
+            todayDietLog: data.todayDietLog || null,
+            nextReservation: data.nextReservation || null,
+            todayLesson: data.todayLesson || null,
+          })
+          if (data.settings?.visible_tabs) {
+            setVisibleTabs(data.settings.visible_tabs)
+            const isDiet = data.settings.visible_tabs.input || data.settings.visible_tabs.analyze || data.settings.visible_tabs.progress
             if (!isDiet) {
               setActiveTab('home')
             }
           }
         }
-      } catch (e) { console.error(e) }
-      finally {
+      } catch (error) {
+        console.error('Failed to fetch bootstrap:', error)
+      } finally {
+        setLoading(false)
         setSettingsLoaded(true)
       }
     }
     if (token) {
-      setSettingsLoaded(false)
-      fetchUser()
-      fetchSettings()
+      fetchBootstrap()
     }
   }, [token])
 
@@ -181,6 +211,7 @@ export default function ClientReservationsPage() {
             userName={userName}
             isDietPlan={isDietPlan}
             todayDraft={todayData}
+            bootstrapData={homeBootstrap}
             onNavigate={(tab) => setActiveTab(tab)}
             onOpenSettings={() => setActiveTab('settings')}
           />

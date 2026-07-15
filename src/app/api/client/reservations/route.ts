@@ -9,6 +9,7 @@ export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
     const token = searchParams.get('token')
+    const scope = searchParams.get('scope')
 
     if (!token) {
       return NextResponse.json(
@@ -29,6 +30,33 @@ export async function GET(request: NextRequest) {
         { error: '無効なトークンです' },
         { status: 401 }
       )
+    }
+
+    if (scope === 'next') {
+      const { data: nextReservations, error: nextError } = await supabaseAdmin
+        .from('reservations')
+        .select('id, title, start_time, end_time, notes, created_at')
+        .eq('client_id', user.id)
+        .gte('start_time', new Date().toISOString())
+        .order('start_time', { ascending: true })
+        .limit(1)
+
+      if (nextError) {
+        console.error('Next reservation fetch error:', nextError)
+        return NextResponse.json(
+          { error: '予約の取得に失敗しました' },
+          { status: 500 }
+        )
+      }
+
+      return NextResponse.json({
+        data: {
+          nextReservation: nextReservations?.[0] || null,
+          futureReservations: nextReservations || [],
+          pastReservations: [],
+          reservations: nextReservations || [],
+        }
+      })
     }
 
     // Get reservations for this client

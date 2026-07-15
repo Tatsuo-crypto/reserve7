@@ -51,7 +51,12 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
 
     const selectedDate = todayDraft?.selectedDate || formatDate(new Date())
 
-    const { weeklyStats, weekOffset, setWeekOffset } = useWeeklyProgress(token, { userId, isAdmin, todayDraft })
+    const { weeklyStats, weekOffset, setWeekOffset } = useWeeklyProgress(token, {
+        userId,
+        isAdmin,
+        todayDraft,
+        enabled: showWeeklyGoals,
+    })
 
     useEffect(() => {
         const fetchData = async () => {
@@ -61,10 +66,26 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
                 const params = isAdmin
                     ? `userId=${encodeURIComponent(userId)}`
                     : `token=${encodeURIComponent(token || '')}`
+                const rangeEnd = new Date()
+                rangeEnd.setHours(23, 59, 59, 999)
+                const rangeStart = new Date()
+                rangeStart.setHours(0, 0, 0, 0)
+
+                if (period === '1w') rangeStart.setDate(rangeEnd.getDate() - 6)
+                else if (period === '1m') rangeStart.setMonth(rangeEnd.getMonth() - 1)
+                else if (period === '3m') rangeStart.setMonth(rangeEnd.getMonth() - 3)
+                else if (period === '6m') rangeStart.setMonth(rangeEnd.getMonth() - 6)
+                else if (period === '1y') rangeStart.setFullYear(rangeEnd.getFullYear() - 1)
+
+                const logParams = new URLSearchParams(params)
+                if (period !== 'all') {
+                    logParams.set('startDate', formatDate(rangeStart))
+                    logParams.set('endDate', formatDate(rangeEnd))
+                }
 
                 const [dietRes, lifeRes, goalRes, settingRes] = await Promise.all([
-                    fetch(`/api/diet/logs?${params}`),
-                    fetch(`/api/lifestyle/logs?${params}`),
+                    fetch(`/api/diet/logs?${logParams.toString()}`),
+                    fetch(`/api/lifestyle/logs?${logParams.toString()}`),
                     fetch(`/api/diet/goals?${params}`),
                     fetch(`/api/lifestyle/settings?${params}`)
                 ])
@@ -93,7 +114,7 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
             }
         }
         fetchData()
-    }, [userId, token, isAdmin])
+    }, [userId, token, isAdmin, period])
 
     const analysisData = useMemo(() => {
         const end = new Date()

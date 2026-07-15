@@ -16,7 +16,6 @@ import {
   generateMemberAccessUrl
 } from '@/lib/utils/member'
 import { useStoreChange } from '@/hooks/useStoreChange'
-import AdminHeader from '@/app/components/AdminHeader'
 
 function MembersPageContent() {
   const { count: storeChangeCount } = useStoreChange()
@@ -45,7 +44,7 @@ function MembersPageContent() {
   useEffect(() => {
     const fetchMembers = async () => {
       try {
-        const response = await fetch('/api/admin/members')
+        const response = await fetch('/api/admin/members?compact=true')
 
         if (response.ok) {
           const result = await response.json()

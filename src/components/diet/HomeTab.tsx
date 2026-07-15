@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import type { ReactNode } from 'react'
-import { useOnlineLessons, getJoinStatus } from '@/hooks/useOnlineLessons'
 import Card from '@/components/ui/Card'
 import Icon from '@/components/ui/icons'
 
@@ -11,6 +10,12 @@ interface HomeTabProps {
     userName: string
     isDietPlan?: boolean
     todayDraft?: any
+    bootstrapData?: {
+        goals: Goal[]
+        todayDietLog: any | null
+        nextReservation: any | null
+        todayLesson: any | null
+    } | null
     onNavigate?: (tab: 'res' | 'record' | 'analyze' | 'plan') => void
     onOpenSettings?: () => void
 }
@@ -45,12 +50,12 @@ function formatGoalDateLong(dateStr: string | null | undefined): string | null {
  * Home = 「今日の秘書」。数字の一覧ではなく、今日やることを最大4枚のカードで見せる。
  * 個々の栄養素・生活ログのバーはすべて分析タブへ移設済み（WeeklyProgressPanel）。
  */
-export default function HomeTab({ token, userName, isDietPlan = true, todayDraft, onNavigate }: HomeTabProps) {
+export default function HomeTab({ token, userName, isDietPlan = true, todayDraft, bootstrapData, onNavigate }: HomeTabProps) {
     const [dietLogs, setDietLogs] = useState<any[]>([])
     const [goals, setGoals] = useState<Goal[]>([])
     const [nextReservation, setNextReservation] = useState<any>(null)
+    const [todayLesson, setTodayLesson] = useState<any>(null)
     const [loading, setLoading] = useState(true)
-    const { lessons } = useOnlineLessons(token)
 
     const today = new Date()
     const todayStr = today.toLocaleDateString('sv-SE')
@@ -61,27 +66,39 @@ export default function HomeTab({ token, userName, isDietPlan = true, todayDraft
     })
 
     useEffect(() => {
+        if (bootstrapData) {
+            setDietLogs(bootstrapData.todayDietLog ? [bootstrapData.todayDietLog] : [])
+            setGoals(bootstrapData.goals || [])
+            setNextReservation(bootstrapData.nextReservation || null)
+            setTodayLesson(bootstrapData.todayLesson || null)
+            setLoading(false)
+            return
+        }
+
         const fetchData = async () => {
             setLoading(true)
             try {
-                const [dietLogRes, goalsRes, resRes] = await Promise.all([
-                    fetch(`/api/diet/logs?token=${token}`),
+                const [dietLogRes, goalsRes, resRes, lessonRes] = await Promise.all([
+                    isDietPlan ? fetch(`/api/diet/logs?date=${todayStr}&token=${token}`) : Promise.resolve(null),
                     fetch(`/api/goals?token=${token}&status=active`),
-                    fetch(`/api/client/reservations?token=${token}`),
+                    fetch(`/api/client/reservations?scope=next&token=${token}`),
+                    fetch(`/api/client/online-lesson?token=${token}`),
                 ])
 
-                const [dietLogData, goalsData, resData] = await Promise.all([
-                    isDietPlan ? dietLogRes.json() : Promise.resolve({ data: [] }),
+                const [dietLogData, goalsData, resData, lessonData] = await Promise.all([
+                    dietLogRes ? dietLogRes.json() : Promise.resolve({ data: null }),
                     isDietPlan ? goalsRes.json() : Promise.resolve({ data: [] }),
                     resRes.json(),
+                    lessonRes.json(),
                 ])
 
-                setDietLogs(dietLogData.data || [])
+                setDietLogs(dietLogData.data ? [dietLogData.data] : [])
                 setGoals(goalsData.data || [])
 
-                const future = (resData?.data?.futureReservations || []) as any[]
-                const sorted = [...future].sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())
-                setNextReservation(sorted[0] || null)
+                setNextReservation(resData?.data?.nextReservation || null)
+                const todayDow = new Date().getDay()
+                const lessons = (lessonData?.lessons || []) as any[]
+                setTodayLesson(lessons.find(lesson => !Array.isArray(lesson.day_of_week) || lesson.day_of_week.includes(todayDow)) || null)
             } catch (e) {
                 console.error(e)
             } finally {
@@ -89,16 +106,7 @@ export default function HomeTab({ token, userName, isDietPlan = true, todayDraft
             }
         }
         if (token) fetchData()
-    }, [token, todayStr, isDietPlan])
-
-    // --- Card 1: today's online lesson ---
-    const todayLesson = useMemo(() => {
-        for (const lesson of lessons) {
-            const status = getJoinStatus(lesson)
-            if (status.isToday) return { lesson, status }
-        }
-        return null
-    }, [lessons])
+    }, [token, todayStr, isDietPlan, bootstrapData])
 
     const todayLog = useMemo(() => dietLogs.find(l => l.date === todayStr) || null, [dietLogs, todayStr])
 
@@ -205,14 +213,14 @@ export default function HomeTab({ token, userName, isDietPlan = true, todayDraft
                             <div className="flex items-center justify-between gap-3">
                                 <div className="min-w-0">
                                     <p className="text-sm font-normal tabular-nums text-text-secondary">
-                                        {todayLesson.lesson.start_time?.substring(0, 5)}〜{todayLesson.lesson.end_time?.substring(0, 5)}
-                                    </p>
-                                    <p className="mt-0.5 truncate text-sm font-normal text-text-secondary">{todayLesson.lesson.title}</p>
-                                </div>
-                                <button
-                                    onClick={() => window.open(todayLesson.lesson.meet_url, '_blank')}
-                                    className={`h-10 w-16 shrink-0 rounded-xl text-sm font-semibold active:scale-[0.98] ${todayLesson.lesson.meet_url ? 'bg-brand-600 text-white' : 'bg-surface-overlay text-text-muted'}`}
-                                    disabled={!todayLesson.lesson.meet_url}
+                                    {todayLesson.start_time?.substring(0, 5)}〜{todayLesson.end_time?.substring(0, 5)}
+                                </p>
+                                <p className="mt-0.5 truncate text-sm font-normal text-text-secondary">{todayLesson.title}</p>
+                            </div>
+                            <button
+                                    onClick={() => window.open(todayLesson.meet_url, '_blank')}
+                                    className={`h-10 w-16 shrink-0 rounded-xl text-sm font-semibold active:scale-[0.98] ${todayLesson.meet_url ? 'bg-brand-600 text-white' : 'bg-surface-overlay text-text-muted'}`}
+                                    disabled={!todayLesson.meet_url}
                                 >
                                     参加
                                 </button>
@@ -271,14 +279,14 @@ export default function HomeTab({ token, userName, isDietPlan = true, todayDraft
                                 <div className="min-w-0">
                                     <p className="text-sm font-semibold text-text-primary">オンラインセッション</p>
                                     <p className="mt-1 text-sm font-normal tabular-nums text-text-secondary">
-                                        {todayLesson.lesson.start_time?.substring(0, 5)}〜{todayLesson.lesson.end_time?.substring(0, 5)}
+                                        {todayLesson.start_time?.substring(0, 5)}〜{todayLesson.end_time?.substring(0, 5)}
                                     </p>
-                                    <p className="mt-0.5 truncate text-sm font-normal text-text-secondary">{todayLesson.lesson.title}</p>
+                                    <p className="mt-0.5 truncate text-sm font-normal text-text-secondary">{todayLesson.title}</p>
                                 </div>
                                 <button
-                                    onClick={() => window.open(todayLesson.lesson.meet_url, '_blank')}
-                                    className={`h-10 w-16 shrink-0 rounded-xl text-sm font-semibold active:scale-[0.98] ${todayLesson.lesson.meet_url ? 'bg-brand-600 text-white' : 'bg-surface-overlay text-text-muted'}`}
-                                    disabled={!todayLesson.lesson.meet_url}
+                                    onClick={() => window.open(todayLesson.meet_url, '_blank')}
+                                    className={`h-10 w-16 shrink-0 rounded-xl text-sm font-semibold active:scale-[0.98] ${todayLesson.meet_url ? 'bg-brand-600 text-white' : 'bg-surface-overlay text-text-muted'}`}
+                                    disabled={!todayLesson.meet_url}
                                 >
                                     参加
                                 </button>

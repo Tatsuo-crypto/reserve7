@@ -1,15 +1,280 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, type ReactNode } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { format, addDays, subDays, startOfWeek, endOfWeek } from 'date-fns'
+import { format, addDays, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, addMonths, subMonths, setHours, setMinutes, isAfter, isSameDay, differenceInMinutes, getDay } from 'date-fns'
 import { ja } from 'date-fns/locale'
 import { Shift, Trainer, ShiftTemplate } from '@/types'
 import ShiftCalendar from '@/components/shifts/ShiftCalendar'
 import TeamShiftCalendar from '@/components/shifts/TeamShiftCalendar'
 import TemplateModal from '@/components/shifts/TemplateModal'
 import Icon from '@/components/ui/icons'
+
+function formatHoursLabel(hours: number) {
+  const rounded = Math.round(hours * 100) / 100
+  return `${Number.isInteger(rounded) ? rounded.toFixed(0) : String(rounded)}h`
+}
+
+const WEEKDAY_LABELS = ['日', '月', '火', '水', '木', '金', '土']
+
+function getMonthCalendarDays(monthDate: Date) {
+  const firstDay = startOfMonth(monthDate)
+  const lastDay = endOfMonth(monthDate)
+  const cells: (Date | null)[] = []
+
+  for (let i = 0; i < firstDay.getDay(); i += 1) {
+    cells.push(null)
+  }
+
+  for (let day = 1; day <= lastDay.getDate(); day += 1) {
+    cells.push(new Date(firstDay.getFullYear(), firstDay.getMonth(), day))
+  }
+
+  while (cells.length % 7 !== 0) {
+    cells.push(null)
+  }
+
+  return cells
+}
+
+function getShiftHours(start: Date, end: Date) {
+  return Math.max(0, differenceInMinutes(end, start) / 60)
+}
+
+function getTrainerLabel(trainer?: Trainer) {
+  return trainer?.full_name || trainer?.name || 'スタッフ'
+}
+
+function getShortTrainerLabel(trainer?: Trainer) {
+  const name = getTrainerLabel(trainer)
+  return name.trim().split(/[\s　]+/)[0] || name
+}
+
+function formatTemplateRange(template: ShiftTemplate) {
+  return `${template.start_time.slice(0, 5)}〜${template.end_time.slice(0, 5)}`
+}
+
+function FixedShiftOverview({
+  trainers,
+  templates,
+  onEdit
+}: {
+  trainers: Trainer[]
+  templates: ShiftTemplate[]
+  onEdit: (trainerId: string) => void
+}) {
+  return (
+    <section className="rounded-2xl border border-border-subtle bg-surface-raised p-4 shadow-sm">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <span className="h-5 w-1 rounded-full bg-brand-500" />
+          <h2 className="text-base font-semibold text-text-primary">固定シフト</h2>
+        </div>
+        <span className="rounded-full bg-surface-base px-3 py-1 text-xs tabular-nums text-text-secondary">
+          {templates.length}件
+        </span>
+      </div>
+
+      <div className="space-y-2">
+        {trainers.length > 0 ? trainers.map(trainer => {
+          const trainerTemplates = templates
+            .filter(template => template.trainer_id === trainer.id)
+            .sort((a, b) => a.day_of_week - b.day_of_week || a.start_time.localeCompare(b.start_time))
+
+          return (
+            <div key={trainer.id} className="rounded-2xl border border-border-subtle bg-surface-base px-4 py-3">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <p className="text-sm font-semibold text-text-primary">{getTrainerLabel(trainer)}</p>
+                <button
+                  type="button"
+                  onClick={() => onEdit(trainer.id)}
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-500/15 text-brand-200 active:scale-95"
+                  aria-label={`${getTrainerLabel(trainer)}の固定シフトを編集`}
+                >
+                  <Icon name="pencil" size={17} />
+                </button>
+              </div>
+
+              <div className="space-y-2">
+                {trainerTemplates.length > 0 ? trainerTemplates.map(template => (
+                  <div
+                    key={template.id}
+                    className="flex items-center justify-between rounded-xl border border-brand-500/20 bg-brand-500/10 px-3 py-2"
+                  >
+                    <span className="text-sm text-brand-100">{WEEKDAY_LABELS[template.day_of_week]}</span>
+                    <span className="text-sm tabular-nums text-text-primary">{formatTemplateRange(template)}</span>
+                  </div>
+                )) : (
+                  <span className="text-sm text-text-muted">未設定</span>
+                )}
+              </div>
+            </div>
+          )
+        }) : (
+          <div className="rounded-2xl bg-surface-base p-6 text-center text-sm text-text-secondary">
+            対象トレーナーがいません
+          </div>
+        )}
+      </div>
+    </section>
+  )
+}
+
+function OverallCalendarSection({
+  currentDate,
+  selectedDate,
+  shifts,
+  templates,
+  trainers,
+  selectedTrainerId,
+  viewMode,
+  onDaySelect,
+  onPrevMonth,
+  onNextMonth,
+  onToday,
+  actions,
+  children
+}: {
+  currentDate: Date
+  selectedDate: Date | null
+  shifts: Shift[]
+  templates: ShiftTemplate[]
+  trainers: Trainer[]
+  selectedTrainerId: string
+  viewMode: 'individual' | 'team'
+  onDaySelect: (day: Date) => void
+  onPrevMonth: () => void
+  onNextMonth: () => void
+  onToday: () => void
+  actions?: ReactNode
+  children: ReactNode
+}) {
+  const days = getMonthCalendarDays(currentDate)
+  const selectedWeekStart = selectedDate ? startOfWeek(selectedDate, { weekStartsOn: 0 }) : null
+  const selectedWeekEnd = selectedWeekStart ? addDays(selectedWeekStart, 6) : null
+  const weekLabel = selectedWeekStart && selectedWeekEnd
+    ? `${format(selectedWeekStart, 'M/d', { locale: ja })}〜${format(selectedWeekEnd, 'M/d', { locale: ja })}`
+    : ''
+  const weekRows = Array.from({ length: Math.ceil(days.length / 7) }, (_, index) => days.slice(index * 7, index * 7 + 7))
+  const trainerIds = viewMode === 'individual'
+    ? (selectedTrainerId ? [selectedTrainerId] : [])
+    : trainers.map(trainer => trainer.id)
+
+  const getDayHours = (day: Date) => {
+    const dayShifts = shifts.filter(shift => trainerIds.includes(shift.trainer_id) && isSameDay(new Date(shift.start_time), day))
+    const dayTemplates = templates.filter(template => trainerIds.includes(template.trainer_id) && template.day_of_week === getDay(day))
+
+    const shiftHours = dayShifts.reduce((sum, shift) => (
+      sum + getShiftHours(new Date(shift.start_time), new Date(shift.end_time))
+    ), 0)
+
+    const templateHours = dayTemplates.reduce((sum, template) => {
+      const start = setMinutes(setHours(day, Number(template.start_time.slice(0, 2))), Number(template.start_time.slice(3, 5)))
+      const end = setMinutes(setHours(day, Number(template.end_time.slice(0, 2))), Number(template.end_time.slice(3, 5)))
+      const hasOverlap = dayShifts.some(shift => {
+        const shiftStart = new Date(shift.start_time)
+        const shiftEnd = new Date(shift.end_time)
+        return start < shiftEnd && end > shiftStart
+      })
+      return hasOverlap ? sum : sum + getShiftHours(start, end)
+    }, 0)
+
+    return shiftHours + templateHours
+  }
+
+  return (
+    <section className="overflow-hidden rounded-2xl border border-border-subtle bg-surface-raised shadow-sm">
+      <div className="flex items-center justify-between gap-3 px-4 pt-4">
+        <div className="flex items-center gap-2">
+          <span className="h-5 w-1 rounded-full bg-brand-500" />
+          <h2 className="text-base font-semibold text-text-primary">全体カレンダー</h2>
+        </div>
+        <div className="flex items-center gap-2">
+          {weekLabel && <span className="rounded-full bg-surface-base px-3 py-1 text-xs tabular-nums text-text-secondary">{weekLabel}</span>}
+          {actions}
+        </div>
+      </div>
+
+      <div className="px-4 py-4">
+        <div className="mb-3 flex items-center justify-between">
+          <button type="button" onClick={onPrevMonth} className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-base text-text-secondary active:scale-95">
+            <Icon name="chevronLeft" size={18} />
+          </button>
+          <div className="text-center">
+            <p className="text-lg font-semibold tabular-nums text-text-primary">{format(currentDate, 'yyyy年M月', { locale: ja })}</p>
+            <button type="button" onClick={onToday} className="mt-1 rounded-full bg-surface-base px-3 py-1 text-xs text-text-secondary">
+              今日
+            </button>
+          </div>
+          <button type="button" onClick={onNextMonth} className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-base text-text-secondary active:scale-95">
+            <Icon name="chevronRight" size={18} />
+          </button>
+        </div>
+
+        <div className="rounded-2xl border border-border-subtle bg-surface-base p-3">
+          <div className="mb-2 grid grid-cols-7 text-center text-[10px] text-text-muted">
+            {WEEKDAY_LABELS.map(day => <div key={day}>{day}</div>)}
+          </div>
+          <div className="space-y-1">
+            {weekRows.map((row, rowIndex) => {
+              const rowSelected = Boolean(selectedWeekStart && row.some(day => day && isSameDay(startOfWeek(day, { weekStartsOn: 0 }), selectedWeekStart)))
+
+              return (
+                <div
+                  key={`week-row-${rowIndex}`}
+                  className={`grid grid-cols-7 gap-1 rounded-2xl border p-1 transition ${
+                    rowSelected
+                      ? 'border-brand-500/75 bg-brand-500/10 shadow-[0_0_0_1px_rgba(249,115,22,0.18)]'
+                      : 'border-transparent'
+                  }`}
+                >
+                  {row.map((day, index) => {
+                    if (!day) return <div key={`empty-${rowIndex}-${index}`} className="min-h-12 rounded-lg" />
+
+                    const hours = getDayHours(day)
+                    const hasWork = hours > 0
+
+                    return (
+                      <button
+                        key={day.toISOString()}
+                        type="button"
+                        onClick={() => onDaySelect(day)}
+                        disabled={viewMode === 'individual' && !selectedTrainerId}
+                        className={`min-h-12 rounded-xl border px-1 py-1 text-center transition active:scale-[0.98] disabled:opacity-40 ${
+                          hasWork
+                            ? 'border-brand-500/25 bg-brand-500/12'
+                            : rowSelected
+                              ? 'border-transparent bg-surface-base/80'
+                              : 'border-transparent bg-surface-raised/45 hover:bg-surface-overlay'
+                        }`}
+                      >
+                        <div className={`text-xs tabular-nums ${hasWork || rowSelected ? 'text-text-primary' : 'text-text-muted'}`}>
+                          {day.getDate()}
+                        </div>
+                        {hasWork && (
+                          <div className="mt-1 truncate text-[10px] tabular-nums text-brand-100">
+                            {formatHoursLabel(hours)}
+                          </div>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </div>
+
+      {children && (
+        <div className="border-t border-border-subtle">
+          {children}
+        </div>
+      )}
+    </section>
+  )
+}
 
 export default function ShiftManagementPage() {
   // Force rebuild to fix ReferenceError
@@ -21,10 +286,15 @@ export default function ShiftManagementPage() {
   const [allTrainers, setAllTrainers] = useState<Trainer[]>([])
   const [selectedTrainerId, setSelectedTrainerId] = useState<string>('')
   const [currentDate, setCurrentDate] = useState(new Date())
+  const [selectedWeekDate, setSelectedWeekDate] = useState<Date | null>(null)
   const [shifts, setShifts] = useState<Shift[]>([])
   const [templates, setTemplates] = useState<ShiftTemplate[]>([])
   const [loading, setLoading] = useState(false)
   const [templateModalOpen, setTemplateModalOpen] = useState(false)
+  const [templateTrainerId, setTemplateTrainerId] = useState<string | null>(null)
+  const [createModalOpen, setCreateModalOpen] = useState(false)
+  const [createDate, setCreateDate] = useState<Date | null>(null)
+  const [actionMenuOpen, setActionMenuOpen] = useState(false)
   const [currentStoreId, setCurrentStoreId] = useState<string>('')
   
   // Selection Mode State
@@ -76,30 +346,32 @@ export default function ShiftManagementPage() {
   }, [status])
 
   // Filter trainers based on current store
-  const filteredTrainers = allTrainers.filter(t => {
+  const filteredTrainers = useMemo(() => allTrainers.filter(t => {
     // If currentStoreId is empty or 'all', show all trainers (or maybe just show none/default?)
     // Usually for admin, if no store selected, maybe show all.
     // But if we want strictly store-based, we should filter.
     if (!currentStoreId || currentStoreId === 'all') return true
     return t.store_id === currentStoreId
-  })
+  }), [allTrainers, currentStoreId])
+
+  const selectableTrainers = filteredTrainers.length > 0 ? filteredTrainers : allTrainers
 
   // Auto-select first trainer if selection becomes invalid or empty
   useEffect(() => {
     // Determine the effective storeId (cookie or fallback to first trainer's store if no cookie)
     // Actually, if we use filteredTrainers, we implicitly respect the store.
     
-    if (filteredTrainers.length > 0) {
-      const isSelectedValid = filteredTrainers.some(t => t.id === selectedTrainerId)
+    if (selectableTrainers.length > 0) {
+      const isSelectedValid = selectableTrainers.some(t => t.id === selectedTrainerId)
       if (!isSelectedValid) {
-        setSelectedTrainerId(filteredTrainers[0].id)
+        setSelectedTrainerId(selectableTrainers[0].id)
       }
     } else {
       if (selectedTrainerId) {
         setSelectedTrainerId('')
       }
     }
-  }, [filteredTrainers, selectedTrainerId])
+  }, [selectableTrainers, selectedTrainerId])
 
   // Fetch templates and shifts
   // Combined effect to avoid race conditions or redundant fetches
@@ -113,7 +385,7 @@ export default function ShiftManagementPage() {
         : ((session?.user as any)?.storeId || allTrainers[0]?.store_id)
       
       // If we are in individual mode but no trainer selected (and we have trainers), wait for auto-select
-      if (viewMode === 'individual' && !selectedTrainerId && filteredTrainers.length > 0) {
+      if (viewMode === 'individual' && !selectedTrainerId && selectableTrainers.length > 0) {
         return
       }
 
@@ -123,8 +395,8 @@ export default function ShiftManagementPage() {
       setTemplates([])
 
       try {
-        const start = startOfWeek(currentDate, { weekStartsOn: 1 })
-        const end = endOfWeek(currentDate, { weekStartsOn: 1 })
+        const start = startOfMonth(currentDate)
+        const end = endOfMonth(currentDate)
         const timestamp = new Date().getTime()
         
         // 1. Fetch Templates
@@ -184,12 +456,16 @@ export default function ShiftManagementPage() {
     return () => {
       isCancelled = true
     }
-  }, [selectedTrainerId, currentDate, viewMode, allTrainers, session, currentStoreId, filteredTrainers.length])
+  }, [selectedTrainerId, currentDate, viewMode, allTrainers, session, currentStoreId, selectableTrainers.length])
 
   // Handlers
-  const handlePrevWeek = () => setCurrentDate(subDays(currentDate, 7))
-  const handleNextWeek = () => setCurrentDate(addDays(currentDate, 7))
-  const handleToday = () => setCurrentDate(new Date())
+  const handlePrevPeriod = () => setCurrentDate(subDays(currentDate, viewMode === 'team' ? 1 : 7))
+  const handleNextPeriod = () => setCurrentDate(addDays(currentDate, viewMode === 'team' ? 1 : 7))
+  const handleToday = () => {
+    const today = new Date()
+    setCurrentDate(today)
+    setSelectedWeekDate(today)
+  }
 
   const refreshShifts = async () => {
     // Clear selection on refresh
@@ -201,8 +477,8 @@ export default function ShiftManagementPage() {
       
     setLoading(true)
     try {
-      const start = startOfWeek(currentDate, { weekStartsOn: 1 })
-      const end = endOfWeek(currentDate, { weekStartsOn: 1 })
+      const start = startOfMonth(currentDate)
+      const end = endOfMonth(currentDate)
       const timestamp = new Date().getTime()
       
       const params = new URLSearchParams({
@@ -415,20 +691,73 @@ export default function ShiftManagementPage() {
     }
   }
 
+  const handleShiftCreateFromCalendar = async (trainerId: string, start: Date, end: Date, weeklyFixed: boolean) => {
+    try {
+      const res = await fetch('/api/admin/shifts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          trainerId,
+          startTime: start.toISOString(),
+          endTime: end.toISOString()
+        })
+      })
+      if (!res.ok) throw new Error('Failed to create shift')
+
+      if (weeklyFixed) {
+        const nextTemplates = templates
+          .filter(template => template.trainer_id === trainerId && template.day_of_week !== getDay(start))
+          .map(template => ({
+            dayOfWeek: template.day_of_week,
+            startTime: template.start_time.slice(0, 5),
+            endTime: template.end_time.slice(0, 5)
+          }))
+
+        nextTemplates.push({
+          dayOfWeek: getDay(start),
+          startTime: format(start, 'HH:mm'),
+          endTime: format(end, 'HH:mm')
+        })
+
+        const templateRes = await fetch('/api/admin/shifts/templates', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            trainerId,
+            templates: nextTemplates
+          })
+        })
+
+        if (!templateRes.ok) throw new Error('Failed to save template')
+      }
+
+      await refreshShifts()
+    } catch (e) {
+      console.error(e)
+      alert('作成に失敗しました')
+    }
+  }
+
   if (status === 'loading') return <div className="p-8 text-center">読み込み中...</div>
 
-  return (
-    <div className="max-w-7xl mx-auto pt-4 pb-12 px-4 sm:px-6 lg:px-8">
+  const selectedTrainer = selectableTrainers.find(t => t.id === selectedTrainerId)
+  const activeWeekDate = selectedWeekDate || currentDate
+  const weekStart = startOfWeek(activeWeekDate, { weekStartsOn: 0 })
+  const weekEnd = addDays(weekStart, 6)
+  const weekLabel = `${format(weekStart, 'M/d', { locale: ja })}〜${format(weekEnd, 'M/d', { locale: ja })}`
+  const scheduleTrainers = viewMode === 'individual'
+    ? (selectedTrainer ? [selectedTrainer] : [])
+    : filteredTrainers
 
-      {/* View Mode and Trainer Selector */}
-      <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        
-        {/* View Mode Switcher */}
-        <div className="flex bg-surface-overlay p-1 rounded-lg">
+  return (
+    <div className="max-w-7xl mx-auto pt-4 pb-24 px-4 sm:px-6 lg:px-8 space-y-4">
+
+      <section className="space-y-3">
+        <div className="flex bg-surface-overlay p-1 rounded-xl">
           <button
             type="button"
             onClick={() => setViewMode('individual')}
-            className={`px-4 py-2 text-sm font-normal rounded-md transition-all ${
+            className={`h-10 flex-1 rounded-lg text-sm font-normal transition-all ${
               viewMode === 'individual' 
                 ? 'bg-surface-raised text-text-primary shadow-sm' 
                 : 'text-text-secondary hover:text-text-primary'
@@ -439,7 +768,7 @@ export default function ShiftManagementPage() {
           <button
             type="button"
             onClick={() => setViewMode('team')}
-            className={`px-4 py-2 text-sm font-normal rounded-md transition-all ${
+            className={`h-10 flex-1 rounded-lg text-sm font-normal transition-all ${
               viewMode === 'team' 
                 ? 'bg-surface-raised text-text-primary shadow-sm' 
                 : 'text-text-secondary hover:text-text-primary'
@@ -449,163 +778,396 @@ export default function ShiftManagementPage() {
           </button>
         </div>
 
-        {/* Trainer Selector (Only for individual view) */}
         {viewMode === 'individual' && (
-          <div className="w-full md:w-64">
-            <label className="block text-xs text-text-secondary mb-1 text-center md:text-left">対象トレーナー</label>
-            <select
-              className="w-full border rounded-md px-3 py-2 text-sm"
-              value={selectedTrainerId}
-              onChange={(e) => setSelectedTrainerId(e.target.value)}
-            >
-              {filteredTrainers.map(t => (
-                <option key={t.id} value={t.id}>{t.full_name}</option>
-              ))}
-            </select>
+          <div>
+            {selectableTrainers.length > 0 ? (
+              <select
+                value={selectedTrainerId}
+                onChange={(event) => setSelectedTrainerId(event.target.value)}
+                className="h-12 w-full rounded-2xl border border-border-subtle bg-surface-base px-4 text-sm text-text-primary"
+              >
+                {selectableTrainers.map(trainer => (
+                  <option key={trainer.id} value={trainer.id}>{getTrainerLabel(trainer)}</option>
+                ))}
+              </select>
+            ) : (
+              <div className="rounded-xl border border-border-subtle bg-surface-base px-4 py-4 text-center text-sm text-text-secondary">
+                対象トレーナーがいません
+              </div>
+            )}
           </div>
         )}
-      </div>
 
-      {/* Toolbar */}
-      <div className="bg-surface-raised p-4 rounded-lg shadow-sm border border-border-strong mb-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex items-center justify-center w-full sm:w-auto space-x-2">
-          <button type="button" onClick={handlePrevWeek} className="p-2 hover:bg-surface-overlay rounded-full text-text-secondary">
-            <Icon name="chevronLeft" size={20} />
-          </button>
-          <span className="text-lg font-normal text-text-primary min-w-[120px] text-center">
-            {format(currentDate, 'yyyy年M月', { locale: ja })}
-          </span>
-          <button type="button" onClick={handleNextWeek} className="p-2 hover:bg-surface-overlay rounded-full text-text-secondary">
-            <Icon name="chevronRight" size={20} />
-          </button>
-        </div>
-
-        <div className="w-full sm:w-auto flex flex-wrap items-center justify-center sm:justify-end gap-2">
-          {!selectionMode ? (
-            <>
-              <button
-                type="button"
-                onClick={() => setSelectionMode(true)}
-                className="inline-flex items-center justify-center px-3 py-2 border border-border-strong shadow-sm text-sm font-normal rounded-md text-text-secondary bg-surface-raised hover:bg-surface-base disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={viewMode === 'individual' && !selectedTrainerId}
-              >
-                <Icon name="checkCircle" size={16} className="mr-2 text-text-secondary" />
-                複数選択
-              </button>
-
-              {viewMode === 'individual' && (
-                <>
-                  <button
-                    type="button"
-                    onClick={handleCopyPrevWeek}
-                    className="inline-flex items-center justify-center px-3 py-2 border border-border-strong shadow-sm text-sm font-normal rounded-md text-text-secondary bg-surface-raised hover:bg-surface-base disabled:opacity-50 disabled:cursor-not-allowed"
-                    disabled={!selectedTrainerId || loading}
-                  >
-                    <Icon name="copy" size={16} className="mr-2 text-text-secondary" />
-                    先週コピー
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleApplyTemplates}
-                    className="inline-flex items-center justify-center px-3 py-2 border border-border-strong shadow-sm text-sm font-normal rounded-md text-text-secondary bg-surface-raised hover:bg-surface-base disabled:opacity-50 disabled:cursor-not-allowed"
-                    disabled={!selectedTrainerId || loading}
-                  >
-                    <Icon name="refresh" size={16} className="mr-2 text-text-secondary" />
-                    固定シフト反映
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setTemplateModalOpen(true)}
-                    className="inline-flex items-center justify-center px-3 py-2 border border-border-strong shadow-sm text-sm font-normal rounded-md text-text-secondary bg-surface-raised hover:bg-surface-base disabled:opacity-50 disabled:cursor-not-allowed"
-                    disabled={!selectedTrainerId || loading}
-                  >
-                    <Icon name="settings" size={16} className="mr-2 text-text-secondary" />
-                    固定シフト設定
-                  </button>
-                </>
-              )}
-            </>
-          ) : (
-            <>
-              <span className="text-sm text-text-secondary font-normal mr-2">{selectedShiftIds.length}件選択中</span>
-              <button
-                type="button"
-                onClick={handleBulkDelete}
-                disabled={selectedShiftIds.length === 0 || loading}
-                className="inline-flex items-center justify-center px-3 py-2 border border-transparent shadow-sm text-sm font-normal rounded-md text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Icon name="trash" size={16} className="mr-2" />
-                選択したシフトを削除
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectionMode(false)
-                  setSelectedShiftIds([])
-                }}
-                className="inline-flex items-center justify-center px-3 py-2 border border-border-strong shadow-sm text-sm font-normal rounded-md text-text-secondary bg-surface-raised hover:bg-surface-base"
-              >
-                <Icon name="close" size={16} className="mr-2 text-text-secondary" />
-                キャンセル
-              </button>
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* Calendar Area */}
-      <div className="bg-surface-raised shadow rounded-lg">
-        {viewMode === 'individual' ? (
-          selectedTrainerId ? (
-            <ShiftCalendar
-              currentDate={currentDate}
-              shifts={shifts}
-              templates={templates || []}
-              trainerName={filteredTrainers.find(t => t.id === selectedTrainerId)?.full_name || ''}
-              loading={loading}
-              onShiftCreate={(start, end) => handleShiftCreate(selectedTrainerId, start, end)}
-              onShiftUpdate={handleShiftUpdate}
-              onShiftDelete={handleShiftDelete}
-              selectionMode={selectionMode}
-              selectedShiftIds={selectedShiftIds}
-              onShiftSelect={handleShiftSelect}
-            />
-          ) : (
-            <div className="h-64 flex items-center justify-center text-text-secondary">
-              トレーナーを選択してください
-            </div>
-          )
-        ) : (
-          <TeamShiftCalendar
-            currentDate={currentDate}
-            trainers={filteredTrainers}
-            shifts={shifts}
-            templates={templates || []}
-            loading={loading}
-            onShiftCreate={handleShiftCreate}
-            onShiftUpdate={handleShiftUpdate}
-            onShiftDelete={handleShiftDelete}
-            selectionMode={selectionMode}
-            selectedShiftIds={selectedShiftIds}
-            onShiftSelect={handleShiftSelect}
-          />
+        {viewMode === 'team' && (
+          <div className="rounded-xl border border-border-subtle bg-surface-base px-4 py-3">
+            <p className="text-sm text-text-primary">店舗全体 <span className="ml-2 text-xs text-text-secondary">{filteredTrainers.length}名</span></p>
+          </div>
         )}
-      </div>
+      </section>
+
+      <FixedShiftOverview
+        trainers={scheduleTrainers}
+        templates={templates || []}
+        onEdit={(trainerId) => {
+          setTemplateTrainerId(trainerId)
+          setTemplateModalOpen(true)
+        }}
+      />
+
+      <OverallCalendarSection
+        currentDate={currentDate}
+        selectedDate={selectedWeekDate}
+        shifts={shifts}
+        templates={templates || []}
+        trainers={scheduleTrainers}
+        selectedTrainerId={selectedTrainerId}
+        viewMode={viewMode}
+        onDaySelect={(day) => {
+          const weekStartDate = startOfWeek(day, { weekStartsOn: 0 })
+          setCurrentDate(day)
+          setSelectedWeekDate(weekStartDate)
+        }}
+        onPrevMonth={() => {
+          setCurrentDate(subMonths(currentDate, 1))
+          setSelectedWeekDate(null)
+        }}
+        onNextMonth={() => {
+          setCurrentDate(addMonths(currentDate, 1))
+          setSelectedWeekDate(null)
+        }}
+        onToday={handleToday}
+        actions={
+          selectedWeekDate ? (
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setActionMenuOpen(prev => !prev)}
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-base text-text-secondary active:scale-95"
+                aria-label="シフト操作"
+              >
+                <Icon name="ellipsisVertical" size={17} />
+              </button>
+
+              {actionMenuOpen && (
+                <div className="absolute right-0 top-10 z-30 w-52 overflow-hidden rounded-2xl border border-border-subtle bg-surface-raised shadow-xl">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActionMenuOpen(false)
+                      setSelectionMode(true)
+                    }}
+                    className="flex h-12 w-full items-center gap-3 px-4 text-left text-sm text-text-primary hover:bg-surface-overlay disabled:opacity-40"
+                    disabled={viewMode === 'individual' && !selectedTrainerId}
+                  >
+                    <Icon name="checkCircle" size={17} className="text-text-secondary" />
+                    複数選択
+                  </button>
+
+                  {viewMode === 'individual' && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActionMenuOpen(false)
+                          handleCopyPrevWeek()
+                        }}
+                        className="flex h-12 w-full items-center gap-3 px-4 text-left text-sm text-text-primary hover:bg-surface-overlay disabled:opacity-40"
+                        disabled={!selectedTrainerId || loading}
+                      >
+                        <Icon name="copy" size={17} className="text-text-secondary" />
+                        先週からコピー
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActionMenuOpen(false)
+                          handleApplyTemplates()
+                        }}
+                        className="flex h-12 w-full items-center gap-3 px-4 text-left text-sm text-text-primary hover:bg-surface-overlay disabled:opacity-40"
+                        disabled={!selectedTrainerId || loading}
+                      >
+                        <Icon name="refresh" size={17} className="text-text-secondary" />
+                        固定シフトを反映
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          ) : null
+        }
+      >
+        {selectedWeekDate && (
+          <>
+            {selectionMode && (
+              <div className="flex items-center justify-center gap-2 border-b border-border-subtle px-4 py-3">
+                <span className="rounded-full bg-brand-500/15 px-3 py-2 text-sm text-brand-200">{selectedShiftIds.length}件</span>
+                <button
+                  type="button"
+                  onClick={handleBulkDelete}
+                  disabled={selectedShiftIds.length === 0 || loading}
+                  className="inline-flex h-10 items-center justify-center rounded-xl bg-red-600 px-3 text-sm font-normal text-white disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98]"
+                >
+                  <Icon name="trash" size={16} className="mr-1.5" />
+                  削除
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectionMode(false)
+                    setSelectedShiftIds([])
+                  }}
+                  className="inline-flex h-10 items-center justify-center rounded-xl border border-border-subtle bg-surface-base px-3 text-sm font-normal text-text-secondary active:scale-[0.98]"
+                >
+                  <Icon name="close" size={16} className="mr-1.5 text-text-secondary" />
+                  キャンセル
+                </button>
+              </div>
+            )}
+
+            <div className="flex items-center justify-between border-b border-border-subtle px-4 py-3">
+              <p className="text-sm font-semibold text-text-primary">選択週のシフト</p>
+              <span className="text-xs tabular-nums text-text-secondary">{weekLabel}</span>
+            </div>
+
+            {viewMode === 'individual' ? (
+              selectedTrainerId ? (
+                <ShiftCalendar
+                  currentDate={selectedWeekDate}
+                  shifts={shifts}
+                  templates={templates || []}
+                  trainerName={selectableTrainers.find(t => t.id === selectedTrainerId)?.full_name || ''}
+                  loading={loading}
+                  onShiftCreate={(start, end) => handleShiftCreate(selectedTrainerId, start, end)}
+                  onShiftUpdate={handleShiftUpdate}
+                  onShiftDelete={handleShiftDelete}
+                  selectionMode={selectionMode}
+                  selectedShiftIds={selectedShiftIds}
+                  onShiftSelect={handleShiftSelect}
+                />
+              ) : (
+                <div className="flex h-64 items-center justify-center px-6 text-center">
+                  <div>
+                    <div className="mx-auto mb-3 h-1 w-8 rounded-full bg-brand-500" />
+                    <p className="text-sm text-text-secondary">トレーナーを選択してください</p>
+                  </div>
+                </div>
+              )
+            ) : (
+              <TeamShiftCalendar
+                currentDate={selectedWeekDate}
+                trainers={filteredTrainers}
+                shifts={shifts}
+                templates={templates || []}
+                loading={loading}
+                onShiftCreate={handleShiftCreate}
+                onShiftUpdate={handleShiftUpdate}
+                onShiftDelete={handleShiftDelete}
+                selectionMode={selectionMode}
+                selectedShiftIds={selectedShiftIds}
+                onShiftSelect={handleShiftSelect}
+              />
+            )}
+          </>
+        )}
+      </OverallCalendarSection>
+
+      {selectedWeekDate && (
+          <button
+            type="button"
+            onClick={() => {
+              setCreateDate(selectedWeekDate)
+              setCreateModalOpen(true)
+            }}
+            disabled={viewMode === 'individual' && !selectedTrainerId}
+            className="sticky bottom-4 z-20 flex h-14 w-full items-center justify-center rounded-2xl bg-brand-600 text-base font-semibold text-white shadow-lg shadow-black/30 active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <Icon name="plus" size={20} className="mr-2" />
+            シフトを追加
+          </button>
+      )}
 
       {/* Template Modal */}
-      {selectedTrainerId && templateModalOpen && (
+      {(templateTrainerId || selectedTrainerId) && templateModalOpen && (
         <TemplateModal
           isOpen={templateModalOpen}
-          onClose={() => setTemplateModalOpen(false)}
-          trainerId={selectedTrainerId}
+          onClose={() => {
+            setTemplateModalOpen(false)
+            setTemplateTrainerId(null)
+          }}
+          trainerId={templateTrainerId || selectedTrainerId}
           onSave={async () => {
             setTemplateModalOpen(false)
+            setTemplateTrainerId(null)
             await refreshShifts()
           }}
         />
       )}
+
+      {createModalOpen && (
+        <ShiftQuickCreateModal
+          isOpen={createModalOpen}
+          onClose={() => {
+            setCreateModalOpen(false)
+            setCreateDate(null)
+          }}
+          currentDate={createDate || currentDate}
+          viewMode={viewMode}
+          trainers={viewMode === 'individual' && selectedTrainer ? [selectedTrainer] : filteredTrainers}
+          selectedTrainerId={selectedTrainerId}
+          onSave={async (trainerId, start, end, weeklyFixed) => {
+            await handleShiftCreateFromCalendar(trainerId, start, end, weeklyFixed)
+            setCreateModalOpen(false)
+            setCreateDate(null)
+          }}
+        />
+      )}
+    </div>
+  )
+}
+
+function ShiftQuickCreateModal({
+  isOpen,
+  onClose,
+  currentDate,
+  viewMode,
+  trainers,
+  selectedTrainerId,
+  onSave
+}: {
+  isOpen: boolean
+  onClose: () => void
+  currentDate: Date
+  viewMode: 'individual' | 'team'
+  trainers: Trainer[]
+  selectedTrainerId: string
+  onSave: (trainerId: string, start: Date, end: Date, weeklyFixed: boolean) => Promise<void>
+}) {
+  const defaultTrainerId = viewMode === 'individual' ? selectedTrainerId : (trainers[0]?.id || '')
+  const [trainerId, setTrainerId] = useState(defaultTrainerId)
+  const [dateValue, setDateValue] = useState(format(currentDate, 'yyyy-MM-dd'))
+  const [startTime, setStartTime] = useState('19:00')
+  const [endTime, setEndTime] = useState('20:00')
+  const [weeklyFixed, setWeeklyFixed] = useState(false)
+  const [loading, setLoading] = useState(false)
+
+  const timeOptions = useMemo(() => {
+    const options: string[] = []
+    for (let i = 6; i <= 23; i += 1) {
+      const hour = i.toString().padStart(2, '0')
+      for (let minute = 0; minute < 60; minute += 10) {
+        options.push(`${hour}:${minute.toString().padStart(2, '0')}`)
+      }
+    }
+    return options
+  }, [])
+
+  if (!isOpen) return null
+
+  const handleSave = async () => {
+    if (!trainerId) {
+      alert('トレーナーを選択してください')
+      return
+    }
+
+    const baseDate = new Date(`${dateValue}T00:00:00`)
+    const [startHour, startMinute] = startTime.split(':').map(Number)
+    const [endHour, endMinute] = endTime.split(':').map(Number)
+    const start = setMinutes(setHours(baseDate, startHour), startMinute)
+    const end = setMinutes(setHours(baseDate, endHour), endMinute)
+
+    if (isAfter(start, end) || start.getTime() === end.getTime()) {
+      alert('終了時間は開始時間より後に設定してください')
+      return
+    }
+
+    setLoading(true)
+    try {
+      await onSave(trainerId, start, end, weeklyFixed)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center">
+      <div className="w-full max-w-md rounded-t-3xl border border-border-subtle bg-surface-raised p-5 shadow-xl sm:rounded-3xl">
+        <div className="mb-5 flex items-center justify-between">
+          <h3 className="text-lg font-semibold text-text-primary">シフトを追加</h3>
+          <button type="button" onClick={onClose} className="flex h-9 w-9 items-center justify-center rounded-full bg-surface-base text-text-secondary">
+            <Icon name="close" size={18} />
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          {viewMode === 'team' && (
+            <div>
+              <label className="mb-2 block text-xs text-text-secondary">トレーナー</label>
+              <select
+                value={trainerId}
+                onChange={event => setTrainerId(event.target.value)}
+                className="h-12 w-full rounded-xl border border-border-subtle bg-surface-base px-3 text-text-primary"
+              >
+                {trainers.map(trainer => (
+                  <option key={trainer.id} value={trainer.id}>{trainer.full_name}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          <div>
+            <label className="mb-2 block text-xs text-text-secondary">日付</label>
+            <input
+              type="date"
+              value={dateValue}
+              onChange={event => setDateValue(event.target.value)}
+              className="h-12 w-full rounded-xl border border-border-subtle bg-surface-base px-3 text-text-primary"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="mb-2 block text-xs text-text-secondary">開始</label>
+              <select
+                value={startTime}
+                onChange={event => setStartTime(event.target.value)}
+                className="h-12 w-full rounded-xl border border-border-subtle bg-surface-base px-3 text-text-primary"
+              >
+                {timeOptions.map(time => <option key={`start-${time}`} value={time}>{time}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="mb-2 block text-xs text-text-secondary">終了</label>
+              <select
+                value={endTime}
+                onChange={event => setEndTime(event.target.value)}
+                className="h-12 w-full rounded-xl border border-border-subtle bg-surface-base px-3 text-text-primary"
+              >
+                {timeOptions.map(time => <option key={`end-${time}`} value={time}>{time}</option>)}
+              </select>
+            </div>
+          </div>
+
+          <label className="flex min-h-12 items-center justify-between rounded-xl border border-border-subtle bg-surface-base px-3">
+            <span className="text-sm text-text-primary">毎週固定</span>
+            <input
+              type="checkbox"
+              checked={weeklyFixed}
+              onChange={event => setWeeklyFixed(event.target.checked)}
+              className="h-5 w-5 rounded border-border-subtle text-brand-600 focus:ring-brand-500"
+            />
+          </label>
+        </div>
+
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={loading}
+          className="mt-6 flex h-12 w-full items-center justify-center rounded-2xl bg-brand-600 text-sm font-semibold text-white disabled:opacity-50"
+        >
+          登録
+        </button>
+      </div>
     </div>
   )
 }

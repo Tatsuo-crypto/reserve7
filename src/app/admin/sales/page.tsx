@@ -6,7 +6,6 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { format } from 'date-fns'
 import { useStoreChange } from '@/hooks/useStoreChange'
-import Icon from '@/components/ui/icons'
 
 function SalesPageContent() {
     const { count: storeChangeCount, currentStoreId } = useStoreChange()
@@ -88,13 +87,7 @@ function SalesPageContent() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 {/* Header */}
                 <div className="mb-6">
-                    <div className="relative flex items-center justify-center">
-                        <button
-                            onClick={() => router.push('/dashboard')}
-                            className="absolute left-0 text-text-muted hover:text-text-secondary"
-                        >
-                            <Icon name="chevronLeft" size={24} />
-                        </button>
+                    <div className="flex items-center justify-center">
                         <div className="text-center">
                             <h1 className="text-2xl font-normal text-text-primary">売上管理</h1>
                             <p className="mt-1 text-sm text-text-secondary">月会費の管理・確認</p>

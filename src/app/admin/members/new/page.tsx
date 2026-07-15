@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { PLAN_LIST } from '@/lib/constants'
-import Icon from '@/components/ui/icons'
 
 export default function NewMemberPage() {
   const { data: session, status } = useSession()
@@ -132,14 +131,7 @@ export default function NewMemberPage() {
   return (
     <div className="max-w-2xl mx-auto py-8 px-4">
       {/* Header */}
-      <div className="mb-8 relative flex items-center justify-center">
-        <button
-          onClick={() => router.back()}
-          className="absolute left-0 p-2 text-text-secondary hover:text-text-secondary hover:bg-surface-overlay rounded-full transition-colors"
-          aria-label="戻る"
-        >
-          <Icon name="chevronLeft" size={24} />
-        </button>
+      <div className="mb-8 flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-normal text-text-primary">新規会員追加</h1>
           <p className="mt-1 text-sm text-text-secondary">会員情報を入力してください</p>
