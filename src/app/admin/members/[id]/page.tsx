@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
-import { useRouter, useSearchParams, usePathname } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Icon, { IconName } from '@/components/ui/icons'
 
@@ -11,6 +11,7 @@ interface MemberDetail {
   fullName: string
   email: string
   plan?: string
+  monthlyFee?: number
   accessToken?: string
   memo?: string
   createdAt?: string
@@ -18,7 +19,7 @@ interface MemberDetail {
   status?: string
 }
 
-function MemberGridItem({
+function MemberActionRow({
   label,
   iconName,
   href,
@@ -33,19 +34,18 @@ function MemberGridItem({
   disabled?: boolean
   external?: boolean
 }) {
-  const className = `group flex min-h-[106px] flex-col items-center justify-start rounded-2xl px-2 py-3 text-center transition-colors ${
+  const className = `group flex w-full items-center justify-between gap-4 rounded-2xl border border-border-subtle bg-surface-raised px-4 py-4 text-left transition-colors ${
     disabled
       ? 'cursor-not-allowed opacity-40'
-      : 'active:scale-[0.98] hover:bg-surface-raised/50'
+      : 'active:scale-[0.99] hover:bg-surface-overlay/60'
   }`
   const content = (
     <>
-      <div className="flex h-12 items-center justify-center text-text-secondary transition-colors group-hover:text-text-primary">
-        <Icon name={iconName} size={40} />
+      <div className="flex min-w-0 items-center gap-3">
+        <Icon name={iconName} size={20} className="shrink-0 text-text-secondary transition-colors group-hover:text-brand-300" />
+        <span className="ui-nowrap text-sm font-normal text-text-primary">{label}</span>
       </div>
-      <div className="mt-2 text-[12px] font-normal leading-snug text-text-secondary transition-colors group-hover:text-text-primary">
-        {label}
-      </div>
+      <Icon name="chevronRight" size={16} className="shrink-0 text-text-muted" />
     </>
   )
 
@@ -80,11 +80,41 @@ function MemberGridItem({
   return <div className={className}>{content}</div>
 }
 
+function InlineActionButton({
+  label,
+  onClick,
+  href,
+  disabled = false,
+}: {
+  label: string
+  onClick?: () => void
+  href?: string
+  disabled?: boolean
+}) {
+  const className = `rounded-full px-4 py-2 text-xs font-normal transition-colors ${
+    disabled
+      ? 'cursor-not-allowed bg-surface-overlay text-text-muted opacity-60'
+      : 'bg-surface-overlay text-text-primary hover:bg-brand-500/15 hover:text-brand-300'
+  }`
+
+  if (href && !disabled) {
+    return (
+      <a href={href} className={className}>
+        {label}
+      </a>
+    )
+  }
+
+  return (
+    <button type="button" onClick={onClick} disabled={disabled} className={className}>
+      {label}
+    </button>
+  )
+}
+
 export default function MemberDetailPage({ params }: { params: { id: string } }) {
   const { data: session, status } = useSession()
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const fromPage = searchParams.get('from') // 'sales' or null
   const memberId = params.id
 
   const [member, setMember] = useState<MemberDetail | null>(null)
@@ -116,6 +146,7 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
           fullName: m.full_name, 
           email: m.email, 
           plan: m.plan,
+          monthlyFee: m.monthly_fee,
           accessToken: m.access_token,
           memo: m.memo,
           createdAt: m.created_at,
@@ -133,15 +164,24 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
     fetchData()
   }, [session, status, memberId, router])
 
-  const pathname = usePathname()
-  useEffect(() => {
-    if (member && !searchParams.get('name')) {
-      const lastName = member.fullName.split(/[\s　]+/)[0]
-      const params = new URLSearchParams(searchParams.toString())
-      params.set('name', lastName)
-      router.replace(`${pathname}?${params.toString()}`)
-    }
-  }, [member, searchParams, router, pathname])
+  const formatYen = (value?: number) => {
+    if (!value) return '未設定'
+    return `${value.toLocaleString('ja-JP')}円`
+  }
+
+  const statusLabel = (status?: string) => {
+    if (status === 'active') return '在籍'
+    if (status === 'suspended') return '休会'
+    if (status === 'withdrawn') return '退会'
+    return '未設定'
+  }
+
+  const statusClassName = (status?: string) => {
+    if (status === 'active') return 'bg-brand-500/15 text-brand-300'
+    if (status === 'suspended') return 'bg-yellow-500/15 text-yellow-300'
+    if (status === 'withdrawn') return 'bg-surface-overlay text-text-muted'
+    return 'bg-surface-overlay text-text-secondary'
+  }
 
   if (status === 'loading' || loading) {
     return (
@@ -157,45 +197,94 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
 
   return (
     <div className="min-h-screen bg-surface-base pt-4 pb-12">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-3 gap-x-2 gap-y-6 sm:grid-cols-4">
-          {member.accessToken ? (
-            <MemberGridItem
-              label={copySuccess || 'URLコピー'}
-              iconName="copy"
-              onClick={() => {
-                const url = `${window.location.origin}/client/${member.accessToken}`
-                navigator.clipboard.writeText(url)
-                setCopySuccess('コピー完了')
-                setTimeout(() => setCopySuccess(''), 2000)
-              }}
-            />
-          ) : (
-            <MemberGridItem label="URL未設定" iconName="lock" disabled />
-          )}
+      <div className="mx-auto max-w-lg px-4 sm:px-6">
+        <section className="mb-8">
+          <div className="relative flex items-start justify-center">
+            <h1 className="ui-nowrap max-w-[calc(100%-5rem)] overflow-x-auto text-center text-3xl font-normal tracking-tight text-text-primary">
+              {member.fullName}
+            </h1>
+            <span className={`ui-nowrap absolute right-0 top-1 shrink-0 rounded-full px-3 py-1 text-xs font-normal ${statusClassName(member.status)}`}>
+              {statusLabel(member.status)}
+            </span>
+          </div>
 
-          <MemberGridItem
-            href={`/admin/members/${memberId}/edit`}
-            label="会員情報"
-            iconName="pencil"
-          />
+          <div className="mt-5 rounded-3xl border border-border-subtle bg-surface-raised p-5">
+            <div className="flex items-end justify-between gap-4">
+              <div>
+                <div className="text-xs font-normal text-text-muted">契約</div>
+                <div className="ui-nowrap mt-2 overflow-x-auto text-2xl font-normal leading-tight text-text-primary">
+                  {member.plan || '未設定'}
+                </div>
+              </div>
+              <div className="shrink-0 text-right">
+                <div className="text-xs font-normal text-text-muted">料金</div>
+                <div className="mt-2 whitespace-nowrap text-lg font-normal text-text-primary">
+                  {formatYen(member.monthlyFee)} / 月
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
 
-          {member.accessToken ? (
-            <MemberGridItem
-              href={`/client/${member.accessToken}?from=admin`}
-              label="会員画面"
-              iconName="eye"
-              external
-            />
-          ) : (
-            <MemberGridItem label="会員画面なし" iconName="linkSlash" disabled />
-          )}
+        <div className="space-y-7">
+          <section>
+            <div className="mb-3 flex items-center gap-2">
+              <span className="h-5 w-1 rounded-full bg-brand-500" />
+              <h2 className="text-base font-normal text-text-primary">管理</h2>
+            </div>
+            <div className="space-y-3">
+              <MemberActionRow
+                href={`/admin/members/${memberId}/edit`}
+                label="会員情報"
+                iconName="pencil"
+              />
+              <MemberActionRow
+                href={`/admin/members/${memberId}/history`}
+                label="月額プラン"
+                iconName="clipboardList"
+              />
+            </div>
+          </section>
 
-          <MemberGridItem
-            href={`/admin/members/${memberId}/history`}
-            label="月額プラン"
-            iconName="clipboardList"
-          />
+          <section>
+            <div className="mb-3 flex items-center gap-2">
+              <span className="h-5 w-1 rounded-full bg-brand-500" />
+              <h2 className="text-base font-normal text-text-primary">招待URL</h2>
+            </div>
+            <div className="space-y-3">
+              {member.accessToken ? (
+                <MemberActionRow
+                  href={`/client/${member.accessToken}?from=admin`}
+                  label="会員画面を確認"
+                  iconName="eye"
+                  external
+                />
+              ) : (
+                <MemberActionRow label="会員画面なし" iconName="linkSlash" disabled />
+              )}
+
+              <div className="rounded-2xl border border-border-subtle bg-surface-raised p-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <Icon name="copy" size={18} className="shrink-0 text-text-secondary" />
+                    <span className="text-sm font-normal text-text-primary">会員ページURL</span>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <InlineActionButton
+                      label={copySuccess || 'コピー'}
+                      disabled={!member.accessToken}
+                      onClick={() => {
+                        const url = `${window.location.origin}/client/${member.accessToken}`
+                        navigator.clipboard.writeText(url)
+                        setCopySuccess('コピー完了')
+                        setTimeout(() => setCopySuccess(''), 2000)
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
         </div>
       </div>
     </div>

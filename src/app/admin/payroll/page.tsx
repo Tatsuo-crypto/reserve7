@@ -7,7 +7,8 @@ import { format } from 'date-fns'
 import { ja } from 'date-fns/locale'
 import { useStoreChange } from '@/hooks/useStoreChange'
 import Icon from '@/components/ui/icons'
-import { calculatePayrollTotals, findHourlyWage, payableHours, PayRate } from '@/lib/payroll'
+import AppModal from '@/components/ui/AppModal'
+import { autoBreakMinutes, calculatePayrollTotals, findHourlyWage, payableHours, PayRate } from '@/lib/payroll'
 
 type PayrollRow = {
   id: string | null
@@ -19,6 +20,7 @@ type PayrollRow = {
   clockOut: string
   breakMinutes: number
   transportationEnabled: boolean
+  attended: boolean
   memo: string
   source: 'shift' | 'saved'
 }
@@ -29,6 +31,8 @@ type PayrollItem = {
     fullName: string
     storeId: string
     dailyTransportationCost: number
+    breakRuleThresholdMinutes: number
+    breakRuleMinutes: number
   }
   rates: PayRate[]
   month: {
@@ -69,6 +73,13 @@ function currentMonth() {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
 }
 
+function nextMonthStartDate(month: string) {
+  const [year, monthIndex] = month.split('-').map(Number)
+  const nextYear = monthIndex === 12 ? year + 1 : year
+  const nextMonth = monthIndex === 12 ? 1 : monthIndex + 1
+  return `${nextYear}-${String(nextMonth).padStart(2, '0')}-01`
+}
+
 function formatYen(value: number) {
   return `${Math.round(value || 0).toLocaleString('ja-JP')}円`
 }
@@ -99,7 +110,9 @@ function getMonthCalendarDays(month: string) {
   const lastDay = new Date(year, monthIndex, 0)
   const cells: (Date | null)[] = []
 
-  for (let i = 0; i < firstDay.getDay(); i += 1) {
+  const leadingEmptyDays = (firstDay.getDay() + 6) % 7
+
+  for (let i = 0; i < leadingEmptyDays; i += 1) {
     cells.push(null)
   }
 
@@ -176,7 +189,7 @@ function PayrollWorkCalendar({ rows, month }: { rows: PayrollRow[], month: strin
   return (
     <div className="mt-4 rounded-xl border border-border-subtle bg-surface-base p-3">
       <div className="mb-2 grid grid-cols-7 text-center text-[10px] text-text-muted">
-        {['日', '月', '火', '水', '木', '金', '土'].map(day => <div key={day}>{day}</div>)}
+        {['月', '火', '水', '木', '金', '土', '日'].map(day => <div key={day}>{day}</div>)}
       </div>
       <div className="grid grid-cols-7 gap-1">
         {days.map((day, index) => {
@@ -187,7 +200,7 @@ function PayrollWorkCalendar({ rows, month }: { rows: PayrollRow[], month: strin
           const key = toDateKey(day)
           const workRows = rowsByDate[key] || []
           const hasWork = workRows.length > 0
-          const firstRow = workRows[0]
+          const attended = workRows.some(row => row.attended)
           const totalHours = workRows.reduce((sum, row) => sum + payableHours(row.clockIn, row.clockOut, row.breakMinutes), 0)
           const timeLabel = `${formatHours(totalHours)}h`
 
@@ -204,8 +217,9 @@ function PayrollWorkCalendar({ rows, month }: { rows: PayrollRow[], month: strin
                 {day.getDate()}
               </div>
               {hasWork && (
-                <div className="mt-1 truncate text-[10px] tabular-nums text-text-primary">
-                  {timeLabel}
+                <div className="mt-1 flex items-center justify-center gap-1 truncate text-[10px] tabular-nums text-text-primary">
+                  <span>{timeLabel}</span>
+                  {attended && <span className="h-1.5 w-1.5 rounded-full bg-brand-400" />}
                 </div>
               )}
             </div>
@@ -223,7 +237,8 @@ export default function AdminPayrollPage() {
   const adminStoreId = currentStoreId || (session as any)?.user?.storeId || ''
 
   const [month, setMonth] = useState(currentMonth())
-  const [storeScope, setStoreScope] = useState<'mine' | 'all'>(adminStoreId ? 'mine' : 'all')
+  const [storeScope, setStoreScope] = useState<'mine' | 'all'>('all')
+  const [payrollTrainerId, setPayrollTrainerId] = useState('')
   const [stores, setStores] = useState<StoreOption[]>([])
   const [items, setItems] = useState<PayrollItem[]>([])
   const [loading, setLoading] = useState(false)
@@ -232,8 +247,19 @@ export default function AdminPayrollPage() {
   const [editRows, setEditRows] = useState<PayrollRow[]>([])
   const [allowanceAmount, setAllowanceAmount] = useState('0')
   const [adjustmentAmount, setAdjustmentAmount] = useState('0')
+  const [breakRuleThresholdHours, setBreakRuleThresholdHours] = useState('8')
+  const [breakRuleMinutes, setBreakRuleMinutes] = useState('120')
+  const [hourlyWage, setHourlyWage] = useState('')
+  const [hourlyWageEffectiveFrom, setHourlyWageEffectiveFrom] = useState('')
   const [memo, setMemo] = useState('')
   const [breakdownOpen, setBreakdownOpen] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const [settingsTrainerId, setSettingsTrainerId] = useState('')
+  const [settingsHourlyWage, setSettingsHourlyWage] = useState('')
+  const [settingsHourlyWageEffectiveFrom, setSettingsHourlyWageEffectiveFrom] = useState('')
+  const [settingsBreakRuleThresholdHours, setSettingsBreakRuleThresholdHours] = useState('8')
+  const [settingsBreakRuleMinutes, setSettingsBreakRuleMinutes] = useState('2')
+  const [settingsTransportationCost, setSettingsTransportationCost] = useState('0')
 
   useEffect(() => {
     if (status === 'loading') return
@@ -245,10 +271,6 @@ export default function AdminPayrollPage() {
       router.push('/dashboard')
     }
   }, [status, session, router])
-
-  useEffect(() => {
-    if (adminStoreId) setStoreScope('mine')
-  }, [adminStoreId])
 
   useEffect(() => {
     const fetchStores = async () => {
@@ -293,16 +315,58 @@ export default function AdminPayrollPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [month, storeScope, adminStoreId])
 
+  useEffect(() => {
+    if (items.length === 0) {
+      setPayrollTrainerId('')
+      return
+    }
+    if (!items.some(item => item.trainer.id === payrollTrainerId)) {
+      setPayrollTrainerId(items[0].trainer.id)
+    }
+  }, [items, payrollTrainerId])
+
   const openDetail = (item: PayrollItem) => {
     setSelected(item)
     setEditRows(item.rows)
     setAllowanceAmount(String(item.month?.allowance_amount || 0))
     setAdjustmentAmount(String(item.month?.adjustment_amount || 0))
+    setBreakRuleThresholdHours(String((item.trainer.breakRuleThresholdMinutes || 480) / 60))
+    setBreakRuleMinutes(String(item.trainer.breakRuleMinutes || 120))
+    const nextRate = [...(item.rates || [])]
+      .filter(rate => rate.effective_from >= `${month}-01`)
+      .sort((a, b) => b.effective_from.localeCompare(a.effective_from))[0]
+    const latestRate = [...(item.rates || [])]
+      .sort((a, b) => b.effective_from.localeCompare(a.effective_from))[0]
+    setHourlyWage(String(nextRate?.hourly_wage || latestRate?.hourly_wage || ''))
+    setHourlyWageEffectiveFrom(nextRate?.effective_from || nextMonthStartDate(month))
     setMemo(item.month?.memo || '')
   }
 
   const updateRow = (index: number, patch: Partial<PayrollRow>) => {
     setEditRows(rows => rows.map((row, i) => i === index ? { ...row, ...patch } : row))
+  }
+
+  const currentBreakRule = useMemo(() => ({
+    thresholdMinutes: Math.max(0, Math.round(Number(breakRuleThresholdHours || 0) * 60)),
+    breakMinutes: Math.max(0, Math.floor(Number(breakRuleMinutes || 0)))
+  }), [breakRuleThresholdHours, breakRuleMinutes])
+
+  const updateRowTime = (index: number, patch: Partial<PayrollRow>) => {
+    setEditRows(rows => rows.map((row, i) => {
+      if (i !== index) return row
+      const nextRow = { ...row, ...patch }
+      return {
+        ...nextRow,
+        breakMinutes: autoBreakMinutes(nextRow.clockIn, nextRow.clockOut, currentBreakRule)
+      }
+    }))
+  }
+
+  const applyBreakRuleToRows = () => {
+    setEditRows(rows => rows.map(row => ({
+      ...row,
+      breakMinutes: autoBreakMinutes(row.clockIn, row.clockOut, currentBreakRule)
+    })))
   }
 
   const addRow = () => {
@@ -317,8 +381,9 @@ export default function AdminPayrollPage() {
         scheduledEnd: null,
         clockIn: localDateTimeIso(date, '09:00'),
         clockOut: localDateTimeIso(date, '10:00'),
-        breakMinutes: 0,
+        breakMinutes: autoBreakMinutes(localDateTimeIso(date, '09:00'), localDateTimeIso(date, '10:00'), currentBreakRule),
         transportationEnabled: true,
+        attended: false,
         memo: '',
         source: 'saved'
       }
@@ -375,111 +440,160 @@ export default function AdminPayrollPage() {
     }
   }
 
-  const summaryTotals = useMemo(() => {
-    return items.reduce((acc, item) => ({
-      hours: acc.hours + item.totals.payableHourTotal,
-      total: acc.total + item.totals.totalPay
-    }), { hours: 0, total: 0 })
-  }, [items])
+  const selectedPayrollItem = useMemo(() => {
+    return items.find(item => item.trainer.id === payrollTrainerId) || null
+  }, [items, payrollTrainerId])
 
-  const summaryBreakdown = useMemo(() => buildPayrollBreakdown(items), [items])
+  const breakdownItems = useMemo(() => {
+    return selectedPayrollItem ? [selectedPayrollItem] : []
+  }, [selectedPayrollItem])
+
+  const summaryTotals = useMemo(() => {
+    if (!selectedPayrollItem) return { hours: 0, total: 0 }
+    return {
+      hours: selectedPayrollItem.totals.payableHourTotal,
+      total: selectedPayrollItem.totals.totalPay
+    }
+  }, [selectedPayrollItem])
+
+  const summaryBreakdown = useMemo(() => buildPayrollBreakdown(breakdownItems), [breakdownItems])
+  const settingsItem = useMemo(() => {
+    return items.find(item => item.trainer.id === settingsTrainerId) || items[0] || null
+  }, [items, settingsTrainerId])
+
+  const hydratePayrollSettings = (item: PayrollItem) => {
+    const latestRate = [...(item.rates || [])]
+      .sort((a, b) => b.effective_from.localeCompare(a.effective_from))[0]
+    setSettingsTrainerId(item.trainer.id)
+    setSettingsHourlyWage(String(latestRate?.hourly_wage || ''))
+    setSettingsHourlyWageEffectiveFrom(month)
+    setSettingsBreakRuleThresholdHours(String((item.trainer.breakRuleThresholdMinutes || 480) / 60))
+    setSettingsBreakRuleMinutes(String((item.trainer.breakRuleMinutes || 120) / 60))
+    setSettingsTransportationCost(String(item.trainer.dailyTransportationCost || 0))
+  }
+
+  const openPayrollSettings = () => {
+    const item = selectedPayrollItem || settingsItem || items[0]
+    if (!item) return
+    hydratePayrollSettings(item)
+    setSettingsOpen(true)
+  }
+
+  const changeSettingsTrainer = (trainerId: string) => {
+    const item = items.find(payrollItem => payrollItem.trainer.id === trainerId)
+    if (!item) return
+    hydratePayrollSettings(item)
+  }
+
+  const savePayrollSettings = async () => {
+    if (!settingsTrainerId) return
+    try {
+      setSaving(true)
+      const res = await fetch('/api/admin/payroll/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          trainerId: settingsTrainerId,
+          dailyTransportationCost: Number(settingsTransportationCost || 0),
+          breakRuleThresholdMinutes: Math.max(0, Math.round(Number(settingsBreakRuleThresholdHours || 0) * 60)),
+          breakRuleMinutes: Math.max(0, Math.round(Number(settingsBreakRuleMinutes || 0) * 60)),
+          hourlyWage: settingsHourlyWage ? Number(settingsHourlyWage) : undefined,
+          hourlyWageEffectiveFrom: settingsHourlyWageEffectiveFrom ? `${settingsHourlyWageEffectiveFrom}-01` : undefined
+        })
+      })
+      if (!res.ok) throw new Error(await res.text())
+      setSettingsOpen(false)
+      await fetchPayroll()
+    } catch (error) {
+      console.error(error)
+      alert('給与設定の保存に失敗しました')
+    } finally {
+      setSaving(false)
+    }
+  }
 
   if (status === 'loading') return null
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-12">
-      <div className="bg-surface-raised shadow rounded-lg p-4 mb-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h1 className="text-xl font-normal text-text-primary">給与計算</h1>
-            <p className="text-xs text-text-muted mt-1">予定シフトを下書きにして、実勤務を確認します</p>
-          </div>
-          <div className="flex items-center gap-2">
+      <div className="mb-4 rounded-2xl bg-surface-raised p-4 shadow">
+        <div className="grid grid-cols-2 gap-2">
+          <label className="block">
+            <span className="sr-only">月</span>
             <input
               type="month"
-              className="border border-border-strong rounded-md px-2 py-1.5 text-sm"
+              className="h-10 w-full rounded-full border border-border-subtle bg-surface-base px-3 text-sm text-text-primary"
               value={month}
               onChange={(e) => setMonth(e.target.value)}
             />
+          </label>
+          <label className="relative block">
+            <span className="sr-only">店舗</span>
             <select
-              className="border border-border-strong rounded-md px-2 py-1.5 text-sm"
+              className="h-10 w-full appearance-none rounded-full border border-border-subtle bg-surface-base px-3 pr-11 text-sm text-text-primary"
               value={storeScope}
               onChange={(e) => setStoreScope(e.target.value as 'mine' | 'all')}
             >
               <option value="mine" disabled={!adminStoreId}>自店舗</option>
               <option value="all">全店舗</option>
             </select>
-          </div>
+            <Icon name="chevronDown" size={14} className="pointer-events-none absolute right-5 top-1/2 -translate-y-1/2 text-text-secondary" />
+          </label>
+          <label className="relative col-span-2 block">
+            <span className="sr-only">スタッフ</span>
+            <select
+              className="h-10 w-full appearance-none rounded-full border border-border-subtle bg-surface-base px-3 pr-11 text-sm text-text-primary disabled:opacity-50"
+              value={payrollTrainerId}
+              onChange={(e) => setPayrollTrainerId(e.target.value)}
+              disabled={items.length === 0}
+            >
+              {items.length === 0 ? (
+                <option value="">スタッフ未選択</option>
+              ) : items.map(item => (
+                <option key={item.trainer.id} value={item.trainer.id}>{item.trainer.fullName}</option>
+              ))}
+            </select>
+            <Icon name="chevronDown" size={14} className="pointer-events-none absolute right-5 top-1/2 -translate-y-1/2 text-text-secondary" />
+          </label>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 mb-4">
-        <button
-          type="button"
-          onClick={() => setBreakdownOpen(true)}
-          className="bg-surface-raised shadow rounded-lg p-4 text-left transition active:scale-[0.99]"
-        >
-          <div className="text-xs text-text-muted">合計時間</div>
-          <div className="mt-1 flex items-center justify-between gap-2">
-            <div className="text-2xl font-normal text-text-primary">{formatHours(summaryTotals.hours)}時間</div>
-            <Icon name="chevronRight" size={18} className="text-text-muted" />
+      {selectedPayrollItem && (
+        <div className="mb-4 rounded-3xl bg-surface-raised p-5 shadow">
+          <div className="rounded-2xl bg-surface-base px-4 py-4">
+            <div className="text-xs text-text-muted">支給見込み</div>
+            <div className="mt-1 text-2xl font-normal leading-tight text-text-primary">
+              {formatYen(selectedPayrollItem.totals.totalPay)}
+            </div>
           </div>
-        </button>
-        <button
-          type="button"
-          onClick={() => setBreakdownOpen(true)}
-          className="bg-surface-raised shadow rounded-lg p-4 text-left transition active:scale-[0.99]"
-        >
-          <div className="text-xs text-text-muted">支給見込み</div>
-          <div className="mt-1 flex items-center justify-between gap-2">
-            <div className="text-2xl font-normal text-text-primary">{formatYen(summaryTotals.total)}</div>
-            <Icon name="chevronRight" size={18} className="text-text-muted" />
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <div className="rounded-2xl bg-surface-base px-4 py-3">
+              <div className="text-xs text-text-muted">勤務</div>
+              <div className="mt-1 text-base font-normal text-text-primary">{formatHours(selectedPayrollItem.totals.payableHourTotal)}時間</div>
+            </div>
+            <div className="rounded-2xl bg-surface-base px-4 py-3">
+              <div className="text-xs text-text-muted">出勤</div>
+              <div className="mt-1 text-base font-normal text-text-primary">{selectedPayrollItem.totals.transportationDays}日</div>
+            </div>
           </div>
-        </button>
-      </div>
+          <div className="mt-3">
+            <button
+              type="button"
+              onClick={openPayrollSettings}
+              className="h-11 w-full rounded-full bg-surface-base text-sm text-text-secondary transition hover:text-text-primary active:scale-[0.99]"
+            >
+              給与設定
+            </button>
+          </div>
+        </div>
+      )}
 
-      <div className="bg-surface-raised shadow rounded-lg overflow-hidden">
-        {loading ? (
-          <div className="text-center py-8 text-text-secondary text-sm">読み込み中...</div>
-        ) : items.length === 0 ? (
-          <div className="text-center py-8 text-text-secondary text-sm">給与対象スタッフがいません</div>
-        ) : (
-          <div className="divide-y divide-border-subtle">
-            {items.map(item => (
-              <button
-                key={item.trainer.id}
-                className="w-full text-left px-4 py-4 hover:bg-surface-base transition-colors"
-                onClick={() => openDetail(item)}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-normal text-text-primary">{item.trainer.fullName}</span>
-                      {item.month?.status === 'confirmed' && (
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-brand-500/15 text-brand-300">確定済み</span>
-                      )}
-                      {item.month?.changed_after_confirm && (
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300">確定後に変更あり</span>
-                      )}
-                    </div>
-                    <div className="text-xs text-text-muted mt-1">{storeNameById[item.trainer.storeId] || ''}</div>
-                  </div>
-                  <Icon name="chevronRight" size={20} className="text-text-muted" />
-                </div>
-                <div className="grid grid-cols-2 md:grid-cols-6 gap-3 mt-3 text-xs">
-                  <div><span className="text-text-muted">勤務</span><div className="text-text-primary">{formatHours(item.totals.payableHourTotal)}時間</div></div>
-                  <div><span className="text-text-muted">基本給</span><div className="text-text-primary">{formatYen(item.totals.basePay)}</div></div>
-                  <div><span className="text-text-muted">出勤日</span><div className="text-text-primary">{item.totals.transportationDays}日</div></div>
-                  <div><span className="text-text-muted">交通費</span><div className="text-text-primary">{formatYen(item.totals.transportationPay)}</div></div>
-                  <div><span className="text-text-muted">調整</span><div className="text-text-primary">{formatYen((item.month?.allowance_amount || 0) + (item.month?.adjustment_amount || 0))}</div></div>
-                  <div><span className="text-text-muted">合計</span><div className="text-text-primary">{formatYen(item.totals.totalPay)}</div></div>
-                </div>
-                <PayrollWorkCalendar rows={item.rows} month={month} />
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
+      {!loading && items.length === 0 && (
+        <div className="rounded-2xl bg-surface-raised px-4 py-8 text-center text-sm text-text-secondary">
+          給与対象スタッフがいません
+        </div>
+      )}
 
       {selected && detailTotals && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3">
@@ -534,84 +648,6 @@ export default function AdminPayrollPage() {
                 </label>
               </div>
 
-              <div className="flex justify-between items-center gap-3">
-                <h3 className="text-sm font-normal text-text-primary">勤務明細</h3>
-                <button className="px-3 py-1.5 text-xs rounded-full bg-surface-overlay text-text-secondary hover:bg-surface-base" onClick={addRow}>
-                  勤務を追加
-                </button>
-              </div>
-
-              <div className="space-y-3">
-                {editRows.map((row, index) => {
-                  const hours = payableHours(row.clockIn, row.clockOut, row.breakMinutes)
-                  const wage = findHourlyWage(selected.rates, row.workDate)
-                  const rowPay = Math.round(hours * wage)
-                  return (
-                    <div key={`${row.id || row.shiftId || 'new'}-${index}`} className="border border-border-subtle rounded-lg p-3">
-                      <div className="grid grid-cols-1 md:grid-cols-6 gap-3 items-end">
-                        <label className="text-xs text-text-secondary">
-                          出勤
-                          <input
-                            className="mt-1 w-full border rounded-md px-2 py-2 text-sm"
-                            type="datetime-local"
-                            value={toDateTimeLocal(row.clockIn)}
-                            onChange={(e) => updateRow(index, { clockIn: fromDateTimeLocal(e.target.value), workDate: e.target.value.slice(0, 10) })}
-                          />
-                        </label>
-                        <label className="text-xs text-text-secondary">
-                          退勤
-                          <input
-                            className="mt-1 w-full border rounded-md px-2 py-2 text-sm"
-                            type="datetime-local"
-                            value={toDateTimeLocal(row.clockOut)}
-                            onChange={(e) => updateRow(index, { clockOut: fromDateTimeLocal(e.target.value) })}
-                          />
-                        </label>
-                        <label className="text-xs text-text-secondary">
-                          休憩分
-                          <input
-                            className="mt-1 w-full border rounded-md px-2 py-2 text-sm"
-                            type="number"
-                            min="0"
-                            value={row.breakMinutes}
-                            onChange={(e) => updateRow(index, { breakMinutes: Number(e.target.value || 0) })}
-                          />
-                        </label>
-                        <label className="text-xs text-text-secondary">
-                          交通費
-                          <select
-                            className="mt-1 w-full border rounded-md px-2 py-2 text-sm"
-                            value={row.transportationEnabled ? 'yes' : 'no'}
-                            onChange={(e) => updateRow(index, { transportationEnabled: e.target.value === 'yes' })}
-                          >
-                            <option value="yes">対象</option>
-                            <option value="no">対象外</option>
-                          </select>
-                        </label>
-                        <div className="text-xs">
-                          <div className="text-text-muted">計算</div>
-                          <div className="text-text-primary mt-1">
-                            {formatYen(wage)} × {formatHours(hours)}時間 = {formatYen(rowPay)}
-                          </div>
-                        </div>
-                        <div className="flex justify-end">
-                          {!row.id && !row.shiftId && (
-                            <button className="p-2 text-text-muted hover:text-red-400" onClick={() => removeUnsavedRow(index)}>
-                              <Icon name="trash" size={18} />
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                      <input
-                        className="mt-3 w-full border rounded-md px-3 py-2 text-sm"
-                        placeholder="メモ"
-                        value={row.memo}
-                        onChange={(e) => updateRow(index, { memo: e.target.value })}
-                      />
-                    </div>
-                  )
-                })}
-              </div>
             </div>
 
             <div className="p-4 border-t border-border-subtle flex justify-end gap-3">
@@ -623,10 +659,112 @@ export default function AdminPayrollPage() {
         </div>
       )}
 
+      {settingsOpen && settingsItem && (
+        <AppModal
+          title="給与設定"
+          onClose={() => setSettingsOpen(false)}
+          bodyClassName="space-y-3 p-4"
+          footer={(
+            <>
+              <button className="rounded-full px-4 py-2 text-sm text-text-secondary" onClick={() => setSettingsOpen(false)} disabled={saving}>キャンセル</button>
+              <button className="rounded-full bg-brand-700 px-5 py-2 text-sm text-white hover:bg-brand-800" onClick={savePayrollSettings} disabled={saving}>保存</button>
+            </>
+          )}
+        >
+              <label className="block text-xs text-text-secondary">
+                スタッフ
+                <select
+                  className="mt-1 w-full rounded-lg border border-border-subtle bg-surface-base px-3 py-2.5 text-sm text-text-primary"
+                  value={settingsTrainerId}
+                  onChange={(event) => changeSettingsTrainer(event.target.value)}
+                >
+                  {items.map(item => (
+                    <option key={item.trainer.id} value={item.trainer.id}>{item.trainer.fullName}</option>
+                  ))}
+                </select>
+              </label>
+
+              <section className="overflow-hidden rounded-xl border border-border-subtle bg-surface-base">
+                <div className="flex items-center gap-2 border-b border-border-subtle px-3 py-2.5">
+                  <span className="h-4 w-1 rounded-full bg-brand-500" />
+                  <h3 className="text-sm font-normal text-text-primary">時給</h3>
+                </div>
+                <div className="grid grid-cols-2 gap-2 p-3">
+                  <label className="text-xs text-text-secondary">
+                    適用月
+                    <input
+                      className="mt-1 w-full rounded-lg border border-border-subtle bg-surface-raised px-3 py-2.5 text-sm text-text-primary"
+                      type="month"
+                      value={settingsHourlyWageEffectiveFrom}
+                      onChange={(event) => setSettingsHourlyWageEffectiveFrom(event.target.value)}
+                    />
+                  </label>
+                  <label className="text-xs text-text-secondary">
+                    時給
+                    <div className="mt-1 flex items-center gap-2 rounded-lg border border-border-subtle bg-surface-raised px-3 py-2.5">
+                      <input
+                        className="min-w-0 flex-1 bg-transparent text-right text-sm tabular-nums text-text-primary outline-none"
+                        type="number"
+                        min="0"
+                        value={settingsHourlyWage}
+                        onChange={(event) => setSettingsHourlyWage(event.target.value)}
+                      />
+                      <span className="text-xs text-text-muted">円</span>
+                    </div>
+                  </label>
+                </div>
+              </section>
+
+              <section className="overflow-hidden rounded-xl border border-border-subtle bg-surface-base">
+                <div className="flex items-center gap-2 border-b border-border-subtle px-3 py-2.5">
+                  <span className="h-4 w-1 rounded-full bg-brand-500" />
+                  <h3 className="text-sm font-normal text-text-primary">勤務条件</h3>
+                </div>
+                <label className="flex min-h-14 items-center justify-between gap-3 border-b border-border-subtle px-3 py-2 text-xs text-text-secondary">
+                  <span className="shrink-0">休憩</span>
+                  <div className="flex min-w-0 items-center justify-end gap-1.5">
+                    <input
+                      className="w-14 rounded-lg border border-border-subtle bg-surface-raised px-2 py-2 text-center text-sm tabular-nums text-text-primary outline-none focus:border-brand-500"
+                      type="number"
+                      min="0"
+                      step="0.5"
+                      value={settingsBreakRuleThresholdHours}
+                      onChange={(event) => setSettingsBreakRuleThresholdHours(event.target.value)}
+                    />
+                    <span className="whitespace-nowrap text-text-muted">時間以上</span>
+                    <span className="text-brand-400">→</span>
+                    <input
+                      className="w-14 rounded-lg border border-border-subtle bg-surface-raised px-2 py-2 text-center text-sm tabular-nums text-text-primary outline-none focus:border-brand-500"
+                      type="number"
+                      min="0"
+                      step="0.5"
+                      value={settingsBreakRuleMinutes}
+                      onChange={(event) => setSettingsBreakRuleMinutes(event.target.value)}
+                    />
+                    <span className="whitespace-nowrap text-text-muted">時間</span>
+                  </div>
+                </label>
+                <label className="flex min-h-14 items-center justify-between gap-3 px-3 py-2 text-xs text-text-secondary">
+                  <span className="shrink-0">交通費</span>
+                  <div className="flex items-center justify-end gap-1.5">
+                    <input
+                      className="w-24 rounded-lg border border-border-subtle bg-surface-raised px-2 py-2 text-right text-sm tabular-nums text-text-primary outline-none focus:border-brand-500"
+                      type="number"
+                      min="0"
+                      value={settingsTransportationCost}
+                      onChange={(event) => setSettingsTransportationCost(event.target.value)}
+                    />
+                    <span className="whitespace-nowrap text-text-muted">円 / 日</span>
+                  </div>
+                </label>
+              </section>
+        </AppModal>
+      )}
+
       {breakdownOpen && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
+        <div className="fixed inset-0 z-[100] flex items-end justify-center sm:items-center">
           <div className="absolute inset-0 bg-black/50" onClick={() => setBreakdownOpen(false)} />
-          <div className="relative flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-t-3xl border border-border-subtle bg-surface-raised shadow-xl sm:rounded-3xl">
+          <div className="relative flex max-h-[calc(100dvh-24px)] w-full max-w-3xl flex-col overflow-hidden rounded-t-3xl border border-border-subtle bg-surface-raised shadow-xl sm:max-h-[90vh] sm:rounded-3xl">
             <div className="flex items-start justify-between gap-3 border-b border-border-subtle p-4">
               <div>
                 <h2 className="text-lg font-normal text-text-primary">支給計算</h2>
@@ -637,7 +775,13 @@ export default function AdminPayrollPage() {
               </button>
             </div>
 
-            <div className="overflow-auto p-4">
+            <div className="overflow-auto p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+              {selectedPayrollItem && (
+                <div className="mb-4">
+                  <PayrollWorkCalendar rows={selectedPayrollItem.rows} month={month} />
+                </div>
+              )}
+
               <div className="space-y-2">
                 {summaryBreakdown.rows.map(row => (
                   <div key={row.key} className="rounded-2xl border border-border-subtle bg-surface-base px-4 py-3">

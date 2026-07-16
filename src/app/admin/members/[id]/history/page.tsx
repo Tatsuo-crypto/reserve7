@@ -282,7 +282,7 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
                             </div>
                           </td>
                           <td className="px-3 sm:px-4 py-4">
-                            <div className="text-sm font-normal text-text-secondary truncate max-w-[80px] sm:max-w-none" title={p.plan || ''}>
+                            <div className="break-words text-sm font-normal text-text-secondary" title={p.plan || ''}>
                               {p.plan || <span className="text-text-muted font-normal italic">未設定</span>}
                             </div>
                           </td>

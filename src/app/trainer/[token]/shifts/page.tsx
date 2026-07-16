@@ -74,7 +74,7 @@ export default function ShiftsPage() {
           <div className="z-10 flex justify-end min-w-[44px]">
             {trainer && (
               <div className="h-10 px-4 flex items-center gap-1 bg-surface-raised rounded-full shadow-sm border border-border-subtle transition-all">
-                <span className="text-text-secondary text-[13px] font-normal truncate max-w-[100px]">
+                <span className="whitespace-nowrap text-[13px] font-normal text-text-secondary">
                   {trainer.name}
                 </span>
                 <div className="ml-1 px-2 py-0.5 rounded-full text-[10px] font-normal whitespace-nowrap bg-brand-500 text-white">
@@ -86,7 +86,7 @@ export default function ShiftsPage() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-12">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-28">
 
         <TrainerShiftPage token={token} trainerName={trainer?.name} />
       </main>

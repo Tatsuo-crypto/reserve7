@@ -19,6 +19,11 @@ export type PayrollWorkRow = {
   transportation_enabled?: boolean
 }
 
+export type BreakRule = {
+  thresholdMinutes: number
+  breakMinutes: number
+}
+
 export function getPayrollMonthRange(month: string): PayrollMonthRange {
   if (!/^\d{4}-\d{2}$/.test(month)) {
     throw new Error('月の形式が正しくありません')
@@ -50,6 +55,18 @@ export function minutesBetween(start: string, end: string, breakMinutes: number)
   if (!Number.isFinite(startTime) || !Number.isFinite(endTime) || endTime <= startTime) return 0
   const rawMinutes = Math.floor((endTime - startTime) / 60000)
   return Math.max(0, rawMinutes - Math.max(0, breakMinutes || 0))
+}
+
+export function rawMinutesBetween(start: string, end: string): number {
+  const startTime = new Date(start).getTime()
+  const endTime = new Date(end).getTime()
+  if (!Number.isFinite(startTime) || !Number.isFinite(endTime) || endTime <= startTime) return 0
+  return Math.floor((endTime - startTime) / 60000)
+}
+
+export function autoBreakMinutes(start: string, end: string, rule?: BreakRule): number {
+  if (!rule || rule.thresholdMinutes <= 0 || rule.breakMinutes <= 0) return 0
+  return rawMinutesBetween(start, end) >= rule.thresholdMinutes ? rule.breakMinutes : 0
 }
 
 export function payableHours(start: string, end: string, breakMinutes: number): number {

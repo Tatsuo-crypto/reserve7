@@ -75,7 +75,7 @@ function MembersPageContent() {
   const [selectedMember, setSelectedMember] = useState<{ id: string, name: string } | null>(null)
 
   // Sorting state
-  const [sortKey, setSortKey] = useState<'plan' | 'status' | 'created' | null>('plan')
+  const [sortKey, setSortKey] = useState<'plan' | 'status' | 'created' | null>(null)
   const [sortAsc, setSortAsc] = useState(true)
 
   // Show only active filter (UI button below table)
@@ -203,10 +203,21 @@ function MembersPageContent() {
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           <div className="bg-surface-raised rounded-2xl p-6 shadow-sm border border-border-subtle">
-            <div className="text-[10px] font-normal text-text-muted uppercase tracking-widest mb-1">現在の在籍者</div>
-            <div className="flex items-baseline gap-2">
-              <span className="text-4xl font-normal text-brand-600 tracking-tight">{totalActive}</span>
-              <span className="text-sm font-normal text-text-muted">名</span>
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <div className="text-[10px] font-normal text-text-muted uppercase tracking-widest mb-1">現在の在籍者</div>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-4xl font-normal text-text-primary tracking-tight">{totalActive}</span>
+                  <span className="text-sm font-normal text-text-muted">名</span>
+                </div>
+              </div>
+              <Link
+                href="/admin/members/new"
+                aria-label="新規登録"
+                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand-700 text-white shadow-md transition-all active:scale-95 hover:bg-brand-800"
+              >
+                <Icon name="plus" size={28} />
+              </Link>
             </div>
           </div>
           <div className="md:col-span-3 bg-surface-raised rounded-2xl p-6 shadow-sm border border-border-subtle">
@@ -223,50 +234,21 @@ function MembersPageContent() {
         </div>
 
         {/* Toolbar */}
-        <div className="bg-surface-raised rounded-2xl p-4 shadow-sm border border-border-subtle mb-6 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 bg-surface-base p-1 rounded-xl border border-border-subtle">
+        <div className="bg-surface-raised rounded-2xl p-4 shadow-sm border border-border-subtle mb-6">
+          <div className="mx-auto flex w-fit items-center gap-3 bg-surface-base p-1.5 rounded-2xl border border-border-subtle">
               <button
                 onClick={() => setShowOnlyActive(true)}
-                className={`px-4 py-2 rounded-lg text-xs font-normal transition-all ${showOnlyActive ? 'bg-surface-raised text-brand-600 shadow-sm' : 'text-text-muted hover:text-text-secondary'}`}
+                className={`ui-control-nowrap min-w-[84px] px-5 py-3 rounded-xl text-xs font-normal transition-all ${showOnlyActive ? 'bg-surface-raised text-brand-600 shadow-sm' : 'text-text-muted hover:text-text-secondary'}`}
               >
                 在籍のみ
               </button>
               <button
                 onClick={() => setShowOnlyActive(false)}
-                className={`px-4 py-2 rounded-lg text-xs font-normal transition-all ${!showOnlyActive ? 'bg-surface-raised text-brand-600 shadow-sm' : 'text-text-muted hover:text-text-secondary'}`}
+                className={`ui-control-nowrap min-w-[84px] px-5 py-3 rounded-xl text-xs font-normal transition-all ${!showOnlyActive ? 'bg-surface-raised text-brand-600 shadow-sm' : 'text-text-muted hover:text-text-secondary'}`}
               >
                 全員表示
               </button>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <select
-                value={sortKey || ''}
-                onChange={(e) => setSortKey(e.target.value as any || null)}
-                className="bg-surface-base border border-border-subtle rounded-xl px-4 py-2 text-xs font-normal text-text-secondary focus:ring-2 focus:ring-brand-500 outline-none"
-              >
-                <option value="">標準並び替え</option>
-                <option value="plan">プラン順</option>
-                <option value="status">ステータス順</option>
-                <option value="created">登録日順</option>
-              </select>
-              <button
-                onClick={() => setSortAsc(!sortAsc)}
-                className="p-2 bg-surface-base text-text-muted hover:text-brand-600 rounded-xl border border-border-subtle transition-all"
-              >
-                <Icon name="chevronDown" size={16} className={`transition-transform ${sortAsc ? '' : 'rotate-180'}`} />
-              </button>
-            </div>
           </div>
-
-          <Link
-            href="/admin/members/new"
-            className="px-5 py-2.5 bg-brand-700 text-white text-[10px] font-normal rounded-2xl hover:bg-brand-800 transition-all shadow-md flex items-center gap-2 uppercase tracking-widest"
-          >
-            <Icon name="plus" size={16} />
-            新規登録
-          </Link>
         </div>
 
         {error && (
@@ -284,47 +266,38 @@ function MembersPageContent() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
+              <table className="w-full min-w-[500px] text-left border-collapse">
                 <thead>
                   <tr className="bg-surface-base/50 border-b border-border-subtle">
-                    <th className="px-4 py-4 text-[10px] font-normal text-text-muted uppercase tracking-widest">氏名</th>
-                    <th className="px-4 py-4 text-[10px] font-normal text-text-muted uppercase tracking-widest">プラン</th>
-                    <th className="px-4 py-4 text-[10px] font-normal text-text-muted uppercase tracking-widest text-center">ステータス</th>
-                    <th className="px-4 py-4 text-right"></th>
+                    <th className="ui-nowrap w-[38%] px-4 py-4 text-[10px] font-normal text-text-muted uppercase tracking-widest">氏名</th>
+                    <th className="ui-nowrap w-[34%] px-4 py-4 text-[10px] font-normal text-text-muted uppercase tracking-widest">プラン</th>
+                    <th className="ui-nowrap w-[28%] px-4 py-4 text-center text-[10px] font-normal text-text-muted uppercase tracking-widest">ステータス</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {(showOnlyActive ? sortedMembers.filter(m => (m.status || 'active') === 'active') : sortedMembers).map((member) => (
                     <tr 
                       key={member.id}
-                      onClick={() => {
-                        const lastName = (member.full_name || '').split(/[\s　]+/)[0]
-                        router.push(`/admin/members/${member.id}?name=${encodeURIComponent(lastName)}`)
-                      }}
+                      onClick={() => router.push(`/admin/members/${member.id}?name=${encodeURIComponent('会員')}`)}
                       className="hover:bg-brand-500/10 transition-colors cursor-pointer group"
                     >
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-2">
                           <div className={`flex-shrink-0 w-2 h-2 rounded-full ${getStatusDotColor(member.status)} shadow-sm`}></div>
-                          <div className="text-sm font-normal text-text-primary group-hover:text-brand-600 transition-colors truncate max-w-[120px] sm:max-w-none">
+                          <div className="ui-nowrap text-sm font-normal text-text-primary transition-colors group-hover:text-brand-600">
                             {member.full_name}
                           </div>
                         </div>
                       </td>
                       <td className="px-4 py-4">
-                        <span className="text-[10px] font-normal text-text-secondary bg-surface-overlay px-2 py-0.5 rounded-md whitespace-nowrap">
+                        <span className="ui-nowrap inline-flex rounded-md bg-surface-overlay px-2 py-0.5 text-[10px] font-normal text-text-secondary">
                           {member.plan || '-'}
                         </span>
                       </td>
                       <td className="px-4 py-4 text-center">
-                        <span className={`px-2 py-0.5 text-[10px] font-normal rounded-full shadow-sm whitespace-nowrap ${getStatusColor(member.status)}`}>
+                        <span className={`ui-nowrap inline-flex rounded-full px-2 py-0.5 text-[10px] font-normal shadow-sm ${getStatusColor(member.status)}`}>
                           {getStatusText(member.status)}
                         </span>
-                      </td>
-                      <td className="px-4 py-4 text-right">
-                        <div className="inline-flex items-center text-text-muted group-hover:text-brand-500 transition-colors">
-                          <Icon name="chevronRight" size={16} />
-                        </div>
                       </td>
                     </tr>
                   ))}

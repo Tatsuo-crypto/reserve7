@@ -3,16 +3,18 @@
 import { useState, useRef } from 'react'
 import { format, isSameDay, setHours, setMinutes, parseISO, differenceInMinutes, isAfter, parse, getDay } from 'date-fns'
 import { ja } from 'date-fns/locale'
-import { Shift, Trainer, ShiftTemplate } from '@/types'
+import { Shift, Trainer, ShiftTemplate, ShiftTemplateException } from '@/types'
 
 interface TeamShiftCalendarProps {
   currentDate: Date
   trainers: Trainer[]
   shifts: Shift[]
   templates?: ShiftTemplate[]
+  templateExceptions?: ShiftTemplateException[]
   onShiftCreate: (trainerId: string, start: Date, end: Date) => Promise<void>
   onShiftUpdate: (shiftId: string, start: Date, end: Date) => Promise<void>
   onShiftDelete: (shiftId: string) => Promise<void>
+  onTemplateDelete?: (trainerId: string, templateId: string | null, date: Date, startTime: string, endTime: string) => Promise<void>
   loading?: boolean
   selectionMode?: boolean
   selectedShiftIds?: string[]
@@ -55,9 +57,11 @@ export default function TeamShiftCalendar({
   trainers, 
   shifts, 
   templates = [],
+  templateExceptions = [],
   onShiftCreate, 
   onShiftUpdate, 
   onShiftDelete, 
+  onTemplateDelete,
   loading,
   selectionMode = false,
   selectedShiftIds = [],
@@ -65,6 +69,7 @@ export default function TeamShiftCalendar({
 }: TeamShiftCalendarProps) {
   const [selectedShift, setSelectedShift] = useState<Shift | null>(null)
   const [createModalOpen, setCreateModalOpen] = useState(false)
+  const [templateShiftDraft, setTemplateShiftDraft] = useState<{ trainerId: string; templateId: string; start: Date; end: Date; startTime: string; endTime: string } | null>(null)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [selectedTime, setSelectedTime] = useState<number | null>(null)
   const [selectedTrainerForCreate, setSelectedTrainerForCreate] = useState<string>('')
@@ -138,6 +143,34 @@ export default function TeamShiftCalendar({
     }
   }
 
+  const handleTemplateClick = (e: React.MouseEvent, item: CalendarItem) => {
+    e.stopPropagation()
+    if (selectionMode) return
+    const template = item.data as ShiftTemplate
+    setTemplateShiftDraft({
+      trainerId: item.trainerId,
+      templateId: template.id,
+      start: item.start,
+      end: item.end,
+      startTime: template.start_time,
+      endTime: template.end_time
+    })
+  }
+
+  const isTemplateDeleted = (template: ShiftTemplate, date: Date) => {
+    const dateKey = format(date, 'yyyy-MM-dd')
+    const templateStart = template.start_time.slice(0, 8)
+    const templateEnd = template.end_time.slice(0, 8)
+
+    return templateExceptions.some(exception => (
+      exception.trainer_id === template.trainer_id &&
+      exception.work_date === dateKey &&
+      (exception.template_id ? exception.template_id === template.id : true) &&
+      exception.start_time.slice(0, 8) === templateStart &&
+      exception.end_time.slice(0, 8) === templateEnd
+    ))
+  }
+
   const buildTrainerItems = (trainerId: string) => {
     const trainerItems: CalendarItem[] = []
 
@@ -155,7 +188,7 @@ export default function TeamShiftCalendar({
       })
 
     templates
-      .filter(t => t.trainer_id === trainerId && t.day_of_week === getDay(selectedDay))
+      .filter(t => t.trainer_id === trainerId && t.day_of_week === getDay(selectedDay) && !isTemplateDeleted(t, selectedDay))
       .forEach(t => {
         const start = parse(t.start_time, 'HH:mm:ss', selectedDay)
         const end = parse(t.end_time, 'HH:mm:ss', selectedDay)
@@ -227,8 +260,9 @@ export default function TeamShiftCalendar({
                     return (
                       <div
                         key={item.id}
-                        className="absolute inset-x-1 overflow-hidden rounded-md border-l-2 border-sky-400 bg-surface-overlay/80 shadow-sm pointer-events-none flex items-center justify-center"
+                        className="absolute inset-x-1 flex cursor-pointer items-center justify-center overflow-hidden rounded-md border-l-2 border-sky-400 bg-surface-overlay/80 shadow-sm hover:bg-surface-overlay"
                         style={getItemStyle(item, trainerItems)}
+                        onClick={(e) => handleTemplateClick(e, item)}
                       >
                         <span className="px-1 text-center text-[10px] leading-tight text-sky-200">{displayTime}</span>
                       </div>
@@ -283,6 +317,30 @@ export default function TeamShiftCalendar({
             setSelectedTrainerForCreate('')
           }}
           onSave={onShiftCreate}
+        />
+      )}
+
+      {templateShiftDraft && (
+        <TemplateShiftCreateModal
+          trainerName={trainers.find(t => t.id === templateShiftDraft.trainerId)?.full_name || ''}
+          start={templateShiftDraft.start}
+          end={templateShiftDraft.end}
+          isOpen={!!templateShiftDraft}
+          onClose={() => setTemplateShiftDraft(null)}
+          onSave={async (start, end) => {
+            await onShiftCreate(templateShiftDraft.trainerId, start, end)
+            setTemplateShiftDraft(null)
+          }}
+          onDelete={onTemplateDelete ? async () => {
+            await onTemplateDelete(
+              templateShiftDraft.trainerId,
+              templateShiftDraft.templateId,
+              templateShiftDraft.start,
+              templateShiftDraft.startTime,
+              templateShiftDraft.endTime
+            )
+            setTemplateShiftDraft(null)
+          } : undefined}
         />
       )}
 
@@ -519,6 +577,126 @@ function ShiftEditModal({ shift, trainerName, isOpen, onClose, onSave, onDelete 
               キャンセル
             </button>
             <button 
+              onClick={handleSave}
+              className="px-3 py-2 bg-brand-700 text-white text-sm rounded hover:bg-brand-800"
+              disabled={loading}
+            >
+              保存
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function TemplateShiftCreateModal({ trainerName, start, end, isOpen, onClose, onSave, onDelete }: {
+  trainerName: string,
+  start: Date,
+  end: Date,
+  isOpen: boolean,
+  onClose: () => void,
+  onSave: (s: Date, e: Date) => Promise<void>,
+  onDelete?: () => Promise<void>
+}) {
+  const [startTime, setStartTime] = useState(format(start, 'HH:mm'))
+  const [endTime, setEndTime] = useState(format(end, 'HH:mm'))
+  const [loading, setLoading] = useState(false)
+  const timeOptions = generateTimeOptions()
+
+  const handleSave = async () => {
+    setLoading(true)
+    try {
+      const [sh, sm] = startTime.split(':').map(Number)
+      const [eh, em] = endTime.split(':').map(Number)
+      const newStart = setMinutes(setHours(start, sh), sm)
+      const newEnd = setMinutes(setHours(start, eh), em)
+
+      if (isAfter(newStart, newEnd) || newStart.getTime() === newEnd.getTime()) {
+        alert('終了時間は開始時間より後に設定してください')
+        setLoading(false)
+        return
+      }
+
+      await onSave(newStart, newEnd)
+      onClose()
+    } catch (e) {
+      console.error(e)
+      alert('保存に失敗しました')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!onDelete) return
+    if (!confirm('この日のシフトを削除しますか？')) return
+    setLoading(true)
+    try {
+      await onDelete()
+    } catch (e) {
+      console.error(e)
+      alert('削除に失敗しました')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (!isOpen) return null
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-30 z-50 flex items-center justify-center">
+      <div className="bg-surface-raised rounded-lg shadow-xl p-6 w-80">
+        <h3 className="text-lg font-normal mb-1">シフト変更</h3>
+        <p className="text-sm text-text-secondary mb-1">{trainerName}</p>
+        <p className="text-sm text-text-secondary mb-4">{format(start, 'yyyy/MM/dd (E)', { locale: ja })}</p>
+
+        <div className="space-y-4 mb-6">
+          <div>
+            <label className="block text-xs text-text-secondary mb-1">開始</label>
+            <select
+              className="w-full border rounded p-2"
+              value={startTime}
+              onChange={e => setStartTime(e.target.value)}
+            >
+              {timeOptions.map(t => (
+                <option key={`template-team-start-${t}`} value={t}>{t}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs text-text-secondary mb-1">終了</label>
+            <select
+              className="w-full border rounded p-2"
+              value={endTime}
+              onChange={e => setEndTime(e.target.value)}
+            >
+              {timeOptions.map(t => (
+                <option key={`template-team-end-${t}`} value={t}>{t}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="flex justify-between gap-2">
+          {onDelete ? (
+            <button
+              onClick={handleDelete}
+              className="px-3 py-2 text-red-400 text-sm hover:bg-red-500/25 rounded"
+              disabled={loading}
+            >
+              削除
+            </button>
+          ) : <span />}
+          <div className="flex gap-2">
+            <button
+              onClick={onClose}
+              className="px-3 py-2 text-text-secondary text-sm hover:bg-surface-overlay rounded"
+              disabled={loading}
+            >
+              キャンセル
+            </button>
+            <button
               onClick={handleSave}
               className="px-3 py-2 bg-brand-700 text-white text-sm rounded hover:bg-brand-800"
               disabled={loading}

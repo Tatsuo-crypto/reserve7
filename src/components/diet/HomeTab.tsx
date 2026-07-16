@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import type { ReactNode } from 'react'
 import Card from '@/components/ui/Card'
 import Icon from '@/components/ui/icons'
+import { fetchJsonCached } from '@/lib/client-fetch-cache'
 
 interface HomeTabProps {
     token: string
@@ -78,22 +79,15 @@ export default function HomeTab({ token, userName, isDietPlan = true, todayDraft
         const fetchData = async () => {
             setLoading(true)
             try {
-                const [dietLogRes, goalsRes, resRes, lessonRes] = await Promise.all([
-                    isDietPlan ? fetch(`/api/diet/logs?date=${todayStr}&token=${token}`) : Promise.resolve(null),
-                    fetch(`/api/goals?token=${token}&status=active`),
-                    fetch(`/api/client/reservations?scope=next&token=${token}`),
-                    fetch(`/api/client/online-lesson?token=${token}`),
-                ])
-
                 const [dietLogData, goalsData, resData, lessonData] = await Promise.all([
-                    dietLogRes ? dietLogRes.json() : Promise.resolve({ data: null }),
-                    isDietPlan ? goalsRes.json() : Promise.resolve({ data: [] }),
-                    resRes.json(),
-                    lessonRes.json(),
+                    isDietPlan ? fetchJsonCached<any>(`/api/diet/logs?date=${todayStr}&token=${token}`) : Promise.resolve({ data: null }),
+                    fetchJsonCached<any>(`/api/goals?token=${token}&status=active`),
+                    fetchJsonCached<any>(`/api/client/reservations?scope=next&token=${token}`),
+                    fetchJsonCached<any>(`/api/client/online-lesson?token=${token}`),
                 ])
 
                 setDietLogs(dietLogData.data ? [dietLogData.data] : [])
-                setGoals(goalsData.data || [])
+                setGoals(isDietPlan ? goalsData.data || [] : [])
 
                 setNextReservation(resData?.data?.nextReservation || null)
                 const todayDow = new Date().getDay()

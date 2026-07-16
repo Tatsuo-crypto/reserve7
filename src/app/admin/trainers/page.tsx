@@ -1,11 +1,11 @@
 'use client'
 
-import Link from 'next/link'
 import { useEffect, useMemo, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { useStoreChange } from '@/hooks/useStoreChange'
 import Icon from '@/components/ui/icons'
+import AppModal from '@/components/ui/AppModal'
 
 type Trainer = {
   id: string
@@ -320,91 +320,154 @@ export default function TrainersPage() {
     }
   }
 
-  return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-12">
+  const visibleTrainers = trainers
+  const activeTrainers = visibleTrainers.filter(t => t.status === 'active')
+  const storeCounts = activeTrainers.reduce((acc, trainer) => {
+    const storeName = storeNameById[trainer.store_id] || '未設定'
+    acc[storeName] = (acc[storeName] || 0) + 1
+    return acc
+  }, {} as Record<string, number>)
+  const sortedStoreNames = Object.keys(storeCounts).sort()
 
-      {/* Compact toolbar: Filters + New button */}
-      <div className="bg-surface-raised shadow rounded-lg p-4 mb-4">
-        <div className="flex items-center justify-between flex-wrap gap-3">
-          <div className="flex items-center gap-2">
+  return (
+    <div className="min-h-screen bg-surface-base pt-4 pb-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+          <div className="bg-surface-raised rounded-2xl p-6 shadow-sm border border-border-subtle">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <div className="text-[10px] font-normal text-text-muted uppercase tracking-widest mb-1">現在の在籍トレーナー</div>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-4xl font-normal text-text-primary tracking-tight">{activeTrainers.length}</span>
+                  <span className="text-sm font-normal text-text-muted">名</span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={openCreate}
+                aria-label="新規登録"
+                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand-700 text-white shadow-md transition-all active:scale-95 hover:bg-brand-800"
+              >
+                <Icon name="plus" size={28} />
+              </button>
+            </div>
+          </div>
+          <div className="md:col-span-3 bg-surface-raised rounded-2xl p-6 shadow-sm border border-border-subtle">
+            <div className="text-[10px] font-normal text-text-muted uppercase tracking-widest mb-4">店舗別内訳</div>
+            <div className="flex flex-wrap gap-2">
+              {sortedStoreNames.length > 0 ? sortedStoreNames.map(storeName => (
+                <div key={storeName} className="bg-surface-base rounded-lg px-3 py-1.5 border border-border-subtle flex items-center gap-2">
+                  <span className="text-[10px] font-normal text-text-secondary">{storeName}</span>
+                  <span className="text-sm font-normal text-text-primary tabular-nums">{storeCounts[storeName]}</span>
+                </div>
+              )) : (
+                <span className="text-xs text-text-muted">在籍トレーナーはいません</span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-surface-raised rounded-2xl p-4 shadow-sm border border-border-subtle mb-6">
+          <div className="flex flex-wrap items-center gap-3">
             <select
-              className="border border-border-strong rounded-md px-2 py-1.5 text-sm"
+              className="ui-control-nowrap h-11 rounded-2xl border border-border-subtle bg-surface-base px-4 pr-9 text-xs font-normal text-text-primary outline-none transition-colors focus:border-brand-500"
               value={storeScope}
               onChange={(e) => setStoreScope(e.target.value as 'mine' | 'all')}
             >
               <option value="mine" disabled={!adminStoreId}>自店舗</option>
               <option value="all">全店舗</option>
             </select>
-            <select
-              className="border border-border-strong rounded-md px-2 py-1.5 text-sm"
-              value={status}
-              onChange={(e) => setStatus(e.target.value as any)}
-            >
-              <option value="all">全ステータス</option>
-              <option value="active">在籍</option>
-              <option value="inactive">無効</option>
-            </select>
-          </div>
-          <button
-            className="px-3 py-1.5 bg-brand-700 text-white text-xs font-normal rounded-full hover:bg-brand-800 transition-colors flex items-center gap-1"
-            onClick={openCreate}
-          >
-            <Icon name="plus" size={14} />
-            新規
-          </button>
-        </div>
-      </div>
-
-      {/* Trainer List */}
-      <div className="bg-surface-raised shadow rounded-lg overflow-hidden">
-        {loading ? (
-          <div className="text-center py-8 text-text-secondary text-sm">読み込み中...</div>
-        ) : trainers.length === 0 ? (
-          <div className="text-center py-8 text-text-secondary text-sm">該当のトレーナーがいません</div>
-        ) : (
-          <div className="divide-y divide-gray-100">
-            {trainers.map(t => (
-              <div
-                key={t.id}
-                className="flex items-center justify-between px-4 py-3 hover:bg-surface-base transition-colors"
+            <div className="flex items-center gap-3 bg-surface-base p-1.5 rounded-2xl border border-border-subtle w-fit">
+              <button
+                onClick={() => setStatus('active')}
+                className={`ui-control-nowrap min-w-[84px] px-5 py-3 rounded-xl text-xs font-normal transition-all ${status === 'active' ? 'bg-surface-raised text-brand-600 shadow-sm' : 'text-text-muted hover:text-text-secondary'}`}
               >
-                <div className="flex items-center gap-3 min-w-0">
-                  <span className={`flex-shrink-0 w-2 h-2 rounded-full ${t.status === 'active' ? 'bg-brand-500' : 'bg-surface-overlay'}`} />
-                  <span className="font-normal text-sm text-text-primary truncate">{t.full_name}</span>
-                  <span className="text-xs text-text-muted flex-shrink-0">{storeNameById[t.store_id] || ''}</span>
-                  {t.payroll_enabled && (
-                    <span className="text-[10px] text-brand-300 bg-brand-500/15 px-2 py-0.5 rounded-full flex-shrink-0">給与</span>
-                  )}
-                </div>
-                <div className="flex items-center gap-2 flex-shrink-0 ml-3">
-                  {t.access_token && (
-                    <button
-                      className="px-2 py-1 text-[10px] font-normal rounded-full bg-brand-500/15 text-brand-300 hover:bg-brand-500/25 transition-colors"
-                      onClick={() => handleCopyAccessUrl(t.access_token!, t.full_name)}
-                    >
-                      URL
-                    </button>
-                  )}
-                  <button
-                    className="px-2 py-1 text-[10px] font-normal rounded-full bg-surface-overlay text-text-secondary hover:bg-surface-overlay transition-colors"
-                    onClick={() => openEdit(t)}
-                  >
-                    編集
-                  </button>
-                </div>
-              </div>
-            ))}
+                在籍のみ
+              </button>
+              <button
+                onClick={() => setStatus('all')}
+                className={`ui-control-nowrap min-w-[84px] px-5 py-3 rounded-xl text-xs font-normal transition-all ${status === 'all' ? 'bg-surface-raised text-brand-600 shadow-sm' : 'text-text-muted hover:text-text-secondary'}`}
+              >
+                全員表示
+              </button>
+            </div>
           </div>
-        )}
-      </div>
+        </div>
+
+        <div className="bg-surface-raised rounded-3xl shadow-sm border border-border-subtle overflow-hidden">
+          {loading ? (
+            <div className="text-center py-8 text-text-secondary text-sm">読み込み中...</div>
+          ) : trainers.length === 0 ? (
+            <div className="p-20 text-center">
+              <p className="text-text-muted font-normal italic">該当のトレーナーがいません</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-border-subtle">
+              {trainers.map(t => (
+                <div key={t.id} className="flex items-center justify-between gap-3 px-4 py-4 transition-colors hover:bg-brand-500/10">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <span className={`h-2 w-2 shrink-0 rounded-full ${t.status === 'active' ? 'bg-brand-500' : 'bg-surface-overlay'} shadow-sm`} />
+                    <div className="min-w-0">
+                      <div className="ui-nowrap text-sm font-normal text-text-primary">
+                        {t.full_name}
+                      </div>
+                      <div className="ui-nowrap mt-1 text-[11px] font-normal text-text-muted">
+                        {storeNameById[t.store_id] || '-'}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
+                    {t.access_token && (
+                      <button
+                        className="ui-control-nowrap min-w-12 rounded-full bg-brand-500/15 px-3 py-1 text-center text-[10px] font-normal text-brand-300 transition-colors hover:bg-brand-500/25"
+                        onClick={() => handleCopyAccessUrl(t.access_token!, t.full_name)}
+                      >
+                        URL
+                      </button>
+                    )}
+                    <button
+                      className="ui-control-nowrap min-w-12 rounded-full bg-surface-overlay px-3 py-1 text-center text-[10px] font-normal text-text-secondary transition-colors hover:bg-surface-overlay"
+                      onClick={() => openEdit(t)}
+                    >
+                      編集
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
       {/* Modal */}
       {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/30" onClick={() => setModalOpen(false)} />
-          <div className="relative bg-surface-raised rounded-lg border border-border-strong shadow-lg w-full max-w-lg p-6">
-            <h3 className="text-lg font-normal mb-4">{editing ? 'トレーナー編集' : '新規トレーナー'}</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <AppModal
+          title={editing ? 'トレーナー編集' : '新規トレーナー'}
+          onClose={() => setModalOpen(false)}
+          bodyClassName="p-4 sm:p-5"
+          footer={(
+            <>
+              {editing && (
+                <button
+                  type="button"
+                  className="mr-auto rounded-full px-4 py-2 text-sm text-red-400 transition-colors hover:bg-red-500/10"
+                  onClick={deleteTrainer}
+                >
+                  削除
+                </button>
+              )}
+              <button type="button" className="rounded-full px-4 py-2 text-sm text-text-secondary" onClick={() => setModalOpen(false)}>キャンセル</button>
+              <button
+                type="button"
+                className="rounded-full bg-brand-700 px-5 py-2 text-sm text-white hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-60"
+                onClick={saveTrainer}
+                disabled={!form.fullName.trim() || !form.storeId.trim()}
+              >
+                保存
+              </button>
+            </>
+          )}
+        >
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="md:col-span-2">
                 <label className="block text-xs text-text-secondary mb-1">氏名</label>
                 <input className="w-full border rounded-md px-3 py-2 text-sm" required value={form.fullName} onChange={(e) => setForm(f => ({ ...f, fullName: e.target.value }))} />
@@ -502,22 +565,9 @@ export default function TrainersPage() {
                 </>
               )}
             </div>
-            <div className="mt-6 flex justify-end gap-3">
-              <button className="px-3 py-2 text-sm rounded-md border" onClick={() => setModalOpen(false)}>キャンセル</button>
-              <button
-                className="px-3 py-2 text-sm rounded-md border border-red-500/40 text-red-400 hover:bg-red-500/25 disabled:opacity-60 disabled:cursor-not-allowed"
-                onClick={deleteTrainer}
-                disabled={!editing}
-              >削除</button>
-              <button
-                className="px-3 py-2 text-sm rounded-md bg-brand-700 text-white hover:bg-brand-800 disabled:opacity-60 disabled:cursor-not-allowed"
-                onClick={saveTrainer}
-                disabled={!form.fullName.trim() || !form.storeId.trim()}
-              >保存</button>
-            </div>
-          </div>
-        </div>
+        </AppModal>
       )}
+      </div>
     </div>
   )
 }

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { getEffectiveDietGoal, getGoalForDate, normalizeDietDayType } from '@/lib/utils/dietDayType'
+import { fetchJsonCached } from '@/lib/client-fetch-cache'
 
 export interface WeightWeeklyStats {
     thisWeekAvg: number | null
@@ -105,18 +106,11 @@ export function useWeeklyProgress(token: string, options: UseWeeklyProgressOptio
                 logParams.set('startDate', prevMonday.toLocaleDateString('sv-SE'))
                 logParams.set('endDate', sunday.toLocaleDateString('sv-SE'))
 
-                const [dietLogRes, lifeLogRes, dietGoalRes, lifeSettingRes] = await Promise.all([
-                    fetch(`/api/diet/logs?${logParams.toString()}`),
-                    fetch(`/api/lifestyle/logs?${logParams.toString()}`),
-                    fetch(`/api/diet/goals?${params}`),
-                    fetch(`/api/lifestyle/settings?${params}`)
-                ])
-
                 const [dietLogData, lifeLogData, dietGoalData, lifeSettingData] = await Promise.all([
-                    dietLogRes.json(),
-                    lifeLogRes.json(),
-                    dietGoalRes.json(),
-                    lifeSettingRes.json()
+                    fetchJsonCached<any>(`/api/diet/logs?${logParams.toString()}`),
+                    fetchJsonCached<any>(`/api/lifestyle/logs?${logParams.toString()}`),
+                    fetchJsonCached<any>(`/api/diet/goals?${params}`),
+                    fetchJsonCached<any>(`/api/lifestyle/settings?${params}`)
                 ])
 
                 setDietLogs(dietLogData.data || [])

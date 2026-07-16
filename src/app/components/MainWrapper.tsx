@@ -17,11 +17,11 @@ function MainWrapperContent({ children }: { children: React.ReactNode }) {
 
   // マウント前はハイドレーションエラーを避けるため標準のスタイルを適用
   if (!mounted) {
-    return <main className="pt-[30px] pb-32">{children}</main>
+    return <main className="pt-[30px] pb-[calc(8rem+env(safe-area-inset-bottom))]">{children}</main>
   }
 
   return (
-    <main className={isStandalone ? '' : 'pt-[30px] pb-32'}>
+    <main className={isStandalone ? '' : 'pt-[30px] pb-[calc(8rem+env(safe-area-inset-bottom))]'}>
       {children}
     </main>
   )
@@ -29,7 +29,7 @@ function MainWrapperContent({ children }: { children: React.ReactNode }) {
 
 export default function MainWrapper({ children }: { children: React.ReactNode }) {
   return (
-    <Suspense fallback={<main className="pt-[30px] pb-32">{children}</main>}>
+    <Suspense fallback={<main className="pt-[30px] pb-[calc(8rem+env(safe-area-inset-bottom))]">{children}</main>}>
       <MainWrapperContent>{children}</MainWrapperContent>
     </Suspense>
   )

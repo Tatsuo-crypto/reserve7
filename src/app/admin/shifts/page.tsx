@@ -5,25 +5,28 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { format, addDays, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, addMonths, subMonths, setHours, setMinutes, isAfter, isSameDay, differenceInMinutes, getDay } from 'date-fns'
 import { ja } from 'date-fns/locale'
-import { Shift, Trainer, ShiftTemplate } from '@/types'
+import { Shift, Trainer, ShiftTemplate, ShiftTemplateException } from '@/types'
 import ShiftCalendar from '@/components/shifts/ShiftCalendar'
 import TeamShiftCalendar from '@/components/shifts/TeamShiftCalendar'
 import TemplateModal from '@/components/shifts/TemplateModal'
 import Icon from '@/components/ui/icons'
+import AppModal from '@/components/ui/AppModal'
 
 function formatHoursLabel(hours: number) {
   const rounded = Math.round(hours * 100) / 100
   return `${Number.isInteger(rounded) ? rounded.toFixed(0) : String(rounded)}h`
 }
 
-const WEEKDAY_LABELS = ['日', '月', '火', '水', '木', '金', '土']
+const WEEKDAY_LABELS_BY_DAY = ['日', '月', '火', '水', '木', '金', '土']
+const WEEKDAY_LABELS_MONDAY_START = ['月', '火', '水', '木', '金', '土', '日']
 
 function getMonthCalendarDays(monthDate: Date) {
   const firstDay = startOfMonth(monthDate)
   const lastDay = endOfMonth(monthDate)
   const cells: (Date | null)[] = []
+  const leadingEmptyCount = (firstDay.getDay() + 6) % 7
 
-  for (let i = 0; i < firstDay.getDay(); i += 1) {
+  for (let i = 0; i < leadingEmptyCount; i += 1) {
     cells.push(null)
   }
 
@@ -55,6 +58,32 @@ function formatTemplateRange(template: ShiftTemplate) {
   return `${template.start_time.slice(0, 5)}〜${template.end_time.slice(0, 5)}`
 }
 
+function getMondayStartDayOrder(dayOfWeek: number) {
+  return dayOfWeek === 0 ? 6 : dayOfWeek - 1
+}
+
+function formatDateKey(date: Date) {
+  return format(date, 'yyyy-MM-dd')
+}
+
+function normalizeTime(value: string) {
+  return value.length === 5 ? `${value}:00` : value.slice(0, 8)
+}
+
+function isTemplateException(
+  exception: ShiftTemplateException,
+  template: ShiftTemplate,
+  date: Date
+) {
+  return (
+    exception.trainer_id === template.trainer_id &&
+    exception.work_date === formatDateKey(date) &&
+    (exception.template_id ? exception.template_id === template.id : true) &&
+    normalizeTime(exception.start_time) === normalizeTime(template.start_time) &&
+    normalizeTime(exception.end_time) === normalizeTime(template.end_time)
+  )
+}
+
 function FixedShiftOverview({
   trainers,
   templates,
@@ -80,7 +109,10 @@ function FixedShiftOverview({
         {trainers.length > 0 ? trainers.map(trainer => {
           const trainerTemplates = templates
             .filter(template => template.trainer_id === trainer.id)
-            .sort((a, b) => a.day_of_week - b.day_of_week || a.start_time.localeCompare(b.start_time))
+            .sort((a, b) => (
+              getMondayStartDayOrder(a.day_of_week) - getMondayStartDayOrder(b.day_of_week) ||
+              a.start_time.localeCompare(b.start_time)
+            ))
 
           return (
             <div key={trainer.id} className="rounded-2xl border border-border-subtle bg-surface-base px-4 py-3">
@@ -102,7 +134,7 @@ function FixedShiftOverview({
                     key={template.id}
                     className="flex items-center justify-between rounded-xl border border-brand-500/20 bg-brand-500/10 px-3 py-2"
                   >
-                    <span className="text-sm text-brand-100">{WEEKDAY_LABELS[template.day_of_week]}</span>
+                    <span className="text-sm text-brand-100">{WEEKDAY_LABELS_BY_DAY[template.day_of_week]}</span>
                     <span className="text-sm tabular-nums text-text-primary">{formatTemplateRange(template)}</span>
                   </div>
                 )) : (
@@ -126,6 +158,7 @@ function OverallCalendarSection({
   selectedDate,
   shifts,
   templates,
+  templateExceptions,
   trainers,
   selectedTrainerId,
   viewMode,
@@ -140,6 +173,7 @@ function OverallCalendarSection({
   selectedDate: Date | null
   shifts: Shift[]
   templates: ShiftTemplate[]
+  templateExceptions: ShiftTemplateException[]
   trainers: Trainer[]
   selectedTrainerId: string
   viewMode: 'individual' | 'team'
@@ -151,7 +185,7 @@ function OverallCalendarSection({
   children: ReactNode
 }) {
   const days = getMonthCalendarDays(currentDate)
-  const selectedWeekStart = selectedDate ? startOfWeek(selectedDate, { weekStartsOn: 0 }) : null
+  const selectedWeekStart = selectedDate ? startOfWeek(selectedDate, { weekStartsOn: 1 }) : null
   const selectedWeekEnd = selectedWeekStart ? addDays(selectedWeekStart, 6) : null
   const weekLabel = selectedWeekStart && selectedWeekEnd
     ? `${format(selectedWeekStart, 'M/d', { locale: ja })}〜${format(selectedWeekEnd, 'M/d', { locale: ja })}`
@@ -163,7 +197,11 @@ function OverallCalendarSection({
 
   const getDayHours = (day: Date) => {
     const dayShifts = shifts.filter(shift => trainerIds.includes(shift.trainer_id) && isSameDay(new Date(shift.start_time), day))
-    const dayTemplates = templates.filter(template => trainerIds.includes(template.trainer_id) && template.day_of_week === getDay(day))
+    const dayTemplates = templates.filter(template => (
+      trainerIds.includes(template.trainer_id) &&
+      template.day_of_week === getDay(day) &&
+      !templateExceptions.some(exception => isTemplateException(exception, template, day))
+    ))
 
     const shiftHours = dayShifts.reduce((sum, shift) => (
       sum + getShiftHours(new Date(shift.start_time), new Date(shift.end_time))
@@ -214,11 +252,11 @@ function OverallCalendarSection({
 
         <div className="rounded-2xl border border-border-subtle bg-surface-base p-3">
           <div className="mb-2 grid grid-cols-7 text-center text-[10px] text-text-muted">
-            {WEEKDAY_LABELS.map(day => <div key={day}>{day}</div>)}
+            {WEEKDAY_LABELS_MONDAY_START.map(day => <div key={day}>{day}</div>)}
           </div>
           <div className="space-y-1">
             {weekRows.map((row, rowIndex) => {
-              const rowSelected = Boolean(selectedWeekStart && row.some(day => day && isSameDay(startOfWeek(day, { weekStartsOn: 0 }), selectedWeekStart)))
+              const rowSelected = Boolean(selectedWeekStart && row.some(day => day && isSameDay(startOfWeek(day, { weekStartsOn: 1 }), selectedWeekStart)))
 
               return (
                 <div
@@ -289,6 +327,7 @@ export default function ShiftManagementPage() {
   const [selectedWeekDate, setSelectedWeekDate] = useState<Date | null>(null)
   const [shifts, setShifts] = useState<Shift[]>([])
   const [templates, setTemplates] = useState<ShiftTemplate[]>([])
+  const [templateExceptions, setTemplateExceptions] = useState<ShiftTemplateException[]>([])
   const [loading, setLoading] = useState(false)
   const [templateModalOpen, setTemplateModalOpen] = useState(false)
   const [templateTrainerId, setTemplateTrainerId] = useState<string | null>(null)
@@ -393,6 +432,7 @@ export default function ShiftManagementPage() {
       // Clear data immediately to prevent displaying stale data from previous trainer/week
       setShifts([])
       setTemplates([])
+      setTemplateExceptions([])
 
       try {
         const start = startOfMonth(currentDate)
@@ -436,6 +476,12 @@ export default function ShiftManagementPage() {
           if (sRes.ok && !isCancelled) {
             const sData = await sRes.json()
             setShifts(sData.shifts || [])
+          }
+
+          const eRes = await fetch(`/api/admin/shifts/template-exceptions?${params}`, { cache: 'no-store' })
+          if (eRes.ok && !isCancelled) {
+            const eData = await eRes.json()
+            setTemplateExceptions(eData.exceptions || [])
           }
         }
 
@@ -506,9 +552,10 @@ export default function ShiftManagementPage() {
         templatesUrl = `/api/admin/shifts/templates?${templatesParams}`
       }
 
-      const [shiftsRes, templatesRes] = await Promise.all([
+      const [shiftsRes, templatesRes, exceptionsRes] = await Promise.all([
         shouldFetch ? fetch(`/api/admin/shifts?${params}`, { cache: 'no-store' }) : Promise.resolve(null),
-        templatesUrl ? fetch(templatesUrl, { cache: 'no-store' }) : Promise.resolve(null)
+        templatesUrl ? fetch(templatesUrl, { cache: 'no-store' }) : Promise.resolve(null),
+        shouldFetch ? fetch(`/api/admin/shifts/template-exceptions?${params}`, { cache: 'no-store' }) : Promise.resolve(null)
       ])
 
       if (shiftsRes?.ok) {
@@ -519,6 +566,11 @@ export default function ShiftManagementPage() {
       if (templatesRes?.ok) {
         const data = await templatesRes.json()
         setTemplates(data.templates || [])
+      }
+
+      if (exceptionsRes?.ok) {
+        const data = await exceptionsRes.json()
+        setTemplateExceptions(data.exceptions || [])
       }
     } finally {
       setLoading(false)
@@ -691,6 +743,38 @@ export default function ShiftManagementPage() {
     }
   }
 
+  const handleTemplateOccurrenceDelete = async (
+    trainerId: string,
+    templateId: string | null,
+    date: Date,
+    startTime: string,
+    endTime: string
+  ) => {
+    try {
+      const res = await fetch('/api/admin/shifts/template-exceptions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          trainerId,
+          templateId,
+          workDate: formatDateKey(date),
+          startTime,
+          endTime
+        })
+      })
+
+      if (!res.ok) {
+        const error = await res.json().catch(() => ({}))
+        throw new Error(error?.message || error?.error || 'Failed to delete template occurrence')
+      }
+
+      await refreshShifts()
+    } catch (e) {
+      console.error(e)
+      alert('削除に失敗しました。マイグレーションが未適用の場合は、追加されたSQLを実行してください。')
+    }
+  }
+
   const handleShiftCreateFromCalendar = async (trainerId: string, start: Date, end: Date, weeklyFixed: boolean) => {
     try {
       const res = await fetch('/api/admin/shifts', {
@@ -742,7 +826,7 @@ export default function ShiftManagementPage() {
 
   const selectedTrainer = selectableTrainers.find(t => t.id === selectedTrainerId)
   const activeWeekDate = selectedWeekDate || currentDate
-  const weekStart = startOfWeek(activeWeekDate, { weekStartsOn: 0 })
+  const weekStart = startOfWeek(activeWeekDate, { weekStartsOn: 1 })
   const weekEnd = addDays(weekStart, 6)
   const weekLabel = `${format(weekStart, 'M/d', { locale: ja })}〜${format(weekEnd, 'M/d', { locale: ja })}`
   const scheduleTrainers = viewMode === 'individual'
@@ -819,11 +903,12 @@ export default function ShiftManagementPage() {
         selectedDate={selectedWeekDate}
         shifts={shifts}
         templates={templates || []}
+        templateExceptions={templateExceptions}
         trainers={scheduleTrainers}
         selectedTrainerId={selectedTrainerId}
         viewMode={viewMode}
         onDaySelect={(day) => {
-          const weekStartDate = startOfWeek(day, { weekStartsOn: 0 })
+          const weekStartDate = startOfWeek(day, { weekStartsOn: 1 })
           setCurrentDate(day)
           setSelectedWeekDate(weekStartDate)
         }}
@@ -936,11 +1021,15 @@ export default function ShiftManagementPage() {
                   currentDate={selectedWeekDate}
                   shifts={shifts}
                   templates={templates || []}
+                  templateExceptions={templateExceptions}
                   trainerName={selectableTrainers.find(t => t.id === selectedTrainerId)?.full_name || ''}
                   loading={loading}
                   onShiftCreate={(start, end) => handleShiftCreate(selectedTrainerId, start, end)}
                   onShiftUpdate={handleShiftUpdate}
                   onShiftDelete={handleShiftDelete}
+                  onTemplateDelete={(templateId, date, startTime, endTime) => (
+                    handleTemplateOccurrenceDelete(selectedTrainerId, templateId, date, startTime, endTime)
+                  )}
                   selectionMode={selectionMode}
                   selectedShiftIds={selectedShiftIds}
                   onShiftSelect={handleShiftSelect}
@@ -959,10 +1048,12 @@ export default function ShiftManagementPage() {
                 trainers={filteredTrainers}
                 shifts={shifts}
                 templates={templates || []}
+                templateExceptions={templateExceptions}
                 loading={loading}
                 onShiftCreate={handleShiftCreate}
                 onShiftUpdate={handleShiftUpdate}
                 onShiftDelete={handleShiftDelete}
+                onTemplateDelete={handleTemplateOccurrenceDelete}
                 selectionMode={selectionMode}
                 selectedShiftIds={selectedShiftIds}
                 onShiftSelect={handleShiftSelect}
@@ -1090,16 +1181,26 @@ function ShiftQuickCreateModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center">
-      <div className="w-full max-w-md rounded-t-3xl border border-border-subtle bg-surface-raised p-5 shadow-xl sm:rounded-3xl">
-        <div className="mb-5 flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-text-primary">シフトを追加</h3>
-          <button type="button" onClick={onClose} className="flex h-9 w-9 items-center justify-center rounded-full bg-surface-base text-text-secondary">
-            <Icon name="close" size={18} />
+    <AppModal
+      title="シフトを追加"
+      onClose={onClose}
+      size="sm"
+      align="bottom"
+      bodyClassName="space-y-4 p-5"
+      footer={(
+        <>
+          <button type="button" onClick={onClose} className="rounded-full px-4 py-2 text-sm text-text-secondary">キャンセル</button>
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={loading}
+            className="rounded-full bg-brand-600 px-5 py-2 text-sm text-white disabled:opacity-50"
+          >
+            登録
           </button>
-        </div>
-
-        <div className="space-y-4">
+        </>
+      )}
+    >
           {viewMode === 'team' && (
             <div>
               <label className="mb-2 block text-xs text-text-secondary">トレーナー</label>
@@ -1157,17 +1258,6 @@ function ShiftQuickCreateModal({
               className="h-5 w-5 rounded border-border-subtle text-brand-600 focus:ring-brand-500"
             />
           </label>
-        </div>
-
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={loading}
-          className="mt-6 flex h-12 w-full items-center justify-center rounded-2xl bg-brand-600 text-sm font-semibold text-white disabled:opacity-50"
-        >
-          登録
-        </button>
-      </div>
-    </div>
+    </AppModal>
   )
 }

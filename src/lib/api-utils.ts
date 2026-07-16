@@ -10,16 +10,14 @@ import { isAdmin, getUserStoreId } from './auth-utils'
 import { ApiResponse } from '@/types/common'
 import { supabaseAdmin } from '@/lib/supabase'
 
-export async function getAuthenticatedUser() {
+export async function getAuthenticatedUser(existingSession?: Awaited<ReturnType<typeof getServerSession>>) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = existingSession || await getServerSession(authOptions)
 
     if (!session?.user?.email) {
       console.error('No session or email found')
       return null
     }
-
-    console.log('getAuthenticatedUser called for:', session.user.email)
 
     // Check if admin
     const adminCheck = isAdmin(session.user.email)
@@ -71,12 +69,6 @@ export async function getAuthenticatedUser() {
         }
       }
 
-      console.log('Admin authenticated with store UUID:', {
-        email: session.user.email,
-        storeId: store.id,
-        calendarId: store.calendar_id
-      })
-
       return {
         id: session.user.email,
         email: session.user.email,
@@ -87,8 +79,6 @@ export async function getAuthenticatedUser() {
       }
     }
 
-    // For non-admin users, get from database
-    console.log('Non-admin user, querying database...')
     const { data: user, error } = await supabaseAdmin
       .from('users')
       .select('id, store_id')
@@ -104,8 +94,6 @@ export async function getAuthenticatedUser() {
       console.error('User not found in database:', session.user.email)
       return null
     }
-
-    console.log('Non-admin user found:', { id: user.id, storeId: user.store_id })
 
     return {
       id: user.id,
@@ -127,7 +115,7 @@ export async function requireAuth(): Promise<NextResponse | { user: any; isAdmin
     return createErrorResponse('認証が必要です', 401)
   }
 
-  const user = await getAuthenticatedUser()
+  const user = await getAuthenticatedUser(session)
   if (!user) {
     return createErrorResponse('ユーザー情報の取得に失敗しました', 401)
   }

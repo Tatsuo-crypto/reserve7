@@ -3,16 +3,18 @@
 import { useState, useRef, useEffect } from 'react'
 import { format, addDays, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, setHours, setMinutes, differenceInMinutes, getDay, isAfter, isBefore, parse } from 'date-fns'
 import { ja } from 'date-fns/locale'
-import { Shift, ShiftTemplate } from '@/types'
+import { Shift, ShiftTemplate, ShiftTemplateException } from '@/types'
 
 interface ShiftCalendarProps {
   currentDate: Date
   shifts: Shift[]
   templates?: ShiftTemplate[]
+  templateExceptions?: ShiftTemplateException[]
   trainerName?: string
   onShiftCreate: (start: Date, end: Date) => Promise<void>
   onShiftUpdate: (shiftId: string, start: Date, end: Date) => Promise<void>
   onShiftDelete: (shiftId: string) => Promise<void>
+  onTemplateDelete?: (templateId: string | null, date: Date, startTime: string, endTime: string) => Promise<void>
   loading?: boolean
   selectionMode?: boolean
   selectedShiftIds?: string[]
@@ -23,16 +25,19 @@ export default function ShiftCalendar({
   currentDate,
   shifts,
   templates = [],
+  templateExceptions = [],
   trainerName,
   onShiftCreate,
   onShiftUpdate,
   onShiftDelete,
+  onTemplateDelete,
   loading,
   selectionMode = false,
   selectedShiftIds = [],
   onShiftSelect
 }: ShiftCalendarProps) {
   const [selectedShift, setSelectedShift] = useState<Shift | null>(null)
+  const [selectedTemplateShift, setSelectedTemplateShift] = useState<{ templateId: string; start: Date; end: Date; startTime: string; endTime: string } | null>(null)
   const [editModalOpen, setEditModalOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -43,7 +48,7 @@ export default function ShiftCalendar({
   const hours = Array.from({ length: END_HOUR - START_HOUR + 1 }, (_, i) => START_HOUR + i)
 
   // Generate days for the week view
-  const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 })
+  const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 })
   const weekDays = eachDayOfInterval({
     start: weekStart,
     end: addDays(weekStart, 6)
@@ -81,6 +86,32 @@ export default function ShiftCalendar({
       setSelectedShift(shift)
       setEditModalOpen(true)
     }
+  }
+
+  const handleTemplateClick = (e: React.MouseEvent, template: ShiftTemplate, start: Date, end: Date) => {
+    e.stopPropagation()
+    if (selectionMode) return
+    setSelectedTemplateShift({
+      templateId: template.id,
+      start,
+      end,
+      startTime: template.start_time,
+      endTime: template.end_time
+    })
+  }
+
+  const isTemplateDeleted = (template: ShiftTemplate, day: Date) => {
+    const dateKey = format(day, 'yyyy-MM-dd')
+    const templateStart = template.start_time.slice(0, 8)
+    const templateEnd = template.end_time.slice(0, 8)
+
+    return templateExceptions.some(exception => (
+      exception.trainer_id === template.trainer_id &&
+      exception.work_date === dateKey &&
+      (exception.template_id ? exception.template_id === template.id : true) &&
+      exception.start_time.slice(0, 8) === templateStart &&
+      exception.end_time.slice(0, 8) === templateEnd
+    ))
   }
 
   // Helper to extract surname
@@ -127,7 +158,7 @@ export default function ShiftCalendar({
             const dayShifts = shifts.filter(s => isSameDay(new Date(s.start_time), day))
 
             // Find templates for this day (0-6, matches date-fns getDay)
-            const dayTemplates = templates.filter(t => t.day_of_week === getDay(day))
+            const dayTemplates = templates.filter(t => t.day_of_week === getDay(day) && !isTemplateDeleted(t, day))
 
             return (
               <div key={day.toString()} className="relative border-r border-border-strong last:border-r-0 bg-surface-raised group">
@@ -159,8 +190,9 @@ export default function ShiftCalendar({
                   return (
                     <div
                       key={`tmpl-${idx}`}
-                      className="absolute inset-x-1 rounded bg-indigo-500/15 border border-indigo-500/30 pointer-events-none z-0 flex items-center justify-center overflow-hidden"
+                      className="absolute inset-x-1 z-[5] flex cursor-pointer items-center justify-center overflow-hidden rounded border border-indigo-500/30 bg-indigo-500/15 hover:bg-indigo-500/25"
                       style={getShiftStyle(start, end)}
+                      onClick={(e) => handleTemplateClick(e, tmpl, start, end)}
                     >
                       <div className="w-full text-center px-0.5">
                         <div className="text-[10px] text-indigo-300 leading-tight break-words font-normal">
@@ -223,6 +255,28 @@ export default function ShiftCalendar({
           }}
           onSave={onShiftUpdate}
           onDelete={onShiftDelete}
+        />
+      )}
+
+      {selectedTemplateShift && (
+        <TemplateShiftEditModal
+          start={selectedTemplateShift.start}
+          end={selectedTemplateShift.end}
+          isOpen={!!selectedTemplateShift}
+          onClose={() => setSelectedTemplateShift(null)}
+          onSave={async (start, end) => {
+            await onShiftCreate(start, end)
+            setSelectedTemplateShift(null)
+          }}
+          onDelete={onTemplateDelete ? async () => {
+            await onTemplateDelete(
+              selectedTemplateShift.templateId,
+              selectedTemplateShift.start,
+              selectedTemplateShift.startTime,
+              selectedTemplateShift.endTime
+            )
+            setSelectedTemplateShift(null)
+          } : undefined}
         />
       )}
     </div>
@@ -338,6 +392,123 @@ function ShiftEditModal({ shift, isOpen, onClose, onSave, onDelete }: {
           >
             削除
           </button>
+          <div className="flex gap-2">
+            <button
+              onClick={onClose}
+              className="px-3 py-2 text-text-secondary text-sm hover:bg-surface-overlay rounded"
+              disabled={loading}
+            >
+              キャンセル
+            </button>
+            <button
+              onClick={handleSave}
+              className="px-3 py-2 bg-brand-700 text-white text-sm rounded hover:bg-brand-800"
+              disabled={loading}
+            >
+              保存
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function TemplateShiftEditModal({ start, end, isOpen, onClose, onSave, onDelete }: {
+  start: Date,
+  end: Date,
+  isOpen: boolean,
+  onClose: () => void,
+  onSave: (s: Date, e: Date) => Promise<void>,
+  onDelete?: () => Promise<void>
+}) {
+  const [startTime, setStartTime] = useState(format(start, 'HH:mm'))
+  const [endTime, setEndTime] = useState(format(end, 'HH:mm'))
+  const [loading, setLoading] = useState(false)
+  const timeOptions = generateTimeOptions()
+
+  const handleSave = async () => {
+    setLoading(true)
+    try {
+      const [sh, sm] = startTime.split(':').map(Number)
+      const [eh, em] = endTime.split(':').map(Number)
+      const newStart = setMinutes(setHours(start, sh), sm)
+      const newEnd = setMinutes(setHours(start, eh), em)
+
+      if (isAfter(newStart, newEnd) || newStart.getTime() === newEnd.getTime()) {
+        alert('終了時間は開始時間より後に設定してください')
+        setLoading(false)
+        return
+      }
+
+      await onSave(newStart, newEnd)
+    } catch (e) {
+      console.error(e)
+      alert('保存に失敗しました')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!onDelete) return
+    if (!confirm('この日のシフトを削除しますか？')) return
+    setLoading(true)
+    try {
+      await onDelete()
+    } catch (e) {
+      console.error(e)
+      alert('削除に失敗しました')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (!isOpen) return null
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-30 z-50 flex items-center justify-center">
+      <div className="bg-surface-raised rounded-lg shadow-xl p-6 w-80">
+        <h3 className="text-lg font-normal mb-4">シフト変更</h3>
+        <p className="text-sm text-text-secondary mb-4">{format(start, 'yyyy/MM/dd (E)', { locale: ja })}</p>
+
+        <div className="space-y-4 mb-6">
+          <div>
+            <label className="block text-xs text-text-secondary mb-1">開始</label>
+            <select
+              className="w-full border rounded p-2"
+              value={startTime}
+              onChange={e => setStartTime(e.target.value)}
+            >
+              {timeOptions.map(t => (
+                <option key={`template-start-${t}`} value={t}>{t}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs text-text-secondary mb-1">終了</label>
+            <select
+              className="w-full border rounded p-2"
+              value={endTime}
+              onChange={e => setEndTime(e.target.value)}
+            >
+              {timeOptions.map(t => (
+                <option key={`template-end-${t}`} value={t}>{t}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="flex justify-between gap-2">
+          {onDelete ? (
+            <button
+              onClick={handleDelete}
+              className="px-3 py-2 text-red-400 text-sm hover:bg-red-500/25 rounded"
+              disabled={loading}
+            >
+              削除
+            </button>
+          ) : <span />}
           <div className="flex gap-2">
             <button
               onClick={onClose}

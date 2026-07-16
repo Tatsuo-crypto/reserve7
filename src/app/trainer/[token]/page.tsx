@@ -2,7 +2,6 @@
 
 import { useEffect, useState, Suspense } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import Link from 'next/link'
 import { getStoreDisplayName } from '@/lib/auth-utils'
 import CalendarView from '@/components/CalendarView'
 import Icon from '@/components/ui/icons'
@@ -108,7 +107,7 @@ export default function TrainerDashboardPage() {
           {/* Right: Account Pill */}
           <div className="z-10 flex justify-end min-w-[44px]">
             <div className="h-10 px-4 flex items-center gap-1 bg-surface-raised rounded-full shadow-sm border border-border-subtle transition-all">
-              <span className="text-text-secondary text-[13px] font-normal truncate max-w-[100px]">
+              <span className="whitespace-nowrap text-[13px] font-normal text-text-secondary">
                 {trainer.name}
               </span>
               <div className="ml-1 px-2 py-0.5 rounded-full text-[10px] font-normal whitespace-nowrap bg-brand-500 text-white">
@@ -119,24 +118,7 @@ export default function TrainerDashboardPage() {
         </div>
       </header>
 
-      <div className="w-full pt-4 pb-12">
-        {/* Toolbar */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-4">
-          <div className="flex justify-between items-center">
-            <div>
-              {viewMode === 'month' && (
-                <Link
-                  href={`/trainer/${token}/shifts`}
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-surface-raised border border-border-strong rounded-full text-sm font-normal text-text-secondary hover:bg-surface-base transition-all shadow-sm active:scale-95"
-                >
-                  <Icon name="clock" size={16} className="text-brand-500" />
-                  シフト管理
-                </Link>
-              )}
-            </div>
-          </div>
-        </div>
-
+      <div className="w-full pt-4 pb-28">
         {/* Calendar Content */}
         <Suspense fallback={<div className="p-8 text-center">読み込み中...</div>}>
           <CalendarView 

@@ -5,6 +5,7 @@ import GoalModal from './GoalModal'
 import Card from '@/components/ui/Card'
 import Icon, { type IconName } from '@/components/ui/icons'
 import { getDietDayTypeLabel, getEffectiveDietGoal, isDayTypeTargetEnabled, normalizeDietDayType, type DietDayType } from '@/lib/utils/dietDayType'
+import { fetchJsonCached, invalidateClientFetchCache } from '@/lib/client-fetch-cache'
 
 interface InputTabProps {
     userId: string;
@@ -65,11 +66,11 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
 
         const fetchDateData = async () => {
             try {
-                const [logRes, settingRes, dietRes, goalRes] = await Promise.all([
-                    fetch(`/api/lifestyle/logs?date=${selectedDate}&token=${token}`),
-                    fetch(`/api/lifestyle/settings?token=${token}`),
-                    fetch(`/api/diet/logs?date=${selectedDate}&token=${token}`),
-                    fetch(`/api/diet/goals?token=${token}`)
+                const [logDataResult, settingDataResult, dietDataResult, goalDataResult] = await Promise.allSettled([
+                    fetchJsonCached<any>(`/api/lifestyle/logs?date=${selectedDate}&token=${token}`),
+                    fetchJsonCached<any>(`/api/lifestyle/settings?token=${token}`),
+                    fetchJsonCached<any>(`/api/diet/logs?date=${selectedDate}&token=${token}`),
+                    fetchJsonCached<any>(`/api/diet/goals?token=${token}`)
                 ])
 
                 const updates: any = {
@@ -88,8 +89,8 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                 }
                 let dayTypeTargetSettings: any = null
 
-                if (settingRes && settingRes.ok) {
-                    const { data } = await settingRes.json()
+                if (settingDataResult.status === 'fulfilled') {
+                    const { data } = settingDataResult.value
                     if (data) {
                         const items = data.visible_items || {}
                         setVisibleItems({ ...items, workout: true })
@@ -106,8 +107,8 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                 }
 
                 let currentPlan: any = null
-                if (goalRes.ok) {
-                    const { data } = await goalRes.json()
+                if (goalDataResult.status === 'fulfilled') {
+                    const { data } = goalDataResult.value
                     if (data && data.length > 0) {
                         currentPlan = data.find((g: any) => g.start_date <= selectedDate) || data[data.length - 1]
                         if (dayTypeTargetSettings) {
@@ -118,8 +119,8 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                 }
 
                 let hasAnyData = false
-                if (logRes.ok) {
-                    const { data } = await logRes.json()
+                if (logDataResult.status === 'fulfilled') {
+                    const { data } = logDataResult.value
                     if (data) {
                         hasAnyData = true
                         if (data.weight) updates.weight = String(data.weight)
@@ -144,8 +145,8 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                     }
                 }
 
-                if (dietRes.ok) {
-                    const { data } = await dietRes.json()
+                if (dietDataResult.status === 'fulfilled') {
+                    const { data } = dietDataResult.value
                     if (data) {
                         const hasDietValues = Boolean(
                             Number(data.calories || 0) > 0
@@ -242,7 +243,8 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                     token,
                     habits: nextHabits,
                 })
-            })
+                })
+            invalidateClientFetchCache('/api/lifestyle/logs')
         } catch (e) {
             console.error('Day type save error:', e)
         }
@@ -293,6 +295,9 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
             }
 
             if (lifestyleRes.ok && dietResOk) {
+                invalidateClientFetchCache('/api/lifestyle/logs')
+                invalidateClientFetchCache('/api/diet/logs')
+                invalidateClientFetchCache('/api/client/bootstrap')
                 setMessage({ type: 'success', text: 'すべての記録を保存しました' })
                 setIsSaved(true)
                 setTimeout(() => setMessage(null), 3000)
@@ -755,6 +760,9 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                                             fetch(`/api/lifestyle/logs?date=${selectedDate}&token=${token}`, { method: 'DELETE' }),
                                             fetch(`/api/diet/logs?date=${selectedDate}&token=${token}`, { method: 'DELETE' })
                                         ])
+                                        invalidateClientFetchCache('/api/lifestyle/logs')
+                                        invalidateClientFetchCache('/api/diet/logs')
+                                        invalidateClientFetchCache('/api/client/bootstrap')
                                         onStateChange({
                                             ...sharedState,
                                             weight: '',

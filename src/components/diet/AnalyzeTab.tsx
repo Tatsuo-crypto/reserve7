@@ -19,6 +19,7 @@ import {
 import { useWeeklyProgress } from '@/hooks/useWeeklyProgress'
 import WeeklyProgressPanel from './WeeklyProgressPanel'
 import Icon from '@/components/ui/icons'
+import { fetchJsonCached } from '@/lib/client-fetch-cache'
 
 interface AnalyzeTabProps {
     userId: string
@@ -83,23 +84,11 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
                     logParams.set('endDate', formatDate(rangeEnd))
                 }
 
-                const [dietRes, lifeRes, goalRes, settingRes] = await Promise.all([
-                    fetch(`/api/diet/logs?${logParams.toString()}`),
-                    fetch(`/api/lifestyle/logs?${logParams.toString()}`),
-                    fetch(`/api/diet/goals?${params}`),
-                    fetch(`/api/lifestyle/settings?${params}`)
-                ])
-
-                const failed = [dietRes, lifeRes, goalRes, settingRes].find(res => !res.ok)
-                if (failed) {
-                    throw new Error(`記録の取得に失敗しました (${failed.status})`)
-                }
-
                 const [dietData, lifeData, goalData, settingData] = await Promise.all([
-                    dietRes.json(),
-                    lifeRes.json(),
-                    goalRes.json(),
-                    settingRes.json()
+                    fetchJsonCached<any>(`/api/diet/logs?${logParams.toString()}`),
+                    fetchJsonCached<any>(`/api/lifestyle/logs?${logParams.toString()}`),
+                    fetchJsonCached<any>(`/api/diet/goals?${params}`),
+                    fetchJsonCached<any>(`/api/lifestyle/settings?${params}`)
                 ])
 
                 setDietLogs(dietData.data || [])

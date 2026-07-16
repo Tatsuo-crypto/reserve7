@@ -471,7 +471,7 @@ export default function AdminOnlineLessonPage() {
                                         ) : (
                                             <Icon name="trash" size={20} />
                                         )}
-                                        <span className="sm:hidden">削除する</span>
+                                        <span>削除</span>
                                     </button>
                                 )}
                                 <div className="flex flex-col sm:flex-row gap-3 flex-1">

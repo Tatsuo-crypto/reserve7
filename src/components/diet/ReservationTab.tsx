@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Card from '@/components/ui/Card'
 import Icon from '@/components/ui/icons'
+import { fetchJsonCached } from '@/lib/client-fetch-cache'
 
 interface Reservation {
     id: string
@@ -46,12 +47,9 @@ export default function ReservationTab({ token, userName }: ReservationTabProps)
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const res = await fetch(`/api/client/reservations?token=${token}`)
-                if (res.ok) {
-                    const result = await res.json()
-                    setFutureReservations(result.data.futureReservations || [])
-                    setPastReservations(result.data.pastReservations || [])
-                }
+                const result = await fetchJsonCached<any>(`/api/client/reservations?token=${token}`, undefined, 30_000)
+                setFutureReservations(result.data.futureReservations || [])
+                setPastReservations(result.data.pastReservations || [])
             } catch (err) {
                 console.error('Failed to fetch reservations:', err)
             } finally {

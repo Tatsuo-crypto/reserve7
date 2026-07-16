@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { ShiftTemplate } from '@/types'
-import Icon from '@/components/ui/icons'
+import AppModal from '@/components/ui/AppModal'
 
 interface TrainerTemplateModalProps {
   isOpen: boolean
@@ -102,16 +102,24 @@ export default function TrainerTemplateModal({ isOpen, onClose, token, onSave }:
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center">
-      <div className="relative bg-surface-raised rounded-lg shadow-xl max-w-2xl w-full mx-4 overflow-hidden">
-        <div className="px-6 py-4 border-b border-border-strong bg-surface-base flex justify-between items-center">
-          <h3 className="text-lg font-normal text-text-primary">固定シフト設定</h3>
-          <button onClick={onClose} className="text-text-muted hover:text-text-secondary">
-            <Icon name="close" size={24} />
+    <AppModal
+      title="固定シフト設定"
+      onClose={onClose}
+      size="lg"
+      bodyClassName="p-4 sm:p-6"
+      footer={(
+        <>
+          <button onClick={onClose} className="rounded-full px-4 py-2 text-sm text-text-secondary">キャンセル</button>
+          <button
+            onClick={handleSave}
+            disabled={loading}
+            className="rounded-full bg-brand-700 px-5 py-2 text-sm text-white disabled:opacity-50"
+          >
+            {loading ? '保存中...' : '保存'}
           </button>
-        </div>
-
-        <div className="p-6 max-h-[70vh] overflow-y-auto">
+        </>
+      )}
+    >
           {loading && templates.length === 0 ? (
             <div className="flex justify-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"></div>
@@ -159,24 +167,6 @@ export default function TrainerTemplateModal({ isOpen, onClose, token, onSave }:
               })}
             </div>
           )}
-        </div>
-
-        <div className="px-6 py-4 bg-surface-base border-t border-border-strong flex justify-end space-x-3">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 border border-border-strong rounded-md shadow-sm text-sm font-normal text-text-secondary bg-surface-raised hover:bg-surface-base focus:outline-none"
-          >
-            キャンセル
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={loading}
-            className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-normal text-white bg-brand-700 hover:bg-brand-800 focus:outline-none disabled:opacity-50"
-          >
-            {loading ? '保存中...' : '設定を保存'}
-          </button>
-        </div>
-      </div>
-    </div>
+    </AppModal>
   )
 }

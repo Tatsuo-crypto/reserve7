@@ -32,7 +32,10 @@ const BottomNavigationContent = () => {
   ];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-surface-raised/95 backdrop-blur-md border-t border-border-subtle pb-8 shadow-[0_-1px_10px_rgba(0,0,0,0.02)]">
+    <div
+      className="fixed bottom-0 left-0 right-0 z-50 border-t border-border-subtle bg-surface-raised/95 backdrop-blur-md shadow-[0_-1px_10px_rgba(0,0,0,0.02)]"
+      style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
+    >
       <div className="max-w-md mx-auto flex items-end px-2 py-1 relative">
         {navItems.map((item) => {
           // 遷移先URLの決定

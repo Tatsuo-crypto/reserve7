@@ -20,6 +20,43 @@
   (<alpha-value>プレースホルダーを使わない。理由はtailwind.config.jsのコメント参照)。
 */
 @layer base {
+  html,
+  body {
+    min-height: 100%;
+  }
+
+  body {
+    min-height: 100dvh;
+    overflow-x: hidden;
+  }
+
+  input[type='number'] {
+    -moz-appearance: textfield;
+  }
+
+  input[type='number']::-webkit-outer-spin-button,
+  input[type='number']::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  input[type='date']::-webkit-calendar-picker-indicator,
+  input[type='month']::-webkit-calendar-picker-indicator,
+  input[type='datetime-local']::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    filter: invert(1);
+    opacity: 0.72;
+  }
+
+  button,
+  select,
+  th,
+  [role='button'] {
+    white-space: nowrap;
+    word-break: keep-all;
+    overflow-wrap: normal;
+  }
+
   :root {
     --color-surface-base: 9 9 11;         /* zinc-950相当。画面地 */
     --color-surface-raised: 24 24 27;     /* zinc-900相当。カード */
@@ -52,6 +89,19 @@
 }
 
 @layer utilities {
+  .ui-nowrap {
+    white-space: nowrap !important;
+    word-break: keep-all !important;
+    overflow-wrap: normal !important;
+  }
+
+  .ui-control-nowrap {
+    white-space: nowrap !important;
+    word-break: keep-all !important;
+    overflow-wrap: normal !important;
+    min-width: max-content;
+  }
+
   .animate-fadeIn {
     animation: fadeIn 0.3s ease-out;
   }

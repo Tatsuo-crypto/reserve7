@@ -4,10 +4,19 @@ import React, { useState, useEffect, Suspense } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import CalendarView from '@/components/CalendarView'
-import { getStatusDotColor, getStatusText, getStatusColor } from '@/lib/utils/member'
-import AdminHeader from '@/app/components/AdminHeader'
+import dynamic from 'next/dynamic'
+import { getStatusDotColor } from '@/lib/utils/member'
 import Icon, { IconName } from '@/components/ui/icons'
+import { fetchJsonCached } from '@/lib/client-fetch-cache'
+
+const CalendarView = dynamic(() => import('@/components/CalendarView'), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-[520px] items-center justify-center">
+      <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-brand-500" />
+    </div>
+  ),
+})
 
 // --- Sub Components ---
 
@@ -50,11 +59,8 @@ const AdminDashboard = () => {
       const fetchDietMembers = async () => {
         setDietLoading(true);
         try {
-          const res = await fetch('/api/admin/members?diet_only=true&compact=true');
-          if (res.ok) {
-            const data = await res.json();
-            setDietMembers(data.members || data.data?.members || []);
-          }
+          const data = await fetchJsonCached<any>('/api/admin/members?diet_only=true&compact=true', undefined, 30_000);
+          setDietMembers(data.members || data.data?.members || []);
         } catch (e) {
           console.error('Failed to fetch diet members', e);
         } finally {

@@ -3,6 +3,8 @@ export const dynamic = 'force-dynamic'
 import { supabaseAdmin } from '@/lib/supabase'
 import { requireAdminAuth, handleApiError } from '@/lib/api-utils'
 import {
+  autoBreakMinutes,
+  BreakRule,
   calculatePayrollTotals,
   getPayrollMonthRange,
   PayRate,
@@ -17,6 +19,8 @@ type TrainerRow = {
   status: string
   payroll_enabled: boolean
   daily_transportation_cost: number
+  break_rule_threshold_minutes: number
+  break_rule_minutes: number
   trainer_pay_rates?: PayRate[]
 }
 
@@ -36,6 +40,14 @@ type ShiftTemplateRow = {
   end_time: string
 }
 
+type ShiftTemplateExceptionRow = {
+  trainer_id: string
+  template_id: string | null
+  work_date: string
+  start_time: string
+  end_time: string
+}
+
 type AttendanceRow = {
   id: string
   trainer_id: string
@@ -47,6 +59,7 @@ type AttendanceRow = {
   clock_out: string
   break_minutes: number
   transportation_enabled: boolean
+  attended: boolean
   memo: string | null
 }
 
@@ -63,7 +76,30 @@ type PayrollMonthRow = {
   changed_after_confirm: boolean
 }
 
-function buildRows(trainerId: string, shifts: ShiftRow[], attendance: AttendanceRow[]) {
+function isMissingColumnError(error: any) {
+  return error?.code === '42703' || String(error?.message || '').includes('does not exist')
+}
+
+function isMissingTableError(error: any) {
+  return error?.code === '42P01' || String(error?.message || '').includes('trainer_shift_template_exceptions')
+}
+
+function withDefaultPayrollSettings(trainer: any): TrainerRow {
+  return {
+    ...trainer,
+    break_rule_threshold_minutes: Number(trainer?.break_rule_threshold_minutes ?? 480),
+    break_rule_minutes: Number(trainer?.break_rule_minutes ?? 120)
+  } as TrainerRow
+}
+
+function withDefaultAttendance(row: any): AttendanceRow {
+  return {
+    ...row,
+    attended: row?.attended === true
+  } as AttendanceRow
+}
+
+function buildRows(trainerId: string, shifts: ShiftRow[], attendance: AttendanceRow[], breakRule: BreakRule) {
   const byShiftId = new Map<string, AttendanceRow>()
   const manualAttendance: AttendanceRow[] = []
   const consumedManualAttendanceIds = new Set<string>()
@@ -95,6 +131,7 @@ function buildRows(trainerId: string, shifts: ShiftRow[], attendance: Attendance
             clockOut: savedTemplateAttendance.clock_out,
             breakMinutes: savedTemplateAttendance.break_minutes,
             transportationEnabled: savedTemplateAttendance.transportation_enabled,
+            attended: savedTemplateAttendance.attended === true,
             memo: savedTemplateAttendance.memo || '',
             source: 'saved' as const
           }
@@ -108,8 +145,9 @@ function buildRows(trainerId: string, shifts: ShiftRow[], attendance: Attendance
           scheduledEnd: shift.end_time,
           clockIn: shift.start_time,
           clockOut: shift.end_time,
-          breakMinutes: 0,
+          breakMinutes: autoBreakMinutes(shift.start_time, shift.end_time, breakRule),
           transportationEnabled: true,
+          attended: false,
           memo: '',
           source: 'shift' as const
         }
@@ -127,6 +165,7 @@ function buildRows(trainerId: string, shifts: ShiftRow[], attendance: Attendance
           clockOut: saved.clock_out,
           breakMinutes: saved.break_minutes,
           transportationEnabled: saved.transportation_enabled,
+          attended: saved.attended === true,
           memo: saved.memo || '',
           source: 'saved' as const
         }
@@ -140,8 +179,9 @@ function buildRows(trainerId: string, shifts: ShiftRow[], attendance: Attendance
         scheduledEnd: shift.end_time,
         clockIn: shift.start_time,
         clockOut: shift.end_time,
-        breakMinutes: 0,
+        breakMinutes: autoBreakMinutes(shift.start_time, shift.end_time, breakRule),
         transportationEnabled: true,
+        attended: false,
         memo: '',
         source: 'shift' as const
       }
@@ -157,6 +197,7 @@ function buildRows(trainerId: string, shifts: ShiftRow[], attendance: Attendance
     clockOut: row.clock_out,
     breakMinutes: row.break_minutes,
     transportationEnabled: row.transportation_enabled,
+    attended: row.attended === true,
     memo: row.memo || '',
     source: 'saved' as const
   })).filter(row => !consumedManualAttendanceIds.has(row.id))
@@ -168,7 +209,12 @@ function normalizeTime(value: string) {
   return value.slice(0, 8)
 }
 
-function buildTemplateShifts(templates: ShiftTemplateRow[], month: string, existingShifts: ShiftRow[]): ShiftRow[] {
+function buildTemplateShifts(
+  templates: ShiftTemplateRow[],
+  exceptions: ShiftTemplateExceptionRow[],
+  month: string,
+  existingShifts: ShiftRow[]
+): ShiftRow[] {
   const [year, monthIndex] = month.split('-').map(Number)
   const lastDay = new Date(year, monthIndex, 0).getDate()
   const generated: ShiftRow[] = []
@@ -183,6 +229,17 @@ function buildTemplateShifts(templates: ShiftTemplateRow[], month: string, exist
       .forEach(template => {
         const startTime = normalizeTime(template.start_time)
         const endTime = normalizeTime(template.end_time)
+
+        const isDeleted = exceptions.some(exception => (
+          exception.trainer_id === template.trainer_id &&
+          exception.work_date === dateText &&
+          (exception.template_id ? exception.template_id === template.id : true) &&
+          normalizeTime(exception.start_time) === startTime &&
+          normalizeTime(exception.end_time) === endTime
+        ))
+
+        if (isDeleted) return
+
         const startIso = new Date(`${dateText}T${startTime}+09:00`).toISOString()
         const endIso = new Date(`${dateText}T${endTime}+09:00`).toISOString()
 
@@ -236,25 +293,48 @@ export async function GET(request: NextRequest) {
 
     let trainerQuery = supabaseAdmin
       .from('trainers')
-      .select('id, full_name, store_id, status, payroll_enabled, daily_transportation_cost, trainer_pay_rates(hourly_wage, effective_from, effective_to)')
-      .eq('payroll_enabled', true)
+      .select('id, full_name, store_id, status, payroll_enabled, daily_transportation_cost, break_rule_threshold_minutes, break_rule_minutes, trainer_pay_rates(hourly_wage, effective_from, effective_to)')
+      .eq('status', 'active')
       .order('full_name', { ascending: true })
 
     if (storeId && storeId !== 'all') {
       trainerQuery = trainerQuery.eq('store_id', storeId)
     }
 
-    const { data: trainers, error: trainerError } = await trainerQuery
+    let { data: trainers, error: trainerError } = await trainerQuery as { data: any[] | null, error: any }
+    if (trainerError && isMissingColumnError(trainerError)) {
+      let fallbackTrainerQuery = supabaseAdmin
+        .from('trainers')
+        .select('id, full_name, store_id, status, payroll_enabled, daily_transportation_cost, trainer_pay_rates(hourly_wage, effective_from, effective_to)')
+        .eq('status', 'active')
+        .order('full_name', { ascending: true })
+
+      if (storeId && storeId !== 'all') {
+        fallbackTrainerQuery = fallbackTrainerQuery.eq('store_id', storeId)
+      }
+
+      const fallback = await fallbackTrainerQuery as { data: any[] | null, error: any }
+      trainers = fallback.data
+      trainerError = fallback.error
+    }
     if (trainerError) throw trainerError
 
-    const trainerRows = (trainers || []) as TrainerRow[]
+    const trainerRows = (trainers || []).map(withDefaultPayrollSettings)
     const trainerIds = trainerRows.map(trainer => trainer.id)
 
     if (trainerIds.length === 0) {
       return NextResponse.json({ month, payroll: [] })
     }
 
-    const [{ data: shifts, error: shiftError }, { data: templates, error: templateError }, { data: attendance, error: attendanceError }, { data: payrollMonths, error: payrollError }] = await Promise.all([
+    const attendanceQuery = supabaseAdmin
+      .from('trainer_attendance_records')
+      .select('id, trainer_id, shift_id, work_date, scheduled_start, scheduled_end, clock_in, clock_out, break_minutes, transportation_enabled, attended, memo')
+      .in('trainer_id', trainerIds)
+      .gte('work_date', range.monthStartDate)
+      .lt('work_date', range.nextMonthStartDate)
+      .order('work_date')
+
+    const [{ data: shifts, error: shiftError }, { data: templates, error: templateError }, exceptionsResult, attendanceResult, { data: payrollMonths, error: payrollError }] = await Promise.all([
       supabaseAdmin
         .from('trainer_shifts')
         .select('id, trainer_id, start_time, end_time')
@@ -269,12 +349,12 @@ export async function GET(request: NextRequest) {
         .order('day_of_week')
         .order('start_time'),
       supabaseAdmin
-        .from('trainer_attendance_records')
-        .select('id, trainer_id, shift_id, work_date, scheduled_start, scheduled_end, clock_in, clock_out, break_minutes, transportation_enabled, memo')
+        .from('trainer_shift_template_exceptions')
+        .select('trainer_id, template_id, work_date, start_time, end_time')
         .in('trainer_id', trainerIds)
         .gte('work_date', range.monthStartDate)
-        .lt('work_date', range.nextMonthStartDate)
-        .order('work_date'),
+        .lt('work_date', range.nextMonthStartDate),
+      attendanceQuery,
       supabaseAdmin
         .from('trainer_payroll_months')
         .select('id, trainer_id, payroll_month, allowance_amount, adjustment_amount, memo, status, confirmed_at, confirmed_total_amount, changed_after_confirm')
@@ -284,19 +364,49 @@ export async function GET(request: NextRequest) {
 
     if (shiftError) throw shiftError
     if (templateError) throw templateError
-    if (attendanceError) throw attendanceError
     if (payrollError) throw payrollError
 
+    let templateExceptions = (exceptionsResult as { data: any[] | null, error: any }).data
+    const templateExceptionsError = (exceptionsResult as { data: any[] | null, error: any }).error
+    if (templateExceptionsError && !isMissingTableError(templateExceptionsError)) throw templateExceptionsError
+    if (templateExceptionsError && isMissingTableError(templateExceptionsError)) {
+      templateExceptions = []
+    }
+
+    let attendance = (attendanceResult as { data: any[] | null, error: any }).data
+    let attendanceError = (attendanceResult as { data: any[] | null, error: any }).error
+    if (attendanceError && isMissingColumnError(attendanceError)) {
+      const fallbackAttendance = await supabaseAdmin
+        .from('trainer_attendance_records')
+        .select('id, trainer_id, shift_id, work_date, scheduled_start, scheduled_end, clock_in, clock_out, break_minutes, transportation_enabled, memo')
+        .in('trainer_id', trainerIds)
+        .gte('work_date', range.monthStartDate)
+        .lt('work_date', range.nextMonthStartDate)
+        .order('work_date') as { data: any[] | null, error: any }
+      attendance = fallbackAttendance.data
+      attendanceError = fallbackAttendance.error
+    }
+    if (attendanceError) throw attendanceError
+
     const shiftRows = (shifts || []) as ShiftRow[]
-    const templateRows = buildTemplateShifts((templates || []) as ShiftTemplateRow[], month, shiftRows)
+    const templateRows = buildTemplateShifts(
+      (templates || []) as ShiftTemplateRow[],
+      (templateExceptions || []) as ShiftTemplateExceptionRow[],
+      month,
+      shiftRows
+    )
     const scheduledRows = [...shiftRows, ...templateRows]
-    const attendanceRows = (attendance || []) as AttendanceRow[]
+    const attendanceRows = (attendance || []).map(withDefaultAttendance)
     const payrollRows = (payrollMonths || []) as PayrollMonthRow[]
     const payrollByTrainer = new Map(payrollRows.map(row => [row.trainer_id, row]))
 
     const payroll = trainerRows.map(trainer => {
       const monthRow = payrollByTrainer.get(trainer.id)
-      const detailRows = buildRows(trainer.id, scheduledRows, attendanceRows)
+      const breakRule = {
+        thresholdMinutes: Math.max(0, trainer.break_rule_threshold_minutes || 0),
+        breakMinutes: Math.max(0, trainer.break_rule_minutes || 0)
+      }
+      const detailRows = buildRows(trainer.id, scheduledRows, attendanceRows, breakRule)
       const rates = (trainer.trainer_pay_rates || []).sort((a, b) => a.effective_from.localeCompare(b.effective_from))
       const totals = calculatePayrollTotals(
         toWorkRows(detailRows),
@@ -311,7 +421,9 @@ export async function GET(request: NextRequest) {
           id: trainer.id,
           fullName: trainer.full_name,
           storeId: trainer.store_id,
-          dailyTransportationCost: trainer.daily_transportation_cost || 0
+          dailyTransportationCost: trainer.daily_transportation_cost || 0,
+          breakRuleThresholdMinutes: breakRule.thresholdMinutes,
+          breakRuleMinutes: breakRule.breakMinutes
         },
         rates,
         month: monthRow || null,
@@ -337,6 +449,10 @@ export async function POST(request: NextRequest) {
     const rows = Array.isArray(body?.rows) ? body.rows : []
     const allowanceAmount = Number.isFinite(Number(body?.allowanceAmount)) ? Math.floor(Number(body.allowanceAmount)) : 0
     const adjustmentAmount = Number.isFinite(Number(body?.adjustmentAmount)) ? Math.floor(Number(body.adjustmentAmount)) : 0
+    const breakRuleThresholdMinutes = Number.isFinite(Number(body?.breakRuleThresholdMinutes)) ? Math.max(0, Math.floor(Number(body.breakRuleThresholdMinutes))) : null
+    const breakRuleMinutes = Number.isFinite(Number(body?.breakRuleMinutes)) ? Math.max(0, Math.floor(Number(body.breakRuleMinutes))) : null
+    const hourlyWage = Number.isFinite(Number(body?.hourlyWage)) ? Math.max(0, Math.floor(Number(body.hourlyWage))) : null
+    const hourlyWageEffectiveFrom = typeof body?.hourlyWageEffectiveFrom === 'string' && body.hourlyWageEffectiveFrom ? body.hourlyWageEffectiveFrom : null
     const memo = typeof body?.memo === 'string' ? body.memo : null
     const status = body?.status === 'confirmed' ? 'confirmed' : 'draft'
 
@@ -345,6 +461,44 @@ export async function POST(request: NextRequest) {
     }
 
     const range = getPayrollMonthRange(month)
+
+    const trainerUpdates: Record<string, number> = {}
+    if (breakRuleThresholdMinutes !== null) trainerUpdates.break_rule_threshold_minutes = breakRuleThresholdMinutes
+    if (breakRuleMinutes !== null) trainerUpdates.break_rule_minutes = breakRuleMinutes
+    if (Object.keys(trainerUpdates).length > 0) {
+      const { error } = await supabaseAdmin
+        .from('trainers')
+        .update(trainerUpdates)
+        .eq('id', trainerId)
+      if (error && !isMissingColumnError(error)) throw error
+    }
+
+    if (hourlyWage !== null && hourlyWageEffectiveFrom) {
+      const { data: existingRate, error: existingRateError } = await supabaseAdmin
+        .from('trainer_pay_rates')
+        .select('id')
+        .eq('trainer_id', trainerId)
+        .eq('effective_from', hourlyWageEffectiveFrom)
+        .maybeSingle()
+      if (existingRateError) throw existingRateError
+
+      if (existingRate?.id) {
+        const { error } = await supabaseAdmin
+          .from('trainer_pay_rates')
+          .update({ hourly_wage: hourlyWage })
+          .eq('id', existingRate.id)
+        if (error) throw error
+      } else {
+        const { error } = await supabaseAdmin
+          .from('trainer_pay_rates')
+          .insert({
+            trainer_id: trainerId,
+            hourly_wage: hourlyWage,
+            effective_from: hourlyWageEffectiveFrom
+          })
+        if (error) throw error
+      }
+    }
 
     const { data: existingMonth, error: existingMonthError } = await supabaseAdmin
       .from('trainer_payroll_months')
@@ -370,6 +524,7 @@ export async function POST(request: NextRequest) {
         clock_out: clockOut,
         break_minutes: Number.isFinite(Number(row.breakMinutes)) ? Math.max(0, Math.floor(Number(row.breakMinutes))) : 0,
         transportation_enabled: row.transportationEnabled !== false,
+        attended: row.attended === true,
         memo: typeof row.memo === 'string' && row.memo.trim() ? row.memo.trim() : null
       }
 
@@ -379,12 +534,26 @@ export async function POST(request: NextRequest) {
           .update(payload)
           .eq('id', row.id)
           .eq('trainer_id', trainerId)
-        if (error) throw error
+        if (error && isMissingColumnError(error)) {
+          const { attended, ...fallbackPayload } = payload
+          const retry = await supabaseAdmin
+            .from('trainer_attendance_records')
+            .update(fallbackPayload)
+            .eq('id', row.id)
+            .eq('trainer_id', trainerId)
+          if (retry.error) throw retry.error
+        } else if (error) throw error
       } else {
         const { error } = await supabaseAdmin
           .from('trainer_attendance_records')
           .insert(payload)
-        if (error) throw error
+        if (error && isMissingColumnError(error)) {
+          const { attended, ...fallbackPayload } = payload
+          const retry = await supabaseAdmin
+            .from('trainer_attendance_records')
+            .insert(fallbackPayload)
+          if (retry.error) throw retry.error
+        } else if (error) throw error
       }
     }
 
@@ -395,12 +564,22 @@ export async function POST(request: NextRequest) {
       .single()
     if (trainerError) throw trainerError
 
-    const { data: savedAttendance, error: savedAttendanceError } = await supabaseAdmin
+    let { data: savedAttendance, error: savedAttendanceError } = await supabaseAdmin
       .from('trainer_attendance_records')
-      .select('work_date, clock_in, clock_out, break_minutes, transportation_enabled')
+      .select('work_date, clock_in, clock_out, break_minutes, transportation_enabled, attended')
       .eq('trainer_id', trainerId)
       .gte('work_date', range.monthStartDate)
-      .lt('work_date', range.nextMonthStartDate)
+      .lt('work_date', range.nextMonthStartDate) as { data: any[] | null, error: any }
+    if (savedAttendanceError && isMissingColumnError(savedAttendanceError)) {
+      const fallbackSavedAttendance = await supabaseAdmin
+        .from('trainer_attendance_records')
+        .select('work_date, clock_in, clock_out, break_minutes, transportation_enabled')
+        .eq('trainer_id', trainerId)
+        .gte('work_date', range.monthStartDate)
+        .lt('work_date', range.nextMonthStartDate) as { data: any[] | null, error: any }
+      savedAttendance = fallbackSavedAttendance.data
+      savedAttendanceError = fallbackSavedAttendance.error
+    }
     if (savedAttendanceError) throw savedAttendanceError
 
     const totals = calculatePayrollTotals(

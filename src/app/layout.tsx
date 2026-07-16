@@ -40,6 +40,12 @@ export const metadata = {
   manifest: '/manifest.json',
 }
 
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover' as const,
+}
+
 export default function RootLayout({
   children,
 }: {
@@ -49,7 +55,7 @@ export default function RootLayout({
     <html lang="ja" className={notoSansJP.variable}>
       <body className={notoSansJP.className}>
         <Providers>
-          <div className="min-h-screen bg-surface-base">
+          <div className="min-h-[100dvh] bg-surface-base">
             <Navigation />
             <MainWrapper>
               {children}

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import AppModal from '@/components/ui/AppModal'
 
 interface GoalModalProps {
     userId: string;
@@ -74,14 +75,25 @@ export default function GoalModal({ userId, token, onClose, onSave }: GoalModalP
     }
 
     return (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black bg-opacity-50">
-            <div className="bg-surface-raised w-full max-w-lg rounded-t-3xl sm:rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh] animate-slideUp">
-                <div className="p-6 border-b border-border-subtle flex items-center justify-between">
-                    <h2 className="text-xl font-normal text-text-primary">目標設定</h2>
-                    <button onClick={onClose} className="p-2 text-text-muted hover:text-text-secondary">×</button>
-                </div>
-
-                <div className="flex-1 overflow-y-auto p-6 space-y-8">
+        <AppModal
+            title="目標設定"
+            onClose={onClose}
+            align="bottom"
+            bodyClassName="space-y-8 p-5 sm:p-6"
+            footer={(
+                <>
+                    <button type="button" onClick={onClose} className="rounded-full px-4 py-2 text-sm text-text-secondary">キャンセル</button>
+                    <button
+                        type="button"
+                        onClick={handleSave}
+                        disabled={saving}
+                        className="rounded-full bg-brand-700 px-5 py-2 text-sm text-white disabled:opacity-50"
+                    >
+                        {saving ? '保存中...' : '保存'}
+                    </button>
+                </>
+            )}
+        >
                     {/* New Goal Form */}
                     <section>
                         <h3 className="text-xs font-normal text-brand-600 uppercase tracking-widest mb-4">新しい目標を設定</h3>
@@ -114,13 +126,6 @@ export default function GoalModal({ userId, token, onClose, onSave }: GoalModalP
                                 <InputItem label="塩分 (g)" value={form.salt} onChange={v => setForm({ ...form, salt: v })} />
                             </div>
 
-                            <button
-                                onClick={handleSave}
-                                disabled={saving}
-                                className="w-full bg-brand-700 text-white py-4 rounded-xl font-normal shadow-lg shadow-brand-200 active:scale-95 transition-all mt-4"
-                            >
-                                {saving ? '保存中...' : '目標を更新する'}
-                            </button>
                         </div>
                     </section>
 
@@ -145,9 +150,7 @@ export default function GoalModal({ userId, token, onClose, onSave }: GoalModalP
                             </div>
                         )}
                     </section>
-                </div>
-            </div>
-        </div>
+        </AppModal>
     )
 }
 

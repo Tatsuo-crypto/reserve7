@@ -235,10 +235,10 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-surface-raised rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-[300] flex items-center justify-center overflow-hidden bg-black/60 p-3 sm:p-4">
+      <div className="w-full max-w-4xl overflow-y-auto overscroll-contain rounded-3xl border border-border-subtle bg-surface-raised shadow-xl [-webkit-overflow-scrolling:touch]" style={{ maxHeight: 'calc(100dvh - max(1.5rem, env(safe-area-inset-top)) - max(1.5rem, env(safe-area-inset-bottom)))' }}>
         {/* ヘッダー */}
-        <div className="sticky top-0 bg-surface-raised border-b border-border-strong px-6 py-4 flex items-center justify-between">
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border-strong bg-surface-raised px-4 py-3.5 sm:px-6 sm:py-4">
           <div className="flex items-center gap-2">
             <Icon name="clipboardList" size={24} className="text-text-secondary" />
             <h2 className="text-xl font-normal text-text-primary">目標・記録管理</h2>

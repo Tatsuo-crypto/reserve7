@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import Card from '@/components/ui/Card'
 import Icon from '@/components/ui/icons'
+import { fetchJsonCached } from '@/lib/client-fetch-cache'
 
 interface PlanTabProps {
     token: string
@@ -50,18 +51,12 @@ export default function PlanTab({ token, onEditPlan }: PlanTabProps) {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const [goalsRes, lifeRes] = await Promise.all([
-                    fetch(`/api/diet/goals?token=${token}`),
-                    fetch(`/api/lifestyle/settings?token=${token}`)
+                const [goalsData, lifeData] = await Promise.all([
+                    fetchJsonCached<any>(`/api/diet/goals?token=${token}`),
+                    fetchJsonCached<any>(`/api/lifestyle/settings?token=${token}`)
                 ])
-                if (goalsRes.ok) {
-                    const data = await goalsRes.json()
-                    setGoals(data.data || [])
-                }
-                if (lifeRes.ok) {
-                    const data = await lifeRes.json()
-                    setLifestyleSettings(data.data || null)
-                }
+                setGoals(goalsData.data || [])
+                setLifestyleSettings(lifeData.data || null)
             } catch (e) {
                 console.error(e)
             } finally {

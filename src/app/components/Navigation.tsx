@@ -38,8 +38,11 @@ function NavigationContent() {
   const getPageTitle = () => {
     const tab = searchParams.get('tab')
     
-    // Member detail pages (try to get name from somewhere or just generic)
+    // Member detail pages
     if (pathname?.startsWith('/admin/members/')) {
+       if (/^\/admin\/members\/[^/]+$/.test(pathname)) {
+         return '会員'
+       }
        const name = searchParams.get('name')
        return name ? `${name}様` : '会員詳細'
     }
@@ -118,7 +121,7 @@ function NavigationContent() {
                onClick={handleLogout}
                className="h-10 px-4 flex items-center gap-1 bg-surface-raised rounded-full shadow-sm border border-border-subtle transition-all active:scale-95"
              >
-               <span className="text-text-secondary text-[13px] font-normal truncate max-w-[100px]">
+               <span className="whitespace-nowrap text-[13px] font-normal text-text-secondary">
                  {formatName(session.user.name, session.user.role)}
                </span>
                <div className={`ml-1 px-2 py-0.5 rounded-full text-[10px] font-normal whitespace-nowrap ${

@@ -1,3 +1,5 @@
+import TrainerBottomNavigation from './[token]/TrainerBottomNavigation'
+
 export default function TrainerLayout({
   children,
 }: {
@@ -6,6 +8,7 @@ export default function TrainerLayout({
   return (
     <>
       {children}
+      <TrainerBottomNavigation />
     </>
   )
 }

@@ -135,6 +135,17 @@ export interface ShiftTemplate {
   updated_at?: string;
 }
 
+export interface ShiftTemplateException {
+  id: string;
+  trainer_id: string;
+  template_id?: string | null;
+  work_date: string; // "YYYY-MM-DD"
+  start_time: string; // "HH:MM:SS"
+  end_time: string; // "HH:MM:SS"
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface Shift {
   id: string;
   trainer_id: string;

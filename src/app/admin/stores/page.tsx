@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
+import AppModal from '@/components/ui/AppModal'
 
 type Store = {
   id: string
@@ -187,11 +188,11 @@ export default function StoresPage() {
                       <td className="px-3 py-2 border-b whitespace-nowrap text-center">
                         <div className="font-normal text-text-primary whitespace-nowrap">{s.name}</div>
                       </td>
-                      <td className="px-3 py-2 border-b whitespace-nowrap text-center">
-                        <div className="text-text-primary truncate max-w-[240px] mx-auto" title={s.email || ''}>{s.email || '-'}</div>
+                      <td className="px-3 py-2 border-b text-center">
+                        <div className="mx-auto max-w-[240px] break-words text-text-primary" title={s.email || ''}>{s.email || '-'}</div>
                       </td>
-                      <td className="px-3 py-2 border-b whitespace-nowrap text-center">
-                        <div className="text-text-primary truncate max-w-[300px] mx-auto" title={s.calendar_id}>{s.calendar_id}</div>
+                      <td className="px-3 py-2 border-b text-center">
+                        <div className="mx-auto max-w-[300px] break-words text-text-primary" title={s.calendar_id}>{s.calendar_id}</div>
                       </td>
                       <td className="px-3 py-2 border-b text-center whitespace-nowrap">
                         <div className="text-text-primary">{s.memberCount ?? 0}</div>
@@ -216,11 +217,18 @@ export default function StoresPage() {
 
       {/* Modal */}
       {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/30" onClick={() => setModalOpen(false)} />
-          <div className="relative bg-surface-raised rounded-lg border border-border-strong shadow-lg w-full max-w-lg p-6">
-            <h3 className="text-lg font-normal mb-4">{editing ? '店舗編集' : '新規店舗'}</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <AppModal
+          title={editing ? '店舗編集' : '新規店舗'}
+          onClose={() => setModalOpen(false)}
+          bodyClassName="p-4 sm:p-5"
+          footer={(
+            <>
+              <button type="button" className="rounded-full px-4 py-2 text-sm text-text-secondary" onClick={() => setModalOpen(false)}>キャンセル</button>
+              <button type="button" className="rounded-full bg-brand-700 px-5 py-2 text-sm text-white hover:bg-brand-800" onClick={saveStore}>保存</button>
+            </>
+          )}
+        >
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="md:col-span-2">
                 <label className="block text-xs text-text-secondary mb-1">店舗名</label>
                 <input className="w-full border rounded-md px-3 py-2 text-sm" value={form.name} onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))} />
@@ -242,12 +250,7 @@ export default function StoresPage() {
               </div>
               {/* 電話・住所は今は不要のため非表示 */}
             </div>
-            <div className="mt-6 flex justify-end gap-3">
-              <button className="px-3 py-2 text-sm rounded-md border" onClick={() => setModalOpen(false)}>キャンセル</button>
-              <button className="px-3 py-2 text-sm rounded-md bg-brand-700 text-white hover:bg-brand-800" onClick={saveStore}>保存</button>
-            </div>
-          </div>
-        </div>
+        </AppModal>
       )}
     </div>
   )

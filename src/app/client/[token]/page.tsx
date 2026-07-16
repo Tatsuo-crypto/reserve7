@@ -8,6 +8,7 @@ import HomeTab from '@/components/diet/HomeTab'
 import AdminHeader from '@/app/components/AdminHeader'
 import PushNotificationPrompt from './PushNotificationPrompt'
 import Icon, { type IconName } from '@/components/ui/icons'
+import { fetchJsonCached } from '@/lib/client-fetch-cache'
 
 const TabLoading = () => (
   <div className="h-56 flex items-center justify-center">
@@ -106,9 +107,8 @@ export default function ClientReservationsPage() {
       setLoading(true)
       setSettingsLoaded(false)
       try {
-        const res = await fetch(`/api/client/bootstrap?token=${token}`)
-        if (res.ok) {
-          const data = await res.json()
+        const data = await fetchJsonCached<any>(`/api/client/bootstrap?token=${token}`, undefined, 30_000)
+        if (data?.user) {
           setUserId(data.user.id)
           setUserName(data.user.name)
           setHomeBootstrap({
@@ -192,7 +192,7 @@ export default function ClientReservationsPage() {
               <Icon name="settings" size={20} />
             </button>
             <div className="h-10 px-4 flex items-center gap-2 bg-surface-raised rounded-full shadow-sm border border-border-subtle transition-all active:scale-95">
-              <span className="text-text-secondary text-[13px] font-normal truncate max-w-[100px]">
+              <span className="whitespace-nowrap text-[13px] font-normal text-text-secondary">
                 {formatName(userName)}
               </span>
               <div className="px-2 py-0.5 rounded-full text-[10px] font-normal bg-surface-overlay text-text-primary whitespace-nowrap">
