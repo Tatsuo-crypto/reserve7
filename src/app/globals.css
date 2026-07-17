@@ -20,14 +20,28 @@
   (<alpha-value>プレースホルダーを使わない。理由はtailwind.config.jsのコメント参照)。
 */
 @layer base {
-  html,
+  html {
+    min-height: 100%;
+    width: 100%;
+    overflow-x: hidden;
+    scrollbar-gutter: stable;
+  }
+
   body {
     min-height: 100%;
+    width: 100%;
+    max-width: 100%;
   }
 
   body {
     min-height: 100dvh;
     overflow-x: hidden;
+  }
+
+  @supports not (scrollbar-gutter: stable) {
+    html {
+      overflow-y: scroll;
+    }
   }
 
   input[type='number'] {

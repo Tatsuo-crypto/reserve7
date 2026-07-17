@@ -6,7 +6,7 @@ let storesPromise: Promise<AdminStoreOption[]> | null = null
 export async function fetchAdminStoresOnce(): Promise<AdminStoreOption[]> {
     if (storesCache) return storesCache
     if (!storesPromise) {
-        storesPromise = fetch('/api/admin/stores')
+        storesPromise = fetch('/api/admin/stores/options')
             .then(async (res) => {
                 if (!res.ok) return []
                 const data = await res.json()

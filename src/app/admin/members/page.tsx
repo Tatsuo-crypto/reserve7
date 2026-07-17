@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect, Suspense, useRef } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
@@ -16,6 +16,7 @@ import {
   generateMemberAccessUrl
 } from '@/lib/utils/member'
 import { useStoreChange } from '@/hooks/useStoreChange'
+import { fetchJsonCached, invalidateClientFetchCache } from '@/lib/client-fetch-cache'
 
 function MembersPageContent() {
   const { count: storeChangeCount } = useStoreChange()
@@ -26,6 +27,7 @@ function MembersPageContent() {
   const [members, setMembers] = useState<Member[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const fetchRequestIdRef = useRef(0)
 
   // Check admin access
   useEffect(() => {
@@ -43,23 +45,23 @@ function MembersPageContent() {
   // Fetch members
   useEffect(() => {
     const fetchMembers = async () => {
+      const requestId = ++fetchRequestIdRef.current
       try {
-        const response = await fetch('/api/admin/members?compact=true')
-
-        if (response.ok) {
-          const result = await response.json()
-          const data = result.data || result
-          setMembers(data.members || [])
-        } else {
-          const errorData = await response.json()
-          console.error('API Error Response:', errorData)
-          setError(`会員データの取得に失敗しました: ${errorData.error || 'Unknown error'}`)
-        }
+        setLoading(true)
+        setError('')
+        const result = await fetchJsonCached<any>(`/api/admin/members?compact=true&_storeVersion=${storeChangeCount}`, undefined, 15_000)
+        if (requestId !== fetchRequestIdRef.current) return
+        const data = result.data || result
+        setMembers(data.members || [])
+        setError('')
       } catch (error) {
+        if (requestId !== fetchRequestIdRef.current) return
         console.error('Fetch Error:', error)
         setError('会員データの取得中にエラーが発生しました')
       } finally {
-        setLoading(false)
+        if (requestId === fetchRequestIdRef.current) {
+          setLoading(false)
+        }
       }
     }
 
@@ -141,6 +143,7 @@ function MembersPageContent() {
       if (response.ok) {
         // Remove member from local state
         setMembers(prev => prev.filter(member => member.id !== memberToDelete.id))
+        invalidateClientFetchCache('/api/admin/members')
         setError(`会員「${memberToDelete.name}」を削除しました`)
         setTimeout(() => setError(''), 3000)
       } else {

@@ -136,22 +136,24 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
   const [templates, setTemplates] = useState<ShiftTemplate[]>([])
   const [trainers, setTrainers] = useState<Trainer[]>([])
   const [loading, setLoading] = useState(true)
+  const [availabilityLoading, setAvailabilityLoading] = useState(false)
   const [syncing, setSyncing] = useState(false)
   const [debugInfo, setDebugInfo] = useState<string>('')
   const [viewMode, setViewMode] = useState<'month' | 'timeline'>('month')
   const [selectedDate, setSelectedDate] = useState<string>('')
   const { count: storeChangeCount } = useStoreChange()
   const lastFetchRef = useRef<{ key: string, at: number } | null>(null)
+  const lastAvailabilityFetchRef = useRef<string | null>(null)
 
   // Note: タイトルの採番はサーバ側で行うため、フロントでは変更しない
 
   // 苗字のみを抽出（スペース区切りの最初の部分）
-  const extractLastName = (fullName: string) => {
+  const extractLastName = useCallback((fullName: string) => {
     if (!fullName) return ''
     // 半角スペースまたは全角スペースで分割
     const nameParts = fullName.split(/\s|　/)
     return nameParts[0] || fullName
-  }
+  }, [])
 
   // タイトルから苗字と回数を抽出（例：「東條成美1/6」→「東條1/6」）
   const formatReservationTitle = (title: string, plan?: string) => {
@@ -184,87 +186,119 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
     setSelectedDate('')
   }, [])
 
-  const fetchCalendarData = useCallback(async (force = false) => {
+  const buildCalendarParams = useCallback((scope: 'reservations' | 'availability' | 'all') => {
+    const range = getCalendarMonthRange(currentDate)
+    const params = new URLSearchParams({
+      start: range.start,
+      end: range.end,
+      scope,
+    })
+    if (trainerToken) {
+      params.append('token', trainerToken)
+    }
+    return params
+  }, [currentDate, trainerToken])
+
+  const applyReservations = useCallback((reservations: Reservation[]) => {
+    setDebugInfo(`API Status: Calendar=200, ResCount=${reservations.length}`)
+
+    if (reservations.length > 0) {
+      // Transform reservations to calendar events (タイトルはサーバの値をそのまま使用)
+      const calendarEvents: CalendarEvent[] = reservations.map(reservation => {
+        const startDate = new Date(reservation.startTime)
+        const endDate = new Date(reservation.endTime)
+
+        // Use JST timezone for consistent display
+        const startTime = startDate.toLocaleTimeString('ja-JP', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false,
+          timeZone: 'Asia/Tokyo'
+        })
+        const endTime = endDate.toLocaleTimeString('ja-JP', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false,
+          timeZone: 'Asia/Tokyo'
+        })
+
+        // Use JST for date as well
+        const dateInJST = startDate.toLocaleDateString('ja-JP', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          timeZone: 'Asia/Tokyo'
+        }).split('/').map(part => part.padStart(2, '0')).join('-')
+
+        // Determine type based on title and client ID
+        const isBlocked = reservation.client.id === 'blocked' || (reservation.title && reservation.title.includes('予約不可'))
+        const isTrial = reservation.title && reservation.title.includes('体験')
+        const isGuest = reservation.client.id === 'guest' || (reservation.title && reservation.title.includes('ゲスト')) || reservation.client.email === 'guest@system'
+        const isTraining = reservation.client.id === 'training' || reservation.title === '研修'
+
+        return {
+          id: reservation.id,
+          title: reservation.title,
+          date: dateInJST,
+          time: `${startTime} - ${endTime}`,
+          type: isTraining ? 'training' : isBlocked ? 'blocked' : (isGuest ? 'guest' : 'reservation'),
+          clientName: isTraining ? '研修' : isBlocked ? '予約不可' : isTrial ? '体験' : (isGuest ? 'Guest' : extractLastName(reservation.client.fullName)),
+          plan: reservation.client.plan,
+          notes: reservation.memo || reservation.notes || '',
+          trainerId: (reservation as any).trainerId
+        }
+      })
+
+      setEvents(calendarEvents)
+    } else {
+      setEvents([])
+    }
+  }, [extractLastName])
+
+  const fetchReservationsData = useCallback(async (force = false) => {
     try {
       setLoading(true)
 
-      const range = getCalendarMonthRange(currentDate)
-      const params = new URLSearchParams({
-        start: range.start,
-        end: range.end,
-      })
-      if (trainerToken) {
-        params.append('token', trainerToken)
-      }
-
+      const params = buildCalendarParams('reservations')
       const cacheKey = params.toString()
       const data = await fetchCalendarPayload(`/api/calendar?${cacheKey}`, cacheKey, force)
-      const reservations = data.reservations
-      setDebugInfo(`API Status: Calendar=200, ResCount=${reservations.length}`)
+      applyReservations(data.reservations)
 
-      if (reservations.length > 0) {
-        // Transform reservations to calendar events (タイトルはサーバの値をそのまま使用)
-        const calendarEvents: CalendarEvent[] = reservations.map(reservation => {
-          const startDate = new Date(reservation.startTime)
-          const endDate = new Date(reservation.endTime)
+    } catch (error) {
+      console.error('Failed to fetch calendar reservations:', error)
+      setDebugInfo(`Fetch Error: ${error}`)
+    } finally {
+      setLoading(false)
+    }
+  }, [applyReservations, buildCalendarParams])
 
-          // Use JST timezone for consistent display
-          const startTime = startDate.toLocaleTimeString('ja-JP', {
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: false,
-            timeZone: 'Asia/Tokyo'
-          })
-          const endTime = endDate.toLocaleTimeString('ja-JP', {
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: false,
-            timeZone: 'Asia/Tokyo'
-          })
+  const fetchAvailabilityData = useCallback(async (force = false) => {
+    try {
+      setAvailabilityLoading(true)
 
-          // Use JST for date as well
-          const dateInJST = startDate.toLocaleDateString('ja-JP', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            timeZone: 'Asia/Tokyo'
-          }).split('/').map(part => part.padStart(2, '0')).join('-')
-
-          // Determine type based on title and client ID
-          const isBlocked = reservation.client.id === 'blocked' || (reservation.title && reservation.title.includes('予約不可'))
-          const isTrial = reservation.title && reservation.title.includes('体験')
-          const isGuest = reservation.client.id === 'guest' || (reservation.title && reservation.title.includes('ゲスト')) || reservation.client.email === 'guest@system'
-          const isTraining = reservation.client.id === 'training' || reservation.title === '研修'
-
-          return {
-            id: reservation.id,
-            title: reservation.title,
-            date: dateInJST,
-            time: `${startTime} - ${endTime}`,
-            type: isTraining ? 'training' : isBlocked ? 'blocked' : (isGuest ? 'guest' : 'reservation'),
-            clientName: isTraining ? '研修' : isBlocked ? '予約不可' : isTrial ? '体験' : (isGuest ? 'Guest' : extractLastName(reservation.client.fullName)),
-            plan: reservation.client.plan,
-            notes: reservation.memo || reservation.notes || '',
-            trainerId: (reservation as any).trainerId
-          }
-        })
-
-        setEvents(calendarEvents)
-      } else {
-        setEvents([])
-      }
+      const params = buildCalendarParams('availability')
+      const cacheKey = params.toString()
+      const data = await fetchCalendarPayload(`/api/calendar?${cacheKey}`, cacheKey, force)
       setShifts(data.shifts)
       setTemplates(data.templates)
       setTrainers(data.trainers)
       setDebugInfo(prev => `${prev}, ShiftsCount=${data.shifts.length}, TemplatesCount=${data.templates.length}`)
 
     } catch (error) {
-      console.error('Failed to fetch calendar data:', error)
+      console.error('Failed to fetch calendar availability:', error)
+      lastAvailabilityFetchRef.current = null
       setDebugInfo(`Fetch Error: ${error}`)
     } finally {
-      setLoading(false)
+      setAvailabilityLoading(false)
     }
-  }, [currentDate, trainerToken])
+  }, [buildCalendarParams])
+
+  const fetchCalendarData = useCallback(async (force = false) => {
+    await Promise.all([
+      fetchReservationsData(force),
+      fetchAvailabilityData(force),
+    ])
+  }, [fetchAvailabilityData, fetchReservationsData])
 
   // Get calendar data
   useEffect(() => {
@@ -276,8 +310,18 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
     }
     lastFetchRef.current = { key: fetchKey, at: Date.now() }
 
-    fetchCalendarData()
-  }, [currentDate, fetchCalendarData, storeChangeCount, trainerToken])
+    fetchReservationsData()
+  }, [currentDate, fetchReservationsData, storeChangeCount, trainerToken])
+
+  useEffect(() => {
+    if (viewMode === 'timeline' && selectedDate && !availabilityLoading) {
+      const range = getCalendarMonthRange(currentDate)
+      const fetchKey = `${trainerToken || 'admin'}:${storeChangeCount}:${range.key}`
+      if (lastAvailabilityFetchRef.current === fetchKey) return
+      lastAvailabilityFetchRef.current = fetchKey
+      void fetchAvailabilityData()
+    }
+  }, [availabilityLoading, currentDate, fetchAvailabilityData, selectedDate, storeChangeCount, trainerToken, viewMode])
 
   const handleCalendarSync = useCallback(async () => {
     if (syncing) return
@@ -458,6 +502,14 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
 
   // Show timeline view if selected
   if (viewMode === 'timeline' && selectedDate) {
+    if (availabilityLoading && trainers.length === 0) {
+      return (
+        <div className="flex h-[520px] items-center justify-center bg-surface-raised">
+          <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-brand-500" />
+        </div>
+      )
+    }
+
     return (
       <TimelineView
         selectedDate={selectedDate}

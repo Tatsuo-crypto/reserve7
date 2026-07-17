@@ -3,6 +3,37 @@ export const dynamic = 'force-dynamic'
 import { supabaseAdmin as supabase } from '@/lib/supabase-admin'
 import { requireAdminAuth, handleApiError } from '@/lib/api-utils'
 
+async function runSupabaseQuery<T>(
+  operation: (signal: AbortSignal) => PromiseLike<T>,
+  attempts = 2,
+  timeoutMs = 2500
+): Promise<T> {
+  let lastResult: any
+
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
+    try {
+      lastResult = await operation(controller.signal)
+    } catch (error) {
+      lastResult = { error }
+    } finally {
+      clearTimeout(timeoutId)
+    }
+
+    const message = lastResult?.error?.message || ''
+
+    const shouldRetry = message.includes('fetch failed') || message.includes('aborted')
+    if (!shouldRetry || attempt === attempts) {
+      return lastResult
+    }
+
+    await new Promise(resolve => setTimeout(resolve, 250 * attempt))
+  }
+
+  return lastResult
+}
+
 // GET /api/admin/stores?status=active|inactive&query=...
 export async function GET(request: NextRequest) {
   try {
@@ -23,7 +54,7 @@ export async function GET(request: NextRequest) {
       q = q.or(`name.ilike.%${query}%,calendar_id.ilike.%${query}%`)
     }
 
-    const { data, error } = await q
+    const { data, error } = await runSupabaseQuery((signal) => q.abortSignal(signal))
     if (error) throw error
 
     const stores = data ?? []
@@ -31,9 +62,12 @@ export async function GET(request: NextRequest) {
     // Fetch user counts directly to avoid RPC issues
     let memberCounts: Record<string, number> = {}
     try {
-      const { data: users, error: usersError } = await supabase
-        .from('users')
-        .select('store_id, status, email')
+      const { data: users, error: usersError } = await runSupabaseQuery((signal) =>
+        supabase
+          .from('users')
+          .select('store_id, status, email')
+          .abortSignal(signal)
+      )
 
       if (usersError) throw usersError
 

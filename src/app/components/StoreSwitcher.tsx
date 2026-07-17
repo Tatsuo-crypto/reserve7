@@ -71,7 +71,14 @@ export default function StoreSwitcher({ defaultStoreName }: StoreSwitcherProps) 
 
     const simplifyName = (name: string) => {
         const match = name.match(/【(.*?)】/)
-        return match ? match[1] : name
+        if (match) return match[1]
+
+        const withoutBrand = name
+            .replace(/^T&J\s*GYM\s*/i, '')
+            .replace(/[【】]/g, '')
+            .trim()
+
+        return withoutBrand || name
     }
 
     return (

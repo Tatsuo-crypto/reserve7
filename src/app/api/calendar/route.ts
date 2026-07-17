@@ -19,6 +19,9 @@ export async function GET(request: NextRequest) {
     const token = searchParams.get('token')
     const start = searchParams.get('start')
     const end = searchParams.get('end')
+    const scope = searchParams.get('scope') || 'all'
+    const includeReservations = scope !== 'availability'
+    const includeAvailability = scope !== 'reservations'
 
     let user: CalendarUser | null = null
     let tokenUser: { id: string } | null = null
@@ -107,6 +110,63 @@ export async function GET(request: NextRequest) {
       reservationsQuery = reservationsQuery.eq('client_id', tokenUser?.id || user.id)
     }
 
+    let reservationsResultPromise: PromiseLike<any> | Promise<any> = Promise.resolve({ data: [], error: null })
+    if (includeReservations) {
+      reservationsResultPromise = reservationsQuery
+    }
+
+    if (!includeAvailability) {
+      const reservationsResult = await reservationsResultPromise
+
+      if (reservationsResult.error) {
+        console.error('Calendar reservations fetch error:', reservationsResult.error)
+        return createErrorResponse('予約の取得に失敗しました', 500)
+      }
+
+      const reservations = (reservationsResult.data || []).map((reservation: any) => ({
+        id: reservation.id,
+        title: reservation.title,
+        startTime: reservation.start_time,
+        endTime: reservation.end_time,
+        notes: reservation.notes,
+        calendarId: reservation.calendar_id,
+        trainerId: reservation.trainer_id,
+        client: reservation.client_id ? {
+          id: (reservation.users as any).id,
+          fullName: (reservation.users as any).full_name,
+          email: (reservation.users as any).email,
+          plan: (reservation.users as any).plan,
+        } : (reservation.title && reservation.title.includes('ゲスト')) ? {
+          id: 'guest',
+          fullName: 'ゲスト予約',
+          email: 'guest@system',
+          plan: '都度',
+        } : (reservation.title && reservation.title.includes('体験')) ? {
+          id: 'trial',
+          fullName: '体験予約',
+          email: 'trial@system',
+          plan: null,
+        } : (reservation.title && reservation.title === '研修') ? {
+          id: 'training',
+          fullName: '研修',
+          email: 'training@system',
+          plan: null,
+        } : {
+          id: 'blocked',
+          fullName: '予約不可時間',
+          email: 'blocked@system',
+          plan: null,
+        }
+      }))
+
+      return createSuccessResponse({
+        reservations,
+        shifts: [],
+        templates: [],
+        trainers: [],
+      })
+    }
+
     const { data: trainers, error: trainerError } = await supabaseAdmin
       .from('trainers')
       .select('id, full_name, email')
@@ -132,7 +192,7 @@ export async function GET(request: NextRequest) {
     if (shiftsQuery && end) shiftsQuery = shiftsQuery.lte('start_time', end)
 
     const [reservationsResult, shiftsResult, templatesResult] = await Promise.all([
-      reservationsQuery,
+      reservationsResultPromise,
       shiftsQuery || Promise.resolve({ data: [], error: null }),
       trainerIds.length > 0
         ? supabaseAdmin
@@ -158,7 +218,7 @@ export async function GET(request: NextRequest) {
 
     const trainerNameById = new Map((trainers || []).map(t => [t.id, t.full_name]))
 
-    const reservations = (reservationsResult.data || []).map(reservation => ({
+    const reservations = (reservationsResult.data || []).map((reservation: any) => ({
       id: reservation.id,
       title: reservation.title,
       startTime: reservation.start_time,

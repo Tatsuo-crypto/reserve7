@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 export const dynamic = 'force-dynamic'
 import { supabaseAdmin } from '@/lib/supabase'
 import { getAuthenticatedUser, createErrorResponse, createSuccessResponse } from '@/lib/api-utils'
+import { getServerSession } from 'next-auth'
+import { cookies } from 'next/headers'
+import { authOptions } from '@/lib/auth-config'
+import { getStoreDisplayName, getUserStoreId, isAdmin } from '@/lib/auth-utils'
 import { PLAN_LIST } from '@/lib/constants'
 import { recordStatusChange } from '@/lib/membership-utils'
 import { format } from 'date-fns'
@@ -15,6 +19,37 @@ type MembershipHistoryStatus = {
   monthly_fee?: number | null
 }
 
+async function runSupabaseQuery<T>(
+  operation: (signal: AbortSignal) => PromiseLike<T>,
+  attempts = 2,
+  timeoutMs = 2500
+): Promise<T> {
+  let lastResult: any
+
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
+    try {
+      lastResult = await operation(controller.signal)
+    } catch (error) {
+      lastResult = { error }
+    } finally {
+      clearTimeout(timeoutId)
+    }
+
+    const message = lastResult?.error?.message || ''
+
+    const shouldRetry = message.includes('fetch failed') || message.includes('aborted')
+    if (!shouldRetry || attempt === attempts) {
+      return lastResult
+    }
+
+    await new Promise(resolve => setTimeout(resolve, 250 * attempt))
+  }
+
+  return lastResult
+}
+
 function deriveCurrentStatus(member: any, histories: MembershipHistoryStatus[], today = format(new Date(), 'yyyy-MM-dd')) {
   const userHistories = histories.filter(history => history.start_date <= today)
 
@@ -26,6 +61,35 @@ function deriveCurrentStatus(member: any, histories: MembershipHistoryStatus[], 
   if (latest.status === 'suspended' && latest.end_date && latest.end_date < today) return 'withdrawn'
 
   return latest.status || member.status || 'active'
+}
+
+function isUuid(value: string | undefined | null) {
+  return !!value && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
+}
+
+async function getFastAdminListUser() {
+  const session = await getServerSession(authOptions)
+  const email = session?.user?.email?.toLowerCase()
+
+  if (!email) {
+    return null
+  }
+
+  if (!isAdmin(email)) {
+    return null
+  }
+
+  const preferredStoreId = cookies().get('admin_store_preference')?.value
+  const storeId = isUuid(preferredStoreId) ? preferredStoreId : getUserStoreId(email)
+
+  return {
+    id: email,
+    email,
+    name: session.user.name || '',
+    isAdmin: true,
+    storeId,
+    calendarId: email === 'tandjgym@gmail.com' ? 'tandjgym@gmail.com' : 'tandjgym2goutenn@gmail.com',
+  }
 }
 
 export async function GET(request: NextRequest) {
@@ -57,7 +121,12 @@ export async function GET(request: NextRequest) {
       }
     } else {
       // Session authentication
-      user = await getAuthenticatedUser()
+      const compact = searchParams.get('compact') === 'true'
+      const allStores = searchParams.get('all_stores') === 'true'
+      user = compact && !allStores ? await getFastAdminListUser() : null
+      if (!user) {
+        user = await getAuthenticatedUser()
+      }
 
       if (!user) {
         console.error('No user found')
@@ -76,31 +145,33 @@ export async function GET(request: NextRequest) {
     const compact = searchParams.get('compact') === 'true'
 
     // Build base query
-    const compactMemberSelect = 'id, full_name, plan, status, store_id, created_at, lifestyle_settings!left(visible_tabs)'
+    const listCompactMemberSelect = 'id, full_name, plan, status, store_id, created_at'
+    const dietCompactMemberSelect = 'id, full_name, plan, status, store_id, created_at, lifestyle_settings!left(visible_tabs)'
     const fullMemberSelect = 'id, full_name, email, plan, status, store_id, monthly_fee, transfer_day, billing_start_month, created_at, memo, access_token, online_reminder_enabled, push_notification_enabled, birth_date, gender, height_cm, activity_level, target_weight_kg, lifestyle_settings!left(visible_tabs)'
-    const memberSelect = compact ? compactMemberSelect : fullMemberSelect
+    const memberSelect = compact ? (dietOnly ? dietCompactMemberSelect : listCompactMemberSelect) : fullMemberSelect
 
-    let baseQuery = supabaseAdmin
-      .from('users')
-      .select(memberSelect)
-      .neq('email', 'tandjgym@gmail.com')
-      .neq('email', 'tandjgym2goutenn@gmail.com')
+    const buildMembersQuery = (storeId?: string) => {
+      let query = supabaseAdmin
+        .from('users')
+        .select(memberSelect)
+        .neq('email', 'tandjgym@gmail.com')
+        .neq('email', 'tandjgym2goutenn@gmail.com')
 
-    // Filter by diet management if requested
-    if (dietOnly) {
-      // Members where visible_tabs->input is true
-      // Note: We use !inner or filter manually after fetch if RLS/joins are complex
-      // For now, let's fetch and filter in code or use a sub-query if possible
-      // Actually, Supabase can filter on joined tables:
-      baseQuery = baseQuery.not('lifestyle_settings', 'is', null)
+      if (dietOnly) {
+        query = query.not('lifestyle_settings', 'is', null)
+      }
+
+      if (storeId) {
+        query = query.eq('store_id', storeId)
+      }
+
+      return query.order('created_at', { ascending: false })
     }
 
     // Apply store filter if needed
-    let query = allStores
-      ? baseQuery
-      : baseQuery.eq('store_id', user.storeId)
-
-    let { data: members, error } = await query.order('created_at', { ascending: false })
+    let { data: members, error } = await runSupabaseQuery((signal) =>
+      (allStores ? buildMembersQuery() : buildMembersQuery(user.storeId)).abortSignal(signal)
+    )
 
     // If dietOnly, further filter in JS to be safe with JSON nested fields
     if (dietOnly && members) {
@@ -114,7 +185,7 @@ export async function GET(request: NextRequest) {
     // If no members found and not all stores mode, try with calendarId
     const calendarId = (user as any).calendarId
     if (!allStores && !error && (!members || members.length === 0) && calendarId && calendarId !== user.storeId) {
-      const result = await baseQuery.eq('store_id', calendarId).order('created_at', { ascending: false })
+      const result = await runSupabaseQuery((signal) => buildMembersQuery(calendarId).abortSignal(signal))
 
       if (!result.error && result.data && result.data.length > 0) {
         members = result.data
@@ -132,26 +203,40 @@ export async function GET(request: NextRequest) {
       return createErrorResponse(`Failed to fetch members: ${error.message}`, 500)
     }
 
-    // Get stores separately with calendar_id
-    const { data: stores, error: storesError } = await supabaseAdmin
-      .from('stores')
-      .select('id, name, calendar_id')
+    let stores: any[] = []
+    if (compact && !allStores) {
+      stores = [{
+        id: user.storeId,
+        name: getStoreDisplayName(user.storeId),
+        calendar_id: (user as any).calendarId,
+      }]
+    } else {
+      const { data: storesData, error: storesError } = await supabaseAdmin
+        .from('stores')
+        .select('id, name, calendar_id')
 
-    if (storesError) {
-      console.error('Stores fetch error:', storesError)
-      // Don't fail if stores can't be fetched, just log it
+      if (storesError) {
+        console.error('Stores fetch error:', storesError)
+        // Don't fail if stores can't be fetched, just log it
+      }
+      stores = storesData || []
     }
 
     const memberRows = (members || []) as any[]
     const memberIds = memberRows.map(member => member.id)
     let membershipHistories: MembershipHistoryStatus[] = []
+    const today = format(new Date(), 'yyyy-MM-dd')
 
     if (memberIds.length > 0) {
-      const { data: historyData, error: historyError } = await supabaseAdmin
-        .from('membership_history')
-        .select(compact ? 'user_id, status, start_date, end_date' : 'user_id, status, start_date, end_date, plan, monthly_fee')
-        .in('user_id', memberIds)
-        .order('start_date', { ascending: true })
+      const { data: historyData, error: historyError } = await runSupabaseQuery((signal) =>
+        supabaseAdmin
+          .from('membership_history')
+          .select(compact ? 'user_id, status, start_date, end_date' : 'user_id, status, start_date, end_date, plan, monthly_fee')
+          .in('user_id', memberIds)
+          .lte('start_date', today)
+          .order('start_date', { ascending: false })
+          .abortSignal(signal)
+      )
 
       if (historyError) {
         console.error('Membership history fetch error:', historyError)
@@ -174,7 +259,7 @@ export async function GET(request: NextRequest) {
     // Map stores to members using store UUID and derive current status from history.
     const membersWithStores = memberRows.map(member => ({
       ...member,
-      status: deriveCurrentStatus(member, historiesByUserId.get(member.id) || []),
+      status: deriveCurrentStatus(member, historiesByUserId.get(member.id) || [], today),
       stores: storesById.get(member.store_id) || null
     }))
 
