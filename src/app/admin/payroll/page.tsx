@@ -589,7 +589,7 @@ export default function AdminPayrollPage() {
             <button
               type="button"
               onClick={openPayrollSettings}
-              className="flex h-11 w-full items-center justify-center gap-2 rounded-full border border-zinc-700 bg-zinc-800 text-sm text-text-primary transition hover:bg-zinc-700 active:scale-[0.99]"
+              className="flex h-11 w-full items-center justify-center gap-2 rounded-full border border-zinc-800 bg-zinc-950 text-sm text-text-primary transition hover:bg-zinc-900 active:scale-[0.99]"
             >
               <Icon name="settings" size={16} className="text-text-secondary" />
               給与設定
