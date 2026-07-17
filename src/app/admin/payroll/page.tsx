@@ -466,7 +466,7 @@ export default function AdminPayrollPage() {
       .sort((a, b) => b.effective_from.localeCompare(a.effective_from))[0]
     setSettingsTrainerId(item.trainer.id)
     setSettingsHourlyWage(String(latestRate?.hourly_wage || ''))
-    setSettingsHourlyWageEffectiveFrom(month)
+    setSettingsHourlyWageEffectiveFrom(nextMonthStartDate(month).slice(0, 7))
     setSettingsBreakRuleThresholdHours(String((item.trainer.breakRuleThresholdMinutes || 480) / 60))
     setSettingsBreakRuleMinutes(String((item.trainer.breakRuleMinutes || 120) / 60))
     setSettingsTransportationCost(String(item.trainer.dailyTransportationCost || 0))
@@ -577,12 +577,21 @@ export default function AdminPayrollPage() {
               <div className="mt-1 text-base font-normal text-text-primary">{selectedPayrollItem.totals.transportationDays}日</div>
             </div>
           </div>
-          <div className="mt-3">
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => openDetail(selectedPayrollItem)}
+              className="flex h-11 w-full items-center justify-center gap-2 rounded-full border border-zinc-800 bg-zinc-950 text-sm text-text-primary transition hover:bg-zinc-900 active:scale-[0.99]"
+            >
+              <Icon name="documentText" size={16} className="text-text-secondary" />
+              給与詳細
+            </button>
             <button
               type="button"
               onClick={openPayrollSettings}
-              className="h-11 w-full rounded-full bg-surface-base text-sm text-text-secondary transition hover:text-text-primary active:scale-[0.99]"
+              className="flex h-11 w-full items-center justify-center gap-2 rounded-full border border-zinc-700 bg-zinc-800 text-sm text-text-primary transition hover:bg-zinc-700 active:scale-[0.99]"
             >
+              <Icon name="settings" size={16} className="text-text-secondary" />
               給与設定
             </button>
           </div>
