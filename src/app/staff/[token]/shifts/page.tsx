@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { addDays, differenceInMinutes, endOfMonth, format, isAfter, isSameDay, parse, setHours, setMinutes, startOfMonth } from 'date-fns'
 import { ja } from 'date-fns/locale'
 import Icon from '@/components/ui/icons'
+import Button from '@/components/ui/Button'
 import { Shift, ShiftRequest } from '@/types'
 
 interface Staff {
@@ -113,7 +114,7 @@ export default function StaffShiftSubmitPage() {
       }
     } catch (err) {
       console.error(err)
-      setError('データの取得に失敗しました')
+      setError('データを取得できませんでした。画面を再読み込みしてください。')
     } finally {
       setLoading(false)
     }
@@ -168,7 +169,7 @@ export default function StaffShiftSubmitPage() {
       })
 
       if (!res.ok) {
-        alert('提出に失敗しました')
+        alert('提出できませんでした。もう一度お試しください。')
         return
       }
 
@@ -198,14 +199,16 @@ export default function StaffShiftSubmitPage() {
     <div className="min-h-screen bg-surface-base pb-10">
       <header className="sticky top-0 z-30 border-b border-border-subtle bg-surface-raised/95 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-md items-center justify-between px-4">
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="sm"
             onClick={() => router.push(`/staff/${token}`)}
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-border-subtle bg-surface-base text-brand-500"
+            className="h-10 w-10 rounded-full border border-border-subtle bg-surface-base p-0 text-brand-500"
             aria-label="戻る"
           >
             <Icon name="chevronLeft" size={22} />
-          </button>
+          </Button>
           <div className="text-center">
             <h1 className="text-base font-semibold text-text-primary">シフト</h1>
             <p className="text-xs text-text-secondary">{staff.name}</p>
@@ -235,47 +238,55 @@ export default function StaffShiftSubmitPage() {
         </section>
 
         <div className="flex rounded-2xl bg-surface-overlay p-1">
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="sm"
             onClick={() => setActiveTab('confirmed')}
-            className={`h-11 flex-1 rounded-xl text-sm ${activeTab === 'confirmed' ? 'bg-surface-raised text-text-primary' : 'text-text-secondary'}`}
+            className={`h-11 flex-1 rounded-2xl px-0 text-sm hover:bg-surface-raised ${activeTab === 'confirmed' ? 'bg-surface-raised text-text-primary' : 'text-text-secondary'}`}
           >
             確定シフト
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="ghost"
+            size="sm"
             onClick={() => setActiveTab('request')}
-            className={`h-11 flex-1 rounded-xl text-sm ${activeTab === 'request' ? 'bg-surface-raised text-text-primary' : 'text-text-secondary'}`}
+            className={`h-11 flex-1 rounded-2xl px-0 text-sm hover:bg-surface-raised ${activeTab === 'request' ? 'bg-surface-raised text-text-primary' : 'text-text-secondary'}`}
           >
             希望提出
-          </button>
+          </Button>
         </div>
 
         <section className="rounded-2xl border border-border-subtle bg-surface-raised p-4">
           <div className="mb-4 flex items-center justify-between">
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="sm"
               onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1))}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-base text-text-secondary"
+              className="h-10 w-10 rounded-full bg-surface-base p-0 text-text-secondary"
             >
               <Icon name="chevronLeft" size={19} />
-            </button>
+            </Button>
             <p className="text-base font-semibold text-text-primary">{format(currentMonth, 'yyyy年M月', { locale: ja })}</p>
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="sm"
               onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1))}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-base text-text-secondary"
+              className="h-10 w-10 rounded-full bg-surface-base p-0 text-text-secondary"
             >
               <Icon name="chevronRight" size={19} />
-            </button>
+            </Button>
           </div>
 
-          <div className="grid grid-cols-7 gap-1 text-center text-[10px] text-text-muted">
+          <div className="grid grid-cols-7 gap-1 text-center text-xs text-text-muted">
             {['日', '月', '火', '水', '木', '金', '土'].map(day => <div key={day}>{day}</div>)}
           </div>
           <div className="mt-2 grid grid-cols-7 gap-1">
             {calendarDays.map((day, index) => {
-              if (!day) return <div key={`empty-${index}`} className="h-12 rounded-xl" />
+              if (!day) return <div key={`empty-${index}`} className="h-12 rounded-2xl" />
 
               const { dayShifts, dayRequests } = getDayItems(day)
               const selected = isSameDay(day, selectedDate)
@@ -286,11 +297,13 @@ export default function StaffShiftSubmitPage() {
                 : dayRequests.reduce((sum, item) => sum + differenceInMinutes(new Date(item.end_time), new Date(item.start_time)) / 60, 0)
 
               return (
-                <button
+                <Button
                   key={day.toISOString()}
                   type="button"
+                  variant="secondary"
+                  size="sm"
                   onClick={() => setSelectedDate(day)}
-                  className={`h-14 rounded-xl border text-center transition active:scale-[0.98] ${
+                  className={`h-14 rounded-2xl border px-0 text-center transition active:scale-[0.98] ${
                     selected
                       ? 'border-brand-500 bg-brand-500/20'
                       : hasConfirmed
@@ -301,8 +314,8 @@ export default function StaffShiftSubmitPage() {
                   }`}
                 >
                   <div className={`text-xs tabular-nums ${selected ? 'text-brand-200' : 'text-text-secondary'}`}>{day.getDate()}</div>
-                  {hours > 0 && <div className="mt-1 text-[10px] tabular-nums text-text-primary">{formatHourValue(hours)}</div>}
-                </button>
+                  {hours > 0 && <div className="mt-1 text-xs tabular-nums text-text-primary">{formatHourValue(hours)}</div>}
+                </Button>
               )
             })}
           </div>
@@ -317,29 +330,31 @@ export default function StaffShiftSubmitPage() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="mb-2 block text-xs text-text-secondary">開始</label>
-                <select value={startTime} onChange={event => setStartTime(event.target.value)} className="h-12 w-full rounded-xl border border-border-subtle bg-surface-base px-3 text-text-primary">
+                <select value={startTime} onChange={event => setStartTime(event.target.value)} className="h-12 w-full rounded-2xl border border-border-subtle bg-surface-base px-3 text-text-primary">
                   {timeOptions.map(time => <option key={`start-${time}`} value={time}>{time}</option>)}
                 </select>
               </div>
               <div>
                 <label className="mb-2 block text-xs text-text-secondary">終了</label>
-                <select value={endTime} onChange={event => setEndTime(event.target.value)} className="h-12 w-full rounded-xl border border-border-subtle bg-surface-base px-3 text-text-primary">
+                <select value={endTime} onChange={event => setEndTime(event.target.value)} className="h-12 w-full rounded-2xl border border-border-subtle bg-surface-base px-3 text-text-primary">
                   {timeOptions.map(time => <option key={`end-${time}`} value={time}>{time}</option>)}
                 </select>
               </div>
             </div>
-            <label className="mt-4 flex h-12 items-center justify-between rounded-xl border border-border-subtle bg-surface-base px-4">
+            <label className="mt-4 flex h-12 items-center justify-between rounded-2xl border border-border-subtle bg-surface-base px-4">
               <span className="text-sm text-text-primary">今月の同じ曜日にも追加</span>
-              <input type="checkbox" checked={weeklyRepeat} onChange={event => setWeeklyRepeat(event.target.checked)} className="h-5 w-5 rounded border-border-subtle text-brand-600 focus:ring-brand-500" />
+              <input type="checkbox" checked={weeklyRepeat} onChange={event => setWeeklyRepeat(event.target.checked)} className="h-5 w-5 rounded-lg border-border-subtle text-brand-600 focus:ring-brand-500" />
             </label>
-            <button
+            <Button
               type="button"
+              variant="primary"
+              size="md"
               onClick={handleSubmitRequest}
               disabled={saving}
-              className="mt-4 flex h-12 w-full items-center justify-center rounded-2xl bg-brand-600 text-sm font-semibold text-white disabled:opacity-50"
+              className="mt-4 h-12 w-full rounded-2xl bg-brand-600 text-sm font-semibold text-white disabled:opacity-50"
             >
               希望に追加
-            </button>
+            </Button>
           </section>
         ) : (
           <section className="rounded-2xl border border-border-subtle bg-surface-raised p-4">

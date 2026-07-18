@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { useStoreChange } from '@/hooks/useStoreChange'
+import Button from '@/components/ui/Button'
 import Icon from '@/components/ui/icons'
 import AppModal from '@/components/ui/AppModal'
 
@@ -250,7 +251,7 @@ export default function TrainersPage() {
       })
       if (!res.ok) {
         const t = await res.text()
-        alert(`保存に失敗しました: ${t}`)
+        alert(`保存できませんでした。${t}`)
         return
       }
       setModalOpen(false)
@@ -258,7 +259,7 @@ export default function TrainersPage() {
       fetchList()
     } catch (e) {
       console.error(e)
-      alert('保存に失敗しました')
+      alert('保存できませんでした。もう一度お試しください。')
     }
   }
 
@@ -270,7 +271,7 @@ export default function TrainersPage() {
       const res = await fetch(`/api/admin/trainers/${editing.id}`, { method: 'DELETE', credentials: 'include' })
       if (!res.ok) {
         const t = await res.text()
-        alert(`削除に失敗しました: ${t}`)
+        alert(`削除できませんでした。${t}`)
         return
       }
       setModalOpen(false)
@@ -278,7 +279,7 @@ export default function TrainersPage() {
       fetchList()
     } catch (e) {
       console.error(e)
-      alert('削除に失敗しました')
+      alert('削除できませんでした。もう一度お試しください。')
     }
   }
 
@@ -292,13 +293,13 @@ export default function TrainersPage() {
       })
       if (!res.ok) {
         const txt = await res.text()
-        alert(`切替に失敗しました: ${txt}`)
+        alert(`切り替えできませんでした。${txt}`)
         return
       }
       fetchList()
     } catch (e) {
       console.error(e)
-      alert('切替に失敗しました')
+      alert('切り替えできませんでした。もう一度お試しください。')
     }
   }
 
@@ -316,7 +317,7 @@ export default function TrainersPage() {
       alert(`「${trainerName}」様の専用URLをコピーしました`)
     } catch (err) {
       console.error('Failed to copy URL:', err)
-      alert('URLのコピーに失敗しました')
+      alert('URLをコピーできませんでした。もう一度お試しください。')
     }
   }
 
@@ -336,28 +337,29 @@ export default function TrainersPage() {
           <div className="bg-surface-raised rounded-2xl p-6 shadow-sm border border-border-subtle">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <div className="text-[10px] font-normal text-text-muted uppercase tracking-widest mb-1">現在の在籍トレーナー</div>
+                <div className="text-xs font-normal text-text-muted uppercase tracking-widest mb-1">現在の在籍トレーナー</div>
                 <div className="flex items-baseline gap-2">
                   <span className="text-4xl font-normal text-text-primary tracking-tight">{activeTrainers.length}</span>
                   <span className="text-sm font-normal text-text-muted">名</span>
                 </div>
               </div>
-              <button
+              <Button
                 type="button"
+                variant="primary"
                 onClick={openCreate}
                 aria-label="新規登録"
-                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand-700 text-white shadow-md transition-all active:scale-95 hover:bg-brand-800"
+                className="h-12 w-12 shrink-0 rounded-full p-0 shadow-md active:scale-95"
               >
                 <Icon name="plus" size={28} />
-              </button>
+              </Button>
             </div>
           </div>
           <div className="md:col-span-3 bg-surface-raised rounded-2xl p-6 shadow-sm border border-border-subtle">
-            <div className="text-[10px] font-normal text-text-muted uppercase tracking-widest mb-4">店舗別内訳</div>
+            <div className="text-xs font-normal text-text-muted uppercase tracking-widest mb-4">店舗別内訳</div>
             <div className="flex flex-wrap gap-2">
               {sortedStoreNames.length > 0 ? sortedStoreNames.map(storeName => (
                 <div key={storeName} className="bg-surface-base rounded-lg px-3 py-1.5 border border-border-subtle flex items-center gap-2">
-                  <span className="text-[10px] font-normal text-text-secondary">{storeName}</span>
+                  <span className="text-xs font-normal text-text-secondary">{storeName}</span>
                   <span className="text-sm font-normal text-text-primary tabular-nums">{storeCounts[storeName]}</span>
                 </div>
               )) : (
@@ -378,23 +380,27 @@ export default function TrainersPage() {
               <option value="all">全店舗</option>
             </select>
             <div className="flex items-center gap-3 bg-surface-base p-1.5 rounded-2xl border border-border-subtle w-fit">
-              <button
+              <Button
+                type="button"
+                variant="ghost"
                 onClick={() => setStatus('active')}
-                className={`ui-control-nowrap min-w-[84px] px-5 py-3 rounded-xl text-xs font-normal transition-all ${status === 'active' ? 'bg-surface-raised text-brand-600 shadow-sm' : 'text-text-muted hover:text-text-secondary'}`}
+                className={`ui-control-nowrap min-w-[84px] px-5 py-3 rounded-2xl text-xs font-normal transition-all ${status === 'active' ? 'bg-surface-raised text-brand-600 shadow-sm' : 'text-text-muted hover:text-text-secondary'}`}
               >
                 在籍のみ
-              </button>
-              <button
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
                 onClick={() => setStatus('all')}
-                className={`ui-control-nowrap min-w-[84px] px-5 py-3 rounded-xl text-xs font-normal transition-all ${status === 'all' ? 'bg-surface-raised text-brand-600 shadow-sm' : 'text-text-muted hover:text-text-secondary'}`}
+                className={`ui-control-nowrap min-w-[84px] px-5 py-3 rounded-2xl text-xs font-normal transition-all ${status === 'all' ? 'bg-surface-raised text-brand-600 shadow-sm' : 'text-text-muted hover:text-text-secondary'}`}
               >
                 全員表示
-              </button>
+              </Button>
             </div>
           </div>
         </div>
 
-        <div className="bg-surface-raised rounded-3xl shadow-sm border border-border-subtle overflow-hidden">
+        <div className="bg-surface-raised rounded-2xl shadow-sm border border-border-subtle overflow-hidden">
           {loading ? (
             <div className="text-center py-8 text-text-secondary text-sm">読み込み中...</div>
           ) : trainers.length === 0 ? (
@@ -411,26 +417,32 @@ export default function TrainersPage() {
                       <div className="ui-nowrap text-sm font-normal text-text-primary">
                         {t.full_name}
                       </div>
-                      <div className="ui-nowrap mt-1 text-[11px] font-normal text-text-muted">
+                      <div className="ui-nowrap mt-1 text-xs font-normal text-text-muted">
                         {storeNameById[t.store_id] || '-'}
                       </div>
                     </div>
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
                     {t.access_token && (
-                      <button
-                        className="ui-control-nowrap min-w-12 rounded-full bg-brand-500/15 px-3 py-1 text-center text-[10px] font-normal text-brand-300 transition-colors hover:bg-brand-500/25"
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        className="ui-control-nowrap min-w-12 rounded-full bg-brand-500/15 px-3 py-1 text-center text-xs font-normal text-brand-300 transition-colors hover:bg-brand-500/25"
                         onClick={() => handleCopyAccessUrl(t.access_token!, t.full_name)}
                       >
                         URL
-                      </button>
+                      </Button>
                     )}
-                    <button
-                      className="ui-control-nowrap min-w-12 rounded-full bg-surface-overlay px-3 py-1 text-center text-[10px] font-normal text-text-secondary transition-colors hover:bg-surface-overlay"
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      className="ui-control-nowrap min-w-12 rounded-full bg-surface-overlay px-3 py-1 text-center text-xs font-normal text-text-secondary transition-colors hover:bg-surface-overlay"
                       onClick={() => openEdit(t)}
                     >
                       編集
-                    </button>
+                    </Button>
                   </div>
                 </div>
               ))}
@@ -447,49 +459,51 @@ export default function TrainersPage() {
           footer={(
             <>
               {editing && (
-                <button
+                <Button
                   type="button"
+                  variant="destructive"
                   className="mr-auto rounded-full px-4 py-2 text-sm text-red-400 transition-colors hover:bg-red-500/10"
                   onClick={deleteTrainer}
                 >
                   削除
-                </button>
+                </Button>
               )}
-              <button type="button" className="rounded-full px-4 py-2 text-sm text-text-secondary" onClick={() => setModalOpen(false)}>キャンセル</button>
-              <button
+              <Button type="button" variant="ghost" className="rounded-full px-4 py-2 text-sm text-text-secondary" onClick={() => setModalOpen(false)}>キャンセル</Button>
+              <Button
                 type="button"
+                variant="primary"
                 className="rounded-full bg-brand-700 px-5 py-2 text-sm text-white hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-60"
                 onClick={saveTrainer}
                 disabled={!form.fullName.trim() || !form.storeId.trim()}
               >
                 保存
-              </button>
+              </Button>
             </>
           )}
         >
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="md:col-span-2">
                 <label className="block text-xs text-text-secondary mb-1">氏名</label>
-                <input className="w-full border rounded-md px-3 py-2 text-sm" required value={form.fullName} onChange={(e) => setForm(f => ({ ...f, fullName: e.target.value }))} />
+                <input className="w-full border rounded-lg px-3 py-2 text-sm" required value={form.fullName} onChange={(e) => setForm(f => ({ ...f, fullName: e.target.value }))} />
               </div>
               <div className="md:col-span-2">
                 <label className="block text-xs text-text-secondary mb-1">メール</label>
-                <input className="w-full border rounded-md px-3 py-2 text-sm" type="email" value={form.email} onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))} />
+                <input className="w-full border rounded-lg px-3 py-2 text-sm" type="email" value={form.email} onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))} />
               </div>
               <div className="md:col-span-2">
                 <label className="block text-xs text-text-secondary mb-1">GoogleカレンダーID（任意）</label>
                 <input 
-                  className="w-full border rounded-md px-3 py-2 text-sm" 
+                  className="w-full border rounded-lg px-3 py-2 text-sm" 
                   placeholder="example@group.calendar.google.com"
                   value={form.googleCalendarId} 
                   onChange={(e) => setForm(f => ({ ...f, googleCalendarId: e.target.value }))} 
                 />
-                <p className="text-[10px] text-text-muted mt-1">※設定すると、このトレーナーの予約が自動的にGoogleカレンダーに連携されます。</p>
+                <p className="text-xs text-text-muted mt-1">※設定すると、このトレーナーの予約が自動的にGoogleカレンダーに連携されます。</p>
               </div>
               <div>
                 <label className="block text-xs text-text-secondary mb-1">担当店舗</label>
                 <select
-                  className="w-full border rounded-md px-2 py-2 text-sm"
+                  className="w-full border rounded-lg px-2 py-2 text-sm"
                   required
                   value={form.storeId}
                   onChange={(e) => setForm(f => ({ ...f, storeId: e.target.value }))}
@@ -508,18 +522,18 @@ export default function TrainersPage() {
               </div>
               <div>
                 <label className="block text-xs text-text-secondary mb-1">ステータス</label>
-                <select className="w-full border rounded-md px-2 py-2 text-sm" value={form.status} onChange={(e) => setForm(f => ({ ...f, status: e.target.value as any }))}>
+                <select className="w-full border rounded-lg px-2 py-2 text-sm" value={form.status} onChange={(e) => setForm(f => ({ ...f, status: e.target.value as any }))}>
                   <option value="active">在籍（active）</option>
                   <option value="inactive">無効（inactive）</option>
                 </select>
               </div>
               <div>
                 <label className="block text-xs text-text-secondary mb-1">電話</label>
-                <input className="w-full border rounded-md px-3 py-2 text-sm" value={form.phone} onChange={(e) => setForm(f => ({ ...f, phone: e.target.value }))} />
+                <input className="w-full border rounded-lg px-3 py-2 text-sm" value={form.phone} onChange={(e) => setForm(f => ({ ...f, phone: e.target.value }))} />
               </div>
               <div className="md:col-span-2">
                 <label className="block text-xs text-text-secondary mb-1">メモ</label>
-                <textarea className="w-full border rounded-md px-3 py-2 text-sm" rows={3} value={form.notes} onChange={(e) => setForm(f => ({ ...f, notes: e.target.value }))} />
+                <textarea className="w-full border rounded-lg px-3 py-2 text-sm" rows={3} value={form.notes} onChange={(e) => setForm(f => ({ ...f, notes: e.target.value }))} />
               </div>
               <div className="md:col-span-2 border-t border-border-subtle pt-4">
                 <label className="flex items-center gap-2 text-sm text-text-primary">
@@ -536,7 +550,7 @@ export default function TrainersPage() {
                   <div>
                     <label className="block text-xs text-text-secondary mb-1">時給</label>
                     <input
-                      className="w-full border rounded-md px-3 py-2 text-sm"
+                      className="w-full border rounded-lg px-3 py-2 text-sm"
                       type="number"
                       min="0"
                       value={form.hourlyWage}
@@ -546,7 +560,7 @@ export default function TrainersPage() {
                   <div>
                     <label className="block text-xs text-text-secondary mb-1">時給の適用開始日</label>
                     <input
-                      className="w-full border rounded-md px-3 py-2 text-sm"
+                      className="w-full border rounded-lg px-3 py-2 text-sm"
                       type="date"
                       value={form.hourlyWageEffectiveFrom}
                       onChange={(e) => setForm(f => ({ ...f, hourlyWageEffectiveFrom: e.target.value }))}
@@ -555,7 +569,7 @@ export default function TrainersPage() {
                   <div>
                     <label className="block text-xs text-text-secondary mb-1">交通費 / 出勤日</label>
                     <input
-                      className="w-full border rounded-md px-3 py-2 text-sm"
+                      className="w-full border rounded-lg px-3 py-2 text-sm"
                       type="number"
                       min="0"
                       value={form.dailyTransportationCost}

@@ -193,12 +193,12 @@ export default function GoalPlanForm({
                 </div>
             )}
 
-            <div className="space-y-1"><h3 className="text-[10px] font-normal text-text-muted uppercase tracking-widest pl-1">食事・栄養の目標</h3></div>
+            <div className="space-y-1"><h3 className="text-xs font-normal text-text-muted uppercase tracking-widest pl-1">食事・栄養の目標</h3></div>
 
             <label className="flex items-center justify-between gap-4 rounded-2xl border border-border-subtle bg-surface-base p-4">
                 <div>
                     <p className="text-sm font-normal text-text-primary">筋トレ日別に設定する</p>
-                    <p className="mt-1 text-[10px] text-text-muted">有効な会員だけ、記録前に筋トレ日/休養日を選べます</p>
+                    <p className="mt-1 text-xs text-text-muted">有効な会員だけ、記録前に筋トレ日/休養日を選べます</p>
                 </div>
                 <input
                     type="checkbox"
@@ -251,7 +251,7 @@ export default function GoalPlanForm({
                 </div>
             ) : (
                 <>
-                    <div className="bg-surface-base/80 rounded-[2rem] p-8 text-center border border-border-subtle/50 relative space-y-4">
+                    <div className="bg-surface-base/80 rounded-2xl p-8 text-center border border-border-subtle/50 relative space-y-4">
                         <h3 className="text-xl font-normal text-text-primary">目標摂取量</h3>
                         <div className="flex items-center justify-center">
                             <input
@@ -283,7 +283,7 @@ export default function GoalPlanForm({
 
             {!values.dayTypeEnabled && (
                 <div className="space-y-8 pt-8 border-t border-border-subtle">
-                    <div className="space-y-1"><h3 className="text-[10px] font-normal text-text-muted uppercase tracking-widest pl-1">生活習慣の目標</h3></div>
+                    <div className="space-y-1"><h3 className="text-xs font-normal text-text-muted uppercase tracking-widest pl-1">生活習慣の目標</h3></div>
                     <div className="grid grid-cols-2 gap-4">
                         <AdminStatCard label="水分摂取" value={habitTargets.water ?? DEFAULT_HABIT_TARGETS.water} unit="L" color="orange" step={0.5} onValueChange={(value) => onHabitTargetsChange(prev => ({ ...prev, water: Math.max(0, value || 0) }))} />
                         <AdminStatCard label="目標歩数" value={habitTargets.steps ?? DEFAULT_HABIT_TARGETS.steps} unit="歩" color="orange" step={500} onValueChange={(value) => onHabitTargetsChange(prev => ({ ...prev, steps: Math.max(0, Math.round(value || 0)) }))} />
@@ -364,7 +364,7 @@ function DayTypeGoalCard({
                 </div>
             </div>
 
-            <div className="bg-surface-base/80 rounded-[2rem] p-8 text-center border border-border-subtle/50 relative space-y-4">
+            <div className="bg-surface-base/80 rounded-2xl p-8 text-center border border-border-subtle/50 relative space-y-4">
                 <h3 className="text-xl font-normal text-text-primary">目標摂取量</h3>
                 <div className="mt-4 flex items-center justify-center">
                     <input
@@ -378,7 +378,7 @@ function DayTypeGoalCard({
                 </div>
             </div>
 
-            <div className="rounded-[1.5rem] border-2 border-border-strong bg-surface-base/60 p-4">
+            <div className="rounded-2xl border-2 border-border-strong bg-surface-base/60 p-4">
                 <h3 className="text-xs font-semibold text-text-primary">PFCバランス</h3>
                 <div className="mt-4 grid grid-cols-3 gap-2 text-center">
                     <EditableMacroSummary label="P" name="たんぱく質" pct={summary.proteinPct} value={protein} onChange={onProteinChange} />
@@ -390,7 +390,7 @@ function DayTypeGoalCard({
             <PfcTotalStatus summary={summary} />
 
             <div className="space-y-3">
-                <h3 className="text-[10px] font-normal text-text-muted uppercase tracking-widest pl-1">生活習慣の目標</h3>
+                <h3 className="text-xs font-normal text-text-muted uppercase tracking-widest pl-1">生活習慣の目標</h3>
                 <div className="grid grid-cols-2 gap-4">
                     <AdminStatCard label="水分摂取" value={habitTargets.water} unit="L" color="orange" step={0.5} onValueChange={(value) => onHabitChange('water', value)} />
                     <AdminStatCard label="目標歩数" value={habitTargets.steps} unit="歩" color="orange" step={500} onValueChange={(value) => onHabitChange('steps', value)} />
@@ -433,7 +433,7 @@ function PfcBalanceEditor({
     onCarbsChange: (value: number) => void
 }) {
     return (
-        <div className="rounded-[1.5rem] border-2 border-border-strong bg-surface-base/60 p-4">
+        <div className="rounded-2xl border-2 border-border-strong bg-surface-base/60 p-4">
             <h3 className="text-xs font-semibold text-text-primary">PFCバランス</h3>
             <div className="mt-4 grid grid-cols-3 gap-2 text-center">
                 <EditableMacroSummary label="P" name="たんぱく質" pct={summary.proteinPct} value={values.protein} onChange={onProteinChange} />
@@ -459,7 +459,7 @@ function EditableMacroSummary({
 }) {
     return (
         <div className="space-y-1.5">
-            <p className="text-[11px] font-semibold text-text-primary">{label} {name}</p>
+            <p className="text-xs font-semibold text-text-primary">{label} {name}</p>
             <div className="flex items-baseline justify-center gap-1">
                 <input
                     type="number"
@@ -503,8 +503,8 @@ function AdminStatCard({ label, value, unit, color, step = 1, onValueChange }: {
             : Math.round(value)
 
     return (
-        <div className={`${bgColor} rounded-[1.5rem] p-4 border-2 ${borderColor} transition-all hover:shadow-md group relative overflow-hidden`}>
-            <p className="text-[9px] font-normal text-text-muted mb-2 uppercase tracking-widest leading-none">{label}</p>
+        <div className={`${bgColor} rounded-2xl p-4 border-2 ${borderColor} transition-all hover:shadow-md group relative overflow-hidden`}>
+            <p className="text-xs font-normal text-text-muted mb-2 uppercase tracking-widest leading-none">{label}</p>
             <div className="flex items-center">
                 <div className="flex items-baseline gap-1">
                     <input
@@ -516,7 +516,7 @@ function AdminStatCard({ label, value, unit, color, step = 1, onValueChange }: {
                         onChange={(e) => onValueChange?.(Number(e.target.value || 0))}
                         className={`w-20 bg-transparent border-none p-0 text-2xl font-normal tabular-nums leading-none focus:ring-0 outline-none ${baseColor}`}
                     />
-                    <span className="text-[9px] font-normal text-text-muted uppercase tracking-tighter">{unit}</span>
+                    <span className="text-xs font-normal text-text-muted uppercase tracking-tighter">{unit}</span>
                 </div>
             </div>
         </div>

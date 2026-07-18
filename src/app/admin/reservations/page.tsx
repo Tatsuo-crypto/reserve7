@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import ErrorMessage from '@/components/ui/ErrorMessage'
+import Button from '@/components/ui/Button'
 import { Reservation } from '@/types/common'
 
 // Helper function to calculate reservation sequence for a specific client
@@ -115,11 +116,11 @@ function AdminReservationsContent() {
 
         } else {
           const errorData = await response.json()
-          setError(`予約データの取得に失敗しました: ${errorData.error || 'Unknown error'}`)
+          setError(`予約データを取得できませんでした。${errorData.error || '画面を再読み込みしてください。'}`)
         }
       } catch (error) {
         console.error('Fetch Error:', error)
-        setError('予約データの取得中にエラーが発生しました')
+        setError('予約データを取得できませんでした。画面を再読み込みしてください。')
       } finally {
         setLoading(false)
       }
@@ -163,18 +164,18 @@ function AdminReservationsContent() {
       if (response.ok) {
         const result = await response.json();
         console.log('🔴 [DEBUG] Delete success:', result);
-        alert('削除しました');
+        alert('削除しました。');
 
         setReservations(prev => prev.filter(r => r.id !== reservationId));
         window.location.reload();
       } else {
         const errorData = await response.json();
         console.error('🔴 [DEBUG] Delete error response:', errorData);
-        alert(`削除失敗: ${errorData.error || 'Unknown error'}`);
+        alert(`削除できませんでした。${errorData.error || 'もう一度お試しください。'}`);
       }
     } catch (error) {
       console.error('🔴 [DEBUG] Delete exception:', error);
-      alert(`エラーが発生しました: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      alert(`削除できませんでした。${error instanceof Error ? error.message : 'もう一度お試しください。'}`);
     }
   }
 
@@ -278,14 +279,14 @@ function AdminReservationsContent() {
         ))
         setShowEditModal(false)
         setEditingReservation(null)
-        alert('予約が更新されました')
+        alert('予約を更新しました。')
       } else {
         const data = await response.json()
-        alert(data.error || '予約の更新に失敗しました')
+        alert(data.error || '予約を更新できませんでした。もう一度お試しください。')
       }
     } catch (error) {
       console.error('Update error:', error)
-      alert('予約の更新に失敗しました')
+      alert('予約を更新できませんでした。もう一度お試しください。')
     }
   }
 
@@ -393,7 +394,7 @@ function AdminReservationsContent() {
         <div className="mb-6 flex justify-center">
           <Link
             href={trainerToken ? `/admin/reservations/new?trainerToken=${trainerToken}` : '/admin/reservations/new'}
-            className="bg-brand-700 text-white px-4 py-2 rounded-md hover:bg-brand-800 transition-colors"
+            className="bg-brand-700 text-white px-4 py-2 rounded-lg hover:bg-brand-800 transition-colors"
           >
             新規予約作成
           </Link>
@@ -404,7 +405,7 @@ function AdminReservationsContent() {
         )}
 
         {/* Reservations Table */}
-        <div className="bg-surface-raised shadow overflow-hidden sm:rounded-md">
+        <div className="bg-surface-raised shadow overflow-hidden sm:rounded-lg">
           <div className="px-4 py-5 sm:p-6">
             <div className="overflow-x-auto">
               <table className="min-w-max divide-y divide-gray-200">
@@ -440,12 +441,12 @@ function AdminReservationsContent() {
                       }
                     >
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-normal min-w-[120px] border-r border-border-subtle">
-                        <div className="bg-brand-500/15 text-brand-300 px-2 py-1 rounded-md text-center">
+                        <div className="bg-brand-500/15 text-brand-300 px-2 py-1 rounded-lg text-center">
                           {formatDate(reservation.startTime || reservation.start_time)}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm min-w-[140px] border-r border-border-subtle">
-                        <div className="bg-surface-base text-text-primary px-2 py-1 rounded-md text-center">
+                        <div className="bg-surface-base text-text-primary px-2 py-1 rounded-lg text-center">
                           {formatTime(reservation.startTime || reservation.start_time)} - {formatTime(reservation.endTime || reservation.end_time)}
                         </div>
                       </td>
@@ -492,28 +493,32 @@ function AdminReservationsContent() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-normal min-w-[120px]">
                         <div className="flex space-x-2">
-                          <button
+                          <Button
                             type="button"
+                            variant="ghost"
+                            size="sm"
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
                               handleEdit(reservation);
                             }}
-                            className="bg-brand-500/15 text-brand-300 hover:bg-brand-500/25 px-3 py-1 rounded-md transition-colors"
+                            className="bg-brand-500/15 text-brand-300 hover:bg-brand-500/25 px-3 py-1 rounded-lg transition-colors"
                           >
                             変更
-                          </button>
-                          <button
+                          </Button>
+                          <Button
                             type="button"
+                            variant="destructive"
+                            size="sm"
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
                               handleDeleteReservation(reservation.id);
                             }}
-                            className="bg-red-500/15 text-red-300 hover:bg-red-500/25 px-3 py-1 rounded-md transition-colors"
+                            className="bg-red-500/15 text-red-300 hover:bg-red-500/25 px-3 py-1 rounded-lg transition-colors"
                           >
                             キャンセル
-                          </button>
+                          </Button>
                         </div>
                       </td>
                     </tr>
@@ -529,7 +534,7 @@ function AdminReservationsContent() {
             <p className="text-text-secondary">予約が見つかりません</p>
             <Link
               href={trainerToken ? `/admin/reservations/new?trainerToken=${trainerToken}` : '/admin/reservations/new'}
-              className="mt-4 inline-block bg-brand-700 text-white px-4 py-2 rounded-md hover:bg-brand-800"
+              className="mt-4 inline-block bg-brand-700 text-white px-4 py-2 rounded-lg hover:bg-brand-800"
             >
               新規予約を作成
             </Link>
@@ -540,7 +545,7 @@ function AdminReservationsContent() {
       {/* Edit Modal */}
       {showEditModal && editingReservation && (
         <div className="fixed inset-0 bg-gray-900 bg-opacity-60 z-[200] flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="relative w-full max-w-md bg-surface-raised shadow-xl rounded-xl max-h-[90vh] flex flex-col border border-border-subtle">
+          <div className="relative w-full max-w-md bg-surface-raised shadow-xl rounded-2xl max-h-[90vh] flex flex-col border border-border-subtle">
             <div className="p-6 overflow-y-auto">
               <h3 className="text-lg font-normal text-text-primary mb-4">
                 予約の変更
@@ -557,7 +562,7 @@ function AdminReservationsContent() {
                       ...prev,
                       title: e.target.value
                     }))}
-                    className="w-full px-3 py-2 border border-border-strong rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    className="w-full px-3 py-2 border border-border-strong rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
                     required
                   />
                 </div>
@@ -569,7 +574,7 @@ function AdminReservationsContent() {
                     type="datetime-local"
                     value={editFormData.startTime}
                     onChange={handleStartTimeChange}
-                    className="w-full px-3 py-2 border border-border-strong rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    className="w-full px-3 py-2 border border-border-strong rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
                     required
                   />
                 </div>
@@ -584,7 +589,7 @@ function AdminReservationsContent() {
                       ...prev,
                       endTime: e.target.value
                     }))}
-                    className="w-full px-3 py-2 border border-border-strong rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    className="w-full px-3 py-2 border border-border-strong rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
                     required
                   />
                 </div>
@@ -599,12 +604,13 @@ function AdminReservationsContent() {
                       notes: e.target.value
                     }))}
                     rows={3}
-                    className="w-full px-3 py-2 border border-border-strong rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    className="w-full px-3 py-2 border border-border-strong rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
                   />
                 </div>
                 <div className="flex justify-between space-x-3 pt-4">
-                  <button
+                  <Button
                     type="button"
+                    variant="destructive"
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
@@ -614,29 +620,30 @@ function AdminReservationsContent() {
                         handleDeleteReservation(editingReservation.id);
                       }
                     }}
-                    className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
                   >
                     削除
-                  </button>
+                  </Button>
                   <div className="flex space-x-3">
-                    <button
+                    <Button
                       type="button"
+                      variant="secondary"
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
                         setShowEditModal(false);
                         setEditingReservation(null);
                       }}
-                      className="px-4 py-2 bg-surface-overlay text-text-secondary rounded-md hover:bg-surface-overlay transition-colors"
+                      className="px-4 py-2 bg-surface-overlay text-text-secondary rounded-lg hover:bg-surface-overlay transition-colors"
                     >
                       キャンセル
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       type="submit"
-                      className="px-4 py-2 bg-brand-700 text-white rounded-md hover:bg-brand-800 transition-colors"
+                      className="px-4 py-2 bg-brand-700 text-white rounded-lg hover:bg-brand-800 transition-colors"
                     >
                       更新
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </form>

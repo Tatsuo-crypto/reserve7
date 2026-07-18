@@ -16,10 +16,10 @@ function ErrorContent() {
       case 'AccessDenied':
         return 'アクセスが拒否されました。'
       case 'Verification':
-        return 'トークンの検証に失敗しました。'
+        return 'ログイン情報を確認できませんでした。'
       case 'Default':
       default:
-        return 'ログインにエラーが発生しました。'
+        return 'ログインできませんでした。'
     }
   }
 
@@ -31,11 +31,11 @@ function ErrorContent() {
             T&J GYM
           </h2>
           <p className="mt-1 text-center text-lg text-text-secondary">
-            エラーが発生しました
+            ログインできませんでした
           </p>
         </div>
 
-        <div className="rounded-md bg-red-500/15 p-4">
+        <div className="rounded-lg bg-red-500/15 p-4">
           <div className="flex">
             <div className="flex-shrink-0">
               <Icon name="xCircle" size={20} className="text-red-400" />
@@ -54,7 +54,7 @@ function ErrorContent() {
         <div className="text-center">
           <Link 
             href="/login" 
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-normal rounded-md text-white bg-brand-700 hover:bg-brand-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500"
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-normal rounded-lg text-white bg-brand-700 hover:bg-brand-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500"
           >
             ログインページに戻る
           </Link>

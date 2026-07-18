@@ -8,6 +8,7 @@ import { ja } from 'date-fns/locale'
 import { useStoreChange } from '@/hooks/useStoreChange'
 import Icon from '@/components/ui/icons'
 import AppModal from '@/components/ui/AppModal'
+import Button from '@/components/ui/Button'
 import { autoBreakMinutes, calculatePayrollTotals, findHourlyWage, payableHours, PayRate } from '@/lib/payroll'
 
 type PayrollRow = {
@@ -187,8 +188,8 @@ function PayrollWorkCalendar({ rows, month }: { rows: PayrollRow[], month: strin
   }, {})
 
   return (
-    <div className="mt-4 rounded-xl border border-border-subtle bg-surface-base p-3">
-      <div className="mb-2 grid grid-cols-7 text-center text-[10px] text-text-muted">
+    <div className="mt-4 rounded-2xl border border-border-subtle bg-surface-base p-3">
+      <div className="mb-2 grid grid-cols-7 text-center text-xs text-text-muted">
         {['月', '火', '水', '木', '金', '土', '日'].map(day => <div key={day}>{day}</div>)}
       </div>
       <div className="grid grid-cols-7 gap-1">
@@ -217,7 +218,7 @@ function PayrollWorkCalendar({ rows, month }: { rows: PayrollRow[], month: strin
                 {day.getDate()}
               </div>
               {hasWork && (
-                <div className="mt-1 flex items-center justify-center gap-1 truncate text-[10px] tabular-nums text-text-primary">
+                <div className="mt-1 flex items-center justify-center gap-1 truncate text-xs tabular-nums text-text-primary">
                   <span>{timeLabel}</span>
                   {attended && <span className="h-1.5 w-1.5 rounded-full bg-brand-400" />}
                 </div>
@@ -304,7 +305,7 @@ export default function AdminPayrollPage() {
     } catch (error) {
       console.error(error)
       setItems([])
-      alert('給与データの読み込みに失敗しました')
+      alert('給与データを読み込めませんでした。画面を再読み込みしてください。')
     } finally {
       setLoading(false)
     }
@@ -434,7 +435,7 @@ export default function AdminPayrollPage() {
       await fetchPayroll()
     } catch (error) {
       console.error(error)
-      alert('保存に失敗しました')
+      alert('保存できませんでした。もう一度お試しください。')
     } finally {
       setSaving(false)
     }
@@ -507,7 +508,7 @@ export default function AdminPayrollPage() {
       await fetchPayroll()
     } catch (error) {
       console.error(error)
-      alert('給与設定の保存に失敗しました')
+      alert('給与設定を保存できませんでした。もう一度お試しください。')
     } finally {
       setSaving(false)
     }
@@ -560,7 +561,7 @@ export default function AdminPayrollPage() {
       </div>
 
       {selectedPayrollItem && (
-        <div className="mb-4 rounded-3xl bg-surface-raised p-5 shadow">
+        <div className="mb-4 rounded-2xl bg-surface-raised p-5 shadow">
           <div className="rounded-2xl bg-surface-base px-4 py-4">
             <div className="text-xs text-text-muted">支給見込み</div>
             <div className="mt-1 text-2xl font-normal leading-tight text-text-primary">
@@ -578,22 +579,26 @@ export default function AdminPayrollPage() {
             </div>
           </div>
           <div className="mt-3 grid grid-cols-2 gap-2">
-            <button
+            <Button
               type="button"
+              variant="secondary"
+              fullWidth
               onClick={() => openDetail(selectedPayrollItem)}
               className="flex h-11 w-full items-center justify-center gap-2 rounded-full border border-zinc-800 bg-zinc-950 text-sm text-text-primary transition hover:bg-zinc-900 active:scale-[0.99]"
             >
               <Icon name="documentText" size={16} className="text-text-secondary" />
               給与詳細
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              variant="secondary"
+              fullWidth
               onClick={openPayrollSettings}
               className="flex h-11 w-full items-center justify-center gap-2 rounded-full border border-zinc-800 bg-zinc-950 text-sm text-text-primary transition hover:bg-zinc-900 active:scale-[0.99]"
             >
               <Icon name="settings" size={16} className="text-text-secondary" />
               給与設定
-            </button>
+            </Button>
           </div>
         </div>
       )}
@@ -613,9 +618,9 @@ export default function AdminPayrollPage() {
                 <h2 className="text-lg font-normal text-text-primary">{selected.trainer.fullName}</h2>
                 <p className="text-xs text-text-muted mt-1">{month} の給与明細</p>
               </div>
-              <button className="p-2 text-text-muted hover:text-text-primary" onClick={() => setSelected(null)}>
+              <Button type="button" variant="ghost" size="sm" className="h-9 w-9 rounded-full p-0 text-text-muted hover:text-text-primary" onClick={() => setSelected(null)}>
                 <Icon name="close" size={20} />
-              </button>
+              </Button>
             </div>
 
             <div className="overflow-auto p-4 space-y-4">
@@ -645,24 +650,24 @@ export default function AdminPayrollPage() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <label className="text-xs text-text-secondary">
                   手当
-                  <input className="mt-1 w-full border rounded-md px-3 py-2 text-sm" type="number" value={allowanceAmount} onChange={(e) => setAllowanceAmount(e.target.value)} />
+                  <input className="mt-1 w-full border rounded-lg px-3 py-2 text-sm" type="number" value={allowanceAmount} onChange={(e) => setAllowanceAmount(e.target.value)} />
                 </label>
                 <label className="text-xs text-text-secondary">
                   調整金額
-                  <input className="mt-1 w-full border rounded-md px-3 py-2 text-sm" type="number" value={adjustmentAmount} onChange={(e) => setAdjustmentAmount(e.target.value)} />
+                  <input className="mt-1 w-full border rounded-lg px-3 py-2 text-sm" type="number" value={adjustmentAmount} onChange={(e) => setAdjustmentAmount(e.target.value)} />
                 </label>
                 <label className="text-xs text-text-secondary">
                   メモ
-                  <input className="mt-1 w-full border rounded-md px-3 py-2 text-sm" value={memo} onChange={(e) => setMemo(e.target.value)} />
+                  <input className="mt-1 w-full border rounded-lg px-3 py-2 text-sm" value={memo} onChange={(e) => setMemo(e.target.value)} />
                 </label>
               </div>
 
             </div>
 
             <div className="p-4 border-t border-border-subtle flex justify-end gap-3">
-              <button className="px-3 py-2 text-sm rounded-md border" onClick={() => setSelected(null)} disabled={saving}>キャンセル</button>
-              <button className="px-3 py-2 text-sm rounded-md border" onClick={() => saveDetail('draft')} disabled={saving}>保存</button>
-              <button className="px-3 py-2 text-sm rounded-md bg-brand-700 text-white hover:bg-brand-800" onClick={() => saveDetail('confirmed')} disabled={saving}>確定</button>
+              <Button type="button" variant="ghost" size="sm" className="rounded-lg" onClick={() => setSelected(null)} disabled={saving}>キャンセル</Button>
+              <Button type="button" variant="secondary" size="sm" className="rounded-lg" onClick={() => saveDetail('draft')} disabled={saving}>保存</Button>
+              <Button type="button" size="sm" className="rounded-lg" onClick={() => saveDetail('confirmed')} disabled={saving}>確定</Button>
             </div>
           </div>
         </div>
@@ -675,8 +680,8 @@ export default function AdminPayrollPage() {
           bodyClassName="space-y-3 p-4"
           footer={(
             <>
-              <button className="rounded-full px-4 py-2 text-sm text-text-secondary" onClick={() => setSettingsOpen(false)} disabled={saving}>キャンセル</button>
-              <button className="rounded-full bg-brand-700 px-5 py-2 text-sm text-white hover:bg-brand-800" onClick={savePayrollSettings} disabled={saving}>保存</button>
+              <Button type="button" variant="ghost" size="sm" className="rounded-full" onClick={() => setSettingsOpen(false)} disabled={saving}>キャンセル</Button>
+              <Button type="button" size="sm" className="rounded-full px-5" onClick={savePayrollSettings} disabled={saving}>保存</Button>
             </>
           )}
         >
@@ -693,7 +698,7 @@ export default function AdminPayrollPage() {
                 </select>
               </label>
 
-              <section className="overflow-hidden rounded-xl border border-border-subtle bg-surface-base">
+              <section className="overflow-hidden rounded-2xl border border-border-subtle bg-surface-base">
                 <div className="flex items-center gap-2 border-b border-border-subtle px-3 py-2.5">
                   <span className="h-4 w-1 rounded-full bg-brand-500" />
                   <h3 className="text-sm font-normal text-text-primary">時給</h3>
@@ -724,7 +729,7 @@ export default function AdminPayrollPage() {
                 </div>
               </section>
 
-              <section className="overflow-hidden rounded-xl border border-border-subtle bg-surface-base">
+              <section className="overflow-hidden rounded-2xl border border-border-subtle bg-surface-base">
                 <div className="flex items-center gap-2 border-b border-border-subtle px-3 py-2.5">
                   <span className="h-4 w-1 rounded-full bg-brand-500" />
                   <h3 className="text-sm font-normal text-text-primary">勤務条件</h3>
@@ -773,15 +778,15 @@ export default function AdminPayrollPage() {
       {breakdownOpen && (
         <div className="fixed inset-0 z-[100] flex items-end justify-center sm:items-center">
           <div className="absolute inset-0 bg-black/50" onClick={() => setBreakdownOpen(false)} />
-          <div className="relative flex max-h-[calc(100dvh-24px)] w-full max-w-3xl flex-col overflow-hidden rounded-t-3xl border border-border-subtle bg-surface-raised shadow-xl sm:max-h-[90vh] sm:rounded-3xl">
+          <div className="relative flex max-h-[calc(100dvh-24px)] w-full max-w-3xl flex-col overflow-hidden rounded-t-2xl border border-border-subtle bg-surface-raised shadow-xl sm:max-h-[90vh] sm:rounded-2xl">
             <div className="flex items-start justify-between gap-3 border-b border-border-subtle p-4">
               <div>
                 <h2 className="text-lg font-normal text-text-primary">支給計算</h2>
                 <p className="mt-1 text-xs text-text-muted">{formatHours(summaryBreakdown.hours)}時間 / {formatYen(summaryBreakdown.totalPay)}</p>
               </div>
-              <button className="flex h-9 w-9 items-center justify-center rounded-full bg-surface-base text-text-secondary" onClick={() => setBreakdownOpen(false)}>
+              <Button type="button" variant="secondary" size="sm" className="h-9 w-9 rounded-full bg-surface-base p-0 text-text-secondary" onClick={() => setBreakdownOpen(false)}>
                 <Icon name="close" size={18} />
-              </button>
+              </Button>
             </div>
 
             <div className="overflow-auto p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">

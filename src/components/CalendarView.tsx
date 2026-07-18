@@ -5,6 +5,7 @@ import Link from 'next/link'
 import TimelineView from './TimelineView'
 import { useStoreChange } from '@/hooks/useStoreChange'
 import Icon from '@/components/ui/icons'
+import Button from '@/components/ui/Button'
 
 interface Reservation {
   id: string
@@ -480,7 +481,7 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
               return (
                 <div
                   key={event.id}
-                  className={`h-[14px] text-[10px] px-0.5 flex items-center rounded truncate leading-none mb-0.5 font-normal ${colorClass}`}
+                  className={`h-5 text-xs px-0.5 flex items-center rounded-lg truncate leading-none mb-0.5 font-normal ${colorClass}`}
                   title={`${event.title} (${event.time})`}
                 >
                   {formatReservationTitle(event.title, event.plan)}
@@ -488,7 +489,7 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
               )
             })}
             {dayEvents.length > 4 && (
-              <div className="text-[8px] text-text-secondary px-0.5">
+              <div className="text-xs text-text-secondary px-0.5">
                 +{dayEvents.length - 4}
               </div>
             )}
@@ -541,34 +542,43 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
         {/* Month Navigation */}
         <div className="py-2 px-4">
           <div className="grid grid-cols-[44px_1fr_44px] items-center gap-3">
-            <button
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
               onClick={() => navigateMonth('prev')}
-              className="p-3 text-text-muted hover:text-text-secondary hover:bg-surface-overlay rounded-md"
+              className="p-3 text-text-muted hover:text-text-secondary hover:bg-surface-overlay rounded-lg"
               aria-label="前の月"
             >
               <Icon name="chevronLeft" size={24} />
-            </button>
+            </Button>
             <div className="flex items-center justify-center gap-2 min-w-0">
               <h3 className="text-xl sm:text-lg font-normal text-text-primary min-w-[160px] text-center">
                 {formatMonth(currentDate)}
               </h3>
-              <button
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
                 onClick={handleCalendarSync}
                 disabled={syncing}
-                className="flex h-9 w-9 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-surface-overlay hover:text-text-secondary disabled:opacity-50"
+                className="h-9 w-9 p-0 rounded-lg text-text-muted hover:bg-surface-overlay hover:text-text-secondary disabled:opacity-50"
                 aria-label="Googleカレンダーと同期"
                 title="Googleカレンダーと同期"
               >
                 <Icon name="refresh" size={18} className={syncing ? 'animate-spin' : ''} />
-              </button>
+              </Button>
             </div>
-            <button
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
               onClick={() => navigateMonth('next')}
-              className="p-3 text-text-muted hover:text-text-secondary hover:bg-surface-overlay rounded-md"
+              className="p-3 text-text-muted hover:text-text-secondary hover:bg-surface-overlay rounded-lg"
               aria-label="次の月"
             >
               <Icon name="chevronRight" size={24} />
-            </button>
+            </Button>
           </div>
         </div>
         {/* Calendar Body */}
@@ -602,15 +612,15 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
         <div className="px-4 py-1">
           <div className="flex items-center justify-center space-x-6 text-sm">
             <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-brand-700 border border-brand-800 rounded"></div>
+              <div className="w-3 h-3 bg-brand-700 border border-brand-800 rounded-lg"></div>
               <span className="text-text-secondary">予約</span>
             </div>
             <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-surface-overlay border border-border-strong rounded"></div>
+              <div className="w-3 h-3 bg-surface-overlay border border-border-strong rounded-lg"></div>
               <span className="text-text-secondary">予約不可時間</span>
             </div>
             <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-purple-500/25 border border-purple-500/40 rounded"></div>
+              <div className="w-3 h-3 bg-purple-500/25 border border-purple-500/40 rounded-lg"></div>
               <span className="text-text-secondary">ゲスト</span>
             </div>
           </div>
@@ -622,7 +632,7 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
       <div className="mt-6 pb-8 flex justify-center">
         <Link
           href={trainerToken ? `/admin/reservations?trainerToken=${trainerToken}` : '/admin/reservations'}
-          className="inline-flex items-center px-8 py-3 bg-brand-500/15 text-brand-300 text-[11px] font-normal rounded-2xl hover:bg-brand-500/25 transition-colors uppercase tracking-widest border border-brand-500/20"
+          className="inline-flex items-center px-8 py-3 bg-brand-500/15 text-brand-300 text-xs font-normal rounded-2xl hover:bg-brand-500/25 transition-colors uppercase tracking-widest border border-brand-500/20"
         >
           予約一覧を見る
         </Link>

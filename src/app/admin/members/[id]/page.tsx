@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Button from '@/components/ui/Button'
 import Icon, { IconName } from '@/components/ui/icons'
 
 interface MemberDetail {
@@ -55,9 +56,9 @@ function MemberActionRow({
 
   if (onClick) {
     return (
-      <button type="button" onClick={onClick} className={className}>
+      <Button type="button" variant="ghost" onClick={onClick} className={className}>
         {content}
-      </button>
+      </Button>
     )
   }
 
@@ -106,9 +107,9 @@ function InlineActionButton({
   }
 
   return (
-    <button type="button" onClick={onClick} disabled={disabled} className={className}>
+    <Button type="button" variant="ghost" onClick={onClick} disabled={disabled} className={className}>
       {label}
-    </button>
+    </Button>
   )
 }
 
@@ -137,7 +138,7 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
       try {
         // Fetch member by ID directly
         const memberRes = await fetch(`/api/admin/members/${memberId}`)
-        if (!memberRes.ok) throw new Error('会員情報の取得に失敗しました')
+        if (!memberRes.ok) throw new Error('会員情報を取得できませんでした。画面を再読み込みしてください。')
         const memberJson = await memberRes.json()
         const m = memberJson.data
         if (!m) throw new Error('会員が見つかりません')
@@ -155,7 +156,7 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
         })
 
       } catch (e: any) {
-        setError(e.message || '読み込みに失敗しました')
+        setError(e.message || '読み込めませんでした。画面を再読み込みしてください。')
       } finally {
         setLoading(false)
       }
@@ -208,7 +209,7 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
             </span>
           </div>
 
-          <div className="mt-5 rounded-3xl border border-border-subtle bg-surface-raised p-5">
+          <div className="mt-5 rounded-2xl border border-border-subtle bg-surface-raised p-5">
             <div className="flex items-end justify-between gap-4">
               <div>
                 <div className="text-xs font-normal text-text-muted">契約</div>

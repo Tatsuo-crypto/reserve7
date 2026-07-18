@@ -2,7 +2,10 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import Card from '@/components/ui/Card'
+import Button from '@/components/ui/Button'
+import EmptyState from '@/components/ui/EmptyState'
 import Icon from '@/components/ui/icons'
+import { SkeletonCard } from '@/components/ui/Skeleton'
 import { fetchJsonCached } from '@/lib/client-fetch-cache'
 
 interface PlanTabProps {
@@ -129,31 +132,41 @@ export default function PlanTab({ token, onEditPlan }: PlanTabProps) {
     const currentGoal = goalRows[goalRows.length - 1]
 
     if (loading) {
-        return <div className="h-64 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"></div></div>
+        return (
+            <div className="space-y-4 pb-24">
+                <SkeletonCard />
+                <SkeletonCard />
+            </div>
+        )
     }
 
     if (!currentGoal) {
         return (
-            <Card padding="lg" className="text-center">
-                <p className="text-sm text-text-muted">目標がまだ設定されていません</p>
-            </Card>
+            <EmptyState
+                icon="flag"
+                title="食事計画がありません"
+                description="目標を設定すると、摂取カロリーやPFCの計画が表示されます。"
+                actionLabel={onEditPlan ? '目標を設定' : undefined}
+                onAction={onEditPlan}
+            />
         )
     }
 
     return (
         <div className="space-y-8 animate-fadeIn pb-24">
-            <Card padding="lg" className="!rounded-[2.5rem]">
+            <Card padding="lg" className="!rounded-2xl">
                 <div className="mb-6 flex items-center justify-between gap-3">
                     <SectionTitle>現在の目標</SectionTitle>
                     {onEditPlan && (
-                        <button
+                        <Button
                             type="button"
+                            variant="ghost"
                             onClick={onEditPlan}
                             aria-label="目標を編集"
-                            className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-500/15 text-brand-300 transition-colors active:scale-95"
+                            className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-500/15 p-0 text-brand-300 transition-colors active:scale-95"
                         >
                             <Icon name="pencil" size={17} />
-                        </button>
+                        </Button>
                     )}
                 </div>
 
@@ -287,11 +300,11 @@ function GoalHistoryChart({ rows, onEditPlan }: { rows: GoalRow[]; onEditPlan?: 
     }, [rows])
 
     return (
-        <Card padding="lg" className="!rounded-[2.5rem]">
+        <Card padding="lg" className="!rounded-2xl">
             <div className="mb-6 flex items-center justify-between gap-3">
                 <SectionTitle>カロリー推移</SectionTitle>
                 {hasDayType && (
-                    <span className="rounded-full bg-brand-500/10 px-2.5 py-1 text-[10px] text-brand-300">筋トレ日基準</span>
+                    <span className="rounded-full bg-brand-500/10 px-2.5 py-1 text-xs text-brand-300">筋トレ日基準</span>
                 )}
             </div>
 
@@ -308,7 +321,7 @@ function GoalHistoryChart({ rows, onEditPlan }: { rows: GoalRow[]; onEditPlan?: 
                         return (
                             <g key={tick}>
                                 <line x1={chart.left} x2={chart.width - chart.right} y1={y} y2={y} stroke="rgba(255,255,255,0.08)" />
-                                <text x={chart.left - 6} y={y + 3} textAnchor="end" className="fill-text-muted text-[9px]">{tick}</text>
+                                <text x={chart.left - 6} y={y + 3} textAnchor="end" className="fill-text-muted text-xs">{tick}</text>
                             </g>
                         )
                     })}
@@ -338,7 +351,7 @@ function GoalHistoryChart({ rows, onEditPlan }: { rows: GoalRow[]; onEditPlan?: 
                                         <g key={segment.key}>
                                             <rect x={x + 1} y={yTop} width={barWidth} height={height} fill={segment.color} opacity={isSelected ? 1 : 0.82} />
                                             {showSegmentLabels && height >= 18 && (
-                                                <text x={x + 1 + barWidth / 2} y={yTop + height / 2 + 4} textAnchor="middle" className="fill-white text-[10px] font-semibold">
+                                                <text x={x + 1 + barWidth / 2} y={yTop + height / 2 + 4} textAnchor="middle" className="fill-white text-xs font-semibold">
                                                     {segment.key}
                                                 </text>
                                             )}
@@ -355,27 +368,28 @@ function GoalHistoryChart({ rows, onEditPlan }: { rows: GoalRow[]; onEditPlan?: 
                                     strokeWidth={isSelected ? 2 : 1}
                                     rx="2"
                                 />
-                                <text x={x + 1} y={chart.top + plotHeight + 17} textAnchor="middle" className="fill-text-muted text-[9px]">{row.displayDate}</text>
+                                <text x={x + 1} y={chart.top + plotHeight + 17} textAnchor="middle" className="fill-text-muted text-xs">{row.displayDate}</text>
                             </g>
                         )
                     })}
-                    <text x={chart.left - 24} y={chart.top - 6} textAnchor="start" className="fill-text-muted text-[9px]">kcal</text>
+                    <text x={chart.left - 24} y={chart.top - 6} textAnchor="start" className="fill-text-muted text-xs">kcal</text>
                 </svg>
             )}
 
             {selected && (
                 <div className="mt-3 space-y-3">
                     <div className="flex items-center justify-between gap-2">
-                        <span className="rounded-full border border-border-subtle bg-surface-base px-2.5 py-1 text-[10px] text-text-muted">{selected.periodLabel}</span>
+                        <span className="rounded-full border border-border-subtle bg-surface-base px-2.5 py-1 text-xs text-text-muted">{selected.periodLabel}</span>
                         {onEditPlan && (
-                            <button
+                            <Button
                                 type="button"
+                                variant="ghost"
                                 onClick={onEditPlan}
                                 aria-label="目標を編集"
-                                className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-500/15 text-brand-300 transition-colors active:scale-95"
+                                className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-500/15 p-0 text-brand-300 transition-colors active:scale-95"
                             >
                                 <Icon name="pencil" size={15} />
-                            </button>
+                            </Button>
                         )}
                     </div>
                     {selected.dayTypeEnabled ? (

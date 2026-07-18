@@ -2,6 +2,7 @@
 
 import React from 'react'
 import { useRouter } from 'next/navigation'
+import Button from '@/components/ui/Button'
 import Icon from '@/components/ui/icons'
 
 interface AdminHeaderProps {
@@ -22,23 +23,25 @@ export default function AdminHeader({ title, subTitle, onBack, rightElement, sho
         {/* Left: Circular Back Button */}
         <div className="z-10 min-w-[44px]">
           {showBack && (
-            <button
+            <Button
+              type="button"
+              variant="ghost"
               onClick={handleBack}
-              className="w-10 h-10 flex items-center justify-center text-brand-500 bg-surface-raised rounded-full shadow-sm border border-border-subtle transition-all active:scale-90 hover:bg-surface-base"
+              className="w-10 h-10 flex items-center justify-center p-0 text-brand-500 bg-surface-raised rounded-full shadow-sm border border-border-subtle transition-all active:scale-90 hover:bg-surface-base"
               aria-label="戻る"
             >
               <Icon name="chevronLeft" size={24} />
-            </button>
+            </Button>
           )}
         </div>
 
         {/* Center: Page Title (Absolutely Centered) */}
         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-          <h1 className="text-[17px] font-normal text-text-primary tracking-tight whitespace-nowrap">
+          <h1 className="text-base font-normal text-text-primary tracking-tight whitespace-nowrap">
             {title}
           </h1>
           {subTitle && (
-            <p className="text-[9px] text-text-muted font-normal uppercase tracking-widest mt-0.5">{subTitle}</p>
+            <p className="text-xs text-text-muted font-normal uppercase tracking-widest mt-0.5">{subTitle}</p>
           )}
         </div>
 

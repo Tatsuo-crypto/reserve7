@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import GoalModal from './GoalModal'
 import Card from '@/components/ui/Card'
+import Button from '@/components/ui/Button'
 import Icon, { type IconName } from '@/components/ui/icons'
 import { getDietDayTypeLabel, getEffectiveDietGoal, isDayTypeTargetEnabled, normalizeDietDayType, type DietDayType } from '@/lib/utils/dietDayType'
 import { fetchJsonCached, invalidateClientFetchCache } from '@/lib/client-fetch-cache'
@@ -302,10 +303,10 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                 setIsSaved(true)
                 setTimeout(() => setMessage(null), 3000)
             } else {
-                throw new Error('保存に失敗しました')
+                throw new Error('保存できませんでした。もう一度お試しください。')
             }
         } catch (e) {
-            setMessage({ type: 'error', text: '保存中にエラーが発生しました' })
+            setMessage({ type: 'error', text: '保存できませんでした。もう一度お試しください。' })
         } finally {
             setSaving(false)
         }
@@ -344,7 +345,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                     salt: 0, salt_target: effectiveTarget.salt
                 })
             } else {
-                throw new Error(uploadData.error || 'アップロードに失敗しました')
+                throw new Error(uploadData.error || 'アップロードできませんでした。もう一度お試しください。')
             }
 
             // 2. Analyze the image
@@ -359,11 +360,11 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                 // Automatic save removed - wait for user to click the main save button
             } else {
                 console.error('Analysis failed:', analyzeData.error, analyzeData.message)
-                setMessage({ type: 'error', text: analyzeData.message || '写真の解析に失敗しました。手動で入力してください。' })
+                setMessage({ type: 'error', text: analyzeData.message || '写真を解析できませんでした。手動で入力してください。' })
             }
         } catch (e: any) {
             console.error('Upload process error:', e)
-            setMessage({ type: 'error', text: e.message || 'エラーが発生しました' })
+            setMessage({ type: 'error', text: e.message || '解析できませんでした。もう一度お試しください。' })
         } finally {
             setAnalyzing(false)
             if (fileInputRef.current) fileInputRef.current.value = ''
@@ -374,10 +375,10 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
         <div className="space-y-6">
             {/* Toast Message */}
             {message && (
-                <div className={`fixed top-16 left-4 right-4 z-50 p-4 rounded-xl shadow-lg border text-sm font-normal flex items-center justify-between ${message.type === 'success' ? 'bg-state-success-500/15 border-state-success-500/30 text-state-success-300' : 'bg-state-danger-500/15 border-state-danger-500/30 text-state-danger-300'
+                <div className={`fixed top-16 left-4 right-4 z-50 p-4 rounded-2xl shadow-lg border text-sm font-normal flex items-center justify-between ${message.type === 'success' ? 'bg-state-success-500/15 border-state-success-500/30 text-state-success-300' : 'bg-state-danger-500/15 border-state-danger-500/30 text-state-danger-300'
                     }`}>
                     <span>{message.text}</span>
-                    <button onClick={() => setMessage(null)}>×</button>
+                    <Button type="button" variant="ghost" size="sm" className="h-auto rounded-full px-2 py-0" onClick={() => setMessage(null)}>×</Button>
                 </div>
             )}
 
@@ -401,7 +402,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                     <div className="flex items-center justify-between">
                         <h2 className="text-sm font-normal text-text-muted uppercase tracking-widest">記録する日を選択</h2>
                         {isAdmin && (
-                            <button className="text-xs font-normal text-brand-300 px-3 py-1 bg-brand-500/15 rounded-full">項目編集</button>
+                            <Button type="button" variant="ghost" size="sm" className="text-xs font-normal text-brand-300 px-3 py-1 bg-brand-500/15 rounded-full">項目編集</Button>
                         )}
                     </div>
 
@@ -410,14 +411,17 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                             type="date"
                             value={selectedDate}
                             onChange={(e) => setSelectedDate(e.target.value)}
-                            className="flex-1 bg-surface-base border-none rounded-xl font-normal text-text-secondary px-4 py-2 focus:ring-2 focus:ring-brand-500"
+                            className="flex-1 bg-surface-base border-none rounded-2xl font-normal text-text-secondary px-4 py-2 focus:ring-2 focus:ring-brand-500"
                         />
-                        <button
+                        <Button
+                            type="button"
+                            variant={selectedDate === new Date().toISOString().split('T')[0] ? 'primary' : 'secondary'}
+                            size="sm"
                             onClick={() => setSelectedDate(new Date().toISOString().split('T')[0])}
-                            className={`px-4 py-2 rounded-xl text-xs font-normal transition-all ${selectedDate === new Date().toISOString().split('T')[0] ? 'bg-brand-700 text-white shadow-md' : 'bg-surface-overlay text-text-secondary'}`}
+                            className={`px-4 py-2 rounded-2xl text-xs font-normal transition-all ${selectedDate === new Date().toISOString().split('T')[0] ? 'bg-brand-700 text-white shadow-md' : 'bg-surface-overlay text-text-secondary'}`}
                         >
                             今日
-                        </button>
+                        </Button>
                     </div>
                 </div>
             </Card>
@@ -429,35 +433,43 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                         <div className="space-y-4 text-center">
                             <h2 className="text-base font-normal text-text-primary">今日はどちらですか？</h2>
                             <div className="grid grid-cols-2 gap-3">
-                                <button
+                                <Button
+                                    type="button"
+                                    fullWidth
                                     onClick={() => handleDayTypeSelect('training')}
                                     className="rounded-2xl bg-brand-700 px-4 py-4 text-sm font-normal text-white active:scale-95 transition-transform"
                                 >
                                     筋トレ日
-                                </button>
-                                <button
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="secondary"
+                                    fullWidth
                                     onClick={() => handleDayTypeSelect('rest')}
                                     className="rounded-2xl bg-surface-overlay px-4 py-4 text-sm font-normal text-text-primary active:scale-95 transition-transform"
                                 >
                                     休養日
-                                </button>
+                                </Button>
                             </div>
                         </div>
                     ) : (
                         <div className="flex items-center justify-between gap-3">
                             <div>
-                                <p className="text-[10px] text-text-muted uppercase tracking-widest">今日の種別</p>
+                                <p className="text-xs text-text-muted uppercase tracking-widest">今日の種別</p>
                                 <p className="mt-1 text-sm font-normal text-text-primary">{getDietDayTypeLabel(selectedDayType)}</p>
                             </div>
                             <div className="flex gap-2">
                                 {(['training', 'rest'] as DietDayType[]).map(type => (
-                                    <button
+                                    <Button
+                                        type="button"
+                                        variant={selectedDayType === type ? 'primary' : 'secondary'}
+                                        size="sm"
                                         key={type}
                                         onClick={() => handleDayTypeSelect(type)}
                                         className={`rounded-full px-3 py-2 text-xs transition-colors ${selectedDayType === type ? 'bg-brand-700 text-white' : 'bg-surface-overlay text-text-secondary'}`}
                                     >
                                         {getDietDayTypeLabel(type)}
-                                    </button>
+                                    </Button>
                                 ))}
                             </div>
                         </div>
@@ -480,7 +492,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                                     ) : (
                                         <div className="w-2 h-2 rounded-full bg-brand-500 animate-pulse"></div>
                                     )}
-                                    <span className={`text-[10px] font-normal uppercase tracking-widest ${isSaved ? 'text-text-secondary' : 'text-brand-600'}`}>
+                                    <span className={`text-xs font-normal uppercase tracking-widest ${isSaved ? 'text-text-secondary' : 'text-brand-600'}`}>
                                         {isSaved ? 'Saved' : 'Draft'}
                                     </span>
                                 </div>
@@ -488,7 +500,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                         </div>
 
                         {dietImageUrl && (
-                            <div className="mb-4 rounded-xl overflow-hidden border border-border-subtle shadow-inner bg-surface-base aspect-video relative">
+                            <div className="mb-4 rounded-2xl overflow-hidden border border-border-subtle shadow-inner bg-surface-base aspect-video relative">
                                 <img 
                                     src={dietImageUrl} 
                                     alt="Uploaded meal" 
@@ -498,8 +510,8 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                         )}
 
                         <div className="grid grid-cols-2 gap-4">
-                            <div className={`col-span-2 p-4 rounded-xl transition-colors ${isSaved ? 'bg-surface-overlay' : 'bg-brand-500/10'}`}>
-                                <div className={`text-[10px] font-normal uppercase mb-2 tracking-widest text-center ${isSaved ? 'text-text-secondary' : 'text-brand-300'}`}>総エネルギー</div>
+                            <div className={`col-span-2 p-4 rounded-2xl transition-colors ${isSaved ? 'bg-surface-overlay' : 'bg-brand-500/10'}`}>
+                                <div className={`text-xs font-normal uppercase mb-2 tracking-widest text-center ${isSaved ? 'text-text-secondary' : 'text-brand-300'}`}>総エネルギー</div>
                                 <div className="flex items-center justify-center space-x-3">
                                     <div className="text-3xl font-normal text-text-primary">{ocrResult.calories}</div>
                                     <div className="text-xl font-normal text-text-muted">/</div>
@@ -517,25 +529,31 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
 
                         <div className="mt-6 flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                                <button 
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
                                     onClick={() => fileInputRef.current?.click()}
                                     className="text-xs font-normal text-brand-300 px-3 py-1.5 bg-brand-500/15 rounded-full hover:bg-brand-500/25 transition-colors flex items-center gap-2"
                                 >
                                     <Icon name="upload" size={12} />
                                     写真を再アップロード
-                                </button>
+                                </Button>
                             </div>
-                            <button 
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
                                 onClick={() => {
                                     if (confirm('入力をリセットしてよろしいですか？')) {
                                         setOcrResult(null);
                                         setDietImageUrl(null);
                                     }
                                 }}
-                                className="text-[10px] font-normal text-text-muted hover:text-text-muted transition-colors flex items-center gap-1 uppercase tracking-widest"
+                                className="text-xs font-normal text-text-muted hover:text-text-muted transition-colors flex items-center gap-1 uppercase tracking-widest"
                             >
                                 削除
-                            </button>
+                            </Button>
                         </div>
                     </div>
                 )}
@@ -551,13 +569,15 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                             <h2 className="text-lg font-normal mb-1">食事写真を解析</h2>
                             <p className="text-brand-100 text-xs mb-6 text-center opacity-80">スクリーンショットを読み取って栄養バランスを一律入力します</p>
 
-                            <button
+                            <Button
+                                type="button"
+                                fullWidth
                                 onClick={() => fileInputRef.current?.click()}
                                 disabled={analyzing}
-                                className={`w-full bg-white text-brand-600 py-3 rounded-xl font-normal shadow-md hover:bg-brand-50 transition-colors disabled:opacity-50 flex items-center justify-center ${analyzing ? 'animate-pulse' : ''}`}
+                                className={`w-full bg-white text-brand-600 py-3 rounded-2xl font-normal shadow-md hover:bg-brand-50 transition-colors disabled:opacity-50 flex items-center justify-center ${analyzing ? 'animate-pulse' : ''}`}
                             >
                                 {analyzing ? '解析中...' : '写真をアップロード'}
-                            </button>
+                            </Button>
                         </div>
                     </div>
                 )}
@@ -579,7 +599,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                     {/* Weight Input Row */}
                     <div className="flex items-center justify-between p-4 bg-surface-base rounded-2xl mb-4 group focus-within:ring-2 focus-within:ring-brand-100 transition-all">
                         <div className="flex items-center space-x-4">
-                            <div className="w-10 h-10 bg-surface-raised rounded-xl flex items-center justify-center shadow-sm text-brand-500">
+                            <div className="w-10 h-10 bg-surface-raised rounded-2xl flex items-center justify-center shadow-sm text-brand-500">
                                 <Icon name="scale" size={24} />
                             </div>
                             <span className="text-sm font-normal text-text-secondary">現在の体重</span>
@@ -654,21 +674,23 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                         <div className="space-y-3">
                             <div className="flex items-center justify-between p-3 border border-border-subtle rounded-2xl hover:bg-surface-base transition-colors">
                                 <div className="flex items-center space-x-3">
-                                    <div className="w-10 h-10 bg-orange-500/15 text-orange-400 rounded-xl flex items-center justify-center shadow-sm">
+                                    <div className="w-10 h-10 bg-orange-500/15 text-orange-400 rounded-2xl flex items-center justify-center shadow-sm">
                                         <Icon name="tableCells" size={20} />
                                     </div>
                                     <span className="text-sm font-normal text-text-secondary">筋トレ</span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <span className="text-[10px] font-normal text-text-muted">実施</span>
-                                    <button
+                                    <span className="text-xs font-normal text-text-muted">実施</span>
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
                                         onClick={() => {
                                             setHabits((prev: any) => ({ ...prev, workout: prev.workout === 1 ? 0 : 1 }))
                                         }}
                                         className={`w-12 h-6 rounded-full transition-all relative ${habits.workout === 1 ? 'bg-orange-500' : 'bg-surface-overlay'}`}
                                     >
                                         <div className={`absolute top-1 w-4 h-4 bg-surface-raised rounded-full transition-all ${habits.workout === 1 ? 'left-7' : 'left-1'}`}></div>
-                                    </button>
+                                    </Button>
                                 </div>
                             </div>
                             {habits.workout === 1 && (
@@ -707,11 +729,14 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                             {quitGoals.map((goal: string) => (
                                 <div key={goal} className="flex items-center justify-between p-4 bg-surface-base rounded-2xl border border-transparent hover:border-purple-500/25 transition-all">
                                     <span className="text-sm font-normal text-text-secondary">{goal}</span>
-                                    <button
+                                    <Button
+                                        type="button"
+                                        variant={habits[goal] === 1 ? 'primary' : 'secondary'}
+                                        size="sm"
                                         onClick={() => {
                                             setHabits((prev: any) => ({ ...prev, [goal]: prev[goal] === 1 ? 0 : 1 }))
                                         }}
-                                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-normal transition-all ${habits[goal] === 1 ? 'bg-state-success-500 text-white shadow-md' : 'bg-surface-raised text-text-muted border border-border-subtle'}`}
+                                        className={`flex items-center gap-2 px-4 py-2 rounded-2xl text-xs font-normal transition-all ${habits[goal] === 1 ? 'bg-state-success-500 text-white shadow-md' : 'bg-surface-raised text-text-muted border border-border-subtle'}`}
                                     >
                                         {habits[goal] === 1 ? (
                                             <>
@@ -724,7 +749,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                                                 未達成
                                             </>
                                         )}
-                                    </button>
+                                    </Button>
                                 </div>
                             ))}
                         </div>
@@ -733,7 +758,9 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
 
                 {/* Save Button */}
                 <div className="mt-8 space-y-4">
-                    <button
+                    <Button
+                        type="button"
+                        fullWidth
                         onClick={handleAllSave}
                         disabled={saving}
                         className="w-full py-4 rounded-2xl font-normal shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 text-lg bg-brand-700 text-white hover:bg-brand-800"
@@ -747,11 +774,14 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                                 保存中...
                             </>
                         ) : isSaved ? '編集内容を更新する' : '入力内容を保存する'}
-                    </button>
-                    <p className="text-center text-[10px] text-text-muted">日付: {selectedDate} の記録として保存されます</p>
+                    </Button>
+                    <p className="text-center text-xs text-text-muted">日付: {selectedDate} の記録として保存されます</p>
 
                     <div className="flex justify-center pt-2">
-                        <button
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
                             onClick={async () => {
                                 if (window.confirm('この日の入力内容を完全に削除し、初期値に戻しますか？（保存済みのデータも削除されます）')) {
                                     setSaving(true)
@@ -782,17 +812,17 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                                         setTimeout(() => setMessage(null), 3000)
                                     } catch (e) {
                                         console.error('Delete error:', e)
-                                        setMessage({ type: 'error', text: '削除中にエラーが発生しました' })
+                                        setMessage({ type: 'error', text: '削除できませんでした。もう一度お試しください。' })
                                     } finally {
                                         setSaving(false)
                                     }
                                 }
                             }}
-                            className="text-[10px] font-normal text-text-muted hover:text-text-muted transition-colors flex items-center gap-1 uppercase tracking-widest"
+                            className="text-xs font-normal text-text-muted hover:text-text-muted transition-colors flex items-center gap-1 uppercase tracking-widest"
                         >
                             <Icon name="trash" size={12} />
                             入力をリセット
-                        </button>
+                        </Button>
                     </div>
                 </div>
             </Card>
@@ -802,8 +832,8 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
 
 function NutrientItem({ label, value, target, unit, onChange }: { label: string, value: number, target?: number, unit: string, onChange: (v: number) => void }) {
     return (
-        <div className="border border-border-subtle p-3 rounded-xl bg-surface-raised shadow-sm">
-            <div className="text-[10px] font-normal text-text-muted mb-1 uppercase tracking-wider">{label}</div>
+        <div className="border border-border-subtle p-3 rounded-2xl bg-surface-raised shadow-sm">
+            <div className="text-xs font-normal text-text-muted mb-1 uppercase tracking-wider">{label}</div>
             <div className="flex items-center justify-between">
                 <div className="flex items-baseline space-x-1">
                     <input
@@ -820,7 +850,7 @@ function NutrientItem({ label, value, target, unit, onChange }: { label: string,
                         </>
                     )}
                 </div>
-                <span className="text-[10px] font-normal text-text-muted">{unit}</span>
+                <span className="text-xs font-normal text-text-muted">{unit}</span>
             </div>
         </div>
     )
@@ -849,19 +879,22 @@ function EditableLogItem({ iconName, label, value, target, unit, iconBg, iconCol
     return (
         <div className="flex items-center justify-between p-3 border border-border-subtle rounded-2xl hover:bg-surface-base transition-colors">
             <div className="flex items-center space-x-3">
-                <div className={`w-10 h-10 ${iconBg} ${iconColor} rounded-xl flex items-center justify-center shadow-sm`}>
+                <div className={`w-10 h-10 ${iconBg} ${iconColor} rounded-2xl flex items-center justify-center shadow-sm`}>
                     <Icon name={iconName} size={20} />
                 </div>
                 <span className="text-sm font-normal text-text-secondary">{label}</span>
             </div>
             <div className="flex items-center gap-4">
-                <div className="flex items-center bg-surface-overlay rounded-xl p-1">
-                    <button 
+                <div className="flex items-center bg-surface-overlay rounded-2xl p-1">
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
                         onClick={() => handleAdjust('down')}
                         className="p-1.5 hover:bg-surface-raised rounded-lg transition-all text-text-muted hover:text-brand-500"
                     >
                         <Icon name="chevronDown" size={16} />
-                    </button>
+                    </Button>
                     <div className="flex items-baseline px-2 min-w-[90px] justify-center">
                         <input
                             type="number"
@@ -872,19 +905,22 @@ function EditableLogItem({ iconName, label, value, target, unit, iconBg, iconCol
                         />
                         {target && (
                             <div className="flex items-baseline ml-1 opacity-40">
-                                <span className="text-[10px] font-normal mx-0.5">/</span>
+                                <span className="text-xs font-normal mx-0.5">/</span>
                                 <span className="text-xs font-normal">{target}</span>
                             </div>
                         )}
                     </div>
-                    <button 
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
                         onClick={() => handleAdjust('up')}
                         className="p-1.5 hover:bg-surface-raised rounded-lg transition-all text-text-muted hover:text-brand-500"
                     >
                         <Icon name="chevronUp" size={16} />
-                    </button>
+                    </Button>
                 </div>
-                <span className="text-[10px] font-normal text-text-muted w-4">{unit}</span>
+                <span className="text-xs font-normal text-text-muted w-4">{unit}</span>
             </div>
         </div>
     )

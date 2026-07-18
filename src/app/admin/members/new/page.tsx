@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
+import Button from '@/components/ui/Button'
 import { PLAN_LIST } from '@/lib/constants'
 
 export default function NewMemberPage() {
@@ -66,7 +67,7 @@ export default function NewMemberPage() {
 
       if (!response.ok) {
         const result = await response.json()
-        const errorMsg = result.error || '会員の追加に失敗しました'
+        const errorMsg = result.error || '会員を追加できませんでした。入力内容を確認してください。'
         console.error('会員登録エラー:', errorMsg, result)
         setError(errorMsg)
         return
@@ -78,7 +79,7 @@ export default function NewMemberPage() {
       router.push('/admin/members')
     } catch (error) {
       console.error('Error:', error)
-      setError('会員の追加中にエラーが発生しました')
+      setError('会員を追加できませんでした。もう一度お試しください。')
     } finally {
       setLoading(false)
     }
@@ -99,15 +100,15 @@ export default function NewMemberPage() {
             setFormData(prev => ({ ...prev, storeId: storesList[0].id }))
           } else {
             console.error('店舗情報が取得できませんでした')
-            setError('店舗情報の読み込みに失敗しました。ページをリロードしてください。')
+            setError('店舗情報を読み込めませんでした。画面を再読み込みしてください。')
           }
         } else {
           console.error('Stores API error:', response.status)
-          setError('店舗情報の取得に失敗しました')
+          setError('店舗情報を取得できませんでした。画面を再読み込みしてください。')
         }
       } catch (error) {
         console.error('Failed to fetch stores:', error)
-        setError('店舗情報の読み込み中にエラーが発生しました')
+        setError('店舗情報を読み込めませんでした。画面を再読み込みしてください。')
       }
     }
     fetchStores()
@@ -384,28 +385,28 @@ export default function NewMemberPage() {
           <div className="pt-6 border-t border-border-subtle">
             <h3 className="text-lg font-normal text-text-primary mb-4">通知設定</h3>
             <div className="space-y-4">
-              <label className="flex items-center gap-4 p-4 bg-brand-500/10 border border-brand-500/25 rounded-xl cursor-pointer hover:bg-brand-500/15 transition-colors">
+              <label className="flex items-center gap-4 p-4 bg-brand-500/10 border border-brand-500/25 rounded-2xl cursor-pointer hover:bg-brand-500/15 transition-colors">
                 <input
                   type="checkbox"
                   id="onlineReminderEnabled"
                   name="onlineReminderEnabled"
                   checked={formData.onlineReminderEnabled}
                   onChange={handleChange}
-                  className="w-6 h-6 text-brand-600 border-border-strong rounded focus:ring-brand-500"
+                  className="w-6 h-6 text-brand-600 border-border-strong rounded-lg focus:ring-brand-500"
                 />
                 <div>
                   <div className="font-normal text-text-primary">メール通知（予約確定・変更・リマインダー）を送信する</div>
                   <div className="text-xs text-text-secondary mt-1">チェックを外すと、この会員様宛のすべての自動通知メールが停止されます。</div>
                 </div>
               </label>
-              <label className="flex items-center gap-4 p-4 bg-brand-500/10 border border-brand-500/25 rounded-xl cursor-pointer hover:bg-brand-500/15 transition-colors">
+              <label className="flex items-center gap-4 p-4 bg-brand-500/10 border border-brand-500/25 rounded-2xl cursor-pointer hover:bg-brand-500/15 transition-colors">
                 <input
                   type="checkbox"
                   id="pushNotificationEnabled"
                   name="pushNotificationEnabled"
                   checked={formData.pushNotificationEnabled}
                   onChange={handleChange}
-                  className="w-6 h-6 text-brand-600 border-border-strong rounded focus:ring-brand-500"
+                  className="w-6 h-6 text-brand-600 border-border-strong rounded-lg focus:ring-brand-500"
                 />
                 <div>
                   <div className="font-normal text-text-primary">プッシュ通知（アプリ通知）を送信する</div>
@@ -433,20 +434,22 @@ export default function NewMemberPage() {
 
           {/* ボタン */}
           <div className="flex justify-center space-x-4">
-            <button
+            <Button
               type="button"
+              variant="secondary"
               onClick={() => router.back()}
               className="px-6 py-2 border border-border-strong rounded-lg text-text-secondary hover:bg-surface-base transition-colors"
             >
               キャンセル
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
+              variant="primary"
               disabled={loading}
               className="px-6 py-2 bg-brand-700 text-white rounded-lg hover:bg-brand-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {loading ? '追加中...' : '会員を追加'}
-            </button>
+            </Button>
           </div>
         </form>
 

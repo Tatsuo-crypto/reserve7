@@ -1,5 +1,27 @@
 # パフォーマンス最適化ガイド
 
+## 2026-07-17 体感速度改善メモ
+
+### 実装
+- `vercel.json`に`regions: ["hnd1"]`を追加し、Vercel Functionsを東京リージョンに固定。
+- 予約作成APIで、Google Calendar作成をDB保存後のバックグラウンド処理へ移動。
+- Google Calendar同期の状態を`reservations.calendar_sync_status`へ保存できるようにマイグレーションを追加。
+- `/api/reservations/sync`で、`pending` / `failed`のGoogle Calendar作成を再試行。
+- 会員画面はログイン直後のアイドル時間に、記録・週間・分析・推移・予約タブのコードと主要APIを先読み。
+
+### 未確認
+- Supabaseプロジェクトのリージョンは管理画面またはSupabase APIで確認が必要。納品時は東京リージョン（ap-northeast-1）で作成すること。
+- 本番APIの修正前後レスポンスタイムは、デプロイ後に同一エンドポイントで比較すること。
+
+### 計測記録
+
+| 項目 | 修正前 | 修正後 | 備考 |
+|------|--------|--------|------|
+| Vercel Function region | 未指定 | hnd1 | 設定変更済み |
+| Supabase region | 未確認 | 未確認 | 東京推奨 |
+| 予約作成API | 未計測 | 未計測 | Google Calendar待ちを排除 |
+| 会員タブ2回目以降 | 未計測 | 未計測 | 既存キャッシュ＋先読み |
+
 ## 実装済みの最適化 🚀
 
 ### 1. キャッシュ設定の最適化 ✅

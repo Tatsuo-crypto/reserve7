@@ -2,6 +2,7 @@
 
 import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import Button from '@/components/ui/Button'
 import Icon from '@/components/ui/icons'
 
 export default function StaffPage() {
@@ -28,7 +29,7 @@ export default function StaffPage() {
         setStaff(data.trainer)
       } catch (err) {
         console.error('Error:', err)
-        setError('認証に失敗しました')
+        setError('認証できませんでした。URLを確認してください。')
       } finally {
         setLoading(false)
       }
@@ -77,9 +78,11 @@ export default function StaffPage() {
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <button
+          <Button
+            type="button"
+            variant="ghost"
             onClick={() => router.push(`/staff/${token}/shifts`)}
-            className="bg-surface-raised p-8 rounded-xl shadow-md border border-border-strong hover:shadow-lg transition-shadow text-left"
+            className="w-full flex-col items-start justify-start gap-0 bg-surface-raised p-8 rounded-2xl shadow-md border border-border-strong hover:shadow-lg transition-shadow text-left"
           >
             <div className="flex items-center mb-4">
               <div className="w-12 h-12 bg-brand-500/15 rounded-lg flex items-center justify-center mr-4">
@@ -88,12 +91,14 @@ export default function StaffPage() {
               <h2 className="text-2xl font-normal text-text-primary">シフト</h2>
             </div>
             <p className="text-text-secondary">希望提出・確定シフトの確認</p>
-          </button>
+          </Button>
 
           {/* 予約管理カード */}
-          <button
+          <Button
+            type="button"
+            variant="ghost"
             onClick={() => router.push(`/staff/${token}/reservations`)}
-            className="bg-surface-raised p-8 rounded-xl shadow-md border border-border-strong hover:shadow-lg transition-shadow text-left"
+            className="w-full flex-col items-start justify-start gap-0 bg-surface-raised p-8 rounded-2xl shadow-md border border-border-strong hover:shadow-lg transition-shadow text-left"
           >
             <div className="flex items-center mb-4">
               <div className="w-12 h-12 bg-brand-500/15 rounded-lg flex items-center justify-center mr-4">
@@ -102,7 +107,7 @@ export default function StaffPage() {
               <h2 className="text-2xl font-normal text-text-primary">予約管理</h2>
             </div>
             <p className="text-text-secondary">予約の確認・作成・編集・削除</p>
-          </button>
+          </Button>
         </div>
       </div>
     </div>

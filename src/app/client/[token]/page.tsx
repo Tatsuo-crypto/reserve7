@@ -9,6 +9,7 @@ import AdminHeader from '@/app/components/AdminHeader'
 import PushNotificationPrompt from './PushNotificationPrompt'
 import Icon, { type IconName } from '@/components/ui/icons'
 import { fetchJsonCached } from '@/lib/client-fetch-cache'
+import Button from '@/components/ui/Button'
 
 const TabLoading = () => (
   <div className="h-56 flex items-center justify-center">
@@ -143,6 +144,51 @@ export default function ClientReservationsPage() {
     }
   }, [isDietPlan, activeTab])
 
+  useEffect(() => {
+    if (!token || !userId || !isDietPlan) return
+
+    const prefetch = () => {
+      const now = new Date()
+      const day = now.getDay()
+      const diff = now.getDate() - day + (day === 0 ? -6 : 1)
+      const monday = new Date(now.setDate(diff))
+      monday.setHours(0, 0, 0, 0)
+      const prevMonday = new Date(monday)
+      prevMonday.setDate(monday.getDate() - 7)
+      const sunday = new Date(monday)
+      sunday.setDate(monday.getDate() + 6)
+      sunday.setHours(23, 59, 59, 999)
+
+      const params = `token=${encodeURIComponent(token)}`
+      const logParams = new URLSearchParams(params)
+      logParams.set('startDate', prevMonday.toLocaleDateString('sv-SE'))
+      logParams.set('endDate', sunday.toLocaleDateString('sv-SE'))
+
+      void Promise.allSettled([
+        import('@/components/diet/InputTab'),
+        import('@/components/diet/WeeklyTab'),
+        import('@/components/diet/AnalyzeTab'),
+        import('@/components/diet/PlanTab'),
+        import('@/components/diet/ReservationTab'),
+        fetchJsonCached<any>(`/api/diet/logs?${logParams.toString()}`),
+        fetchJsonCached<any>(`/api/lifestyle/logs?${logParams.toString()}`),
+        fetchJsonCached<any>(`/api/diet/goals?${params}`),
+        fetchJsonCached<any>(`/api/lifestyle/settings?${params}`),
+        fetchJsonCached<any>(`/api/client/reservations?token=${token}`, undefined, 30_000),
+      ])
+    }
+
+    const requestIdle = (window as any).requestIdleCallback as undefined | ((cb: () => void) => number)
+    const cancelIdle = (window as any).cancelIdleCallback as undefined | ((id: number) => void)
+    if (requestIdle) {
+      const idleId = requestIdle(prefetch)
+      return () => cancelIdle?.(idleId)
+    }
+
+    const timeoutId = window.setTimeout(prefetch, 300)
+    return () => window.clearTimeout(timeoutId)
+  }, [token, userId, isDietPlan])
+
   if (loading || !settingsLoaded || !userId) {
     return (
       <div className="min-h-screen bg-surface-base flex items-center justify-center">
@@ -151,7 +197,7 @@ export default function ClientReservationsPage() {
           {loading ? (
             <p className="mt-4 text-text-secondary">読み込み中...</p>
           ) : (
-            <p className="mt-4 text-red-600">ユーザー情報の取得に失敗しました。再読み込みしてください。</p>
+            <p className="mt-4 text-red-600">ユーザー情報を取得できませんでした。画面を再読み込みしてください。</p>
           )}
         </div>
       </div>
@@ -184,18 +230,21 @@ export default function ClientReservationsPage() {
         onBack={() => router.push('/admin/members')}
         rightElement={
           <div className="flex items-center gap-2">
-            <button
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
               onClick={() => setActiveTab('settings')}
               aria-label="設定"
-              className={`h-10 w-10 flex items-center justify-center rounded-full shadow-sm border border-border-subtle transition-all active:scale-95 ${activeTab === 'settings' ? 'bg-brand-500/15 text-brand-300' : 'bg-surface-raised text-text-secondary'}`}
+              className={`h-10 w-10 p-0 rounded-full shadow-sm border border-border-subtle transition-all active:scale-95 ${activeTab === 'settings' ? 'bg-brand-500/15 text-brand-300' : 'bg-surface-raised text-text-secondary'}`}
             >
               <Icon name="settings" size={20} />
-            </button>
+            </Button>
             <div className="h-10 px-4 flex items-center gap-2 bg-surface-raised rounded-full shadow-sm border border-border-subtle transition-all active:scale-95">
-              <span className="whitespace-nowrap text-[13px] font-normal text-text-secondary">
+              <span className="whitespace-nowrap text-sm font-normal text-text-secondary">
                 {formatName(userName)}
               </span>
-              <div className="px-2 py-0.5 rounded-full text-[10px] font-normal bg-surface-overlay text-text-primary whitespace-nowrap">
+              <div className="px-2 py-0.5 rounded-full text-xs font-normal bg-surface-overlay text-text-primary whitespace-nowrap">
                 会員
               </div>
             </div>
@@ -318,14 +367,17 @@ export default function ClientReservationsPage() {
 function CenterHomeBtn({ active, onClick }: { active: boolean, onClick: () => void }) {
   return (
     <div className="relative flex h-full flex-col items-center justify-center">
-      <button
+      <Button
+        type="button"
+        variant="primary"
+        size="sm"
         onClick={onClick}
         aria-label="ホーム"
-        className={`absolute top-[-8px] flex h-14 w-14 items-center justify-center rounded-full text-white shadow-sm transition-all duration-200 active:scale-95 ${active ? 'bg-brand-600 scale-105' : 'bg-brand-500'}`}
+        className={`absolute top-[-8px] h-14 w-14 p-0 rounded-full text-white shadow-sm transition-all duration-200 active:scale-95 ${active ? 'bg-brand-600 scale-105' : 'bg-brand-500'}`}
       >
         <Icon name="home" size={28} />
-      </button>
-      <span className={`absolute bottom-2 text-[10px] font-normal transition-colors duration-300 ${active ? 'text-brand-300' : 'text-text-muted'}`}>ホーム</span>
+      </Button>
+      <span className={`absolute bottom-2 text-xs font-normal transition-colors duration-300 ${active ? 'text-brand-300' : 'text-text-muted'}`}>ホーム</span>
     </div>
   )
 }
@@ -337,7 +389,7 @@ function SettingsTab({ token }: { token: string }) {
 
       <div className="rounded-2xl border border-border-subtle bg-surface-raised p-5 shadow-sm">
         <div className="flex items-start gap-3">
-          <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-500/15 text-brand-300">
+          <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-brand-500/15 text-brand-300">
             <Icon name="informationCircle" size={20} />
           </div>
           <div>
@@ -354,18 +406,21 @@ function SettingsTab({ token }: { token: string }) {
 
 function NavBtn({ active, onClick, iconName, label }: { active: boolean, onClick: () => void, iconName: IconName, label: string }) {
   return (
-    <button
+    <Button
+      type="button"
+      variant="ghost"
+      size="sm"
       onClick={onClick}
-      className={`flex flex-col items-center justify-between w-full h-16 py-1 transition-all duration-300 ${active ? 'text-brand-600' : 'text-text-muted'}`}
+      className={`[display:flex] flex-col items-center justify-between w-full h-16 px-0 py-1 bg-transparent hover:bg-transparent transition-all duration-300 ${active ? 'text-brand-600' : 'text-text-muted'}`}
     >
       <div className="flex flex-col items-center justify-center flex-1">
-        <div className={`p-1.5 rounded-xl transition-all duration-300 ${active ? 'bg-brand-500/20 scale-105' : 'bg-transparent'}`}>
+        <div className={`p-1.5 rounded-2xl transition-all duration-300 ${active ? 'bg-brand-500/20 scale-105' : 'bg-transparent'}`}>
           <Icon name={iconName} size={24} />
         </div>
-        <span className="text-[10px] font-normal tracking-tighter mt-0.5">{label}</span>
+        <span className="text-xs font-normal tracking-tighter mt-0.5">{label}</span>
       </div>
       {/* Reserve space for the dot to prevent layout shift */}
       <div className={`w-1 h-1 rounded-full transition-all duration-300 ${active ? 'bg-brand-600 opacity-100' : 'bg-transparent opacity-0'}`}></div>
-    </button>
+    </Button>
   )
 }

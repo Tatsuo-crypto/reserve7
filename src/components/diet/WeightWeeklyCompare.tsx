@@ -42,7 +42,7 @@ export default function WeightWeeklyCompare({ weight, compact = false }: WeightW
     if (compact) {
         return (
             <div>
-                <p className="text-[11px] font-normal text-text-muted tracking-widest uppercase mb-1">体重（今週平均）</p>
+                <p className="text-xs font-normal text-text-muted tracking-widest uppercase mb-1">体重（今週平均）</p>
                 {body}
             </div>
         )
@@ -50,7 +50,7 @@ export default function WeightWeeklyCompare({ weight, compact = false }: WeightW
 
     return (
         <Card padding="sm">
-            <p className="text-[11px] font-normal text-text-muted tracking-widest uppercase mb-1">体重（今週平均）</p>
+            <p className="text-xs font-normal text-text-muted tracking-widest uppercase mb-1">体重（今週平均）</p>
             {body}
         </Card>
     )

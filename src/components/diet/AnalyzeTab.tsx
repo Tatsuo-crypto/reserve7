@@ -18,7 +18,10 @@ import {
 } from 'recharts'
 import { useWeeklyProgress } from '@/hooks/useWeeklyProgress'
 import WeeklyProgressPanel from './WeeklyProgressPanel'
+import Button from '@/components/ui/Button'
+import EmptyState from '@/components/ui/EmptyState'
 import Icon from '@/components/ui/icons'
+import { ChartSkeleton } from '@/components/ui/Skeleton'
 import { fetchJsonCached } from '@/lib/client-fetch-cache'
 
 interface AnalyzeTabProps {
@@ -97,7 +100,7 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
                 setSettings(settingData.data || null)
             } catch (e) {
                 console.error('Fetch error in AnalyzeTab:', e)
-                setFetchError(e instanceof Error ? e.message : '記録の取得に失敗しました')
+                setFetchError(e instanceof Error ? e.message : '記録を取得できませんでした。画面を再読み込みしてください。')
             } finally {
                 setLoading(false)
             }
@@ -244,11 +247,41 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
         setCalendarDate(d)
     }
 
-    if (loading) return <div className="h-64 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"></div></div>
+    if (loading) {
+        return (
+            <div className="space-y-4 pb-24">
+                <ChartSkeleton />
+                <ChartSkeleton />
+            </div>
+        )
+    }
     if (fetchError) {
         return (
-            <div className="bg-surface-raised rounded-2xl border border-red-500/25 p-6 text-sm text-red-400">
-                分析データを取得できませんでした。画面を再読み込みしてください。
+            <EmptyState
+                icon="warning"
+                title="分析データを取得できませんでした"
+                description="通信状況を確認して、画面を再読み込みしてください。"
+                className="border-state-danger-500/25"
+            />
+        )
+    }
+    if (analysisData.length === 0) {
+        return (
+            <div className="space-y-6 pb-24">
+                {showWeeklyGoals && (
+                    <WeeklyProgressPanel
+                        weeklyStats={weeklyStats}
+                        weekOffset={weekOffset}
+                        setWeekOffset={setWeekOffset}
+                        collapsible
+                        defaultOpen={false}
+                    />
+                )}
+                <EmptyState
+                    icon="chartBar"
+                    title="分析できる記録がありません"
+                    description="食事・体重・生活の記録が入ると、推移グラフが表示されます。"
+                />
             </div>
         )
     }
@@ -532,7 +565,7 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
             </div>
 
             {/* 9. Workout Chart - Spanning full width with enough height */}
-            <div className="bg-surface-raised rounded-3xl p-4 sm:p-6 border border-border-subtle shadow-sm flex flex-col min-h-[450px]">
+            <div className="bg-surface-raised rounded-2xl p-4 sm:p-6 border border-border-subtle shadow-sm flex flex-col min-h-[450px]">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
                     <div className="space-y-1">
                         <div className="flex items-center gap-2">
@@ -544,26 +577,30 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
                         </div>
                     </div>
                     <div className="flex items-center justify-between sm:justify-center gap-2 bg-orange-500/15 rounded-full p-1 shadow-inner w-full sm:w-auto">
-                        <button 
+                        <Button
+                            type="button"
+                            variant="ghost"
                             onClick={handlePrevMonth}
-                            className="w-8 h-8 flex items-center justify-center hover:bg-surface-raised rounded-full transition-all text-orange-500 active:scale-90"
+                            className="w-8 h-8 flex items-center justify-center hover:bg-surface-raised rounded-full p-0 transition-all text-orange-500 active:scale-90"
                         >
                             <Icon name="chevronLeft" size={20} />
-                        </button>
+                        </Button>
                         <span className="text-xs font-normal text-orange-500 min-w-[72px] text-center">月移動</span>
-                        <button 
+                        <Button
+                            type="button"
+                            variant="ghost"
                             onClick={handleNextMonth}
-                            className="w-8 h-8 flex items-center justify-center hover:bg-surface-raised rounded-full transition-all text-orange-500 active:scale-90"
+                            className="w-8 h-8 flex items-center justify-center hover:bg-surface-raised rounded-full p-0 transition-all text-orange-500 active:scale-90"
                         >
                             <Icon name="chevronRight" size={20} />
-                        </button>
+                        </Button>
                     </div>
                 </div>
                 
                 <div className="flex flex-col flex-1">
                     <div className="grid grid-cols-7 gap-3 mb-4">
                         {['日', '月', '火', '水', '木', '金', '土'].map(d => (
-                            <div key={d} className="text-[10px] font-normal text-text-muted text-center uppercase tracking-widest">{d}</div>
+                            <div key={d} className="text-xs font-normal text-text-muted text-center uppercase tracking-widest">{d}</div>
                         ))}
                     </div>
                     <div className="grid grid-cols-7 gap-3 flex-1">
@@ -587,7 +624,7 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
                                 
                                 calendarDays.push(
                                     <div key={dStr} className={`relative aspect-square flex flex-col items-center justify-center rounded-2xl border-2 transition-all overflow-hidden ${!isCurrentMonth ? 'opacity-10 pointer-events-none' : ''} ${isSelected ? 'border-orange-500 bg-orange-500/10' : 'border-border-subtle bg-surface-base/30 hover:border-border-subtle'}`}>
-                                        <span className={`text-[10px] font-normal z-10 ${isDone ? 'text-white opacity-40' : isToday ? 'text-blue-500' : 'text-text-muted'}`}>
+                                        <span className={`text-xs font-normal z-10 ${isDone ? 'text-white opacity-40' : isToday ? 'text-blue-500' : 'text-text-muted'}`}>
                                             {date.getDate()}
                                         </span>
                                         {isDone && (
@@ -611,7 +648,7 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
                             <span className="text-xs font-normal text-text-secondary uppercase tracking-tighter">実施済み</span>
                         </div>
                         <div className="flex items-center gap-3">
-                            <div className="w-6 h-6 bg-surface-base rounded-xl border-2 border-border-subtle"></div>
+                            <div className="w-6 h-6 bg-surface-base rounded-2xl border-2 border-border-subtle"></div>
                             <span className="text-xs font-normal text-text-muted uppercase tracking-tighter">未実施</span>
                         </div>
                     </div>

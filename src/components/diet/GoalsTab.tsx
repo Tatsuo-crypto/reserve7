@@ -3,7 +3,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
+import EmptyState from '@/components/ui/EmptyState'
 import Icon from '@/components/ui/icons'
+import { SkeletonCard } from '@/components/ui/Skeleton'
 
 interface GoalsTabProps {
     userId?: string
@@ -230,7 +232,12 @@ export default function GoalsTab({ userId, token, isAdmin }: GoalsTabProps) {
     }
 
     if (loading) {
-        return <div className="h-64 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"></div></div>
+        return (
+            <div className="space-y-4 pb-24">
+                <SkeletonCard />
+                <SkeletonCard />
+            </div>
+        )
     }
 
     return (
@@ -243,7 +250,11 @@ export default function GoalsTab({ userId, token, isAdmin }: GoalsTabProps) {
                 </div>
 
                 {activeGoals.length === 0 ? (
-                    <p className="text-sm text-text-muted">まだ目標が設定されていません。</p>
+                    <EmptyState
+                        icon="flag"
+                        title="今の目標はありません"
+                        description="体重や習慣の目標を作ると、進行中の目標として表示されます。"
+                    />
                 ) : (
                     <div className="space-y-3">
                         {activeGoals.map(goal => {
@@ -252,7 +263,7 @@ export default function GoalsTab({ userId, token, isAdmin }: GoalsTabProps) {
                             return (
                                 <div key={goal.id} className="rounded-2xl bg-surface-base border-2 border-border-strong p-5 flex items-center justify-between gap-3">
                                     <div>
-                                        <p className="text-[10px] font-normal text-text-muted uppercase tracking-widest mb-1">{goal.type === 'weight' ? '体重' : '習慣'}</p>
+                                        <p className="text-xs font-normal text-text-muted uppercase tracking-widest mb-1">{goal.type === 'weight' ? '体重' : '習慣'}</p>
                                         <p className="text-base font-semibold text-text-primary">
                                             {goal.type === 'weight' && goal.target_value != null ? `目標 ${goal.target_value}kg` : goal.title}
                                         </p>
@@ -272,17 +283,18 @@ export default function GoalsTab({ userId, token, isAdmin }: GoalsTabProps) {
                                                 type="checkbox"
                                                 checked={false}
                                                 onChange={() => updateStatus(goal, 'achieved')}
-                                                className="h-4 w-4 rounded border-border-strong bg-surface-base accent-brand-600"
+                                                className="h-4 w-4 rounded-lg border-border-strong bg-surface-base accent-brand-600"
                                             />
                                         </label>
-                                        <button
+                                        <Button
                                             type="button"
+                                            variant="ghost"
                                             onClick={() => openEditGoal(goal)}
                                             aria-label="目標を編集"
-                                            className="h-9 w-9 rounded-full border border-brand-500/20 bg-brand-500/15 text-brand-300 hover:bg-brand-500/25 flex items-center justify-center"
+                                            className="h-9 w-9 rounded-full border border-brand-500/20 bg-brand-500/15 p-0 text-brand-300 hover:bg-brand-500/25 flex items-center justify-center"
                                         >
                                             <Icon name="pencil" size={16} />
-                                        </button>
+                                        </Button>
                                     </div>
                                 </div>
                             )
@@ -301,37 +313,37 @@ export default function GoalsTab({ userId, token, isAdmin }: GoalsTabProps) {
             ) : (
                 <Card padding="lg" className="space-y-5">
                     <div className="flex gap-2">
-                        <button onClick={() => setNewGoal(prev => ({ ...prev, type: 'weight' }))} className={`flex-1 py-3 rounded-xl text-sm transition-colors ${newGoal.type === 'weight' ? 'bg-surface-overlay text-text-primary' : 'bg-surface-base text-text-secondary hover:bg-surface-overlay'}`}>体重の目標</button>
-                        <button onClick={() => setNewGoal(prev => ({ ...prev, type: 'habit' }))} className={`flex-1 py-3 rounded-xl text-sm transition-colors ${newGoal.type === 'habit' ? 'bg-surface-overlay text-text-primary' : 'bg-surface-base text-text-secondary hover:bg-surface-overlay'}`}>習慣の目標</button>
+                        <Button type="button" variant="ghost" onClick={() => setNewGoal(prev => ({ ...prev, type: 'weight' }))} className={`flex-1 py-3 rounded-2xl text-sm transition-colors ${newGoal.type === 'weight' ? 'bg-surface-overlay text-text-primary' : 'bg-surface-base text-text-secondary hover:bg-surface-overlay'}`}>体重の目標</Button>
+                        <Button type="button" variant="ghost" onClick={() => setNewGoal(prev => ({ ...prev, type: 'habit' }))} className={`flex-1 py-3 rounded-2xl text-sm transition-colors ${newGoal.type === 'habit' ? 'bg-surface-overlay text-text-primary' : 'bg-surface-base text-text-secondary hover:bg-surface-overlay'}`}>習慣の目標</Button>
                     </div>
 
                     {newGoal.type === 'habit' && (
                         <div className="space-y-1">
-                            <label className="text-[10px] font-normal text-text-muted uppercase tracking-widest pl-1">習慣の目標</label>
-                            <input type="text" value={newGoal.title} onChange={e => setNewGoal(prev => ({ ...prev, title: e.target.value }))} placeholder="砂糖をやめる" className="w-full bg-surface-base border-none rounded-xl px-3 py-3 text-sm font-normal focus:ring-2 focus:ring-brand-500" />
+                            <label className="text-xs font-normal text-text-muted uppercase tracking-widest pl-1">習慣の目標</label>
+                            <input type="text" value={newGoal.title} onChange={e => setNewGoal(prev => ({ ...prev, title: e.target.value }))} placeholder="砂糖をやめる" className="w-full bg-surface-base border-none rounded-2xl px-3 py-3 text-sm font-normal focus:ring-2 focus:ring-brand-500" />
                         </div>
                     )}
 
                     {newGoal.type === 'weight' && (
                         <div className="space-y-1">
-                            <label className="text-[10px] font-normal text-text-muted uppercase tracking-widest pl-1">目標体重(kg)</label>
-                            <input type="number" step="0.1" value={newGoal.targetValue} onChange={e => setNewGoal(prev => ({ ...prev, targetValue: e.target.value }))} className="w-full bg-surface-base border-none rounded-xl px-3 py-3 text-sm font-normal focus:ring-2 focus:ring-brand-500" />
+                            <label className="text-xs font-normal text-text-muted uppercase tracking-widest pl-1">目標体重(kg)</label>
+                            <input type="number" step="0.1" value={newGoal.targetValue} onChange={e => setNewGoal(prev => ({ ...prev, targetValue: e.target.value }))} className="w-full bg-surface-base border-none rounded-2xl px-3 py-3 text-sm font-normal focus:ring-2 focus:ring-brand-500" />
                         </div>
                     )}
 
                     <div className="space-y-1">
-                        <label className="text-[10px] font-normal text-text-muted uppercase tracking-widest pl-1">期限（任意）</label>
-                        <input type="date" value={newGoal.deadline} onChange={e => setNewGoal(prev => ({ ...prev, deadline: e.target.value }))} className="w-full bg-surface-base border-none rounded-xl px-3 py-3 text-sm font-normal focus:ring-2 focus:ring-brand-500" />
+                        <label className="text-xs font-normal text-text-muted uppercase tracking-widest pl-1">期限（任意）</label>
+                        <input type="date" value={newGoal.deadline} onChange={e => setNewGoal(prev => ({ ...prev, deadline: e.target.value }))} className="w-full bg-surface-base border-none rounded-2xl px-3 py-3 text-sm font-normal focus:ring-2 focus:ring-brand-500" />
                     </div>
 
                     <div className="space-y-1">
-                        <label className="text-[10px] font-normal text-text-muted uppercase tracking-widest pl-1">メモ（任意）</label>
+                        <label className="text-xs font-normal text-text-muted uppercase tracking-widest pl-1">メモ（任意）</label>
                         <textarea
                             value={newGoal.note}
                             onChange={e => setNewGoal(prev => ({ ...prev, note: e.target.value }))}
                             placeholder="補足メモ"
                             rows={3}
-                            className="w-full bg-surface-base border-none rounded-xl px-3 py-3 text-sm font-normal focus:ring-2 focus:ring-brand-500 resize-none"
+                            className="w-full bg-surface-base border-none rounded-2xl px-3 py-3 text-sm font-normal focus:ring-2 focus:ring-brand-500 resize-none"
                         />
                     </div>
 
@@ -340,14 +352,15 @@ export default function GoalsTab({ userId, token, isAdmin }: GoalsTabProps) {
                         <Button onClick={closeGoalForm} variant="ghost">キャンセル</Button>
                     </div>
                     {editingGoalId && (
-                        <button
+                        <Button
                             type="button"
+                            variant="destructive"
                             onClick={handleDeleteGoal}
                             disabled={saving}
-                            className="w-full rounded-xl border border-state-danger-500/25 bg-state-danger-500/10 px-4 py-3 text-sm text-state-danger-300 hover:bg-state-danger-500/15 disabled:opacity-60"
+                            className="w-full rounded-2xl border border-state-danger-500/25 bg-state-danger-500/10 px-4 py-3 text-sm text-state-danger-300 hover:bg-state-danger-500/15 disabled:opacity-60"
                         >
                             削除
-                        </button>
+                        </Button>
                     )}
                 </Card>
             )}
@@ -366,7 +379,7 @@ export default function GoalsTab({ userId, token, isAdmin }: GoalsTabProps) {
                             return (
                             <div key={goal.id} className="rounded-2xl bg-surface-base border-2 border-border-strong p-5 flex items-center justify-between gap-3">
                                 <div>
-                                    <p className="text-[10px] font-normal text-text-muted uppercase tracking-widest mb-1">{goal.type === 'weight' ? '体重' : '習慣'}</p>
+                                    <p className="text-xs font-normal text-text-muted uppercase tracking-widest mb-1">{goal.type === 'weight' ? '体重' : '習慣'}</p>
                                     <p className="text-base font-normal text-text-secondary">
                                         {goal.type === 'weight' && goal.target_value != null ? `目標 ${goal.target_value}kg` : goal.title}
                                     </p>
@@ -386,17 +399,18 @@ export default function GoalsTab({ userId, token, isAdmin }: GoalsTabProps) {
                                             type="checkbox"
                                             checked={goal.status === 'achieved'}
                                             onChange={(e) => updateStatus(goal, e.target.checked ? 'achieved' : 'missed')}
-                                            className="h-4 w-4 rounded border-border-strong bg-surface-base accent-brand-600"
+                                            className="h-4 w-4 rounded-lg border-border-strong bg-surface-base accent-brand-600"
                                         />
                                     </label>
-                                    <button
+                                    <Button
                                         type="button"
+                                        variant="ghost"
                                         onClick={() => openEditGoal(goal)}
                                         aria-label="目標を編集"
-                                        className="h-9 w-9 rounded-full border border-brand-500/20 bg-brand-500/15 text-brand-300 hover:bg-brand-500/25 flex items-center justify-center"
+                                        className="h-9 w-9 rounded-full border border-brand-500/20 bg-brand-500/15 p-0 text-brand-300 hover:bg-brand-500/25 flex items-center justify-center"
                                     >
                                         <Icon name="pencil" size={16} />
-                                    </button>
+                                    </Button>
                                 </div>
                             </div>
                             )

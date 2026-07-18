@@ -3,7 +3,9 @@
 import { useState, useEffect, useMemo } from 'react'
 import type { ReactNode } from 'react'
 import Card from '@/components/ui/Card'
+import Button from '@/components/ui/Button'
 import Icon from '@/components/ui/icons'
+import { SkeletonCard } from '@/components/ui/Skeleton'
 import { fetchJsonCached } from '@/lib/client-fetch-cache'
 
 interface HomeTabProps {
@@ -173,7 +175,15 @@ export default function HomeTab({ token, userName, isDietPlan = true, todayDraft
         return title
     }
 
-    if (loading) return <div className="h-64 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"></div></div>
+    if (loading) {
+        return (
+            <div className="space-y-4 pb-24">
+                <SkeletonCard />
+                <SkeletonCard />
+                <SkeletonCard />
+            </div>
+        )
+    }
 
     const primaryGoal = goals[0] || null
     const primaryGoalRemain = primaryGoal ? daysUntil(primaryGoal.deadline) : null
@@ -211,13 +221,15 @@ export default function HomeTab({ token, userName, isDietPlan = true, todayDraft
                                 </p>
                                 <p className="mt-0.5 truncate text-sm font-normal text-text-secondary">{todayLesson.title}</p>
                             </div>
-                            <button
+                            <Button
+                                    type="button"
+                                    variant="ghost"
                                     onClick={() => window.open(todayLesson.meet_url, '_blank')}
-                                    className={`h-10 w-16 shrink-0 rounded-xl text-sm font-semibold active:scale-[0.98] ${todayLesson.meet_url ? 'bg-brand-600 text-white' : 'bg-surface-overlay text-text-muted'}`}
+                                    className={`h-10 w-16 shrink-0 rounded-2xl p-0 text-sm font-semibold active:scale-[0.98] ${todayLesson.meet_url ? 'bg-brand-600 text-white' : 'bg-surface-overlay text-text-muted'}`}
                                     disabled={!todayLesson.meet_url}
                                 >
                                     参加
-                                </button>
+                                </Button>
                             </div>
                         ) : (
                             <p className="text-sm text-text-muted">本日の予定はありません</p>
@@ -237,7 +249,7 @@ export default function HomeTab({ token, userName, isDietPlan = true, todayDraft
             <section className="space-y-2">
                 <SectionTitle>目標</SectionTitle>
                 <Card padding="sm" className="!p-3">
-                    <div className="rounded-xl bg-brand-600 px-4 py-4">
+                    <div className="rounded-2xl bg-brand-600 px-4 py-4">
                         <div className="flex items-center justify-between gap-4">
                             <div className="min-w-0">
                                 <p className="text-xs font-normal text-white/75">
@@ -277,18 +289,22 @@ export default function HomeTab({ token, userName, isDietPlan = true, todayDraft
                                     </p>
                                     <p className="mt-0.5 truncate text-sm font-normal text-text-secondary">{todayLesson.title}</p>
                                 </div>
-                                <button
+                                <Button
+                                    type="button"
+                                    variant="ghost"
                                     onClick={() => window.open(todayLesson.meet_url, '_blank')}
-                                    className={`h-10 w-16 shrink-0 rounded-xl text-sm font-semibold active:scale-[0.98] ${todayLesson.meet_url ? 'bg-brand-600 text-white' : 'bg-surface-overlay text-text-muted'}`}
+                                    className={`h-10 w-16 shrink-0 rounded-2xl p-0 text-sm font-semibold active:scale-[0.98] ${todayLesson.meet_url ? 'bg-brand-600 text-white' : 'bg-surface-overlay text-text-muted'}`}
                                     disabled={!todayLesson.meet_url}
                                 >
                                     参加
-                                </button>
+                                </Button>
                             </div>
                         </div>
                     )}
 
-                    <button
+                    <Button
+                        type="button"
+                        variant="ghost"
                         onClick={() => onNavigate?.('record')}
                         className={`grid w-full grid-cols-[1fr_auto] items-center gap-3 px-4 py-4 text-left active:scale-[0.99] ${todayLesson ? 'border-t border-border-subtle' : ''}`}
                     >
@@ -300,15 +316,17 @@ export default function HomeTab({ token, userName, isDietPlan = true, todayDraft
                         ) : (
                             <div className="h-7 w-7 shrink-0 rounded-full border-2 border-border-strong" />
                         )}
-                    </button>
+                    </Button>
                 </Card>
             </section>
 
             <section className="space-y-2">
                 <SectionTitle>今後</SectionTitle>
-                <button
+                <Button
+                    type="button"
+                    variant="ghost"
                     onClick={() => onNavigate?.('res')}
-                    className="w-full text-left active:scale-[0.99] transition-transform"
+                    className="block w-full p-0 text-left active:scale-[0.99] transition-transform"
                 >
                     <Card padding="sm" className="!p-4">
                         {nextReservation ? (
@@ -326,7 +344,7 @@ export default function HomeTab({ token, userName, isDietPlan = true, todayDraft
                             </div>
                         )}
                     </Card>
-                </button>
+                </Button>
             </section>
         </div>
     )

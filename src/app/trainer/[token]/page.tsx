@@ -4,6 +4,7 @@ import { useEffect, useState, Suspense } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { getStoreDisplayName } from '@/lib/auth-utils'
 import CalendarView from '@/components/CalendarView'
+import Button from '@/components/ui/Button'
 import Icon from '@/components/ui/icons'
 
 interface Trainer {
@@ -41,7 +42,7 @@ export default function TrainerDashboardPage() {
 
       } catch (err) {
         console.error('Error fetching trainer:', err)
-        setError('データの取得に失敗しました')
+        setError('データを取得できませんでした。画面を再読み込みしてください。')
       } finally {
         setLoading(false)
       }
@@ -88,18 +89,20 @@ export default function TrainerDashboardPage() {
           {/* Left: Spacer */}
           <div className="min-w-[44px]">
             {viewMode === 'timeline' && (
-              <button
+              <Button
+                type="button"
+                variant="ghost"
                 onClick={handleBackToMonth}
-                className="w-10 h-10 flex items-center justify-center text-brand-500 bg-surface-raised rounded-full shadow-sm border border-border-subtle transition-all active:scale-90"
+                className="w-10 h-10 flex items-center justify-center p-0 text-brand-500 bg-surface-raised rounded-full shadow-sm border border-border-subtle transition-all active:scale-90"
               >
                 <Icon name="chevronLeft" size={24} />
-              </button>
+              </Button>
             )}
           </div>
 
           {/* Center: Title (Empty as requested) */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <h1 className="text-[17px] font-normal text-text-primary tracking-tight whitespace-nowrap pointer-events-auto">
+            <h1 className="text-base font-normal text-text-primary tracking-tight whitespace-nowrap pointer-events-auto">
               {viewMode === 'timeline' ? '予約詳細' : ''}
             </h1>
           </div>
@@ -107,10 +110,10 @@ export default function TrainerDashboardPage() {
           {/* Right: Account Pill */}
           <div className="z-10 flex justify-end min-w-[44px]">
             <div className="h-10 px-4 flex items-center gap-1 bg-surface-raised rounded-full shadow-sm border border-border-subtle transition-all">
-              <span className="whitespace-nowrap text-[13px] font-normal text-text-secondary">
+              <span className="whitespace-nowrap text-sm font-normal text-text-secondary">
                 {trainer.name}
               </span>
-              <div className="ml-1 px-2 py-0.5 rounded-full text-[10px] font-normal whitespace-nowrap bg-brand-500 text-white">
+              <div className="ml-1 px-2 py-0.5 rounded-full text-xs font-normal whitespace-nowrap bg-brand-500 text-white">
                 トレーナー
               </div>
             </div>

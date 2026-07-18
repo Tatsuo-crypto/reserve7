@@ -2,6 +2,7 @@
 
 import { useWeeklyProgress } from '@/hooks/useWeeklyProgress'
 import WeeklyProgressPanel from './WeeklyProgressPanel'
+import { WeeklyPanelSkeleton } from '@/components/ui/Skeleton'
 
 interface ProgressTabProps {
     userId: string;
@@ -19,7 +20,7 @@ export default function ProgressTab({ userId, token, weekOffset: controlledWeekO
         onWeekOffsetChange,
     })
 
-    if (loading) return <div className="h-64 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"></div></div>
+    if (loading) return <WeeklyPanelSkeleton />
 
     return (
         <div className="space-y-4 pb-24 animate-fadeIn">
@@ -32,7 +33,7 @@ export default function ProgressTab({ userId, token, weekOffset: controlledWeekO
             />
 
             <div className="text-center pt-4">
-                <p className="text-[10px] font-normal text-text-muted uppercase tracking-widest italic">Weekly Progress Metrics - Trainer View</p>
+                <p className="text-xs font-normal text-text-muted uppercase tracking-widest italic">Weekly Progress Metrics - Trainer View</p>
             </div>
         </div>
     )

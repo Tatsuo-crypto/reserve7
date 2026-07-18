@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { ShiftTemplate } from '@/types'
 import AppModal from '@/components/ui/AppModal'
+import Button from '@/components/ui/Button'
 
 interface TrainerTemplateModalProps {
   isOpen: boolean
@@ -93,7 +94,7 @@ export default function TrainerTemplateModal({ isOpen, onClose, token, onSave }:
       onClose()
     } catch (error) {
       console.error('Failed to save templates:', error)
-      alert('テンプレートの保存に失敗しました')
+      alert('テンプレートを保存できませんでした。もう一度お試しください。')
     } finally {
       setLoading(false)
     }
@@ -109,14 +110,16 @@ export default function TrainerTemplateModal({ isOpen, onClose, token, onSave }:
       bodyClassName="p-4 sm:p-6"
       footer={(
         <>
-          <button onClick={onClose} className="rounded-full px-4 py-2 text-sm text-text-secondary">キャンセル</button>
-          <button
+          <Button type="button" variant="ghost" onClick={onClose} className="rounded-full px-4 py-2 text-sm text-text-secondary">キャンセル</Button>
+          <Button
+            type="button"
+            variant="primary"
             onClick={handleSave}
             disabled={loading}
             className="rounded-full bg-brand-700 px-5 py-2 text-sm text-white disabled:opacity-50"
           >
             {loading ? '保存中...' : '保存'}
-          </button>
+          </Button>
         </>
       )}
     >
@@ -140,7 +143,7 @@ export default function TrainerTemplateModal({ isOpen, onClose, token, onSave }:
                         type="checkbox"
                         checked={template.enabled}
                         onChange={() => handleToggleDay(index)}
-                        className="focus:ring-brand-500 h-4 w-4 text-brand-600 border-border-strong rounded"
+                        className="focus:ring-brand-500 h-4 w-4 text-brand-600 border-border-strong rounded-lg"
                       />
                     </div>
                     <label htmlFor={`day-${template.dayOfWeek}`} className="min-w-[3rem] text-sm font-normal text-text-secondary select-none cursor-pointer">
@@ -152,14 +155,14 @@ export default function TrainerTemplateModal({ isOpen, onClose, token, onSave }:
                         type="time"
                         value={template.startTime}
                         onChange={(e) => handleChangeTime(index, 'startTime', e.target.value)}
-                        className="shadow-sm focus:ring-brand-500 focus:border-brand-500 block w-full sm:text-sm border-border-strong rounded-md"
+                        className="shadow-sm focus:ring-brand-500 focus:border-brand-500 block w-full sm:text-sm border-border-strong rounded-lg"
                       />
                       <span className="text-text-secondary">〜</span>
                       <input
                         type="time"
                         value={template.endTime}
                         onChange={(e) => handleChangeTime(index, 'endTime', e.target.value)}
-                        className="shadow-sm focus:ring-brand-500 focus:border-brand-500 block w-full sm:text-sm border-border-strong rounded-md"
+                        className="shadow-sm focus:ring-brand-500 focus:border-brand-500 block w-full sm:text-sm border-border-strong rounded-lg"
                       />
                     </div>
                   </div>

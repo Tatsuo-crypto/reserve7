@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { PLAN_LIST } from '@/lib/constants'
+import Button from '@/components/ui/Button'
 
 type Choice = { label: string; value: string }
 type CounselingData = Record<string, string | string[]>
@@ -216,7 +217,7 @@ export default function EditMemberPage() {
         }
       } catch (error) {
         console.error('Failed to fetch:', error)
-        setError('情報の取得中にエラーが発生しました')
+        setError('情報を取得できませんでした。画面を再読み込みしてください。')
       } finally {
         setFetchLoading(false)
       }
@@ -406,20 +407,22 @@ export default function EditMemberPage() {
         <div className="border-b border-border-strong p-4">
           <div className="grid grid-cols-6 gap-2">
             {tabs.map((tab, index) => (
-              <button
+              <Button
                 key={tab}
                 type="button"
+                variant={activeTab === index ? 'primary' : 'secondary'}
+                size="sm"
                 onClick={() => selectTab(index)}
                 aria-label={tab}
                 title={tab}
-                className={`h-11 rounded-lg border text-sm font-normal transition-colors ${
+                className={`h-11 p-0 text-sm ${
                   activeTab === index
                     ? 'border-brand-700 text-white bg-brand-700 shadow-sm'
                     : 'border-border-strong text-text-secondary bg-surface-raised hover:text-text-primary hover:bg-surface-base'
                 }`}
               >
                 {index + 1}
-              </button>
+              </Button>
             ))}
           </div>
           <div className="mt-3 text-center text-sm text-text-secondary">
@@ -562,7 +565,7 @@ export default function EditMemberPage() {
                         visible_items: { steps: isChecked, sleep: isChecked, water: isChecked, alcohol: isChecked, workout: isChecked },
                       }))
                     }}
-                    className="w-6 h-6 text-brand-600 border-border-strong rounded focus:ring-brand-500"
+                    className="w-6 h-6 text-brand-600 border-border-strong rounded-lg focus:ring-brand-500"
                   />
                   <div>
                     <div className="font-normal text-text-primary">食事管理機能を表示する</div>
@@ -586,27 +589,31 @@ export default function EditMemberPage() {
 
         <div className="px-5 md:px-6 py-4 border-t border-border-strong flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
           <div className="flex gap-3">
-            <button
+            <Button
               type="button"
+              variant="secondary"
+              size="sm"
               onClick={() => changeTab(activeTab - 1)}
               disabled={activeTab === 0}
               className="px-5 py-2 border border-border-strong rounded-lg text-text-secondary hover:bg-surface-base disabled:opacity-40"
             >
               戻る
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              variant="secondary"
+              size="sm"
               onClick={() => changeTab(activeTab + 1)}
               disabled={activeTab === tabs.length - 1}
               className="px-5 py-2 border border-border-strong rounded-lg text-text-secondary hover:bg-surface-base disabled:opacity-40"
             >
               次のタブへ
-            </button>
+            </Button>
           </div>
           <div className="text-sm text-text-secondary">
             {saveStatus === 'saving' && '自動保存中...'}
             {saveStatus === 'saved' && '自動保存済み'}
-            {saveStatus === 'error' && '自動保存に失敗しました'}
+            {saveStatus === 'error' && '自動保存できませんでした'}
             {saveStatus === 'idle' && '入力内容は自動で保存されます'}
           </div>
         </div>
@@ -771,7 +778,7 @@ function CheckGroup({ label, name, values, options, onToggle, required }: { labe
               type="checkbox"
               checked={values.includes(option.value)}
               onChange={() => onToggle(name, option.value)}
-              className="w-5 h-5 text-brand-600 border-border-strong rounded focus:ring-brand-500"
+              className="w-5 h-5 text-brand-600 border-border-strong rounded-lg focus:ring-brand-500"
             />
             <span className="text-sm text-text-primary">{option.label}</span>
           </label>
@@ -790,7 +797,7 @@ function SwitchCard({ name, checked, onChange, title, description, color = 'blue
         name={name}
         checked={checked}
         onChange={onChange}
-        className={`w-6 h-6 border-border-strong rounded ${color === 'brand' ? 'text-brand-600 focus:ring-brand-500' : 'text-brand-600 focus:ring-brand-500'}`}
+        className={`w-6 h-6 border-border-strong rounded-lg ${color === 'brand' ? 'text-brand-600 focus:ring-brand-500' : 'text-brand-600 focus:ring-brand-500'}`}
       />
       <span>
         <span className="block font-normal text-text-primary">{title}</span>
@@ -825,7 +832,7 @@ function SummaryBox({ summaryText, formData, counseling }: { summaryText: string
 
 function SummaryItem({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-md bg-surface-raised/70 px-3 py-2">
+    <div className="rounded-lg bg-surface-raised/70 px-3 py-2">
       <span className="text-xs text-brand-700">{label}</span>
       <div className="text-sm text-text-primary">{value || '-'}</div>
     </div>

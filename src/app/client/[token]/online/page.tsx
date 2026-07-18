@@ -3,6 +3,7 @@
 import { useParams, useRouter } from 'next/navigation'
 import { useState, useEffect, useRef } from 'react'
 import Icon from '@/components/ui/icons'
+import Button from '@/components/ui/Button'
 
 const DAYS_JA = ['日', '月', '火', '水', '木', '金', '土']
 const DAYS_FULL = ['日曜日', '月曜日', '火曜日', '水曜日', '木曜日', '金曜日', '土曜日']
@@ -145,17 +146,20 @@ function LessonCard({ lesson, onJoin }: { lesson: OnlineLesson; onJoin: (url: st
                     </div>
 
                     {/* Join Button */}
-                    <button
+                    <Button
+                        type="button"
+                        variant={status.canJoin ? 'primary' : 'secondary'}
+                        size="sm"
                         onClick={() => onJoin(lesson.meet_url)}
                         disabled={!status.canJoin}
-                        className={`flex items-center space-x-2 px-5 py-2.5 rounded-xl font-normal text-sm transition-all ${status.canJoin
+                        className={`space-x-2 px-5 py-2.5 rounded-2xl text-sm transition-all ${status.canJoin
                             ? 'bg-brand-700 text-white hover:bg-brand-800 shadow-md hover:shadow-lg transform hover:scale-105 active:scale-95'
-                            : 'bg-surface-overlay text-text-muted cursor-not-allowed'
+                            : 'bg-surface-overlay text-text-muted disabled:bg-surface-overlay disabled:text-text-muted cursor-not-allowed'
                             }`}
                     >
                         <Icon name="video" size={16} />
                         <span>参加する</span>
-                    </button>
+                    </Button>
                 </div>
 
             </div>
@@ -200,11 +204,11 @@ export default function OnlineLessonPage() {
                 setLessons(data.lessons || [])
             } else {
                 const data = await res.json().catch(() => ({}))
-                setError(data.error || 'レッスンの取得に失敗しました')
+                setError(data.error || 'レッスンを取得できませんでした。画面を再読み込みしてください。')
             }
         } catch (e) {
             console.error('Fetch error:', e)
-            setError('通信エラーが発生しました')
+            setError('通信できませんでした。接続状況を確認してください。')
         }
         finally { setLoading(false) }
     }
@@ -231,12 +235,16 @@ export default function OnlineLessonPage() {
             {/* Header */}
             <div className="bg-surface-raised bg-opacity-80 backdrop-blur-sm border-b border-border-subtle sticky top-0 z-10">
                 <div className="max-w-lg mx-auto px-4 py-4 flex items-center">
-                    <button
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
                         onClick={() => router.push(`/client/${token}`)}
-                        className="mr-3 text-text-muted hover:text-text-secondary transition-colors"
+                        className="mr-3 p-0 text-text-muted hover:bg-transparent hover:text-text-secondary transition-colors"
+                        aria-label="戻る"
                     >
                         <Icon name="back" size={24} />
-                    </button>
+                    </Button>
                     <div>
                         <h1 className="text-lg font-normal text-text-primary">オンラインレッスン</h1>
                         <p className="text-xs text-brand-600 font-normal">開始5分前から参加できます</p>
@@ -250,7 +258,7 @@ export default function OnlineLessonPage() {
                     <div className="max-w-lg mx-auto px-4 py-3">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center space-x-3">
-                                <div className="w-10 h-10 bg-surface-raised rounded-xl flex items-center justify-center flex-shrink-0">
+                                <div className="w-10 h-10 bg-surface-raised rounded-2xl flex items-center justify-center flex-shrink-0">
                                     <Icon name="video" size={24} className="text-brand-600" />
                                 </div>
                                 <div>
@@ -267,13 +275,16 @@ export default function OnlineLessonPage() {
                                 >
                                     App Store
                                 </a>
-                                <button
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
                                     onClick={() => setShowIOSBanner(false)}
-                                    className="text-brand-200 hover:text-white ml-1"
+                                    className="ml-1 p-0 text-brand-200 hover:bg-transparent hover:text-white"
                                     aria-label="閉じる"
                                 >
                                     <Icon name="close" size={20} />
-                                </button>
+                                </Button>
                             </div>
                         </div>
                     </div>
@@ -287,12 +298,15 @@ export default function OnlineLessonPage() {
                             <Icon name="exclamationCircle" size={32} className="text-red-400" />
                         </div>
                         <p className="text-text-secondary font-normal">{error}</p>
-                        <button
+                        <Button
+                            type="button"
+                            variant="primary"
+                            size="sm"
                             onClick={fetchLessons}
                             className="mt-4 px-4 py-2 bg-brand-700 text-white rounded-lg text-sm"
                         >
                             再試行
-                        </button>
+                        </Button>
                     </div>
                 ) : lessons.length === 0 ? (
                     <div className="text-center py-16">
@@ -334,7 +348,7 @@ export default function OnlineLessonPage() {
                                         href="https://apps.apple.com/jp/app/google-meet/id1270665395"
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="mt-2 flex items-center justify-center w-full py-3 bg-brand-700 text-white rounded-xl font-normal text-sm space-x-2 hover:bg-brand-800 transition-colors"
+                                        className="mt-2 flex items-center justify-center w-full py-3 bg-brand-700 text-white rounded-2xl font-normal text-sm space-x-2 hover:bg-brand-800 transition-colors"
                                     >
                                         <Icon name="download" size={20} />
                                         <span>App StoreでGoogle Meetをダウンロード</span>

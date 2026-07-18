@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Icon, { type IconName } from '@/components/ui/icons'
+import Button from '@/components/ui/Button'
 
 interface TrackingModalProps {
   isOpen: boolean
@@ -104,7 +105,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
       }
     } catch (error) {
       console.error('Fetch error:', error)
-      setMessage('エラーが発生しました')
+      setMessage('データを取得できませんでした。画面を再読み込みしてください。')
     } finally {
       setLoading(false)
     }
@@ -125,11 +126,11 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
         // フォームリセット
         resetForm(type)
       } else {
-        setMessage('保存に失敗しました')
+        setMessage('保存できませんでした。もう一度お試しください。')
       }
     } catch (error) {
       console.error('Submit error:', error)
-      setMessage('エラーが発生しました')
+      setMessage('保存できませんでした。もう一度お試しください。')
     } finally {
       setLoading(false)
       setTimeout(() => setMessage(''), 3000)
@@ -151,11 +152,11 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
         setMessage('削除しました')
         fetchData()
       } else {
-        setMessage('削除に失敗しました')
+        setMessage('削除できませんでした。もう一度お試しください。')
       }
     } catch (error) {
       console.error('Delete error:', error)
-      setMessage('エラーが発生しました')
+      setMessage('削除できませんでした。もう一度お試しください。')
     } finally {
       setLoading(false)
       setTimeout(() => setMessage(''), 3000)
@@ -177,11 +178,11 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
         setEditForm({})
         fetchData()
       } else {
-        setMessage('更新に失敗しました')
+        setMessage('更新できませんでした。もう一度お試しください。')
       }
     } catch (error) {
       console.error('Update error:', error)
-      setMessage('エラーが発生しました')
+      setMessage('更新できませんでした。もう一度お試しください。')
     } finally {
       setLoading(false)
       setTimeout(() => setMessage(''), 3000)
@@ -204,11 +205,11 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
       if (response.ok) {
         setMessage('設定を保存しました')
       } else {
-        throw new Error('保存に失敗しました')
+        throw new Error('保存できませんでした。もう一度お試しください。')
       }
     } catch (error) {
       console.error('Settings save error:', error)
-      setMessage('保存に失敗しました')
+      setMessage('保存できませんでした。もう一度お試しください。')
     } finally {
       setLoading(false)
       setTimeout(() => setMessage(''), 3000)
@@ -236,19 +237,22 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
 
   return (
     <div className="fixed inset-0 z-[300] flex items-center justify-center overflow-hidden bg-black/60 p-3 sm:p-4">
-      <div className="w-full max-w-4xl overflow-y-auto overscroll-contain rounded-3xl border border-border-subtle bg-surface-raised shadow-xl [-webkit-overflow-scrolling:touch]" style={{ maxHeight: 'calc(100dvh - max(1.5rem, env(safe-area-inset-top)) - max(1.5rem, env(safe-area-inset-bottom)))' }}>
+      <div className="w-full max-w-4xl overflow-y-auto overscroll-contain rounded-2xl border border-border-subtle bg-surface-raised shadow-xl [-webkit-overflow-scrolling:touch]" style={{ maxHeight: 'calc(100dvh - max(1.5rem, env(safe-area-inset-top)) - max(1.5rem, env(safe-area-inset-bottom)))' }}>
         {/* ヘッダー */}
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border-strong bg-surface-raised px-4 py-3.5 sm:px-6 sm:py-4">
           <div className="flex items-center gap-2">
             <Icon name="clipboardList" size={24} className="text-text-secondary" />
             <h2 className="text-xl font-normal text-text-primary">目標・記録管理</h2>
           </div>
-          <button
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
             onClick={onClose}
-            className="text-text-muted hover:text-text-secondary transition-colors"
+            className="h-10 w-10 rounded-full p-0 text-text-muted hover:text-text-secondary"
           >
             <Icon name="close" size={24} />
-          </button>
+          </Button>
         </div>
 
         {/* 会員名表示 */}
@@ -273,10 +277,13 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
               { key: 'squat', label: 'SQ記録', iconName: 'bolt' },
               { key: 'settings', label: '表示設定', iconName: 'settings' },
             ] as { key: string, label: string, iconName: IconName }[]).map((tab) => (
-              <button
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key as any)}
-                className={`py-2.5 px-2 sm:px-3 text-xs sm:text-sm font-normal border-b-2 transition-colors flex flex-row items-center gap-1.5 whitespace-nowrap ${
+                className={`rounded-none border-b-2 px-2 py-2.5 text-xs sm:px-3 sm:text-sm flex-row whitespace-nowrap ${
                   activeTab === tab.key
                     ? 'border-brand-500 text-brand-600'
                     : 'border-transparent text-text-secondary hover:text-text-secondary'
@@ -285,7 +292,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
               >
                 <Icon name={tab.iconName} size={16} className="flex-shrink-0" />
                 <span className="inline-block">{tab.label}</span>
-              </button>
+              </Button>
             ))}
           </div>
         </div>
@@ -304,7 +311,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                       type="number"
                       value={yearlyForm.year}
                       onChange={(e) => setYearlyForm({ ...yearlyForm, year: parseInt(e.target.value) })}
-                      className="w-full border border-border-strong rounded-md px-3 py-2 text-sm"
+                      className="w-full border border-border-strong rounded-lg px-3 py-2 text-sm"
                     />
                   </div>
                   <div>
@@ -312,17 +319,19 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                     <textarea
                       value={yearlyForm.goal_text}
                       onChange={(e) => setYearlyForm({ ...yearlyForm, goal_text: e.target.value })}
-                      className="w-full border border-border-strong rounded-md px-3 py-2 text-sm"
+                      className="w-full border border-border-strong rounded-lg px-3 py-2 text-sm"
                       rows={3}
                     />
                   </div>
-                  <button
+                  <Button
+                    type="button"
+                    fullWidth
                     onClick={() => handleSubmit('yearly_goal', yearlyForm)}
                     disabled={loading || !yearlyForm.goal_text}
-                    className="w-full bg-brand-700 text-white px-4 py-2 rounded-md text-sm font-normal hover:bg-brand-800 disabled:opacity-50"
+                    className="w-full bg-brand-700 text-white px-4 py-2 rounded-lg text-sm font-normal hover:bg-brand-800 disabled:opacity-50"
                   >
                     保存
-                  </button>
+                  </Button>
                 </div>
               </div>
 
@@ -340,27 +349,32 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                               type="number"
                               value={editForm.year || goal.year}
                               onChange={(e) => setEditForm({ ...editForm, year: parseInt(e.target.value) })}
-                              className="w-full border border-border-strong rounded-md px-2 py-1 text-sm"
+                              className="w-full border border-border-strong rounded-lg px-2 py-1 text-sm"
                             />
                             <textarea
                               value={editForm.goal_text || goal.goal_text}
                               onChange={(e) => setEditForm({ ...editForm, goal_text: e.target.value })}
-                              className="w-full border border-border-strong rounded-md px-2 py-1 text-sm"
+                              className="w-full border border-border-strong rounded-lg px-2 py-1 text-sm"
                               rows={2}
                             />
                             <div className="flex gap-2">
-                              <button
+                              <Button
+                                type="button"
+                                size="sm"
                                 onClick={() => handleUpdate('yearly_goal', goal.id)}
-                                className="px-3 py-1 bg-brand-700 text-white rounded text-sm hover:bg-brand-800"
+                                className="px-3 py-1 bg-brand-700 text-white rounded-lg text-sm hover:bg-brand-800"
                               >
                                 保存
-                              </button>
-                              <button
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="secondary"
+                                size="sm"
                                 onClick={() => setEditingId(null)}
-                                className="px-3 py-1 bg-surface-overlay text-text-secondary rounded text-sm hover:bg-surface-overlay"
+                                className="px-3 py-1 bg-surface-overlay text-text-secondary rounded-lg text-sm hover:bg-surface-overlay"
                               >
                                 キャンセル
-                              </button>
+                              </Button>
                             </div>
                           </div>
                         ) : (
@@ -370,21 +384,27 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                               <div className="text-sm text-text-primary">{goal.goal_text}</div>
                             </div>
                             <div className="flex gap-2">
-                              <button
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
                                 onClick={() => {
                                   setEditingId(goal.id)
                                   setEditForm({ year: goal.year, goal_text: goal.goal_text })
                                 }}
-                                className="text-brand-600 hover:text-brand-800 text-sm"
+                                className="h-auto rounded-lg px-1 py-0 text-brand-600 hover:text-brand-800 text-sm"
                               >
                                 編集
-                              </button>
-                              <button
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
                                 onClick={() => handleDelete('yearly_goal', goal.id)}
-                                className="text-red-600 hover:text-red-800 text-sm"
+                                className="h-auto rounded-lg px-1 py-0 text-red-600 hover:text-red-800 text-sm"
                               >
                                 削除
-                              </button>
+                              </Button>
                             </div>
                           </div>
                         )}
@@ -409,7 +429,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                         type="number"
                         value={monthlyForm.year}
                         onChange={(e) => setMonthlyForm({ ...monthlyForm, year: parseInt(e.target.value) })}
-                        className="w-full border border-border-strong rounded-md px-3 py-2 text-sm"
+                        className="w-full border border-border-strong rounded-lg px-3 py-2 text-sm"
                       />
                     </div>
                     <div>
@@ -417,7 +437,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                       <select
                         value={monthlyForm.month}
                         onChange={(e) => setMonthlyForm({ ...monthlyForm, month: parseInt(e.target.value) })}
-                        className="w-full border border-border-strong rounded-md px-3 py-2 text-sm"
+                        className="w-full border border-border-strong rounded-lg px-3 py-2 text-sm"
                       >
                         {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
                           <option key={m} value={m}>{m}月</option>
@@ -431,7 +451,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                       type="text"
                       value={monthlyForm.goal_text_1}
                       onChange={(e) => setMonthlyForm({ ...monthlyForm, goal_text_1: e.target.value })}
-                      className="w-full border border-border-strong rounded-md px-3 py-2 text-sm"
+                      className="w-full border border-border-strong rounded-lg px-3 py-2 text-sm"
                       placeholder="例: 水2L飲む"
                     />
                   </div>
@@ -441,7 +461,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                       type="text"
                       value={monthlyForm.goal_text_2}
                       onChange={(e) => setMonthlyForm({ ...monthlyForm, goal_text_2: e.target.value })}
-                      className="w-full border border-border-strong rounded-md px-3 py-2 text-sm"
+                      className="w-full border border-border-strong rounded-lg px-3 py-2 text-sm"
                       placeholder="例: 毎日10000歩歩く"
                     />
                   </div>
@@ -451,11 +471,13 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                       type="text"
                       value={monthlyForm.goal_text_3}
                       onChange={(e) => setMonthlyForm({ ...monthlyForm, goal_text_3: e.target.value })}
-                      className="w-full border border-border-strong rounded-md px-3 py-2 text-sm"
+                      className="w-full border border-border-strong rounded-lg px-3 py-2 text-sm"
                       placeholder="例: カロリー2000kcal以内"
                     />
                   </div>
-                  <button
+                  <Button
+                    type="button"
+                    fullWidth
                     onClick={async () => {
                       const goals = [
                         monthlyForm.goal_text_1,
@@ -481,24 +503,24 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                               data: { year: monthlyForm.year, month: monthlyForm.month, goal_text } 
                             }),
                           })
-                          if (!response.ok) throw new Error('保存に失敗しました')
+                          if (!response.ok) throw new Error('保存できませんでした。もう一度お試しください。')
                         }
                         setMessage(`${goals.length}件の目標を保存しました`)
                         fetchData()
                         resetForm('monthly_goal')
                       } catch (error) {
                         console.error('Submit error:', error)
-                        setMessage('エラーが発生しました')
+                        setMessage('保存できませんでした。もう一度お試しください。')
                       } finally {
                         setLoading(false)
                         setTimeout(() => setMessage(''), 3000)
                       }
                     }}
                     disabled={loading || (!monthlyForm.goal_text_1 && !monthlyForm.goal_text_2 && !monthlyForm.goal_text_3)}
-                    className="w-full bg-brand-700 text-white px-4 py-2 rounded-md text-sm font-normal hover:bg-brand-800 disabled:opacity-50"
+                    className="w-full bg-brand-700 text-white px-4 py-2 rounded-lg text-sm font-normal hover:bg-brand-800 disabled:opacity-50"
                   >
                     まとめて保存
-                  </button>
+                  </Button>
                 </div>
               </div>
 
@@ -517,12 +539,12 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                                 type="number"
                                 value={editForm.year || goal.year}
                                 onChange={(e) => setEditForm({ ...editForm, year: parseInt(e.target.value) })}
-                                className="border border-border-strong rounded-md px-2 py-1 text-sm"
+                                className="border border-border-strong rounded-lg px-2 py-1 text-sm"
                               />
                               <select
                                 value={editForm.month || goal.month}
                                 onChange={(e) => setEditForm({ ...editForm, month: parseInt(e.target.value) })}
-                                className="border border-border-strong rounded-md px-2 py-1 text-sm"
+                                className="border border-border-strong rounded-lg px-2 py-1 text-sm"
                               >
                                 {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
                                   <option key={m} value={m}>{m}月</option>
@@ -533,21 +555,26 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                               type="text"
                               value={editForm.goal_text || goal.goal_text}
                               onChange={(e) => setEditForm({ ...editForm, goal_text: e.target.value })}
-                              className="w-full border border-border-strong rounded-md px-2 py-1 text-sm"
+                              className="w-full border border-border-strong rounded-lg px-2 py-1 text-sm"
                             />
                             <div className="flex gap-2">
-                              <button
+                              <Button
+                                type="button"
+                                size="sm"
                                 onClick={() => handleUpdate('monthly_goal', goal.id)}
-                                className="px-3 py-1 bg-brand-700 text-white rounded text-sm hover:bg-brand-800"
+                                className="px-3 py-1 bg-brand-700 text-white rounded-lg text-sm hover:bg-brand-800"
                               >
                                 保存
-                              </button>
-                              <button
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="secondary"
+                                size="sm"
                                 onClick={() => setEditingId(null)}
-                                className="px-3 py-1 bg-surface-overlay text-text-secondary rounded text-sm hover:bg-surface-overlay"
+                                className="px-3 py-1 bg-surface-overlay text-text-secondary rounded-lg text-sm hover:bg-surface-overlay"
                               >
                                 キャンセル
-                              </button>
+                              </Button>
                             </div>
                           </div>
                         ) : (
@@ -557,21 +584,27 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                               <div className="text-sm text-text-primary">{goal.goal_text}</div>
                             </div>
                             <div className="flex gap-2">
-                              <button
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
                                 onClick={() => {
                                   setEditingId(goal.id)
                                   setEditForm({ year: goal.year, month: goal.month, goal_text: goal.goal_text })
                                 }}
-                                className="text-brand-600 hover:text-brand-800 text-sm"
+                                className="h-auto rounded-lg px-1 py-0 text-brand-600 hover:text-brand-800 text-sm"
                               >
                                 編集
-                              </button>
-                              <button
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
                                 onClick={() => handleDelete('monthly_goal', goal.id)}
-                                className="text-red-600 hover:text-red-800 text-sm"
+                                className="h-auto rounded-lg px-1 py-0 text-red-600 hover:text-red-800 text-sm"
                               >
                                 削除
-                              </button>
+                              </Button>
                             </div>
                           </div>
                         )}
@@ -595,7 +628,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                       type="date"
                       value={weightForm.recorded_date}
                       onChange={(e) => setWeightForm({ ...weightForm, recorded_date: e.target.value })}
-                      className="w-full border border-border-strong rounded-md px-3 py-2 text-sm"
+                      className="w-full border border-border-strong rounded-lg px-3 py-2 text-sm"
                     />
                   </div>
                   <div>
@@ -605,7 +638,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                       step="0.1"
                       value={weightForm.weight_kg}
                       onChange={(e) => setWeightForm({ ...weightForm, weight_kg: e.target.value })}
-                      className="w-full border border-border-strong rounded-md px-3 py-2 text-sm"
+                      className="w-full border border-border-strong rounded-lg px-3 py-2 text-sm"
                     />
                   </div>
                   <div>
@@ -614,16 +647,18 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                       type="text"
                       value={weightForm.notes}
                       onChange={(e) => setWeightForm({ ...weightForm, notes: e.target.value })}
-                      className="w-full border border-border-strong rounded-md px-3 py-2 text-sm"
+                      className="w-full border border-border-strong rounded-lg px-3 py-2 text-sm"
                     />
                   </div>
-                  <button
+                  <Button
+                    type="button"
+                    fullWidth
                     onClick={() => handleSubmit('weight_record', { ...weightForm, weight_kg: parseFloat(weightForm.weight_kg) })}
                     disabled={loading || !weightForm.weight_kg}
-                    className="w-full bg-brand-700 text-white px-4 py-2 rounded-md text-sm font-normal hover:bg-brand-800 disabled:opacity-50"
+                    className="w-full bg-brand-700 text-white px-4 py-2 rounded-lg text-sm font-normal hover:bg-brand-800 disabled:opacity-50"
                   >
                     保存
-                  </button>
+                  </Button>
                 </div>
               </div>
 
@@ -641,35 +676,40 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                               type="date"
                               value={editForm.recorded_date || record.recorded_date}
                               onChange={(e) => setEditForm({ ...editForm, recorded_date: e.target.value })}
-                              className="w-full border border-border-strong rounded-md px-2 py-1 text-sm"
+                              className="w-full border border-border-strong rounded-lg px-2 py-1 text-sm"
                             />
                             <input
                               type="number"
                               step="0.1"
                               value={editForm.weight_kg !== undefined ? editForm.weight_kg : record.weight_kg}
                               onChange={(e) => setEditForm({ ...editForm, weight_kg: parseFloat(e.target.value) })}
-                              className="w-full border border-border-strong rounded-md px-2 py-1 text-sm"
+                              className="w-full border border-border-strong rounded-lg px-2 py-1 text-sm"
                             />
                             <input
                               type="text"
                               value={editForm.notes !== undefined ? editForm.notes : record.notes || ''}
                               onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
                               placeholder="メモ"
-                              className="w-full border border-border-strong rounded-md px-2 py-1 text-sm"
+                              className="w-full border border-border-strong rounded-lg px-2 py-1 text-sm"
                             />
                             <div className="flex gap-2">
-                              <button
+                              <Button
+                                type="button"
+                                size="sm"
                                 onClick={() => handleUpdate('weight_record', record.id)}
-                                className="px-3 py-1 bg-brand-700 text-white rounded text-sm hover:bg-brand-800"
+                                className="px-3 py-1 bg-brand-700 text-white rounded-lg text-sm hover:bg-brand-800"
                               >
                                 保存
-                              </button>
-                              <button
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="secondary"
+                                size="sm"
                                 onClick={() => setEditingId(null)}
-                                className="px-3 py-1 bg-surface-overlay text-text-secondary rounded text-sm hover:bg-surface-overlay"
+                                className="px-3 py-1 bg-surface-overlay text-text-secondary rounded-lg text-sm hover:bg-surface-overlay"
                               >
                                 キャンセル
-                              </button>
+                              </Button>
                             </div>
                           </div>
                         ) : (
@@ -679,21 +719,27 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                               <div className="text-sm text-text-primary">{record.weight_kg}kg {record.notes && `- ${record.notes}`}</div>
                             </div>
                             <div className="flex gap-2">
-                              <button
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
                                 onClick={() => {
                                   setEditingId(record.id)
                                   setEditForm({ recorded_date: record.recorded_date, weight_kg: record.weight_kg, notes: record.notes || '' })
                                 }}
-                                className="text-brand-600 hover:text-brand-800 text-sm"
+                                className="h-auto rounded-lg px-1 py-0 text-brand-600 hover:text-brand-800 text-sm"
                               >
                                 編集
-                              </button>
-                              <button
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
                                 onClick={() => handleDelete('weight_record', record.id)}
-                                className="text-red-600 hover:text-red-800 text-sm"
+                                className="h-auto rounded-lg px-1 py-0 text-red-600 hover:text-red-800 text-sm"
                               >
                                 削除
-                              </button>
+                              </Button>
                             </div>
                           </div>
                         )}
@@ -717,7 +763,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                       type="date"
                       value={squatForm.recorded_date}
                       onChange={(e) => setSquatForm({ ...squatForm, recorded_date: e.target.value })}
-                      className="w-full border border-border-strong rounded-md px-3 py-2 text-sm"
+                      className="w-full border border-border-strong rounded-lg px-3 py-2 text-sm"
                     />
                   </div>
                   <div>
@@ -727,7 +773,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                       step="0.5"
                       value={squatForm.weight_kg}
                       onChange={(e) => setSquatForm({ ...squatForm, weight_kg: e.target.value })}
-                      className="w-full border border-border-strong rounded-md px-3 py-2 text-sm"
+                      className="w-full border border-border-strong rounded-lg px-3 py-2 text-sm"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
@@ -737,7 +783,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                         type="number"
                         value={squatForm.sets}
                         onChange={(e) => setSquatForm({ ...squatForm, sets: e.target.value })}
-                        className="w-full border border-border-strong rounded-md px-3 py-2 text-sm"
+                        className="w-full border border-border-strong rounded-lg px-3 py-2 text-sm"
                       />
                     </div>
                     <div>
@@ -746,7 +792,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                         type="number"
                         value={squatForm.reps}
                         onChange={(e) => setSquatForm({ ...squatForm, reps: e.target.value })}
-                        className="w-full border border-border-strong rounded-md px-3 py-2 text-sm"
+                        className="w-full border border-border-strong rounded-lg px-3 py-2 text-sm"
                       />
                     </div>
                   </div>
@@ -756,10 +802,12 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                       type="text"
                       value={squatForm.notes}
                       onChange={(e) => setSquatForm({ ...squatForm, notes: e.target.value })}
-                      className="w-full border border-border-strong rounded-md px-3 py-2 text-sm"
+                      className="w-full border border-border-strong rounded-lg px-3 py-2 text-sm"
                     />
                   </div>
-                  <button
+                  <Button
+                    type="button"
+                    fullWidth
                     onClick={() => handleSubmit('squat_record', { 
                       ...squatForm, 
                       weight_kg: parseFloat(squatForm.weight_kg),
@@ -767,10 +815,10 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                       reps: squatForm.reps ? parseInt(squatForm.reps) : undefined,
                     })}
                     disabled={loading || !squatForm.weight_kg}
-                    className="w-full bg-brand-700 text-white px-4 py-2 rounded-md text-sm font-normal hover:bg-brand-800 disabled:opacity-50"
+                    className="w-full bg-brand-700 text-white px-4 py-2 rounded-lg text-sm font-normal hover:bg-brand-800 disabled:opacity-50"
                   >
                     保存
-                  </button>
+                  </Button>
                 </div>
               </div>
 
@@ -788,7 +836,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                               type="date"
                               value={editForm.recorded_date || record.recorded_date}
                               onChange={(e) => setEditForm({ ...editForm, recorded_date: e.target.value })}
-                              className="w-full border border-border-strong rounded-md px-2 py-1 text-sm"
+                              className="w-full border border-border-strong rounded-lg px-2 py-1 text-sm"
                             />
                             <input
                               type="number"
@@ -796,7 +844,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                               value={editForm.weight_kg !== undefined ? editForm.weight_kg : record.weight_kg}
                               onChange={(e) => setEditForm({ ...editForm, weight_kg: parseFloat(e.target.value) })}
                               placeholder="重量 (kg)"
-                              className="w-full border border-border-strong rounded-md px-2 py-1 text-sm"
+                              className="w-full border border-border-strong rounded-lg px-2 py-1 text-sm"
                             />
                             <div className="grid grid-cols-2 gap-2">
                               <input
@@ -804,14 +852,14 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                                 value={editForm.sets !== undefined ? editForm.sets : record.sets || ''}
                                 onChange={(e) => setEditForm({ ...editForm, sets: e.target.value ? parseInt(e.target.value) : null })}
                                 placeholder="セット数"
-                                className="border border-border-strong rounded-md px-2 py-1 text-sm"
+                                className="border border-border-strong rounded-lg px-2 py-1 text-sm"
                               />
                               <input
                                 type="number"
                                 value={editForm.reps !== undefined ? editForm.reps : record.reps || ''}
                                 onChange={(e) => setEditForm({ ...editForm, reps: e.target.value ? parseInt(e.target.value) : null })}
                                 placeholder="回数"
-                                className="border border-border-strong rounded-md px-2 py-1 text-sm"
+                                className="border border-border-strong rounded-lg px-2 py-1 text-sm"
                               />
                             </div>
                             <input
@@ -819,21 +867,26 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                               value={editForm.notes !== undefined ? editForm.notes : record.notes || ''}
                               onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
                               placeholder="メモ"
-                              className="w-full border border-border-strong rounded-md px-2 py-1 text-sm"
+                              className="w-full border border-border-strong rounded-lg px-2 py-1 text-sm"
                             />
                             <div className="flex gap-2">
-                              <button
+                              <Button
+                                type="button"
+                                size="sm"
                                 onClick={() => handleUpdate('squat_record', record.id)}
-                                className="px-3 py-1 bg-brand-700 text-white rounded text-sm hover:bg-brand-800"
+                                className="px-3 py-1 bg-brand-700 text-white rounded-lg text-sm hover:bg-brand-800"
                               >
                                 保存
-                              </button>
-                              <button
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="secondary"
+                                size="sm"
                                 onClick={() => setEditingId(null)}
-                                className="px-3 py-1 bg-surface-overlay text-text-secondary rounded text-sm hover:bg-surface-overlay"
+                                className="px-3 py-1 bg-surface-overlay text-text-secondary rounded-lg text-sm hover:bg-surface-overlay"
                               >
                                 キャンセル
-                              </button>
+                              </Button>
                             </div>
                           </div>
                         ) : (
@@ -848,7 +901,10 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                               </div>
                             </div>
                             <div className="flex gap-2">
-                              <button
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
                                 onClick={() => {
                                   setEditingId(record.id)
                                   setEditForm({ 
@@ -859,16 +915,19 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                                     notes: record.notes || '' 
                                   })
                                 }}
-                                className="text-brand-600 hover:text-brand-800 text-sm"
+                                className="h-auto rounded-lg px-1 py-0 text-brand-600 hover:text-brand-800 text-sm"
                               >
                                 編集
-                              </button>
-                              <button
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
                                 onClick={() => handleDelete('squat_record', record.id)}
-                                className="text-red-600 hover:text-red-800 text-sm"
+                                className="h-auto rounded-lg px-1 py-0 text-red-600 hover:text-red-800 text-sm"
                               >
                                 削除
-                              </button>
+                              </Button>
                             </div>
                           </div>
                         )}
@@ -910,13 +969,15 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
               </div>
 
               <div className="pt-4">
-                <button
+                <Button
+                  type="button"
+                  fullWidth
                   onClick={handleSettingsSave}
                   disabled={loading}
                   className="w-full bg-brand-700 text-white py-4 rounded-2xl font-normal shadow-lg hover:bg-brand-800 transition-all active:scale-95 disabled:opacity-50 text-lg"
                 >
                   {loading ? '保存中...' : '設定を保存する'}
-                </button>
+                </Button>
               </div>
             </div>
           )}
@@ -924,12 +985,14 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
 
         {/* フッター */}
         <div className="sticky bottom-0 bg-surface-base border-t border-border-strong px-6 py-4 flex justify-end">
-          <button
+          <Button
+            type="button"
+            variant="secondary"
             onClick={onClose}
-            className="px-6 py-2 bg-surface-overlay text-text-primary rounded-md text-sm font-normal hover:bg-border-strong"
+            className="px-6 py-2 bg-surface-overlay text-text-primary rounded-lg text-sm font-normal hover:bg-border-strong"
           >
             閉じる
-          </button>
+          </Button>
         </div>
       </div>
     </div>

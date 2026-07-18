@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic'
 import { supabaseAdmin } from '@/lib/supabase'
 import { createGoogleCalendarService } from '@/lib/google-calendar'
 import { getAuthenticatedUser } from '@/lib/api-utils'
+import { retryPendingCalendarCreates } from '@/lib/reservation-calendar-sync'
 
 export async function POST(request: NextRequest) {
   try {
@@ -45,9 +46,11 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    const pendingCreateResult = await retryPendingCalendarCreates()
+
     const calendarService = createGoogleCalendarService()
     if (!calendarService) {
-      return NextResponse.json({ error: 'Google Calendar未設定' }, { status: 500 })
+      return NextResponse.json({ error: 'Google Calendar未設定', pendingCreates: pendingCreateResult.attempted }, { status: 500 })
     }
 
     const calendarId = (user as any).calendarId || user.storeId
@@ -68,7 +71,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (!reservations || reservations.length === 0) {
-      return NextResponse.json({ synced: 0, deleted: 0 })
+      return NextResponse.json({ synced: 0, deleted: 0, pendingCreates: pendingCreateResult.attempted })
     }
 
     console.log(`🔄 Sync: Checking ${reservations.length} reservations against Google Calendar`)
@@ -134,6 +137,7 @@ export async function POST(request: NextRequest) {
       synced: reservations.length,
       deleted: deletedCount,
       deletedTitles,
+      pendingCreates: pendingCreateResult.attempted,
     })
   } catch (error) {
     console.error('Sync API error:', error)

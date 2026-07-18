@@ -65,7 +65,7 @@ export default function ShiftsPage() {
 
           {/* Center: Title */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <h1 className="text-[17px] font-normal text-text-primary tracking-tight whitespace-nowrap pointer-events-auto">
+            <h1 className="text-base font-normal text-text-primary tracking-tight whitespace-nowrap pointer-events-auto">
               シフト管理
             </h1>
           </div>
@@ -74,10 +74,10 @@ export default function ShiftsPage() {
           <div className="z-10 flex justify-end min-w-[44px]">
             {trainer && (
               <div className="h-10 px-4 flex items-center gap-1 bg-surface-raised rounded-full shadow-sm border border-border-subtle transition-all">
-                <span className="whitespace-nowrap text-[13px] font-normal text-text-secondary">
+                <span className="whitespace-nowrap text-sm font-normal text-text-secondary">
                   {trainer.name}
                 </span>
-                <div className="ml-1 px-2 py-0.5 rounded-full text-[10px] font-normal whitespace-nowrap bg-brand-500 text-white">
+                <div className="ml-1 px-2 py-0.5 rounded-full text-xs font-normal whitespace-nowrap bg-brand-500 text-white">
                   トレーナー
                 </div>
               </div>

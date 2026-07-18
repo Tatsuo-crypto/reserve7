@@ -8,6 +8,7 @@ import { useEffect } from 'react'
 import { getStoreDisplayName } from '@/lib/auth-utils'
 import { getPlanRank } from '@/lib/utils/member'
 import Icon from '@/components/ui/icons'
+import Button from '@/components/ui/Button'
 
 interface Client {
   id: string
@@ -407,12 +408,12 @@ function NewReservationContent() {
       })
       const data = await response.json()
       if (!response.ok) {
-        throw new Error(data.error || '予約の作成に失敗しました')
+        throw new Error(data.error || '予約を作成できませんでした。もう一度お試しください。')
       }
       processSuccess()
     } catch (error) {
       console.error('Create reservation retry error:', error)
-      setError(error instanceof Error ? error.message : '予約の作成に失敗しました')
+      setError(error instanceof Error ? error.message : '予約を作成できませんでした。もう一度お試しください。')
     } finally {
       setLoading(false)
     }
@@ -585,7 +586,7 @@ function NewReservationContent() {
           // Do not setLoading(false) here yet, the modal will handle it if cancelled
           return
         } else {
-          throw new Error(data.error || '予約の作成に失敗しました')
+          throw new Error(data.error || '予約を作成できませんでした。もう一度お試しください。')
         }
       }
 
@@ -593,7 +594,7 @@ function NewReservationContent() {
 
     } catch (error) {
       console.error('Create reservation error:', error)
-      setError(error instanceof Error ? error.message : '予約の作成に失敗しました')
+      setError(error instanceof Error ? error.message : '予約を作成できませんでした。もう一度お試しください。')
     } finally {
       setLoading(false)
     }
@@ -858,7 +859,7 @@ function NewReservationContent() {
                               setFormData(prev => ({ ...prev, trainingTrainerIds: prev.trainingTrainerIds.filter(id => id !== trainer.id) }))
                             }
                           }}
-                          className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-border-strong rounded"
+                          className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-border-strong rounded-lg"
                         />
                         <span className="ml-3 text-text-primary">{trainer.full_name}</span>
                       </label>
@@ -1125,20 +1126,21 @@ function NewReservationContent() {
 
             {/* Submit Button */}
             <div className="flex justify-center space-x-4">
-              <button
+              <Button
                 type="button"
+                variant="secondary"
                 onClick={() => router.back()}
                 className="px-6 py-2 border border-border-strong rounded-lg text-text-secondary hover:bg-surface-base transition-colors"
               >
                 キャンセル
-              </button>
-              <button
+              </Button>
+              <Button
                 type="submit"
                 disabled={loading}
                 className="px-6 py-2 bg-brand-700 text-white rounded-lg hover:bg-brand-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {loading ? '作成中...' : '予約作成'}
-              </button>
+              </Button>
             </div>
           </form>
         </div>
@@ -1159,20 +1161,23 @@ function NewReservationContent() {
                 この時間帯に出勤しているトレーナーがいません（シフト外）。<br /><br />それでも予約を作成しますか？
               </p>
               <div className="flex justify-center space-x-3 w-full">
-                <button
+                <Button
                   type="button"
+                  variant="secondary"
+                  fullWidth
                   onClick={cancelShiftConfirm}
-                  className="flex-1 px-4 py-3 border border-border-strong text-text-secondary bg-surface-raised rounded-xl hover:bg-surface-base transition-colors font-normal shadow-sm"
+                  className="flex-1 px-4 py-3 border border-border-strong text-text-secondary bg-surface-raised rounded-2xl hover:bg-surface-base transition-colors font-normal shadow-sm"
                 >
                   キャンセル
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
+                  fullWidth
                   onClick={handleConfirmShift}
-                  className="flex-1 px-4 py-3 bg-brand-700 text-white rounded-xl hover:bg-brand-800 transition-colors font-normal shadow-sm"
+                  className="flex-1 px-4 py-3 bg-brand-700 text-white rounded-2xl hover:bg-brand-800 transition-colors font-normal shadow-sm"
                 >
                   OK (作成)
-                </button>
+                </Button>
               </div>
             </div>
           </div>
@@ -1194,19 +1199,22 @@ function NewReservationContent() {
                 <span className="font-normal">{pendingTrainerName}</span> はこの時間帯にシフトがありません。<br /><br />それでも研修に追加しますか？
               </p>
               <div className="flex justify-center space-x-3 w-full">
-                <button
+                <Button
                   type="button"
+                  variant="secondary"
+                  fullWidth
                   onClick={() => {
                     setShowTrainingShiftModal(false)
                     setPendingTrainerId(null)
                     setPendingTrainerName('')
                   }}
-                  className="flex-1 px-4 py-3 border border-border-strong text-text-secondary bg-surface-raised rounded-xl hover:bg-surface-base transition-colors font-normal shadow-sm"
+                  className="flex-1 px-4 py-3 border border-border-strong text-text-secondary bg-surface-raised rounded-2xl hover:bg-surface-base transition-colors font-normal shadow-sm"
                 >
                   キャンセル
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
+                  fullWidth
                   onClick={() => {
                     if (pendingTrainerId) {
                       setFormData(prev => ({ ...prev, trainingTrainerIds: [...prev.trainingTrainerIds, pendingTrainerId] }))
@@ -1215,10 +1223,10 @@ function NewReservationContent() {
                     setPendingTrainerId(null)
                     setPendingTrainerName('')
                   }}
-                  className="flex-1 px-4 py-3 bg-orange-600 text-white rounded-xl hover:bg-orange-700 transition-colors font-normal shadow-sm"
+                  className="flex-1 px-4 py-3 bg-orange-600 text-white rounded-2xl hover:bg-orange-700 transition-colors font-normal shadow-sm"
                 >
                   OK (追加)
-                </button>
+                </Button>
               </div>
             </div>
           </div>

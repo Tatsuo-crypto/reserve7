@@ -4,6 +4,7 @@ import { useState, useRef } from 'react'
 import { format, isSameDay, setHours, setMinutes, parseISO, differenceInMinutes, isAfter, parse, getDay } from 'date-fns'
 import { ja } from 'date-fns/locale'
 import { Shift, Trainer, ShiftTemplate, ShiftTemplateException } from '@/types'
+import Button from '@/components/ui/Button'
 
 interface TeamShiftCalendarProps {
   currentDate: Date
@@ -260,11 +261,11 @@ export default function TeamShiftCalendar({
                     return (
                       <div
                         key={item.id}
-                        className="absolute inset-x-1 flex cursor-pointer items-center justify-center overflow-hidden rounded-md border-l-2 border-sky-400 bg-surface-overlay/80 shadow-sm hover:bg-surface-overlay"
+                        className="absolute inset-x-1 flex cursor-pointer items-center justify-center overflow-hidden rounded-lg border-l-2 border-sky-400 bg-surface-overlay/80 shadow-sm hover:bg-surface-overlay"
                         style={getItemStyle(item, trainerItems)}
                         onClick={(e) => handleTemplateClick(e, item)}
                       >
-                        <span className="px-1 text-center text-[10px] leading-tight text-sky-200">{displayTime}</span>
+                        <span className="px-1 text-center text-xs leading-tight text-sky-200">{displayTime}</span>
                       </div>
                     )
                   } else {
@@ -274,7 +275,7 @@ export default function TeamShiftCalendar({
                     return (
                       <div
                         key={item.id}
-                        className={`absolute inset-x-1 cursor-pointer overflow-hidden rounded-md border-l-2 shadow-sm transition-all flex items-center justify-center ${
+                        className={`absolute inset-x-1 cursor-pointer overflow-hidden rounded-lg border-l-2 shadow-sm transition-all flex items-center justify-center ${
                           isSelected
                             ? 'border-brand-400 bg-brand-500/25 ring-2 ring-brand-400/70'
                             : 'border-brand-500 bg-surface-overlay hover:bg-brand-500/15'
@@ -283,7 +284,7 @@ export default function TeamShiftCalendar({
                         onClick={(e) => handleShiftClick(e, shift)}
                         title={`${trainer.full_name}: ${format(item.start, 'HH:mm')} - ${format(item.end, 'HH:mm')}`}
                       >
-                        <span className={`px-1 text-center text-[10px] leading-tight ${isSelected ? 'text-brand-100' : 'text-text-primary'}`}>
+                        <span className={`px-1 text-center text-xs leading-tight ${isSelected ? 'text-brand-100' : 'text-text-primary'}`}>
                           {displayTime}
                         </span>
                       </div>
@@ -397,7 +398,7 @@ function ShiftCreateModal({ trainers, date, initialHour, initialTrainerId, isOpe
       onClose()
     } catch (e) {
       console.error(e)
-      alert('保存に失敗しました')
+      alert('保存できませんでした。もう一度お試しください。')
     } finally {
       setLoading(false)
     }
@@ -415,7 +416,7 @@ function ShiftCreateModal({ trainers, date, initialHour, initialTrainerId, isOpe
           <div>
             <label className="block text-xs text-text-secondary mb-1">トレーナー</label>
             <select
-              className="w-full border rounded p-2"
+              className="w-full border rounded-lg p-2"
               value={trainerId}
               onChange={e => setTrainerId(e.target.value)}
             >
@@ -427,7 +428,7 @@ function ShiftCreateModal({ trainers, date, initialHour, initialTrainerId, isOpe
           <div>
             <label className="block text-xs text-text-secondary mb-1">開始</label>
             <select
-              className="w-full border rounded p-2"
+              className="w-full border rounded-lg p-2"
               value={startTime}
               onChange={e => setStartTime(e.target.value)}
             >
@@ -439,7 +440,7 @@ function ShiftCreateModal({ trainers, date, initialHour, initialTrainerId, isOpe
           <div>
             <label className="block text-xs text-text-secondary mb-1">終了</label>
             <select
-              className="w-full border rounded p-2"
+              className="w-full border rounded-lg p-2"
               value={endTime}
               onChange={e => setEndTime(e.target.value)}
             >
@@ -451,20 +452,24 @@ function ShiftCreateModal({ trainers, date, initialHour, initialTrainerId, isOpe
         </div>
 
         <div className="flex justify-end gap-2">
-          <button 
+          <Button
+            type="button"
+            variant="ghost"
             onClick={onClose}
-            className="px-3 py-2 text-text-secondary text-sm hover:bg-surface-overlay rounded"
+            className="px-3 py-2 text-text-secondary text-sm hover:bg-surface-overlay rounded-lg"
             disabled={loading}
           >
             キャンセル
-          </button>
-          <button 
+          </Button>
+          <Button
+            type="button"
+            variant="primary"
             onClick={handleSave}
-            className="px-3 py-2 bg-brand-700 text-white text-sm rounded hover:bg-brand-800"
+            className="px-3 py-2 bg-brand-700 text-white text-sm rounded-lg hover:bg-brand-800"
             disabled={loading}
           >
             保存
-          </button>
+          </Button>
         </div>
       </div>
     </div>
@@ -504,7 +509,7 @@ function ShiftEditModal({ shift, trainerName, isOpen, onClose, onSave, onDelete 
       onClose()
     } catch (e) {
       console.error(e)
-      alert('保存に失敗しました')
+      alert('保存できませんでした。もう一度お試しください。')
     } finally {
       setLoading(false)
     }
@@ -518,7 +523,7 @@ function ShiftEditModal({ shift, trainerName, isOpen, onClose, onSave, onDelete 
       onClose()
     } catch (e) {
       console.error(e)
-      alert('削除に失敗しました')
+      alert('削除できませんでした。もう一度お試しください。')
     } finally {
       setLoading(false)
     }
@@ -537,7 +542,7 @@ function ShiftEditModal({ shift, trainerName, isOpen, onClose, onSave, onDelete 
           <div>
             <label className="block text-xs text-text-secondary mb-1">開始</label>
             <select
-              className="w-full border rounded p-2"
+              className="w-full border rounded-lg p-2"
               value={startTime}
               onChange={e => setStartTime(e.target.value)}
             >
@@ -549,7 +554,7 @@ function ShiftEditModal({ shift, trainerName, isOpen, onClose, onSave, onDelete 
           <div>
             <label className="block text-xs text-text-secondary mb-1">終了</label>
             <select
-              className="w-full border rounded p-2"
+              className="w-full border rounded-lg p-2"
               value={endTime}
               onChange={e => setEndTime(e.target.value)}
             >
@@ -561,28 +566,34 @@ function ShiftEditModal({ shift, trainerName, isOpen, onClose, onSave, onDelete 
         </div>
 
         <div className="flex justify-between">
-          <button 
+          <Button
+            type="button"
+            variant="destructive"
             onClick={handleDelete}
-            className="px-3 py-2 text-red-400 text-sm hover:bg-red-500/25 rounded"
+            className="px-3 py-2 text-red-400 text-sm hover:bg-red-500/25 rounded-lg"
             disabled={loading}
           >
             削除
-          </button>
+          </Button>
           <div className="flex gap-2">
-            <button 
+            <Button
+              type="button"
+              variant="ghost"
               onClick={onClose}
-              className="px-3 py-2 text-text-secondary text-sm hover:bg-surface-overlay rounded"
+              className="px-3 py-2 text-text-secondary text-sm hover:bg-surface-overlay rounded-lg"
               disabled={loading}
             >
               キャンセル
-            </button>
-            <button 
+            </Button>
+            <Button
+              type="button"
+              variant="primary"
               onClick={handleSave}
-              className="px-3 py-2 bg-brand-700 text-white text-sm rounded hover:bg-brand-800"
+              className="px-3 py-2 bg-brand-700 text-white text-sm rounded-lg hover:bg-brand-800"
               disabled={loading}
             >
               保存
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -622,7 +633,7 @@ function TemplateShiftCreateModal({ trainerName, start, end, isOpen, onClose, on
       onClose()
     } catch (e) {
       console.error(e)
-      alert('保存に失敗しました')
+      alert('保存できませんでした。もう一度お試しください。')
     } finally {
       setLoading(false)
     }
@@ -636,7 +647,7 @@ function TemplateShiftCreateModal({ trainerName, start, end, isOpen, onClose, on
       await onDelete()
     } catch (e) {
       console.error(e)
-      alert('削除に失敗しました')
+      alert('削除できませんでした。もう一度お試しください。')
     } finally {
       setLoading(false)
     }
@@ -655,7 +666,7 @@ function TemplateShiftCreateModal({ trainerName, start, end, isOpen, onClose, on
           <div>
             <label className="block text-xs text-text-secondary mb-1">開始</label>
             <select
-              className="w-full border rounded p-2"
+              className="w-full border rounded-lg p-2"
               value={startTime}
               onChange={e => setStartTime(e.target.value)}
             >
@@ -667,7 +678,7 @@ function TemplateShiftCreateModal({ trainerName, start, end, isOpen, onClose, on
           <div>
             <label className="block text-xs text-text-secondary mb-1">終了</label>
             <select
-              className="w-full border rounded p-2"
+              className="w-full border rounded-lg p-2"
               value={endTime}
               onChange={e => setEndTime(e.target.value)}
             >
@@ -680,29 +691,35 @@ function TemplateShiftCreateModal({ trainerName, start, end, isOpen, onClose, on
 
         <div className="flex justify-between gap-2">
           {onDelete ? (
-            <button
+            <Button
+              type="button"
+              variant="destructive"
               onClick={handleDelete}
-              className="px-3 py-2 text-red-400 text-sm hover:bg-red-500/25 rounded"
+              className="px-3 py-2 text-red-400 text-sm hover:bg-red-500/25 rounded-lg"
               disabled={loading}
             >
               削除
-            </button>
+            </Button>
           ) : <span />}
           <div className="flex gap-2">
-            <button
+            <Button
+              type="button"
+              variant="ghost"
               onClick={onClose}
-              className="px-3 py-2 text-text-secondary text-sm hover:bg-surface-overlay rounded"
+              className="px-3 py-2 text-text-secondary text-sm hover:bg-surface-overlay rounded-lg"
               disabled={loading}
             >
               キャンセル
-            </button>
-            <button
+            </Button>
+            <Button
+              type="button"
+              variant="primary"
               onClick={handleSave}
-              className="px-3 py-2 bg-brand-700 text-white text-sm rounded hover:bg-brand-800"
+              className="px-3 py-2 bg-brand-700 text-white text-sm rounded-lg hover:bg-brand-800"
               disabled={loading}
             >
               保存
-            </button>
+            </Button>
           </div>
         </div>
       </div>

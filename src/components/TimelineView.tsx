@@ -3,6 +3,7 @@
 import { useMemo, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Icon from '@/components/ui/icons'
+import Button from '@/components/ui/Button'
 
 interface CalendarEvent {
   id: string
@@ -429,7 +430,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
       })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        alert(data.error || '予約の更新に失敗しました')
+        alert(data.error || '予約を更新できませんでした。もう一度お試しください。')
         return
       }
       setShowEditModal(false)
@@ -437,7 +438,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
       onEventsUpdate()
     } catch (err) {
       console.error(err)
-      alert('予約の更新に失敗しました')
+      alert('予約を更新できませんでした。もう一度お試しください。')
     }
   }
 
@@ -461,7 +462,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
       })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        alert(data.error || '予約の削除に失敗しました')
+        alert(data.error || '予約を削除できませんでした。もう一度お試しください。')
         return
       }
       setShowEditModal(false)
@@ -469,7 +470,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
       onEventsUpdate()
     } catch (err) {
       console.error(err)
-      alert('予約の削除に失敗しました')
+      alert('予約を削除できませんでした。もう一度お試しください。')
     }
   }
 
@@ -501,23 +502,29 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
       <div className="px-4 py-4">
         <div className="flex flex-col items-center space-y-2">
           <div className="flex items-center space-x-3">
-            <button
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
               onClick={() => changeDate(-1)}
-              className="p-2 text-text-muted hover:text-text-secondary hover:bg-surface-overlay rounded-md flex-shrink-0"
+              className="p-2 text-text-muted hover:text-text-secondary hover:bg-surface-overlay rounded-lg flex-shrink-0"
               title="前の日"
             >
               <Icon name="chevronLeft" size={20} />
-            </button>
+            </Button>
             <h2 className="text-xl font-normal text-text-primary whitespace-nowrap">
               {formatSelectedDate(selectedDate)}
             </h2>
-            <button
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
               onClick={() => changeDate(1)}
-              className="p-2 text-text-muted hover:text-text-secondary hover:bg-surface-overlay rounded-md flex-shrink-0"
+              className="p-2 text-text-muted hover:text-text-secondary hover:bg-surface-overlay rounded-lg flex-shrink-0"
               title="次の日"
             >
               <Icon name="chevronRight" size={20} />
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -593,7 +600,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
                     return (
                       <div
                         key={`avail-${idx}`}
-                        className="absolute w-full rounded-[2px] border border-neutral-900/45 shadow-[inset_0_10px_18px_rgba(0,0,0,0.10)] z-0 pointer-events-none"
+                        className="absolute w-full rounded-2xl border border-neutral-900/45 shadow-[inset_0_10px_18px_rgba(0,0,0,0.10)] z-0 pointer-events-none"
                         style={{
                           top: `${top}px`,
                           height: `${height}px`,
@@ -630,7 +637,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
                       return (
                         <div
                           key={`${event.id}-${trainer.id}`}
-                          className={`absolute px-1 py-1 rounded text-xs font-normal ${colorClass} z-10`}
+                          className={`absolute px-1 py-1 rounded-lg text-xs font-normal ${colorClass} z-10`}
                           style={{
                             top: `${top}px`,
                             left: `${leftPercent}%`,
@@ -688,19 +695,19 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
       <div className="px-6 py-3 border-t border-border-strong bg-surface-base">
         <div className="flex items-center justify-center space-x-6 text-sm">
           <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-brand-700 border border-brand-800 rounded"></div>
+            <div className="w-3 h-3 bg-brand-700 border border-brand-800 rounded-lg"></div>
             <span className="text-text-secondary">予約</span>
           </div>
           <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-blue-500/15 border border-blue-500/30 rounded"></div>
+            <div className="w-3 h-3 bg-blue-500/15 border border-blue-500/30 rounded-lg"></div>
             <span className="text-text-secondary">体験</span>
           </div>
           <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-surface-overlay border border-border-strong rounded"></div>
+            <div className="w-3 h-3 bg-surface-overlay border border-border-strong rounded-lg"></div>
             <span className="text-text-secondary">予約不可時間</span>
           </div>
           <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-purple-500/25 border border-purple-500/40 rounded"></div>
+            <div className="w-3 h-3 bg-purple-500/25 border border-purple-500/40 rounded-lg"></div>
             <span className="text-text-secondary">ゲスト</span>
           </div>
         </div>
@@ -709,7 +716,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
       {/* Loading Overlay for Navigation */}
       {isNavigating && (
         <div className="fixed inset-0 bg-gray-900 bg-opacity-50 z-[100] flex items-center justify-center backdrop-blur-sm">
-          <div className="bg-surface-raised p-6 rounded-xl shadow-xl flex flex-col items-center">
+          <div className="bg-surface-raised p-6 rounded-2xl shadow-xl flex flex-col items-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600 mb-4"></div>
             <p className="text-text-primary font-normal">予約画面へ移動中...</p>
             <p className="text-text-secondary text-xs mt-2">少々お待ちください</p>
@@ -720,7 +727,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
       {/* Edit Modal */}
       {showEditModal && editingReservation && (
         <div className="fixed inset-0 bg-gray-900 bg-opacity-60 z-[200] flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="relative w-full max-w-md bg-surface-raised shadow-xl rounded-xl max-h-[90vh] flex flex-col border border-border-subtle">
+          <div className="relative w-full max-w-md bg-surface-raised shadow-xl rounded-2xl max-h-[90vh] flex flex-col border border-border-subtle">
             <div className="p-6 overflow-y-auto">
               <h3 className="text-lg font-normal text-text-primary mb-4">予約の変更</h3>
               <form onSubmit={handleEditSubmit} className="space-y-4">
@@ -730,7 +737,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
                     type="text"
                     value={editFormData.title}
                     onChange={(e) => setEditFormData(prev => ({ ...prev, title: e.target.value }))}
-                    className="w-full px-3 py-2 border border-border-strong rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    className="w-full px-3 py-2 border border-border-strong rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
                     required
                   />
                 </div>
@@ -739,7 +746,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
                   <select
                     value={editFormData.trainerId || ''}
                     onChange={(e) => setEditFormData(prev => ({ ...prev, trainerId: e.target.value }))}
-                    className="w-full px-3 py-2 border border-border-strong rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    className="w-full px-3 py-2 border border-border-strong rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
                   >
                     <option value="">指定なし（フリー）</option>
                     {trainers.map(tr => (
@@ -753,7 +760,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
                     type="datetime-local"
                     value={editFormData.startTime}
                     onChange={handleStartTimeChange}
-                    className="w-full px-3 py-2 border border-border-strong rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    className="w-full px-3 py-2 border border-border-strong rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
                     required
                   />
                 </div>
@@ -763,7 +770,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
                     type="datetime-local"
                     value={editFormData.endTime}
                     onChange={(e) => setEditFormData(prev => ({ ...prev, endTime: e.target.value }))}
-                    className="w-full px-3 py-2 border border-border-strong rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    className="w-full px-3 py-2 border border-border-strong rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
                     required
                   />
                 </div>
@@ -773,33 +780,39 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
                     value={editFormData.notes}
                     onChange={(e) => setEditFormData(prev => ({ ...prev, notes: e.target.value }))}
                     rows={3}
-                    className="w-full px-3 py-2 border border-border-strong rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    className="w-full px-3 py-2 border border-border-strong rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
                   />
                 </div>
                 <div className="flex items-center justify-between pt-4">
                   <div>
-                    <button
+                    <Button
                       type="button"
+                      variant="destructive"
+                      size="sm"
                       onClick={handleDeleteReservation}
-                      className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
                     >
                       削除
-                    </button>
+                    </Button>
                   </div>
                   <div className="flex space-x-3">
-                    <button
+                    <Button
                       type="button"
+                      variant="secondary"
+                      size="sm"
                       onClick={() => { setShowEditModal(false); setEditingReservation(null) }}
-                      className="px-4 py-2 bg-surface-overlay text-text-secondary rounded-md hover:bg-surface-overlay transition-colors"
+                      className="px-4 py-2 bg-surface-overlay text-text-secondary rounded-lg hover:bg-surface-overlay transition-colors"
                     >
                       キャンセル
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       type="submit"
-                      className="px-4 py-2 bg-brand-700 text-white rounded-md hover:bg-brand-800 transition-colors"
+                      variant="primary"
+                      size="sm"
+                      className="px-4 py-2 bg-brand-700 text-white rounded-lg hover:bg-brand-800 transition-colors"
                     >
                       更新
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </form>
@@ -819,20 +832,24 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
               <h3 className="text-xl font-normal text-text-primary mb-2">予約を削除しますか？</h3>
               <p className="text-sm text-text-secondary mb-6">この操作は取り消せません。</p>
               <div className="flex justify-center space-x-3 w-full">
-                <button
+                <Button
                   type="button"
+                  variant="secondary"
+                  size="md"
                   onClick={() => setShowDeleteConfirmModal(false)}
-                  className="flex-1 px-4 py-3 border border-border-strong text-text-secondary bg-surface-raised rounded-xl hover:bg-surface-base transition-colors font-normal shadow-sm"
+                  className="flex-1 px-4 py-3 border border-border-strong text-text-secondary bg-surface-raised rounded-2xl hover:bg-surface-base transition-colors font-normal shadow-sm"
                 >
                   キャンセル
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
+                  variant="destructive"
+                  size="md"
                   onClick={executeDeleteReservation}
-                  className="flex-1 px-4 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors font-normal shadow-sm"
+                  className="flex-1 px-4 py-3 bg-red-600 text-white rounded-2xl hover:bg-red-700 transition-colors font-normal shadow-sm"
                 >
                   削除する
-                </button>
+                </Button>
               </div>
             </div>
           </div>

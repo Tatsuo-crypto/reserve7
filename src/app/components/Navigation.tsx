@@ -6,6 +6,7 @@ import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { getStoreDisplayName } from '@/lib/auth-utils'
 import { useState, Suspense, useEffect } from 'react'
 import StoreSwitcher from './StoreSwitcher'
+import Button from '@/components/ui/Button'
 import Icon from '@/components/ui/icons'
 
 function NavigationContent() {
@@ -89,25 +90,29 @@ function NavigationContent() {
         {/* Left: Menu or Back Button */}
         <div className="z-10 min-w-[44px]">
           {isSubPage ? (
-            <button
+            <Button
+              type="button"
+              variant="ghost"
               onClick={handleBack}
-              className="w-10 h-10 flex items-center justify-center text-brand-500 bg-surface-raised rounded-full shadow-sm border border-border-subtle transition-all active:scale-90 hover:bg-surface-base"
+              className="w-10 h-10 flex items-center justify-center p-0 text-brand-500 bg-surface-raised rounded-full shadow-sm border border-border-subtle transition-all active:scale-90 hover:bg-surface-base"
             >
               <Icon name="chevronLeft" size={24} />
-            </button>
+            </Button>
           ) : (
-            <button
+            <Button
+              type="button"
+              variant="ghost"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="w-10 h-10 flex items-center justify-center text-text-muted bg-surface-raised rounded-full shadow-sm border border-border-subtle transition-all active:scale-90"
+              className="w-10 h-10 flex items-center justify-center p-0 text-text-muted bg-surface-raised rounded-full shadow-sm border border-border-subtle transition-all active:scale-90"
             >
               <Icon name="menu" size={24} />
-            </button>
+            </Button>
           )}
         </div>
 
         {/* Center: Dynamic Page Title */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <h1 className="text-[17px] font-normal text-text-primary tracking-tight whitespace-nowrap pointer-events-auto">
+          <h1 className="text-base font-normal text-text-primary tracking-tight whitespace-nowrap pointer-events-auto">
             {getPageTitle()}
           </h1>
         </div>
@@ -117,25 +122,27 @@ function NavigationContent() {
           {session?.user?.role === 'ADMIN' ? (
             <StoreSwitcher defaultStoreName={getStoreDisplayName(session.user.email)} />
           ) : session?.user ? (
-             <button 
+             <Button
+               type="button"
+               variant="ghost"
                onClick={handleLogout}
                className="h-10 px-4 flex items-center gap-1 bg-surface-raised rounded-full shadow-sm border border-border-subtle transition-all active:scale-95"
              >
-               <span className="whitespace-nowrap text-[13px] font-normal text-text-secondary">
+               <span className="whitespace-nowrap text-sm font-normal text-text-secondary">
                  {formatName(session.user.name, session.user.role)}
                </span>
-               <div className={`ml-1 px-2 py-0.5 rounded-full text-[10px] font-normal whitespace-nowrap ${
+               <div className={`ml-1 px-2 py-0.5 rounded-full text-xs font-normal whitespace-nowrap ${
                  session.user.role === 'TRAINER' ? 'bg-brand-500 text-white' : 'bg-surface-overlay text-text-primary'
                }`}>
                  {session.user.role === 'TRAINER' ? 'トレーナー' : '会員'}
                </div>
-             </button>
+             </Button>
           ) : null}
         </div>
 
         {/* Mobile Menu Overlay */}
         {isMobileMenuOpen && (
-          <div className="absolute top-16 left-4 right-4 bg-surface-raised rounded-3xl shadow-xl border border-border-subtle p-2 z-50 animate-fadeIn overflow-hidden">
+          <div className="absolute top-16 left-4 right-4 bg-surface-raised rounded-2xl shadow-xl border border-border-subtle p-2 z-50 animate-fadeIn overflow-hidden">
              <div className="flex flex-col">
               <Link 
                 href="/dashboard" 
@@ -144,12 +151,14 @@ function NavigationContent() {
               >
                 <span className="text-base font-normal">ダッシュボード</span>
               </Link>
-              <button 
+              <Button
+                type="button"
+                variant="ghost"
                 onClick={handleLogout}
                 className="w-full flex items-center gap-3 p-5 hover:bg-state-danger-500/25 rounded-2xl transition-colors text-state-danger-400 border-t border-border-subtle"
               >
                 <span className="text-base font-normal">ログアウト</span>
-              </button>
+              </Button>
              </div>
           </div>
         )}

@@ -11,6 +11,7 @@ import TeamShiftCalendar from '@/components/shifts/TeamShiftCalendar'
 import TemplateModal from '@/components/shifts/TemplateModal'
 import Icon from '@/components/ui/icons'
 import AppModal from '@/components/ui/AppModal'
+import Button from '@/components/ui/Button'
 
 function formatHoursLabel(hours: number) {
   const rounded = Math.round(hours * 100) / 100
@@ -118,21 +119,23 @@ function FixedShiftOverview({
             <div key={trainer.id} className="rounded-2xl border border-border-subtle bg-surface-base px-4 py-3">
               <div className="mb-3 flex items-center justify-between gap-3">
                 <p className="text-sm font-semibold text-text-primary">{getTrainerLabel(trainer)}</p>
-                <button
+                <Button
                   type="button"
                   onClick={() => onEdit(trainer.id)}
+                  variant="ghost"
+                  size="sm"
                   className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-500/15 text-brand-200 active:scale-95"
                   aria-label={`${getTrainerLabel(trainer)}の固定シフトを編集`}
                 >
                   <Icon name="pencil" size={17} />
-                </button>
+                </Button>
               </div>
 
               <div className="space-y-2">
                 {trainerTemplates.length > 0 ? trainerTemplates.map(template => (
                   <div
                     key={template.id}
-                    className="flex items-center justify-between rounded-xl border border-brand-500/20 bg-brand-500/10 px-3 py-2"
+                    className="flex items-center justify-between rounded-2xl border border-brand-500/20 bg-brand-500/10 px-3 py-2"
                   >
                     <span className="text-sm text-brand-100">{WEEKDAY_LABELS_BY_DAY[template.day_of_week]}</span>
                     <span className="text-sm tabular-nums text-text-primary">{formatTemplateRange(template)}</span>
@@ -236,22 +239,22 @@ function OverallCalendarSection({
 
       <div className="px-4 py-4">
         <div className="mb-3 flex items-center justify-between">
-          <button type="button" onClick={onPrevMonth} className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-base text-text-secondary active:scale-95">
+          <Button type="button" variant="secondary" size="sm" onClick={onPrevMonth} className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-base p-0 text-text-secondary active:scale-95">
             <Icon name="chevronLeft" size={18} />
-          </button>
+          </Button>
           <div className="text-center">
             <p className="text-lg font-semibold tabular-nums text-text-primary">{format(currentDate, 'yyyy年M月', { locale: ja })}</p>
-            <button type="button" onClick={onToday} className="mt-1 rounded-full bg-surface-base px-3 py-1 text-xs text-text-secondary">
+            <Button type="button" variant="secondary" size="sm" onClick={onToday} className="mt-1 rounded-full bg-surface-base px-3 py-1 text-xs text-text-secondary">
               今日
-            </button>
+            </Button>
           </div>
-          <button type="button" onClick={onNextMonth} className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-base text-text-secondary active:scale-95">
+          <Button type="button" variant="secondary" size="sm" onClick={onNextMonth} className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-base p-0 text-text-secondary active:scale-95">
             <Icon name="chevronRight" size={18} />
-          </button>
+          </Button>
         </div>
 
         <div className="rounded-2xl border border-border-subtle bg-surface-base p-3">
-          <div className="mb-2 grid grid-cols-7 text-center text-[10px] text-text-muted">
+          <div className="mb-2 grid grid-cols-7 text-center text-xs text-text-muted">
             {WEEKDAY_LABELS_MONDAY_START.map(day => <div key={day}>{day}</div>)}
           </div>
           <div className="space-y-1">
@@ -274,12 +277,14 @@ function OverallCalendarSection({
                     const hasWork = hours > 0
 
                     return (
-                      <button
+                      <Button
                         key={day.toISOString()}
                         type="button"
+                        variant="ghost"
+                        size="sm"
                         onClick={() => onDaySelect(day)}
                         disabled={viewMode === 'individual' && !selectedTrainerId}
-                        className={`min-h-12 rounded-xl border px-1 py-1 text-center transition active:scale-[0.98] disabled:opacity-40 ${
+                        className={`min-h-12 flex-col rounded-2xl border px-1 py-1 text-center transition active:scale-[0.98] disabled:opacity-40 ${
                           hasWork
                             ? 'border-brand-500/25 bg-brand-500/12'
                             : rowSelected
@@ -291,11 +296,11 @@ function OverallCalendarSection({
                           {day.getDate()}
                         </div>
                         {hasWork && (
-                          <div className="mt-1 truncate text-[10px] tabular-nums text-brand-100">
+                          <div className="mt-1 truncate text-xs tabular-nums text-brand-100">
                             {formatHoursLabel(hours)}
                           </div>
                         )}
-                      </button>
+                      </Button>
                     )
                   })}
                 </div>
@@ -600,15 +605,15 @@ export default function ShiftManagementPage() {
 
       if (res.ok) {
         const data = await res.json()
-        alert(`${data.count}件のシフトをコピーしました`)
+        alert(`${data.count}件のシフトをコピーしました。`)
         refreshShifts()
       } else {
         const err = await res.json()
-        alert(`コピーに失敗しました: ${err.message || '不明なエラー'}`)
+        alert(`コピーできませんでした。${err.message || 'もう一度お試しください。'}`)
       }
     } catch (e) {
       console.error(e)
-      alert('エラーが発生しました')
+      alert('コピーできませんでした。もう一度お試しください。')
     } finally {
       setLoading(false)
     }
@@ -636,15 +641,15 @@ export default function ShiftManagementPage() {
 
       if (res.ok) {
         const data = await res.json()
-        alert(`${data.count}件のシフトを作成しました`)
+        alert(`${data.count}件のシフトを作成しました。`)
         refreshShifts()
       } else {
         const err = await res.json()
-        alert(`反映に失敗しました: ${err.message || '不明なエラー'}`)
+        alert(`反映できませんでした。${err.message || 'もう一度お試しください。'}`)
       }
     } catch (e) {
       console.error(e)
-      alert('エラーが発生しました')
+      alert('反映できませんでした。もう一度お試しください。')
     } finally {
       setLoading(false)
     }
@@ -685,11 +690,11 @@ export default function ShiftManagementPage() {
         refreshShifts()
       } else {
         const err = await res.json()
-        alert(`削除に失敗しました: ${err.message || '不明なエラー'}`)
+        alert(`削除できませんでした。${err.message || 'もう一度お試しください。'}`)
       }
     } catch (e) {
       console.error(e)
-      alert('エラーが発生しました')
+      alert('削除できませんでした。もう一度お試しください。')
     } finally {
       setLoading(false)
     }
@@ -710,7 +715,7 @@ export default function ShiftManagementPage() {
       if (res.ok) refreshShifts()
     } catch (e) {
       console.error(e)
-      alert('作成に失敗しました')
+      alert('作成できませんでした。もう一度お試しください。')
     }
   }
 
@@ -727,7 +732,7 @@ export default function ShiftManagementPage() {
       if (res.ok) refreshShifts()
     } catch (e) {
       console.error(e)
-      alert('更新に失敗しました')
+      alert('更新できませんでした。もう一度お試しください。')
     }
   }
 
@@ -739,7 +744,7 @@ export default function ShiftManagementPage() {
       if (res.ok) refreshShifts()
     } catch (e) {
       console.error(e)
-      alert('削除に失敗しました')
+      alert('削除できませんでした。もう一度お試しください。')
     }
   }
 
@@ -771,7 +776,7 @@ export default function ShiftManagementPage() {
       await refreshShifts()
     } catch (e) {
       console.error(e)
-      alert('削除に失敗しました。マイグレーションが未適用の場合は、追加されたSQLを実行してください。')
+      alert('削除できませんでした。必要なデータベース更新が反映されているか確認してください。')
     }
   }
 
@@ -818,7 +823,7 @@ export default function ShiftManagementPage() {
       await refreshShifts()
     } catch (e) {
       console.error(e)
-      alert('作成に失敗しました')
+      alert('作成できませんでした。もう一度お試しください。')
     }
   }
 
@@ -837,9 +842,11 @@ export default function ShiftManagementPage() {
     <div className="max-w-7xl mx-auto pt-4 pb-24 px-4 sm:px-6 lg:px-8 space-y-4">
 
       <section className="space-y-3">
-        <div className="flex bg-surface-overlay p-1 rounded-xl">
-          <button
+        <div className="flex bg-surface-overlay p-1 rounded-2xl">
+          <Button
             type="button"
+            variant="ghost"
+            fullWidth
             onClick={() => setViewMode('individual')}
             className={`h-10 flex-1 rounded-lg text-sm font-normal transition-all ${
               viewMode === 'individual' 
@@ -848,9 +855,11 @@ export default function ShiftManagementPage() {
             }`}
           >
             個人
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="ghost"
+            fullWidth
             onClick={() => setViewMode('team')}
             className={`h-10 flex-1 rounded-lg text-sm font-normal transition-all ${
               viewMode === 'team' 
@@ -859,7 +868,7 @@ export default function ShiftManagementPage() {
             }`}
           >
             店舗
-          </button>
+          </Button>
         </div>
 
         {viewMode === 'individual' && (
@@ -875,7 +884,7 @@ export default function ShiftManagementPage() {
                 ))}
               </select>
             ) : (
-              <div className="rounded-xl border border-border-subtle bg-surface-base px-4 py-4 text-center text-sm text-text-secondary">
+              <div className="rounded-2xl border border-border-subtle bg-surface-base px-4 py-4 text-center text-sm text-text-secondary">
                 対象トレーナーがいません
               </div>
             )}
@@ -883,7 +892,7 @@ export default function ShiftManagementPage() {
         )}
 
         {viewMode === 'team' && (
-          <div className="rounded-xl border border-border-subtle bg-surface-base px-4 py-3">
+          <div className="rounded-2xl border border-border-subtle bg-surface-base px-4 py-3">
             <p className="text-sm text-text-primary">店舗全体 <span className="ml-2 text-xs text-text-secondary">{filteredTrainers.length}名</span></p>
           </div>
         )}
@@ -924,19 +933,23 @@ export default function ShiftManagementPage() {
         actions={
           selectedWeekDate ? (
             <div className="relative">
-              <button
+              <Button
                 type="button"
+                variant="secondary"
+                size="sm"
                 onClick={() => setActionMenuOpen(prev => !prev)}
                 className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-base text-text-secondary active:scale-95"
                 aria-label="シフト操作"
               >
                 <Icon name="ellipsisVertical" size={17} />
-              </button>
+              </Button>
 
               {actionMenuOpen && (
                 <div className="absolute right-0 top-10 z-30 w-52 overflow-hidden rounded-2xl border border-border-subtle bg-surface-raised shadow-xl">
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
+                    fullWidth
                     onClick={() => {
                       setActionMenuOpen(false)
                       setSelectionMode(true)
@@ -946,12 +959,14 @@ export default function ShiftManagementPage() {
                   >
                     <Icon name="checkCircle" size={17} className="text-text-secondary" />
                     複数選択
-                  </button>
+                  </Button>
 
                   {viewMode === 'individual' && (
                     <>
-                      <button
+                      <Button
                         type="button"
+                        variant="ghost"
+                        fullWidth
                         onClick={() => {
                           setActionMenuOpen(false)
                           handleCopyPrevWeek()
@@ -961,9 +976,11 @@ export default function ShiftManagementPage() {
                       >
                         <Icon name="copy" size={17} className="text-text-secondary" />
                         先週からコピー
-                      </button>
-                      <button
+                      </Button>
+                      <Button
                         type="button"
+                        variant="ghost"
+                        fullWidth
                         onClick={() => {
                           setActionMenuOpen(false)
                           handleApplyTemplates()
@@ -973,7 +990,7 @@ export default function ShiftManagementPage() {
                       >
                         <Icon name="refresh" size={17} className="text-text-secondary" />
                         固定シフトを反映
-                      </button>
+                      </Button>
                     </>
                   )}
                 </div>
@@ -987,26 +1004,28 @@ export default function ShiftManagementPage() {
             {selectionMode && (
               <div className="flex items-center justify-center gap-2 border-b border-border-subtle px-4 py-3">
                 <span className="rounded-full bg-brand-500/15 px-3 py-2 text-sm text-brand-200">{selectedShiftIds.length}件</span>
-                <button
+                <Button
                   type="button"
+                  variant="destructive"
                   onClick={handleBulkDelete}
                   disabled={selectedShiftIds.length === 0 || loading}
-                  className="inline-flex h-10 items-center justify-center rounded-xl bg-red-600 px-3 text-sm font-normal text-white disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98]"
+                  className="inline-flex h-10 items-center justify-center rounded-2xl bg-red-600 px-3 text-sm font-normal text-white disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98]"
                 >
                   <Icon name="trash" size={16} className="mr-1.5" />
                   削除
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
+                  variant="secondary"
                   onClick={() => {
                     setSelectionMode(false)
                     setSelectedShiftIds([])
                   }}
-                  className="inline-flex h-10 items-center justify-center rounded-xl border border-border-subtle bg-surface-base px-3 text-sm font-normal text-text-secondary active:scale-[0.98]"
+                  className="inline-flex h-10 items-center justify-center rounded-2xl border border-border-subtle bg-surface-base px-3 text-sm font-normal text-text-secondary active:scale-[0.98]"
                 >
                   <Icon name="close" size={16} className="mr-1.5 text-text-secondary" />
                   キャンセル
-                </button>
+                </Button>
               </div>
             )}
 
@@ -1064,8 +1083,9 @@ export default function ShiftManagementPage() {
       </OverallCalendarSection>
 
       {selectedWeekDate && (
-          <button
+          <Button
             type="button"
+            fullWidth
             onClick={() => {
               setCreateDate(selectedWeekDate)
               setCreateModalOpen(true)
@@ -1075,7 +1095,7 @@ export default function ShiftManagementPage() {
           >
             <Icon name="plus" size={20} className="mr-2" />
             シフトを追加
-          </button>
+          </Button>
       )}
 
       {/* Template Modal */}
@@ -1189,15 +1209,15 @@ function ShiftQuickCreateModal({
       bodyClassName="space-y-4 p-5"
       footer={(
         <>
-          <button type="button" onClick={onClose} className="rounded-full px-4 py-2 text-sm text-text-secondary">キャンセル</button>
-          <button
+          <Button type="button" variant="ghost" size="sm" onClick={onClose} className="rounded-full px-4 py-2 text-sm text-text-secondary">キャンセル</Button>
+          <Button
             type="button"
             onClick={handleSave}
             disabled={loading}
             className="rounded-full bg-brand-600 px-5 py-2 text-sm text-white disabled:opacity-50"
           >
             登録
-          </button>
+          </Button>
         </>
       )}
     >
@@ -1207,7 +1227,7 @@ function ShiftQuickCreateModal({
               <select
                 value={trainerId}
                 onChange={event => setTrainerId(event.target.value)}
-                className="h-12 w-full rounded-xl border border-border-subtle bg-surface-base px-3 text-text-primary"
+                className="h-12 w-full rounded-2xl border border-border-subtle bg-surface-base px-3 text-text-primary"
               >
                 {trainers.map(trainer => (
                   <option key={trainer.id} value={trainer.id}>{trainer.full_name}</option>
@@ -1222,7 +1242,7 @@ function ShiftQuickCreateModal({
               type="date"
               value={dateValue}
               onChange={event => setDateValue(event.target.value)}
-              className="h-12 w-full rounded-xl border border-border-subtle bg-surface-base px-3 text-text-primary"
+              className="h-12 w-full rounded-2xl border border-border-subtle bg-surface-base px-3 text-text-primary"
             />
           </div>
 
@@ -1232,7 +1252,7 @@ function ShiftQuickCreateModal({
               <select
                 value={startTime}
                 onChange={event => setStartTime(event.target.value)}
-                className="h-12 w-full rounded-xl border border-border-subtle bg-surface-base px-3 text-text-primary"
+                className="h-12 w-full rounded-2xl border border-border-subtle bg-surface-base px-3 text-text-primary"
               >
                 {timeOptions.map(time => <option key={`start-${time}`} value={time}>{time}</option>)}
               </select>
@@ -1242,20 +1262,20 @@ function ShiftQuickCreateModal({
               <select
                 value={endTime}
                 onChange={event => setEndTime(event.target.value)}
-                className="h-12 w-full rounded-xl border border-border-subtle bg-surface-base px-3 text-text-primary"
+                className="h-12 w-full rounded-2xl border border-border-subtle bg-surface-base px-3 text-text-primary"
               >
                 {timeOptions.map(time => <option key={`end-${time}`} value={time}>{time}</option>)}
               </select>
             </div>
           </div>
 
-          <label className="flex min-h-12 items-center justify-between rounded-xl border border-border-subtle bg-surface-base px-3">
+          <label className="flex min-h-12 items-center justify-between rounded-2xl border border-border-subtle bg-surface-base px-3">
             <span className="text-sm text-text-primary">毎週固定</span>
             <input
               type="checkbox"
               checked={weeklyFixed}
               onChange={event => setWeeklyFixed(event.target.checked)}
-              className="h-5 w-5 rounded border-border-subtle text-brand-600 focus:ring-brand-500"
+              className="h-5 w-5 rounded-lg border-border-subtle text-brand-600 focus:ring-brand-500"
             />
           </label>
     </AppModal>

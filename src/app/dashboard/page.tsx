@@ -80,7 +80,7 @@ const AdminDashboard = () => {
         {/* DIET TAB */}
         {activeTab === 'diet' && (
           <div className="space-y-6 animate-slideUp">
-            <div className="bg-surface-raised p-6 rounded-[2.5rem] border border-border-subtle shadow-sm space-y-6">
+            <div className="bg-surface-raised p-6 rounded-2xl border border-border-subtle shadow-sm space-y-6">
               <div className="space-y-3">
                 {dietLoading ? (
                   <div className="py-10 text-center flex flex-col items-center gap-3">
@@ -91,12 +91,12 @@ const AdminDashboard = () => {
                   <div className="py-10 text-center text-text-muted italic text-sm">対象者がいません</div>
                 ) : (
                   dietMembers.map(member => (
-                    <Link key={member.id} href={`/admin/diet-plan?userId=${member.id}`} className="flex items-center gap-4 p-5 hover:bg-surface-base rounded-3xl border border-border-subtle transition-all shadow-sm">
+                    <Link key={member.id} href={`/admin/diet-plan?userId=${member.id}`} className="flex items-center gap-4 p-5 hover:bg-surface-base rounded-2xl border border-border-subtle transition-all shadow-sm">
                       <div className={`w-3 h-3 rounded-full ${getStatusDotColor(member.status)}`} />
                       <div className="flex-1">
                         <div className="text-base font-normal text-text-primary">{member.full_name}</div>
                         <div className="flex items-center gap-2 mt-0.5">
-                          <span className="text-[10px] font-normal text-text-muted bg-surface-overlay px-2 py-0.5 rounded-md uppercase">
+                          <span className="text-xs font-normal text-text-muted bg-surface-overlay px-2 py-0.5 rounded-lg uppercase">
                             {member.stores?.name || '店舗未設定'}
                           </span>
                         </div>
@@ -113,7 +113,7 @@ const AdminDashboard = () => {
         {/* HOME / RESERVATION TAB */}
         {activeTab === 'home' && (
           <div className="animate-slideUp -mt-2">
-            <div className="bg-surface-raised rounded-[2.5rem] border border-border-subtle shadow-sm overflow-hidden">
+            <div className="bg-surface-raised rounded-2xl border border-border-subtle shadow-sm overflow-hidden">
               <div className="p-0">
                 <CalendarView key={searchParams.get('_t') || 'initial'} />
               </div>

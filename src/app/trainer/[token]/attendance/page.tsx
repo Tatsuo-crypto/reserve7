@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
+import Button from '@/components/ui/Button'
 import Icon from '@/components/ui/icons'
 
 type AttendanceShift = {
@@ -57,7 +58,7 @@ export default function TrainerAttendancePage() {
       setLoading(true)
       const response = await fetch(`/api/trainer/attendance?token=${token}&_t=${Date.now()}`, { cache: 'no-store' })
       if (!response.ok) {
-        setError('出勤データの取得に失敗しました')
+        setError('出勤データを取得できませんでした。画面を再読み込みしてください。')
         return
       }
       const nextData = await response.json()
@@ -65,7 +66,7 @@ export default function TrainerAttendancePage() {
       setError(null)
     } catch (err) {
       console.error(err)
-      setError('出勤データの取得に失敗しました')
+      setError('出勤データを取得できませんでした。画面を再読み込みしてください。')
     } finally {
       setLoading(false)
     }
@@ -90,13 +91,13 @@ export default function TrainerAttendancePage() {
         })
       })
       if (!response.ok) {
-        alert('保存に失敗しました')
+        alert('保存できませんでした。もう一度お試しください。')
         return
       }
       await fetchAttendance()
     } catch (err) {
       console.error(err)
-      alert('保存に失敗しました')
+      alert('保存できませんでした。もう一度お試しください。')
     } finally {
       setSavingId(null)
     }
@@ -111,13 +112,13 @@ export default function TrainerAttendancePage() {
     <div className="min-h-screen bg-surface-base pb-28">
       <header className="sticky top-0 z-50 h-16 border-b border-border-subtle bg-surface-raised/80 backdrop-blur-md">
         <div className="relative mx-auto flex h-full max-w-7xl items-center justify-center px-4">
-          <h1 className="text-[17px] font-normal tracking-tight text-text-primary">出勤</h1>
+          <h1 className="text-base font-normal tracking-tight text-text-primary">出勤</h1>
           {data?.trainer && (
             <div className="absolute right-4 top-1/2 flex h-10 -translate-y-1/2 items-center gap-1 rounded-full border border-border-subtle bg-surface-raised px-4 shadow-sm">
-              <span className="whitespace-nowrap text-[13px] font-normal text-text-secondary">
+              <span className="whitespace-nowrap text-sm font-normal text-text-secondary">
                 {data.trainer.name}
               </span>
-              <span className="ml-1 rounded-full bg-brand-500 px-2 py-0.5 text-[10px] font-normal text-white">
+              <span className="ml-1 rounded-full bg-brand-500 px-2 py-0.5 text-xs font-normal text-white">
                 トレーナー
               </span>
             </div>
@@ -126,7 +127,7 @@ export default function TrainerAttendancePage() {
       </header>
 
       <main className="mx-auto max-w-md px-4 pt-5">
-        <section className="rounded-3xl border border-border-subtle bg-surface-raised p-5">
+        <section className="rounded-2xl border border-border-subtle bg-surface-raised p-5">
           {hasAttended && (
             <div className="mb-5 flex justify-center">
               <div className="flex h-16 w-16 items-center justify-center rounded-full bg-brand-700 text-white shadow-lg shadow-brand-900/30">
@@ -186,8 +187,9 @@ export default function TrainerAttendancePage() {
                     {shift.attended ? '出勤済み' : '未出勤'}
                   </div>
                 </div>
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
                   onClick={() => toggleAttendance(shift)}
                   disabled={!canToggle}
                   className={`h-10 rounded-full px-4 text-sm font-normal transition active:scale-[0.98] disabled:opacity-50 ${
@@ -199,7 +201,7 @@ export default function TrainerAttendancePage() {
                   }`}
                 >
                   {shift.attended ? '取消' : '出勤'}
-                </button>
+                </Button>
               </div>
             </div>
               )

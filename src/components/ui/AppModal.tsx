@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import Icon from './icons'
+import Button from './Button'
 
 type ModalSize = 'sm' | 'md' | 'lg' | 'xl'
 type ModalAlign = 'center' | 'bottom'
@@ -106,7 +107,7 @@ export default function AppModal({
       <section
         role="dialog"
         aria-modal="true"
-        className={`relative flex min-h-0 w-full flex-col overflow-hidden border border-border-subtle bg-surface-raised shadow-2xl ${sizeClasses[size]} ${bottomAligned ? 'rounded-t-3xl sm:rounded-3xl' : 'rounded-3xl'} ${panelClassName}`}
+        className={`relative flex min-h-0 w-full flex-col overflow-hidden border border-border-subtle bg-surface-raised shadow-2xl ${sizeClasses[size]} ${bottomAligned ? 'rounded-t-2xl sm:rounded-2xl' : 'rounded-2xl'} ${panelClassName}`}
         style={{
           maxHeight: bottomAligned
             ? 'calc(100dvh - env(safe-area-inset-top))'
@@ -115,14 +116,16 @@ export default function AppModal({
       >
         <header className="flex shrink-0 items-center justify-between gap-3 border-b border-border-subtle px-4 py-3.5 sm:px-5">
           <h2 className="min-w-0 text-lg font-normal text-text-primary">{title}</h2>
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="sm"
             onClick={onClose}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-base text-text-secondary transition-colors hover:text-text-primary"
+            className="h-9 w-9 shrink-0 rounded-full bg-surface-base p-0 text-text-secondary transition-colors hover:text-text-primary"
             aria-label={closeLabel}
           >
             <Icon name="close" size={18} />
-          </button>
+          </Button>
         </header>
 
         <div className={`min-h-0 flex-1 overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch] ${bodyClassName}`}>

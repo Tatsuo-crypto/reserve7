@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
+import Button from '@/components/ui/Button'
 import Icon from '@/components/ui/icons'
 
 interface User {
@@ -54,7 +55,7 @@ export default function ClientReservationsContent() {
         const reservationsResponse = await fetch(`/api/client/reservations?token=${token}`)
         if (!reservationsResponse.ok) {
           const errorData = await reservationsResponse.json().catch(() => ({}))
-          setError(errorData.error || '予約の取得に失敗しました')
+          setError(errorData.error || '予約を取得できませんでした。画面を再読み込みしてください。')
           return
         }
         const reservationsData = await reservationsResponse.json()
@@ -68,7 +69,7 @@ export default function ClientReservationsContent() {
 
       } catch (err) {
         console.error('Error fetching data:', err)
-        setError('データの取得に失敗しました')
+        setError('データを取得できませんでした。画面を再読み込みしてください。')
       } finally {
         setLoading(false)
       }
@@ -158,19 +159,21 @@ export default function ClientReservationsContent() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <h1 className="text-xl font-normal text-text-primary">T&J GYM</h1>
-            <button
-              className="p-2 rounded-md text-text-secondary hover:text-text-primary hover:bg-surface-overlay"
+            <Button
+              type="button"
+              variant="ghost"
+              className="p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-overlay"
               aria-label="メニュー"
             >
               <Icon name="menu" size={24} />
-            </button>
+            </Button>
           </div>
         </div>
       </header>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* User Info */}
-        <div className="bg-surface-raised rounded-xl shadow-md border border-border-strong p-8 mb-6">
+        <div className="bg-surface-raised rounded-2xl shadow-md border border-border-strong p-8 mb-6">
           <h1 className="text-3xl font-normal text-text-primary mb-6 pb-4 border-b border-border-strong">予約一覧</h1>
           <div className="space-y-4">
             <div className="flex items-center p-4 bg-blue-500/15 rounded-lg border border-blue-500/25">
@@ -211,7 +214,7 @@ export default function ClientReservationsContent() {
                 })
                 .map(([monthKey, reservations]) => (
                 <div key={monthKey} className="space-y-3">
-                  <div className="bg-gradient-to-r from-blue-50 to-blue-100 border-l-4 border-blue-500 px-4 py-2 rounded">
+                  <div className="bg-gradient-to-r from-blue-50 to-blue-100 border-l-4 border-blue-500 px-4 py-2 rounded-lg">
                     <h3 className="text-lg font-normal text-blue-900">{monthKey}</h3>
                   </div>
                   {reservations
@@ -266,7 +269,7 @@ export default function ClientReservationsContent() {
                 })
                 .map(([monthKey, reservations]) => (
                 <div key={monthKey} className="space-y-3">
-                  <div className="bg-gradient-to-r from-gray-50 to-gray-100 border-l-4 border-border-strong px-4 py-2 rounded">
+                  <div className="bg-gradient-to-r from-gray-50 to-gray-100 border-l-4 border-border-strong px-4 py-2 rounded-lg">
                     <h3 className="text-lg font-normal text-text-secondary">{monthKey}</h3>
                   </div>
                   {reservations

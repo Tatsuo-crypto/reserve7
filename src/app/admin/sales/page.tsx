@@ -103,12 +103,12 @@ function SalesPageContent() {
                                 type="month"
                                 value={month}
                                 onChange={(e) => setMonth(e.target.value)}
-                                className="border border-border-strong rounded-md px-2 py-1.5 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+                                className="border border-border-strong rounded-lg px-2 py-1.5 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                             />
                             <select
                                 value={selectedStore}
                                 onChange={(e) => setSelectedStore(e.target.value)}
-                                className="border border-border-strong rounded-md px-2 py-1.5 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+                                className="border border-border-strong rounded-lg px-2 py-1.5 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                             >
                                 <option value="all">全店舗</option>
                                 <option value="77439c86-679a-409a-8000-2e5297e5c0e8">1号店</option>
@@ -137,9 +137,9 @@ function SalesPageContent() {
                                     className="flex items-center px-3 py-2.5 hover:bg-surface-base transition-colors"
                                 >
                                     <span className="flex-shrink-0 w-1.5 h-1.5 rounded-full mr-2 bg-surface-overlay" />
-                                    <span className="font-normal text-[13px] text-text-primary truncate" style={{flex: '1 1 35%'}}>{item.full_name}</span>
-                                    <span className="text-[11px] text-text-secondary whitespace-nowrap text-left" style={{flex: '1 1 35%'}}>{item.plan}</span>
-                                    <span className="text-[13px] font-normal text-text-primary whitespace-nowrap text-right" style={{flex: '0 0 auto'}}>¥{item.amount.toLocaleString()}</span>
+                                    <span className="font-normal text-sm text-text-primary truncate" style={{flex: '1 1 35%'}}>{item.full_name}</span>
+                                    <span className="text-xs text-text-secondary whitespace-nowrap text-left" style={{flex: '1 1 35%'}}>{item.plan}</span>
+                                    <span className="text-sm font-normal text-text-primary whitespace-nowrap text-right" style={{flex: '0 0 auto'}}>¥{item.amount.toLocaleString()}</span>
                                 </Link>
                             ))}
                         </div>

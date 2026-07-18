@@ -11,7 +11,7 @@ interface ErrorMessageProps {
 
 export default function ErrorMessage({ message, className = '' }: ErrorMessageProps) {
   return (
-    <div className={`rounded-md bg-red-500/15 p-4 ${className}`}>
+    <div className={`rounded-lg bg-red-500/15 p-4 ${className}`}>
       <div className="flex">
         <div className="flex-shrink-0">
           <Icon name="xCircle" size={20} className="text-red-400" />

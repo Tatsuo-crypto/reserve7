@@ -87,7 +87,7 @@ export default function DesignSystemPage() {
                                 <div className="w-10 h-10 rounded-lg bg-surface-base flex items-center justify-center text-text-secondary">
                                     <Icon name={name} />
                                 </div>
-                                <span className="text-[10px] text-text-muted">{name}</span>
+                                <span className="text-xs text-text-muted">{name}</span>
                             </div>
                         ))}
                     </div>

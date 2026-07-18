@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from 'react'
 import { signIn, getSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import Button from '@/components/ui/Button'
 
 function LoginForm() {
   const router = useRouter()
@@ -48,10 +49,10 @@ function LoginForm() {
       } else if (result?.ok) {
         router.push('/dashboard')
       } else {
-        setError('ログインに失敗しました。もう一度お試しください。')
+        setError('ログインできませんでした。もう一度お試しください。')
       }
     } catch (error) {
-      setError('ログインに失敗しました')
+        setError('ログインできませんでした。もう一度お試しください。')
     } finally {
       setIsLoading(false)
     }
@@ -79,7 +80,7 @@ function LoginForm() {
         </div>
 
         {message && (
-          <div className="rounded-md bg-state-success-500/15 border border-state-success-500/30 p-4">
+          <div className="rounded-lg bg-state-success-500/15 border border-state-success-500/30 p-4">
             <p className="text-sm text-state-success-300">{message}</p>
           </div>
         )}
@@ -96,7 +97,7 @@ function LoginForm() {
                 name="email"
                 type="email"
                 required
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-border-strong placeholder-gray-500 text-text-primary rounded-md focus:outline-none focus:ring-brand-500 focus:border-brand-500 focus:z-10 sm:text-sm"
+                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-border-strong placeholder-gray-500 text-text-primary rounded-lg focus:outline-none focus:ring-brand-500 focus:border-brand-500 focus:z-10 sm:text-sm"
                 placeholder="example@email.com"
                 value={formData.email}
                 onChange={handleChange}
@@ -112,7 +113,7 @@ function LoginForm() {
                 name="password"
                 type="password"
                 required
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-border-strong placeholder-gray-500 text-text-primary rounded-md focus:outline-none focus:ring-brand-500 focus:border-brand-500 focus:z-10 sm:text-sm"
+                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-border-strong placeholder-gray-500 text-text-primary rounded-lg focus:outline-none focus:ring-brand-500 focus:border-brand-500 focus:z-10 sm:text-sm"
                 placeholder="パスワード"
                 value={formData.password}
                 onChange={handleChange}
@@ -121,19 +122,20 @@ function LoginForm() {
           </div>
 
           {error && (
-            <div className="rounded-md bg-red-500/15 p-4">
+            <div className="rounded-lg bg-red-500/15 p-4">
               <p className="text-sm text-red-300">{error}</p>
             </div>
           )}
 
           <div>
-            <button
+            <Button
               type="submit"
+              variant="primary"
               disabled={isLoading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-normal rounded-md text-white bg-brand-700 hover:bg-brand-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-normal rounded-lg text-white bg-brand-700 hover:bg-brand-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? 'ログイン中...' : 'ログイン'}
-            </button>
+            </Button>
           </div>
 
           <div className="text-center">

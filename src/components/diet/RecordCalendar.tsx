@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import Button from '@/components/ui/Button'
 import Icon from '@/components/ui/icons'
 
 interface RecordCalendarProps {
@@ -94,31 +95,33 @@ export default function RecordCalendar({ userId, token, isAdmin }: RecordCalenda
             </div>
 
             <div className="mb-4 flex items-center justify-between">
-                <button
+                <Button
                     type="button"
+                    variant="ghost"
                     onClick={() => moveMonth(-1)}
                     aria-label="前の月"
-                    className="flex h-9 w-9 items-center justify-center rounded-full text-text-secondary transition-colors hover:bg-surface-overlay"
+                    className="flex h-9 w-9 items-center justify-center rounded-full p-0 text-text-secondary transition-colors hover:bg-surface-overlay"
                 >
                     <Icon name="chevronLeft" size={18} />
-                </button>
+                </Button>
                 <div className="text-sm font-normal tabular-nums text-text-primary">
                     {displayMonth.getFullYear()}年{displayMonth.getMonth() + 1}月
                 </div>
-                <button
+                <Button
                     type="button"
+                    variant="ghost"
                     onClick={() => moveMonth(1)}
                     disabled={!canMoveNext}
                     aria-label="次の月"
-                    className="flex h-9 w-9 items-center justify-center rounded-full text-text-secondary transition-colors hover:bg-surface-overlay disabled:opacity-20"
+                    className="flex h-9 w-9 items-center justify-center rounded-full p-0 text-text-secondary transition-colors hover:bg-surface-overlay disabled:opacity-20"
                 >
                     <Icon name="chevronRight" size={18} />
-                </button>
+                </Button>
             </div>
 
             <div className="grid grid-cols-7 gap-y-2">
                 {['日', '月', '火', '水', '木', '金', '土'].map(day => (
-                    <div key={day} className="text-center text-[10px] font-normal text-text-muted">
+                    <div key={day} className="text-center text-xs font-normal text-text-muted">
                         {day}
                     </div>
                 ))}

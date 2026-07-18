@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 export default function HomeIconSetupPage() {
   return (
     <main className="min-h-screen flex flex-col items-center justify-center gap-6 p-6 bg-surface-base">
-      <div className="max-w-2xl w-full bg-surface-raised rounded-xl shadow-lg p-8">
+      <div className="max-w-2xl w-full bg-surface-raised rounded-2xl shadow-lg p-8">
         <h1 className="text-3xl font-normal text-text-primary mb-6 text-center">ホーム画面アイコンの更新</h1>
         
         {/* 重要な注意事項 */}

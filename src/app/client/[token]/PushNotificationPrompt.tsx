@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Button from '@/components/ui/Button'
 
 type PushNotificationPromptProps = {
   token: string
@@ -112,7 +113,7 @@ export default function PushNotificationPrompt({ token }: PushNotificationPrompt
       const saveData = await saveRes.json()
 
       if (!saveRes.ok) {
-        setMessage(saveData.error || '通知設定の保存に失敗しました。')
+        setMessage(saveData.error || '通知設定を保存できませんでした。')
         return
       }
 
@@ -121,7 +122,7 @@ export default function PushNotificationPrompt({ token }: PushNotificationPrompt
       setMessage(saveData.enabledByAdmin ? '通知を受け取れるようになりました。' : '端末登録は完了しました。店舗側で通知が有効になると受け取れます。')
     } catch (error) {
       console.error('Failed to enable push notifications:', error)
-      setMessage('通知設定中にエラーが発生しました。')
+      setMessage('通知を設定できませんでした。もう一度お試しください。')
     } finally {
       setLoading(false)
     }
@@ -148,7 +149,7 @@ export default function PushNotificationPrompt({ token }: PushNotificationPrompt
       setMessage('この端末への通知を解除しました。')
     } catch (error) {
       console.error('Failed to disable push notifications:', error)
-      setMessage('通知解除中にエラーが発生しました。')
+      setMessage('通知を解除できませんでした。もう一度お試しください。')
     } finally {
       setLoading(false)
     }
@@ -159,7 +160,7 @@ export default function PushNotificationPrompt({ token }: PushNotificationPrompt
   }
 
   return (
-    <div className="mb-4 rounded-xl border border-border-subtle bg-surface-raised p-4 shadow-sm">
+    <div className="mb-4 rounded-2xl border border-border-subtle bg-surface-raised p-4 shadow-sm">
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="text-sm font-normal text-text-primary">アプリ通知</div>
@@ -176,23 +177,27 @@ export default function PushNotificationPrompt({ token }: PushNotificationPrompt
           {message && <div className="mt-2 text-xs text-text-secondary">{message}</div>}
         </div>
         {subscribed ? (
-          <button
+          <Button
             type="button"
+            variant="secondary"
+            size="sm"
             onClick={disablePush}
             disabled={loading}
             className="shrink-0 rounded-lg border border-border-strong px-3 py-2 text-xs text-text-secondary disabled:opacity-50"
           >
             解除
-          </button>
+          </Button>
         ) : (
-          <button
+          <Button
             type="button"
+            variant="primary"
+            size="sm"
             onClick={enablePush}
             disabled={loading || permission === 'denied'}
             className="shrink-0 rounded-lg bg-brand-700 px-3 py-2 text-xs text-white disabled:opacity-50"
           >
             許可
-          </button>
+          </Button>
         )}
       </div>
     </div>

@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import Card from '@/components/ui/Card'
+import EmptyState from '@/components/ui/EmptyState'
 import Icon from '@/components/ui/icons'
+import { SkeletonCard } from '@/components/ui/Skeleton'
 import { fetchJsonCached } from '@/lib/client-fetch-cache'
 
 interface Reservation {
@@ -59,7 +61,15 @@ export default function ReservationTab({ token, userName }: ReservationTabProps)
         fetchData()
     }, [token])
 
-    if (loading) return <div className="h-64 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"></div></div>
+    if (loading) {
+        return (
+            <div className="space-y-4 pb-24">
+                <SkeletonCard />
+                <SkeletonCard />
+                <SkeletonCard />
+            </div>
+        )
+    }
 
     const nextReservation = [...futureReservations].sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())[0]
     const otherFutureReservations = [...futureReservations]
@@ -83,15 +93,17 @@ export default function ReservationTab({ token, userName }: ReservationTabProps)
                             </span>
                         </div>
                         {nextReservation.notes && (
-                            <p className="mt-3 rounded-xl bg-surface-base px-3 py-2 text-xs text-text-secondary">
+                            <p className="mt-3 rounded-2xl bg-surface-base px-3 py-2 text-xs text-text-secondary">
                                 {nextReservation.notes}
                             </p>
                         )}
                     </Card>
                 ) : (
-                    <Card padding="sm" className="!p-4">
-                        <p className="text-sm text-text-muted">次回の予約はありません</p>
-                    </Card>
+                    <EmptyState
+                        icon="calendar"
+                        title="次回の予約はありません"
+                        description="予約が入ると、ここに日時と内容が表示されます。"
+                    />
                 )}
 
                 {otherFutureReservations.length > 0 && (
@@ -112,9 +124,11 @@ export default function ReservationTab({ token, userName }: ReservationTabProps)
                         ))}
                     </div>
                 ) : (
-                    <Card padding="sm" className="!p-4">
-                        <p className="text-sm text-text-muted">過去の予約はありません</p>
-                    </Card>
+                    <EmptyState
+                        icon="archiveBox"
+                        title="過去の予約はありません"
+                        description="来店履歴ができると、ここに時系列で表示されます。"
+                    />
                 )}
             </section>
         </div>

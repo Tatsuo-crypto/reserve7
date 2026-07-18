@@ -186,7 +186,7 @@ export default function AnalyticsPage() {
                 <select
                     value={filterStoreId}
                     onChange={(e) => setFilterStoreId(e.target.value)}
-                    className="text-sm border-border-strong rounded-md shadow-sm focus:border-brand-500 focus:ring-brand-500 py-1 pl-2 pr-8"
+                    className="text-sm border-border-strong rounded-lg shadow-sm focus:border-brand-500 focus:ring-brand-500 py-1 pl-2 pr-8"
                 >
                     <option value="all">全店舗</option>
                     {stores.map(store => (
@@ -197,7 +197,7 @@ export default function AnalyticsPage() {
                 <select
                     value={period}
                     onChange={(e) => setPeriod(e.target.value)}
-                    className="text-sm border-border-strong rounded-md shadow-sm focus:border-brand-500 focus:ring-brand-500 py-1 pl-2 pr-8"
+                    className="text-sm border-border-strong rounded-lg shadow-sm focus:border-brand-500 focus:ring-brand-500 py-1 pl-2 pr-8"
                 >
                     <option value="all">全期間 (2023/11~)</option>
                     <option value="2023">2023年</option>
@@ -211,7 +211,7 @@ export default function AnalyticsPage() {
 
             {/* Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <div className="bg-surface-raised p-6 rounded-xl shadow-sm border border-border-subtle">
+                <div className="bg-surface-raised p-6 rounded-2xl shadow-sm border border-border-subtle">
                     <h3 className="text-sm font-normal text-text-secondary">現在の月額会員数</h3>
                     <div className="mt-2 flex items-baseline">
                         <span className="text-3xl font-normal text-text-primary">{activeCount}</span>
@@ -222,7 +222,7 @@ export default function AnalyticsPage() {
                         <span className="ml-2 text-xs text-text-muted">前月比</span>
                     </div>
                 </div>
-                <div className="bg-surface-raised p-6 rounded-xl shadow-sm border border-border-subtle">
+                <div className="bg-surface-raised p-6 rounded-2xl shadow-sm border border-border-subtle">
                     <h3 className="text-sm font-normal text-text-secondary">今月の月会費見込み</h3>
                     <div className="mt-2 flex items-baseline">
                         <span className="text-3xl font-normal text-text-primary">¥{projectedSales.toLocaleString()}</span>
@@ -234,7 +234,7 @@ export default function AnalyticsPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8" key={`${filterStoreId}-${period}`}>
 
                 {/* Sales Chart */}
-                <div className="bg-surface-raised p-6 rounded-xl shadow-sm border border-border-subtle">
+                <div className="bg-surface-raised p-6 rounded-2xl shadow-sm border border-border-subtle">
                     <div className="flex items-center justify-between mb-6">
                         <h3 className="text-lg font-normal text-text-primary">売上推移</h3>
                     </div>
@@ -258,7 +258,7 @@ export default function AnalyticsPage() {
                 </div>
 
                 {/* Member Growth Chart */}
-                <div className="bg-surface-raised p-6 rounded-xl shadow-sm border border-border-subtle">
+                <div className="bg-surface-raised p-6 rounded-2xl shadow-sm border border-border-subtle">
                     <div className="flex items-center justify-between mb-6">
                         <h3 className="text-lg font-normal text-text-primary">会員数推移</h3>
                     </div>
@@ -281,16 +281,16 @@ export default function AnalyticsPage() {
                 </div>
 
                 {/* Member Movement (Join/Withdraw) - Custom Block Chart */}
-                <div className="bg-surface-raised p-6 rounded-xl shadow-sm border border-border-subtle lg:col-span-2">
+                <div className="bg-surface-raised p-6 rounded-2xl shadow-sm border border-border-subtle lg:col-span-2">
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="text-lg font-normal text-text-primary">入会・退会推移</h3>
                         <div className="flex items-center gap-4 text-xs text-text-secondary">
                             <span className="flex items-center gap-1.5">
-                                <span className="inline-block w-3 h-3 rounded-sm bg-state-success-500"></span>
+                                <span className="inline-block w-3 h-3 rounded-lg bg-state-success-500"></span>
                                 新規入会
                             </span>
                             <span className="flex items-center gap-1.5">
-                                <span className="inline-block w-3 h-3 rounded-sm bg-state-danger-500"></span>
+                                <span className="inline-block w-3 h-3 rounded-lg bg-state-danger-500"></span>
                                 退会
                             </span>
                         </div>
@@ -310,14 +310,14 @@ export default function AnalyticsPage() {
                                         {/* Vertical year divider */}
                                         {showYear && idx > 0 && (
                                             <div className="flex flex-col items-center mr-1">
-                                                <div className="text-[9px] font-normal text-text-muted whitespace-nowrap mb-1">{yearStr}</div>
+                                                <div className="text-xs font-normal text-text-muted whitespace-nowrap mb-1">{yearStr}</div>
                                                 <div className="w-px bg-surface-overlay flex-1" />
                                             </div>
                                         )}
                                         <div className="flex flex-col items-center">
                                         {/* Year label at top for first item */}
                                         {showYear && idx === 0 && (
-                                            <div className="text-[10px] font-normal text-brand-300 bg-brand-500/15 px-2 py-0.5 rounded-full mb-1 whitespace-nowrap">
+                                            <div className="text-xs font-normal text-brand-300 bg-brand-500/15 px-2 py-0.5 rounded-full mb-1 whitespace-nowrap">
                                                 {yearStr}
                                             </div>
                                         )}
@@ -333,13 +333,13 @@ export default function AnalyticsPage() {
                                                 {Array.from({ length: newCount }).map((_, i) => (
                                                     <div
                                                         key={`n-${i}`}
-                                                        className="w-5 h-4 rounded-sm bg-state-success-500"
+                                                        className="w-5 h-4 rounded-lg bg-state-success-500"
                                                     />
                                                 ))}
                                             </div>
                                             {/* Center line + month label */}
                                             <div className="w-full border-t border-border-strong my-1" />
-                                            <div className="text-[10px] text-text-secondary leading-none mb-1 font-normal">
+                                            <div className="text-xs text-text-secondary leading-none mb-1 font-normal">
                                                 {monthLabel}
                                             </div>
                                             <div className="w-full border-t border-border-strong mb-1" />
@@ -348,7 +348,7 @@ export default function AnalyticsPage() {
                                                 {Array.from({ length: withdrawnCount }).map((_, i) => (
                                                     <div
                                                         key={`w-${i}`}
-                                                        className="w-5 h-4 rounded-sm bg-state-danger-500"
+                                                        className="w-5 h-4 rounded-lg bg-state-danger-500"
                                                     />
                                                 ))}
                                             </div>
@@ -359,7 +359,7 @@ export default function AnalyticsPage() {
                             })}
                         </div>
                     </div>
-                    <p className="text-[11px] text-text-muted mt-2 text-center">※ 月をタップすると詳細を表示します</p>
+                    <p className="text-xs text-text-muted mt-2 text-center">※ 月をタップすると詳細を表示します</p>
                 </div>
             </div>
 

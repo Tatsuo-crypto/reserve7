@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useWeeklyProgress } from '@/hooks/useWeeklyProgress'
 import WeightWeeklyCompare from './WeightWeeklyCompare'
 import Card from '@/components/ui/Card'
+import { SkeletonCard } from '@/components/ui/Skeleton'
 
 interface WeightTabProps {
     userId?: string
@@ -90,7 +91,14 @@ export default function WeightTab({ userId, token, isAdmin }: WeightTabProps) {
         return rows
     }, [lifestyleLogs])
 
-    if (loading) return <div className="h-64 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"></div></div>
+    if (loading) {
+        return (
+            <div className="space-y-4 pb-24">
+                <SkeletonCard />
+                <SkeletonCard />
+            </div>
+        )
+    }
 
     return (
         <div className="space-y-4 pb-24 animate-fadeIn">
@@ -103,12 +111,15 @@ export default function WeightTab({ userId, token, isAdmin }: WeightTabProps) {
                 </div>
 
                 {historyLoading ? (
-                    <div className="py-8 flex justify-center"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-brand-600"></div></div>
+                    <div className="space-y-3 py-2">
+                        <SkeletonCard className="p-4" />
+                        <SkeletonCard className="p-4" />
+                    </div>
                 ) : (
                     <div className="divide-y divide-border-subtle">
                         {weekHistory.map((row, i) => (
                             <div key={i} className="py-3">
-                                <p className="text-[10px] font-normal text-text-muted tabular-nums mb-1">{row.rangeStr}</p>
+                                <p className="text-xs font-normal text-text-muted tabular-nums mb-1">{row.rangeStr}</p>
                                 <div className="flex items-baseline gap-3 flex-wrap">
                                     <span className="text-base font-semibold text-text-primary tabular-nums">
                                         {row.avg !== null ? `平均 ${row.avg.toFixed(1)}kg` : '記録なし'}

@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import type { WeeklyProgressStats } from '@/hooks/useWeeklyProgress'
 import Card from '@/components/ui/Card'
+import Button from '@/components/ui/Button'
+import EmptyState from '@/components/ui/EmptyState'
 import Icon from '@/components/ui/icons'
 import { RecordCheckTable, CalorieHeroCard, AchievementItemCard, DisplayModeToggle, type DisplayMode } from './WeeklyAchievementCards'
 
@@ -37,39 +39,45 @@ export default function WeeklySummaryPanel({
             {showWeekSwitcher && (
                 <div className="px-2 flex flex-col items-center">
                     <div className="flex items-center gap-3 bg-surface-overlay rounded-2xl p-1.5 w-full max-w-[300px] shadow-sm">
-                        <button
+                        <Button
+                            type="button"
+                            variant="ghost"
                             onClick={() => setWeekOffset(prev => prev - 1)}
-                            className="w-9 h-9 flex items-center justify-center hover:bg-surface-raised rounded-xl transition-all text-text-secondary active:scale-90"
+                            className="w-9 h-9 flex items-center justify-center hover:bg-surface-raised rounded-2xl p-0 transition-all text-text-secondary active:scale-90"
                         >
                             <Icon name="chevronLeft" size={16} />
-                        </button>
+                        </Button>
 
                         <div className="flex-1 text-center">
                             <div className="flex items-center justify-center gap-2">
                                 <span className="text-sm font-normal text-text-primary">
                                     {weekOffset === 0 ? '今週' : weekOffset === -1 ? '先週' : `${Math.abs(weekOffset)}週間前`}
                                 </span>
-                                <span className="text-[10px] font-normal text-text-secondary tabular-nums">
+                                <span className="text-xs font-normal text-text-secondary tabular-nums">
                                     ({weeklyStats?.weekRangeStr})
                                 </span>
                             </div>
                         </div>
 
-                        <button
+                        <Button
+                            type="button"
+                            variant="ghost"
                             onClick={() => setWeekOffset(prev => Math.min(0, prev + 1))}
-                            className={`w-9 h-9 flex items-center justify-center rounded-xl transition-all active:scale-90 ${weekOffset === 0 ? 'text-text-muted cursor-not-allowed' : 'hover:bg-surface-raised text-text-secondary'}`}
+                            className={`w-9 h-9 flex items-center justify-center rounded-2xl p-0 transition-all active:scale-90 ${weekOffset === 0 ? 'text-text-muted cursor-not-allowed' : 'hover:bg-surface-raised text-text-secondary'}`}
                             disabled={weekOffset === 0}
                         >
                             <Icon name="chevronRight" size={16} />
-                        </button>
+                        </Button>
                     </div>
                 </div>
             )}
 
             {!weeklyStats ? (
-                <Card padding="lg" className="text-center">
-                    <p className="text-text-muted font-normal italic">今週の記録または目標がありません</p>
-                </Card>
+                <EmptyState
+                    icon="chartBar"
+                    title="今週の記録がありません"
+                    description="記録が入ると、週間まとめがここに表示されます。"
+                />
             ) : (
                 <div className="space-y-4">
                     <DisplayModeToggle mode={mode} onChange={setMode} />

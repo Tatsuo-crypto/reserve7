@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import AppModal from '@/components/ui/AppModal'
+import Button from '@/components/ui/Button'
 
 interface GoalModalProps {
     userId: string;
@@ -82,15 +83,16 @@ export default function GoalModal({ userId, token, onClose, onSave }: GoalModalP
             bodyClassName="space-y-8 p-5 sm:p-6"
             footer={(
                 <>
-                    <button type="button" onClick={onClose} className="rounded-full px-4 py-2 text-sm text-text-secondary">キャンセル</button>
-                    <button
+                    <Button type="button" variant="ghost" onClick={onClose} className="rounded-full px-4 py-2 text-sm text-text-secondary">キャンセル</Button>
+                    <Button
                         type="button"
+                        variant="primary"
                         onClick={handleSave}
                         disabled={saving}
                         className="rounded-full bg-brand-700 px-5 py-2 text-sm text-white disabled:opacity-50"
                     >
                         {saving ? '保存中...' : '保存'}
-                    </button>
+                    </Button>
                 </>
             )}
         >
@@ -104,7 +106,7 @@ export default function GoalModal({ userId, token, onClose, onSave }: GoalModalP
                                     type="date"
                                     value={form.startDate}
                                     onChange={e => setForm({ ...form, startDate: e.target.value })}
-                                    className="w-full bg-surface-base border-none rounded-xl font-normal text-text-secondary px-4 py-3"
+                                    className="w-full bg-surface-base border-none rounded-2xl font-normal text-text-secondary px-4 py-3"
                                 />
                             </div>
 
@@ -115,7 +117,7 @@ export default function GoalModal({ userId, token, onClose, onSave }: GoalModalP
                                         type="number"
                                         value={form.calories}
                                         onChange={e => setForm({ ...form, calories: parseInt(e.target.value) || 0 })}
-                                        className="w-full bg-surface-base border-none rounded-xl font-normal text-text-secondary px-4 py-3 text-xl"
+                                        className="w-full bg-surface-base border-none rounded-2xl font-normal text-text-secondary px-4 py-3 text-xl"
                                     />
                                 </div>
                                 <InputItem label="P (g)" value={form.protein} onChange={v => setForm({ ...form, protein: v })} />
@@ -137,12 +139,12 @@ export default function GoalModal({ userId, token, onClose, onSave }: GoalModalP
                         ) : (
                             <div className="space-y-3">
                                 {history.map((h, i) => (
-                                    <div key={h.id} className="bg-surface-base rounded-xl p-4 flex items-center justify-between">
+                                    <div key={h.id} className="bg-surface-base rounded-2xl p-4 flex items-center justify-between">
                                         <div>
                                             <div className="text-xs font-normal text-text-muted">{h.start_date.replace(/-/g, '/')} 〜</div>
                                             <div className="text-lg font-normal text-text-secondary">{h.calories} <span className="text-xs">kcal</span></div>
                                         </div>
-                                        <div className="text-[10px] font-normal text-text-muted bg-surface-raised px-3 py-1 rounded-full shadow-sm">
+                                        <div className="text-xs font-normal text-text-muted bg-surface-raised px-3 py-1 rounded-full shadow-sm">
                                             P:{h.protein} F:{h.fat} C:{h.carbs} 糖:{h.sugar} 繊:{h.fiber} 塩:{h.salt}
                                         </div>
                                     </div>
@@ -157,12 +159,12 @@ export default function GoalModal({ userId, token, onClose, onSave }: GoalModalP
 function InputItem({ label, value, onChange }: { label: string, value: number, onChange: (v: number) => void }) {
     return (
         <div>
-            <label className="block text-[10px] font-normal text-text-muted mb-1">{label}</label>
+            <label className="block text-xs font-normal text-text-muted mb-1">{label}</label>
             <input
                 type="number"
                 value={value}
                 onChange={e => onChange(parseFloat(e.target.value) || 0)}
-                className="w-full bg-surface-base border-none rounded-xl font-normal text-text-secondary px-4 py-3"
+                className="w-full bg-surface-base border-none rounded-2xl font-normal text-text-secondary px-4 py-3"
             />
         </div>
     )

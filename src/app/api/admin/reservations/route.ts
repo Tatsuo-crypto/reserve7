@@ -6,6 +6,8 @@ import { createGoogleCalendarService } from '@/lib/google-calendar'
 import { generateReservationTitle, updateMonthlyTitles, updateAllTitles, usesCumulativeCount } from '@/lib/title-utils'
 import { sendTrainerNotification, sendClientNotification } from '@/lib/email'
 import { sendPushNotificationToUser } from '@/lib/push'
+import { runBackgroundTask } from '@/lib/background-task'
+import { createReservationCalendarEvent, markCalendarCreatePending } from '@/lib/reservation-calendar-sync'
 
 export async function POST(request: NextRequest) {
   try {
@@ -288,75 +290,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Try to create Google Calendar event first (if configured)
-    let externalEventId: string | null = null
-    let trainerExternalEventId: string | null = null
-    let calendarDebug: string = 'not attempted'
-    const calendarService = createGoogleCalendarService()
-
-    console.log('📅 Google Calendar Service:', calendarService ? 'Initialized' : 'Not configured')
-
-    if (calendarService) {
-      try {
-        const clientName = clientId === 'BLOCKED'
-          ? '予約不可時間'
-          : clientId === 'TRIAL'
-            ? generatedTitle
-            : clientId === 'GUEST'
-              ? generatedTitle
-              : clientId === 'TRAINING'
-                ? generatedTitle
-                : clientUser!.full_name
-        const clientEmail = clientId === 'BLOCKED'
-          ? 'blocked@system'
-          : clientId === 'TRIAL'
-            ? 'trial@system'
-            : clientId === 'GUEST'
-              ? 'guest@system'
-              : clientId === 'TRAINING'
-                ? 'training@system'
-                : clientUser!.email
-
-        // 会員のGoogleカレンダーメールが設定されている場合、出席者として追加
-        const memberCalendarEmail = clientUser?.google_calendar_email || null
-
-        // TRAINING タイプは後のループで各トレーナーの店舗カレンダーにイベントを個別作成するためここではスキップ
-        if (clientId !== 'TRAINING') {
-          console.log('📅 Creating calendar event:', {
-            title: generatedTitle,
-            calendarId: calendarId,
-            memberCalendarEmail: memberCalendarEmail || '(not set)',
-          })
-
-          const calResult = await calendarService.createEvent({
-            title: generatedTitle,
-            startTime: startDateTime.toISOString(),
-            endTime: endDateTime.toISOString(),
-            clientName,
-            clientEmail,
-            notes: notes || undefined,
-            calendarId: calendarId,
-            memberCalendarEmail, // 会員のカレンダーメールを渡す
-            trainerCalendarEmail, // トレーナーのカレンダーメールを渡す
-            trainerNotifyEmail, // トレーナーへの招待メール送信用
-          })
-          externalEventId = calResult.eventId
-          trainerExternalEventId = calResult.trainerEventId || null
-
-          calendarDebug = 'success: ' + externalEventId
-        } else {
-          calendarDebug = 'training: handled per-trainer below'
-        }
-
-        // TRAINING type: store calendar events are created per-store in the DB insert block below.
-        // No separate personal calendar events needed to avoid duplication.
-      } catch (calendarError) {
-        calendarDebug = 'error: ' + (calendarError instanceof Error ? calendarError.message : String(calendarError))
-        console.error('❌ Calendar event creation failed:', calendarDebug)
-      }
-    } else {
-      calendarDebug = 'service not configured'
-    }
+    const calendarDebug = 'queued after DB save'
 
     // Create reservation
     // Store notes as-is from user input. If empty, store null.
@@ -383,37 +317,10 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // Googleカレンダーには「店舗ごとに1イベントのみ」作成する
-      // 同じ店舗に複数トレーナーがいても、カレンダーへの登録は1件に止める
-      const storeEventIdMap = new Map<string, string | null>() // storeId -> eventId
-
-      if (calendarService) {
-        for (const storeId of trainerStoreIds) {
-          const trainerCalId = storeCalendarMap.get(storeId) || calendarId
-          try {
-            const calResult = await calendarService.createEvent({
-              title: generatedTitle,
-              startTime: startDateTime.toISOString(),
-              endTime: endDateTime.toISOString(),
-              clientName: generatedTitle,
-              clientEmail: 'training@system',
-              notes: notes || undefined,
-              calendarId: trainerCalId,
-            })
-            storeEventIdMap.set(storeId, calResult.eventId)
-            console.log(`✅ Training calendar event created for store ${storeId} on ${trainerCalId}: ${calResult.eventId}`)
-          } catch (calErr) {
-            storeEventIdMap.set(storeId, null)
-            console.error(`⚠️ Failed to create training calendar event for store ${storeId}:`, calErr instanceof Error ? calErr.message : calErr)
-          }
-        }
-      }
-
-      // Create one DB record per trainer, all sharing the same store-level event ID
+      // Create one DB record per trainer. Calendar events are queued after DB save.
       const reservationRows: any[] = []
       for (const t of (trainingTrainers || [])) {
         const trainerCalId = storeCalendarMap.get(t.store_id) || calendarId
-        const trainingEventId = storeEventIdMap.get(t.store_id) || null
 
         reservationRows.push({
           client_id: null,
@@ -422,7 +329,7 @@ export async function POST(request: NextRequest) {
           end_time: endDateTime.toISOString(),
           notes: mergedNotes,
           calendar_id: trainerCalId,
-          external_event_id: trainingEventId,  // ← 店舗単位のイベントIDを全トレーナーで共有
+          external_event_id: null,
           trainer_id: t.id,
         })
       }
@@ -430,7 +337,7 @@ export async function POST(request: NextRequest) {
       const { data: reservations, error } = await supabaseAdmin
         .from('reservations')
         .insert(reservationRows)
-        .select('id, title, start_time, end_time, notes, created_at, trainer_id')
+        .select('id, title, start_time, end_time, notes, created_at, trainer_id, calendar_id')
 
       if (error) {
         console.error('Training reservation creation error:', error)
@@ -441,6 +348,81 @@ export async function POST(request: NextRequest) {
       }
 
       console.log(`✅ Created ${reservations?.length} training reservation records (1 per trainer)`)
+
+      const reservationsByCalendar = new Map<string, string[]>()
+      for (const reservation of reservations || []) {
+        const ids = reservationsByCalendar.get((reservation as any).calendar_id) || []
+        ids.push(reservation.id)
+        reservationsByCalendar.set((reservation as any).calendar_id, ids)
+      }
+
+      if (reservationsByCalendar.size > 0) {
+        const allReservationIds = Array.from(reservationsByCalendar.values()).flat()
+        await supabaseAdmin
+          .from('reservations')
+          .update({
+            calendar_sync_status: 'pending',
+            calendar_sync_action: 'create',
+            calendar_sync_error: null,
+            calendar_sync_attempted_at: new Date().toISOString(),
+          })
+          .in('id', allReservationIds)
+          .then(({ error }) => {
+            if (error) console.error('Failed to mark training calendar sync pending:', error.message)
+          })
+
+        runBackgroundTask('training-calendar-create', async () => {
+          const calendarService = createGoogleCalendarService()
+          if (!calendarService) {
+            await supabaseAdmin
+              .from('reservations')
+              .update({
+                calendar_sync_status: 'skipped',
+                calendar_sync_action: 'create',
+                calendar_sync_error: 'Google Calendar service is not configured',
+                calendar_sync_attempted_at: new Date().toISOString(),
+              })
+              .in('id', allReservationIds)
+            return
+          }
+
+          for (const [trainerCalId, reservationIds] of Array.from(reservationsByCalendar.entries())) {
+            try {
+              const calResult = await calendarService.createEvent({
+                title: generatedTitle,
+                startTime: startDateTime.toISOString(),
+                endTime: endDateTime.toISOString(),
+                clientName: generatedTitle,
+                clientEmail: 'training@system',
+                notes: notes || undefined,
+                calendarId: trainerCalId,
+              })
+
+              await supabaseAdmin
+                .from('reservations')
+                .update({
+                  external_event_id: calResult.eventId,
+                  calendar_sync_status: 'synced',
+                  calendar_sync_action: 'create',
+                  calendar_sync_error: null,
+                  calendar_sync_attempted_at: new Date().toISOString(),
+                  calendar_synced_at: new Date().toISOString(),
+                })
+                .in('id', reservationIds)
+            } catch (calErr) {
+              await supabaseAdmin
+                .from('reservations')
+                .update({
+                  calendar_sync_status: 'failed',
+                  calendar_sync_action: 'create',
+                  calendar_sync_error: calErr instanceof Error ? calErr.message : String(calErr),
+                  calendar_sync_attempted_at: new Date().toISOString(),
+                })
+                .in('id', reservationIds)
+            }
+          }
+        })
+      }
 
       return NextResponse.json({
         reservation: reservations?.[0],
@@ -456,8 +438,8 @@ export async function POST(request: NextRequest) {
       end_time: endDateTime.toISOString(),
       notes: mergedNotes,
       calendar_id: calendarId,
-      external_event_id: externalEventId,
-      trainer_external_event_id: trainerExternalEventId,
+      external_event_id: null,
+      trainer_external_event_id: null,
       trainer_id: trainerId || null,
     }
 
@@ -482,16 +464,6 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error('Reservation creation error:', error)
-
-      // If calendar event was created but reservation failed, try to clean up
-      if (externalEventId && calendarService) {
-        try {
-          await calendarService.deleteEvent(externalEventId, calendarId)
-          console.log('Cleaned up calendar event after reservation failure')
-        } catch (cleanupError) {
-          console.error('Failed to cleanup calendar event:', cleanupError)
-        }
-      }
 
       return NextResponse.json(
         { error: '予約の作成に失敗しました', details: (error as any)?.message || (error as any)?.hint || (error as any)?.code || null },
@@ -531,11 +503,42 @@ export async function POST(request: NextRequest) {
       trainerId,
       trainerName,
       trainerCalendarEmail,
-      externalEventId,
       calendarId,
       calendarDebug,
       title: reservation.title,
     }))
+
+    const clientNameForCalendar = clientId === 'BLOCKED'
+      ? '予約不可時間'
+      : clientId === 'TRIAL'
+        ? generatedTitle
+        : clientId === 'GUEST'
+          ? generatedTitle
+          : clientUser?.full_name || generatedTitle
+    const clientEmailForCalendar = clientId === 'BLOCKED'
+      ? 'blocked@system'
+      : clientId === 'TRIAL'
+        ? 'trial@system'
+        : clientId === 'GUEST'
+          ? 'guest@system'
+          : clientUser?.email || 'system@reservation'
+
+    await markCalendarCreatePending(reservation.id)
+    runBackgroundTask('reservation-calendar-create', async () => {
+      await createReservationCalendarEvent({
+        reservationId: reservation.id,
+        title: generatedTitle,
+        startTime: startDateTime.toISOString(),
+        endTime: endDateTime.toISOString(),
+        clientName: clientNameForCalendar,
+        clientEmail: clientEmailForCalendar,
+        notes: notes || undefined,
+        calendarId,
+        memberCalendarEmail: clientUser?.google_calendar_email || null,
+        trainerCalendarEmail,
+        trainerNotifyEmail,
+      })
+    })
 
     const emailPromises: Promise<any>[] = []
 
@@ -605,7 +608,9 @@ export async function POST(request: NextRequest) {
     }
 
     if (emailPromises.length > 0) {
-      await Promise.allSettled(emailPromises)
+      runBackgroundTask('reservation-notifications', async () => {
+        await Promise.allSettled(emailPromises)
+      })
     }
 
     return NextResponse.json({

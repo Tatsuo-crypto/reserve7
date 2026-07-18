@@ -7,6 +7,7 @@ import Link from 'next/link'
 import TrackingModal from './TrackingModal'
 import type { Member } from '@/types'
 import Icon from '@/components/ui/icons'
+import Button from '@/components/ui/Button'
 import {
   getPlanRank,
   getStatusRank,
@@ -57,7 +58,7 @@ function MembersPageContent() {
       } catch (error) {
         if (requestId !== fetchRequestIdRef.current) return
         console.error('Fetch Error:', error)
-        setError('会員データの取得中にエラーが発生しました')
+        setError('会員データを取得できませんでした。画面を再読み込みしてください。')
       } finally {
         if (requestId === fetchRequestIdRef.current) {
           setLoading(false)
@@ -92,7 +93,7 @@ function MembersPageContent() {
       setTimeout(() => setError(''), 3000)
     } catch (err) {
       console.error('Failed to copy URL:', err)
-      setError('URLのコピーに失敗しました')
+      setError('URLをコピーできませんでした。もう一度お試しください。')
     }
   }
 
@@ -147,11 +148,11 @@ function MembersPageContent() {
         setError(`会員「${memberToDelete.name}」を削除しました`)
         setTimeout(() => setError(''), 3000)
       } else {
-        setError(`会員削除に失敗しました: ${result.error || 'Unknown error'}`)
+        setError(`会員を削除できませんでした。${result.error || 'もう一度お試しください。'}`)
       }
     } catch (error) {
       console.error('会員削除エラー:', error)
-      setError('会員削除中にエラーが発生しました')
+      setError('会員を削除できませんでした。もう一度お試しください。')
     } finally {
       setShowDeleteModal(false)
       setMemberToDelete(null)
@@ -208,7 +209,7 @@ function MembersPageContent() {
           <div className="bg-surface-raised rounded-2xl p-6 shadow-sm border border-border-subtle">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <div className="text-[10px] font-normal text-text-muted uppercase tracking-widest mb-1">現在の在籍者</div>
+                <div className="text-xs font-normal text-text-muted uppercase tracking-widest mb-1">現在の在籍者</div>
                 <div className="flex items-baseline gap-2">
                   <span className="text-4xl font-normal text-text-primary tracking-tight">{totalActive}</span>
                   <span className="text-sm font-normal text-text-muted">名</span>
@@ -224,11 +225,11 @@ function MembersPageContent() {
             </div>
           </div>
           <div className="md:col-span-3 bg-surface-raised rounded-2xl p-6 shadow-sm border border-border-subtle">
-            <div className="text-[10px] font-normal text-text-muted uppercase tracking-widest mb-4">プラン別内訳</div>
+            <div className="text-xs font-normal text-text-muted uppercase tracking-widest mb-4">プラン別内訳</div>
             <div className="flex flex-wrap gap-2">
               {sortedPlans.map(plan => (
                 <div key={plan} className="bg-surface-base rounded-lg px-3 py-1.5 border border-border-subtle flex items-center gap-2">
-                  <span className="text-[10px] font-normal text-text-secondary">{plan}</span>
+                  <span className="text-xs font-normal text-text-secondary">{plan}</span>
                   <span className="text-sm font-normal text-text-primary tabular-nums">{planCounts[plan]}</span>
                 </div>
               ))}
@@ -239,18 +240,24 @@ function MembersPageContent() {
         {/* Toolbar */}
         <div className="bg-surface-raised rounded-2xl p-4 shadow-sm border border-border-subtle mb-6">
           <div className="mx-auto flex w-fit items-center gap-3 bg-surface-base p-1.5 rounded-2xl border border-border-subtle">
-              <button
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
                 onClick={() => setShowOnlyActive(true)}
-                className={`ui-control-nowrap min-w-[84px] px-5 py-3 rounded-xl text-xs font-normal transition-all ${showOnlyActive ? 'bg-surface-raised text-brand-600 shadow-sm' : 'text-text-muted hover:text-text-secondary'}`}
+                className={`ui-control-nowrap min-w-[84px] px-5 py-3 rounded-2xl text-xs font-normal transition-all ${showOnlyActive ? 'bg-surface-raised text-brand-600 shadow-sm' : 'text-text-muted hover:text-text-secondary'}`}
               >
                 在籍のみ
-              </button>
-              <button
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
                 onClick={() => setShowOnlyActive(false)}
-                className={`ui-control-nowrap min-w-[84px] px-5 py-3 rounded-xl text-xs font-normal transition-all ${!showOnlyActive ? 'bg-surface-raised text-brand-600 shadow-sm' : 'text-text-muted hover:text-text-secondary'}`}
+                className={`ui-control-nowrap min-w-[84px] px-5 py-3 rounded-2xl text-xs font-normal transition-all ${!showOnlyActive ? 'bg-surface-raised text-brand-600 shadow-sm' : 'text-text-muted hover:text-text-secondary'}`}
               >
                 全員表示
-              </button>
+              </Button>
           </div>
         </div>
 
@@ -262,7 +269,7 @@ function MembersPageContent() {
         )}
 
         {/* Member List (Simple Table Format) */}
-        <div className="bg-surface-raised rounded-3xl shadow-sm border border-border-subtle overflow-hidden">
+        <div className="bg-surface-raised rounded-2xl shadow-sm border border-border-subtle overflow-hidden">
           {!members || members.length === 0 ? (
             <div className="p-20 text-center">
               <p className="text-text-muted font-normal italic">会員データが見つかりません</p>
@@ -272,9 +279,9 @@ function MembersPageContent() {
               <table className="w-full min-w-[500px] text-left border-collapse">
                 <thead>
                   <tr className="bg-surface-base/50 border-b border-border-subtle">
-                    <th className="ui-nowrap w-[38%] px-4 py-4 text-[10px] font-normal text-text-muted uppercase tracking-widest">氏名</th>
-                    <th className="ui-nowrap w-[34%] px-4 py-4 text-[10px] font-normal text-text-muted uppercase tracking-widest">プラン</th>
-                    <th className="ui-nowrap w-[28%] px-4 py-4 text-center text-[10px] font-normal text-text-muted uppercase tracking-widest">ステータス</th>
+                    <th className="ui-nowrap w-[38%] px-4 py-4 text-xs font-normal text-text-muted uppercase tracking-widest">氏名</th>
+                    <th className="ui-nowrap w-[34%] px-4 py-4 text-xs font-normal text-text-muted uppercase tracking-widest">プラン</th>
+                    <th className="ui-nowrap w-[28%] px-4 py-4 text-center text-xs font-normal text-text-muted uppercase tracking-widest">ステータス</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -293,12 +300,12 @@ function MembersPageContent() {
                         </div>
                       </td>
                       <td className="px-4 py-4">
-                        <span className="ui-nowrap inline-flex rounded-md bg-surface-overlay px-2 py-0.5 text-[10px] font-normal text-text-secondary">
+                        <span className="ui-nowrap inline-flex rounded-lg bg-surface-overlay px-2 py-0.5 text-xs font-normal text-text-secondary">
                           {member.plan || '-'}
                         </span>
                       </td>
                       <td className="px-4 py-4 text-center">
-                        <span className={`ui-nowrap inline-flex rounded-full px-2 py-0.5 text-[10px] font-normal shadow-sm ${getStatusColor(member.status)}`}>
+                        <span className={`ui-nowrap inline-flex rounded-full px-2 py-0.5 text-xs font-normal shadow-sm ${getStatusColor(member.status)}`}>
                           {getStatusText(member.status)}
                         </span>
                       </td>

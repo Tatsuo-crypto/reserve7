@@ -15,7 +15,7 @@ const PADDING_CLASSES: Record<Padding, string> = {
 /**
  * N-2: カードの角丸・シャドウ・枠線を一元化する共通コンポーネント。
  * 角丸・シャドウはN-4のトークンどおり固定（rounded-2xl / shadow-sm）。
- * 既存の角丸(rounded-2xl〜rounded-[2.5rem]まで8種類混在)・シャドウ(8種類混在)の揺れを
+ * 既存の角丸(rounded-2xl〜rounded-2xlまで8種類混在)・シャドウ(8種類混在)の揺れを
  * ここに集約することで解消していく（適用は画面を触るタイミングで段階的に）。
  * Q-6: 背景・枠線はセマンティックトークン(surface.raised/border.subtle)参照に変更。
  * PR-Q2でトークンの値がzinc系に切り替わると、この行を触らずに黒ベース化される。

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { format, addMonths, startOfMonth, parseISO } from 'date-fns'
 import { PLAN_LIST, PLAN_FEES } from '@/lib/constants'
 import Icon from '@/components/ui/icons'
+import Button from '@/components/ui/Button'
 
 interface PaymentItem {
   month: string
@@ -74,7 +75,7 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
     const fetchData = async () => {
       try {
         const memberRes = await fetch(`/api/admin/members/${memberId}`)
-        if (!memberRes.ok) throw new Error('会員情報の取得に失敗しました')
+        if (!memberRes.ok) throw new Error('会員情報を取得できませんでした。画面を再読み込みしてください。')
         const memberJson = await memberRes.json()
         const m = memberJson.data
         if (!m) throw new Error('会員が見つかりません')
@@ -88,7 +89,7 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
 
         await fetchPayments()
       } catch (e: any) {
-        setError(e.message || '読み込みに失敗しました')
+        setError(e.message || '読み込めませんでした。画面を再読み込みしてください。')
       } finally {
         setLoading(false)
       }
@@ -145,7 +146,7 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
 
       if (!res.ok) {
         const err = await res.json()
-        alert(`保存に失敗しました: ${err.error}`)
+        alert(`保存できませんでした。${err.error}`)
         return
       }
 
@@ -153,7 +154,7 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
       await fetchPayments()
     } catch (e) {
       console.error(e)
-      alert('保存中にエラーが発生しました')
+      alert('保存できませんでした。もう一度お試しください。')
     } finally {
       setSaving(false)
     }
@@ -223,19 +224,22 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
         </div>
 
         {/* Monthly Plan/Payment Settings */}
-        <div className="bg-surface-raised rounded-3xl shadow-sm border border-border-subtle overflow-hidden mb-10">
+        <div className="bg-surface-raised rounded-2xl shadow-sm border border-border-subtle overflow-hidden mb-10">
           <div className="px-8 py-6 border-b border-border-subtle flex items-center justify-between">
             <div>
               <h3 className="text-xl font-normal text-text-primary tracking-tight">支払い・プラン変更履歴</h3>
               <p className="text-xs font-normal text-text-muted uppercase tracking-widest mt-0.5">月ごとのプランと支払金額の管理</p>
             </div>
-            <button
+            <Button
+              type="button"
+              variant="primary"
+              size="sm"
               onClick={handleAddMonth}
               title="プランを追加・復帰"
-              className="w-12 h-12 bg-gradient-to-br from-brand-600 to-brand-800 text-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 flex items-center justify-center hover:scale-105 active:scale-95 group"
+              className="w-12 h-12 p-0 bg-gradient-to-br from-brand-600 to-brand-800 text-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 hover:scale-105 active:scale-95 group"
             >
               <Icon name="plus" size={24} className="group-hover:rotate-90 transition-transform duration-300" />
-            </button>
+            </Button>
           </div>
           <div className="p-0">
             {payments.length === 0 ? (
@@ -250,11 +254,11 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
                 <table className="min-w-full divide-y divide-border-subtle">
                   <thead className="bg-surface-base/50">
                     <tr>
-                      <th className="px-3 sm:px-8 py-4 text-left text-[10px] font-normal text-text-muted uppercase tracking-widest">対象月</th>
-                      <th className="px-3 sm:px-4 py-4 text-left text-[10px] font-normal text-text-muted uppercase tracking-widest">プラン</th>
-                      <th className="px-3 sm:px-4 py-4 text-left text-[10px] font-normal text-text-muted uppercase tracking-widest">予定金額</th>
-                      <th className="hidden lg:table-cell px-8 py-4 text-left text-[10px] font-normal text-text-muted uppercase tracking-widest">メモ</th>
-                      <th className="px-3 sm:px-8 py-4 text-right text-[10px] font-normal text-text-muted uppercase tracking-widest">操作</th>
+                      <th className="px-3 sm:px-8 py-4 text-left text-xs font-normal text-text-muted uppercase tracking-widest">対象月</th>
+                      <th className="px-3 sm:px-4 py-4 text-left text-xs font-normal text-text-muted uppercase tracking-widest">プラン</th>
+                      <th className="px-3 sm:px-4 py-4 text-left text-xs font-normal text-text-muted uppercase tracking-widest">予定金額</th>
+                      <th className="hidden lg:table-cell px-8 py-4 text-left text-xs font-normal text-text-muted uppercase tracking-widest">メモ</th>
+                      <th className="px-3 sm:px-8 py-4 text-right text-xs font-normal text-text-muted uppercase tracking-widest">操作</th>
                     </tr>
                   </thead>
                   <tbody className="bg-surface-raised divide-y divide-border-subtle">
@@ -273,10 +277,10 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
                               </span>
                               <div className="flex gap-1">
                                 {isFutureMonth && (
-                                  <span className="text-[8px] font-normal bg-brand-500/15 text-brand-300 px-1.5 py-0.5 rounded-full uppercase tracking-tighter">予定</span>
+                                  <span className="text-xs font-normal bg-brand-500/15 text-brand-300 px-1.5 py-0.5 rounded-full uppercase tracking-tighter">予定</span>
                                 )}
                                 {isCurrentMonth && (
-                                  <span className="text-[8px] font-normal bg-surface-overlay text-text-secondary px-1.5 py-0.5 rounded-full uppercase tracking-tighter">今月</span>
+                                  <span className="text-xs font-normal bg-surface-overlay text-text-secondary px-1.5 py-0.5 rounded-full uppercase tracking-tighter">今月</span>
                                 )}
                               </div>
                             </div>
@@ -297,8 +301,11 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
                             </span>
                           </td>
                           <td className="px-3 sm:px-8 py-4 text-right">
-                            <button
-                              className={`text-[10px] font-normal uppercase tracking-widest px-3 py-2 rounded-xl border transition-all ${
+                            <Button
+                              type="button"
+                              variant="secondary"
+                              size="sm"
+                              className={`text-xs font-normal uppercase tracking-widest px-3 py-2 rounded-2xl border transition-all ${
                                 isFutureMonth 
                                   ? 'bg-brand-500/15 text-brand-300 border-brand-500/20 hover:bg-brand-500/25'
                                   : 'bg-surface-raised text-brand-600 border-border-subtle hover:border-brand-500/30 hover:bg-brand-500/15'
@@ -306,7 +313,7 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
                               onClick={() => handleEditClick(p)}
                             >
                               {isFutureMonth ? '設定' : '編集'}
-                            </button>
+                            </Button>
                           </td>
                         </tr>
                       )
@@ -326,12 +333,12 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
               <div className="flex items-center gap-2 mb-4">
                 <h3 className="text-lg font-normal">{formatMonth(editingItem.month)} の設定</h3>
                 {editingItem.status === 'future' && (
-                  <span className="text-xs bg-brand-500/15 text-brand-300 px-2 py-0.5 rounded font-normal">翌月以降の予定</span>
+                  <span className="text-xs bg-brand-500/15 text-brand-300 px-2 py-0.5 rounded-lg font-normal">翌月以降の予定</span>
                 )}
               </div>
 
               {editingItem.status === 'future' && (
-                <div className="mb-4 bg-brand-500/15 border border-brand-500/30 rounded-md p-3 text-sm text-brand-300">
+                <div className="mb-4 bg-brand-500/15 border border-brand-500/30 rounded-lg p-3 text-sm text-brand-300">
                   📅 <strong>{formatMonth(editingItem.month)}</strong> からのプラン変更予定を設定します。<br />
                   <span className="text-xs text-brand-300 mt-1 block">現在のプランは今月末まで継続されます。</span>
                 </div>
@@ -341,7 +348,7 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
                 <div>
                   <label className="block text-sm font-normal text-text-secondary mb-1">プラン</label>
                   <select
-                    className="w-full border rounded-md px-3 py-2 text-sm"
+                    className="w-full border rounded-lg px-3 py-2 text-sm"
                     value={editForm.plan}
                     onChange={(e) => {
                       const newPlan = e.target.value
@@ -370,7 +377,7 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
                   <input
                     type="text"
                     inputMode="numeric"
-                    className="w-full border rounded-md px-3 py-2 text-sm"
+                    className="w-full border rounded-lg px-3 py-2 text-sm"
                     value={editForm.monthlyFee}
                     onChange={(e) => {
                       const v = e.target.value.replace(/[^0-9]/g, '')
@@ -385,7 +392,7 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
                     <label className="block text-sm font-normal text-text-secondary mb-1">入金日（任意）</label>
                     <input
                       type="date"
-                      className="w-full border rounded-md px-3 py-2 text-sm"
+                      className="w-full border rounded-lg px-3 py-2 text-sm"
                       value={editForm.paymentDate}
                       onChange={(e) => setEditForm({ ...editForm, paymentDate: e.target.value })}
                     />
@@ -395,7 +402,7 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
                 <div>
                   <label className="block text-sm font-normal text-text-secondary mb-1">メモ（任意）</label>
                   <textarea
-                    className="w-full border rounded-md px-3 py-2 text-sm"
+                    className="w-full border rounded-lg px-3 py-2 text-sm"
                     rows={3}
                     value={editForm.memo}
                     onChange={(e) => setEditForm({ ...editForm, memo: e.target.value })}
@@ -403,21 +410,27 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
                   />
                 </div>
                 
-                <div className="text-xs text-text-secondary bg-yellow-500/15 p-2 rounded">
+                <div className="text-xs text-text-secondary bg-yellow-500/15 p-2 rounded-lg">
                   ※ この月の設定のみ変更されます。前後の月には影響しませんが、この変更により会員履歴データが分割される場合があります。
                 </div>
               </div>
 
               <div className="mt-6 flex justify-end gap-3">
-                <button
-                  className="px-4 py-2 text-sm rounded-md border hover:bg-surface-base"
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  className="px-4 py-2 text-sm rounded-lg border hover:bg-surface-base"
                   onClick={() => setEditingItem(null)}
                   disabled={saving}
                 >
                   キャンセル
-                </button>
-                <button
-                  className={`px-4 py-2 text-sm rounded-md text-white disabled:opacity-50 ${
+                </Button>
+                <Button
+                  type="button"
+                  variant="primary"
+                  size="sm"
+                  className={`px-4 py-2 text-sm rounded-lg text-white disabled:opacity-50 ${
                     editingItem.status === 'future'
                       ? 'bg-brand-600 hover:bg-brand-800'
                       : 'bg-brand-600 hover:bg-brand-800'
@@ -426,7 +439,7 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
                   disabled={saving}
                 >
                   {saving ? '保存中...' : (editingItem.status === 'future' ? '予定を保存' : '保存')}
-                </button>
+                </Button>
               </div>
             </div>
           </div>

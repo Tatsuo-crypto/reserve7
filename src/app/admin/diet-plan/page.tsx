@@ -10,6 +10,7 @@ import type { GoalFormValues, HabitTargetsValues } from '@/components/diet/GoalP
 // Reusing some logic from members page
 import { getStatusDotColor } from '@/lib/utils/member'
 import { calculateAragonPlan, caloriesFromMacros, NEAT_LEVELS } from '@/lib/utils/dietGoalCalc'
+import Button from '@/components/ui/Button'
 import Icon from '@/components/ui/icons'
 
 const PanelLoading = () => (
@@ -492,11 +493,11 @@ function DietPlanPageContent() {
             const dietError = dietRes.ok ? '' : await dietRes.text()
             const lifestyleError = lifestyleRes.ok ? '' : await lifestyleRes.text()
             console.error('Save goal failed:', { dietStatus: dietRes.status, dietError, lifestyleStatus: lifestyleRes.status, lifestyleError })
-            setMessage('保存に失敗しました')
+            setMessage('保存できませんでした。もう一度お試しください。')
             return false
         } catch (error) {
             console.error('Save error:', error)
-            setMessage('エラーが発生しました')
+            setMessage('保存できませんでした。もう一度お試しください。')
             return false
         }
     }
@@ -538,11 +539,11 @@ function DietPlanPageContent() {
             const dietError = dietRes.ok ? '' : await dietRes.text()
             const lifestyleError = lifestyleRes.ok ? '' : await lifestyleRes.text()
             console.error('Update goal failed:', { dietStatus: dietRes.status, dietError, lifestyleStatus: lifestyleRes.status, lifestyleError })
-            setMessage('保存に失敗しました')
+            setMessage('保存できませんでした。もう一度お試しください。')
             return false
         } catch (error) {
             console.error('Update error:', error)
-            setMessage('エラーが発生しました')
+            setMessage('保存できませんでした。もう一度お試しください。')
             return false
         }
     }
@@ -813,7 +814,7 @@ function DietPlanPageContent() {
         <div className={`min-h-screen bg-surface-base pb-12 text-text-primary ${selectedMember ? 'pt-0' : 'pt-4'}`}>
             <div className="max-w-2xl mx-auto px-4 sm:px-6">
                 {!selectedMember ? (
-                    <div className="bg-surface-raised rounded-[2.5rem] shadow-sm border border-border-subtle overflow-hidden">
+                    <div className="bg-surface-raised rounded-2xl shadow-sm border border-border-subtle overflow-hidden">
                         <div className="p-8 border-b border-border-subtle">
                             <h2 className="text-xl font-normal mb-6 flex items-center gap-2">
                                 <span className="w-1.5 h-6 bg-brand-500 rounded-full"></span>
@@ -832,24 +833,27 @@ function DietPlanPageContent() {
                         </div>
                         <div className="divide-y divide-border-subtle max-h-[60vh] overflow-y-auto px-4 pb-4">
                             {filteredMembers.map(member => (
-                                <button
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    fullWidth
                                     key={member.id}
                                     onClick={() => {
                                         setSelectedMember(member)
                                         // ヘッダーのタイトル(Navigation.tsx)が会員名を表示できるよう、URLにも反映しておく
                                         router.replace(`/admin/diet-plan?userId=${member.id}&name=${encodeURIComponent(member.full_name || '')}`)
                                     }}
-                                    className="w-full flex items-center px-6 py-5 hover:bg-brand-500/10 transition-all rounded-[2rem] group mt-2"
+                                    className="w-full flex items-center px-6 py-5 hover:bg-brand-500/10 transition-all rounded-2xl group mt-2"
                                 >
                                     <div className="flex-1 flex items-center gap-4 text-left">
                                         <div className={`w-3 h-3 rounded-full ${getStatusDotColor(member.status)} shadow-sm`} />
                                         <div>
                                             <div className="font-normal text-text-primary group-hover:text-brand-600 transition-colors">{member.full_name}</div>
-                                            <div className="text-[10px] font-normal text-text-muted uppercase tracking-widest">{member.email}</div>
+                                            <div className="text-xs font-normal text-text-muted uppercase tracking-widest">{member.email}</div>
                                         </div>
                                     </div>
-                                    <div className="text-[10px] font-normal text-text-muted bg-surface-base px-4 py-2 rounded-full group-hover:bg-brand-500 group-hover:text-white transition-all uppercase tracking-widest">選択</div>
-                                </button>
+                                    <div className="text-xs font-normal text-text-muted bg-surface-base px-4 py-2 rounded-full group-hover:bg-brand-500 group-hover:text-white transition-all uppercase tracking-widest">選択</div>
+                                </Button>
                             ))}
                         </div>
                     </div>
@@ -858,7 +862,7 @@ function DietPlanPageContent() {
                         {/* Q-3: ライトモード時代のrgba(249,250,251,...)という白いシャドウが黒背景で
                             発光ブロブのように見えてしまっていたため、素の背景色のみで区切る形に変更 */}
                         <div className="sticky top-16 z-40 max-w-2xl mx-auto bg-surface-base px-1 pt-2 pb-2">
-                            <div className="grid grid-cols-5 bg-surface-raised/95 backdrop-blur-md p-1.5 rounded-[2.5rem] border border-border-subtle shadow-sm gap-1">
+                            <div className="grid grid-cols-5 bg-surface-raised/95 backdrop-blur-md p-1.5 rounded-2xl border border-border-subtle shadow-sm gap-1">
                                 {[
                                     { id: 'panel', label: '週間' },
                                     { id: 'weight', label: '体重' },
@@ -866,9 +870,9 @@ function DietPlanPageContent() {
                                     { id: 'goals', label: '目標' },
                                     { id: 'plan', label: 'カロリー\n設定' }
                                 ].map(tab => (
-                                    <button key={tab.id} onClick={() => setActiveTab(tab.id as TabType)} className={`min-w-0 h-12 px-1 text-[11px] sm:text-sm leading-tight font-normal transition-all duration-300 rounded-2xl flex items-center justify-center text-center ${activeTab === tab.id ? 'bg-surface-overlay text-text-primary shadow-xl scale-[1.02]' : 'text-text-muted hover:text-text-secondary hover:bg-surface-base/50'}`}>
+                                    <Button type="button" variant="ghost" size="sm" key={tab.id} onClick={() => setActiveTab(tab.id as TabType)} className={`min-w-0 h-12 px-1 text-xs sm:text-sm leading-tight font-normal transition-all duration-300 rounded-2xl flex items-center justify-center text-center ${activeTab === tab.id ? 'bg-surface-overlay text-text-primary shadow-xl scale-[1.02]' : 'text-text-muted hover:text-text-secondary hover:bg-surface-base/50'}`}>
                                         <span className="whitespace-pre-line">{tab.label}</span>
-                                    </button>
+                                    </Button>
                                 ))}
                             </div>
                         </div>
@@ -885,8 +889,11 @@ function DietPlanPageContent() {
                                     showWeekSwitcher={true}
                                 />
 
-                                <div className="bg-surface-raised rounded-[2.5rem] border border-border-subtle shadow-sm overflow-hidden">
-                                    <button
+                                <div className="bg-surface-raised rounded-2xl border border-border-subtle shadow-sm overflow-hidden">
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        fullWidth
                                         onClick={() => setShowDailyRecords(!showDailyRecords)}
                                         className="w-full flex items-center justify-between px-8 py-6"
                                     >
@@ -895,16 +902,16 @@ function DietPlanPageContent() {
                                             <h2 className="text-base font-normal text-text-primary">日別の記録</h2>
                                         </div>
                                         <Icon name="chevronDown" size={20} className={`text-text-muted transition-transform duration-300 ${showDailyRecords ? 'rotate-180' : ''}`} />
-                                    </button>
+                                    </Button>
                                     {showDailyRecords && (
                                         <div className="overflow-x-auto px-8 pb-8 animate-fadeIn">
                                             <table className="w-full text-left">
                                                 <thead>
                                                     <tr className="border-b border-border-subtle">
-                                                        <th className="py-4 text-[10px] font-normal text-text-muted uppercase tracking-widest">日付</th>
-                                                        <th className="py-4 text-[10px] font-normal text-text-muted uppercase tracking-widest text-right">カロリー</th>
-                                                        <th className="py-4 text-[10px] font-normal text-text-muted uppercase tracking-widest text-center">P/F/C (g)</th>
-                                                        <th className="py-4 text-[10px] font-normal text-text-muted uppercase tracking-widest text-center">糖質/繊維/塩</th>
+                                                        <th className="py-4 text-xs font-normal text-text-muted uppercase tracking-widest">日付</th>
+                                                        <th className="py-4 text-xs font-normal text-text-muted uppercase tracking-widest text-right">カロリー</th>
+                                                        <th className="py-4 text-xs font-normal text-text-muted uppercase tracking-widest text-center">P/F/C (g)</th>
+                                                        <th className="py-4 text-xs font-normal text-text-muted uppercase tracking-widest text-center">糖質/繊維/塩</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody className="divide-y divide-border-subtle">
@@ -912,9 +919,9 @@ function DietPlanPageContent() {
                                                         <tr key={i} className="group hover:bg-surface-base transition-colors">
                                                             <td className="py-5 text-sm font-normal text-text-primary">
                                                                 {h.date.slice(5).replace(/-/g, '/')}
-                                                                {h.image_url && <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-[8px] bg-brand-500/15 text-brand-300 uppercase tracking-tighter font-bold">Image</span>}
+                                                                {h.image_url && <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-lg text-xs bg-brand-500/15 text-brand-300 uppercase tracking-tighter font-bold">Image</span>}
                                                             </td>
-                                                            <td className="py-5 text-sm font-normal text-text-primary text-right tabular-nums">{h.calories?.toLocaleString()} <span className="text-[10px] text-text-muted">kcal</span></td>
+                                                            <td className="py-5 text-sm font-normal text-text-primary text-right tabular-nums">{h.calories?.toLocaleString()} <span className="text-xs text-text-muted">kcal</span></td>
                                                             <td className="py-5 text-sm font-normal text-text-secondary text-center tabular-nums">
                                                                 <span className="text-amber-600">{Math.round(h.protein)}</span>
                                                                 <span className="mx-1 text-text-muted">/</span>
@@ -963,7 +970,7 @@ function DietPlanPageContent() {
                                 {/* 基礎情報からカロリー計算（アラゴン式）: 最初の目標設定時だけ必要なため、
                                     目標設定の履歴が既にある会員には表示しない */}
                                 {dietHistory.length === 0 && (
-                                <div className="bg-surface-raised rounded-[2.5rem] p-8 sm:p-10 shadow-sm border border-border-subtle space-y-6">
+                                <div className="bg-surface-raised rounded-2xl p-8 sm:p-10 shadow-sm border border-border-subtle space-y-6">
                                     <div className="flex items-center gap-2">
                                         <div className="w-1.5 h-6 bg-brand-500 rounded-full"></div>
                                         <h2 className="text-xl font-normal text-text-primary tracking-tight">基礎情報からカロリー計算</h2>
@@ -978,15 +985,15 @@ function DietPlanPageContent() {
                                             <div className="grid grid-cols-2 gap-3">
                                                 <DietProfileStat label="現在の体重" value={`${latestWeight}kg`} />
                                                 <div className="space-y-1">
-                                                    <label className="text-[10px] font-normal text-text-muted uppercase tracking-widest pl-1">週のトレーニング時間</label>
-                                                    <input type="number" value={aragonInput.weeklyTrainingHours} onChange={(e) => setAragonInput(prev => ({ ...prev, weeklyTrainingHours: e.target.value }))} className="w-full bg-surface-base border-none rounded-xl px-3 py-3 text-sm font-normal focus:ring-2 focus:ring-brand-500" />
+                                                    <label className="text-xs font-normal text-text-muted uppercase tracking-widest pl-1">週のトレーニング時間</label>
+                                                    <input type="number" value={aragonInput.weeklyTrainingHours} onChange={(e) => setAragonInput(prev => ({ ...prev, weeklyTrainingHours: e.target.value }))} className="w-full bg-surface-base border-none rounded-2xl px-3 py-3 text-sm font-normal focus:ring-2 focus:ring-brand-500" />
                                                 </div>
                                             </div>
 
                                             {/* O-7: 数値入力→スライダー化。既存の計算ロジック(dietGoalCalc.ts)は無変更 */}
                                             <div className="space-y-2">
                                                 <div className="flex items-center justify-between px-1">
-                                                    <label className="text-[10px] font-normal text-text-muted uppercase tracking-widest">最終目標体重</label>
+                                                    <label className="text-xs font-normal text-text-muted uppercase tracking-widest">最終目標体重</label>
                                                     <span className="text-sm font-semibold text-text-primary tabular-nums">
                                                         {aragonInput.targetWeight || '--'}<span className="text-xs font-normal text-text-muted ml-0.5">kg</span>
                                                     </span>
@@ -1004,7 +1011,7 @@ function DietPlanPageContent() {
 
                                             <div className="space-y-2">
                                                 <div className="flex items-center justify-between px-1">
-                                                    <label className="text-[10px] font-normal text-text-muted uppercase tracking-widest">目標期間</label>
+                                                    <label className="text-xs font-normal text-text-muted uppercase tracking-widest">目標期間</label>
                                                     <span className="text-sm font-semibold text-text-primary tabular-nums">
                                                         {aragonInput.periodWeeks}<span className="text-xs font-normal text-text-muted ml-0.5">週間</span>
                                                     </span>
@@ -1032,24 +1039,27 @@ function DietPlanPageContent() {
                                                     />
                                                 </div>
                                                 <div className="flex items-center justify-between px-1">
-                                                    <span className={`text-[10px] ${aragonPaceExceedsSafe ? 'text-state-danger-600' : 'text-text-muted'}`}>
+                                                    <span className={`text-xs ${aragonPaceExceedsSafe ? 'text-state-danger-600' : 'text-text-muted'}`}>
                                                         {aragonRequestedPaceKg === null ? '' : aragonRequestedPaceKg > 0 ? `週${aragonRequestedPaceKg}kg減` : aragonRequestedPaceKg < 0 ? `週${Math.abs(aragonRequestedPaceKg)}kg増` : '変化なし'}
                                                     </span>
-                                                    <span className="text-[10px] text-text-muted">安全上限 週{aragonMaxSafeWeeklyLossKg}kg</span>
+                                                    <span className="text-xs text-text-muted">安全上限 週{aragonMaxSafeWeeklyLossKg}kg</span>
                                                 </div>
                                             </div>
 
                                             <div className="space-y-2">
-                                                <label className="text-[10px] font-normal text-text-muted uppercase tracking-widest pl-1">日常の活動量（NEAT）</label>
+                                                <label className="text-xs font-normal text-text-muted uppercase tracking-widest pl-1">日常の活動量（NEAT）</label>
                                                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                                                     {NEAT_LEVELS.map(level => (
-                                                        <button
+                                                        <Button
+                                                            type="button"
+                                                            variant={aragonInput.neat === level.value ? 'primary' : 'secondary'}
+                                                            size="sm"
                                                             key={level.value}
                                                             onClick={() => setAragonInput(prev => ({ ...prev, neat: level.value }))}
-                                                            className={`text-xs py-3 px-2 rounded-xl transition-colors ${aragonInput.neat === level.value ? 'bg-brand-700 text-white' : 'bg-surface-base text-text-secondary hover:bg-surface-overlay'}`}
+                                                            className={`text-xs py-3 px-2 rounded-2xl transition-colors ${aragonInput.neat === level.value ? 'bg-brand-700 text-white' : 'bg-surface-base text-text-secondary hover:bg-surface-overlay'}`}
                                                         >
                                                             {level.label}
-                                                        </button>
+                                                        </Button>
                                                     ))}
                                                 </div>
                                             </div>
@@ -1061,20 +1071,20 @@ function DietPlanPageContent() {
                                                             希望ペース（週{aragonResult.requestedWeeklyLossKg}kg減）が安全上限（週{aragonResult.maxSafeWeeklyLossKg}kg減）を超えています。筋肉を落とさないため、12週間後の中間目標体重 {aragonResult.tbwKg}kg を採用して計算しています。
                                                         </div>
                                                     )}
-                                                    <div className="bg-surface-base/80 rounded-[2rem] p-8 text-center border border-border-subtle/50">
-                                                        <p className="text-[10px] font-normal text-text-muted mb-1 uppercase tracking-widest">目標摂取カロリー</p>
+                                                    <div className="bg-surface-base/80 rounded-2xl p-8 text-center border border-border-subtle/50">
+                                                        <p className="text-xs font-normal text-text-muted mb-1 uppercase tracking-widest">目標摂取カロリー</p>
                                                         <div className="flex items-baseline justify-center gap-1 mb-4">
                                                             <span className="text-4xl font-normal text-text-primary tabular-nums">{aragonResult.targetCalories.toLocaleString()}</span>
                                                             <span className="text-sm font-normal text-text-muted">kcal / 日</span>
                                                         </div>
-                                                        <p className="text-[11px] text-text-secondary">
+                                                        <p className="text-xs text-text-secondary">
                                                             <span className="text-amber-500">P {aragonResult.protein}g</span>
                                                             <span className="mx-1 text-text-muted">/</span>
                                                             <span className="text-purple-500">F {aragonResult.fat}g</span>
                                                             <span className="mx-1 text-text-muted">/</span>
                                                             <span className="text-blue-500">C {aragonResult.carbs}g</span>
                                                         </p>
-                                                        <button onClick={applyAragonPlanToGoal} className="mt-4 w-full sm:w-auto px-6 py-3 rounded-xl bg-brand-700 text-white text-sm hover:bg-brand-800 transition-colors">目標に反映</button>
+                                                        <Button type="button" onClick={applyAragonPlanToGoal} className="mt-4 w-full sm:w-auto px-6 py-3 rounded-2xl bg-brand-700 text-white text-sm hover:bg-brand-800 transition-colors">目標に反映</Button>
                                                     </div>
                                                 </>
                                             ) : (
@@ -1088,14 +1098,14 @@ function DietPlanPageContent() {
                                 )}
 
                                 {/* L-2: 現在の目標設定。デフォルトは閲覧専用のコンパクト表示、「編集」で統一フォームを展開 */}
-                                <div className="bg-surface-raised rounded-[2.5rem] p-8 sm:p-10 shadow-sm border border-border-subtle">
+                                <div className="bg-surface-raised rounded-2xl p-8 sm:p-10 shadow-sm border border-border-subtle">
                                     <div className="flex items-center justify-between mb-6">
                                         <div className="flex items-center gap-2">
                                             <div className="w-1.5 h-6 bg-orange-500 rounded-full"></div>
                                             <h2 className="text-xl font-normal text-text-primary tracking-tight">現在の目標設定</h2>
                                         </div>
                                         {!editingCurrentPlan && (
-                                            <button onClick={() => setEditingCurrentPlan(true)} className="text-xs text-brand-300 bg-brand-500/15 px-4 py-2 rounded-full hover:bg-brand-500/25">編集</button>
+                                            <Button type="button" variant="ghost" size="sm" onClick={() => setEditingCurrentPlan(true)} className="text-xs text-brand-300 bg-brand-500/15 px-4 py-2 rounded-full hover:bg-brand-500/25">編集</Button>
                                         )}
                                     </div>
                                     {editingCurrentPlan ? (
@@ -1197,7 +1207,7 @@ function DietPlanPageContent() {
                                 )}
 
                                 {/* L-4: 目標履歴の一番下に配置 */}
-                                <button onClick={openNewGoalModal} className="w-full text-sm text-white bg-brand-700 hover:bg-brand-800 px-4 py-4 rounded-2xl shadow-sm transition-colors">新しい目標を追加</button>
+                                <Button type="button" fullWidth onClick={openNewGoalModal} className="w-full text-sm text-white bg-brand-700 hover:bg-brand-800 px-4 py-4 rounded-2xl shadow-sm transition-colors">新しい目標を追加</Button>
                             </div>
                         )}
                     </div>
@@ -1223,7 +1233,7 @@ function DietPlanPageContent() {
 function DietProfileStat({ label, value }: { label: string, value: string }) {
     return (
         <div className="rounded-2xl bg-surface-base border border-border-subtle p-4">
-            <div className="text-[10px] text-text-muted uppercase tracking-widest">{label}</div>
+            <div className="text-xs text-text-muted uppercase tracking-widest">{label}</div>
             <div className="mt-1 text-lg text-text-primary">{value}</div>
         </div>
     )
@@ -1332,7 +1342,7 @@ function GoalHistoryCharts({ data, habitTargets, onEditRequest }: { data: any[],
     }, [data])
 
     return (
-        <div className="bg-surface-raised rounded-[2rem] p-5 sm:p-8 shadow-sm border border-border-subtle space-y-6">
+        <div className="bg-surface-raised rounded-2xl p-5 sm:p-8 shadow-sm border border-border-subtle space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
                 <div className="flex items-center gap-2">
                     <div className="w-1.5 h-6 bg-brand-500 rounded-full"></div>
@@ -1347,11 +1357,11 @@ function GoalHistoryCharts({ data, habitTargets, onEditRequest }: { data: any[],
                 <div className="mb-3">
                     <div className="flex items-center justify-between gap-3">
                         <h3 className="text-sm font-normal text-text-primary">カロリー推移</h3>
-                        <span className="rounded-full bg-brand-500/10 px-2.5 py-1 text-[10px] text-brand-300">筋トレ日基準</span>
+                        <span className="rounded-full bg-brand-500/10 px-2.5 py-1 text-xs text-brand-300">筋トレ日基準</span>
                     </div>
                 </div>
                 {chartRows.length === 1 ? (
-                    <div className="h-44 rounded-xl bg-surface-raised border border-border-subtle flex flex-col items-center justify-center text-center">
+                    <div className="h-44 rounded-2xl bg-surface-raised border border-border-subtle flex flex-col items-center justify-center text-center">
                         <p className="text-3xl text-text-primary tabular-nums">
                             {formatKcal(chartRows[0].dayTypeEnabled ? chartRows[0].trainingCalories : chartRows[0].calories)}<span className="ml-1 text-sm text-text-muted">kcal</span>
                         </p>
@@ -1364,7 +1374,7 @@ function GoalHistoryCharts({ data, habitTargets, onEditRequest }: { data: any[],
                             return (
                                 <g key={tick}>
                                     <line x1={chart.left} x2={chart.width - chart.right} y1={y} y2={y} stroke="rgba(255,255,255,0.08)" />
-                                    <text x={chart.left - 6} y={y + 3} textAnchor="end" className="fill-text-muted text-[9px]">{tick}</text>
+                                    <text x={chart.left - 6} y={y + 3} textAnchor="end" className="fill-text-muted text-xs">{tick}</text>
                                 </g>
                             )
                         })}
@@ -1411,7 +1421,7 @@ function GoalHistoryCharts({ data, habitTargets, onEditRequest }: { data: any[],
                                                         x={x + 1 + barWidth / 2}
                                                         y={yTop + height / 2 + 4}
                                                         textAnchor="middle"
-                                                        className="fill-white text-[10px] font-semibold"
+                                                        className="fill-white text-xs font-semibold"
                                                     >
                                                         {segment.key}
                                                     </text>
@@ -1429,24 +1439,26 @@ function GoalHistoryCharts({ data, habitTargets, onEditRequest }: { data: any[],
                                         strokeWidth={isSelected ? 2 : 1}
                                         rx="2"
                                     />
-                                    <text x={x + 1} y={chart.top + plotHeight + 17} textAnchor="middle" className="fill-text-muted text-[9px]">{row.displayDate}</text>
+                                    <text x={x + 1} y={chart.top + plotHeight + 17} textAnchor="middle" className="fill-text-muted text-xs">{row.displayDate}</text>
                                 </g>
                             )
                         })}
-                        <text x={chart.left - 24} y={chart.top - 6} textAnchor="start" className="fill-text-muted text-[9px]">kcal</text>
+                        <text x={chart.left - 24} y={chart.top - 6} textAnchor="start" className="fill-text-muted text-xs">kcal</text>
                     </svg>
                 )}
                 {selected && (
                     <div className="mt-3 space-y-3">
                         <div className="flex items-center justify-between gap-2">
-                            <span className="rounded-full bg-surface-base border border-border-subtle px-2.5 py-1 text-[10px] text-text-muted">{selected.periodLabel}</span>
-                            <button
+                            <span className="rounded-full bg-surface-base border border-border-subtle px-2.5 py-1 text-xs text-text-muted">{selected.periodLabel}</span>
+                            <Button
                                 type="button"
+                                variant="ghost"
+                                size="sm"
                                 onClick={() => onEditRequest(selected.date)}
                                 className="rounded-full bg-brand-500/15 px-3 py-1.5 text-xs text-brand-300 hover:bg-brand-500/25"
                             >
                                 編集
-                            </button>
+                            </Button>
                         </div>
                         {selected.dayTypeEnabled ? (
                             <div className="space-y-3">

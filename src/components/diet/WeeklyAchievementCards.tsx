@@ -1,4 +1,5 @@
 import Card from '@/components/ui/Card'
+import Button from '@/components/ui/Button'
 import Icon from '@/components/ui/icons'
 import Badge from '@/components/ui/Badge'
 import type { WeekDayRecordFlag } from '@/hooks/useWeeklyProgress'
@@ -54,18 +55,22 @@ export function DisplayModeToggle({ mode, onChange }: { mode: DisplayMode; onCha
     return (
         <div className="px-2 flex justify-center">
             <div className="inline-flex bg-surface-overlay rounded-full p-1">
-                <button
+                <Button
+                    type="button"
+                    variant="ghost"
                     onClick={() => onChange('total')}
                     className={`px-4 py-1.5 rounded-full text-xs font-normal transition-all ${mode === 'total' ? 'bg-surface-raised text-text-primary shadow-sm' : 'text-text-muted'}`}
                 >
                     週の合計
-                </button>
-                <button
+                </Button>
+                <Button
+                    type="button"
+                    variant="ghost"
                     onClick={() => onChange('average')}
                     className={`px-4 py-1.5 rounded-full text-xs font-normal transition-all ${mode === 'average' ? 'bg-surface-raised text-text-primary shadow-sm' : 'text-text-muted'}`}
                 >
                     平均値
-                </button>
+                </Button>
             </div>
         </div>
     )
@@ -79,7 +84,7 @@ export function RecordCheckTable({ weekDays }: { weekDays: WeekDayRecordFlag[] }
             <div className="grid grid-cols-7 gap-1.5">
                 {weekDays.map(day => (
                     <div key={day.date} className="flex flex-col items-center gap-1">
-                        <span className={`text-[10px] font-normal ${day.isToday ? 'text-brand-600' : 'text-text-muted'}`}>{day.label}</span>
+                        <span className={`text-xs font-normal ${day.isToday ? 'text-brand-600' : 'text-text-muted'}`}>{day.label}</span>
                         <div
                             className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${day.recorded ? 'bg-brand-500 text-white' : 'bg-surface-overlay text-text-muted'} ${day.isToday ? 'ring-2 ring-brand-500 ring-offset-1 ring-offset-surface-raised' : ''}`}
                         >
@@ -206,7 +211,7 @@ export function AchievementItemCard({
     return (
         <Card padding="sm">
             <div className="flex justify-between items-center mb-1">
-                <p className="text-[10px] font-normal text-text-muted uppercase tracking-widest leading-none">{label}</p>
+                <p className="text-xs font-normal text-text-muted uppercase tracking-widest leading-none">{label}</p>
                 <p className={`text-xs font-normal tabular-nums leading-none ${text}`}>{pct}%</p>
             </div>
 
@@ -250,7 +255,7 @@ export function NutritionListCard({
         <Card padding="sm">
             <div className="mb-4 flex items-center justify-between">
                 <h3 className="text-sm font-semibold text-text-primary">栄養バランス</h3>
-                <span className="text-[10px] font-normal text-text-muted">実績/目標</span>
+                <span className="text-xs font-normal text-text-muted">実績/目標</span>
             </div>
             <div className="divide-y divide-border-subtle">
                 {items.map(item => {
@@ -266,13 +271,13 @@ export function NutritionListCard({
                             <div className="mb-2 flex items-center justify-between gap-3">
                                 <div className="min-w-0">
                                     <p className="text-sm font-semibold text-text-primary">{item.label}</p>
-                                    <p className="text-[10px] text-text-muted">{item.shortLabel}</p>
+                                    <p className="text-xs text-text-muted">{item.shortLabel}</p>
                                 </div>
                                 <div className="flex shrink-0 items-center gap-2">
                                     <p className="text-sm font-semibold tabular-nums text-text-primary">
-                                        {actualText}/{targetText}<span className="ml-0.5 text-[10px] font-normal text-text-muted">{item.unit}</span>
+                                        {actualText}/{targetText}<span className="ml-0.5 text-xs font-normal text-text-muted">{item.unit}</span>
                                     </p>
-                                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-normal ${classes.badge}`}>{statusText}</span>
+                                    <span className={`rounded-full px-2 py-0.5 text-xs font-normal ${classes.badge}`}>{statusText}</span>
                                 </div>
                             </div>
                             <div className="h-1.5 overflow-hidden rounded-full bg-surface-overlay">
@@ -302,7 +307,7 @@ export function HabitListCard({
         <Card padding="sm">
             <div className="mb-4 flex items-center justify-between">
                 <h3 className="text-sm font-semibold text-text-primary">習慣の進み具合</h3>
-                <span className="text-[10px] font-normal text-text-muted">実績/目標</span>
+                <span className="text-xs font-normal text-text-muted">実績/目標</span>
             </div>
             <div className="divide-y divide-border-subtle">
                 {items.map(item => {
@@ -319,9 +324,9 @@ export function HabitListCard({
                                 <p className="min-w-0 text-sm font-semibold text-text-primary">{item.label}</p>
                                 <div className="flex shrink-0 items-center gap-2">
                                     <p className="text-sm font-semibold tabular-nums text-text-primary">
-                                        {actualText}/{targetText}<span className="ml-0.5 text-[10px] font-normal text-text-muted">{item.unit}</span>
+                                        {actualText}/{targetText}<span className="ml-0.5 text-xs font-normal text-text-muted">{item.unit}</span>
                                     </p>
-                                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-normal ${classes.badge}`}>{statusText}</span>
+                                    <span className={`rounded-full px-2 py-0.5 text-xs font-normal ${classes.badge}`}>{statusText}</span>
                                 </div>
                             </div>
                             <div className="h-1.5 overflow-hidden rounded-full bg-surface-overlay">
@@ -353,7 +358,7 @@ export function MemberWeeklyResultListCard({
         <Card padding="sm">
             <div className="mb-3 flex items-center justify-between">
                 <h3 className="text-base font-semibold text-text-primary">今週の結果</h3>
-                <span className="text-[10px] font-normal text-text-muted">{mode === 'total' ? '週合計' : '平均'}</span>
+                <span className="text-xs font-normal text-text-muted">{mode === 'total' ? '週合計' : '平均'}</span>
             </div>
             <div className="divide-y divide-border-subtle">
                 {items.map(item => {
@@ -369,7 +374,7 @@ export function MemberWeeklyResultListCard({
                                 <p className="min-w-0 text-sm font-normal text-text-secondary">{item.label}</p>
                                 <p className="shrink-0 text-base font-semibold tabular-nums text-text-primary">
                                     {actualText}<span className="mx-0.5 text-xs font-normal text-text-muted">/</span>{targetText}
-                                    <span className="ml-0.5 text-[10px] font-normal text-text-muted">{item.unit}</span>
+                                    <span className="ml-0.5 text-xs font-normal text-text-muted">{item.unit}</span>
                                 </p>
                             </div>
                             <div className="h-1.5 overflow-hidden rounded-full bg-surface-overlay">

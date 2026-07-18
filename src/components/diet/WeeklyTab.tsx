@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useWeeklyProgress } from '@/hooks/useWeeklyProgress'
 import WeeklyProgressPanel from './WeeklyProgressPanel'
 import RecordCalendar from './RecordCalendar'
+import Button from '@/components/ui/Button'
 import Icon from '@/components/ui/icons'
 
 interface WeeklyTabProps {
@@ -30,8 +31,9 @@ export default function WeeklyTab({ userId, token, isAdmin }: WeeklyTabProps) {
                 simpleMemberView
             />
             <section className="space-y-3">
-                <button
+                <Button
                     type="button"
+                    variant="ghost"
                     onClick={() => setCalendarOpen(open => !open)}
                     className="flex w-full items-center justify-between rounded-2xl border border-border-subtle bg-surface-raised px-4 py-3 text-left shadow-sm active:scale-[0.99]"
                 >
@@ -40,7 +42,7 @@ export default function WeeklyTab({ userId, token, isAdmin }: WeeklyTabProps) {
                         記録カレンダー
                     </span>
                     <Icon name={calendarOpen ? 'chevronUp' : 'chevronDown'} size={18} className="text-text-muted" />
-                </button>
+                </Button>
                 {calendarOpen && <RecordCalendar userId={userId} token={token} isAdmin={isAdmin} />}
             </section>
         </div>

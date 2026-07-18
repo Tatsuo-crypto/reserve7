@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Icon from '@/components/ui/icons'
+import Button from '@/components/ui/Button'
 
 const DAYS_JA = ['日', '月', '火', '水', '木', '金', '土']
 const DAYS_EN = ['日曜', '月曜', '火曜', '水曜', '木曜', '金曜', '土曜']
@@ -166,13 +167,13 @@ export default function AdminOnlineLessonPage() {
             }
 
             const data = await res.json()
-            if (!res.ok) throw new Error(data.error || '保存に失敗しました')
+            if (!res.ok) throw new Error(data.error || '保存できませんでした。もう一度お試しください。')
             setSuccess('保存しました！')
             setEditingId(null)
             await fetchLessons()
             setTimeout(() => setSuccess(null), 3000)
         } catch (e) {
-            setError(e instanceof Error ? e.message : '保存に失敗しました')
+            setError(e instanceof Error ? e.message : '保存できませんでした。もう一度お試しください。')
         } finally {
             setSaving(false)
         }
@@ -183,13 +184,13 @@ export default function AdminOnlineLessonPage() {
         setDeletingId(id)
         try {
             const res = await fetch(`/api/admin/online-lesson?id=${id}`, { method: 'DELETE' })
-            if (!res.ok) throw new Error('削除に失敗しました')
+            if (!res.ok) throw new Error('削除できませんでした。もう一度お試しください。')
             await fetchLessons()
             if (editingId === id) {
                 setEditingId(null)
             }
         } catch (e) {
-            alert(e instanceof Error ? e.message : '削除に失敗しました')
+            alert(e instanceof Error ? e.message : '削除できませんでした。もう一度お試しください。')
         } finally {
             setDeletingId(null)
         }
@@ -210,10 +211,10 @@ export default function AdminOnlineLessonPage() {
                 }),
             })
             const data = await res.json()
-            if (!res.ok) throw new Error(data.error || '告知メールの送信に失敗しました')
-            alert(`告知メールを送信しました！(送信数: ${data.sentCount}/${data.totalCount})`)
+            if (!res.ok) throw new Error(data.error || '告知メールを送信できませんでした。もう一度お試しください。')
+            alert(`告知メールを送信しました。（送信数: ${data.sentCount}/${data.totalCount}）`)
         } catch (e) {
-            setError(e instanceof Error ? e.message : '告知メールの送信に失敗しました')
+            setError(e instanceof Error ? e.message : '告知メールを送信できませんでした。もう一度お試しください。')
         } finally {
             setSendingAnnouncement(false)
         }
@@ -233,7 +234,7 @@ export default function AdminOnlineLessonPage() {
 
                 {/* Global success */}
                 {success && (
-                    <div className="mb-4 p-3 bg-state-success-500/15 border border-state-success-500/30 rounded-xl text-sm text-state-success-300">
+                    <div className="mb-4 p-3 bg-state-success-500/15 border border-state-success-500/30 rounded-2xl text-sm text-state-success-300">
                         ✓ {success}
                     </div>
                 )}
@@ -254,7 +255,7 @@ export default function AdminOnlineLessonPage() {
                                     value={form.title}
                                     onChange={e => setForm(p => ({ ...p, title: e.target.value }))}
                                     placeholder="例: 朝ヨガ、夜のHIIT、ストレッチ..."
-                                    className="w-full px-4 py-3 border border-border-strong rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                                    className="w-full px-4 py-3 border border-border-strong rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                                 />
                             </div>
 
@@ -266,7 +267,7 @@ export default function AdminOnlineLessonPage() {
                                     value={form.meet_url}
                                     onChange={e => setForm(p => ({ ...p, meet_url: e.target.value }))}
                                     placeholder="https://meet.google.com/xxx-xxxx-xxx"
-                                    className="w-full px-4 py-3 border border-border-strong rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                                    className="w-full px-4 py-3 border border-border-strong rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                                 />
                             </div>
 
@@ -286,14 +287,16 @@ export default function AdminOnlineLessonPage() {
                                             'bg-orange-500/15 text-orange-300 border-orange-500/30',
                                         ]
                                         return (
-                                            <button
+                                            <Button
                                                 key={d}
                                                 type="button"
+                                                variant="secondary"
+                                                size="sm"
                                                 onClick={() => toggleDay(d)}
-                                                className={`w-10 h-10 rounded-xl border-2 text-sm font-normal transition-all ${selected ? colors[d] + ' border-current' : 'bg-surface-overlay text-text-muted border-border-strong'}`}
+                                                className={`w-10 h-10 p-0 rounded-2xl border-2 text-sm transition-all ${selected ? colors[d] + ' border-current' : 'bg-surface-overlay text-text-muted border-border-strong'}`}
                                             >
                                                 {DAYS_JA[d]}
-                                            </button>
+                                            </Button>
                                         )
                                     })}
                                 </div>
@@ -307,7 +310,7 @@ export default function AdminOnlineLessonPage() {
                                         type="time"
                                         value={form.start_time || ''}
                                         onChange={e => setForm(p => ({ ...p, start_time: e.target.value }))}
-                                        className="w-full px-4 py-3 border border-border-strong rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                                        className="w-full px-4 py-3 border border-border-strong rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                                     />
                                 </div>
                                 <div>
@@ -316,7 +319,7 @@ export default function AdminOnlineLessonPage() {
                                         type="time"
                                         value={form.end_time || ''}
                                         onChange={e => setForm(p => ({ ...p, end_time: e.target.value }))}
-                                        className="w-full px-4 py-3 border border-border-strong rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                                        className="w-full px-4 py-3 border border-border-strong rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                                     />
                                 </div>
                             </div>
@@ -329,7 +332,7 @@ export default function AdminOnlineLessonPage() {
                                     onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
                                     placeholder="参加方法、準備するもの、レッスン内容など..."
                                     rows={3}
-                                    className="w-full px-4 py-3 border border-border-strong rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
+                                    className="w-full px-4 py-3 border border-border-strong rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
                                 />
                             </div>
 
@@ -360,7 +363,7 @@ export default function AdminOnlineLessonPage() {
                                     type="date"
                                     value={form.url_expires_at || ''}
                                     onChange={e => setForm(p => ({ ...p, url_expires_at: e.target.value }))}
-                                    className="w-full px-4 py-3 border border-border-strong rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                                    className="w-full px-4 py-3 border border-border-strong rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                                 />
                                 <p className="text-xs text-text-secondary mt-1">※設定した期限の1週間前からアラートが表示されます</p>
                             </div>
@@ -375,7 +378,7 @@ export default function AdminOnlineLessonPage() {
                                         {/* Trigger Area / Selected List */}
                                         <div 
                                             onClick={() => setDropdownOpen(!dropdownOpen)}
-                                            className="min-h-[46px] w-full px-3 py-2 border border-border-strong rounded-xl text-sm focus-within:ring-2 focus-within:ring-brand-500 bg-surface-raised flex flex-wrap gap-1.5 items-center justify-between cursor-pointer"
+                                            className="min-h-[46px] w-full px-3 py-2 border border-border-strong rounded-2xl text-sm focus-within:ring-2 focus-within:ring-brand-500 bg-surface-raised flex flex-wrap gap-1.5 items-center justify-between cursor-pointer"
                                         >
                                             <div className="flex flex-wrap gap-1.5 items-center flex-1">
                                                 {(form.userIds || []).length === 0 ? (
@@ -387,8 +390,10 @@ export default function AdminOnlineLessonPage() {
                                                             className="inline-flex items-center gap-1 bg-brand-500/15 border border-brand-500/25 text-brand-300 px-2 py-0.5 rounded-lg text-xs font-normal"
                                                         >
                                                             {member.full_name}
-                                                            <button
+                                                            <Button
                                                                 type="button"
+                                                                variant="ghost"
+                                                                size="sm"
                                                                 onClick={(e) => {
                                                                     e.stopPropagation()
                                                                     setForm(prev => ({
@@ -396,10 +401,10 @@ export default function AdminOnlineLessonPage() {
                                                                         userIds: (prev.userIds || []).filter(id => id !== member.id)
                                                                     }))
                                                                 }}
-                                                                className="hover:bg-brand-500/25 p-0.5 rounded transition-colors text-brand-500 hover:text-brand-300"
+                                                                className="hover:bg-brand-500/25 p-0.5 rounded-lg transition-colors text-brand-500 hover:text-brand-300"
                                                             >
                                                                 <Icon name="close" size={12} />
-                                                            </button>
+                                                            </Button>
                                                         </span>
                                                     ))
                                                 )}
@@ -417,7 +422,7 @@ export default function AdminOnlineLessonPage() {
                                                     className="fixed inset-0 z-40" 
                                                     onClick={() => setDropdownOpen(false)}
                                                 />
-                                                <div className="absolute left-0 right-0 mt-1 bg-surface-raised border border-border-strong rounded-xl shadow-xl max-h-56 overflow-y-auto p-2 space-y-0.5 z-50">
+                                                <div className="absolute left-0 right-0 mt-1 bg-surface-raised border border-border-strong rounded-2xl shadow-xl max-h-56 overflow-y-auto p-2 space-y-0.5 z-50">
                                                     {members.map(member => {
                                                         const isChecked = (form.userIds || []).includes(member.id)
                                                         return (
@@ -437,11 +442,11 @@ export default function AdminOnlineLessonPage() {
                                                                             return { ...prev, userIds: next }
                                                                         })
                                                                     }}
-                                                                    className="w-4 h-4 text-brand-600 focus:ring-brand-500 border-border-strong rounded cursor-pointer"
+                                                                    className="w-4 h-4 text-brand-600 focus:ring-brand-500 border-border-strong rounded-lg cursor-pointer"
                                                                 />
                                                                 <div className="flex flex-col">
                                                                     <span className="text-sm text-text-secondary font-normal">{member.full_name}</span>
-                                                                    <span className="text-[10px] text-text-muted">{member.email}</span>
+                                                                    <span className="text-xs text-text-muted">{member.email}</span>
                                                                 </div>
                                                             </label>
                                                         )
@@ -455,16 +460,18 @@ export default function AdminOnlineLessonPage() {
                             </div>
 
                             {error && (
-                                <div className="p-3 bg-red-500/15 border border-red-500/30 rounded-xl text-sm text-red-300">{error}</div>
+                                <div className="p-3 bg-red-500/15 border border-red-500/30 rounded-2xl text-sm text-red-300">{error}</div>
                             )}
 
                             <div className="flex flex-col sm:flex-row gap-3 pt-2">
                                 {editingId !== 'new' && (
-                                    <button
+                                    <Button
                                         type="button"
+                                        variant="destructive"
+                                        size="md"
                                         onClick={() => handleDelete(editingId!)}
                                         disabled={deletingId === editingId}
-                                        className="py-3 px-4 sm:flex-none border border-red-500/30 text-red-400 rounded-xl hover:bg-red-500/25 transition-colors font-normal text-sm flex items-center justify-center space-x-2"
+                                        className="py-3 px-4 sm:flex-none border border-red-500/30 text-red-400 rounded-2xl hover:bg-red-500/25 transition-colors font-normal text-sm flex items-center justify-center space-x-2"
                                     >
                                         {deletingId === editingId ? (
                                             <div className="animate-spin h-5 w-5 border-b-2 border-red-600 rounded-full" />
@@ -472,34 +479,40 @@ export default function AdminOnlineLessonPage() {
                                             <Icon name="trash" size={20} />
                                         )}
                                         <span>削除</span>
-                                    </button>
+                                    </Button>
                                 )}
                                 <div className="flex flex-col sm:flex-row gap-3 flex-1">
-                                    <button
+                                    <Button
                                         type="button"
+                                        variant="secondary"
+                                        size="md"
                                         onClick={cancelEdit}
-                                        className="flex-1 py-3 border border-border-strong text-text-secondary rounded-xl hover:bg-surface-base transition-colors font-normal text-sm"
+                                        className="flex-1 py-3 border border-border-strong text-text-secondary rounded-2xl hover:bg-surface-base transition-colors font-normal text-sm"
                                     >
                                         キャンセル
-                                    </button>
+                                    </Button>
                                     {editingId !== 'new' && (
-                                        <button
+                                        <Button
                                             type="button"
+                                            variant="secondary"
+                                            size="md"
                                             onClick={handleSendAnnouncement}
                                             disabled={saving || sendingAnnouncement}
-                                            className="flex-1 py-3 border border-brand-500/30 text-brand-400 rounded-xl hover:bg-brand-500/25 transition-colors font-normal text-sm disabled:opacity-50"
+                                            className="flex-1 py-3 border border-brand-500/30 text-brand-400 rounded-2xl hover:bg-brand-500/25 transition-colors font-normal text-sm disabled:opacity-50"
                                         >
                                             {sendingAnnouncement ? '送信中...' : '告知メールを送る'}
-                                        </button>
+                                        </Button>
                                     )}
-                                    <button
+                                    <Button
                                         type="button"
+                                        variant="primary"
+                                        size="md"
                                         onClick={handleSave}
                                         disabled={saving}
-                                        className="flex-1 py-3 bg-brand-700 text-white rounded-xl hover:bg-brand-800 transition-colors font-normal text-sm disabled:opacity-50"
+                                        className="flex-1 py-3 bg-brand-700 text-white rounded-2xl hover:bg-brand-800 transition-colors font-normal text-sm disabled:opacity-50"
                                     >
                                         {saving ? '保存中...' : '保存する'}
-                                    </button>
+                                    </Button>
                                 </div>
                             </div>
                         </div>
@@ -516,7 +529,10 @@ export default function AdminOnlineLessonPage() {
                 ) : (
                     <div className="space-y-4">
                         {lessons.map(lesson => (
-                            <button
+                            <Button
+                                type="button"
+                                variant="secondary"
+                                size="md"
                                 key={lesson.id}
                                 onClick={() => startEdit(lesson)}
                                 className="w-full text-left bg-surface-raised rounded-2xl shadow-sm border border-border-subtle p-5 hover:border-brand-500/40 hover:shadow-md transition-all group focus:outline-none focus:ring-2 focus:ring-brand-500 block"
@@ -544,17 +560,20 @@ export default function AdminOnlineLessonPage() {
                                         )}
                                     </div>
                                 </div>
-                            </button>
+                            </Button>
                         ))}
 
                         {/* Plus Add Button */}
                         {editingId === null && (
-                            <button
+                            <Button
+                                type="button"
+                                variant="secondary"
+                                size="md"
                                 onClick={() => startEdit()}
                                 className="w-full h-[72px] bg-surface-raised border-2 border-dashed border-border-strong rounded-2xl flex items-center justify-center text-text-muted hover:text-brand-600 hover:border-brand-500/40 hover:bg-brand-500/25 transition-all group"
                             >
                                 <Icon name="plus" size={32} className="group-hover:scale-110 transition-transform duration-200" />
-                            </button>
+                            </Button>
                         )}
                     </div>
                 )}

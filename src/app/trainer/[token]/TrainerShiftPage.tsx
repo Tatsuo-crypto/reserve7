@@ -7,6 +7,7 @@ import { Shift, ShiftTemplate } from '@/types'
 import ShiftCalendar from '@/components/shifts/ShiftCalendar'
 import TrainerTemplateModal from '@/components/shifts/TrainerTemplateModal'
 import Icon from '@/components/ui/icons'
+import Button from '@/components/ui/Button'
 
 interface TrainerShiftPageProps {
   token: string
@@ -78,10 +79,10 @@ export default function TrainerShiftPage({ token, trainerName }: TrainerShiftPag
         })
       })
       if (res.ok) fetchData()
-      else alert('作成に失敗しました')
+      else alert('作成できませんでした。もう一度お試しください。')
     } catch (e) {
       console.error(e)
-      alert('エラーが発生しました')
+      alert('作成できませんでした。もう一度お試しください。')
     }
   }
 
@@ -98,10 +99,10 @@ export default function TrainerShiftPage({ token, trainerName }: TrainerShiftPag
         })
       })
       if (res.ok) fetchData()
-      else alert('更新に失敗しました')
+      else alert('更新できませんでした。もう一度お試しください。')
     } catch (e) {
       console.error(e)
-      alert('エラーが発生しました')
+      alert('更新できませんでした。もう一度お試しください。')
     }
   }
 
@@ -111,10 +112,10 @@ export default function TrainerShiftPage({ token, trainerName }: TrainerShiftPag
         method: 'DELETE'
       })
       if (res.ok) fetchData()
-      else alert('削除に失敗しました')
+      else alert('削除できませんでした。もう一度お試しください。')
     } catch (e) {
       console.error(e)
-      alert('エラーが発生しました')
+      alert('削除できませんでした。もう一度お試しください。')
     }
   }
 
@@ -139,15 +140,15 @@ export default function TrainerShiftPage({ token, trainerName }: TrainerShiftPag
 
       if (res.ok) {
         const data = await res.json()
-        alert(`${data.count}件のシフトをコピーしました`)
+        alert(`${data.count}件のシフトをコピーしました。`)
         fetchData()
       } else {
         const err = await res.json()
-        alert(`コピーに失敗しました: ${err.message || '不明なエラー'}`)
+        alert(`コピーできませんでした。${err.message || 'もう一度お試しください。'}`)
       }
     } catch (e) {
       console.error(e)
-      alert('エラーが発生しました')
+      alert('コピーできませんでした。もう一度お試しください。')
     } finally {
       setLoading(false)
     }
@@ -174,15 +175,15 @@ export default function TrainerShiftPage({ token, trainerName }: TrainerShiftPag
 
       if (res.ok) {
         const data = await res.json()
-        alert(`${data.count}件のシフトを作成しました`)
+        alert(`${data.count}件のシフトを作成しました。`)
         fetchData()
       } else {
         const err = await res.json()
-        alert(`反映に失敗しました: ${err.message || '不明なエラー'}`)
+        alert(`反映できませんでした。${err.message || 'もう一度お試しください。'}`)
       }
     } catch (e) {
       console.error(e)
-      alert('エラーが発生しました')
+      alert('反映できませんでした。もう一度お試しください。')
     } finally {
       setLoading(false)
     }
@@ -222,11 +223,11 @@ export default function TrainerShiftPage({ token, trainerName }: TrainerShiftPag
         fetchData()
       } else {
         const err = await res.json()
-        alert(`削除に失敗しました: ${err.message || '不明なエラー'}`)
+        alert(`削除できませんでした。${err.message || 'もう一度お試しください。'}`)
       }
     } catch (e) {
       console.error(e)
-      alert('エラーが発生しました')
+      alert('削除できませんでした。もう一度お試しください。')
     } finally {
       setLoading(false)
     }
@@ -246,78 +247,96 @@ export default function TrainerShiftPage({ token, trainerName }: TrainerShiftPag
           <div className="flex-1 w-full md:w-auto flex flex-wrap items-center justify-center md:justify-start gap-2 order-2 md:order-1">
             {!selectionMode ? (
                 <>
-                  <button
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
                     onClick={() => setSelectionMode(true)}
                     disabled={loading}
-                    className="inline-flex items-center px-4 py-2 border border-border-strong shadow-sm text-sm font-normal rounded-md text-text-secondary bg-surface-raised hover:bg-surface-base transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="inline-flex items-center px-4 py-2 border border-border-strong shadow-sm text-sm font-normal rounded-lg text-text-secondary bg-surface-raised hover:bg-surface-base transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Icon name="checkCircle" size={16} className="mr-2 text-text-secondary" />
                     複数選択
-                  </button>
+                  </Button>
 
-                  <button
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
                     onClick={handleCopyPrevWeek}
                     disabled={loading}
-                    className="inline-flex items-center px-4 py-2 border border-border-strong shadow-sm text-sm font-normal rounded-md text-text-secondary bg-surface-raised hover:bg-surface-base transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="inline-flex items-center px-4 py-2 border border-border-strong shadow-sm text-sm font-normal rounded-lg text-text-secondary bg-surface-raised hover:bg-surface-base transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Icon name="copy" size={16} className="mr-2 text-text-secondary" />
                     先週コピー
-                  </button>
+                  </Button>
 
-                  <button
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
                     onClick={handleApplyTemplates}
                     disabled={loading}
-                    className="inline-flex items-center px-4 py-2 border border-border-strong shadow-sm text-sm font-normal rounded-md text-text-secondary bg-surface-raised hover:bg-surface-base transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="inline-flex items-center px-4 py-2 border border-border-strong shadow-sm text-sm font-normal rounded-lg text-text-secondary bg-surface-raised hover:bg-surface-base transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Icon name="refresh" size={16} className="mr-2 text-text-secondary" />
                     固定シフト反映
-                  </button>
+                  </Button>
 
-                  <button
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
                     onClick={() => setIsTemplateModalOpen(true)}
                     disabled={loading}
-                    className="inline-flex items-center px-4 py-2 border border-border-strong shadow-sm text-sm font-normal rounded-md text-text-secondary bg-surface-raised hover:bg-surface-base transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="inline-flex items-center px-4 py-2 border border-border-strong shadow-sm text-sm font-normal rounded-lg text-text-secondary bg-surface-raised hover:bg-surface-base transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Icon name="settings" size={16} className="mr-2 text-text-secondary" />
                     固定シフト設定
-                  </button>
+                  </Button>
                 </>
               ) : (
                 <>
                   <span className="text-sm text-text-secondary font-normal mr-2">{selectedShiftIds.length}件選択中</span>
-                  <button
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
                     onClick={handleBulkDelete}
                     disabled={selectedShiftIds.length === 0 || loading}
-                    className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-normal rounded-md text-white bg-red-600 hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-normal rounded-lg text-white bg-red-600 hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Icon name="trash" size={16} className="mr-2" />
                     選択したシフトを削除
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
                     onClick={() => {
                       setSelectionMode(false)
                       setSelectedShiftIds([])
                     }}
-                    className="inline-flex items-center px-4 py-2 border border-border-strong shadow-sm text-sm font-normal rounded-md text-text-secondary bg-surface-raised hover:bg-surface-base transition-colors"
+                    className="inline-flex items-center px-4 py-2 border border-border-strong shadow-sm text-sm font-normal rounded-lg text-text-secondary bg-surface-raised hover:bg-surface-base transition-colors"
                   >
                     <Icon name="close" size={16} className="mr-2 text-text-secondary" />
                     キャンセル
-                  </button>
+                  </Button>
                 </>
               )}
             </div>
 
-            {/* Center: Date Navigation */}
+          {/* Center: Date Navigation */}
           <div className="flex justify-center items-center space-x-4 w-full md:w-auto order-1 md:order-2">
-            <button onClick={handlePrevWeek} className="p-2 hover:bg-surface-overlay rounded-full text-text-secondary transition-colors">
+            <Button type="button" variant="ghost" size="sm" onClick={handlePrevWeek} className="rounded-full p-2 text-text-secondary hover:bg-surface-overlay">
               <Icon name="chevronLeft" size={20} />
-            </button>
+            </Button>
             <span className="text-xl font-normal text-text-primary min-w-[140px] text-center">
               {format(currentDate, 'yyyy年M月', { locale: ja })}
             </span>
-            <button onClick={handleNextWeek} className="p-2 hover:bg-surface-overlay rounded-full text-text-secondary transition-colors">
+            <Button type="button" variant="ghost" size="sm" onClick={handleNextWeek} className="rounded-full p-2 text-text-secondary hover:bg-surface-overlay">
               <Icon name="chevronRight" size={20} />
-            </button>
+            </Button>
           </div>
 
           {/* Right: Spacer */}

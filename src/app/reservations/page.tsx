@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { getStoreDisplayName } from '@/lib/auth-utils'
 import Icon from '@/components/ui/icons'
+import Button from '@/components/ui/Button'
 
 interface Reservation {
   id: string
@@ -66,7 +67,7 @@ export default function ReservationsPage() {
       const response = await fetch('/api/reservations')
 
       if (!response.ok) {
-        throw new Error('予約の取得に失敗しました')
+        throw new Error('予約を取得できませんでした。画面を再読み込みしてください。')
       }
       if (response.ok) {
         const result = await response.json()
@@ -76,7 +77,7 @@ export default function ReservationsPage() {
       }
     } catch (error) {
       console.error('Fetch reservations error:', error)
-      setError(error instanceof Error ? error.message : '予約の取得に失敗しました')
+      setError(error instanceof Error ? error.message : '予約を取得できませんでした。画面を再読み込みしてください。')
     } finally {
       setLoading(false)
     }
@@ -199,19 +200,19 @@ export default function ReservationsPage() {
       if (response.ok) {
         // Remove the reservation from the list
         setReservations(prev => prev.filter(r => r.id !== reservationToCancel))
-        alert('予約がキャンセルされました')
+        alert('予約をキャンセルしました。')
       } else {
         const data = await response.json()
         if (data.error === '認証が必要です') {
           alert('セッションが期限切れです。再度ログインしてください。')
           router.push('/login')
         } else {
-          alert(data.error || '予約のキャンセルに失敗しました')
+          alert(data.error || '予約をキャンセルできませんでした。もう一度お試しください。')
         }
       }
     } catch (error) {
       console.error('Cancel error:', error)
-      alert('予約のキャンセルに失敗しました')
+      alert('予約をキャンセルできませんでした。もう一度お試しください。')
     } finally {
       setReservationToCancel(null)
     }
@@ -318,14 +319,14 @@ export default function ReservationsPage() {
         ))
         setShowEditModal(false)
         setEditingReservation(null)
-        alert('予約が更新されました')
+        alert('予約を更新しました。')
       } else {
         const data = await response.json()
-        alert(data.error || '予約の更新に失敗しました')
+        alert(data.error || '予約を更新できませんでした。もう一度お試しください。')
       }
     } catch (error) {
       console.error('Update error:', error)
-      alert('予約の更新に失敗しました')
+      alert('予約を更新できませんでした。もう一度お試しください。')
     }
   }
 
@@ -354,12 +355,16 @@ export default function ReservationsPage() {
               予約管理
             </h1>
             <div className="flex items-center justify-between w-full">
-              <button
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
                 onClick={() => router.back()}
-                className="p-2 hover:bg-surface-overlay rounded-full transition-colors"
+                className="rounded-full p-2 hover:bg-surface-overlay"
+                aria-label="戻る"
               >
                 <Icon name="chevronLeft" size={20} className="text-text-secondary" />
-              </button>
+              </Button>
               <p className="text-text-secondary">
                 すべての予約を管理できます
               </p>
@@ -368,7 +373,7 @@ export default function ReservationsPage() {
             {isAdmin && (
               <Link
                 href="/admin/reservations/new"
-                className="bg-brand-700 text-white px-4 py-2 rounded-md hover:bg-brand-800 transition-colors"
+                className="bg-brand-700 text-white px-4 py-2 rounded-lg hover:bg-brand-800 transition-colors"
               >
                 新規予約作成
               </Link>
@@ -378,12 +383,15 @@ export default function ReservationsPage() {
         {error && (
           <div className="mb-6 bg-red-500/15 border border-red-500/30 rounded-lg p-4">
             <p className="text-red-300">{error}</p>
-            <button
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
               onClick={fetchReservations}
               className="mt-2 text-red-400 hover:text-red-300 underline"
             >
               再試行
-            </button>
+            </Button>
           </div>
         )}
 
@@ -404,7 +412,7 @@ export default function ReservationsPage() {
             </p>
           </div>
         ) : (
-          <div className="bg-surface-raised shadow overflow-hidden sm:rounded-md">
+          <div className="bg-surface-raised shadow overflow-hidden sm:rounded-lg">
             <div className="px-4 py-5 sm:p-6">
               <div className="overflow-x-auto">
                 <table className="min-w-max divide-y divide-gray-200">
@@ -436,12 +444,12 @@ export default function ReservationsPage() {
                     {reservations && reservations.map((reservation) => (
                       <tr key={reservation.id} className={getRowClassName(reservation)}>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-normal min-w-[120px] border-r border-border-subtle">
-                          <div className="bg-brand-500/15 text-brand-300 px-2 py-1 rounded-md text-center">
+                          <div className="bg-brand-500/15 text-brand-300 px-2 py-1 rounded-lg text-center">
                             {formatDate(reservation.startTime)}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm min-w-[140px] border-r border-border-subtle">
-                          <div className="bg-surface-base text-text-primary px-2 py-1 rounded-md text-center">
+                          <div className="bg-surface-base text-text-primary px-2 py-1 rounded-lg text-center">
                             {formatTime(reservation.startTime)} - {formatTime(reservation.endTime)}
                           </div>
                         </td>
@@ -489,28 +497,32 @@ export default function ReservationsPage() {
                         {isAdmin && (
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-normal min-w-[120px]">
                             <div className="flex space-x-2">
-                              <button
+                              <Button
                                 type="button"
+                                variant="secondary"
+                                size="sm"
                                 onClick={(e) => {
                                   e.preventDefault()
                                   e.stopPropagation()
                                   handleEdit(reservation)
                                 }}
-                                className="bg-brand-500/15 text-brand-300 hover:bg-brand-500/25 px-3 py-1 rounded-md transition-colors"
+                                className="bg-brand-500/15 text-brand-300 hover:bg-brand-500/25 px-3 py-1 rounded-lg transition-colors"
                               >
                                 変更
-                              </button>
-                              <button
+                              </Button>
+                              <Button
                                 type="button"
+                                variant="destructive"
+                                size="sm"
                                 onClick={(e) => {
                                   e.preventDefault()
                                   e.stopPropagation()
                                   handleCancel(reservation.id)
                                 }}
-                                className="bg-red-500/15 text-red-300 hover:bg-red-500/25 px-3 py-1 rounded-md transition-colors"
+                                className="bg-red-500/15 text-red-300 hover:bg-red-500/25 px-3 py-1 rounded-lg transition-colors"
                               >
                                 キャンセル
-                              </button>
+                              </Button>
                             </div>
                           </td>
                         )}
@@ -527,7 +539,7 @@ export default function ReservationsPage() {
       {/* Edit Modal */}
       {showEditModal && editingReservation && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-surface-raised">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-lg bg-surface-raised">
             <div className="mt-3">
               <h3 className="text-lg font-normal text-text-primary mb-4">
                 予約の変更
@@ -544,7 +556,7 @@ export default function ReservationsPage() {
                       ...prev,
                       title: e.target.value
                     }))}
-                    className="w-full px-3 py-2 border border-border-strong rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    className="w-full px-3 py-2 border border-border-strong rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
                     placeholder="予約タイトルを入力してください"
                     required
                   />
@@ -557,7 +569,7 @@ export default function ReservationsPage() {
                     type="datetime-local"
                     value={editFormData.startTime}
                     onChange={handleStartTimeChange}
-                    className="w-full px-3 py-2 border border-border-strong rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    className="w-full px-3 py-2 border border-border-strong rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
                     required
                   />
                 </div>
@@ -572,7 +584,7 @@ export default function ReservationsPage() {
                       ...prev,
                       endTime: e.target.value
                     }))}
-                    className="w-full px-3 py-2 border border-border-strong rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    className="w-full px-3 py-2 border border-border-strong rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
                     required
                   />
                 </div>
@@ -587,27 +599,31 @@ export default function ReservationsPage() {
                       notes: e.target.value
                     }))}
                     rows={3}
-                    className="w-full px-3 py-2 border border-border-strong rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    className="w-full px-3 py-2 border border-border-strong rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
                     placeholder="メモを入力してください（任意）"
                   />
                 </div>
                 <div className="flex justify-end space-x-3 pt-4">
-                  <button
+                  <Button
                     type="button"
+                    variant="secondary"
+                    size="sm"
                     onClick={() => {
                       setShowEditModal(false)
                       setEditingReservation(null)
                     }}
-                    className="px-4 py-2 bg-surface-overlay text-text-secondary rounded-md hover:bg-surface-overlay transition-colors"
+                    className="px-4 py-2 bg-surface-overlay text-text-secondary rounded-lg hover:bg-surface-overlay transition-colors"
                   >
                     キャンセル
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="submit"
-                    className="px-4 py-2 bg-brand-700 text-white rounded-md hover:bg-brand-800 transition-colors"
+                    variant="primary"
+                    size="sm"
+                    className="px-4 py-2 bg-brand-700 text-white rounded-lg hover:bg-brand-800 transition-colors"
                   >
                     更新
-                  </button>
+                  </Button>
                 </div>
               </form>
             </div>
@@ -618,7 +634,7 @@ export default function ReservationsPage() {
       {/* Confirm Cancel Modal */}
       {showConfirmModal && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-surface-raised">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-lg bg-surface-raised">
             <div className="mt-3">
               <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-500/15 mb-4">
                 <Icon name="warning" size={24} className="text-red-400" />
@@ -630,20 +646,24 @@ export default function ReservationsPage() {
                 この操作は取り消すことができません。
               </p>
               <div className="flex justify-center space-x-3">
-                <button
+                <Button
                   type="button"
+                  variant="secondary"
+                  size="sm"
                   onClick={cancelCancel}
-                  className="px-4 py-2 bg-surface-overlay text-text-secondary rounded-md hover:bg-surface-overlay transition-colors"
+                  className="px-4 py-2 bg-surface-overlay text-text-secondary rounded-lg hover:bg-surface-overlay transition-colors"
                 >
                   キャンセル
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
+                  variant="destructive"
+                  size="sm"
                   onClick={confirmCancel}
-                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
                 >
                   削除する
-                </button>
+                </Button>
               </div>
             </div>
           </div>

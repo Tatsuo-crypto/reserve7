@@ -1,5 +1,6 @@
 import { format } from 'date-fns'
 import { ja } from 'date-fns/locale'
+import Button from '@/components/ui/Button'
 
 interface Member {
     user_id: string
@@ -101,13 +102,14 @@ export default function MemberMovementModal({ isOpen, onClose, data }: MemberMov
                         </div>
                     </div>
                     <div className="bg-surface-base px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                        <button
+                        <Button
                             type="button"
-                            className="mt-3 w-full inline-flex justify-center rounded-md border border-border-strong shadow-sm px-4 py-2 bg-surface-raised text-base font-normal text-text-secondary hover:bg-surface-base focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                            variant="secondary"
+                            className="mt-3 w-full inline-flex justify-center rounded-lg border border-border-strong shadow-sm px-4 py-2 bg-surface-raised text-base font-normal text-text-secondary hover:bg-surface-base focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
                             onClick={onClose}
                         >
                             閉じる
-                        </button>
+                        </Button>
                     </div>
                 </div>
             </div>

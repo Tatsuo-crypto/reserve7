@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Button from '@/components/ui/Button'
 import Icon from '@/components/ui/icons'
 
 export default function RegisterPage() {
@@ -65,14 +66,14 @@ export default function RegisterPage() {
       const data = await response.json()
 
       if (!response.ok) {
-        setErrors({ submit: data.error || '登録に失敗しました' })
+        setErrors({ submit: data.error || '登録できませんでした。入力内容を確認してください。' })
         return
       }
 
       // Registration successful, redirect to login
       router.push('/login?message=registration_success')
     } catch (error) {
-      setErrors({ submit: 'ネットワークエラーが発生しました' })
+      setErrors({ submit: '通信できませんでした。接続状況を確認してください。' })
     } finally {
       setIsLoading(false)
     }
@@ -113,7 +114,7 @@ export default function RegisterPage() {
                   id="storeId"
                   name="storeId"
                   required
-                  className="appearance-none relative block w-full px-3 py-2 pr-10 border border-border-strong text-text-primary rounded-md focus:outline-none focus:ring-brand-500 focus:border-brand-500 focus:z-10 sm:text-sm bg-surface-raised"
+                  className="appearance-none relative block w-full px-3 py-2 pr-10 border border-border-strong text-text-primary rounded-lg focus:outline-none focus:ring-brand-500 focus:border-brand-500 focus:z-10 sm:text-sm bg-surface-raised"
                   value={formData.storeId}
                   onChange={handleChange}
                 >
@@ -138,7 +139,7 @@ export default function RegisterPage() {
                 name="fullName"
                 type="text"
                 required
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-border-strong placeholder-gray-500 text-text-primary rounded-md focus:outline-none focus:ring-brand-500 focus:border-brand-500 focus:z-10 sm:text-sm"
+                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-border-strong placeholder-gray-500 text-text-primary rounded-lg focus:outline-none focus:ring-brand-500 focus:border-brand-500 focus:z-10 sm:text-sm"
                 placeholder="山田太郎"
                 value={formData.fullName}
                 onChange={handleChange}
@@ -156,7 +157,7 @@ export default function RegisterPage() {
                 id="email"
                 name="email"
                 type="email"
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-border-strong placeholder-gray-500 text-text-primary rounded-md focus:outline-none focus:ring-brand-500 focus:border-brand-500 focus:z-10 sm:text-sm"
+                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-border-strong placeholder-gray-500 text-text-primary rounded-lg focus:outline-none focus:ring-brand-500 focus:border-brand-500 focus:z-10 sm:text-sm"
                 placeholder="example@email.com"
                 value={formData.email}
                 onChange={handleChange}
@@ -175,7 +176,7 @@ export default function RegisterPage() {
                 name="password"
                 type="password"
                 required
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-border-strong placeholder-gray-500 text-text-primary rounded-md focus:outline-none focus:ring-brand-500 focus:border-brand-500 focus:z-10 sm:text-sm"
+                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-border-strong placeholder-gray-500 text-text-primary rounded-lg focus:outline-none focus:ring-brand-500 focus:border-brand-500 focus:z-10 sm:text-sm"
                 placeholder="8文字以上"
                 value={formData.password}
                 onChange={handleChange}
@@ -194,7 +195,7 @@ export default function RegisterPage() {
                 name="confirmPassword"
                 type="password"
                 required
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-border-strong placeholder-gray-500 text-text-primary rounded-md focus:outline-none focus:ring-brand-500 focus:border-brand-500 focus:z-10 sm:text-sm"
+                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-border-strong placeholder-gray-500 text-text-primary rounded-lg focus:outline-none focus:ring-brand-500 focus:border-brand-500 focus:z-10 sm:text-sm"
                 placeholder="パスワードを再入力"
                 value={formData.confirmPassword}
                 onChange={handleChange}
@@ -206,19 +207,20 @@ export default function RegisterPage() {
           </div>
 
           {errors.submit && (
-            <div className="rounded-md bg-red-500/15 p-4">
+            <div className="rounded-lg bg-red-500/15 p-4">
               <p className="text-sm text-red-300">{errors.submit}</p>
             </div>
           )}
 
           <div>
-            <button
+            <Button
               type="submit"
+              variant="primary"
               disabled={isLoading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-normal rounded-md text-white bg-brand-700 hover:bg-brand-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-normal rounded-lg text-white bg-brand-700 hover:bg-brand-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? '登録中...' : '会員登録'}
-            </button>
+            </Button>
           </div>
         </form>
       </div>

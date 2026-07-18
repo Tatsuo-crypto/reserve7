@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import AppModal from '@/components/ui/AppModal'
+import Button from '@/components/ui/Button'
 
 type Store = {
   id: string
@@ -103,7 +104,7 @@ export default function StoresPage() {
       })
       if (!res.ok) {
         const txt = await res.text()
-        alert(`保存に失敗しました: ${txt}`)
+        alert(`保存できませんでした。${txt}`)
         return
       }
       setModalOpen(false)
@@ -111,7 +112,7 @@ export default function StoresPage() {
       fetchList()
     } catch (e) {
       console.error(e)
-      alert('保存に失敗しました: ネットワークまたはサーバーエラー')
+      alert('保存できませんでした。通信状況を確認してください。')
     }
   }
 
@@ -127,7 +128,7 @@ export default function StoresPage() {
       fetchList()
     } catch (e) {
       console.error(e)
-      alert('切替に失敗しました')
+      alert('切り替えできませんでした。もう一度お試しください。')
     }
   }
 
@@ -136,7 +137,7 @@ export default function StoresPage() {
 
       {/* Action Button */}
       <div className="flex justify-center mb-6">
-        <button className="inline-flex items-center px-4 py-2 rounded-md bg-brand-700 text-white hover:bg-brand-800" onClick={openCreate}>新規店舗</button>
+        <Button type="button" variant="primary" className="inline-flex items-center px-4 py-2 rounded-lg bg-brand-700 text-white hover:bg-brand-800" onClick={openCreate}>新規店舗</Button>
       </div>
 
       {/* Filters (temporarily hidden) */}
@@ -145,7 +146,7 @@ export default function StoresPage() {
           <div className="px-6 py-4 grid grid-cols-1 md:grid-cols-3 gap-3">
             <div>
               <label className="block text-xs text-text-secondary mb-1">ステータス</label>
-              <select className="w-full border rounded-md px-2 py-2 text-sm" value={status} onChange={(e) => setStatus(e.target.value as any)}>
+              <select className="w-full border rounded-lg px-2 py-2 text-sm" value={status} onChange={(e) => setStatus(e.target.value as any)}>
                 <option value="all">すべて</option>
                 <option value="active">有効（active）</option>
                 <option value="inactive">無効（inactive）</option>
@@ -154,8 +155,8 @@ export default function StoresPage() {
             <div className="md:col-span-2">
               <label className="block text-xs text-text-secondary mb-1">検索（店舗名・カレンダーID）</label>
               <div className="flex gap-2">
-                <input className="flex-1 border rounded-md px-3 py-2 text-sm" placeholder="例: 一号店 or calendar-id@group.calendar.google.com" value={query} onChange={(e) => setQuery(e.target.value)} />
-                <button onClick={fetchList} className="px-3 py-2 text-sm rounded-md border bg-surface-base hover:bg-surface-overlay">検索</button>
+                <input className="flex-1 border rounded-lg px-3 py-2 text-sm" placeholder="例: 一号店 or calendar-id@group.calendar.google.com" value={query} onChange={(e) => setQuery(e.target.value)} />
+                <Button type="button" variant="secondary" onClick={fetchList} className="px-3 py-2 text-sm rounded-lg border bg-surface-base hover:bg-surface-overlay">検索</Button>
               </div>
             </div>
           </div>
@@ -202,8 +203,8 @@ export default function StoresPage() {
                       </td>
                       <td className="px-3 py-2 border-b text-center whitespace-nowrap">
                         <div className="inline-flex items-center gap-2 whitespace-nowrap justify-center">
-                          <button className="px-2 py-1 text-xs rounded-md border hover:bg-surface-base" onClick={() => openEdit(s)}>編集</button>
-                          <button className={`px-2 py-1 text-xs rounded-md border ${s.status === 'active' ? 'hover:bg-red-500/25' : 'hover:bg-brand-500/25'}`} onClick={() => toggleActive(s)}>{s.status === 'active' ? '無効化' : '有効化'}</button>
+                          <Button type="button" variant="secondary" size="sm" className="px-2 py-1 text-xs rounded-lg border hover:bg-surface-base" onClick={() => openEdit(s)}>編集</Button>
+                          <Button type="button" variant="secondary" size="sm" className={`px-2 py-1 text-xs rounded-lg border ${s.status === 'active' ? 'hover:bg-red-500/25' : 'hover:bg-brand-500/25'}`} onClick={() => toggleActive(s)}>{s.status === 'active' ? '無効化' : '有効化'}</Button>
                         </div>
                       </td>
                     </tr>
@@ -223,27 +224,27 @@ export default function StoresPage() {
           bodyClassName="p-4 sm:p-5"
           footer={(
             <>
-              <button type="button" className="rounded-full px-4 py-2 text-sm text-text-secondary" onClick={() => setModalOpen(false)}>キャンセル</button>
-              <button type="button" className="rounded-full bg-brand-700 px-5 py-2 text-sm text-white hover:bg-brand-800" onClick={saveStore}>保存</button>
+              <Button type="button" variant="ghost" className="rounded-full px-4 py-2 text-sm text-text-secondary" onClick={() => setModalOpen(false)}>キャンセル</Button>
+              <Button type="button" variant="primary" className="rounded-full bg-brand-700 px-5 py-2 text-sm text-white hover:bg-brand-800" onClick={saveStore}>保存</Button>
             </>
           )}
         >
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="md:col-span-2">
                 <label className="block text-xs text-text-secondary mb-1">店舗名</label>
-                <input className="w-full border rounded-md px-3 py-2 text-sm" value={form.name} onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))} />
+                <input className="w-full border rounded-lg px-3 py-2 text-sm" value={form.name} onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))} />
               </div>
               <div className="md:col-span-2">
                 <label className="block text-xs text-text-secondary mb-1">カレンダーID</label>
-                <input className="w-full border rounded-md px-3 py-2 text-sm" value={form.calendarId} onChange={(e) => setForm(f => ({ ...f, calendarId: e.target.value }))} />
+                <input className="w-full border rounded-lg px-3 py-2 text-sm" value={form.calendarId} onChange={(e) => setForm(f => ({ ...f, calendarId: e.target.value }))} />
               </div>
               <div className="md:col-span-2">
                 <label className="block text-xs text-text-secondary mb-1">店舗メール</label>
-                <input className="w-full border rounded-md px-3 py-2 text-sm" value={form.email} onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))} />
+                <input className="w-full border rounded-lg px-3 py-2 text-sm" value={form.email} onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))} />
               </div>
               <div>
                 <label className="block text-xs text-text-secondary mb-1">ステータス</label>
-                <select className="w-full border rounded-md px-2 py-2 text-sm" value={form.status} onChange={(e) => setForm(f => ({ ...f, status: e.target.value as any }))}>
+                <select className="w-full border rounded-lg px-2 py-2 text-sm" value={form.status} onChange={(e) => setForm(f => ({ ...f, status: e.target.value as any }))}>
                   <option value="active">有効（active）</option>
                   <option value="inactive">無効（inactive）</option>
                 </select>

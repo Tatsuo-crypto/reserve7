@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import Button from '@/components/ui/Button'
 import Icon from '@/components/ui/icons'
 import { AdminStoreOption, fetchAdminStoresOnce } from '@/lib/admin-stores-client'
 
@@ -83,30 +84,34 @@ export default function StoreSwitcher({ defaultStoreName }: StoreSwitcherProps) 
 
     return (
         <div className="relative" ref={dropdownRef}>
-            <button
+            <Button
+                type="button"
+                variant="ghost"
                 onClick={() => setIsOpen(!isOpen)}
                 className="flex items-center space-x-1.5 px-3 py-1.5 border border-border-subtle rounded-full hover:bg-surface-overlay transition-colors bg-surface-raised/50 shadow-sm active:scale-95"
             >
-                <span className="text-[13px] font-normal text-text-secondary flex items-center whitespace-nowrap">
+                <span className="text-sm font-normal text-text-secondary flex items-center whitespace-nowrap">
                     {simplifyName(currentStoreName)}
                     <Icon name="chevronDown" size={12} className={`ml-1 text-text-muted transform transition-transform ${isOpen ? 'rotate-180' : ''}`} />
                 </span>
-            </button>
+            </Button>
 
             {isOpen && (
                 <div className="absolute right-0 mt-2 w-40 bg-surface-raised rounded-2xl shadow-xl py-1 z-50 border border-border-subtle animate-fadeIn overflow-hidden">
-                    <div className="px-4 py-2 text-[10px] font-normal text-text-muted uppercase tracking-widest border-b border-border-subtle">
+                    <div className="px-4 py-2 text-xs font-normal text-text-muted uppercase tracking-widest border-b border-border-subtle">
                         店舗選択
                     </div>
                     {stores.map(store => (
-                        <button
+                        <Button
+                            type="button"
+                            variant="ghost"
                             key={store.id}
                             onClick={() => handleSelect(store)}
-                            className={`block w-full text-left px-4 py-3 text-[13px] text-text-secondary hover:bg-surface-overlay transition-colors ${store.name === currentStoreName ? 'bg-surface-overlay text-brand-400' : ''
+                            className={`block w-full text-left px-4 py-3 text-sm text-text-secondary hover:bg-surface-overlay transition-colors ${store.name === currentStoreName ? 'bg-surface-overlay text-brand-400' : ''
                                 }`}
                         >
                             {simplifyName(store.name)}
-                        </button>
+                        </Button>
                     ))}
                     {stores.length === 0 && (
                         <div className="px-4 py-3 text-sm text-text-muted">
