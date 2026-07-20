@@ -295,6 +295,7 @@ export default function AdminPayrollPage() {
     if (storeScope === 'mine' && !adminStoreId) return
     const params = new URLSearchParams({ month })
     params.set('storeId', storeScope === 'mine' ? adminStoreId : 'all')
+    params.set('_t', String(Date.now()))
 
     try {
       setLoading(true)

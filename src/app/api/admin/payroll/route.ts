@@ -76,6 +76,12 @@ type PayrollMonthRow = {
   changed_after_confirm: boolean
 }
 
+const noStoreHeaders = {
+  'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+  Pragma: 'no-cache',
+  Expires: '0'
+}
+
 function isMissingColumnError(error: any) {
   return error?.code === '42703' || String(error?.message || '').includes('does not exist')
 }
@@ -323,7 +329,7 @@ export async function GET(request: NextRequest) {
     const trainerIds = trainerRows.map(trainer => trainer.id)
 
     if (trainerIds.length === 0) {
-      return NextResponse.json({ month, payroll: [] })
+      return NextResponse.json({ month, payroll: [] }, { headers: noStoreHeaders })
     }
 
     const attendanceQuery = supabaseAdmin
@@ -432,7 +438,7 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    return NextResponse.json({ month, payroll })
+    return NextResponse.json({ month, payroll }, { headers: noStoreHeaders })
   } catch (error) {
     return handleApiError(error, 'Admin payroll GET')
   }
@@ -625,7 +631,7 @@ export async function POST(request: NextRequest) {
       if (error) throw error
     }
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ success: true }, { headers: noStoreHeaders })
   } catch (error) {
     return handleApiError(error, 'Admin payroll POST')
   }
