@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Button from '@/components/ui/Button'
+import Icon from '@/components/ui/icons'
 
 type PushNotificationPromptProps = {
   token: string
@@ -27,6 +28,7 @@ export default function PushNotificationPrompt({ token }: PushNotificationPrompt
   const [permission, setPermission] = useState<NotificationPermission>('default')
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(true)
+  const [supportMessage, setSupportMessage] = useState('')
 
   useEffect(() => {
     const available =
@@ -37,6 +39,7 @@ export default function PushNotificationPrompt({ token }: PushNotificationPrompt
 
     setSupported(available)
     if (!available) {
+      setSupportMessage('このブラウザでは通知を利用できません。iPhoneの場合はホーム画面に追加したアプリから開いてください。')
       setLoading(false)
       return
     }
@@ -68,6 +71,7 @@ export default function PushNotificationPrompt({ token }: PushNotificationPrompt
         setEnabledByAdmin(data.enabledByAdmin === true)
       } catch (error) {
         console.error('Failed to load push notification status:', error)
+        setMessage('通知設定を確認できませんでした。')
       } finally {
         setLoading(false)
       }
@@ -81,19 +85,19 @@ export default function PushNotificationPrompt({ token }: PushNotificationPrompt
     setLoading(true)
 
     try {
-      const keyRes = await fetch('/api/push/public-key')
-      const keyData = await keyRes.json()
-
-      if (!keyRes.ok || !keyData.publicKey) {
-        setMessage('通知機能の準備がまだ完了していません。')
-        return
-      }
-
       const result = await Notification.requestPermission()
       setPermission(result)
 
       if (result !== 'granted') {
         setMessage('スマホ側で通知が許可されていません。')
+        return
+      }
+
+      const keyRes = await fetch('/api/push/public-key')
+      const keyData = await keyRes.json()
+
+      if (!keyRes.ok || !keyData.publicKey) {
+        setMessage('通知機能の準備がまだ完了していません。')
         return
       }
 
@@ -119,7 +123,7 @@ export default function PushNotificationPrompt({ token }: PushNotificationPrompt
 
       setSubscribed(true)
       setEnabledByAdmin(saveData.enabledByAdmin === true)
-      setMessage(saveData.enabledByAdmin ? '通知を受け取れるようになりました。' : '端末登録は完了しました。店舗側で通知が有効になると受け取れます。')
+      setMessage('通知をオンにしました。')
     } catch (error) {
       console.error('Failed to enable push notifications:', error)
       setMessage('通知を設定できませんでした。もう一度お試しください。')
@@ -146,6 +150,7 @@ export default function PushNotificationPrompt({ token }: PushNotificationPrompt
       }
 
       setSubscribed(false)
+      setEnabledByAdmin(false)
       setMessage('この端末への通知を解除しました。')
     } catch (error) {
       console.error('Failed to disable push notifications:', error)
@@ -155,51 +160,60 @@ export default function PushNotificationPrompt({ token }: PushNotificationPrompt
     }
   }
 
-  if (!supported) {
-    return null
-  }
-
   return (
-    <div className="mb-4 rounded-2xl border border-border-subtle bg-surface-raised p-4 shadow-sm">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <div className="text-sm font-normal text-text-primary">アプリ通知</div>
-          <div className="mt-1 text-xs text-text-secondary">
-            {subscribed
-              ? enabledByAdmin
-                ? '予約やオンライン開始前のお知らせをスマホで受け取れます。'
-                : '端末登録済みです。店舗側の通知チェックがONになると通知されます。'
-              : 'スマホで通知を受け取る場合は許可してください。'}
+    <div className="rounded-2xl border border-border-subtle bg-surface-raised p-4 shadow-sm">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${subscribed && enabledByAdmin ? 'bg-brand-500 text-white' : 'bg-surface-overlay text-text-secondary'}`}>
+            <Icon name="bell" size={20} />
           </div>
-          {permission === 'denied' && (
-            <div className="mt-2 text-xs text-red-600">ブラウザ設定で通知がブロックされています。</div>
-          )}
-          {message && <div className="mt-2 text-xs text-text-secondary">{message}</div>}
+          <div className="min-w-0">
+            <div className="text-sm font-normal text-text-primary">通知</div>
+            <div className="mt-0.5 text-xs text-text-secondary">
+              {subscribed && enabledByAdmin ? 'オン' : 'オフ'}
+            </div>
+          </div>
         </div>
-        {subscribed ? (
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            onClick={disablePush}
-            disabled={loading}
-            className="shrink-0 rounded-lg border border-border-strong px-3 py-2 text-xs text-text-secondary disabled:opacity-50"
-          >
-            解除
-          </Button>
-        ) : (
-          <Button
-            type="button"
-            variant="primary"
-            size="sm"
-            onClick={enablePush}
-            disabled={loading || permission === 'denied'}
-            className="shrink-0 rounded-lg bg-brand-700 px-3 py-2 text-xs text-white disabled:opacity-50"
-          >
-            許可
-          </Button>
-        )}
+
+        <div className="w-full shrink-0 sm:w-auto">
+          {permission === 'denied' && (
+            <span className="inline-flex w-full items-center justify-center rounded-full border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-300 sm:w-auto">
+              ブロック中
+            </span>
+          )}
+          {permission !== 'denied' && (subscribed && enabledByAdmin ? (
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={disablePush}
+              disabled={loading}
+              className="w-full rounded-full border border-border-strong px-4 py-2 text-xs text-text-secondary disabled:opacity-50 sm:w-auto"
+            >
+              オフにする
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              variant="primary"
+              size="sm"
+              onClick={enablePush}
+              disabled={loading || !supported}
+              className="w-full rounded-full bg-brand-700 px-4 py-2 text-xs text-white disabled:opacity-50 sm:w-auto"
+            >
+              通知をオンにする
+            </Button>
+          ))}
+        </div>
       </div>
+
+      {(supportMessage || message || permission === 'denied') && (
+        <div className="mt-3 rounded-xl bg-surface-overlay px-3 py-2 text-xs leading-relaxed text-text-secondary">
+          {permission === 'denied'
+            ? 'ブラウザ設定で通知がブロックされています。設定から通知を許可してください。'
+            : supportMessage || message}
+        </div>
+      )}
     </div>
   )
 }

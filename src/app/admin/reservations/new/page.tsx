@@ -42,6 +42,7 @@ function NewReservationContent() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+  const [optimisticMessage, setOptimisticMessage] = useState<string | null>(null)
 
   const [showShiftConfirmModal, setShowShiftConfirmModal] = useState(false)
   const [pendingRequest, setPendingRequest] = useState<{ url: string, requestData: any } | null>(null)
@@ -357,6 +358,7 @@ function NewReservationContent() {
   }
 
   const processSuccess = () => {
+    setOptimisticMessage(null)
     setSuccess(formData.isTrial ? '体験予約が正常に作成されました' : formData.isTraining ? '研修予約が正常に作成されました' : '予約が正常に作成されました')
 
     // Reset form
@@ -398,6 +400,7 @@ function NewReservationContent() {
     setLoading(true)
     setError(null)
     setSuccess(null)
+    setOptimisticMessage('予約を保存しています')
 
     try {
       const { url, requestData } = pendingRequest
@@ -413,6 +416,7 @@ function NewReservationContent() {
       processSuccess()
     } catch (error) {
       console.error('Create reservation retry error:', error)
+      setOptimisticMessage(null)
       setError(error instanceof Error ? error.message : '予約を作成できませんでした。もう一度お試しください。')
     } finally {
       setLoading(false)
@@ -423,6 +427,7 @@ function NewReservationContent() {
     setShowShiftConfirmModal(false)
     setPendingRequest(null)
     setLoading(false)
+    setOptimisticMessage(null)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -430,6 +435,7 @@ function NewReservationContent() {
     setLoading(true)
     setError(null)
     setSuccess(null)
+    setOptimisticMessage(null)
 
     try {
       // Validate required fields
@@ -471,7 +477,7 @@ function NewReservationContent() {
       const endDateTime = new Date(startDateTime.getTime() + formData.duration * 60 * 1000)
 
       // Prepare data for API
-      let requestData
+      let requestData: any
       if (formData.isBlocked) {
         // For blocked time, combine date and time fields
         if (!formData.blockedDate || !formData.blockedStartTime || !formData.blockedEndTime) {
@@ -568,6 +574,25 @@ function NewReservationContent() {
         ? `/api/admin/reservations?token=${trainerToken}`
         : '/api/admin/reservations'
 
+      const optimisticTitle = formData.isTraining
+        ? '研修'
+        : formData.isBlocked
+          ? (requestData.title || '予約不可')
+          : formData.isTrial
+            ? requestData.title
+            : formData.isGuest
+              ? requestData.title
+              : selectedClient?.name || '予約'
+      const optimisticStart = new Date(requestData.startTime)
+      const optimisticTime = optimisticStart.toLocaleString('ja-JP', {
+        timeZone: 'Asia/Tokyo',
+        month: 'numeric',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+      setOptimisticMessage(`${optimisticTime} ${optimisticTitle} を保存しています`)
+
       let response = await fetch(url, {
         method: 'POST',
         headers: {
@@ -581,6 +606,7 @@ function NewReservationContent() {
       if (!response.ok) {
         // If shift warning, show confirm dialog and retry with skipShiftCheck
         if (data.code === 'NO_SHIFT') {
+          setOptimisticMessage(null)
           setPendingRequest({ url, requestData })
           setShowShiftConfirmModal(true)
           // Do not setLoading(false) here yet, the modal will handle it if cancelled
@@ -594,6 +620,7 @@ function NewReservationContent() {
 
     } catch (error) {
       console.error('Create reservation error:', error)
+      setOptimisticMessage(null)
       setError(error instanceof Error ? error.message : '予約を作成できませんでした。もう一度お試しください。')
     } finally {
       setLoading(false)
@@ -648,6 +675,15 @@ function NewReservationContent() {
               <p className="text-state-success-300">{success}</p>
             </div>
             <p className="text-state-success-300 text-sm mt-1">カレンダーに移動します...</p>
+          </div>
+        )}
+
+        {optimisticMessage && (
+          <div className="mb-6 bg-brand-500/15 border border-brand-500/30 rounded-lg p-4">
+            <div className="flex items-center">
+              <div className="mr-3 h-2.5 w-2.5 rounded-full bg-brand-500 animate-pulse" />
+              <p className="text-brand-200">{optimisticMessage}</p>
+            </div>
           </div>
         )}
 
@@ -1139,7 +1175,7 @@ function NewReservationContent() {
                 disabled={loading}
                 className="px-6 py-2 bg-brand-700 text-white rounded-lg hover:bg-brand-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {loading ? '作成中...' : '予約作成'}
+                {loading ? '保存中...' : '予約作成'}
               </Button>
             </div>
           </form>

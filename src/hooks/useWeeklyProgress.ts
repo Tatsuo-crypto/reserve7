@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useMemo } from 'react'
+import useSWR from 'swr'
 import { getEffectiveDietGoal, getGoalForDate, normalizeDietDayType } from '@/lib/utils/dietDayType'
 import { fetchJsonCached } from '@/lib/client-fetch-cache'
 
@@ -55,6 +56,7 @@ interface UseWeeklyProgressOptions {
 }
 
 const METRIC_KEYS = ['calories', 'protein', 'fat', 'carbs', 'sugar', 'fiber', 'salt', 'steps', 'water', 'sleep', 'workout'] as const
+const EMPTY_ARRAY: any[] = []
 
 /**
  * Shared weekly actual-vs-target calculation used by the member Home summary,
@@ -64,67 +66,77 @@ const METRIC_KEYS = ['calories', 'protein', 'fat', 'carbs', 'sugar', 'fiber', 's
 export function useWeeklyProgress(token: string, options: UseWeeklyProgressOptions = {}) {
     const { userId, isAdmin, weekOffset: controlledWeekOffset, onWeekOffsetChange, todayDraft, enabled = true } = options
 
-    const [dietLogs, setDietLogs] = useState<any[]>([])
-    const [lifestyleLogs, setLifestyleLogs] = useState<any[]>([])
-    const [dietGoals, setDietGoals] = useState<any[]>([])
-    const [lifestyleSettings, setLifestyleSettings] = useState<any>(null)
-    const [loading, setLoading] = useState(true)
-
     const [internalWeekOffset, setInternalWeekOffset] = useState(0)
     const weekOffset = controlledWeekOffset ?? internalWeekOffset
     const setWeekOffset = onWeekOffsetChange ?? setInternalWeekOffset
 
     const todayStr = new Date().toLocaleDateString('sv-SE')
 
-    useEffect(() => {
-        const fetchData = async () => {
-            if (!enabled) {
-                setLoading(false)
-                return
-            }
+    const params = useMemo(() => {
+        return isAdmin && userId
+            ? `userId=${encodeURIComponent(userId)}`
+            : `token=${encodeURIComponent(token || '')}`
+    }, [isAdmin, userId, token])
 
-            setLoading(true)
-            try {
-                const params = isAdmin && userId
-                    ? `userId=${encodeURIComponent(userId)}`
-                    : `token=${encodeURIComponent(token || '')}`
-                const getWeekRange = (offset: number) => {
-                    const now = new Date()
-                    now.setDate(now.getDate() + (offset * 7))
-                    const day = now.getDay()
-                    const diff = now.getDate() - day + (day === 0 ? -6 : 1)
-                    const monday = new Date(now.setDate(diff))
-                    monday.setHours(0, 0, 0, 0)
-                    const sunday = new Date(monday)
-                    sunday.setDate(monday.getDate() + 6)
-                    sunday.setHours(23, 59, 59, 999)
-                    return { monday, sunday }
-                }
-                const { monday: prevMonday } = getWeekRange(weekOffset - 1)
-                const { sunday } = getWeekRange(weekOffset)
-                const logParams = new URLSearchParams(params)
-                logParams.set('startDate', prevMonday.toLocaleDateString('sv-SE'))
-                logParams.set('endDate', sunday.toLocaleDateString('sv-SE'))
-
-                const [dietLogData, lifeLogData, dietGoalData, lifeSettingData] = await Promise.all([
-                    fetchJsonCached<any>(`/api/diet/logs?${logParams.toString()}`),
-                    fetchJsonCached<any>(`/api/lifestyle/logs?${logParams.toString()}`),
-                    fetchJsonCached<any>(`/api/diet/goals?${params}`),
-                    fetchJsonCached<any>(`/api/lifestyle/settings?${params}`)
-                ])
-
-                setDietLogs(dietLogData.data || [])
-                setLifestyleLogs(lifeLogData.data || [])
-                setDietGoals(dietGoalData.data || [])
-                setLifestyleSettings(lifeSettingData.data || null)
-            } catch (e) {
-                console.error(e)
-            } finally {
-                setLoading(false)
-            }
+    const weekFetchRange = useMemo(() => {
+        const getWeekRange = (offset: number) => {
+            const now = new Date()
+            now.setDate(now.getDate() + (offset * 7))
+            const day = now.getDay()
+            const diff = now.getDate() - day + (day === 0 ? -6 : 1)
+            const monday = new Date(now.setDate(diff))
+            monday.setHours(0, 0, 0, 0)
+            const sunday = new Date(monday)
+            sunday.setDate(monday.getDate() + 6)
+            sunday.setHours(23, 59, 59, 999)
+            return { monday, sunday }
         }
-        if (token || (isAdmin && userId)) fetchData()
-    }, [token, userId, isAdmin, enabled, weekOffset])
+        const { monday: prevMonday } = getWeekRange(weekOffset - 1)
+        const { sunday } = getWeekRange(weekOffset)
+        return {
+            startDate: prevMonday.toLocaleDateString('sv-SE'),
+            endDate: sunday.toLocaleDateString('sv-SE'),
+        }
+    }, [weekOffset])
+
+    const shouldFetch = enabled && (Boolean(token) || Boolean(isAdmin && userId))
+    const weeklyProgressKey = shouldFetch
+        ? ['weekly-progress', params, weekFetchRange.startDate, weekFetchRange.endDate]
+        : null
+
+    const { data: weeklyData, isLoading } = useSWR(
+        weeklyProgressKey,
+        async ([, requestParams, startDate, endDate]) => {
+            const logParams = new URLSearchParams(requestParams)
+            logParams.set('startDate', startDate)
+            logParams.set('endDate', endDate)
+
+            const [dietLogData, lifeLogData, dietGoalData, lifeSettingData] = await Promise.all([
+                fetchJsonCached<any>(`/api/diet/logs?${logParams.toString()}`),
+                fetchJsonCached<any>(`/api/lifestyle/logs?${logParams.toString()}`),
+                fetchJsonCached<any>(`/api/diet/goals?${requestParams}`),
+                fetchJsonCached<any>(`/api/lifestyle/settings?${requestParams}`)
+            ])
+
+            return {
+                dietLogs: dietLogData.data || [],
+                lifestyleLogs: lifeLogData.data || [],
+                dietGoals: dietGoalData.data || [],
+                lifestyleSettings: lifeSettingData.data || null,
+            }
+        },
+        {
+            keepPreviousData: true,
+            revalidateOnFocus: false,
+            dedupingInterval: 30_000,
+        }
+    )
+
+    const dietLogs: any[] = weeklyData?.dietLogs ?? EMPTY_ARRAY
+    const lifestyleLogs: any[] = weeklyData?.lifestyleLogs ?? EMPTY_ARRAY
+    const dietGoals: any[] = weeklyData?.dietGoals ?? EMPTY_ARRAY
+    const lifestyleSettings = weeklyData?.lifestyleSettings || null
+    const loading = shouldFetch ? isLoading && !weeklyData : false
 
     const weeklyStats: WeeklyProgressStats | null = useMemo(() => {
         if (!enabled) return null

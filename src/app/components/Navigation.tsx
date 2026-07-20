@@ -1,23 +1,23 @@
 'use client'
 
 import { useSession, signOut } from 'next-auth/react'
-import Link from 'next/link'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { getStoreDisplayName } from '@/lib/auth-utils'
-import { useState, Suspense, useEffect } from 'react'
+import Link from 'next/link'
+import { Suspense, useState } from 'react'
 import StoreSwitcher from './StoreSwitcher'
 import Button from '@/components/ui/Button'
-import Icon from '@/components/ui/icons'
+import Icon, { type IconName } from '@/components/ui/icons'
 
 function NavigationContent() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   // Determine if we should show a back button instead of a menu button
   const isSubPage = pathname !== '/dashboard' && pathname !== '/admin/members' && pathname !== '/admin/analytics'
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
 
   // Helper to get only last name
   const formatName = (fullName: string | null | undefined, role: string | undefined) => {
@@ -79,6 +79,22 @@ function NavigationContent() {
     router.back()
   }
 
+  const getActiveTab = () => {
+    if (pathname?.startsWith('/admin/members')) return 'members'
+    if (pathname?.startsWith('/admin/analytics')) return 'sales'
+    return searchParams.get('tab') || (pathname === '/dashboard' ? 'home' : '')
+  }
+
+  const menuItems: { id: string, label: string, href: string, iconName: IconName }[] = [
+    { id: 'sales', label: '売上', href: '/admin/analytics', iconName: 'chartBar' },
+    { id: 'diet', label: 'ダイエット', href: '/dashboard?tab=diet', iconName: 'heart' },
+    { id: 'home', label: '予約', href: `/dashboard?tab=home&_t=${Date.now()}`, iconName: 'calendar' },
+    { id: 'members', label: '会員', href: '/admin/members', iconName: 'userGroup' },
+    { id: 'others', label: 'その他', href: '/dashboard?tab=others', iconName: 'listMenu' },
+  ]
+
+  const activeTab = getActiveTab()
+
   // Don't show global navigation on client pages (they have their own headers)
   if (pathname && (pathname.startsWith('/client/') || pathname.startsWith('/trainer/'))) {
     return null
@@ -87,8 +103,8 @@ function NavigationContent() {
   return (
     <header className="bg-surface-raised/80 backdrop-blur-md border-b border-border-subtle sticky top-0 z-50 h-16">
       <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between relative">
-        {/* Left: Menu or Back Button */}
-        <div className="z-10 min-w-[44px]">
+        {/* Left: Store Switcher or Back Button */}
+        <div className="z-10 flex min-w-[44px] justify-start">
           {isSubPage ? (
             <Button
               type="button"
@@ -98,16 +114,9 @@ function NavigationContent() {
             >
               <Icon name="chevronLeft" size={24} />
             </Button>
-          ) : (
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="w-10 h-10 flex items-center justify-center p-0 text-text-muted bg-surface-raised rounded-full shadow-sm border border-border-subtle transition-all active:scale-90"
-            >
-              <Icon name="menu" size={24} />
-            </Button>
-          )}
+          ) : session?.user?.role === 'ADMIN' ? (
+            <StoreSwitcher defaultStoreName={getStoreDisplayName(session.user.email)} />
+          ) : null}
         </div>
 
         {/* Center: Dynamic Page Title */}
@@ -117,10 +126,59 @@ function NavigationContent() {
           </h1>
         </div>
 
-        {/* Right: Store Switcher / Account Pill */}
-        <div className="z-10 flex justify-end min-w-[44px]">
+        {/* Right: Menu / Account Pill */}
+        <div className="z-10 relative flex justify-end min-w-[44px]">
           {session?.user?.role === 'ADMIN' ? (
-            <StoreSwitcher defaultStoreName={getStoreDisplayName(session.user.email)} />
+            <>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setIsMenuOpen((value) => !value)}
+                className="w-12 h-12 flex items-center justify-center p-0 text-text-secondary bg-surface-raised rounded-full shadow-sm border border-border-subtle transition-all active:scale-90 hover:bg-surface-base"
+                aria-label="メニュー"
+              >
+                <Icon name="menu" size={34} />
+              </Button>
+
+              {isMenuOpen && (
+                <div className="absolute right-0 top-12 w-52 overflow-hidden rounded-2xl border border-border-subtle bg-surface-raised shadow-xl animate-fadeIn">
+                  <div className="py-1">
+                    {menuItems.map((item) => {
+                      const isActive = activeTab === item.id
+                      return (
+                        <Link
+                          key={item.id}
+                          href={item.href}
+                          onClick={() => setIsMenuOpen(false)}
+                          className={`flex items-center gap-3 px-4 py-3 text-sm font-normal transition-colors ${
+                            isActive
+                              ? 'bg-brand-500/15 text-brand-300'
+                              : 'text-text-secondary hover:bg-surface-overlay hover:text-text-primary'
+                          }`}
+                        >
+                          <Icon name={item.iconName} size={18} />
+                          <span className="whitespace-nowrap">{item.label}</span>
+                        </Link>
+                      )
+                    })}
+                  </div>
+                  <div className="border-t border-border-subtle py-1">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={() => {
+                        setIsMenuOpen(false)
+                        handleLogout()
+                      }}
+                      className="flex w-full items-center justify-start gap-3 rounded-none px-4 py-3 text-sm font-normal text-text-secondary hover:bg-surface-overlay hover:text-text-primary"
+                    >
+                      <Icon name="logout" size={18} />
+                      <span className="whitespace-nowrap">ログアウト</span>
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
           ) : session?.user ? (
              <Button
                type="button"
@@ -140,28 +198,6 @@ function NavigationContent() {
           ) : null}
         </div>
 
-        {/* Mobile Menu Overlay */}
-        {isMobileMenuOpen && (
-          <div className="absolute top-16 left-4 right-4 bg-surface-raised rounded-2xl shadow-xl border border-border-subtle p-2 z-50 animate-fadeIn overflow-hidden">
-             <div className="flex flex-col">
-              <Link 
-                href="/dashboard" 
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="flex items-center gap-3 p-5 hover:bg-surface-base rounded-2xl transition-colors text-text-secondary"
-              >
-                <span className="text-base font-normal">ダッシュボード</span>
-              </Link>
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={handleLogout}
-                className="w-full flex items-center gap-3 p-5 hover:bg-state-danger-500/25 rounded-2xl transition-colors text-state-danger-400 border-t border-border-subtle"
-              >
-                <span className="text-base font-normal">ログアウト</span>
-              </Button>
-             </div>
-          </div>
-        )}
       </div>
     </header>
   )

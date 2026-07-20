@@ -112,7 +112,7 @@ const AdminDashboard = () => {
 
         {/* HOME / RESERVATION TAB */}
         {activeTab === 'home' && (
-          <div className="animate-slideUp -mt-2">
+          <div className="animate-slideUp -mt-4 sm:-mt-2">
             <div className="bg-surface-raised rounded-2xl border border-border-subtle shadow-sm overflow-hidden">
               <div className="p-0">
                 <CalendarView key={searchParams.get('_t') || 'initial'} />
@@ -152,7 +152,7 @@ export default function DashboardPage() {
   if (!session) return null;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 py-3 sm:py-8">
       <Suspense fallback={null}>
         {session.user.role === 'ADMIN' ? <AdminDashboard /> : <div className="text-center py-20 font-normal">アクセス権限がありません</div>}
       </Suspense>

@@ -229,24 +229,21 @@ export default function ClientReservationsPage() {
         showBack={fromAdmin && isAdmin}
         onBack={() => router.push('/admin/members')}
         rightElement={
-          <div className="flex items-center gap-2">
+          <div className="flex min-w-0 items-center justify-end gap-1.5">
             <Button
               type="button"
               variant="ghost"
               size="sm"
               onClick={() => setActiveTab('settings')}
               aria-label="設定"
-              className={`h-10 w-10 p-0 rounded-full shadow-sm border border-border-subtle transition-all active:scale-95 ${activeTab === 'settings' ? 'bg-brand-500/15 text-brand-300' : 'bg-surface-raised text-text-secondary'}`}
+              className={`h-10 w-10 shrink-0 p-0 rounded-full shadow-sm border border-border-subtle transition-all active:scale-95 ${activeTab === 'settings' ? 'bg-brand-500/15 text-brand-300' : 'bg-surface-raised text-text-secondary'}`}
             >
               <Icon name="settings" size={20} />
             </Button>
-            <div className="h-10 px-4 flex items-center gap-2 bg-surface-raised rounded-full shadow-sm border border-border-subtle transition-all active:scale-95">
-              <span className="whitespace-nowrap text-sm font-normal text-text-secondary">
+            <div className="flex h-10 min-w-0 max-w-[72px] items-center rounded-full border border-border-subtle bg-surface-raised px-2.5 shadow-sm transition-all active:scale-95 sm:max-w-[108px] sm:px-3">
+              <span className="min-w-0 truncate whitespace-nowrap text-sm font-normal text-text-secondary">
                 {formatName(userName)}
               </span>
-              <div className="px-2 py-0.5 rounded-full text-xs font-normal bg-surface-overlay text-text-primary whitespace-nowrap">
-                会員
-              </div>
             </div>
           </div>
         }
@@ -386,20 +383,6 @@ function SettingsTab({ token }: { token: string }) {
   return (
     <div className="space-y-4 animate-fadeIn">
       <PushNotificationPrompt token={token} />
-
-      <div className="rounded-2xl border border-border-subtle bg-surface-raised p-5 shadow-sm">
-        <div className="flex items-start gap-3">
-          <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-brand-500/15 text-brand-300">
-            <Icon name="informationCircle" size={20} />
-          </div>
-          <div>
-            <div className="text-sm text-text-primary">通知の受け取り</div>
-            <p className="mt-1 text-xs leading-relaxed text-text-secondary">
-              予約のお知らせやオンラインレッスン開始前の通知を、この端末で受け取れます。
-            </p>
-          </div>
-        </div>
-      </div>
     </div>
   )
 }

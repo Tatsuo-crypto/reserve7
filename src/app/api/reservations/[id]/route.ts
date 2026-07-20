@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { requireAuth, handleApiError } from '@/lib/api-utils'
 import { updateMonthlyTitles, updateAllTitles, usesCumulativeCount } from '@/lib/title-utils'
-import { createGoogleCalendarService } from '@/lib/google-calendar'
 import {
   sendClientCancellationNotification,
   sendTrainerCancellationNotification,
@@ -10,6 +9,13 @@ import {
   sendTrainerUpdateNotification
 } from '@/lib/email'
 import { sendPushNotificationToUser } from '@/lib/push'
+import { runBackgroundTask } from '@/lib/background-task'
+import {
+  enqueueCalendarDeleteJob,
+  markCalendarUpdatePending,
+  processCalendarDeleteJob,
+  updateReservationCalendarEvent
+} from '@/lib/reservation-calendar-sync'
 
 export const dynamic = 'force-dynamic'
 
@@ -132,7 +138,7 @@ export async function DELETE(
     }
 
     const isTrainingDeletion = reservation.title === '研修' && !reservation.client_id
-    const calendarService = createGoogleCalendarService()
+    const trainingCalendarDeletes: Array<{ eventId: string; calendarId: string }> = []
 
     if (isTrainingDeletion) {
       // 研修予約: 同じ時刻の全兄弟レコードを取得して一括削除
@@ -150,20 +156,14 @@ export async function DELETE(
       } else if (siblings && siblings.length > 0) {
         // ユニークなevent_idのみカレンダー削除（同じIDを複数回削除しない）
         const deletedEventIds = new Set<string>()
-        if (calendarService) {
-          for (const sibling of siblings) {
-            if (!sibling.external_event_id) continue
-            if (deletedEventIds.has(sibling.external_event_id)) continue
-            deletedEventIds.add(sibling.external_event_id)
-            try {
-              await calendarService.deleteEvent(sibling.external_event_id, sibling.calendar_id)
-              console.log(`✅ Training calendar event deleted: ${sibling.external_event_id} from ${sibling.calendar_id}`)
-            } catch (calErr: any) {
-              if (calErr?.code !== 404 && calErr?.response?.status !== 404) {
-                console.error(`⚠️ Failed to delete training calendar event ${sibling.external_event_id}:`, calErr?.message || calErr)
-              }
-            }
-          }
+        for (const sibling of siblings) {
+          if (!sibling.external_event_id) continue
+          if (deletedEventIds.has(sibling.external_event_id)) continue
+          deletedEventIds.add(sibling.external_event_id)
+          trainingCalendarDeletes.push({
+            eventId: sibling.external_event_id,
+            calendarId: sibling.calendar_id,
+          })
         }
 
         // 全兄弟レコードをDBから削除
@@ -181,6 +181,17 @@ export async function DELETE(
           )
         }
         console.log(`✅ Deleted ${siblingIds.length} training reservation record(s) from DB`)
+
+        if (trainingCalendarDeletes.length > 0) {
+          runBackgroundTask('training-calendar-delete', async () => {
+            for (const item of trainingCalendarDeletes) {
+              const jobId = await enqueueCalendarDeleteJob(item)
+              if (jobId) {
+                await processCalendarDeleteJob(jobId, item)
+              }
+            }
+          })
+        }
       }
     } else {
       // 通常予約: 1件のみ
@@ -202,32 +213,18 @@ export async function DELETE(
         }
       }
 
+      const calendarDeletePayload = reservation.external_event_id
+        ? {
+            eventId: reservation.external_event_id,
+            calendarId: reservation.calendar_id,
+            memberCalendarEmail: (reservation.users as any)?.google_calendar_email,
+            trainerExternalEventId: (reservation as any).trainer_external_event_id || null,
+            trainerCalendarEmail: trainerCalendarId,
+          }
+        : null
+
       if (reservation.external_event_id) {
         console.log('📅 Attempting to delete from Google Calendar:', reservation.external_event_id)
-
-        const deleteOptions: any = {
-          memberCalendarEmail: (reservation.users as any)?.google_calendar_email,
-          trainerExternalEventId: (reservation as any).trainer_external_event_id || null,
-        }
-
-        if (trainerCalendarId) {
-          deleteOptions.trainerCalendarEmail = trainerCalendarId
-        }
-
-        if (calendarService) {
-          try {
-            await calendarService.deleteEvent(
-              reservation.external_event_id,
-              reservation.calendar_id,
-              deleteOptions
-            )
-            console.log('✅ Google Calendar event deleted:', reservation.external_event_id)
-          } catch (calendarError) {
-            console.error('❌ Calendar event deletion failed:', calendarError)
-          }
-        } else {
-          console.warn('⚠️ Calendar service not available')
-        }
       } else {
         console.log('ℹ️ No external_event_id, skipping Google Calendar deletion')
       }
@@ -247,6 +244,15 @@ export async function DELETE(
         )
       }
       console.log('✅ Database deletion successful')
+
+      if (calendarDeletePayload) {
+        runBackgroundTask('reservation-calendar-delete', async () => {
+          const jobId = await enqueueCalendarDeleteJob(calendarDeletePayload)
+          if (jobId) {
+            await processCalendarDeleteJob(jobId, calendarDeletePayload)
+          }
+        })
+      }
 
       // Notify client and trainer
       const clientUser = reservation.users as any
@@ -304,7 +310,9 @@ export async function DELETE(
       }
 
       if (cancelEmailPromises.length > 0) {
-        await Promise.allSettled(cancelEmailPromises)
+        runBackgroundTask('reservation-cancel-notifications', async () => {
+          await Promise.allSettled(cancelEmailPromises)
+        })
       }
     }
 
@@ -501,81 +509,79 @@ export async function PUT(
     // Check if this is a training reservation
     const isTrainingReservation = reservation.title === '研修' && !reservation.client_id
 
-    // Update Google Calendar event(s)
-    const calendarService = createGoogleCalendarService()
-    if (calendarService) {
-      if (isTrainingReservation) {
-        // 研修予約: 兄弟レコードを取得し、ユニークなevent_idのみカレンダー更新（重複排除）
-        const { data: siblingReservations, error: siblingError } = await supabaseAdmin
-          .from('reservations')
-          .select('id, external_event_id, calendar_id')
-          .eq('title', '研修')
-          .eq('start_time', reservation.start_time)
-          .eq('end_time', reservation.end_time)
-          .is('client_id', null)
+    const calendarUpdateJobs: Array<{
+      reservationId: string
+      eventId: string
+      title: string
+      startTime: string
+      endTime: string
+      clientName: string
+      clientEmail: string
+      notes?: string
+      calendarId: string
+      memberCalendarEmail?: string | null
+      trainerCalendarEmail?: string | null
+    }> = []
 
-        if (siblingError) {
-          console.error('Failed to fetch sibling training reservations:', siblingError)
-        } else if (siblingReservations && siblingReservations.length > 0) {
-          // 同じevent_idが複数レコードにある場合、1回だけ更新する
-          const updatedEventIds = new Set<string>()
-          console.log(`🔄 Updating Google Calendar for ${siblingReservations.length} training sibling(s)`)
-          for (const sibling of siblingReservations) {
-            if (!sibling.external_event_id) continue
-            if (updatedEventIds.has(sibling.external_event_id)) continue
-            updatedEventIds.add(sibling.external_event_id)
-            try {
-              await calendarService.updateEvent(sibling.external_event_id, {
-                title,
-                startTime: startDateTime.toISOString(),
-                endTime: endDateTime.toISOString(),
-                clientName: '研修',
-                clientEmail: 'training@system',
-                notes: notes || undefined,
-                calendarId: sibling.calendar_id,
-              })
-              console.log(`✅ Calendar event updated: ${sibling.external_event_id} on ${sibling.calendar_id}`)
-            } catch (calendarError) {
-              console.error(`⚠️ Calendar update failed for event ${sibling.external_event_id}:`, calendarError)
-            }
-          }
-        }
-      } else if (reservation.external_event_id) {
-        // 通常予約: 1件のみ更新
-        try {
-          const userRel: any = reservation.users
-          const updateOptions: any = {
+    if (isTrainingReservation) {
+      // 研修予約: 兄弟レコードを取得し、ユニークなevent_idのみカレンダー更新（重複排除）
+      const { data: siblingReservations, error: siblingError } = await supabaseAdmin
+        .from('reservations')
+        .select('id, external_event_id, calendar_id')
+        .eq('title', '研修')
+        .eq('start_time', reservation.start_time)
+        .eq('end_time', reservation.end_time)
+        .is('client_id', null)
+
+      if (siblingError) {
+        console.error('Failed to fetch sibling training reservations:', siblingError)
+      } else if (siblingReservations && siblingReservations.length > 0) {
+        const updatedEventIds = new Set<string>()
+        for (const sibling of siblingReservations) {
+          if (!sibling.external_event_id) continue
+          if (updatedEventIds.has(sibling.external_event_id)) continue
+          updatedEventIds.add(sibling.external_event_id)
+          calendarUpdateJobs.push({
+            reservationId: sibling.id,
+            eventId: sibling.external_event_id,
             title,
             startTime: startDateTime.toISOString(),
             endTime: endDateTime.toISOString(),
-            clientName: userRel?.full_name || '予約不可時間',
-            clientEmail: userRel?.email || 'blocked@system',
+            clientName: '研修',
+            clientEmail: 'training@system',
             notes: notes || undefined,
-            calendarId: reservation.calendar_id,
-            memberCalendarEmail: userRel?.google_calendar_email || null
-          }
-
-          // Handle trainer calendar
-          const targetTrainerId = trainerId !== undefined ? trainerId : reservation.trainer_id
-          if (targetTrainerId) {
-            const { data: trainer } = await supabaseAdmin
-              .from('trainers')
-              .select('google_calendar_id')
-              .eq('id', targetTrainerId)
-              .single()
-
-            if (trainer?.google_calendar_id) {
-              updateOptions.trainerCalendarEmail = trainer.google_calendar_id
-            }
-          }
-
-          await calendarService.updateEvent(reservation.external_event_id, updateOptions)
-          console.log('Google Calendar event updated:', reservation.external_event_id)
-        } catch (calendarError) {
-          console.error('Calendar event update failed:', calendarError)
-          // Continue with reservation update even if calendar sync fails
+            calendarId: sibling.calendar_id,
+          })
         }
       }
+    } else if (reservation.external_event_id) {
+      const userRel: any = reservation.users
+      let trainerCalendarEmail: string | null = null
+
+      const targetTrainerId = trainerId !== undefined ? trainerId : reservation.trainer_id
+      if (targetTrainerId) {
+        const { data: trainer } = await supabaseAdmin
+          .from('trainers')
+          .select('google_calendar_id')
+          .eq('id', targetTrainerId)
+          .single()
+
+        trainerCalendarEmail = trainer?.google_calendar_id || null
+      }
+
+      calendarUpdateJobs.push({
+        reservationId,
+        eventId: reservation.external_event_id,
+        title,
+        startTime: startDateTime.toISOString(),
+        endTime: endDateTime.toISOString(),
+        clientName: userRel?.full_name || '予約不可時間',
+        clientEmail: userRel?.email || 'blocked@system',
+        notes: notes || undefined,
+        calendarId: reservation.calendar_id,
+        memberCalendarEmail: userRel?.google_calendar_email || null,
+        trainerCalendarEmail,
+      })
     }
 
     // Update the reservation in DB
@@ -629,6 +635,17 @@ export async function PUT(
           { status: 500 }
         )
       }
+    }
+
+    if (calendarUpdateJobs.length > 0) {
+      await Promise.allSettled(
+        calendarUpdateJobs.map(job => markCalendarUpdatePending(job.reservationId))
+      )
+      runBackgroundTask('reservation-calendar-update', async () => {
+        await Promise.allSettled(
+          calendarUpdateJobs.map(job => updateReservationCalendarEvent(job))
+        )
+      })
     }
 
     // Send email notifications for updates (fire-and-forget)
@@ -722,7 +739,9 @@ export async function PUT(
         }
 
         if (updateEmailPromises.length > 0) {
-          await Promise.allSettled(updateEmailPromises)
+          runBackgroundTask('reservation-update-notifications', async () => {
+            await Promise.allSettled(updateEmailPromises)
+          })
         }
       }
     } catch (emailErr) {

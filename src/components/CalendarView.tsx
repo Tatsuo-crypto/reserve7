@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
-import Link from 'next/link'
 import TimelineView from './TimelineView'
 import { useStoreChange } from '@/hooks/useStoreChange'
 import Icon from '@/components/ui/icons'
@@ -142,7 +141,7 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
   const [debugInfo, setDebugInfo] = useState<string>('')
   const [viewMode, setViewMode] = useState<'month' | 'timeline'>('month')
   const [selectedDate, setSelectedDate] = useState<string>('')
-  const { count: storeChangeCount } = useStoreChange()
+  const { count: storeChangeCount, currentStoreId } = useStoreChange()
   const lastFetchRef = useRef<{ key: string, at: number } | null>(null)
   const lastAvailabilityFetchRef = useRef<string | null>(null)
 
@@ -261,8 +260,9 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
       setLoading(true)
 
       const params = buildCalendarParams('reservations')
-      const cacheKey = params.toString()
-      const data = await fetchCalendarPayload(`/api/calendar?${cacheKey}`, cacheKey, force)
+      const queryString = params.toString()
+      const cacheKey = `${queryString}:store=${currentStoreId || 'default'}:storeChange=${storeChangeCount}`
+      const data = await fetchCalendarPayload(`/api/calendar?${queryString}`, cacheKey, force)
       applyReservations(data.reservations)
 
     } catch (error) {
@@ -271,15 +271,16 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
     } finally {
       setLoading(false)
     }
-  }, [applyReservations, buildCalendarParams])
+  }, [applyReservations, buildCalendarParams, currentStoreId, storeChangeCount])
 
   const fetchAvailabilityData = useCallback(async (force = false) => {
     try {
       setAvailabilityLoading(true)
 
       const params = buildCalendarParams('availability')
-      const cacheKey = params.toString()
-      const data = await fetchCalendarPayload(`/api/calendar?${cacheKey}`, cacheKey, force)
+      const queryString = params.toString()
+      const cacheKey = `${queryString}:store=${currentStoreId || 'default'}:storeChange=${storeChangeCount}`
+      const data = await fetchCalendarPayload(`/api/calendar?${queryString}`, cacheKey, force)
       setShifts(data.shifts)
       setTemplates(data.templates)
       setTrainers(data.trainers)
@@ -292,7 +293,7 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
     } finally {
       setAvailabilityLoading(false)
     }
-  }, [buildCalendarParams])
+  }, [buildCalendarParams, currentStoreId, storeChangeCount])
 
   const fetchCalendarData = useCallback(async (force = false) => {
     await Promise.all([
@@ -304,7 +305,7 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
   // Get calendar data
   useEffect(() => {
     const range = getCalendarMonthRange(currentDate)
-    const fetchKey = `${trainerToken || 'admin'}:${storeChangeCount}:${range.key}`
+    const fetchKey = `${trainerToken || 'admin'}:${currentStoreId || 'default'}:${storeChangeCount}:${range.key}`
     const lastFetch = lastFetchRef.current
     if (lastFetch?.key === fetchKey && Date.now() - lastFetch.at < 2000) {
       return
@@ -312,17 +313,17 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
     lastFetchRef.current = { key: fetchKey, at: Date.now() }
 
     fetchReservationsData()
-  }, [currentDate, fetchReservationsData, storeChangeCount, trainerToken])
+  }, [currentDate, currentStoreId, fetchReservationsData, storeChangeCount, trainerToken])
 
   useEffect(() => {
     if (viewMode === 'timeline' && selectedDate && !availabilityLoading) {
       const range = getCalendarMonthRange(currentDate)
-      const fetchKey = `${trainerToken || 'admin'}:${storeChangeCount}:${range.key}`
+      const fetchKey = `${trainerToken || 'admin'}:${currentStoreId || 'default'}:${storeChangeCount}:${range.key}`
       if (lastAvailabilityFetchRef.current === fetchKey) return
       lastAvailabilityFetchRef.current = fetchKey
       void fetchAvailabilityData()
     }
-  }, [availabilityLoading, currentDate, fetchAvailabilityData, selectedDate, storeChangeCount, trainerToken, viewMode])
+  }, [availabilityLoading, currentDate, currentStoreId, fetchAvailabilityData, selectedDate, storeChangeCount, trainerToken, viewMode])
 
   const handleCalendarSync = useCallback(async () => {
     if (syncing) return
@@ -432,7 +433,7 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
     // Empty cells for days before the first day of the month
     for (let i = 0; i < firstDay; i++) {
       days.push(
-        <div key={`empty-${i}`} className="h-[85px] bg-surface-base border border-border-subtle"></div>
+        <div key={`empty-${i}`} className="h-[82px] bg-surface-base border border-border-subtle"></div>
       )
     }
 
@@ -443,26 +444,28 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
       const today = new Date()
       const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
       const isToday = dateStr === todayStr
+      const visibleEvents = dayEvents.length > 4 ? dayEvents.slice(0, 3) : dayEvents.slice(0, 4)
+      const hiddenEventCount = dayEvents.length > 4 ? dayEvents.length - 3 : 0
 
       days.push(
         <div
           key={day}
-          className="h-[85px] p-1 overflow-hidden cursor-pointer flex flex-col bg-surface-raised hover:bg-surface-base border border-border-subtle"
+          className="h-[82px] p-[2px] overflow-hidden cursor-pointer flex flex-col bg-surface-raised hover:bg-surface-base border border-border-subtle"
           onClick={() => handleDateClick(dateStr)}
         >
-          <div className="text-sm font-normal mb-1 flex-shrink-0 flex justify-start">
+          <div className="h-4 text-[11px] font-normal mb-0.5 flex-shrink-0 flex justify-start">
             {isToday ? (
-              <div className="w-6 h-6 bg-brand-500 text-white rounded-full flex items-center justify-center text-xs font-normal">
+              <div className="w-4 h-4 bg-brand-500 text-white rounded-full flex items-center justify-center text-[10px] font-normal">
                 {day}
               </div>
             ) : (
-              <div className="w-6 h-6 flex items-center justify-center text-text-primary font-normal">
+              <div className="w-4 h-4 flex items-center justify-center text-text-primary font-normal">
                 {day}
               </div>
             )}
           </div>
-          <div className="flex-1 min-h-0 overflow-hidden">
-            {dayEvents.slice(0, 4).map(event => {
+          <div className="flex-1 min-h-0 overflow-hidden space-y-[1px]">
+            {visibleEvents.map(event => {
               // Determine color based on reservation type
               // Check trial BEFORE other types to ensure trial reservations are blue
               const isTrial = event.title.includes('体験')
@@ -481,16 +484,16 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
               return (
                 <div
                   key={event.id}
-                  className={`h-5 text-xs px-0.5 flex items-center rounded-lg truncate leading-none mb-0.5 font-normal ${colorClass}`}
+                  className={`h-[13px] min-w-0 text-[8px] px-[2px] flex items-center rounded-[5px] truncate leading-none font-normal ${colorClass}`}
                   title={`${event.title} (${event.time})`}
                 >
                   {formatReservationTitle(event.title, event.plan)}
                 </div>
               )
             })}
-            {dayEvents.length > 4 && (
-              <div className="text-xs text-text-secondary px-0.5">
-                +{dayEvents.length - 4}
+            {hiddenEventCount > 0 && (
+              <div className="h-[13px] min-w-0 text-[8px] px-[2px] flex items-center rounded-[5px] bg-surface-overlay text-text-secondary border border-border-subtle leading-none font-normal">
+                +{hiddenEventCount}
               </div>
             )}
           </div>
@@ -540,41 +543,39 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
       {/* White container: Month title -> Calendar grid -> Legend */}
       <div className="bg-surface-raised p-0">
         {/* Month Navigation */}
-        <div className="py-2 px-4">
-          <div className="grid grid-cols-[44px_1fr_44px] items-center gap-3">
+        <div className="py-1 px-2">
+          <div className="relative flex h-11 items-center justify-center">
             <Button
               type="button"
               variant="ghost"
               size="sm"
               onClick={() => navigateMonth('prev')}
-              className="p-3 text-text-muted hover:text-text-secondary hover:bg-surface-overlay rounded-lg"
+              className="absolute left-1 p-2 text-text-muted hover:text-text-secondary hover:bg-surface-overlay rounded-lg"
               aria-label="前の月"
             >
               <Icon name="chevronLeft" size={24} />
             </Button>
-            <div className="flex items-center justify-center gap-2 min-w-0">
-              <h3 className="text-xl sm:text-lg font-normal text-text-primary min-w-[160px] text-center">
-                {formatMonth(currentDate)}
-              </h3>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={handleCalendarSync}
-                disabled={syncing}
-                className="h-9 w-9 p-0 rounded-lg text-text-muted hover:bg-surface-overlay hover:text-text-secondary disabled:opacity-50"
-                aria-label="Googleカレンダーと同期"
-                title="Googleカレンダーと同期"
-              >
-                <Icon name="refresh" size={18} className={syncing ? 'animate-spin' : ''} />
-              </Button>
-            </div>
+            <h3 className="text-lg sm:text-lg font-normal text-text-primary text-center">
+              {formatMonth(currentDate)}
+            </h3>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={handleCalendarSync}
+              disabled={syncing}
+              className="absolute right-12 h-10 w-10 p-0 rounded-full text-text-secondary bg-surface-overlay hover:bg-surface-base hover:text-brand-300 border border-border-subtle disabled:opacity-50"
+              aria-label="Googleカレンダーと同期"
+              title="Googleカレンダーと同期"
+            >
+              <Icon name="refresh" size={22} className={syncing ? 'animate-spin' : ''} />
+            </Button>
             <Button
               type="button"
               variant="ghost"
               size="sm"
               onClick={() => navigateMonth('next')}
-              className="p-3 text-text-muted hover:text-text-secondary hover:bg-surface-overlay rounded-lg"
+              className="absolute right-1 p-2 text-text-muted hover:text-text-secondary hover:bg-surface-overlay rounded-lg"
               aria-label="次の月"
             >
               <Icon name="chevronRight" size={24} />
@@ -582,7 +583,7 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
           </div>
         </div>
         {/* Calendar Body */}
-        <div className="px-0 pb-4">
+        <div className="px-0 pb-1">
           {loading ? (
             <div className="flex items-center justify-center h-64">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"></div>
@@ -591,9 +592,9 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
           ) : (
             <div className="">
               {/* Days of week header (no divider line) */}
-              <div className="grid grid-cols-7 mb-1">
+              <div className="grid grid-cols-7">
                 {['月', '火', '水', '木', '金', '土', '日'].map((day, index) => (
-                  <div key={day} className={`p-2 text-center text-sm font-normal ${index === 5 ? 'text-brand-300' : index === 6 ? 'text-brand-600' : 'text-text-secondary'
+                  <div key={day} className={`py-1 text-center text-xs font-normal ${index === 5 ? 'text-brand-300' : index === 6 ? 'text-brand-600' : 'text-text-secondary'
                     }`}>
                     {day}
                   </div>
@@ -609,33 +610,23 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
         </div>
 
         {/* Legend inside white container */}
-        <div className="px-4 py-1">
-          <div className="flex items-center justify-center space-x-6 text-sm">
-            <div className="flex items-center space-x-2">
+        <div className="px-3 py-2">
+          <div className="flex items-center justify-center gap-5 text-xs">
+            <div className="flex items-center gap-2">
               <div className="w-3 h-3 bg-brand-700 border border-brand-800 rounded-lg"></div>
               <span className="text-text-secondary">予約</span>
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center gap-2">
               <div className="w-3 h-3 bg-surface-overlay border border-border-strong rounded-lg"></div>
               <span className="text-text-secondary">予約不可時間</span>
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center gap-2">
               <div className="w-3 h-3 bg-purple-500/25 border border-purple-500/40 rounded-lg"></div>
               <span className="text-text-secondary">ゲスト</span>
             </div>
           </div>
         </div>
 
-      </div>
-
-      {/* Button to navigate to reservation list - Placed below the card on the Y-axis */}
-      <div className="mt-6 pb-8 flex justify-center">
-        <Link
-          href={trainerToken ? `/admin/reservations?trainerToken=${trainerToken}` : '/admin/reservations'}
-          className="inline-flex items-center px-8 py-3 bg-brand-500/15 text-brand-300 text-xs font-normal rounded-2xl hover:bg-brand-500/25 transition-colors uppercase tracking-widest border border-brand-500/20"
-        >
-          予約一覧を見る
-        </Link>
       </div>
     </div>
   )

@@ -19,9 +19,9 @@ export default function AdminHeader({ title, subTitle, onBack, rightElement, sho
 
   return (
     <div className="mb-8 mt-2 sticky top-0 z-50 bg-surface-base/80 backdrop-blur-sm pt-2 pb-2">
-      <div className="relative flex items-center justify-between min-h-[56px] px-1 max-w-5xl mx-auto">
+      <div className="grid grid-cols-[44px_minmax(0,1fr)_auto] items-center gap-2 min-h-[56px] px-1 max-w-5xl mx-auto">
         {/* Left: Circular Back Button */}
-        <div className="z-10 min-w-[44px]">
+        <div className="min-w-0">
           {showBack && (
             <Button
               type="button"
@@ -35,9 +35,9 @@ export default function AdminHeader({ title, subTitle, onBack, rightElement, sho
           )}
         </div>
 
-        {/* Center: Page Title (Absolutely Centered) */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-          <h1 className="text-base font-normal text-text-primary tracking-tight whitespace-nowrap">
+        {/* Center: Page Title */}
+        <div className="min-w-0 flex flex-col items-center justify-center pointer-events-none">
+          <h1 className="max-w-full truncate text-base font-normal text-text-primary tracking-tight whitespace-nowrap">
             {title}
           </h1>
           {subTitle && (
@@ -46,7 +46,7 @@ export default function AdminHeader({ title, subTitle, onBack, rightElement, sho
         </div>
 
         {/* Right: Pill-shaped Info/Action Button */}
-        <div className="z-10 flex justify-end min-w-[44px]">
+        <div className="flex min-w-0 max-w-[46vw] justify-end overflow-hidden">
           {rightElement}
         </div>
       </div>

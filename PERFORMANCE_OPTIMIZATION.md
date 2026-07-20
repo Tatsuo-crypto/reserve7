@@ -8,6 +8,11 @@
 - Google Calendar同期の状態を`reservations.calendar_sync_status`へ保存できるようにマイグレーションを追加。
 - `/api/reservations/sync`で、`pending` / `failed`のGoogle Calendar作成を再試行。
 - 会員画面はログイン直後のアイドル時間に、記録・週間・分析・推移・予約タブのコードと主要APIを先読み。
+- 予約変更・予約削除APIでも、Google Calendar更新/削除と通知送信をバックグラウンド化。
+- Google Calendar更新失敗も`calendar_sync_status = failed`として残し、同期APIで再試行対象に追加。
+- `useWeeklyProgress`をSWR化し、週間・分析・体重タブ間で週次データを共有キャッシュ。
+- 予約削除のGoogle Calendar同期は`reservation_calendar_sync_jobs`へ永続キュー化し、予約行削除後も失敗を再試行可能に変更。
+- 予約作成画面は送信直後に作成予定を表示し、押下直後の体感反応を追加。
 
 ### 未確認
 - Supabaseプロジェクトのリージョンは管理画面またはSupabase APIで確認が必要。納品時は東京リージョン（ap-northeast-1）で作成すること。
@@ -20,7 +25,10 @@
 | Vercel Function region | 未指定 | hnd1 | 設定変更済み |
 | Supabase region | 未確認 | 未確認 | 東京推奨 |
 | 予約作成API | 未計測 | 未計測 | Google Calendar待ちを排除 |
-| 会員タブ2回目以降 | 未計測 | 未計測 | 既存キャッシュ＋先読み |
+| 予約変更API | 未計測 | 未計測 | Google Calendar待ちを排除 |
+| 予約削除API | 未計測 | 未計測 | Google Calendar削除待ちを排除 |
+| 予約削除Calendar再試行 | なし | キュー化 | 別テーブルで永続化 |
+| 会員タブ2回目以降 | 未計測 | 未計測 | SWR共有キャッシュ＋先読み |
 
 ## 実装済みの最適化 🚀
 

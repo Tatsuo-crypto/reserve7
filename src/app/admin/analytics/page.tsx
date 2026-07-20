@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import {
-    Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+    XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
     BarChart, Bar, ComposedChart, Area
 } from 'recharts'
 import { useStoreChange } from '@/hooks/useStoreChange'
@@ -272,9 +272,7 @@ export default function AnalyticsPage() {
                                 <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#a1a1aa' }} axisLine={{ stroke: '#3f3f46' }} tickLine={{ stroke: '#3f3f46' }} />
                                 <YAxis tick={{ fontSize: 12, fill: '#a1a1aa' }} axisLine={{ stroke: '#3f3f46' }} tickLine={{ stroke: '#3f3f46' }} />
                                 <Tooltip formatter={(value: any, name: any) => [`${value}名`, name]} />
-                                <Legend />
                                 <Area type="monotone" dataKey="active" name="在籍会員" fill="#818cf8" stroke="#4f46e5" fillOpacity={0.1} />
-                                <Line type="monotone" dataKey="suspended" name="休会" stroke="#94a3b8" strokeDasharray="5 5" />
                             </ComposedChart>
                         </ResponsiveContainer>
                     </div>
