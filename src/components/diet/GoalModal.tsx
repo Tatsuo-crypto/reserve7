@@ -117,7 +117,7 @@ export default function GoalModal({ userId, token, onClose, onSave }: GoalModalP
                                         type="number"
                                         value={form.calories}
                                         onChange={e => setForm({ ...form, calories: parseInt(e.target.value) || 0 })}
-                                        className="w-full bg-surface-base border-none rounded-2xl font-normal text-text-secondary px-4 py-3 text-xl"
+                                        className="w-full bg-surface-base border-none rounded-2xl font-bold tabular-nums text-text-secondary px-4 py-3 text-3xl"
                                     />
                                 </div>
                                 <InputItem label="P (g)" value={form.protein} onChange={v => setForm({ ...form, protein: v })} />
@@ -142,7 +142,7 @@ export default function GoalModal({ userId, token, onClose, onSave }: GoalModalP
                                     <div key={h.id} className="bg-surface-base rounded-2xl p-4 flex items-center justify-between">
                                         <div>
                                             <div className="text-xs font-normal text-text-muted">{h.start_date.replace(/-/g, '/')} 〜</div>
-                                            <div className="text-lg font-normal text-text-secondary">{h.calories} <span className="text-xs">kcal</span></div>
+                                            <div className="text-sm font-semibold text-text-secondary">{h.calories} <span className="text-xs">kcal</span></div>
                                         </div>
                                         <div className="text-xs font-normal text-text-muted bg-surface-raised px-3 py-1 rounded-full shadow-sm">
                                             P:{h.protein} F:{h.fat} C:{h.carbs} 糖:{h.sugar} 繊:{h.fiber} 塩:{h.salt}

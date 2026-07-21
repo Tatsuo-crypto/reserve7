@@ -242,7 +242,7 @@ export default function AdminOnlineLessonPage() {
                 {/* Edit / New Form */}
                 {editingId !== null && (
                     <div className="bg-surface-raised rounded-2xl shadow-sm border border-brand-500/25 p-6 mb-6">
-                        <h2 className="text-lg font-normal text-text-primary mb-5">
+                        <h2 className="text-xl font-semibold text-text-primary mb-5">
                             {editingId === 'new' ? '新しいレッスンを追加' : 'レッスンを編集'}
                         </h2>
 
@@ -540,7 +540,7 @@ export default function AdminOnlineLessonPage() {
                                 <div className="flex flex-col space-y-3">
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center space-x-2 mb-1">
-                                            <h3 className="font-normal text-text-primary text-lg group-hover:text-brand-600 transition-colors">{lesson.title}</h3>
+                                            <h3 className="font-semibold text-text-primary text-xl group-hover:text-brand-600 transition-colors">{lesson.title}</h3>
                                             <span className="text-xs px-2 py-0.5 rounded-full font-normal bg-brand-500/15 text-brand-300">
                                                 {lesson.difficulty || '初心者'}
                                             </span>

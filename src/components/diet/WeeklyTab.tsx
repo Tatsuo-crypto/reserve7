@@ -37,7 +37,7 @@ export default function WeeklyTab({ userId, token, isAdmin }: WeeklyTabProps) {
                     onClick={() => setCalendarOpen(open => !open)}
                     className="flex w-full items-center justify-between rounded-2xl border border-border-subtle bg-surface-raised px-4 py-3 text-left shadow-sm active:scale-[0.99]"
                 >
-                    <span className="flex items-center gap-2 text-base font-semibold text-text-primary">
+                    <span className="flex items-center gap-2 text-xl font-semibold text-text-primary">
                         <span className="h-5 w-1 rounded-full bg-brand-500" />
                         記録カレンダー
                     </span>

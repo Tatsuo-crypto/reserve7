@@ -351,7 +351,7 @@ export default function ReservationsPage() {
         {/* Header */}
         <div className="mb-8">
           <div className="flex flex-col items-center space-y-3">
-            <h1 className="text-4xl font-normal text-text-primary">
+            <h1 className="text-xl font-semibold text-text-primary">
               予約管理
             </h1>
             <div className="flex items-center justify-between w-full">
@@ -401,7 +401,7 @@ export default function ReservationsPage() {
             <div className="text-text-muted mb-4">
               <Icon name="calendar" size={48} className="mx-auto" />
             </div>
-            <h3 className="text-lg font-normal text-text-primary mb-2">
+            <h3 className="text-xl font-semibold text-text-primary mb-2">
               予約がありません
             </h3>
             <p className="text-text-secondary">
@@ -541,7 +541,7 @@ export default function ReservationsPage() {
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
           <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-lg bg-surface-raised">
             <div className="mt-3">
-              <h3 className="text-lg font-normal text-text-primary mb-4">
+              <h3 className="text-xl font-semibold text-text-primary mb-4">
                 予約の変更
               </h3>
               <form onSubmit={handleEditSubmit} className="space-y-4">
@@ -639,7 +639,7 @@ export default function ReservationsPage() {
               <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-500/15 mb-4">
                 <Icon name="warning" size={24} className="text-red-400" />
               </div>
-              <h3 className="text-lg font-normal text-text-primary text-center mb-4">
+              <h3 className="text-xl font-semibold text-text-primary text-center mb-4">
                 予約をキャンセルしますか？
               </h3>
               <p className="text-sm text-text-secondary text-center mb-6">

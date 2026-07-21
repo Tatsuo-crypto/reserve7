@@ -74,7 +74,7 @@ function LoginForm() {
           <h2 className="text-center text-3xl font-normal text-text-primary keep-design">
             T&J GYM
           </h2>
-          <p className="mt-1 text-center text-lg text-text-secondary">
+          <p className="mt-1 text-center text-sm font-semibold text-text-secondary">
             予約確認フォーム
           </p>
         </div>

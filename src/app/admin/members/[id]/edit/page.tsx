@@ -383,7 +383,7 @@ export default function EditMemberPage() {
   if (fetchLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">会員情報を読み込み中...</div>
+        <div className="text-sm font-semibold">会員情報を読み込み中...</div>
       </div>
     )
   }
@@ -392,7 +392,7 @@ export default function EditMemberPage() {
     <div ref={pageTopRef} className="max-w-5xl mx-auto py-6 px-4">
       <div className="mb-6 flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-normal text-text-primary">会員情報編集</h1>
+          <h1 className="text-xl font-semibold text-text-primary">会員情報編集</h1>
           <p className="mt-1 text-sm text-text-secondary">カウンセリング内容と入会情報を管理します</p>
         </div>
       </div>
@@ -486,7 +486,7 @@ export default function EditMemberPage() {
 
               {isDietSelected ? (
                 <div className="mt-6 pt-6 border-t border-border-subtle space-y-5">
-                  <h3 className="text-base font-normal text-text-primary">ダイエット詳細</h3>
+                  <h3 className="text-xl font-semibold text-text-primary">ダイエット詳細</h3>
                   <ChoiceGroup label="ダイエット意欲" name="dietMotivation" value={valueOf(counseling.dietMotivation)} options={choices.dietMotivation} onValue={updateCounseling} />
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <TextField label="目標減量" type="number" name="targetLossKg" value={valueOf(counseling.targetLossKg)} onValue={updateCounseling} unit="kg" placeholder="5" />
@@ -552,7 +552,7 @@ export default function EditMemberPage() {
               )}
 
               <div className="pt-4 border-t border-border-subtle">
-                <h3 className="text-lg font-normal text-text-primary mb-4">機能表示設定</h3>
+                <h3 className="text-xl font-semibold text-text-primary mb-4">機能表示設定</h3>
                 <label className="flex items-center gap-4 p-4 bg-brand-500/10 border border-brand-500/25 rounded-lg cursor-pointer hover:bg-brand-500/15">
                   <input
                     type="checkbox"
@@ -575,7 +575,7 @@ export default function EditMemberPage() {
               </div>
 
               <div className="pt-4 border-t border-border-subtle">
-                <h3 className="text-lg font-normal text-text-primary mb-4">通知設定</h3>
+                <h3 className="text-xl font-semibold text-text-primary mb-4">通知設定</h3>
                 <div className="space-y-4">
                   <SwitchCard name="onlineReminderEnabled" checked={formData.onlineReminderEnabled} onChange={handleChange} title="メール通知を送信する" description="予約確定・変更・リマインダーの自動通知メールを送信します。" />
                   <SwitchCard name="pushNotificationEnabled" checked={formData.pushNotificationEnabled} onChange={handleChange} title="プッシュ通知を送信する" description="お客様がアプリ通知を許可している場合にスマホへ通知します。" color="brand" />
@@ -626,7 +626,7 @@ function Section({ title, description, children }: { title: string; description?
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="text-xl font-normal text-text-primary">{title}</h2>
+        <h2 className="text-xl font-semibold text-text-primary">{title}</h2>
         {description && <p className="mt-1 text-sm text-text-secondary">{description}</p>}
       </div>
       {children}
@@ -810,7 +810,7 @@ function SwitchCard({ name, checked, onChange, title, description, color = 'blue
 function SummaryBox({ summaryText, formData, counseling }: { summaryText: string; formData: { fullName: string; gender: string; heightCm: string }; counseling: CounselingData }) {
   return (
     <div className="mt-6 rounded-lg border border-brand-500/30 bg-brand-500/15 p-4">
-      <h3 className="text-base font-normal text-brand-300 mb-3">保存後のカウンセリング要約</h3>
+      <h3 className="text-xl font-semibold text-brand-300 mb-3">保存後のカウンセリング要約</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-brand-300">
         <SummaryItem label="氏名" value={formData.fullName} />
         <SummaryItem label="性別" value={genderLabel(formData.gender)} />

@@ -1190,7 +1190,7 @@ function NewReservationContent() {
               <div className="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-yellow-500/15 mb-4">
                 <Icon name="warning" size={28} className="text-yellow-400" />
               </div>
-              <h3 className="text-xl font-normal text-text-primary mb-2">
+              <h3 className="text-xl font-semibold text-text-primary mb-2">
                 シフト外の予約
               </h3>
               <p className="text-sm text-text-secondary mb-6 leading-relaxed">
@@ -1228,7 +1228,7 @@ function NewReservationContent() {
               <div className="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-orange-500/15 mb-4">
                 <Icon name="warning" size={28} className="text-orange-400" />
               </div>
-              <h3 className="text-xl font-normal text-text-primary mb-2">
+              <h3 className="text-xl font-semibold text-text-primary mb-2">
                 シフト外のトレーナー
               </h3>
               <p className="text-sm text-text-secondary mb-6 leading-relaxed">

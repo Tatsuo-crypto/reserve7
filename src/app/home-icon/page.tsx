@@ -29,7 +29,7 @@ export default function HomeIconSetupPage() {
         {/* 手順 */}
         <div className="space-y-6">
           <div>
-            <h2 className="text-lg font-normal text-text-primary mb-3">手順</h2>
+            <h2 className="text-xl font-semibold text-text-primary mb-3">手順</h2>
             <ol className="space-y-4">
               <li className="flex items-start">
                 <span className="flex-shrink-0 w-8 h-8 bg-brand-700 text-white rounded-full flex items-center justify-center font-normal mr-3">1</span>

@@ -71,7 +71,7 @@ export default function StaffPage() {
       <header className="bg-surface-raised border-b border-border-strong shadow-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <h1 className="text-xl font-normal text-text-primary">T&J GYM - スタッフページ</h1>
+            <h1 className="text-xl font-semibold text-text-primary">T&J GYM - スタッフページ</h1>
             <div className="text-sm text-text-secondary">{staff.name} さん</div>
           </div>
         </div>
@@ -90,7 +90,7 @@ export default function StaffPage() {
               <div className="w-12 h-12 bg-brand-500/15 rounded-lg flex items-center justify-center mr-4">
                 <Icon name="clock" size={24} className="text-brand-400" />
               </div>
-              <h2 className="text-2xl font-normal text-text-primary">シフト</h2>
+              <h2 className="text-xl font-semibold text-text-primary">シフト</h2>
             </div>
             <p className="text-text-secondary">希望提出・確定シフトの確認</p>
           </Button>
@@ -106,7 +106,7 @@ export default function StaffPage() {
               <div className="w-12 h-12 bg-brand-500/15 rounded-lg flex items-center justify-center mr-4">
                 <Icon name="calendar" size={24} className="text-brand-400" />
               </div>
-              <h2 className="text-2xl font-normal text-text-primary">予約管理</h2>
+              <h2 className="text-xl font-semibold text-text-primary">予約管理</h2>
             </div>
             <p className="text-text-secondary">予約の確認・作成・編集・削除</p>
           </Button>

@@ -99,7 +99,7 @@ function FixedShiftOverview({
       <div className="mb-4 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <span className="h-5 w-1 rounded-full bg-brand-500" />
-          <h2 className="text-base font-semibold text-text-primary">固定シフト</h2>
+          <h2 className="text-xl font-semibold text-text-primary">固定シフト</h2>
         </div>
         <span className="rounded-full bg-surface-base px-3 py-1 text-xs tabular-nums text-text-secondary">
           {templates.length}件
@@ -229,7 +229,7 @@ function OverallCalendarSection({
       <div className="flex items-center justify-between gap-3 px-4 pt-4">
         <div className="flex items-center gap-2">
           <span className="h-5 w-1 rounded-full bg-brand-500" />
-          <h2 className="text-base font-semibold text-text-primary">全体カレンダー</h2>
+          <h2 className="text-xl font-semibold text-text-primary">全体カレンダー</h2>
         </div>
         <div className="flex items-center gap-2">
           {weekLabel && <span className="rounded-full bg-surface-base px-3 py-1 text-xs tabular-nums text-text-secondary">{weekLabel}</span>}
@@ -243,7 +243,7 @@ function OverallCalendarSection({
             <Icon name="chevronLeft" size={18} />
           </Button>
           <div className="text-center">
-            <p className="text-lg font-semibold tabular-nums text-text-primary">{format(currentDate, 'yyyy年M月', { locale: ja })}</p>
+            <p className="text-xl font-semibold tabular-nums text-text-primary">{format(currentDate, 'yyyy年M月', { locale: ja })}</p>
             <Button type="button" variant="secondary" size="sm" onClick={onToday} className="mt-1 rounded-full bg-surface-base px-3 py-1 text-xs text-text-secondary">
               今日
             </Button>
@@ -1091,7 +1091,7 @@ export default function ShiftManagementPage() {
               setCreateModalOpen(true)
             }}
             disabled={viewMode === 'individual' && !selectedTrainerId}
-            className="sticky bottom-4 z-20 flex h-14 w-full items-center justify-center rounded-2xl bg-brand-600 text-base font-semibold text-white shadow-lg shadow-black/30 active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed"
+            className="sticky bottom-4 z-20 flex h-14 w-full items-center justify-center rounded-2xl bg-brand-600 text-sm font-normal text-white shadow-lg shadow-black/30 active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <Icon name="plus" size={20} className="mr-2" />
             シフトを追加

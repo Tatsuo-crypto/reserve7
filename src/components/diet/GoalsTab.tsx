@@ -264,7 +264,7 @@ export default function GoalsTab({ userId, token, isAdmin }: GoalsTabProps) {
                                 <div key={goal.id} className="rounded-2xl bg-surface-base border-2 border-border-strong p-5 flex items-center justify-between gap-3">
                                     <div>
                                         <p className="text-xs font-normal text-text-muted uppercase tracking-widest mb-1">{goal.type === 'weight' ? '体重' : '習慣'}</p>
-                                        <p className="text-base font-semibold text-text-primary">
+                                        <p className="text-sm font-normal text-text-primary">
                                             {goal.type === 'weight' && goal.target_value != null ? `目標 ${goal.target_value}kg` : goal.title}
                                         </p>
                                         <p className="text-xs text-text-muted mt-1">
@@ -370,7 +370,7 @@ export default function GoalsTab({ userId, token, isAdmin }: GoalsTabProps) {
                 <Card padding="lg" className="bg-transparent border-0 shadow-none">
                     <div className="flex items-center gap-2 mb-4">
                         <div className="w-1 h-5 bg-brand-500/70 rounded-full"></div>
-                        <h2 className="text-lg font-normal text-text-secondary tracking-tight">過去の目標</h2>
+                        <h2 className="text-xl font-semibold text-text-secondary tracking-tight">過去の目標</h2>
                     </div>
                     <div className="space-y-3">
                         {pastGoals.map(goal => {
@@ -380,7 +380,7 @@ export default function GoalsTab({ userId, token, isAdmin }: GoalsTabProps) {
                             <div key={goal.id} className="rounded-2xl bg-surface-base border-2 border-border-strong p-5 flex items-center justify-between gap-3">
                                 <div>
                                     <p className="text-xs font-normal text-text-muted uppercase tracking-widest mb-1">{goal.type === 'weight' ? '体重' : '習慣'}</p>
-                                    <p className="text-base font-normal text-text-secondary">
+                                    <p className="text-sm font-normal text-text-secondary">
                                         {goal.type === 'weight' && goal.target_value != null ? `目標 ${goal.target_value}kg` : goal.title}
                                     </p>
                                     <p className="text-xs text-text-muted mt-1">

@@ -570,7 +570,7 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
                     <div className="space-y-1">
                         <div className="flex items-center gap-2">
                             <div className="w-1.5 h-6 bg-orange-500 rounded-full"></div>
-                            <h3 className="text-lg font-normal text-text-primary">筋トレカレンダー</h3>
+                            <h3 className="text-xl font-semibold text-text-primary">筋トレカレンダー</h3>
                         </div>
                         <div className="pl-3.5 text-sm font-normal text-orange-600">
                             {calendarDate.getFullYear()}年 {calendarDate.getMonth() + 1}月

@@ -160,7 +160,7 @@ export default function ClientReservationsContent() {
       <header className="bg-surface-raised border-b border-border-strong shadow-sm sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <h1 className="text-xl font-normal text-text-primary">T&J GYM</h1>
+            <h1 className="text-xl font-semibold text-text-primary">T&J GYM</h1>
             <Button
               type="button"
               variant="ghost"
@@ -184,7 +184,7 @@ export default function ClientReservationsContent() {
               </div>
               <div>
                 <div className="text-sm text-blue-300 font-normal mb-1">お名前</div>
-                <div className="text-xl font-normal text-text-primary">{user.name} 様</div>
+                <div className="text-xl font-semibold text-text-primary">{user.name} 様</div>
               </div>
             </div>
             <div className="flex items-center p-4 bg-surface-overlay rounded-lg border border-border-subtle">
@@ -193,7 +193,7 @@ export default function ClientReservationsContent() {
               </div>
               <div>
                 <div className="text-sm text-text-secondary font-normal mb-1">プラン</div>
-                <div className="text-lg font-normal text-text-primary">{user.plan}</div>
+                <div className="text-sm font-semibold text-text-primary">{user.plan}</div>
               </div>
             </div>
           </div>
@@ -201,7 +201,7 @@ export default function ClientReservationsContent() {
 
         {/* Future Reservations */}
         <div className="bg-surface-raised rounded-lg shadow-sm border border-border-strong p-6 mb-6">
-          <h2 className="text-xl font-normal text-text-primary mb-4">今後の予約</h2>
+          <h2 className="text-xl font-semibold text-text-primary mb-4">今後の予約</h2>
           {futureReservations.length === 0 ? (
             <div className="text-center py-8 text-text-secondary">
               今後の予約はありません
@@ -217,7 +217,7 @@ export default function ClientReservationsContent() {
                 .map(([monthKey, reservations]) => (
                 <div key={monthKey} className="space-y-3">
                   <div className="bg-gradient-to-r from-blue-50 to-blue-100 border-l-4 border-blue-500 px-4 py-2 rounded-lg">
-                    <h3 className="text-lg font-normal text-blue-900">{monthKey}</h3>
+                    <h3 className="text-xl font-semibold text-blue-900">{monthKey}</h3>
                   </div>
                   {reservations
                     .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())
@@ -228,7 +228,7 @@ export default function ClientReservationsContent() {
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
-                          <h3 className="text-lg font-normal text-text-primary mb-1">
+                          <h3 className="text-xl font-semibold text-text-primary mb-1">
                             {formatTitle(reservation.title)}
                           </h3>
                           <p className="text-text-secondary mb-2">
@@ -256,7 +256,7 @@ export default function ClientReservationsContent() {
 
         {/* Past Reservations */}
         <div className="bg-surface-raised rounded-lg shadow-sm border border-border-strong p-6">
-          <h2 className="text-xl font-normal text-text-primary mb-4">過去の予約</h2>
+          <h2 className="text-xl font-semibold text-text-primary mb-4">過去の予約</h2>
           {pastReservations.length === 0 ? (
             <div className="text-center py-8 text-text-secondary">
               過去の予約はありません
@@ -272,7 +272,7 @@ export default function ClientReservationsContent() {
                 .map(([monthKey, reservations]) => (
                 <div key={monthKey} className="space-y-3">
                   <div className="bg-gradient-to-r from-gray-50 to-gray-100 border-l-4 border-border-strong px-4 py-2 rounded-lg">
-                    <h3 className="text-lg font-normal text-text-secondary">{monthKey}</h3>
+                    <h3 className="text-xl font-semibold text-text-secondary">{monthKey}</h3>
                   </div>
                   {reservations
                     .sort((a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime())
@@ -283,7 +283,7 @@ export default function ClientReservationsContent() {
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
-                          <h3 className="text-lg font-normal text-text-secondary mb-1">
+                          <h3 className="text-xl font-semibold text-text-secondary mb-1">
                             {formatTitle(reservation.title)}
                           </h3>
                           <p className="text-text-secondary mb-2">

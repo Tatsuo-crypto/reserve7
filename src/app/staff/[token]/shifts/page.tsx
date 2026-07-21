@@ -188,7 +188,7 @@ export default function StaffShiftSubmitPage() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-surface-base px-6 text-center">
         <div>
-          <p className="text-lg text-text-primary">アクセスできません</p>
+          <p className="text-sm font-semibold text-text-primary">アクセスできません</p>
           <p className="mt-2 text-sm text-text-secondary">{error || '無効なURLです'}</p>
         </div>
       </div>
@@ -210,7 +210,7 @@ export default function StaffShiftSubmitPage() {
             <Icon name="chevronLeft" size={22} />
           </Button>
           <div className="text-center">
-            <h1 className="text-base font-semibold text-text-primary">シフト</h1>
+            <h1 className="text-xl font-semibold text-text-primary">シフト</h1>
             <p className="text-xs text-text-secondary">{staff.name}</p>
           </div>
           <div className="h-10 w-10" />
@@ -221,14 +221,14 @@ export default function StaffShiftSubmitPage() {
         <section className="rounded-2xl border border-border-subtle bg-surface-raised p-4">
           <div className="mb-3 flex items-center gap-2">
             <span className="h-5 w-1 rounded-full bg-brand-500" />
-            <h2 className="text-base font-semibold text-text-primary">次の勤務</h2>
+            <h2 className="text-xl font-semibold text-text-primary">次の勤務</h2>
           </div>
           {nextShift ? (
             <div className="rounded-2xl bg-surface-base p-4">
-              <p className="text-2xl font-semibold tabular-nums text-text-primary">
+              <p className="text-3xl font-bold tabular-nums text-text-primary">
                 {format(new Date(nextShift.start_time), 'M/d(E)', { locale: ja })}
               </p>
-              <p className="mt-2 text-base tabular-nums text-text-secondary">
+              <p className="mt-2 text-sm font-normal tabular-nums text-text-secondary">
                 {format(new Date(nextShift.start_time), 'HH:mm')}〜{format(new Date(nextShift.end_time), 'HH:mm')}
               </p>
             </div>
@@ -269,7 +269,7 @@ export default function StaffShiftSubmitPage() {
             >
               <Icon name="chevronLeft" size={19} />
             </Button>
-            <p className="text-base font-semibold text-text-primary">{format(currentMonth, 'yyyy年M月', { locale: ja })}</p>
+            <p className="text-xl font-semibold text-text-primary">{format(currentMonth, 'yyyy年M月', { locale: ja })}</p>
             <Button
               type="button"
               variant="ghost"
@@ -325,7 +325,7 @@ export default function StaffShiftSubmitPage() {
           <section className="rounded-2xl border border-border-subtle bg-surface-raised p-4">
             <div className="mb-4 flex items-center gap-2">
               <span className="h-5 w-1 rounded-full bg-brand-500" />
-              <h2 className="text-base font-semibold text-text-primary">{format(selectedDate, 'M/d(E)', { locale: ja })}</h2>
+              <h2 className="text-xl font-semibold text-text-primary">{format(selectedDate, 'M/d(E)', { locale: ja })}</h2>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>

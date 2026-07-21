@@ -115,7 +115,7 @@ export default function AppModal({
         }}
       >
         <header className="flex shrink-0 items-center justify-between gap-3 border-b border-border-subtle px-4 py-3.5 sm:px-5">
-          <h2 className="min-w-0 text-lg font-normal text-text-primary">{title}</h2>
+          <h2 className="min-w-0 text-xl font-semibold text-text-primary">{title}</h2>
           <Button
             type="button"
             variant="ghost"

@@ -453,9 +453,9 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
           className="h-[82px] p-[2px] overflow-hidden cursor-pointer flex flex-col bg-surface-raised hover:bg-surface-base border border-border-subtle"
           onClick={() => handleDateClick(dateStr)}
         >
-          <div className="h-4 text-[11px] font-normal mb-0.5 flex-shrink-0 flex justify-start">
+          <div className="h-4 text-cell font-normal mb-0.5 flex-shrink-0 flex justify-start">
             {isToday ? (
-              <div className="w-4 h-4 bg-brand-500 text-white rounded-full flex items-center justify-center text-[10px] font-normal">
+              <div className="w-4 h-4 bg-brand-500 text-white rounded-full flex items-center justify-center text-cell font-normal">
                 {day}
               </div>
             ) : (
@@ -484,7 +484,7 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
               return (
                 <div
                   key={event.id}
-                  className={`h-[13px] min-w-0 text-[8px] px-[2px] flex items-center rounded-[5px] truncate leading-none font-normal ${colorClass}`}
+                  className={`h-[13px] min-w-0 text-cell px-[2px] flex items-center rounded-[5px] truncate font-normal ${colorClass}`}
                   title={`${event.title} (${event.time})`}
                 >
                   {formatReservationTitle(event.title, event.plan)}
@@ -492,7 +492,7 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
               )
             })}
             {hiddenEventCount > 0 && (
-              <div className="h-[13px] min-w-0 text-[8px] px-[2px] flex items-center rounded-[5px] bg-surface-overlay text-text-secondary border border-border-subtle leading-none font-normal">
+              <div className="h-[13px] min-w-0 text-cell px-[2px] flex items-center rounded-[5px] bg-surface-overlay text-text-secondary border border-border-subtle font-normal">
                 +{hiddenEventCount}
               </div>
             )}
@@ -555,7 +555,7 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
             >
               <Icon name="chevronLeft" size={24} />
             </Button>
-            <h3 className="text-lg sm:text-lg font-normal text-text-primary text-center">
+            <h3 className="text-xl font-semibold text-text-primary text-center">
               {formatMonth(currentDate)}
             </h3>
             <Button

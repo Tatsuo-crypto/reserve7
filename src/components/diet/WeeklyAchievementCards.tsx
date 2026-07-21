@@ -357,7 +357,7 @@ export function MemberWeeklyResultListCard({
     return (
         <Card padding="sm">
             <div className="mb-3 flex items-center justify-between">
-                <h3 className="text-base font-semibold text-text-primary">今週の結果</h3>
+                <h3 className="text-xl font-semibold text-text-primary">今週の結果</h3>
                 <span className="text-xs font-normal text-text-muted">{mode === 'total' ? '週合計' : '平均'}</span>
             </div>
             <div className="divide-y divide-border-subtle">
@@ -372,7 +372,7 @@ export function MemberWeeklyResultListCard({
                         <div key={item.label} className="py-3 first:pt-0 last:pb-0">
                             <div className="mb-2 flex items-baseline justify-between gap-3">
                                 <p className="min-w-0 text-sm font-normal text-text-secondary">{item.label}</p>
-                                <p className="shrink-0 text-base font-semibold tabular-nums text-text-primary">
+                                <p className="shrink-0 text-sm font-normal tabular-nums text-text-primary">
                                     {actualText}<span className="mx-0.5 text-xs font-normal text-text-muted">/</span>{targetText}
                                     <span className="ml-0.5 text-xs font-normal text-text-muted">{item.unit}</span>
                                 </p>

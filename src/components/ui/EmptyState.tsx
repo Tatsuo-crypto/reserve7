@@ -23,7 +23,7 @@ export default function EmptyState({
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-brand-500/15 text-brand-300">
                 <Icon name={icon} size={22} />
             </div>
-            <p className="text-base font-semibold text-text-primary">{title}</p>
+            <p className="text-xl font-semibold text-text-primary">{title}</p>
             {description && (
                 <p className="mx-auto mt-2 max-w-[280px] text-sm text-text-muted">{description}</p>
             )}

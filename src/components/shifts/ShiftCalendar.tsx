@@ -355,7 +355,7 @@ function ShiftEditModal({ shift, isOpen, onClose, onSave, onDelete }: {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-30 z-50 flex items-center justify-center">
       <div className="bg-surface-raised rounded-lg shadow-xl p-6 w-80">
-        <h3 className="text-lg font-normal mb-4">シフト編集</h3>
+        <h3 className="text-xl font-semibold mb-4">シフト編集</h3>
         <p className="text-sm text-text-secondary mb-4">{format(new Date(shift.start_time), 'yyyy/MM/dd (E)', { locale: ja })}</p>
 
         <div className="space-y-4 mb-6">
@@ -476,7 +476,7 @@ function TemplateShiftEditModal({ start, end, isOpen, onClose, onSave, onDelete 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-30 z-50 flex items-center justify-center">
       <div className="bg-surface-raised rounded-lg shadow-xl p-6 w-80">
-        <h3 className="text-lg font-normal mb-4">シフト変更</h3>
+        <h3 className="text-xl font-semibold mb-4">シフト変更</h3>
         <p className="text-sm text-text-secondary mb-4">{format(start, 'yyyy/MM/dd (E)', { locale: ja })}</p>
 
         <div className="space-y-4 mb-6">

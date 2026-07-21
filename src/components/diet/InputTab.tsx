@@ -431,7 +431,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                 <Card padding="md">
                     {!selectedDayType ? (
                         <div className="space-y-4 text-center">
-                            <h2 className="text-base font-normal text-text-primary">今日はどちらですか？</h2>
+                            <h2 className="text-xl font-semibold text-text-primary">今日はどちらですか？</h2>
                             <div className="grid grid-cols-2 gap-3">
                                 <Button
                                     type="button"
@@ -482,7 +482,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                 {(!dayTypeEnabled || selectedDayType) && ocrResult && (
                     <div className={`bg-surface-raised rounded-2xl shadow-lg p-6 animate-slideUp border-2 ${isSaved ? 'border-border-subtle' : 'border-brand-500'}`}>
                         <div className="flex items-center justify-between mb-4">
-                            <h2 className="text-lg font-normal text-text-primary">
+                            <h2 className="text-xl font-semibold text-text-primary">
                                 {analyzing ? '解析中...' : isSaved ? '食事の記録' : '解析結果'}
                             </h2>
                             {!analyzing && (
@@ -513,9 +513,9 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                             <div className={`col-span-2 p-4 rounded-2xl transition-colors ${isSaved ? 'bg-surface-overlay' : 'bg-brand-500/10'}`}>
                                 <div className={`text-xs font-normal uppercase mb-2 tracking-widest text-center ${isSaved ? 'text-text-secondary' : 'text-brand-300'}`}>総エネルギー</div>
                                 <div className="flex items-center justify-center space-x-3">
-                                    <div className="text-3xl font-normal text-text-primary">{ocrResult.calories}</div>
-                                    <div className="text-xl font-normal text-text-muted">/</div>
-                                    <div className="text-2xl font-normal text-text-muted opacity-60">{ocrResult.calories_target}</div>
+                                    <div className="text-3xl font-bold text-text-primary tabular-nums">{ocrResult.calories}</div>
+                                    <div className="text-sm font-normal text-text-muted">/</div>
+                                    <div className="text-sm font-normal text-text-muted opacity-60">{ocrResult.calories_target}</div>
                                     <div className="text-sm font-normal text-text-muted">kcal</div>
                                 </div>
                             </div>
@@ -566,7 +566,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                             <div className="w-16 h-16 bg-white bg-opacity-20 rounded-2xl flex items-center justify-center mb-4">
                                 <Icon name="camera" size={32} className="text-white" />
                             </div>
-                            <h2 className="text-lg font-normal mb-1">食事写真を解析</h2>
+                            <h2 className="text-xl font-semibold mb-1">食事写真を解析</h2>
                             <p className="text-brand-100 text-xs mb-6 text-center opacity-80">スクリーンショットを読み取って栄養バランスを一律入力します</p>
 
                             <Button
@@ -615,7 +615,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                                         setWeight(e.target.value)
                                     }}
                                     placeholder="00.0"
-                                    className="w-20 text-right text-2xl font-normal text-text-primary bg-transparent border-none p-0 focus:ring-0 placeholder-gray-200"
+                                    className="w-20 text-right text-3xl font-bold text-text-primary tabular-nums bg-transparent border-none p-0 focus:ring-0 placeholder-gray-200"
                                 />
                                 <span className="text-xs font-normal text-text-muted">kg</span>
                             </div>
@@ -763,7 +763,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                         fullWidth
                         onClick={handleAllSave}
                         disabled={saving}
-                        className="w-full py-4 rounded-2xl font-normal shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 text-lg bg-brand-700 text-white hover:bg-brand-800"
+                        className="w-full py-4 rounded-2xl font-semibold shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 text-sm bg-brand-700 text-white hover:bg-brand-800"
                     >
                         {saving ? (
                             <>
@@ -841,7 +841,7 @@ function NutrientItem({ label, value, target, unit, onChange }: { label: string,
                         step="0.1"
                         value={value}
                         onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
-                        className="w-16 text-lg font-normal text-text-primary border-none p-0 focus:ring-0 leading-none bg-transparent"
+                        className="w-16 text-sm font-semibold text-text-primary border-none p-0 focus:ring-0 leading-none bg-transparent"
                     />
                     {target !== undefined && (
                         <>
@@ -901,7 +901,7 @@ function EditableLogItem({ iconName, label, value, target, unit, iconBg, iconCol
                             inputMode="decimal"
                             value={value}
                             onChange={(e) => onChange(e.target.value)}
-                            className={`w-24 text-center text-lg font-normal bg-transparent border-none p-0 focus:ring-0 transition-colors ${isDefault ? 'text-text-muted' : 'text-text-primary'}`}
+                            className={`w-24 text-center text-sm font-semibold bg-transparent border-none p-0 focus:ring-0 transition-colors ${isDefault ? 'text-text-muted' : 'text-text-primary'}`}
                         />
                         {target && (
                             <div className="flex items-baseline ml-1 opacity-40">

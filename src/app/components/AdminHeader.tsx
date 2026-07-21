@@ -37,7 +37,7 @@ export default function AdminHeader({ title, subTitle, onBack, rightElement, sho
 
         {/* Center: Page Title */}
         <div className="min-w-0 flex flex-col items-center justify-center pointer-events-none">
-          <h1 className="max-w-full truncate text-base font-normal text-text-primary tracking-tight whitespace-nowrap">
+          <h1 className="max-w-full truncate text-xl font-semibold text-text-primary tracking-tight whitespace-nowrap">
             {title}
           </h1>
           {subTitle && (

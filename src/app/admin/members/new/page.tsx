@@ -134,7 +134,7 @@ export default function NewMemberPage() {
       {/* Header */}
       <div className="mb-8 flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-normal text-text-primary">新規会員追加</h1>
+          <h1 className="text-xl font-semibold text-text-primary">新規会員追加</h1>
           <p className="mt-1 text-sm text-text-secondary">会員情報を入力してください</p>
         </div>
       </div>
@@ -305,7 +305,7 @@ export default function NewMemberPage() {
 
           {/* ダイエット基礎情報 */}
           <div className="pt-6 border-t border-border-subtle">
-            <h3 className="text-lg font-normal text-text-primary mb-2">ダイエット基礎情報</h3>
+            <h3 className="text-xl font-semibold text-text-primary mb-2">ダイエット基礎情報</h3>
             <p className="text-xs text-text-secondary mb-4">カロリー計算に使う情報です。ダイエット対象者だけ入力すれば大丈夫です。</p>
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -383,7 +383,7 @@ export default function NewMemberPage() {
 
           {/* 通知設定 */}
           <div className="pt-6 border-t border-border-subtle">
-            <h3 className="text-lg font-normal text-text-primary mb-4">通知設定</h3>
+            <h3 className="text-xl font-semibold text-text-primary mb-4">通知設定</h3>
             <div className="space-y-4">
               <label className="flex items-center gap-4 p-4 bg-brand-500/10 border border-brand-500/25 rounded-2xl cursor-pointer hover:bg-brand-500/15 transition-colors">
                 <input

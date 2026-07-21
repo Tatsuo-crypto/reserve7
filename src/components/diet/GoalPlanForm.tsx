@@ -252,7 +252,7 @@ export default function GoalPlanForm({
             ) : (
                 <>
                     <div className="bg-surface-base/80 rounded-2xl p-8 text-center border border-border-subtle/50 relative space-y-4">
-                        <h3 className="text-xl font-normal text-text-primary">目標摂取量</h3>
+                        <h3 className="text-xl font-semibold text-text-primary">目標摂取量</h3>
                         <div className="flex items-center justify-center">
                             <input
                                 type="number"
@@ -264,7 +264,7 @@ export default function GoalPlanForm({
                                     const nextCalories = Math.max(0, Math.round(Number(e.target.value || 0)))
                                     onValuesChange(prev => ({ ...prev, targetCalories: nextCalories }))
                                 }}
-                                className="w-40 bg-surface-overlay border border-border-strong rounded-none px-4 py-3 text-4xl font-semibold text-center tabular-nums focus:ring-2 focus:ring-brand-500 outline-none"
+                                className="w-40 bg-surface-overlay border border-border-strong rounded-none px-4 py-3 text-3xl font-bold text-center tabular-nums focus:ring-2 focus:ring-brand-500 outline-none"
                             />
                         </div>
                     </div>
@@ -365,7 +365,7 @@ function DayTypeGoalCard({
             </div>
 
             <div className="bg-surface-base/80 rounded-2xl p-8 text-center border border-border-subtle/50 relative space-y-4">
-                <h3 className="text-xl font-normal text-text-primary">目標摂取量</h3>
+                <h3 className="text-xl font-semibold text-text-primary">目標摂取量</h3>
                 <div className="mt-4 flex items-center justify-center">
                     <input
                         type="number"
@@ -373,7 +373,7 @@ function DayTypeGoalCard({
                         min={0}
                         value={Math.round(calories || 0)}
                         onChange={(e) => onCaloriesChange(Number(e.target.value || 0))}
-                        className={`w-40 bg-surface-overlay border border-border-strong rounded-none px-4 py-3 text-4xl font-semibold text-center tabular-nums outline-none ${accent.input}`}
+                        className={`w-40 bg-surface-overlay border border-border-strong rounded-none px-4 py-3 text-3xl font-bold text-center tabular-nums outline-none ${accent.input}`}
                     />
                 </div>
             </div>
@@ -406,7 +406,7 @@ function PfcTotalStatus({ summary }: { summary: ReturnType<typeof getPfcSummary>
     const over = summary.overCalories > 0
     return (
         <div className="space-y-1 text-center">
-            <p className="text-lg font-semibold text-text-primary">
+            <p className="text-sm font-semibold text-text-primary">
                 合計 <span className={over ? 'text-state-danger-400' : 'text-brand-300'}>{summary.total.toLocaleString()}</span>
                 <span className="text-sm text-text-muted"> / {summary.target.toLocaleString()}kcal</span>
             </p>
@@ -467,7 +467,7 @@ function EditableMacroSummary({
                     min={0}
                     value={Math.round(value || 0)}
                     onChange={(e) => onChange(Number(e.target.value || 0))}
-                    className="w-16 bg-transparent border-none p-0 text-center text-2xl font-semibold text-text-primary tabular-nums focus:ring-0"
+                    className="w-16 bg-transparent border-none p-0 text-center text-3xl font-bold text-text-primary tabular-nums focus:ring-0"
                 />
                 <span className="text-xs text-text-secondary">g</span>
             </div>
@@ -514,7 +514,7 @@ function AdminStatCard({ label, value, unit, color, step = 1, onValueChange }: {
                         min={0}
                         value={displayValue}
                         onChange={(e) => onValueChange?.(Number(e.target.value || 0))}
-                        className={`w-20 bg-transparent border-none p-0 text-2xl font-normal tabular-nums leading-none focus:ring-0 outline-none ${baseColor}`}
+                        className={`w-20 bg-transparent border-none p-0 text-3xl font-bold tabular-nums leading-none focus:ring-0 outline-none ${baseColor}`}
                     />
                     <span className="text-xs font-normal text-text-muted uppercase tracking-tighter">{unit}</span>
                 </div>

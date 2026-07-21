@@ -816,7 +816,7 @@ function DietPlanPageContent() {
                 {!selectedMember ? (
                     <div className="bg-surface-raised rounded-2xl shadow-sm border border-border-subtle overflow-hidden">
                         <div className="p-8 border-b border-border-subtle">
-                            <h2 className="text-xl font-normal mb-6 flex items-center gap-2">
+                            <h2 className="text-xl font-semibold mb-6 flex items-center gap-2">
                                 <span className="w-1.5 h-6 bg-brand-500 rounded-full"></span>
                                 会員を選択
                             </h2>
@@ -899,7 +899,7 @@ function DietPlanPageContent() {
                                     >
                                         <div className="flex items-center gap-2">
                                             <div className="w-1.5 h-6 bg-brand-500 rounded-full"></div>
-                                            <h2 className="text-base font-normal text-text-primary">日別の記録</h2>
+                                            <h2 className="text-xl font-semibold text-text-primary">日別の記録</h2>
                                         </div>
                                         <Icon name="chevronDown" size={20} className={`text-text-muted transition-transform duration-300 ${showDailyRecords ? 'rotate-180' : ''}`} />
                                     </Button>
@@ -973,7 +973,7 @@ function DietPlanPageContent() {
                                 <div className="bg-surface-raised rounded-2xl p-8 sm:p-10 shadow-sm border border-border-subtle space-y-6">
                                     <div className="flex items-center gap-2">
                                         <div className="w-1.5 h-6 bg-brand-500 rounded-full"></div>
-                                        <h2 className="text-xl font-normal text-text-primary tracking-tight">基礎情報からカロリー計算</h2>
+                                        <h2 className="text-xl font-semibold text-text-primary tracking-tight">基礎情報からカロリー計算</h2>
                                     </div>
 
                                     {!latestWeight ? (
@@ -1074,7 +1074,7 @@ function DietPlanPageContent() {
                                                     <div className="bg-surface-base/80 rounded-2xl p-8 text-center border border-border-subtle/50">
                                                         <p className="text-xs font-normal text-text-muted mb-1 uppercase tracking-widest">目標摂取カロリー</p>
                                                         <div className="flex items-baseline justify-center gap-1 mb-4">
-                                                            <span className="text-4xl font-normal text-text-primary tabular-nums">{aragonResult.targetCalories.toLocaleString()}</span>
+                                                            <span className="text-3xl font-bold text-text-primary tabular-nums">{aragonResult.targetCalories.toLocaleString()}</span>
                                                             <span className="text-sm font-normal text-text-muted">kcal / 日</span>
                                                         </div>
                                                         <p className="text-xs text-text-secondary">
@@ -1102,7 +1102,7 @@ function DietPlanPageContent() {
                                     <div className="flex items-center justify-between mb-6">
                                         <div className="flex items-center gap-2">
                                             <div className="w-1.5 h-6 bg-orange-500 rounded-full"></div>
-                                            <h2 className="text-xl font-normal text-text-primary tracking-tight">現在の目標設定</h2>
+                                            <h2 className="text-xl font-semibold text-text-primary tracking-tight">現在の目標設定</h2>
                                         </div>
                                         {!editingCurrentPlan && (
                                             <Button type="button" variant="ghost" size="sm" onClick={() => setEditingCurrentPlan(true)} className="text-xs text-brand-300 bg-brand-500/15 px-4 py-2 rounded-full hover:bg-brand-500/25">編集</Button>
@@ -1149,7 +1149,7 @@ function DietPlanPageContent() {
                                                     ].map(item => (
                                                         <div key={item.label} className={`rounded-2xl border px-4 py-4 ${item.tone === 'training' ? 'bg-brand-500/10 border-brand-500/25' : 'bg-surface-base border-border-subtle'}`}>
                                                             <p className={`text-xs ${item.tone === 'training' ? 'text-brand-300' : 'text-blue-300'}`}>{item.label}</p>
-                                                            <p className="mt-1 text-3xl text-text-primary tabular-nums">{Math.round(Number(item.calories)).toLocaleString()}<span className="ml-1 text-sm text-text-muted">kcal</span></p>
+                                                            <p className="mt-1 text-3xl font-bold text-text-primary tabular-nums">{Math.round(Number(item.calories)).toLocaleString()}<span className="ml-1 text-sm text-text-muted">kcal</span></p>
                                                             <div className="mt-3 flex flex-wrap gap-2">
                                                                 {[
                                                                     ['P', item.protein, 'text-red-300'],
@@ -1170,8 +1170,8 @@ function DietPlanPageContent() {
                                                 </div>
                                             ) : (
                                                 <div className="rounded-2xl bg-surface-base border border-border-subtle px-4 py-4">
-                                                    <p className="text-4xl font-normal text-text-primary tabular-nums">
-                                                        {Math.round(nutrientForm.targetCalories).toLocaleString()}<span className="ml-1 text-lg text-text-muted">kcal</span>
+                                                    <p className="text-3xl font-bold text-text-primary tabular-nums">
+                                                        {Math.round(nutrientForm.targetCalories).toLocaleString()}<span className="ml-1 text-sm font-normal text-text-muted">kcal</span>
                                                     </p>
                                                     <div className="mt-3 flex flex-wrap gap-2">
                                                         {[
@@ -1234,7 +1234,7 @@ function DietProfileStat({ label, value }: { label: string, value: string }) {
     return (
         <div className="rounded-2xl bg-surface-base border border-border-subtle p-4">
             <div className="text-xs text-text-muted uppercase tracking-widest">{label}</div>
-            <div className="mt-1 text-lg text-text-primary">{value}</div>
+            <div className="mt-1 text-sm font-semibold text-text-primary">{value}</div>
         </div>
     )
 }
@@ -1327,7 +1327,7 @@ function GoalHistoryCharts({ data, habitTargets, onEditRequest }: { data: any[],
         return (
             <div className={`rounded-2xl border px-4 py-4 ${isTraining ? 'bg-brand-500/10 border-brand-500/25' : 'bg-surface-base border-border-subtle'}`}>
                 {label && <p className={`text-xs ${isTraining ? 'text-brand-300' : 'text-blue-300'}`}>{label}</p>}
-                <p className={`${label ? 'mt-1' : ''} text-3xl text-text-primary tabular-nums`}>
+                <p className={`${label ? 'mt-1' : ''} text-3xl font-bold text-text-primary tabular-nums`}>
                     {formatKcal(calories)}<span className="ml-1 text-sm text-text-muted">kcal</span>
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2">
@@ -1347,7 +1347,7 @@ function GoalHistoryCharts({ data, habitTargets, onEditRequest }: { data: any[],
                 <div className="flex items-center gap-2">
                     <div className="w-1.5 h-6 bg-brand-500 rounded-full"></div>
                     <div>
-                        <h2 className="text-xl font-normal text-text-primary tracking-tight">目標設定の推移</h2>
+                        <h2 className="text-xl font-semibold text-text-primary tracking-tight">目標設定の推移</h2>
                     </div>
                 </div>
                 <span className="rounded-full bg-surface-base border border-border-subtle px-3 py-1 text-xs text-text-secondary whitespace-nowrap">{data.length}件</span>
@@ -1362,7 +1362,7 @@ function GoalHistoryCharts({ data, habitTargets, onEditRequest }: { data: any[],
                 </div>
                 {chartRows.length === 1 ? (
                     <div className="h-44 rounded-2xl bg-surface-raised border border-border-subtle flex flex-col items-center justify-center text-center">
-                        <p className="text-3xl text-text-primary tabular-nums">
+                        <p className="text-3xl font-bold text-text-primary tabular-nums">
                             {formatKcal(chartRows[0].dayTypeEnabled ? chartRows[0].trainingCalories : chartRows[0].calories)}<span className="ml-1 text-sm text-text-muted">kcal</span>
                         </p>
                         <p className="mt-2 text-xs text-text-muted">変更履歴はまだありません</p>

@@ -227,7 +227,7 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
         <div className="bg-surface-raised rounded-2xl shadow-sm border border-border-subtle overflow-hidden mb-10">
           <div className="px-8 py-6 border-b border-border-subtle flex items-center justify-between">
             <div>
-              <h3 className="text-xl font-normal text-text-primary tracking-tight">支払い・プラン変更履歴</h3>
+              <h3 className="text-xl font-semibold text-text-primary tracking-tight">支払い・プラン変更履歴</h3>
               <p className="text-xs font-normal text-text-muted uppercase tracking-widest mt-0.5">月ごとのプランと支払金額の管理</p>
             </div>
             <Button
@@ -331,7 +331,7 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
             <div className="absolute inset-0 bg-black/30" onClick={() => setEditingItem(null)} />
             <div className="relative bg-surface-raised rounded-lg shadow-lg w-full max-w-md p-6">
               <div className="flex items-center gap-2 mb-4">
-                <h3 className="text-lg font-normal">{formatMonth(editingItem.month)} の設定</h3>
+                <h3 className="text-xl font-semibold">{formatMonth(editingItem.month)} の設定</h3>
                 {editingItem.status === 'future' && (
                   <span className="text-xs bg-brand-500/15 text-brand-300 px-2 py-0.5 rounded-lg font-normal">翌月以降の予定</span>
                 )}

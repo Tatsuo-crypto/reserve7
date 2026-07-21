@@ -409,7 +409,7 @@ function ShiftCreateModal({ trainers, date, initialHour, initialTrainerId, isOpe
   return (
     <div className="fixed inset-0 bg-black bg-opacity-30 z-50 flex items-center justify-center">
       <div className="bg-surface-raised rounded-lg shadow-xl p-6 w-80">
-        <h3 className="text-lg font-normal mb-1">シフト追加</h3>
+        <h3 className="text-xl font-semibold mb-1">シフト追加</h3>
         <p className="text-sm text-text-secondary mb-4">{format(date, 'yyyy/MM/dd (E)', { locale: ja })}</p>
         
         <div className="space-y-4 mb-6">
@@ -534,7 +534,7 @@ function ShiftEditModal({ shift, trainerName, isOpen, onClose, onSave, onDelete 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-30 z-50 flex items-center justify-center">
       <div className="bg-surface-raised rounded-lg shadow-xl p-6 w-80">
-        <h3 className="text-lg font-normal mb-1">シフト編集</h3>
+        <h3 className="text-xl font-semibold mb-1">シフト編集</h3>
         <p className="text-sm text-text-secondary mb-1">{trainerName}</p>
         <p className="text-sm text-text-secondary mb-4">{format(parseISO(shift.start_time), 'yyyy/MM/dd (E)', { locale: ja })}</p>
         
@@ -658,7 +658,7 @@ function TemplateShiftCreateModal({ trainerName, start, end, isOpen, onClose, on
   return (
     <div className="fixed inset-0 bg-black bg-opacity-30 z-50 flex items-center justify-center">
       <div className="bg-surface-raised rounded-lg shadow-xl p-6 w-80">
-        <h3 className="text-lg font-normal mb-1">シフト変更</h3>
+        <h3 className="text-xl font-semibold mb-1">シフト変更</h3>
         <p className="text-sm text-text-secondary mb-1">{trainerName}</p>
         <p className="text-sm text-text-secondary mb-4">{format(start, 'yyyy/MM/dd (E)', { locale: ja })}</p>
 

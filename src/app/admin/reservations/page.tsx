@@ -345,7 +345,7 @@ function AdminReservationsContent() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <LoadingSpinner size="lg" />
-        <span className="ml-3 text-lg">認証状態を確認中...</span>
+        <span className="ml-3 text-sm font-semibold">認証状態を確認中...</span>
       </div>
     )
   }
@@ -354,7 +354,7 @@ function AdminReservationsContent() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <LoadingSpinner size="lg" />
-        <span className="ml-3 text-lg">ログインページにリダイレクト中...</span>
+        <span className="ml-3 text-sm font-semibold">ログインページにリダイレクト中...</span>
       </div>
     )
   }
@@ -363,7 +363,7 @@ function AdminReservationsContent() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <LoadingSpinner size="lg" />
-        <span className="ml-3 text-lg">予約ページにリダイレクト中...</span>
+        <span className="ml-3 text-sm font-semibold">予約ページにリダイレクト中...</span>
       </div>
     )
   }
@@ -372,7 +372,7 @@ function AdminReservationsContent() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <LoadingSpinner size="lg" />
-        <span className="ml-3 text-lg">予約データを読み込み中...</span>
+        <span className="ml-3 text-sm font-semibold">予約データを読み込み中...</span>
       </div>
     )
   }
@@ -384,7 +384,7 @@ function AdminReservationsContent() {
         <div className="mb-6">
           <div className="flex items-center justify-center">
             <div className="text-center">
-              <h1 className="text-2xl font-normal text-text-primary">予約</h1>
+              <h1 className="text-xl font-semibold text-text-primary">予約</h1>
               <p className="mt-1 text-sm text-text-secondary">予約のステータス管理</p>
             </div>
           </div>
@@ -547,7 +547,7 @@ function AdminReservationsContent() {
         <div className="fixed inset-0 bg-gray-900 bg-opacity-60 z-[200] flex items-center justify-center p-4 backdrop-blur-sm">
           <div className="relative w-full max-w-md bg-surface-raised shadow-xl rounded-2xl max-h-[90vh] flex flex-col border border-border-subtle">
             <div className="p-6 overflow-y-auto">
-              <h3 className="text-lg font-normal text-text-primary mb-4">
+              <h3 className="text-xl font-semibold text-text-primary mb-4">
                 予約の変更
               </h3>
               <form onSubmit={handleEditSubmit} className="space-y-4">
@@ -660,7 +660,7 @@ export default function AdminReservationsPage() {
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center">
         <LoadingSpinner size="lg" />
-        <span className="ml-3 text-lg">読み込み中...</span>
+        <span className="ml-3 text-sm font-semibold">読み込み中...</span>
       </div>
     }>
       <AdminReservationsContent />

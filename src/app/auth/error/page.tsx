@@ -30,7 +30,7 @@ function ErrorContent() {
           <h2 className="text-center text-3xl font-normal text-text-primary">
             T&J GYM
           </h2>
-          <p className="mt-1 text-center text-lg text-text-secondary">
+          <p className="mt-1 text-center text-sm font-semibold text-text-secondary">
             ログインできませんでした
           </p>
         </div>

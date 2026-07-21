@@ -85,7 +85,7 @@ export default function ReservationTab({ token, userName }: ReservationTabProps)
                     <Card padding="sm" className="!p-4 border-brand-500/70">
                         <div className="flex items-center justify-between gap-3">
                             <div className="min-w-0">
-                                <p className="text-base font-semibold text-text-primary">{formatTitle(nextReservation.title, userName)}</p>
+                                <p className="text-xl font-semibold text-text-primary">{formatTitle(nextReservation.title, userName)}</p>
                                 <p className="mt-1 text-sm font-normal tabular-nums text-text-secondary">{formatDate(nextReservation.start_time)}</p>
                             </div>
                             <span className="shrink-0 rounded-full bg-brand-500/15 px-3 py-1 text-xs font-normal text-brand-300">
@@ -151,7 +151,7 @@ function ReservationRow({ reservation, userName, muted = false }: { reservation:
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
     return (
-        <h2 className="flex items-center gap-2 text-left text-base font-semibold text-text-primary">
+        <h2 className="flex items-center gap-2 text-left text-xl font-semibold text-text-primary">
             <span className="h-5 w-1 rounded-full bg-brand-500" />
             <span>{children}</span>
         </h2>

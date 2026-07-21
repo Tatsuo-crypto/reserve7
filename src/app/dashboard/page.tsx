@@ -94,7 +94,7 @@ const AdminDashboard = () => {
                     <Link key={member.id} href={`/admin/diet-plan?userId=${member.id}`} className="flex items-center gap-4 p-5 hover:bg-surface-base rounded-2xl border border-border-subtle transition-all shadow-sm">
                       <div className={`w-3 h-3 rounded-full ${getStatusDotColor(member.status)}`} />
                       <div className="flex-1">
-                        <div className="text-base font-normal text-text-primary">{member.full_name}</div>
+                        <div className="text-sm font-normal text-text-primary">{member.full_name}</div>
                         <div className="flex items-center gap-2 mt-0.5">
                           <span className="text-xs font-normal text-text-muted bg-surface-overlay px-2 py-0.5 rounded-lg uppercase">
                             {member.stores?.name || '店舗未設定'}

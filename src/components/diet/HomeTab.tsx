@@ -193,7 +193,7 @@ export default function HomeTab({ token, userName, isDietPlan = true, todayDraft
         return (
             <div className="space-y-5 animate-fadeIn">
                 <div className="pt-1 pb-0 text-center">
-                    <p className="text-3xl font-semibold tabular-nums text-text-primary">{todayLabel}</p>
+                    <p className="text-3xl font-bold tabular-nums text-text-primary">{todayLabel}</p>
                 </div>
 
                 <section className="space-y-2">
@@ -243,7 +243,7 @@ export default function HomeTab({ token, userName, isDietPlan = true, todayDraft
     return (
         <div className="space-y-5 animate-fadeIn">
             <div className="pt-1 pb-0 text-center">
-                <p className="text-3xl font-semibold tabular-nums text-text-primary">{todayLabel}</p>
+                <p className="text-3xl font-bold tabular-nums text-text-primary">{todayLabel}</p>
             </div>
 
             <section className="space-y-2">
@@ -255,7 +255,7 @@ export default function HomeTab({ token, userName, isDietPlan = true, todayDraft
                                 <p className="text-xs font-normal text-white/75">
                                     {primaryGoal?.type === 'weight' ? '目標体重' : primaryGoal ? '目標' : '目標'}
                                 </p>
-                                <p className="mt-1 truncate text-2xl font-semibold text-white">
+                                <p className="mt-1 truncate text-3xl font-bold text-white tabular-nums">
                                     {primaryGoal
                                         ? primaryGoal.type === 'weight' && primaryGoal.target_value != null
                                             ? `${primaryGoal.target_value}kg`
@@ -352,7 +352,7 @@ export default function HomeTab({ token, userName, isDietPlan = true, todayDraft
 
 function SectionTitle({ children }: { children: ReactNode }) {
     return (
-        <h2 className="flex items-center gap-2 text-left text-base font-semibold text-text-primary">
+        <h2 className="flex items-center gap-2 text-left text-xl font-semibold text-text-primary">
             <span className="h-5 w-1 rounded-full bg-brand-500" />
             <span>{children}</span>
         </h2>

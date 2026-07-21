@@ -77,7 +77,7 @@ function SalesPageContent() {
     if (!isClient || status === 'loading') {
         return (
             <div className="min-h-screen flex items-center justify-center">
-                <div className="text-lg">読み込み中...</div>
+                <div className="text-sm font-semibold">読み込み中...</div>
             </div>
         )
     }
@@ -89,7 +89,7 @@ function SalesPageContent() {
                 <div className="mb-6">
                     <div className="flex items-center justify-center">
                         <div className="text-center">
-                            <h1 className="text-2xl font-normal text-text-primary">売上管理</h1>
+                            <h1 className="text-xl font-semibold text-text-primary">売上管理</h1>
                             <p className="mt-1 text-sm text-text-secondary">月会費の管理・確認</p>
                         </div>
                     </div>
@@ -117,7 +117,7 @@ function SalesPageContent() {
                         </div>
                         <div className="text-right">
                             <span className="text-xs text-text-secondary">月会費見込み</span>
-                            <span className="ml-2 text-lg font-normal text-text-primary">¥{totalAmount.toLocaleString()}</span>
+                            <span className="ml-2 text-sm font-semibold text-text-primary">¥{totalAmount.toLocaleString()}</span>
                         </div>
                     </div>
                 </div>
@@ -154,7 +154,7 @@ export default function SalesPage() {
     return (
         <Suspense fallback={
             <div className="min-h-screen flex items-center justify-center">
-                <div className="text-lg">読み込み中...</div>
+                <div className="text-sm font-semibold">読み込み中...</div>
             </div>
         }>
             <SalesPageContent />

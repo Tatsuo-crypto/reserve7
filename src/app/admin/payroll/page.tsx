@@ -565,18 +565,18 @@ export default function AdminPayrollPage() {
         <div className="mb-4 rounded-2xl bg-surface-raised p-5 shadow">
           <div className="rounded-2xl bg-surface-base px-4 py-4">
             <div className="text-xs text-text-muted">支給見込み</div>
-            <div className="mt-1 text-2xl font-normal leading-tight text-text-primary">
+            <div className="mt-1 text-3xl font-bold leading-tight text-text-primary tabular-nums">
               {formatYen(selectedPayrollItem.totals.totalPay)}
             </div>
           </div>
           <div className="mt-3 grid grid-cols-2 gap-2">
             <div className="rounded-2xl bg-surface-base px-4 py-3">
               <div className="text-xs text-text-muted">勤務</div>
-              <div className="mt-1 text-base font-normal text-text-primary">{formatHours(selectedPayrollItem.totals.payableHourTotal)}時間</div>
+              <div className="mt-1 text-sm font-normal text-text-primary">{formatHours(selectedPayrollItem.totals.payableHourTotal)}時間</div>
             </div>
             <div className="rounded-2xl bg-surface-base px-4 py-3">
               <div className="text-xs text-text-muted">出勤</div>
-              <div className="mt-1 text-base font-normal text-text-primary">{selectedPayrollItem.totals.transportationDays}日</div>
+              <div className="mt-1 text-sm font-normal text-text-primary">{selectedPayrollItem.totals.transportationDays}日</div>
             </div>
           </div>
           <div className="mt-3 grid grid-cols-2 gap-2">
@@ -616,7 +616,7 @@ export default function AdminPayrollPage() {
           <div className="relative bg-surface-raised rounded-lg border border-border-strong shadow-lg w-full max-w-5xl max-h-[92vh] overflow-hidden flex flex-col">
             <div className="p-4 border-b border-border-subtle flex items-start justify-between gap-3">
               <div>
-                <h2 className="text-lg font-normal text-text-primary">{selected.trainer.fullName}</h2>
+                <h2 className="text-xl font-semibold text-text-primary">{selected.trainer.fullName}</h2>
                 <p className="text-xs text-text-muted mt-1">{month} の給与明細</p>
               </div>
               <Button type="button" variant="ghost" size="sm" className="h-9 w-9 rounded-full p-0 text-text-muted hover:text-text-primary" onClick={() => setSelected(null)}>
@@ -628,23 +628,23 @@ export default function AdminPayrollPage() {
               <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                 <div className="bg-surface-base rounded-lg p-3">
                   <div className="text-xs text-text-muted">計算時間</div>
-                  <div className="text-lg text-text-primary mt-1">{formatHours(detailTotals.payableHourTotal)}時間</div>
+                  <div className="text-sm font-semibold text-text-primary mt-1">{formatHours(detailTotals.payableHourTotal)}時間</div>
                 </div>
                 <div className="bg-surface-base rounded-lg p-3">
                   <div className="text-xs text-text-muted">基本給</div>
-                  <div className="text-lg text-text-primary mt-1">{formatYen(detailTotals.basePay)}</div>
+                  <div className="text-sm font-semibold text-text-primary mt-1">{formatYen(detailTotals.basePay)}</div>
                 </div>
                 <div className="bg-surface-base rounded-lg p-3">
                   <div className="text-xs text-text-muted">交通費</div>
-                  <div className="text-lg text-text-primary mt-1">{formatYen(detailTotals.transportationPay)}</div>
+                  <div className="text-sm font-semibold text-text-primary mt-1">{formatYen(detailTotals.transportationPay)}</div>
                 </div>
                 <div className="bg-surface-base rounded-lg p-3">
                   <div className="text-xs text-text-muted">手当・調整</div>
-                  <div className="text-lg text-text-primary mt-1">{formatYen(Number(allowanceAmount || 0) + Number(adjustmentAmount || 0))}</div>
+                  <div className="text-sm font-semibold text-text-primary mt-1">{formatYen(Number(allowanceAmount || 0) + Number(adjustmentAmount || 0))}</div>
                 </div>
                 <div className="bg-surface-base rounded-lg p-3">
                   <div className="text-xs text-text-muted">支給見込み</div>
-                  <div className="text-lg text-text-primary mt-1">{formatYen(detailTotals.totalPay)}</div>
+                  <div className="text-sm font-semibold text-text-primary mt-1">{formatYen(detailTotals.totalPay)}</div>
                 </div>
               </div>
 
@@ -782,7 +782,7 @@ export default function AdminPayrollPage() {
           <div className="relative flex max-h-[calc(100dvh-24px)] w-full max-w-3xl flex-col overflow-hidden rounded-t-2xl border border-border-subtle bg-surface-raised shadow-xl sm:max-h-[90vh] sm:rounded-2xl">
             <div className="flex items-start justify-between gap-3 border-b border-border-subtle p-4">
               <div>
-                <h2 className="text-lg font-normal text-text-primary">支給計算</h2>
+                <h2 className="text-xl font-semibold text-text-primary">支給計算</h2>
                 <p className="mt-1 text-xs text-text-muted">{formatHours(summaryBreakdown.hours)}時間 / {formatYen(summaryBreakdown.totalPay)}</p>
               </div>
               <Button type="button" variant="secondary" size="sm" className="h-9 w-9 rounded-full bg-surface-base p-0 text-text-secondary" onClick={() => setBreakdownOpen(false)}>
@@ -834,7 +834,7 @@ export default function AdminPayrollPage() {
                   <span className="text-text-secondary">手当・調整</span>
                   <span className="tabular-nums text-text-primary">{formatYen(summaryBreakdown.adjustmentPay)}</span>
                 </div>
-                <div className="flex justify-between border-t border-border-subtle pt-3 text-base">
+                <div className="flex justify-between border-t border-border-subtle pt-3 text-sm">
                   <span className="text-text-primary">合計</span>
                   <span className="tabular-nums text-text-primary">{formatYen(summaryBreakdown.totalPay)}</span>
                 </div>

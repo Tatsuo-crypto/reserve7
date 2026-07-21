@@ -72,7 +72,7 @@ function AdminCalendarPageContent() {
         <header className="bg-gradient-to-b from-white to-gray-50 border-b border-border-subtle shadow mb-6">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-16">
-              <div className="text-xl font-normal text-text-primary">
+              <div className="text-xl font-semibold text-text-primary">
                 T&J GYM
               </div>
               {trainer && (
@@ -95,7 +95,7 @@ function AdminCalendarPageContent() {
         <div className="mb-6 px-4">
           <div className="flex items-center justify-center">
             <div className="text-center">
-              <h1 className="text-2xl font-normal text-text-primary">予約</h1>
+              <h1 className="text-xl font-semibold text-text-primary">予約</h1>
               <p className="mt-1 text-sm text-text-secondary">予約のステータス管理</p>
             </div>
             {!trainerToken && (

@@ -238,7 +238,7 @@ export default function TrainerShiftPage({ token, trainerName }: TrainerShiftPag
       <div className="p-4 border-b border-border-strong space-y-4">
         {/* Header Row */}
         {/* <div className="flex justify-between items-center">
-          <h2 className="text-lg font-normal text-text-primary">シフト管理</h2>
+          <h2 className="text-xl font-semibold text-text-primary">シフト管理</h2>
         </div> */}
 
         {/* Controls Row */}
@@ -331,7 +331,7 @@ export default function TrainerShiftPage({ token, trainerName }: TrainerShiftPag
             <Button type="button" variant="ghost" size="sm" onClick={handlePrevWeek} className="rounded-full p-2 text-text-secondary hover:bg-surface-overlay">
               <Icon name="chevronLeft" size={20} />
             </Button>
-            <span className="text-xl font-normal text-text-primary min-w-[140px] text-center">
+            <span className="text-xl font-semibold text-text-primary min-w-[140px] text-center">
               {format(currentDate, 'yyyy年M月', { locale: ja })}
             </span>
             <Button type="button" variant="ghost" size="sm" onClick={handleNextWeek} className="rounded-full p-2 text-text-secondary hover:bg-surface-overlay">

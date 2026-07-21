@@ -339,7 +339,7 @@ export default function AdminMailSettingsPage() {
             <div className="bg-surface-raised rounded-2xl shadow-sm border border-border-subtle p-6 space-y-5">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                  <h2 className="text-base font-semibold text-text-primary">会員ごとのアプリ通知</h2>
+                  <h2 className="text-xl font-semibold text-text-primary">会員ごとのアプリ通知</h2>
                   <p className="mt-1 text-xs text-text-secondary">このスイッチ1つで、予約の確定・変更連絡と前日リマインダー、オンラインレッスン開始前の通知すべてを制御します。</p>
                   <p className="mt-0.5 text-xs text-text-muted">メール送信は行わず、アプリのプッシュ通知だけで届きます。</p>
                 </div>

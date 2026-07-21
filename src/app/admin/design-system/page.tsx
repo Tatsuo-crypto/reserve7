@@ -46,7 +46,7 @@ export default function DesignSystemPage() {
                 </div>
 
                 <Card>
-                    <h2 className="text-base font-semibold text-text-primary mb-4">Button</h2>
+                    <h2 className="text-xl font-semibold text-text-primary mb-4">Button</h2>
                     <div className="space-y-3">
                         <div className="flex flex-wrap gap-2">
                             <Button variant="primary">primary</Button>
@@ -64,12 +64,12 @@ export default function DesignSystemPage() {
                 </Card>
 
                 <Card>
-                    <h2 className="text-base font-semibold text-text-primary mb-4">Card(このカード自体もCardコンポーネント)</h2>
+                    <h2 className="text-xl font-semibold text-text-primary mb-4">Card(このカード自体もCardコンポーネント)</h2>
                     <p className="text-sm font-normal text-text-secondary">rounded-2xl / border-border-subtle / shadow-sm で統一。</p>
                 </Card>
 
                 <Card>
-                    <h2 className="text-base font-semibold text-text-primary mb-4">Badge</h2>
+                    <h2 className="text-xl font-semibold text-text-primary mb-4">Badge</h2>
                     <div className="flex flex-wrap gap-2">
                         <Badge tone="neutral">neutral</Badge>
                         <Badge tone="brand">brand</Badge>
@@ -80,7 +80,7 @@ export default function DesignSystemPage() {
                 </Card>
 
                 <Card>
-                    <h2 className="text-base font-semibold text-text-primary mb-4">Icon</h2>
+                    <h2 className="text-xl font-semibold text-text-primary mb-4">Icon</h2>
                     <div className="grid grid-cols-4 sm:grid-cols-6 gap-4">
                         {ICON_NAMES.map(name => (
                             <div key={name} className="flex flex-col items-center gap-1">
@@ -94,7 +94,7 @@ export default function DesignSystemPage() {
                 </Card>
 
                 <Card>
-                    <h2 className="text-base font-semibold text-text-primary mb-4">タイポグラフィ(N-4)</h2>
+                    <h2 className="text-xl font-semibold text-text-primary mb-4">タイポグラフィ(N-4)</h2>
                     <div className="space-y-2">
                         <p className="text-xl font-semibold text-text-primary">見出し・主数値 = font-semibold</p>
                         <p className="text-sm font-normal text-text-secondary">本文 = font-normal</p>
@@ -103,7 +103,7 @@ export default function DesignSystemPage() {
                 </Card>
 
                 <Card>
-                    <h2 className="text-base font-semibold text-text-primary mb-4">アクセントカラー(brand)</h2>
+                    <h2 className="text-xl font-semibold text-text-primary mb-4">アクセントカラー(brand)</h2>
                     <div className="flex gap-2">
                         <div className="w-10 h-10 rounded-lg bg-brand-50" title="brand-50" />
                         <div className="w-10 h-10 rounded-lg bg-brand-100" title="brand-100" />

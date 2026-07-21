@@ -339,7 +339,7 @@ export default function TrainersPage() {
               <div>
                 <div className="text-xs font-normal text-text-muted uppercase tracking-widest mb-1">現在の在籍トレーナー</div>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-normal text-text-primary tracking-tight">{activeTrainers.length}</span>
+                  <span className="text-3xl font-bold text-text-primary tracking-tight tabular-nums">{activeTrainers.length}</span>
                   <span className="text-sm font-normal text-text-muted">名</span>
                 </div>
               </div>

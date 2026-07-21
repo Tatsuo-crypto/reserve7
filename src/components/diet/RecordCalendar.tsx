@@ -87,7 +87,7 @@ export default function RecordCalendar({ userId, token, isAdmin }: RecordCalenda
             <div className="mb-4 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     <span className="h-5 w-1 rounded-full bg-brand-500" />
-                    <h2 className="text-base font-normal text-text-primary">記録カレンダー</h2>
+                    <h2 className="text-xl font-semibold text-text-primary">記録カレンダー</h2>
                 </div>
                 <span className="text-sm font-normal tabular-nums text-text-secondary">
                     {loading ? '-' : `${recordedCount}日`}

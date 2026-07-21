@@ -213,13 +213,13 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
             <div className="flex items-end justify-between gap-4">
               <div>
                 <div className="text-xs font-normal text-text-muted">契約</div>
-                <div className="ui-nowrap mt-2 overflow-x-auto text-2xl font-normal leading-tight text-text-primary">
+                <div className="ui-nowrap mt-2 overflow-x-auto text-xl font-semibold leading-tight text-text-primary">
                   {member.plan || '未設定'}
                 </div>
               </div>
               <div className="shrink-0 text-right">
                 <div className="text-xs font-normal text-text-muted">料金</div>
-                <div className="mt-2 whitespace-nowrap text-lg font-normal text-text-primary">
+                <div className="mt-2 whitespace-nowrap text-sm font-semibold text-text-primary">
                   {formatYen(member.monthlyFee)} / 月
                 </div>
               </div>
@@ -231,7 +231,7 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
           <section>
             <div className="mb-3 flex items-center gap-2">
               <span className="h-5 w-1 rounded-full bg-brand-500" />
-              <h2 className="text-base font-normal text-text-primary">管理</h2>
+              <h2 className="text-xl font-semibold text-text-primary">管理</h2>
             </div>
             <div className="space-y-3">
               <MemberActionRow
@@ -250,7 +250,7 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
           <section>
             <div className="mb-3 flex items-center gap-2">
               <span className="h-5 w-1 rounded-full bg-brand-500" />
-              <h2 className="text-base font-normal text-text-primary">招待URL</h2>
+              <h2 className="text-xl font-semibold text-text-primary">招待URL</h2>
             </div>
             <div className="space-y-3">
               {member.accessToken ? (

@@ -109,7 +109,7 @@ function LessonCard({ lesson, onJoin }: { lesson: OnlineLesson; onJoin: (url: st
                 <div className="flex items-start justify-between">
                     <div className="flex-1">
                         <div className="flex items-center space-x-2">
-                            <h3 className={`font-normal text-lg ${status.isOngoing ? 'text-white' : 'text-text-primary'}`}>
+                            <h3 className={`font-semibold text-xl ${status.isOngoing ? 'text-white' : 'text-text-primary'}`}>
                                 {lesson.title}
                             </h3>
                             <span className="text-xs px-2 py-0.5 rounded-full font-normal bg-brand-500/15 text-brand-300">
@@ -246,7 +246,7 @@ export default function OnlineLessonPage() {
                         <Icon name="back" size={24} />
                     </Button>
                     <div>
-                        <h1 className="text-lg font-normal text-text-primary">オンラインレッスン</h1>
+                        <h1 className="text-xl font-semibold text-text-primary">オンラインレッスン</h1>
                         <p className="text-xs text-brand-600 font-normal">開始5分前から参加できます</p>
                     </div>
                 </div>
@@ -313,7 +313,7 @@ export default function OnlineLessonPage() {
                         <div className="w-24 h-24 bg-brand-500/15 rounded-full flex items-center justify-center mx-auto mb-6">
                             <Icon name="video" size={48} className="text-brand-400" />
                         </div>
-                        <h2 className="text-xl font-normal text-text-secondary mb-2">現在準備中です</h2>
+                        <h2 className="text-xl font-semibold text-text-secondary mb-2">現在準備中です</h2>
                         <p className="text-text-secondary text-sm">オンラインレッスンの詳細は<br />もうしばらくお待ちください</p>
                     </div>
                 ) : (

@@ -35,7 +35,7 @@ export default function MemberMovementModal({ isOpen, onClose, data }: MemberMov
                     <div className="bg-surface-raised px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                         <div className="sm:flex sm:items-start">
                             <div className="mt-3 text-center sm:mt-0 sm:text-left w-full">
-                                <h3 className="text-lg leading-6 font-normal text-text-primary mb-4">
+                                <h3 className="text-xl leading-6 font-semibold text-text-primary mb-4">
                                     {data.month} の入退会詳細
                                 </h3>
                                 
@@ -105,7 +105,7 @@ export default function MemberMovementModal({ isOpen, onClose, data }: MemberMov
                         <Button
                             type="button"
                             variant="secondary"
-                            className="mt-3 w-full inline-flex justify-center rounded-lg border border-border-strong shadow-sm px-4 py-2 bg-surface-raised text-base font-normal text-text-secondary hover:bg-surface-base focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                            className="mt-3 w-full inline-flex justify-center rounded-lg border border-border-strong shadow-sm px-4 py-2 bg-surface-raised text-sm font-normal text-text-secondary hover:bg-surface-base focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 sm:mt-0 sm:ml-3 sm:w-auto"
                             onClick={onClose}
                         >
                             閉じる

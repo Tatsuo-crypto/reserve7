@@ -165,7 +165,7 @@ function MembersPageContent() {
   if (status === 'loading') {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">認証状態を確認中...</div>
+        <div className="text-sm font-semibold">認証状態を確認中...</div>
       </div>
     )
   }
@@ -174,7 +174,7 @@ function MembersPageContent() {
   if (status === 'unauthenticated') {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">ログインページにリダイレクト中...</div>
+        <div className="text-sm font-semibold">ログインページにリダイレクト中...</div>
       </div>
     )
   }
@@ -183,7 +183,7 @@ function MembersPageContent() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">会員データを読み込み中...</div>
+        <div className="text-sm font-semibold">会員データを読み込み中...</div>
       </div>
     )
   }
@@ -211,7 +211,7 @@ function MembersPageContent() {
               <div>
                 <div className="text-xs font-normal text-text-muted uppercase tracking-widest mb-1">現在の在籍者</div>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-normal text-text-primary tracking-tight">{totalActive}</span>
+                  <span className="text-3xl font-bold text-text-primary tracking-tight tabular-nums">{totalActive}</span>
                   <span className="text-sm font-normal text-text-muted">名</span>
                 </div>
               </div>

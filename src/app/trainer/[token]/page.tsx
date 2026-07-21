@@ -104,7 +104,7 @@ export default function TrainerDashboardPage() {
 
           {/* Center: Title (Empty as requested) */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <h1 className="text-base font-normal text-text-primary tracking-tight whitespace-nowrap pointer-events-auto">
+            <h1 className="text-xl font-semibold text-text-primary tracking-tight whitespace-nowrap pointer-events-auto">
               {viewMode === 'timeline' ? '予約詳細' : ''}
             </h1>
           </div>

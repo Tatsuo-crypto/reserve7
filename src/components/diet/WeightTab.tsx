@@ -121,11 +121,11 @@ export default function WeightTab({ userId, token, isAdmin }: WeightTabProps) {
                             <div key={i} className="py-3">
                                 <p className="text-xs font-normal text-text-muted tabular-nums mb-1">{row.rangeStr}</p>
                                 <div className="flex items-baseline gap-3 flex-wrap">
-                                    <span className="text-base font-semibold text-text-primary tabular-nums">
+                                    <span className="text-sm font-normal text-text-primary tabular-nums">
                                         {row.avg !== null ? `平均 ${row.avg.toFixed(1)}kg` : '記録なし'}
                                     </span>
                                     {row.diffAbs !== null && (
-                                        <span className={`text-base font-semibold tabular-nums whitespace-nowrap ${row.diffAbs < 0 ? 'text-blue-600' : row.diffAbs > 0 ? 'text-rose-600' : 'text-text-muted'}`}>
+                                        <span className={`text-sm font-normal tabular-nums whitespace-nowrap ${row.diffAbs < 0 ? 'text-blue-600' : row.diffAbs > 0 ? 'text-rose-600' : 'text-text-muted'}`}>
                                             先週差 {row.diffAbs > 0 ? '+' : ''}{row.diffAbs.toFixed(1)}kg
                                             {row.diffPercent !== null && (
                                                 <span className="ml-1">（{row.diffPercent > 0 ? '+' : ''}{row.diffPercent.toFixed(1)}%）</span>

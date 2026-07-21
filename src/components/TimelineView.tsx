@@ -512,7 +512,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
             >
               <Icon name="chevronLeft" size={20} />
             </Button>
-            <h2 className="text-xl font-normal text-text-primary whitespace-nowrap">
+            <h2 className="text-xl font-semibold text-text-primary whitespace-nowrap">
               {formatSelectedDate(selectedDate)}
             </h2>
             <Button
@@ -729,7 +729,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
         <div className="fixed inset-0 bg-gray-900 bg-opacity-60 z-[200] flex items-center justify-center p-4 backdrop-blur-sm">
           <div className="relative w-full max-w-md bg-surface-raised shadow-xl rounded-2xl max-h-[90vh] flex flex-col border border-border-subtle">
             <div className="p-6 overflow-y-auto">
-              <h3 className="text-lg font-normal text-text-primary mb-4">予約の変更</h3>
+              <h3 className="text-xl font-semibold text-text-primary mb-4">予約の変更</h3>
               <form onSubmit={handleEditSubmit} className="space-y-4">
                 <div>
                   <label className="block text-sm font-normal text-text-secondary mb-1">タイトル</label>
@@ -829,7 +829,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
               <div className="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-red-500/15 mb-4">
                 <Icon name="trash" size={28} className="text-red-400" />
               </div>
-              <h3 className="text-xl font-normal text-text-primary mb-2">予約を削除しますか？</h3>
+              <h3 className="text-xl font-semibold text-text-primary mb-2">予約を削除しますか？</h3>
               <p className="text-sm text-text-secondary mb-6">この操作は取り消せません。</p>
               <div className="flex justify-center space-x-3 w-full">
                 <Button

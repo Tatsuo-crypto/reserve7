@@ -112,7 +112,7 @@ export default function TrainerAttendancePage() {
     <div className="min-h-screen bg-surface-base pb-28">
       <header className="sticky top-0 z-50 h-16 border-b border-border-subtle bg-surface-raised/80 backdrop-blur-md">
         <div className="relative mx-auto flex h-full max-w-7xl items-center justify-center px-4">
-          <h1 className="text-base font-normal tracking-tight text-text-primary">出勤</h1>
+          <h1 className="text-xl font-semibold tracking-tight text-text-primary">出勤</h1>
           {data?.trainer && (
             <div className="absolute right-4 top-1/2 flex h-10 -translate-y-1/2 items-center gap-1 rounded-full border border-border-subtle bg-surface-raised px-4 shadow-sm">
               <span className="whitespace-nowrap text-sm font-normal text-text-secondary">
@@ -138,7 +138,7 @@ export default function TrainerAttendancePage() {
 
           <div className="mb-4 flex items-center justify-between">
             <div>
-              <div className="text-lg font-normal text-text-primary">{heading}</div>
+              <div className="text-xl font-semibold text-text-primary">{heading}</div>
               <div className="mt-1 text-sm text-text-secondary">
                 {data?.date ? formatDate(data.date) : ''}
               </div>
@@ -180,7 +180,7 @@ export default function TrainerAttendancePage() {
             >
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <div className="text-base font-normal text-text-primary">
+                  <div className="text-sm font-normal text-text-primary">
                     {formatTime(shift.startTime)}〜{formatTime(shift.endTime)}
                   </div>
                   <div className="mt-1 text-xs text-text-secondary">

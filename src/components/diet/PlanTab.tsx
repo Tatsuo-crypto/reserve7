@@ -189,7 +189,7 @@ function SectionTitle({ children }: { children: string }) {
     return (
         <div className="flex items-center gap-2">
             <div className="h-6 w-1.5 rounded-full bg-brand-500" />
-            <h2 className="text-xl font-normal tracking-tight text-text-primary">{children}</h2>
+            <h2 className="text-xl font-semibold tracking-tight text-text-primary">{children}</h2>
         </div>
     )
 }
@@ -234,7 +234,7 @@ function TargetSetCard({ row, type }: { row: GoalRow; type?: 'training' | 'rest'
             <p className={`text-sm font-normal ${isTraining ? 'text-brand-300' : isRest ? 'text-blue-300' : 'text-text-muted'}`}>
                 {label}
             </p>
-            <p className="mt-1 text-3xl font-normal tabular-nums text-text-primary">
+            <p className="mt-1 text-3xl font-bold tabular-nums text-text-primary">
                 {formatKcal(calories)}<span className="ml-1 text-sm text-text-muted">kcal</span>
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
@@ -310,7 +310,7 @@ function GoalHistoryChart({ rows, onEditPlan }: { rows: GoalRow[]; onEditPlan?: 
 
             {chartRows.length === 1 ? (
                 <div className="flex h-44 flex-col items-center justify-center rounded-2xl border border-border-subtle bg-surface-base text-center">
-                    <p className="text-3xl font-normal tabular-nums text-text-primary">
+                    <p className="text-3xl font-bold tabular-nums text-text-primary">
                         {formatKcal(displayCalories(chartRows[0]))}<span className="ml-1 text-sm text-text-muted">kcal</span>
                     </p>
                 </div>

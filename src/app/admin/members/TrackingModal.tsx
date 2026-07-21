@@ -242,7 +242,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border-strong bg-surface-raised px-4 py-3.5 sm:px-6 sm:py-4">
           <div className="flex items-center gap-2">
             <Icon name="clipboardList" size={24} className="text-text-secondary" />
-            <h2 className="text-xl font-normal text-text-primary">目標・記録管理</h2>
+            <h2 className="text-xl font-semibold text-text-primary">目標・記録管理</h2>
           </div>
           <Button
             type="button"
@@ -962,7 +962,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                     className="w-8 h-8 text-brand-600 border-border-strong rounded-lg focus:ring-brand-500 transition-all"
                   />
                   <div>
-                    <div className="text-lg font-normal text-text-primary">食事管理機能を表示する <span className="text-brand-600 ml-1">(ダイエットプラン限定)</span></div>
+                    <div className="text-sm font-semibold text-text-primary">食事管理機能を表示する <span className="text-brand-600 ml-1">(ダイエットプラン限定)</span></div>
                     <div className="text-sm text-text-secondary mt-1 italic">チェックを入れると全ての管理機能（入力・分析・進捗）が会員アプリに表示されます</div>
                   </div>
                 </label>
@@ -974,7 +974,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                   fullWidth
                   onClick={handleSettingsSave}
                   disabled={loading}
-                  className="w-full bg-brand-700 text-white py-4 rounded-2xl font-normal shadow-lg hover:bg-brand-800 transition-all active:scale-95 disabled:opacity-50 text-lg"
+                  className="w-full bg-brand-700 text-white py-4 rounded-2xl font-semibold shadow-lg hover:bg-brand-800 transition-all active:scale-95 disabled:opacity-50 text-sm"
                 >
                   {loading ? '保存中...' : '設定を保存する'}
                 </Button>
