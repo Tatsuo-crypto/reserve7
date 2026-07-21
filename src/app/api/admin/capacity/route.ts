@@ -32,6 +32,7 @@ function resolvePeriodRange(period: string, today: Date): { start: Date; end: Da
 // 1. 今月のセッション数 2. 所要時間の内訳 3. トレーナー別週間シフト時間・トレーナー別実際の稼働率
 // 4. 曜日・時間帯別の予約集中度 5. 現スタッフの週間稼働可能時間(→月間最大セッション数・稼働率)
 // 6. 月別セッション数の推移(過去分も含む) 7. トレーナー別・月別セッション数の推移(過去分も含む)
+// 8. トレーナー別・月別の稼働率(月選択で遡って参照するためのデータ)
 export async function GET(request: NextRequest) {
   try {
     const user = await getAuthenticatedUser()
@@ -227,6 +228,37 @@ export async function GET(request: NextRequest) {
       totalWeeklyHours = trainerWeeklyHours.reduce((sum, t) => sum + t.weeklyHours, 0)
     }
 
+    // トレーナー別・月別の稼働率(月を遡って参照するためのデータ)
+    // 対象トレーナー = 期間内に実施履歴があるトレーナー ∪ 現在在籍中のトレーナー(セッション0件でも表示するため)
+    const maxSessionsByTrainerId = new Map<string, number>()
+    for (const t of trainerWeeklyHours) {
+      maxSessionsByTrainerId.set(t.trainerId, t.maxMonthlySessions)
+    }
+
+    const trainerDirectory = new Map<string, string>() // trainerId -> fullName
+    for (const t of trendTrainerNames) trainerDirectory.set(t.id, t.fullName)
+    for (const t of activeTrainers || []) trainerDirectory.set(t.id, t.full_name)
+    const trainerDirectoryList = Array.from(trainerDirectory.entries())
+      .map(([id, fullName]) => ({ id, fullName }))
+      .sort((a, b) => a.fullName.localeCompare(b.fullName, 'ja'))
+
+    const trainerMonthlyBreakdown = monthList.map((date) => {
+      const key = format(date, 'yyyy-MM')
+      const trainers = trainerDirectoryList.map((t) => {
+        const sessions = trainerSessionsByMonth.get(t.id)?.get(key) || 0
+        const maxSessions = maxSessionsByTrainerId.get(t.id) ?? 0
+        const rate = maxSessions > 0 ? Math.round((sessions / maxSessions) * 1000) / 10 : null
+        return {
+          trainerId: t.id,
+          fullName: t.fullName,
+          sessions,
+          maxMonthlySessions: maxSessions,
+          utilizationRate: rate,
+        }
+      })
+      return { month: key, trainers }
+    })
+
     const maxMonthlySessions = mostCommonDuration > 0
       ? Math.round((totalWeeklyHours * WEEKS_PER_MONTH) / (mostCommonDuration / 60))
       : 0
@@ -255,6 +287,7 @@ export async function GET(request: NextRequest) {
       monthlyTrend,
       trainerMonthlyTrend,
       trainerNames: trendTrainerNames.map((t) => t.fullName),
+      trainerMonthlyBreakdown,
       calculatedAt: new Date().toISOString(),
     })
   } catch (error) {

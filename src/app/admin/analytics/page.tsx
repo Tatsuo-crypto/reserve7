@@ -5,7 +5,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import {
     XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-    BarChart, Bar, ComposedChart, Area, LineChart, Line
+    BarChart, Bar, ComposedChart, Area
 } from 'recharts'
 import { useStoreChange } from '@/hooks/useStoreChange'
 import MemberMovementModal from './MemberMovementModal'
@@ -37,9 +37,11 @@ type CapacityData = {
     monthlyTrend: { month: string; sessions: number; utilizationRate: number | null }[]
     trainerMonthlyTrend: Record<string, string | number>[]
     trainerNames: string[]
+    trainerMonthlyBreakdown: {
+        month: string
+        trainers: { trainerId: string; fullName: string; sessions: number; maxMonthlySessions: number; utilizationRate: number | null }[]
+    }[]
 }
-
-const TRAINER_TREND_COLORS = ['#f97316', '#38bdf8', '#a78bfa', '#34d399', '#f472b6', '#facc15', '#fb923c', '#60a5fa']
 
 type DemographicsData = {
     totalMembers: number
@@ -123,6 +125,7 @@ export default function AnalyticsPage() {
     const [capacityLoading, setCapacityLoading] = useState(true)
     const [demographics, setDemographics] = useState<DemographicsData | null>(null)
     const [demographicsLoading, setDemographicsLoading] = useState(true)
+    const [capacityMonth, setCapacityMonth] = useState<string>('')
 
     // Fetch stores list
     useEffect(() => {
@@ -198,6 +201,16 @@ export default function AnalyticsPage() {
             ignore = true
         }
     }, [period])
+
+    // トレーナー別稼働率の月選択: データ取得時、選択中の月が範囲外なら最新月を初期選択
+    useEffect(() => {
+        if (!capacity || capacity.trainerMonthlyBreakdown.length === 0) return
+        const months = capacity.trainerMonthlyBreakdown.map((m) => m.month)
+        if (!capacityMonth || !months.includes(capacityMonth)) {
+            setCapacityMonth(months[months.length - 1])
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [capacity])
 
     // 会員統計(年齢層・男女比・職業・入会目的・入会経路)
     useEffect(() => {
@@ -480,66 +493,30 @@ export default function AnalyticsPage() {
                         </div>
 
                         <div>
-                            <h4 className="text-sm font-semibold text-text-primary mb-2">トレーナー別 セッション数の推移</h4>
-                            <p className="text-xs font-normal text-text-secondary mb-2">
-                                上部の期間セレクタに連動します。過去に在籍していたトレーナーも、期間内に実施履歴があれば表示されます。
-                            </p>
-                            <div className="h-[280px]">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <LineChart data={capacity.trainerMonthlyTrend}>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#3f3f46" />
-                                        <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#a1a1aa' }} axisLine={{ stroke: '#3f3f46' }} tickLine={{ stroke: '#3f3f46' }} />
-                                        <YAxis tick={{ fontSize: 12, fill: '#a1a1aa' }} axisLine={{ stroke: '#3f3f46' }} tickLine={{ stroke: '#3f3f46' }} />
-                                        <Tooltip formatter={(value: any) => [`${value}件`, 'セッション数']} />
-                                        <Legend />
-                                        {capacity.trainerNames.length === 0 ? null : capacity.trainerNames.map((name, i) => (
-                                            <Line
-                                                key={name}
-                                                type="monotone"
-                                                dataKey={name}
-                                                name={name}
-                                                stroke={TRAINER_TREND_COLORS[i % TRAINER_TREND_COLORS.length]}
-                                                strokeWidth={2}
-                                                dot={{ r: 2 }}
-                                            />
+                            <div className="flex items-center justify-between mb-2">
+                                <h4 className="text-sm font-semibold text-text-primary">トレーナー別 実際の稼働率</h4>
+                                {capacity.trainerMonthlyBreakdown.length > 0 && (
+                                    <select
+                                        value={capacityMonth}
+                                        onChange={(e) => setCapacityMonth(e.target.value)}
+                                        className="text-xs border-border-strong rounded-lg shadow-sm focus:border-brand-500 focus:ring-brand-500 py-1 pl-2 pr-6"
+                                    >
+                                        {capacity.trainerMonthlyBreakdown.map((m) => (
+                                            <option key={m.month} value={m.month}>{m.month}</option>
                                         ))}
-                                    </LineChart>
-                                </ResponsiveContainer>
+                                    </select>
+                                )}
                             </div>
-                            {capacity.trainerNames.length === 0 && (
-                                <p className="text-sm font-normal text-text-secondary">データがありません</p>
-                            )}
-                        </div>
-
-                        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                             <BreakdownList
-                                title="所要時間の内訳"
-                                items={capacity.durationBreakdown.map((d) => ({ label: `${d.durationMinutes}分`, count: d.count }))}
-                            />
-                            <BreakdownList
-                                title="人気の時間帯(直近3ヶ月・上位10)"
-                                items={capacity.popularSlots.map((s) => ({ label: `${s.weekdayLabel}曜 ${s.hour}:00〜`, count: s.count }))}
-                            />
-                        </div>
-
-                        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                            <BreakdownList
-                                title="トレーナー別 週間シフト時間"
-                                items={capacity.trainerWeeklyHours.map((t) => ({ label: t.fullName, count: t.weeklyHours, unit: '時間/週' }))}
-                            />
-                            <BreakdownList
-                                title="トレーナー別 実際の稼働率"
-                                items={capacity.trainerWeeklyHours.map((t) => ({
-                                    label: `${t.fullName}（今月${t.monthlySessions}件）`,
+                                title={capacityMonth || '-'}
+                                items={(capacity.trainerMonthlyBreakdown.find((m) => m.month === capacityMonth)?.trainers || []).map((t) => ({
+                                    label: `${t.fullName}（${t.sessions}件）`,
                                     count: t.utilizationRate ?? 0,
                                     unit: '%',
                                 }))}
-                                note="シフト未登録のトレーナーは稼働率0%と表示されます(上限セッション数が算出できないため)。"
+                                note="シフト未登録・退職済みなど上限セッション数が算出できないトレーナーは稼働率0%と表示されます。稼働率は各トレーナー自身の週間シフト時間(現在の設定を基準)を用いた参考値です。"
                             />
                         </div>
-                        <p className="text-xs font-normal text-text-secondary">
-                            ※月間最大セッション数は「週間シフト時間合計 × 4.345週 ÷ 所要時間」の理論値です。休憩・移動時間は考慮していません。トレーナー別の稼働率も同じ考え方で、各トレーナー自身の週間シフト時間を基準に算出しています。
-                        </p>
                     </div>
                 ) : (
                     <p className="text-sm font-normal text-text-secondary">データを取得できませんでした</p>
