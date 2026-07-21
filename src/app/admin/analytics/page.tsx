@@ -23,7 +23,14 @@ type CapacityData = {
     mostCommonDuration: number
     popularSlots: { weekday: number; weekdayLabel: string; hour: number; count: number }[]
     activeTrainerCount: number
-    trainerWeeklyHours: { trainerId: string; fullName: string; weeklyHours: number }[]
+    trainerWeeklyHours: {
+        trainerId: string
+        fullName: string
+        weeklyHours: number
+        monthlySessions: number
+        maxMonthlySessions: number
+        utilizationRate: number | null
+    }[]
     totalWeeklyHours: number
     maxMonthlySessions: number
     utilizationRate: number | null
@@ -468,22 +475,34 @@ export default function AnalyticsPage() {
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+                        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                             <BreakdownList
                                 title="所要時間の内訳"
                                 items={capacity.durationBreakdown.map((d) => ({ label: `${d.durationMinutes}分`, count: d.count }))}
-                            />
-                            <BreakdownList
-                                title="トレーナー別 週間シフト時間"
-                                items={capacity.trainerWeeklyHours.map((t) => ({ label: t.fullName, count: t.weeklyHours, unit: '時間/週' }))}
                             />
                             <BreakdownList
                                 title="人気の時間帯(直近3ヶ月・上位10)"
                                 items={capacity.popularSlots.map((s) => ({ label: `${s.weekdayLabel}曜 ${s.hour}:00〜`, count: s.count }))}
                             />
                         </div>
+
+                        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                            <BreakdownList
+                                title="トレーナー別 週間シフト時間"
+                                items={capacity.trainerWeeklyHours.map((t) => ({ label: t.fullName, count: t.weeklyHours, unit: '時間/週' }))}
+                            />
+                            <BreakdownList
+                                title="トレーナー別 実際の稼働率"
+                                items={capacity.trainerWeeklyHours.map((t) => ({
+                                    label: `${t.fullName}（今月${t.monthlySessions}件）`,
+                                    count: t.utilizationRate ?? 0,
+                                    unit: '%',
+                                }))}
+                                note="シフト未登録のトレーナーは稼働率0%と表示されます(上限セッション数が算出できないため)。"
+                            />
+                        </div>
                         <p className="text-xs font-normal text-text-secondary">
-                            ※月間最大セッション数は「週間シフト時間合計 × 4.345週 ÷ 所要時間」の理論値です。休憩・移動時間は考慮していません。
+                            ※月間最大セッション数は「週間シフト時間合計 × 4.345週 ÷ 所要時間」の理論値です。休憩・移動時間は考慮していません。トレーナー別の稼働率も同じ考え方で、各トレーナー自身の週間シフト時間を基準に算出しています。
                         </p>
                     </div>
                 ) : (

@@ -29,7 +29,7 @@ function resolvePeriodRange(period: string, today: Date): { start: Date; end: Da
 
 // GET /api/admin/capacity?period=1y
 // 稼働率ダッシュボード用のデータをまとめて返す:
-// 1. 今月のセッション数 2. 所要時間の内訳 3. トレーナー別週間シフト時間
+// 1. 今月のセッション数 2. 所要時間の内訳 3. トレーナー別週間シフト時間・トレーナー別実際の稼働率
 // 4. 曜日・時間帯別の予約集中度 5. 現スタッフの週間稼働可能時間(→月間最大セッション数・稼働率)
 // 6. 月別セッション数の推移(過去分も含む)
 export async function GET(request: NextRequest) {
@@ -46,16 +46,23 @@ export async function GET(request: NextRequest) {
     const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString()
     const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate()).toISOString()
 
-    // 1. 今月のセッション数(実施予約のみ、client_idがnullのブロック・研修は除く)
-    const { count: monthlySessions, error: monthlyError } = await supabaseAdmin
+    // 1. 今月のセッション数(実施予約のみ、client_idがnullのブロック・研修は除く)。トレーナー別集計のためtrainer_idも取得
+    const { data: monthlyReservations, error: monthlyError } = await supabaseAdmin
       .from('reservations')
-      .select('id', { count: 'exact', head: true })
+      .select('id, trainer_id')
       .not('client_id', 'is', null)
       .gte('start_time', monthStart)
       .lt('start_time', nextMonthStart)
 
     if (monthlyError) {
       console.error('Capacity: monthly sessions error', monthlyError)
+    }
+
+    const monthlySessions = monthlyReservations?.length ?? null
+    const monthlySessionsByTrainer = new Map<string, number>()
+    for (const r of monthlyReservations || []) {
+      if (!r.trainer_id) continue
+      monthlySessionsByTrainer.set(r.trainer_id, (monthlySessionsByTrainer.get(r.trainer_id) || 0) + 1)
     }
 
     // 2〜4. 所要時間・時間帯分布の元データ(直近3ヶ月の実施予約)
@@ -134,7 +141,17 @@ export async function GET(request: NextRequest) {
 
     const activeTrainerIds = (activeTrainers || []).map((t) => t.id)
 
-    let trainerWeeklyHours: { trainerId: string; fullName: string; weeklyHours: number }[] = []
+    // 導出値: 月間最大セッション数(週4.33換算) と 稼働率
+    const WEEKS_PER_MONTH = 4.345
+
+    let trainerWeeklyHours: {
+      trainerId: string
+      fullName: string
+      weeklyHours: number
+      monthlySessions: number
+      maxMonthlySessions: number
+      utilizationRate: number | null
+    }[] = []
     let totalWeeklyHours = 0
 
     if (activeTrainerIds.length > 0) {
@@ -155,17 +172,26 @@ export async function GET(request: NextRequest) {
         hoursByTrainer.set(t.trainer_id, (hoursByTrainer.get(t.trainer_id) || 0) + hours)
       }
 
-      trainerWeeklyHours = (activeTrainers || []).map((t) => ({
-        trainerId: t.id,
-        fullName: t.full_name,
-        weeklyHours: Math.round((hoursByTrainer.get(t.id) || 0) * 10) / 10,
-      }))
+      trainerWeeklyHours = (activeTrainers || []).map((t) => {
+        const weeklyHours = Math.round((hoursByTrainer.get(t.id) || 0) * 10) / 10
+        const sessions = monthlySessionsByTrainer.get(t.id) || 0
+        const maxSessions = mostCommonDuration > 0
+          ? Math.round((weeklyHours * WEEKS_PER_MONTH) / (mostCommonDuration / 60))
+          : 0
+        const rate = maxSessions > 0 ? Math.round((sessions / maxSessions) * 1000) / 10 : null
+        return {
+          trainerId: t.id,
+          fullName: t.full_name,
+          weeklyHours,
+          monthlySessions: sessions,
+          maxMonthlySessions: maxSessions,
+          utilizationRate: rate,
+        }
+      })
 
       totalWeeklyHours = trainerWeeklyHours.reduce((sum, t) => sum + t.weeklyHours, 0)
     }
 
-    // 導出値: 月間最大セッション数(週4.33換算) と 稼働率
-    const WEEKS_PER_MONTH = 4.345
     const maxMonthlySessions = mostCommonDuration > 0
       ? Math.round((totalWeeklyHours * WEEKS_PER_MONTH) / (mostCommonDuration / 60))
       : 0
