@@ -27,6 +27,7 @@ type CapacityData = {
     totalWeeklyHours: number
     maxMonthlySessions: number
     utilizationRate: number | null
+    monthlyTrend: { month: string; sessions: number; utilizationRate: number | null }[]
 }
 
 type DemographicsData = {
@@ -164,10 +165,11 @@ export default function AnalyticsPage() {
     }, [filterStoreId, period])
 
     // 稼働率(店舗をまたいだ全体値。トレーナーのシフトが店舗別に厳密紐付いていないため店舗フィルタ非対応)
+    // 月別推移は既存の期間セレクタ(period)に連動させる
     useEffect(() => {
         let ignore = false
         setCapacityLoading(true)
-        fetch('/api/admin/capacity')
+        fetch(`/api/admin/capacity?period=${period}`)
             .then((res) => {
                 if (!res.ok) throw new Error('failed')
                 return res.json()
@@ -184,7 +186,7 @@ export default function AnalyticsPage() {
         return () => {
             ignore = true
         }
-    }, [])
+    }, [period])
 
     // 会員統計(年齢層・男女比・職業・入会目的・入会経路)
     useEffect(() => {
@@ -446,6 +448,26 @@ export default function AnalyticsPage() {
                             <StatCard label="月間最大セッション数" value={capacity.maxMonthlySessions} unit="件" />
                             <StatCard label="在籍トレーナー数" value={capacity.activeTrainerCount} unit="名" />
                         </div>
+
+                        <div>
+                            <h4 className="text-sm font-semibold text-text-primary mb-2">月別セッション数の推移</h4>
+                            <p className="text-xs font-normal text-text-secondary mb-2">
+                                上部の期間セレクタに連動します。稼働率(参考値)は現在のスタッフ体制を基準に計算しており、過去の実際のシフト体制とは異なる場合があります。
+                            </p>
+                            <div className="h-[260px]">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={capacity.monthlyTrend}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#3f3f46" />
+                                        <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#a1a1aa' }} axisLine={{ stroke: '#3f3f46' }} tickLine={{ stroke: '#3f3f46' }} />
+                                        <YAxis tick={{ fontSize: 12, fill: '#a1a1aa' }} axisLine={{ stroke: '#3f3f46' }} tickLine={{ stroke: '#3f3f46' }} />
+                                        <Tooltip formatter={(value: any, name: any) => [name === 'sessions' ? `${value}件` : `${value}%`, name === 'sessions' ? 'セッション数' : '稼働率(参考)']} />
+                                        <Legend formatter={(value) => (value === 'sessions' ? 'セッション数' : '稼働率(参考)')} />
+                                        <Bar dataKey="sessions" name="sessions" fill="#f97316" radius={[4, 4, 0, 0]} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+
                         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                             <BreakdownList
                                 title="所要時間の内訳"

@@ -1,19 +1,45 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { subMonths, startOfMonth, endOfMonth, eachMonthOfInterval, format } from 'date-fns'
 import { supabaseAdmin } from '@/lib/supabase'
 import { getAuthenticatedUser, createErrorResponse } from '@/lib/api-utils'
 
 export const dynamic = 'force-dynamic'
 
-// GET /api/admin/capacity
+const MIN_START_DATE = new Date('2023-11-01')
+
+function resolvePeriodRange(period: string, today: Date): { start: Date; end: Date } {
+  let start: Date
+  let end: Date = startOfMonth(today)
+
+  if (period === 'all') {
+    start = MIN_START_DATE
+  } else if (['2023', '2024', '2025', '2026'].includes(period)) {
+    start = new Date(`${period}-01-01`)
+    end = new Date(`${period}-12-01`)
+  } else if (period === '3m') {
+    start = subMonths(startOfMonth(today), 2)
+  } else {
+    // default '1y'
+    start = subMonths(startOfMonth(today), 11)
+  }
+
+  if (start < MIN_START_DATE) start = MIN_START_DATE
+  return { start, end }
+}
+
+// GET /api/admin/capacity?period=1y
 // 稼働率ダッシュボード用のデータをまとめて返す:
 // 1. 今月のセッション数 2. 所要時間の内訳 3. トレーナー別週間シフト時間
 // 4. 曜日・時間帯別の予約集中度 5. 現スタッフの週間稼働可能時間(→月間最大セッション数・稼働率)
+// 6. 月別セッション数の推移(過去分も含む)
 export async function GET(request: NextRequest) {
   try {
     const user = await getAuthenticatedUser()
     if (!user || !user.isAdmin) {
       return createErrorResponse('Unauthorized', 401)
     }
+
+    const period = request.nextUrl.searchParams.get('period') || '1y'
 
     const now = new Date()
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
@@ -41,6 +67,27 @@ export async function GET(request: NextRequest) {
 
     if (recentError) {
       console.error('Capacity: recent reservations error', recentError)
+    }
+
+    // 6. 月別セッション数の推移(periodで指定された範囲、過去分も遡って表示)
+    const { start: rangeStart, end: rangeEnd } = resolvePeriodRange(period, now)
+    const monthList = eachMonthOfInterval({ start: rangeStart, end: rangeEnd })
+
+    const { data: trendReservations, error: trendError } = await supabaseAdmin
+      .from('reservations')
+      .select('start_time')
+      .not('client_id', 'is', null)
+      .gte('start_time', rangeStart.toISOString())
+      .lt('start_time', endOfMonth(rangeEnd).toISOString())
+
+    if (trendError) {
+      console.error('Capacity: trend reservations error', trendError)
+    }
+
+    const sessionCountByMonth = new Map<string, number>()
+    for (const r of trendReservations || []) {
+      const key = format(new Date(r.start_time), 'yyyy-MM')
+      sessionCountByMonth.set(key, (sessionCountByMonth.get(key) || 0) + 1)
     }
 
     const durationCounts = new Map<number, number>()
@@ -126,6 +173,14 @@ export async function GET(request: NextRequest) {
       ? Math.round((monthlySessions / maxMonthlySessions) * 1000) / 10
       : null
 
+    // 月別推移: 各月の実セッション数と、現在のスタッフ体制を基準にした稼働率(参考値)
+    const monthlyTrend = monthList.map((date) => {
+      const key = format(date, 'yyyy-MM')
+      const sessions = sessionCountByMonth.get(key) || 0
+      const rate = maxMonthlySessions > 0 ? Math.round((sessions / maxMonthlySessions) * 1000) / 10 : null
+      return { month: key, sessions, utilizationRate: rate }
+    })
+
     return NextResponse.json({
       monthlySessions: monthlySessions ?? 0,
       durationBreakdown,
@@ -136,6 +191,7 @@ export async function GET(request: NextRequest) {
       totalWeeklyHours: Math.round(totalWeeklyHours * 10) / 10,
       maxMonthlySessions,
       utilizationRate,
+      monthlyTrend,
       calculatedAt: new Date().toISOString(),
     })
   } catch (error) {
