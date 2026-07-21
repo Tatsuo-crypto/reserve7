@@ -17,6 +17,27 @@ type AnalyticsData = {
     projectedSales: number
 }
 
+type CapacityData = {
+    monthlySessions: number
+    durationBreakdown: { durationMinutes: number; count: number }[]
+    mostCommonDuration: number
+    popularSlots: { weekday: number; weekdayLabel: string; hour: number; count: number }[]
+    activeTrainerCount: number
+    trainerWeeklyHours: { trainerId: string; fullName: string; weeklyHours: number }[]
+    totalWeeklyHours: number
+    maxMonthlySessions: number
+    utilizationRate: number | null
+}
+
+type DemographicsData = {
+    totalMembers: number
+    ageGroups: { label: string; count: number }[]
+    genderBreakdown: { label: string; count: number }[]
+    jobBreakdown: { label: string; count: number }[]
+    mainPurposeBreakdown: { label: string; count: number }[]
+    routeBreakdown: { label: string; count: number }[]
+}
+
 const ANALYTICS_CACHE_MS = 30 * 1000
 const analyticsCache = new Map<string, { timestamp: number, data: AnalyticsData }>()
 const analyticsPromises = new Map<string, Promise<AnalyticsData>>()
@@ -86,6 +107,10 @@ export default function AnalyticsPage() {
         projectedSales: 0
     })
     const [loading, setLoading] = useState(true)
+    const [capacity, setCapacity] = useState<CapacityData | null>(null)
+    const [capacityLoading, setCapacityLoading] = useState(true)
+    const [demographics, setDemographics] = useState<DemographicsData | null>(null)
+    const [demographicsLoading, setDemographicsLoading] = useState(true)
 
     // Fetch stores list
     useEffect(() => {
@@ -137,6 +162,52 @@ export default function AnalyticsPage() {
             ignore = true
         }
     }, [filterStoreId, period])
+
+    // 稼働率(店舗をまたいだ全体値。トレーナーのシフトが店舗別に厳密紐付いていないため店舗フィルタ非対応)
+    useEffect(() => {
+        let ignore = false
+        setCapacityLoading(true)
+        fetch('/api/admin/capacity')
+            .then((res) => {
+                if (!res.ok) throw new Error('failed')
+                return res.json()
+            })
+            .then((json) => {
+                if (!ignore) setCapacity(json)
+            })
+            .catch((e) => {
+                if (!ignore) console.error('Failed to fetch capacity', e)
+            })
+            .finally(() => {
+                if (!ignore) setCapacityLoading(false)
+            })
+        return () => {
+            ignore = true
+        }
+    }, [])
+
+    // 会員統計(年齢層・男女比・職業・入会目的・入会経路)
+    useEffect(() => {
+        let ignore = false
+        setDemographicsLoading(true)
+        fetch(`/api/admin/demographics?storeId=${filterStoreId || 'all'}`)
+            .then((res) => {
+                if (!res.ok) throw new Error('failed')
+                return res.json()
+            })
+            .then((json) => {
+                if (!ignore) setDemographics(json)
+            })
+            .catch((e) => {
+                if (!ignore) console.error('Failed to fetch demographics', e)
+            })
+            .finally(() => {
+                if (!ignore) setDemographicsLoading(false)
+            })
+        return () => {
+            ignore = true
+        }
+    }, [filterStoreId])
 
     // Auto-scroll movement chart to the right (show latest month)
     useEffect(() => {
@@ -361,11 +432,113 @@ export default function AnalyticsPage() {
                 </div>
             </div>
 
+            {/* 稼働率 */}
+            <div className="mt-8 bg-surface-raised p-6 rounded-2xl shadow-sm border border-border-subtle">
+                <h3 className="text-xl font-semibold text-text-primary mb-1">稼働率</h3>
+                <p className="text-xs font-normal text-text-secondary mb-4">全店舗合算(トレーナーのシフトが店舗別に厳密紐付いていないため店舗フィルタ非対応)</p>
+                {capacityLoading ? (
+                    <p className="text-sm font-normal text-text-secondary">読み込み中...</p>
+                ) : capacity ? (
+                    <div className="space-y-6">
+                        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                            <StatCard label="今月のセッション数" value={capacity.monthlySessions} unit="件" />
+                            <StatCard label="稼働率" value={capacity.utilizationRate ?? '-'} unit={capacity.utilizationRate != null ? '%' : ''} />
+                            <StatCard label="月間最大セッション数" value={capacity.maxMonthlySessions} unit="件" />
+                            <StatCard label="在籍トレーナー数" value={capacity.activeTrainerCount} unit="名" />
+                        </div>
+                        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+                            <BreakdownList
+                                title="所要時間の内訳"
+                                items={capacity.durationBreakdown.map((d) => ({ label: `${d.durationMinutes}分`, count: d.count }))}
+                            />
+                            <BreakdownList
+                                title="トレーナー別 週間シフト時間"
+                                items={capacity.trainerWeeklyHours.map((t) => ({ label: t.fullName, count: t.weeklyHours, unit: '時間/週' }))}
+                            />
+                            <BreakdownList
+                                title="人気の時間帯(直近3ヶ月・上位10)"
+                                items={capacity.popularSlots.map((s) => ({ label: `${s.weekdayLabel}曜 ${s.hour}:00〜`, count: s.count }))}
+                            />
+                        </div>
+                        <p className="text-xs font-normal text-text-secondary">
+                            ※月間最大セッション数は「週間シフト時間合計 × 4.345週 ÷ 所要時間」の理論値です。休憩・移動時間は考慮していません。
+                        </p>
+                    </div>
+                ) : (
+                    <p className="text-sm font-normal text-text-secondary">データを取得できませんでした</p>
+                )}
+            </div>
+
+            {/* 会員統計 */}
+            <div className="mt-8 bg-surface-raised p-6 rounded-2xl shadow-sm border border-border-subtle">
+                <h3 className="text-xl font-semibold text-text-primary mb-1">会員統計</h3>
+                <p className="text-xs font-normal text-text-secondary mb-4">
+                    {demographics ? `対象: 登録会員 ${demographics.totalMembers}名(在籍・休会・退会を含む)` : ''}
+                </p>
+                {demographicsLoading ? (
+                    <p className="text-sm font-normal text-text-secondary">読み込み中...</p>
+                ) : demographics ? (
+                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                        <BreakdownList title="年齢層" items={demographics.ageGroups.map((a) => ({ label: a.label, count: a.count }))} />
+                        <BreakdownList title="男女比" items={demographics.genderBreakdown.map((g) => ({ label: g.label, count: g.count }))} />
+                        <BreakdownList title="職業傾向" items={demographics.jobBreakdown.map((j) => ({ label: j.label, count: j.count }))} note="自由入力(カウンセリング「職業」欄)の集計のため表記ゆれあり" />
+                        <BreakdownList title="主な入会目的" items={demographics.mainPurposeBreakdown.map((p) => ({ label: p.label, count: p.count }))} />
+                        <BreakdownList title="入会経路" items={demographics.routeBreakdown.map((r) => ({ label: r.label, count: r.count }))} />
+                    </div>
+                ) : (
+                    <p className="text-sm font-normal text-text-secondary">データを取得できませんでした</p>
+                )}
+                <p className="mt-4 text-xs font-normal text-text-secondary">
+                    ※職業・入会目的・入会経路は会員詳細の「カウンセリング」情報が入力されている会員のみ集計対象です(未入力分は「未入力」に集計)。
+                </p>
+            </div>
+
             <MemberMovementModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 data={selectedMonthData}
             />
+        </div>
+    )
+}
+
+function StatCard({ label, value, unit }: { label: string; value: number | string; unit: string }) {
+    return (
+        <div className="rounded-2xl border border-border-subtle bg-surface-base p-4">
+            <div className="text-xs font-normal text-text-secondary">{label}</div>
+            <div className="mt-1 flex items-baseline gap-1">
+                <span className="stat-value">{value}</span>
+                {unit && <span className="text-xs font-normal text-text-secondary">{unit}</span>}
+            </div>
+        </div>
+    )
+}
+
+function BreakdownList({
+    title,
+    items,
+    note,
+}: {
+    title: string
+    items: { label: string; count: number; unit?: string }[]
+    note?: string
+}) {
+    return (
+        <div className="rounded-2xl border border-border-subtle bg-surface-base p-4">
+            <h4 className="text-sm font-semibold text-text-primary">{title}</h4>
+            <div className="mt-2 space-y-1.5">
+                {items.length === 0 ? (
+                    <p className="text-sm font-normal text-text-secondary">データがありません</p>
+                ) : (
+                    items.map((item) => (
+                        <div key={item.label} className="flex items-center justify-between text-sm font-normal text-text-secondary">
+                            <span className="truncate text-text-primary">{item.label}</span>
+                            <span className="shrink-0 tabular-nums">{item.count}{item.unit || '件'}</span>
+                        </div>
+                    ))
+                )}
+            </div>
+            {note && <p className="mt-2 text-xs font-normal text-text-secondary">{note}</p>}
         </div>
     )
 }

@@ -128,7 +128,6 @@ const AdminDashboard = () => {
             <div className="grid grid-cols-3 gap-x-2 gap-y-6 sm:grid-cols-4">
               <OtherGridItem href="/admin/shifts" label="シフト管理" iconName="clock" />
               <OtherGridItem href="/admin/payroll" label="給与計算" iconName="currencyYen" />
-              <OtherGridItem href="/admin/capacity" label="稼働率" iconName="chartBar" />
               <OtherGridItem href="/admin/online-lesson" label="オンライン" iconName="video" />
               <OtherGridItem href="/admin/trainers" label="トレーナー管理" iconName="academicCap" />
               <OtherGridItem href="/admin/stores" label="店舗管理" iconName="building" />
