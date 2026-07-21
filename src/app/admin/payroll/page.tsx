@@ -445,59 +445,54 @@ export default function AdminPayrollPage() {
       )}
 
       {selected && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setSelected(null)} />
-          <div className="relative bg-surface-raised rounded-lg border border-border-strong shadow-lg w-full max-w-5xl max-h-[92vh] overflow-hidden flex flex-col">
-            <div className="p-4 border-b border-border-subtle flex items-start justify-between gap-3">
-              <div>
-                <h2 className="text-xl font-semibold text-text-primary">{selected.trainer.fullName}</h2>
-                <p className="text-xs text-text-muted mt-1">{month} の給与明細</p>
-              </div>
-              <Button type="button" variant="ghost" size="sm" className="h-9 w-9 rounded-full p-0 text-text-muted hover:text-text-primary" onClick={() => setSelected(null)}>
-                <Icon name="close" size={20} />
-              </Button>
+        <AppModal
+          title={(
+            <div className="min-w-0">
+              <div className="truncate">{selected.trainer.fullName}</div>
+              <p className="mt-0.5 text-xs font-normal text-text-muted">{month} の給与明細</p>
             </div>
+          )}
+          onClose={() => setSelected(null)}
+          size="xl"
+          bodyClassName="space-y-4 p-4"
+        >
+          <PayrollWorkCalendar rows={selected.rows} month={month} />
 
-            <div className="flex-1 min-h-0 overflow-auto p-4 space-y-4">
-              <PayrollWorkCalendar rows={selected.rows} month={month} />
-
-              <div>
-                <h3 className="text-sm font-semibold text-text-primary mb-1">日付と値段の計算</h3>
-                <p className="text-xs text-text-secondary mb-2">実労働時間 × その日に適用される時給、で1日ごとに計算しています。</p>
-                <div className="space-y-1.5">
-                  {detailBreakdownRows.length === 0 ? (
-                    <p className="text-sm text-text-secondary">対象データがありません</p>
-                  ) : detailBreakdownRows.map(row => (
-                    <div key={row.key} className="flex items-center justify-between gap-3 rounded-lg border border-border-subtle bg-surface-base px-3 py-2">
-                      <div className="min-w-0">
-                        <div className="text-sm text-text-primary">
-                          {formatDateLabel(row.workDate)}
-                          {row.countsForTransportation && (
-                            <span className="ml-2 text-xs text-brand-400">交通費対象</span>
-                          )}
-                        </div>
-                        <div className="mt-0.5 text-xs tabular-nums text-text-secondary">
-                          {formatTime(row.clockIn)}〜{formatTime(row.clockOut)}(休憩{row.breakMinutes}分)
-                        </div>
-                      </div>
-                      <div className="shrink-0 text-right">
-                        <div className="text-sm tabular-nums text-text-primary">{formatYen(row.pay)}</div>
-                        <div className="mt-0.5 text-xs tabular-nums text-text-secondary">
-                          {formatYen(row.wage)} × {formatHours(row.hours)}h
-                        </div>
-                      </div>
+          <div>
+            <h3 className="text-sm font-semibold text-text-primary mb-1">日付と値段の計算</h3>
+            <p className="text-xs text-text-secondary mb-2">実労働時間 × その日に適用される時給、で1日ごとに計算しています。</p>
+            <div className="space-y-1.5">
+              {detailBreakdownRows.length === 0 ? (
+                <p className="text-sm text-text-secondary">対象データがありません</p>
+              ) : detailBreakdownRows.map(row => (
+                <div key={row.key} className="flex items-center justify-between gap-3 rounded-lg border border-border-subtle bg-surface-base px-3 py-2">
+                  <div className="min-w-0">
+                    <div className="text-sm text-text-primary">
+                      {formatDateLabel(row.workDate)}
+                      {row.countsForTransportation && (
+                        <span className="ml-2 text-xs text-brand-400">交通費対象</span>
+                      )}
                     </div>
-                  ))}
+                    <div className="mt-0.5 text-xs tabular-nums text-text-secondary">
+                      {formatTime(row.clockIn)}〜{formatTime(row.clockOut)}(休憩{row.breakMinutes}分)
+                    </div>
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <div className="text-sm tabular-nums text-text-primary">{formatYen(row.pay)}</div>
+                    <div className="mt-0.5 text-xs tabular-nums text-text-secondary">
+                      {formatYen(row.wage)} × {formatHours(row.hours)}h
+                    </div>
+                  </div>
                 </div>
-              </div>
-
-              <div className="flex justify-between rounded-lg border border-border-subtle bg-surface-base p-3 text-sm">
-                <span className="text-text-secondary">基本給(上記の日別合計)</span>
-                <span className="tabular-nums text-text-primary">{formatYen(selected.totals.basePay)}</span>
-              </div>
+              ))}
             </div>
           </div>
-        </div>
+
+          <div className="flex justify-between rounded-lg border border-border-subtle bg-surface-base p-3 text-sm">
+            <span className="text-text-secondary">基本給(上記の日別合計)</span>
+            <span className="tabular-nums text-text-primary">{formatYen(selected.totals.basePay)}</span>
+          </div>
+        </AppModal>
       )}
 
       {settingsOpen && settingsItem && (
