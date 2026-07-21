@@ -9,7 +9,7 @@ import { useStoreChange } from '@/hooks/useStoreChange'
 import Icon from '@/components/ui/icons'
 import AppModal from '@/components/ui/AppModal'
 import Button from '@/components/ui/Button'
-import { autoBreakMinutes, calculatePayrollTotals, findHourlyWage, payableHours, PayRate } from '@/lib/payroll'
+import { findHourlyWage, payableHours, PayRate } from '@/lib/payroll'
 
 type PayrollRow = {
   id: string | null
@@ -76,22 +76,6 @@ function formatYen(value: number) {
 
 function formatHours(value: number) {
   return Number.isInteger(value) ? String(value) : String(Math.round(value * 100) / 100)
-}
-
-function toDateTimeLocal(value: string) {
-  if (!value) return ''
-  const date = new Date(value)
-  const pad = (n: number) => String(n).padStart(2, '0')
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
-}
-
-function fromDateTimeLocal(value: string) {
-  if (!value) return ''
-  return new Date(value).toISOString()
-}
-
-function localDateTimeIso(date: string, time: string) {
-  return new Date(`${date}T${time}:00`).toISOString()
 }
 
 function getMonthCalendarDays(month: string) {
@@ -198,14 +182,6 @@ export default function AdminPayrollPage() {
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [selected, setSelected] = useState<PayrollItem | null>(null)
-  const [editRows, setEditRows] = useState<PayrollRow[]>([])
-  const [allowanceAmount, setAllowanceAmount] = useState('0')
-  const [adjustmentAmount, setAdjustmentAmount] = useState('0')
-  const [breakRuleThresholdHours, setBreakRuleThresholdHours] = useState('8')
-  const [breakRuleMinutes, setBreakRuleMinutes] = useState('120')
-  const [hourlyWage, setHourlyWage] = useState('')
-  const [hourlyWageEffectiveFrom, setHourlyWageEffectiveFrom] = useState('')
-  const [memo, setMemo] = useState('')
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [settingsTrainerId, setSettingsTrainerId] = useState('')
   const [settingsHourlyWage, setSettingsHourlyWage] = useState('')
@@ -281,81 +257,16 @@ export default function AdminPayrollPage() {
 
   const openDetail = (item: PayrollItem) => {
     setSelected(item)
-    setEditRows(item.rows)
-    setAllowanceAmount(String(item.month?.allowance_amount || 0))
-    setAdjustmentAmount(String(item.month?.adjustment_amount || 0))
-    setBreakRuleThresholdHours(String((item.trainer.breakRuleThresholdMinutes || 480) / 60))
-    setBreakRuleMinutes(String(item.trainer.breakRuleMinutes || 120))
-    const nextRate = [...(item.rates || [])]
-      .filter(rate => rate.effective_from >= `${month}-01`)
-      .sort((a, b) => b.effective_from.localeCompare(a.effective_from))[0]
-    const latestRate = [...(item.rates || [])]
-      .sort((a, b) => b.effective_from.localeCompare(a.effective_from))[0]
-    setHourlyWage(String(nextRate?.hourly_wage || latestRate?.hourly_wage || ''))
-    setHourlyWageEffectiveFrom(nextRate?.effective_from || nextMonthStartDate(month))
-    setMemo(item.month?.memo || '')
-  }
-
-  const updateRow = (index: number, patch: Partial<PayrollRow>) => {
-    setEditRows(rows => rows.map((row, i) => i === index ? { ...row, ...patch } : row))
-  }
-
-  const currentBreakRule = useMemo(() => ({
-    thresholdMinutes: Math.max(0, Math.round(Number(breakRuleThresholdHours || 0) * 60)),
-    breakMinutes: Math.max(0, Math.floor(Number(breakRuleMinutes || 0)))
-  }), [breakRuleThresholdHours, breakRuleMinutes])
-
-  const updateRowTime = (index: number, patch: Partial<PayrollRow>) => {
-    setEditRows(rows => rows.map((row, i) => {
-      if (i !== index) return row
-      const nextRow = { ...row, ...patch }
-      return {
-        ...nextRow,
-        breakMinutes: autoBreakMinutes(nextRow.clockIn, nextRow.clockOut, currentBreakRule)
-      }
-    }))
-  }
-
-  const applyBreakRuleToRows = () => {
-    setEditRows(rows => rows.map(row => ({
-      ...row,
-      breakMinutes: autoBreakMinutes(row.clockIn, row.clockOut, currentBreakRule)
-    })))
-  }
-
-  const addRow = () => {
-    const date = `${month}-01`
-    setEditRows(rows => [
-      ...rows,
-      {
-        id: null,
-        shiftId: null,
-        workDate: date,
-        scheduledStart: null,
-        scheduledEnd: null,
-        clockIn: localDateTimeIso(date, '09:00'),
-        clockOut: localDateTimeIso(date, '10:00'),
-        breakMinutes: autoBreakMinutes(localDateTimeIso(date, '09:00'), localDateTimeIso(date, '10:00'), currentBreakRule),
-        transportationEnabled: true,
-        attended: false,
-        memo: '',
-        source: 'saved'
-      }
-    ])
-  }
-
-  const removeUnsavedRow = (index: number) => {
-    setEditRows(rows => rows.filter((_, i) => i !== index))
   }
 
   const detailBreakdownRows = useMemo(() => {
     if (!selected) return []
-    return editRows
+    return selected.rows
       .map((row, index) => {
         const hours = payableHours(row.clockIn, row.clockOut, row.breakMinutes)
         const wage = findHourlyWage(selected.rates, row.workDate)
         return {
-          key: row.id || row.shiftId || `new-${index}`,
+          key: row.id || row.shiftId || `row-${index}`,
           workDate: row.workDate,
           clockIn: row.clockIn,
           clockOut: row.clockOut,
@@ -368,53 +279,7 @@ export default function AdminPayrollPage() {
       })
       .filter(row => row.hours > 0)
       .sort((a, b) => a.clockIn.localeCompare(b.clockIn))
-  }, [selected, editRows])
-
-  const detailTotals = useMemo(() => {
-    if (!selected) return null
-    return calculatePayrollTotals(
-      editRows.map(row => ({
-        work_date: row.workDate,
-        clock_in: row.clockIn,
-        clock_out: row.clockOut,
-        break_minutes: row.breakMinutes,
-        transportation_enabled: row.transportationEnabled
-      })),
-      selected.rates,
-      selected.trainer.dailyTransportationCost,
-      Number(allowanceAmount || 0),
-      Number(adjustmentAmount || 0)
-    )
-  }, [selected, editRows, allowanceAmount, adjustmentAmount])
-
-  const saveDetail = async (statusValue: 'draft' | 'confirmed') => {
-    if (!selected) return
-    try {
-      setSaving(true)
-      const res = await fetch('/api/admin/payroll', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          trainerId: selected.trainer.id,
-          month,
-          rows: editRows,
-          allowanceAmount: Number(allowanceAmount || 0),
-          adjustmentAmount: Number(adjustmentAmount || 0),
-          memo,
-          status: statusValue
-        })
-      })
-      if (!res.ok) throw new Error(await res.text())
-      setSelected(null)
-      await fetchPayroll()
-    } catch (error) {
-      console.error(error)
-      alert('保存できませんでした。もう一度お試しください。')
-    } finally {
-      setSaving(false)
-    }
-  }
+  }, [selected])
 
   const selectedPayrollItem = useMemo(() => {
     return items.find(item => item.trainer.id === payrollTrainerId) || null
@@ -532,11 +397,19 @@ export default function AdminPayrollPage() {
           </div>
           <div className="mt-3 grid grid-cols-2 gap-2">
             <div className="rounded-2xl bg-surface-base px-4 py-3">
-              <div className="text-xs text-text-muted">勤務</div>
+              <div className="text-xs text-text-muted">基本給</div>
+              <div className="mt-1 text-sm font-normal text-text-primary">{formatYen(selectedPayrollItem.totals.basePay)}</div>
+            </div>
+            <div className="rounded-2xl bg-surface-base px-4 py-3">
+              <div className="text-xs text-text-muted">交通費</div>
+              <div className="mt-1 text-sm font-normal text-text-primary">{formatYen(selectedPayrollItem.totals.transportationPay)}</div>
+            </div>
+            <div className="rounded-2xl bg-surface-base px-4 py-3">
+              <div className="text-xs text-text-muted">勤務時間</div>
               <div className="mt-1 text-sm font-normal text-text-primary">{formatHours(selectedPayrollItem.totals.payableHourTotal)}時間</div>
             </div>
             <div className="rounded-2xl bg-surface-base px-4 py-3">
-              <div className="text-xs text-text-muted">出勤</div>
+              <div className="text-xs text-text-muted">出勤日数</div>
               <div className="mt-1 text-sm font-normal text-text-primary">{selectedPayrollItem.totals.transportationDays}日</div>
             </div>
           </div>
@@ -571,7 +444,7 @@ export default function AdminPayrollPage() {
         </div>
       )}
 
-      {selected && detailTotals && (
+      {selected && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3">
           <div className="absolute inset-0 bg-black/40" onClick={() => setSelected(null)} />
           <div className="relative bg-surface-raised rounded-lg border border-border-strong shadow-lg w-full max-w-5xl max-h-[92vh] overflow-hidden flex flex-col">
@@ -585,35 +458,13 @@ export default function AdminPayrollPage() {
               </Button>
             </div>
 
-            <div className="overflow-auto p-4 space-y-4">
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                <div className="bg-surface-base rounded-lg p-3">
-                  <div className="text-xs text-text-muted">計算時間</div>
-                  <div className="text-sm font-semibold text-text-primary mt-1">{formatHours(detailTotals.payableHourTotal)}時間</div>
-                </div>
-                <div className="bg-surface-base rounded-lg p-3">
-                  <div className="text-xs text-text-muted">基本給</div>
-                  <div className="text-sm font-semibold text-text-primary mt-1">{formatYen(detailTotals.basePay)}</div>
-                </div>
-                <div className="bg-surface-base rounded-lg p-3">
-                  <div className="text-xs text-text-muted">交通費</div>
-                  <div className="text-sm font-semibold text-text-primary mt-1">{formatYen(detailTotals.transportationPay)}</div>
-                </div>
-                <div className="bg-surface-base rounded-lg p-3">
-                  <div className="text-xs text-text-muted">手当・調整</div>
-                  <div className="text-sm font-semibold text-text-primary mt-1">{formatYen(Number(allowanceAmount || 0) + Number(adjustmentAmount || 0))}</div>
-                </div>
-                <div className="bg-surface-base rounded-lg p-3">
-                  <div className="text-xs text-text-muted">支給見込み</div>
-                  <div className="text-sm font-semibold text-text-primary mt-1">{formatYen(detailTotals.totalPay)}</div>
-                </div>
-              </div>
+            <div className="flex-1 min-h-0 overflow-auto p-4 space-y-4">
+              <PayrollWorkCalendar rows={selected.rows} month={month} />
 
               <div>
-                <h3 className="text-sm font-semibold text-text-primary mb-1">内訳(日別)</h3>
+                <h3 className="text-sm font-semibold text-text-primary mb-1">日付と値段の計算</h3>
                 <p className="text-xs text-text-secondary mb-2">実労働時間 × その日に適用される時給、で1日ごとに計算しています。</p>
-                <PayrollWorkCalendar rows={editRows} month={month} />
-                <div className="mt-3 space-y-1.5">
+                <div className="space-y-1.5">
                   {detailBreakdownRows.length === 0 ? (
                     <p className="text-sm text-text-secondary">対象データがありません</p>
                   ) : detailBreakdownRows.map(row => (
@@ -640,50 +491,10 @@ export default function AdminPayrollPage() {
                 </div>
               </div>
 
-              <div className="space-y-1.5 rounded-lg border border-border-subtle bg-surface-base p-3 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-text-secondary">基本給(上記の日別合計)</span>
-                  <span className="tabular-nums text-text-primary">{formatYen(detailTotals.basePay)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-text-secondary">交通費 = {formatYen(selected.trainer.dailyTransportationCost)} × {detailTotals.transportationDays}日</span>
-                  <span className="tabular-nums text-text-primary">{formatYen(detailTotals.transportationPay)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-text-secondary">手当</span>
-                  <span className="tabular-nums text-text-primary">{formatYen(Number(allowanceAmount || 0))}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-text-secondary">調整金額</span>
-                  <span className="tabular-nums text-text-primary">{formatYen(Number(adjustmentAmount || 0))}</span>
-                </div>
-                <div className="flex justify-between border-t border-border-subtle pt-1.5 font-semibold">
-                  <span className="text-text-primary">支給見込み合計</span>
-                  <span className="tabular-nums text-text-primary">{formatYen(detailTotals.totalPay)}</span>
-                </div>
+              <div className="flex justify-between rounded-lg border border-border-subtle bg-surface-base p-3 text-sm">
+                <span className="text-text-secondary">基本給(上記の日別合計)</span>
+                <span className="tabular-nums text-text-primary">{formatYen(selected.totals.basePay)}</span>
               </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <label className="text-xs text-text-secondary">
-                  手当
-                  <input className="mt-1 w-full border rounded-lg px-3 py-2 text-sm" type="number" value={allowanceAmount} onChange={(e) => setAllowanceAmount(e.target.value)} />
-                </label>
-                <label className="text-xs text-text-secondary">
-                  調整金額
-                  <input className="mt-1 w-full border rounded-lg px-3 py-2 text-sm" type="number" value={adjustmentAmount} onChange={(e) => setAdjustmentAmount(e.target.value)} />
-                </label>
-                <label className="text-xs text-text-secondary">
-                  メモ
-                  <input className="mt-1 w-full border rounded-lg px-3 py-2 text-sm" value={memo} onChange={(e) => setMemo(e.target.value)} />
-                </label>
-              </div>
-
-            </div>
-
-            <div className="p-4 border-t border-border-subtle flex justify-end gap-3">
-              <Button type="button" variant="ghost" size="sm" className="rounded-lg" onClick={() => setSelected(null)} disabled={saving}>キャンセル</Button>
-              <Button type="button" variant="secondary" size="sm" className="rounded-lg" onClick={() => saveDetail('draft')} disabled={saving}>保存</Button>
-              <Button type="button" size="sm" className="rounded-lg" onClick={() => saveDetail('confirmed')} disabled={saving}>確定</Button>
             </div>
           </div>
         </div>
