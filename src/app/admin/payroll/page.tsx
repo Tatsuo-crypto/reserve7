@@ -58,17 +58,6 @@ type StoreOption = {
   name: string
 }
 
-type PayrollBreakdownRow = {
-  key: string
-  trainerName: string
-  workDate: string
-  clockIn: string
-  clockOut: string
-  hours: number
-  wage: number
-  pay: number
-}
-
 function currentMonth() {
   const now = new Date()
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
@@ -141,42 +130,6 @@ function formatTime(value: string) {
 
 function formatDateLabel(value: string) {
   return format(new Date(`${value}T00:00:00`), 'M/d(E)', { locale: ja })
-}
-
-function buildPayrollBreakdown(items: PayrollItem[]) {
-  const rows: PayrollBreakdownRow[] = items
-    .flatMap(item => item.rows.map((row, index) => {
-      const hours = payableHours(row.clockIn, row.clockOut, row.breakMinutes)
-      const wage = findHourlyWage(item.rates, row.workDate)
-      return {
-        key: `${item.trainer.id}-${row.id || row.shiftId || index}`,
-        trainerName: item.trainer.fullName,
-        workDate: row.workDate,
-        clockIn: row.clockIn,
-        clockOut: row.clockOut,
-        hours,
-        wage,
-        pay: Math.round(hours * wage)
-      }
-    }))
-    .filter(row => row.hours > 0)
-    .sort((a, b) => a.clockIn.localeCompare(b.clockIn))
-
-  const basePay = rows.reduce((sum, row) => sum + row.pay, 0)
-  const transportationPay = items.reduce((sum, item) => sum + item.totals.transportationPay, 0)
-  const adjustmentPay = items.reduce((sum, item) => (
-    sum + (item.month?.allowance_amount || 0) + (item.month?.adjustment_amount || 0)
-  ), 0)
-  const hours = rows.reduce((sum, row) => sum + row.hours, 0)
-
-  return {
-    rows,
-    hours,
-    basePay,
-    transportationPay,
-    adjustmentPay,
-    totalPay: basePay + transportationPay + adjustmentPay
-  }
 }
 
 function PayrollWorkCalendar({ rows, month }: { rows: PayrollRow[], month: string }) {
@@ -253,7 +206,6 @@ export default function AdminPayrollPage() {
   const [hourlyWage, setHourlyWage] = useState('')
   const [hourlyWageEffectiveFrom, setHourlyWageEffectiveFrom] = useState('')
   const [memo, setMemo] = useState('')
-  const [breakdownOpen, setBreakdownOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [settingsTrainerId, setSettingsTrainerId] = useState('')
   const [settingsHourlyWage, setSettingsHourlyWage] = useState('')
@@ -396,6 +348,28 @@ export default function AdminPayrollPage() {
     setEditRows(rows => rows.filter((_, i) => i !== index))
   }
 
+  const detailBreakdownRows = useMemo(() => {
+    if (!selected) return []
+    return editRows
+      .map((row, index) => {
+        const hours = payableHours(row.clockIn, row.clockOut, row.breakMinutes)
+        const wage = findHourlyWage(selected.rates, row.workDate)
+        return {
+          key: row.id || row.shiftId || `new-${index}`,
+          workDate: row.workDate,
+          clockIn: row.clockIn,
+          clockOut: row.clockOut,
+          breakMinutes: row.breakMinutes,
+          hours,
+          wage,
+          pay: Math.round(hours * wage),
+          countsForTransportation: hours > 0 && row.transportationEnabled !== false
+        }
+      })
+      .filter(row => row.hours > 0)
+      .sort((a, b) => a.clockIn.localeCompare(b.clockIn))
+  }, [selected, editRows])
+
   const detailTotals = useMemo(() => {
     if (!selected) return null
     return calculatePayrollTotals(
@@ -446,19 +420,6 @@ export default function AdminPayrollPage() {
     return items.find(item => item.trainer.id === payrollTrainerId) || null
   }, [items, payrollTrainerId])
 
-  const breakdownItems = useMemo(() => {
-    return selectedPayrollItem ? [selectedPayrollItem] : []
-  }, [selectedPayrollItem])
-
-  const summaryTotals = useMemo(() => {
-    if (!selectedPayrollItem) return { hours: 0, total: 0 }
-    return {
-      hours: selectedPayrollItem.totals.payableHourTotal,
-      total: selectedPayrollItem.totals.totalPay
-    }
-  }, [selectedPayrollItem])
-
-  const summaryBreakdown = useMemo(() => buildPayrollBreakdown(breakdownItems), [breakdownItems])
   const settingsItem = useMemo(() => {
     return items.find(item => item.trainer.id === settingsTrainerId) || items[0] || null
   }, [items, settingsTrainerId])
@@ -648,6 +609,60 @@ export default function AdminPayrollPage() {
                 </div>
               </div>
 
+              <div>
+                <h3 className="text-sm font-semibold text-text-primary mb-1">内訳(日別)</h3>
+                <p className="text-xs text-text-secondary mb-2">実労働時間 × その日に適用される時給、で1日ごとに計算しています。</p>
+                <PayrollWorkCalendar rows={editRows} month={month} />
+                <div className="mt-3 space-y-1.5">
+                  {detailBreakdownRows.length === 0 ? (
+                    <p className="text-sm text-text-secondary">対象データがありません</p>
+                  ) : detailBreakdownRows.map(row => (
+                    <div key={row.key} className="flex items-center justify-between gap-3 rounded-lg border border-border-subtle bg-surface-base px-3 py-2">
+                      <div className="min-w-0">
+                        <div className="text-sm text-text-primary">
+                          {formatDateLabel(row.workDate)}
+                          {row.countsForTransportation && (
+                            <span className="ml-2 text-xs text-brand-400">交通費対象</span>
+                          )}
+                        </div>
+                        <div className="mt-0.5 text-xs tabular-nums text-text-secondary">
+                          {formatTime(row.clockIn)}〜{formatTime(row.clockOut)}(休憩{row.breakMinutes}分)
+                        </div>
+                      </div>
+                      <div className="shrink-0 text-right">
+                        <div className="text-sm tabular-nums text-text-primary">{formatYen(row.pay)}</div>
+                        <div className="mt-0.5 text-xs tabular-nums text-text-secondary">
+                          {formatYen(row.wage)} × {formatHours(row.hours)}h
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-1.5 rounded-lg border border-border-subtle bg-surface-base p-3 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-text-secondary">基本給(上記の日別合計)</span>
+                  <span className="tabular-nums text-text-primary">{formatYen(detailTotals.basePay)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-text-secondary">交通費 = {formatYen(selected.trainer.dailyTransportationCost)} × {detailTotals.transportationDays}日</span>
+                  <span className="tabular-nums text-text-primary">{formatYen(detailTotals.transportationPay)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-text-secondary">手当</span>
+                  <span className="tabular-nums text-text-primary">{formatYen(Number(allowanceAmount || 0))}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-text-secondary">調整金額</span>
+                  <span className="tabular-nums text-text-primary">{formatYen(Number(adjustmentAmount || 0))}</span>
+                </div>
+                <div className="flex justify-between border-t border-border-subtle pt-1.5 font-semibold">
+                  <span className="text-text-primary">支給見込み合計</span>
+                  <span className="tabular-nums text-text-primary">{formatYen(detailTotals.totalPay)}</span>
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <label className="text-xs text-text-secondary">
                   手当
@@ -774,74 +789,6 @@ export default function AdminPayrollPage() {
                 </label>
               </section>
         </AppModal>
-      )}
-
-      {breakdownOpen && (
-        <div className="fixed inset-0 z-[100] flex items-end justify-center sm:items-center">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setBreakdownOpen(false)} />
-          <div className="relative flex max-h-[calc(100dvh-24px)] w-full max-w-3xl flex-col overflow-hidden rounded-t-2xl border border-border-subtle bg-surface-raised shadow-xl sm:max-h-[90vh] sm:rounded-2xl">
-            <div className="flex items-start justify-between gap-3 border-b border-border-subtle p-4">
-              <div>
-                <h2 className="text-xl font-semibold text-text-primary">支給計算</h2>
-                <p className="mt-1 text-xs text-text-muted">{formatHours(summaryBreakdown.hours)}時間 / {formatYen(summaryBreakdown.totalPay)}</p>
-              </div>
-              <Button type="button" variant="secondary" size="sm" className="h-9 w-9 rounded-full bg-surface-base p-0 text-text-secondary" onClick={() => setBreakdownOpen(false)}>
-                <Icon name="close" size={18} />
-              </Button>
-            </div>
-
-            <div className="overflow-auto p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
-              {selectedPayrollItem && (
-                <div className="mb-4">
-                  <PayrollWorkCalendar rows={selectedPayrollItem.rows} month={month} />
-                </div>
-              )}
-
-              <div className="space-y-2">
-                {summaryBreakdown.rows.map(row => (
-                  <div key={row.key} className="rounded-2xl border border-border-subtle bg-surface-base px-4 py-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="text-sm text-text-primary">
-                          {formatDateLabel(row.workDate)}
-                          <span className="ml-2 text-text-secondary">{row.trainerName}</span>
-                        </div>
-                        <div className="mt-1 text-xs tabular-nums text-text-secondary">
-                          {formatTime(row.clockIn)}〜{formatTime(row.clockOut)}
-                        </div>
-                      </div>
-                      <div className="shrink-0 text-right">
-                        <div className="text-sm tabular-nums text-text-primary">{formatYen(row.pay)}</div>
-                        <div className="mt-1 text-xs tabular-nums text-text-secondary">
-                          {formatYen(row.wage)} × {formatHours(row.hours)}h = {formatYen(row.pay)}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-4 space-y-2 rounded-2xl border border-border-subtle bg-surface-base p-4">
-                <div className="flex justify-between text-sm">
-                  <span className="text-text-secondary">基本給</span>
-                  <span className="tabular-nums text-text-primary">{formatYen(summaryBreakdown.basePay)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-text-secondary">交通費</span>
-                  <span className="tabular-nums text-text-primary">{formatYen(summaryBreakdown.transportationPay)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-text-secondary">手当・調整</span>
-                  <span className="tabular-nums text-text-primary">{formatYen(summaryBreakdown.adjustmentPay)}</span>
-                </div>
-                <div className="flex justify-between border-t border-border-subtle pt-3 text-sm">
-                  <span className="text-text-primary">合計</span>
-                  <span className="tabular-nums text-text-primary">{formatYen(summaryBreakdown.totalPay)}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
       )}
     </div>
   )
