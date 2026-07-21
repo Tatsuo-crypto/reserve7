@@ -100,6 +100,16 @@
   .stat-unit {
     @apply text-xs font-normal text-text-muted;
   }
+
+  /*
+    AB-4: 文字サイズ4段化の「グリッドセル例外」トークン。
+    カレンダー月表示セル・グラフ軸ラベルなど、物理的に幅が制約される箇所だけの
+    唯一の許可値(10px)。生のtext-[10px]/[8px]/[11px]直書きはここに集約し、
+    N-6ゲート「4トークン＋text-cell以外のtext-*使用0件」で守る。
+  */
+  .text-cell {
+    @apply text-[10px] leading-none;
+  }
 }
 
 @layer utilities {

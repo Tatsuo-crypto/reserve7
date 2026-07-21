@@ -68,8 +68,10 @@ export default function TrainerDashboardPage() {
     return (
       <div className="min-h-screen bg-surface-base flex items-center justify-center">
         <div className="text-center">
-          <div className="text-red-500 text-6xl mb-4">⚠️</div>
-          <h1 className="text-2xl font-normal text-text-primary mb-2">アクセスエラー</h1>
+          <div className="mb-4 flex justify-center">
+            <Icon name="warning" size={48} className="text-red-500" />
+          </div>
+          <h1 className="text-xl font-semibold text-text-primary mb-2">アクセスエラー</h1>
           <p className="text-text-secondary">{error || '無効なURLです'}</p>
         </div>
       </div>
