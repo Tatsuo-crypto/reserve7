@@ -208,7 +208,7 @@ export default function PushNotificationPrompt({ token }: PushNotificationPrompt
       </div>
 
       {(supportMessage || message || permission === 'denied') && (
-        <div className="mt-3 rounded-xl bg-surface-overlay px-3 py-2 text-xs leading-relaxed text-text-secondary">
+        <div className="mt-3 rounded-lg bg-surface-overlay px-3 py-2 text-xs leading-relaxed text-text-secondary">
           {permission === 'denied'
             ? 'ブラウザ設定で通知がブロックされています。設定から通知を許可してください。'
             : supportMessage || message}

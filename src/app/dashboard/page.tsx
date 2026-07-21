@@ -29,7 +29,7 @@ function OtherGridItem({ href, label, iconName }: { href: string, label: string,
       <div className="flex h-12 items-center justify-center text-text-secondary transition-colors group-hover:text-text-primary">
         <Icon name={iconName} size={40} />
       </div>
-      <div className="mt-2 text-[12px] font-normal leading-snug text-text-secondary transition-colors group-hover:text-text-primary">
+      <div className="mt-2 text-xs font-normal leading-snug text-text-secondary transition-colors group-hover:text-text-primary">
         {label}
       </div>
     </Link>
