@@ -6,6 +6,7 @@ import { getStoreDisplayName } from '@/lib/auth-utils'
 import CalendarView from '@/components/CalendarView'
 import Button from '@/components/ui/Button'
 import Icon from '@/components/ui/icons'
+import ConsentGate from '@/components/ConsentGate'
 
 interface Trainer {
   id: string
@@ -84,6 +85,7 @@ export default function TrainerDashboardPage() {
   }
 
   return (
+    <ConsentGate subjectType="trainer_staff" subjectId={trainer?.id}>
     <div className="min-h-screen bg-surface-base">
       {/* Top Navigation */}
       <header className="bg-surface-raised/80 backdrop-blur-md border-b border-border-subtle sticky top-0 z-50 h-16">
@@ -135,5 +137,6 @@ export default function TrainerDashboardPage() {
         </Suspense>
       </div>
     </div>
+    </ConsentGate>
   )
 }

@@ -144,6 +144,11 @@ function LoginForm() {
             </Link>
           </div>
         </form>
+
+        <div className="flex justify-center gap-4 pt-2 text-xs font-normal text-text-secondary">
+          <Link href="/terms" target="_blank" className="underline underline-offset-2">利用規約</Link>
+          <Link href="/privacy" target="_blank" className="underline underline-offset-2">プライバシーポリシー</Link>
+        </div>
       </div>
     </div>
   )

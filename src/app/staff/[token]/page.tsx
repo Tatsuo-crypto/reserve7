@@ -4,6 +4,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import Button from '@/components/ui/Button'
 import Icon from '@/components/ui/icons'
+import ConsentGate from '@/components/ConsentGate'
 
 export default function StaffPage() {
   const params = useParams()
@@ -66,6 +67,7 @@ export default function StaffPage() {
   }
 
   return (
+    <ConsentGate subjectType="trainer_staff" subjectId={staff?.id}>
     <div className="min-h-screen bg-surface-base">
       {/* Header */}
       <header className="bg-surface-raised border-b border-border-strong shadow-sm sticky top-0 z-50">
@@ -113,5 +115,6 @@ export default function StaffPage() {
         </div>
       </div>
     </div>
+    </ConsentGate>
   )
 }

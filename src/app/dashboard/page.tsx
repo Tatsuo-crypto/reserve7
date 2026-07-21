@@ -8,6 +8,7 @@ import dynamic from 'next/dynamic'
 import { getStatusDotColor } from '@/lib/utils/member'
 import Icon, { IconName } from '@/components/ui/icons'
 import { fetchJsonCached } from '@/lib/client-fetch-cache'
+import ConsentGate from '@/components/ConsentGate'
 
 const CalendarView = dynamic(() => import('@/components/CalendarView'), {
   ssr: false,
@@ -152,10 +153,12 @@ export default function DashboardPage() {
   if (!session) return null;
 
   return (
+    <ConsentGate subjectType="admin" subjectId={session.user.role === 'ADMIN' ? session.user.id : null}>
     <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 py-3 sm:py-8">
       <Suspense fallback={null}>
         {session.user.role === 'ADMIN' ? <AdminDashboard /> : <div className="text-center py-20 font-normal">アクセス権限がありません</div>}
       </Suspense>
     </div>
+    </ConsentGate>
   );
 }

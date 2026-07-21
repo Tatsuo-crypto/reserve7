@@ -2,6 +2,7 @@
 
 import { useParams, useSearchParams, useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { useSession } from 'next-auth/react'
 import dynamic from 'next/dynamic'
 import HomeTab from '@/components/diet/HomeTab'
@@ -10,6 +11,7 @@ import PushNotificationPrompt from './PushNotificationPrompt'
 import Icon, { type IconName } from '@/components/ui/icons'
 import { fetchJsonCached } from '@/lib/client-fetch-cache'
 import Button from '@/components/ui/Button'
+import ConsentGate from '@/components/ConsentGate'
 
 const TabLoading = () => (
   <div className="h-56 flex items-center justify-center">
@@ -222,9 +224,10 @@ export default function ClientReservationsPage() {
   }
 
   return (
+    <ConsentGate subjectType="member" subjectId={fromAdmin && isAdmin ? null : userId}>
     <div className="min-h-screen bg-surface-base pb-20">
       {/* Universal AirPAY Header */}
-      <AdminHeader 
+      <AdminHeader
         title={tabTitles[activeTab]} 
         showBack={fromAdmin && isAdmin}
         onBack={() => router.push('/admin/members')}
@@ -297,7 +300,7 @@ export default function ClientReservationsPage() {
           />
         )}
         {activeTab === 'settings' && (
-          <SettingsTab token={token} />
+          <SettingsTab token={token} userId={userId} userName={userName} />
         )}
       </main>
 
@@ -358,6 +361,7 @@ export default function ClientReservationsPage() {
       </nav>
 
     </div>
+    </ConsentGate>
   )
 }
 
@@ -379,10 +383,75 @@ function CenterHomeBtn({ active, onClick }: { active: boolean, onClick: () => vo
   )
 }
 
-function SettingsTab({ token }: { token: string }) {
+function SettingsTab({ token, userId, userName }: { token: string; userId: string | null; userName: string }) {
   return (
     <div className="space-y-4 animate-fadeIn">
       <PushNotificationPrompt token={token} />
+      <DataRequestSection subjectType="member" subjectId={userId} subjectName={userName} />
+      <div className="flex justify-center gap-4 pb-4 pt-2 text-xs font-normal text-text-secondary">
+        <Link href="/terms" target="_blank" className="underline underline-offset-2">利用規約</Link>
+        <Link href="/privacy" target="_blank" className="underline underline-offset-2">プライバシーポリシー</Link>
+      </div>
+    </div>
+  )
+}
+
+function DataRequestSection({
+  subjectType,
+  subjectId,
+  subjectName,
+}: {
+  subjectType: 'member' | 'trainer_staff'
+  subjectId: string | null
+  subjectName?: string
+}) {
+  const [submittedType, setSubmittedType] = useState<'export' | 'delete' | null>(null)
+  const [pending, setPending] = useState<'export' | 'delete' | null>(null)
+  const [error, setError] = useState('')
+
+  const submit = async (requestType: 'export' | 'delete') => {
+    if (!subjectId) return
+    if (requestType === 'delete' && !window.confirm('データの削除をリクエストします。よろしいですか？この操作は取り消せません。')) {
+      return
+    }
+    setPending(requestType)
+    setError('')
+    try {
+      const res = await fetch('/api/data-requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subjectType, subjectId, subjectName, requestType }),
+      })
+      if (!res.ok) throw new Error('failed')
+      setSubmittedType(requestType)
+    } catch {
+      setError('リクエストの送信に失敗しました。しばらくしてからもう一度お試しください。')
+    } finally {
+      setPending(null)
+    }
+  }
+
+  return (
+    <div className="rounded-2xl border border-border-subtle bg-surface-raised p-4">
+      <h2 className="text-sm font-semibold text-text-primary">データの取り扱いについて</h2>
+      <p className="mt-1 text-xs font-normal text-text-secondary">
+        ご自身の記録データのエクスポート、またはアカウントデータの削除をリクエストできます。リクエスト後、運営者が対応いたします。
+      </p>
+      {submittedType ? (
+        <p className="mt-3 text-xs font-normal text-brand-300">
+          {submittedType === 'export' ? 'エクスポート' : '削除'}のリクエストを受け付けました。運営者からの連絡をお待ちください。
+        </p>
+      ) : (
+        <div className="mt-3 flex gap-2">
+          <Button type="button" variant="secondary" size="sm" disabled={!subjectId} loading={pending === 'export'} onClick={() => submit('export')}>
+            データをエクスポート
+          </Button>
+          <Button type="button" variant="destructive" size="sm" disabled={!subjectId} loading={pending === 'delete'} onClick={() => submit('delete')}>
+            データを削除
+          </Button>
+        </div>
+      )}
+      {error && <p className="mt-2 text-xs text-red-300">{error}</p>}
     </div>
   )
 }
