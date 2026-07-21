@@ -5,7 +5,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import {
     XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-    BarChart, Bar, ComposedChart, Area
+    BarChart, Bar, ComposedChart, Area, LineChart, Line
 } from 'recharts'
 import { useStoreChange } from '@/hooks/useStoreChange'
 import MemberMovementModal from './MemberMovementModal'
@@ -35,7 +35,11 @@ type CapacityData = {
     maxMonthlySessions: number
     utilizationRate: number | null
     monthlyTrend: { month: string; sessions: number; utilizationRate: number | null }[]
+    trainerMonthlyTrend: Record<string, string | number>[]
+    trainerNames: string[]
 }
+
+const TRAINER_TREND_COLORS = ['#f97316', '#38bdf8', '#a78bfa', '#34d399', '#f472b6', '#facc15', '#fb923c', '#60a5fa']
 
 type DemographicsData = {
     totalMembers: number
@@ -473,6 +477,38 @@ export default function AnalyticsPage() {
                                     </BarChart>
                                 </ResponsiveContainer>
                             </div>
+                        </div>
+
+                        <div>
+                            <h4 className="text-sm font-semibold text-text-primary mb-2">トレーナー別 セッション数の推移</h4>
+                            <p className="text-xs font-normal text-text-secondary mb-2">
+                                上部の期間セレクタに連動します。過去に在籍していたトレーナーも、期間内に実施履歴があれば表示されます。
+                            </p>
+                            <div className="h-[280px]">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <LineChart data={capacity.trainerMonthlyTrend}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#3f3f46" />
+                                        <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#a1a1aa' }} axisLine={{ stroke: '#3f3f46' }} tickLine={{ stroke: '#3f3f46' }} />
+                                        <YAxis tick={{ fontSize: 12, fill: '#a1a1aa' }} axisLine={{ stroke: '#3f3f46' }} tickLine={{ stroke: '#3f3f46' }} />
+                                        <Tooltip formatter={(value: any) => [`${value}件`, 'セッション数']} />
+                                        <Legend />
+                                        {capacity.trainerNames.length === 0 ? null : capacity.trainerNames.map((name, i) => (
+                                            <Line
+                                                key={name}
+                                                type="monotone"
+                                                dataKey={name}
+                                                name={name}
+                                                stroke={TRAINER_TREND_COLORS[i % TRAINER_TREND_COLORS.length]}
+                                                strokeWidth={2}
+                                                dot={{ r: 2 }}
+                                            />
+                                        ))}
+                                    </LineChart>
+                                </ResponsiveContainer>
+                            </div>
+                            {capacity.trainerNames.length === 0 && (
+                                <p className="text-sm font-normal text-text-secondary">データがありません</p>
+                            )}
                         </div>
 
                         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">

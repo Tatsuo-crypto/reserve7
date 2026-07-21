@@ -31,7 +31,7 @@ function resolvePeriodRange(period: string, today: Date): { start: Date; end: Da
 // 稼働率ダッシュボード用のデータをまとめて返す:
 // 1. 今月のセッション数 2. 所要時間の内訳 3. トレーナー別週間シフト時間・トレーナー別実際の稼働率
 // 4. 曜日・時間帯別の予約集中度 5. 現スタッフの週間稼働可能時間(→月間最大セッション数・稼働率)
-// 6. 月別セッション数の推移(過去分も含む)
+// 6. 月別セッション数の推移(過去分も含む) 7. トレーナー別・月別セッション数の推移(過去分も含む)
 export async function GET(request: NextRequest) {
   try {
     const user = await getAuthenticatedUser()
@@ -82,7 +82,7 @@ export async function GET(request: NextRequest) {
 
     const { data: trendReservations, error: trendError } = await supabaseAdmin
       .from('reservations')
-      .select('start_time')
+      .select('start_time, trainer_id')
       .not('client_id', 'is', null)
       .gte('start_time', rangeStart.toISOString())
       .lt('start_time', endOfMonth(rangeEnd).toISOString())
@@ -92,10 +92,45 @@ export async function GET(request: NextRequest) {
     }
 
     const sessionCountByMonth = new Map<string, number>()
+    // トレーナー別・月別のセッション数(在籍・退職を問わず、期間内に実施履歴があるトレーナーを対象)
+    const trainerSessionsByMonth = new Map<string, Map<string, number>>() // trainerId -> (yyyy-MM -> count)
+    const trendTrainerIds = new Set<string>()
     for (const r of trendReservations || []) {
       const key = format(new Date(r.start_time), 'yyyy-MM')
       sessionCountByMonth.set(key, (sessionCountByMonth.get(key) || 0) + 1)
+
+      if (r.trainer_id) {
+        trendTrainerIds.add(r.trainer_id)
+        if (!trainerSessionsByMonth.has(r.trainer_id)) {
+          trainerSessionsByMonth.set(r.trainer_id, new Map())
+        }
+        const monthMap = trainerSessionsByMonth.get(r.trainer_id)!
+        monthMap.set(key, (monthMap.get(key) || 0) + 1)
+      }
     }
+
+    // 推移グラフに登場するトレーナー(現在は退職済みでも期間内に実施履歴があれば含める)の氏名を取得
+    let trendTrainerNames: { id: string; fullName: string }[] = []
+    if (trendTrainerIds.size > 0) {
+      const { data: trendTrainersData, error: trendTrainersError } = await supabaseAdmin
+        .from('trainers')
+        .select('id, full_name')
+        .in('id', Array.from(trendTrainerIds))
+
+      if (trendTrainersError) {
+        console.error('Capacity: trend trainers error', trendTrainersError)
+      }
+      trendTrainerNames = (trendTrainersData || []).map((t) => ({ id: t.id, fullName: t.full_name }))
+    }
+
+    const trainerMonthlyTrend = monthList.map((date) => {
+      const key = format(date, 'yyyy-MM')
+      const entry: Record<string, string | number> = { month: key }
+      for (const t of trendTrainerNames) {
+        entry[t.fullName] = trainerSessionsByMonth.get(t.id)?.get(key) || 0
+      }
+      return entry
+    })
 
     const durationCounts = new Map<number, number>()
     const slotCounts = new Map<string, { weekday: number; hour: number; count: number }>()
@@ -218,6 +253,8 @@ export async function GET(request: NextRequest) {
       maxMonthlySessions,
       utilizationRate,
       monthlyTrend,
+      trainerMonthlyTrend,
+      trainerNames: trendTrainerNames.map((t) => t.fullName),
       calculatedAt: new Date().toISOString(),
     })
   } catch (error) {
