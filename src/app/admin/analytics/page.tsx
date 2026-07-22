@@ -17,41 +17,6 @@ type AnalyticsData = {
     projectedSales: number
 }
 
-type CapacityData = {
-    monthlySessions: number
-    durationBreakdown: { durationMinutes: number; count: number }[]
-    mostCommonDuration: number
-    popularSlots: { weekday: number; weekdayLabel: string; hour: number; count: number }[]
-    activeTrainerCount: number
-    trainerWeeklyHours: {
-        trainerId: string
-        fullName: string
-        weeklyHours: number
-        monthlySessions: number
-        maxMonthlySessions: number
-        utilizationRate: number | null
-    }[]
-    totalWeeklyHours: number
-    maxMonthlySessions: number
-    utilizationRate: number | null
-    monthlyTrend: { month: string; sessions: number; utilizationRate: number | null }[]
-    trainerMonthlyTrend: Record<string, string | number>[]
-    trainerNames: string[]
-    trainerMonthlyBreakdown: {
-        month: string
-        trainers: { trainerId: string; fullName: string; sessions: number; maxMonthlySessions: number; utilizationRate: number | null }[]
-    }[]
-}
-
-type DemographicsData = {
-    totalMembers: number
-    ageGroups: { label: string; count: number }[]
-    genderBreakdown: { label: string; count: number }[]
-    jobBreakdown: { label: string; count: number }[]
-    mainPurposeBreakdown: { label: string; count: number }[]
-    routeBreakdown: { label: string; count: number }[]
-}
-
 const ANALYTICS_CACHE_MS = 30 * 1000
 const analyticsCache = new Map<string, { timestamp: number, data: AnalyticsData }>()
 const analyticsPromises = new Map<string, Promise<AnalyticsData>>()
@@ -121,11 +86,6 @@ export default function AnalyticsPage() {
         projectedSales: 0
     })
     const [loading, setLoading] = useState(true)
-    const [capacity, setCapacity] = useState<CapacityData | null>(null)
-    const [capacityLoading, setCapacityLoading] = useState(true)
-    const [demographics, setDemographics] = useState<DemographicsData | null>(null)
-    const [demographicsLoading, setDemographicsLoading] = useState(true)
-    const [capacityMonth, setCapacityMonth] = useState<string>('')
 
     // Fetch stores list
     useEffect(() => {
@@ -177,63 +137,6 @@ export default function AnalyticsPage() {
             ignore = true
         }
     }, [filterStoreId, period])
-
-    // 稼働率(店舗をまたいだ全体値。トレーナーのシフトが店舗別に厳密紐付いていないため店舗フィルタ非対応)
-    // 月別推移は既存の期間セレクタ(period)に連動させる
-    useEffect(() => {
-        let ignore = false
-        setCapacityLoading(true)
-        fetch(`/api/admin/capacity?period=${period}`)
-            .then((res) => {
-                if (!res.ok) throw new Error('failed')
-                return res.json()
-            })
-            .then((json) => {
-                if (!ignore) setCapacity(json)
-            })
-            .catch((e) => {
-                if (!ignore) console.error('Failed to fetch capacity', e)
-            })
-            .finally(() => {
-                if (!ignore) setCapacityLoading(false)
-            })
-        return () => {
-            ignore = true
-        }
-    }, [period])
-
-    // トレーナー別稼働率の月選択: データ取得時、選択中の月が範囲外なら最新月を初期選択
-    useEffect(() => {
-        if (!capacity || capacity.trainerMonthlyBreakdown.length === 0) return
-        const months = capacity.trainerMonthlyBreakdown.map((m) => m.month)
-        if (!capacityMonth || !months.includes(capacityMonth)) {
-            setCapacityMonth(months[months.length - 1])
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [capacity])
-
-    // 会員統計(年齢層・男女比・職業・入会目的・入会経路)
-    useEffect(() => {
-        let ignore = false
-        setDemographicsLoading(true)
-        fetch(`/api/admin/demographics?storeId=${filterStoreId || 'all'}`)
-            .then((res) => {
-                if (!res.ok) throw new Error('failed')
-                return res.json()
-            })
-            .then((json) => {
-                if (!ignore) setDemographics(json)
-            })
-            .catch((e) => {
-                if (!ignore) console.error('Failed to fetch demographics', e)
-            })
-            .finally(() => {
-                if (!ignore) setDemographicsLoading(false)
-            })
-        return () => {
-            ignore = true
-        }
-    }, [filterStoreId])
 
     // Auto-scroll movement chart to the right (show latest month)
     useEffect(() => {
@@ -458,141 +361,11 @@ export default function AnalyticsPage() {
                 </div>
             </div>
 
-            {/* 稼働率 */}
-            <div className="mt-8 bg-surface-raised p-6 rounded-2xl shadow-sm border border-border-subtle">
-                <h3 className="text-xl font-semibold text-text-primary mb-1">稼働率</h3>
-                <p className="text-xs font-normal text-text-secondary mb-4">全店舗合算(トレーナーのシフトが店舗別に厳密紐付いていないため店舗フィルタ非対応)</p>
-                {capacityLoading ? (
-                    <p className="text-sm font-normal text-text-secondary">読み込み中...</p>
-                ) : capacity ? (
-                    <div className="space-y-6">
-                        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                            <StatCard label="今月のセッション数" value={capacity.monthlySessions} unit="件" />
-                            <StatCard label="稼働率" value={capacity.utilizationRate ?? '-'} unit={capacity.utilizationRate != null ? '%' : ''} />
-                            <StatCard label="月間最大セッション数" value={capacity.maxMonthlySessions} unit="件" />
-                            <StatCard label="在籍トレーナー数" value={capacity.activeTrainerCount} unit="名" />
-                        </div>
-
-                        <div>
-                            <h4 className="text-sm font-semibold text-text-primary mb-2">月別セッション数の推移</h4>
-                            <p className="text-xs font-normal text-text-secondary mb-2">
-                                上部の期間セレクタに連動します。稼働率(参考値)は現在のスタッフ体制を基準に計算しており、過去の実際のシフト体制とは異なる場合があります。
-                            </p>
-                            <div className="h-[260px]">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={capacity.monthlyTrend}>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#3f3f46" />
-                                        <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#a1a1aa' }} axisLine={{ stroke: '#3f3f46' }} tickLine={{ stroke: '#3f3f46' }} />
-                                        <YAxis tick={{ fontSize: 12, fill: '#a1a1aa' }} axisLine={{ stroke: '#3f3f46' }} tickLine={{ stroke: '#3f3f46' }} />
-                                        <Tooltip formatter={(value: any, name: any) => [name === 'sessions' ? `${value}件` : `${value}%`, name === 'sessions' ? 'セッション数' : '稼働率(参考)']} />
-                                        <Legend formatter={(value) => (value === 'sessions' ? 'セッション数' : '稼働率(参考)')} />
-                                        <Bar dataKey="sessions" name="sessions" fill="#f97316" radius={[4, 4, 0, 0]} />
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            </div>
-                        </div>
-
-                        <div>
-                            <div className="flex items-center justify-between mb-2">
-                                <h4 className="text-sm font-semibold text-text-primary">トレーナー別 実際の稼働率</h4>
-                                {capacity.trainerMonthlyBreakdown.length > 0 && (
-                                    <select
-                                        value={capacityMonth}
-                                        onChange={(e) => setCapacityMonth(e.target.value)}
-                                        className="text-xs border-border-strong rounded-lg shadow-sm focus:border-brand-500 focus:ring-brand-500 py-1 pl-2 pr-6"
-                                    >
-                                        {capacity.trainerMonthlyBreakdown.map((m) => (
-                                            <option key={m.month} value={m.month}>{m.month}</option>
-                                        ))}
-                                    </select>
-                                )}
-                            </div>
-                            <BreakdownList
-                                title={capacityMonth || '-'}
-                                items={(capacity.trainerMonthlyBreakdown.find((m) => m.month === capacityMonth)?.trainers || []).map((t) => ({
-                                    label: `${t.fullName}（${t.sessions}件）`,
-                                    count: t.utilizationRate ?? 0,
-                                    unit: '%',
-                                }))}
-                                note="シフト未登録・退職済みなど上限セッション数が算出できないトレーナーは稼働率0%と表示されます。稼働率は各トレーナー自身の週間シフト時間(現在の設定を基準)を用いた参考値です。"
-                            />
-                        </div>
-                    </div>
-                ) : (
-                    <p className="text-sm font-normal text-text-secondary">データを取得できませんでした</p>
-                )}
-            </div>
-
-            {/* 会員統計 */}
-            <div className="mt-8 bg-surface-raised p-6 rounded-2xl shadow-sm border border-border-subtle">
-                <h3 className="text-xl font-semibold text-text-primary mb-1">会員統計</h3>
-                <p className="text-xs font-normal text-text-secondary mb-4">
-                    {demographics ? `対象: 登録会員 ${demographics.totalMembers}名(在籍・休会・退会を含む)` : ''}
-                </p>
-                {demographicsLoading ? (
-                    <p className="text-sm font-normal text-text-secondary">読み込み中...</p>
-                ) : demographics ? (
-                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                        <BreakdownList title="年齢層" items={demographics.ageGroups.map((a) => ({ label: a.label, count: a.count }))} />
-                        <BreakdownList title="男女比" items={demographics.genderBreakdown.map((g) => ({ label: g.label, count: g.count }))} />
-                        <BreakdownList title="職業傾向" items={demographics.jobBreakdown.map((j) => ({ label: j.label, count: j.count }))} note="自由入力(カウンセリング「職業」欄)の集計のため表記ゆれあり" />
-                        <BreakdownList title="主な入会目的" items={demographics.mainPurposeBreakdown.map((p) => ({ label: p.label, count: p.count }))} />
-                        <BreakdownList title="入会経路" items={demographics.routeBreakdown.map((r) => ({ label: r.label, count: r.count }))} />
-                    </div>
-                ) : (
-                    <p className="text-sm font-normal text-text-secondary">データを取得できませんでした</p>
-                )}
-                <p className="mt-4 text-xs font-normal text-text-secondary">
-                    ※職業・入会目的・入会経路は会員詳細の「カウンセリング」情報が入力されている会員のみ集計対象です(未入力分は「未入力」に集計)。
-                </p>
-            </div>
-
             <MemberMovementModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 data={selectedMonthData}
             />
-        </div>
-    )
-}
-
-function StatCard({ label, value, unit }: { label: string; value: number | string; unit: string }) {
-    return (
-        <div className="rounded-2xl border border-border-subtle bg-surface-base p-4">
-            <div className="text-xs font-normal text-text-secondary">{label}</div>
-            <div className="mt-1 flex items-baseline gap-1">
-                <span className="stat-value">{value}</span>
-                {unit && <span className="text-xs font-normal text-text-secondary">{unit}</span>}
-            </div>
-        </div>
-    )
-}
-
-function BreakdownList({
-    title,
-    items,
-    note,
-}: {
-    title: string
-    items: { label: string; count: number; unit?: string }[]
-    note?: string
-}) {
-    return (
-        <div className="rounded-2xl border border-border-subtle bg-surface-base p-4">
-            <h4 className="text-sm font-semibold text-text-primary">{title}</h4>
-            <div className="mt-2 space-y-1.5">
-                {items.length === 0 ? (
-                    <p className="text-sm font-normal text-text-secondary">データがありません</p>
-                ) : (
-                    items.map((item) => (
-                        <div key={item.label} className="flex items-center justify-between text-sm font-normal text-text-secondary">
-                            <span className="truncate text-text-primary">{item.label}</span>
-                            <span className="shrink-0 tabular-nums">{item.count}{item.unit || '件'}</span>
-                        </div>
-                    ))
-                )}
-            </div>
-            {note && <p className="mt-2 text-xs font-normal text-text-secondary">{note}</p>}
         </div>
     )
 }
