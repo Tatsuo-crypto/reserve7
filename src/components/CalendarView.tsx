@@ -541,7 +541,7 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
   return (
     <div className="w-full">
       {/* White container: Month title -> Calendar grid -> Legend */}
-      <div className="bg-surface-raised p-0">
+      <div className="bg-surface-raised rounded-2xl border border-border-subtle shadow-sm overflow-hidden">
         {/* Month Navigation */}
         <div className="py-1 px-2">
           <div className="relative flex h-11 items-center justify-center">
@@ -611,17 +611,17 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
 
         {/* Legend inside white container */}
         <div className="px-3 py-2">
-          <div className="flex items-center justify-center gap-5 text-xs">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-brand-700 border border-brand-800 rounded-lg"></div>
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-xs">
+            <div className="flex shrink-0 items-center gap-1.5 whitespace-nowrap">
+              <div className="h-2.5 w-2.5 shrink-0 rounded-lg border border-brand-800 bg-brand-700"></div>
               <span className="text-text-secondary">予約</span>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-surface-overlay border border-border-strong rounded-lg"></div>
+            <div className="flex shrink-0 items-center gap-1.5 whitespace-nowrap">
+              <div className="h-2.5 w-2.5 shrink-0 rounded-lg border border-border-strong bg-surface-overlay"></div>
               <span className="text-text-secondary">予約不可時間</span>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-purple-500/25 border border-purple-500/40 rounded-lg"></div>
+            <div className="flex shrink-0 items-center gap-1.5 whitespace-nowrap">
+              <div className="h-2.5 w-2.5 shrink-0 rounded-lg border border-purple-500/40 bg-purple-500/25"></div>
               <span className="text-text-secondary">ゲスト</span>
             </div>
           </div>

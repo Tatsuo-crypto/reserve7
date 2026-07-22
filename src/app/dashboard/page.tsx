@@ -114,11 +114,9 @@ const AdminDashboard = () => {
         {/* HOME / RESERVATION TAB */}
         {activeTab === 'home' && (
           <div className="animate-slideUp -mt-4 sm:-mt-2">
-            <div className="bg-surface-raised rounded-2xl border border-border-subtle shadow-sm overflow-hidden">
-              <div className="p-0">
-                <CalendarView key={searchParams.get('_t') || 'initial'} />
-              </div>
-            </div>
+            {/* 月表示/タイムライン表示それぞれが自前で角丸・枠線を持つため、
+                ここではoverflow-hiddenを付けない(付けるとposition:stickyなヘッダーが機能しなくなる) */}
+            <CalendarView key={searchParams.get('_t') || 'initial'} />
           </div>
         )}
 

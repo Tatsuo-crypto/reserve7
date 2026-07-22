@@ -693,26 +693,26 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
       </div>
 
       {/* Legend */}
-      <div className="px-6 py-3 border-t border-border-strong bg-surface-base">
-        <div className="flex items-center justify-center space-x-6 text-sm">
-          <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-brand-700 border border-brand-800 rounded-lg"></div>
+      <div className="px-4 py-2.5 border-t border-border-strong bg-surface-base">
+        <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-xs">
+          <div className="flex shrink-0 items-center gap-1.5 whitespace-nowrap">
+            <div className="h-2.5 w-2.5 shrink-0 rounded-lg border border-brand-800 bg-brand-700"></div>
             <span className="text-text-secondary">予約</span>
           </div>
-          <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-blue-500/15 border border-blue-500/30 rounded-lg"></div>
+          <div className="flex shrink-0 items-center gap-1.5 whitespace-nowrap">
+            <div className="h-2.5 w-2.5 shrink-0 rounded-lg border border-blue-500/30 bg-blue-500/15"></div>
             <span className="text-text-secondary">体験</span>
           </div>
-          <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-surface-overlay border border-border-strong rounded-lg"></div>
+          <div className="flex shrink-0 items-center gap-1.5 whitespace-nowrap">
+            <div className="h-2.5 w-2.5 shrink-0 rounded-lg border border-border-strong bg-surface-overlay"></div>
             <span className="text-text-secondary">予約不可時間</span>
           </div>
-          <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-purple-500/25 border border-purple-500/40 rounded-lg"></div>
+          <div className="flex shrink-0 items-center gap-1.5 whitespace-nowrap">
+            <div className="h-2.5 w-2.5 shrink-0 rounded-lg border border-purple-500/40 bg-purple-500/25"></div>
             <span className="text-text-secondary">ゲスト</span>
           </div>
-          <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-orange-500/10 border border-orange-500/25 rounded-lg"></div>
+          <div className="flex shrink-0 items-center gap-1.5 whitespace-nowrap">
+            <div className="h-2.5 w-2.5 shrink-0 rounded-lg border border-orange-500/25 bg-orange-500/10"></div>
             <span className="text-text-secondary">予約可能時間(シフト)</span>
           </div>
         </div>
