@@ -497,9 +497,10 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
   }
 
   return (
-    <div className="bg-surface-raised shadow-sm border border-border-strong rounded-lg">
-      {/* Sticky Header: 日付ナビ+トレーナー名は常に表示し、時間帯の中身だけがスクロールするようにする */}
-      <div className="sticky top-16 z-40 rounded-t-lg bg-surface-raised">
+    <div className="flex h-[calc(100vh-100px)] flex-col overflow-hidden rounded-lg border border-border-strong bg-surface-raised shadow-sm sm:h-[calc(100vh-140px)]">
+      {/* 固定ヘッダー: 日付ナビ+トレーナー名は親のスクロールに含めず、常に表示する。
+          中身(時間帯グリッド)だけを下のTimeline Bodyで独立スクロールさせる */}
+      <div className="shrink-0 rounded-t-lg bg-surface-raised">
         {/* Header */}
         <div className="px-4 py-4">
           <div className="flex flex-col items-center space-y-2">
@@ -544,8 +545,9 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
         </div>
       </div>
 
-      {/* Timeline Body */}
-      <div className="flex flex-col h-full">
+      {/* Timeline Body: このブロックだけが独立してスクロールする(親をflex-1 min-h-0にして高さを確定させることで、
+          overflow-y-autoが実際にスクロールコンテナとして機能するようにしている) */}
+      <div className="flex min-h-0 flex-1 flex-col">
         <div className="flex-1 overflow-y-auto touch-pan-y" style={{ WebkitOverflowScrolling: 'touch' }}>
           <div className="flex relative min-h-[768px]"> {/* 16 hours * 48px */}
             {/* Time Labels */}
@@ -693,7 +695,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
       </div>
 
       {/* Legend */}
-      <div className="px-4 py-2.5 border-t border-border-strong bg-surface-base">
+      <div className="shrink-0 px-4 py-2.5 border-t border-border-strong bg-surface-base">
         <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-xs">
           <div className="flex shrink-0 items-center gap-1.5 whitespace-nowrap">
             <div className="h-2.5 w-2.5 shrink-0 rounded-lg border border-brand-800 bg-brand-700"></div>
