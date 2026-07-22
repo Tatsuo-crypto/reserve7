@@ -12,6 +12,10 @@ interface ConsentGateProps {
   children: React.ReactNode
 }
 
+// AH-1: 同意ゲートを一時的に無効化(2026-07-23)。今は同意取得を求めない運用にするための措置。
+// バックエンド(consent_recordsテーブル/APIやUI)は残したままなので、再度必要になったらtrueに戻すだけで良い。
+const CONSENT_GATE_ENABLED = false
+
 /**
  * T-5 / AB-優先1: 初回アクセス時に利用規約・プライバシーポリシーへの同意を取得するゲート。
  * subjectId未確定(認証前)の間はchildrenをそのまま表示し、
@@ -24,7 +28,7 @@ export default function ConsentGate({ subjectType, subjectId, children }: Consen
   const [error, setError] = useState('')
 
   useEffect(() => {
-    if (!subjectId) {
+    if (!CONSENT_GATE_ENABLED || !subjectId) {
       setStatus('skip')
       return
     }

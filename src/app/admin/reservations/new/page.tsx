@@ -981,7 +981,7 @@ function NewReservationContent() {
                     id="trainingDate"
                     value={formData.trainingDate}
                     onChange={(e) => setFormData({ ...formData, trainingDate: e.target.value })}
-                    className="w-full px-2 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                    className="w-full min-w-0 px-2 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                     required
                   />
                 </div>
@@ -994,7 +994,7 @@ function NewReservationContent() {
                     id="trainingStartTime"
                     value={formData.trainingStartTime}
                     onChange={(e) => setFormData({ ...formData, trainingStartTime: e.target.value })}
-                    className="w-full px-2 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                    className="w-full min-w-0 px-2 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                     required
                   />
                 </div>
@@ -1007,7 +1007,7 @@ function NewReservationContent() {
                     id="trainingEndTime"
                     value={formData.trainingEndTime}
                     onChange={(e) => setFormData({ ...formData, trainingEndTime: e.target.value })}
-                    className="w-full px-2 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                    className="w-full min-w-0 px-2 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                     required
                   />
                 </div>
@@ -1024,7 +1024,7 @@ function NewReservationContent() {
                     id="blockedDate"
                     value={formData.blockedDate}
                     onChange={(e) => setFormData({ ...formData, blockedDate: e.target.value })}
-                    className="w-full px-2 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                    className="w-full min-w-0 px-2 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                     required
                   />
                 </div>
@@ -1037,7 +1037,7 @@ function NewReservationContent() {
                     id="blockedStartTime"
                     value={formData.blockedStartTime}
                     onChange={(e) => setFormData({ ...formData, blockedStartTime: e.target.value })}
-                    className="w-full px-2 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                    className="w-full min-w-0 px-2 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                     required
                   />
                 </div>
@@ -1050,15 +1050,16 @@ function NewReservationContent() {
                     id="blockedEndTime"
                     value={formData.blockedEndTime}
                     onChange={(e) => setFormData({ ...formData, blockedEndTime: e.target.value })}
-                    className="w-full px-2 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                    className="w-full min-w-0 px-2 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                     required
                   />
                 </div>
               </div>
             ) : (
-              // Regular reservation: datetime-local + duration side by side
-              <div className="grid grid-cols-3 gap-2">
-                <div className="col-span-2">
+              // Regular reservation: datetime-local + duration stacked (datetime-localはネイティブUIの最小幅が広く、
+              // 横並びのgridに入れると枠が被って表示されることがあるため縦積みにする)
+              <div className="space-y-2">
+                <div>
                   <label htmlFor="startTime" className="block text-xs font-normal text-text-secondary mb-1">
                     開始日時 *
                   </label>
@@ -1067,7 +1068,7 @@ function NewReservationContent() {
                     id="startTime"
                     value={formData.startTime}
                     onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
-                    className="w-full px-2 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                    className="w-full min-w-0 px-2 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                     required
                   />
                 </div>
@@ -1079,7 +1080,7 @@ function NewReservationContent() {
                     id="duration"
                     value={formData.duration}
                     onChange={(e) => setFormData({ ...formData, duration: parseInt(e.target.value) })}
-                    className="w-full px-2 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                    className="w-full min-w-0 px-2 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                     required
                   >
                     <option value={30}>30分</option>
