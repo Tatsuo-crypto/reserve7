@@ -589,23 +589,21 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
                     handleTimelineClick(e, trainer.id)
                   }}
                 >
-                  {/* Availability Blocks (Shifts & Templates) */}
+                  {/* Availability Blocks (Shifts & Templates): シフトが入っている＝予約可能な時間帯を薄いオレンジで示す。
+                      時間の罫線はこのブロック内では描画せず、下のHour Grid Lines(全体に1系統のみ)に一本化する */}
                   {(availabilityByTrainer.get(trainer.id) || []).map((item, idx) => {
                     const startMinutes = item.start.getHours() * 60 + item.start.getMinutes()
                     const endMinutes = item.end.getHours() * 60 + item.end.getMinutes()
                     const top = ((startMinutes - (TIMELINE_START_HOUR * 60)) / 60) * HOUR_HEIGHT
                     const height = ((endMinutes - startMinutes) / 60) * HOUR_HEIGHT
-                    const hourLineOffset = (HOUR_HEIGHT - (top % HOUR_HEIGHT)) % HOUR_HEIGHT
 
                     return (
                       <div
                         key={`avail-${idx}`}
-                        className="absolute w-full rounded-2xl border border-neutral-900/45 shadow-[inset_0_10px_18px_rgba(0,0,0,0.10)] z-0 pointer-events-none"
+                        className="absolute w-full rounded-2xl border border-orange-500/25 bg-orange-500/10 z-0 pointer-events-none"
                         style={{
                           top: `${top}px`,
                           height: `${height}px`,
-                          backgroundImage: 'repeating-linear-gradient(to bottom, rgba(24,24,27,0.38) 0px, rgba(24,24,27,0.38) 1px, rgba(255,255,255,0.95) 1px, rgba(255,255,255,0.95) 48px)',
-                          backgroundPositionY: `${hourLineOffset}px`,
                         }}
                       />
                     )
@@ -709,6 +707,10 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
           <div className="flex items-center space-x-2">
             <div className="w-3 h-3 bg-purple-500/25 border border-purple-500/40 rounded-lg"></div>
             <span className="text-text-secondary">ゲスト</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <div className="w-3 h-3 bg-orange-500/10 border border-orange-500/25 rounded-lg"></div>
+            <span className="text-text-secondary">予約可能時間(シフト)</span>
           </div>
         </div>
       </div>
