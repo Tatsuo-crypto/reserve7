@@ -498,39 +498,39 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
 
   return (
     <div className="bg-surface-raised shadow-sm border border-border-strong rounded-lg">
-      {/* Header */}
-      <div className="px-4 py-4">
-        <div className="flex flex-col items-center space-y-2">
-          <div className="flex items-center space-x-3">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => changeDate(-1)}
-              className="p-2 text-text-muted hover:text-text-secondary hover:bg-surface-overlay rounded-lg flex-shrink-0"
-              title="前の日"
-            >
-              <Icon name="chevronLeft" size={20} />
-            </Button>
-            <h2 className="text-xl font-semibold text-text-primary whitespace-nowrap">
-              {formatSelectedDate(selectedDate)}
-            </h2>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => changeDate(1)}
-              className="p-2 text-text-muted hover:text-text-secondary hover:bg-surface-overlay rounded-lg flex-shrink-0"
-              title="次の日"
-            >
-              <Icon name="chevronRight" size={20} />
-            </Button>
+      {/* Sticky Header: 日付ナビ+トレーナー名は常に表示し、時間帯の中身だけがスクロールするようにする */}
+      <div className="sticky top-16 z-40 rounded-t-lg bg-surface-raised">
+        {/* Header */}
+        <div className="px-4 py-4">
+          <div className="flex flex-col items-center space-y-2">
+            <div className="flex items-center space-x-3">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => changeDate(-1)}
+                className="p-2 text-text-muted hover:text-text-secondary hover:bg-surface-overlay rounded-lg flex-shrink-0"
+                title="前の日"
+              >
+                <Icon name="chevronLeft" size={20} />
+              </Button>
+              <h2 className="text-xl font-semibold text-text-primary whitespace-nowrap">
+                {formatSelectedDate(selectedDate)}
+              </h2>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => changeDate(1)}
+                className="p-2 text-text-muted hover:text-text-secondary hover:bg-surface-overlay rounded-lg flex-shrink-0"
+                title="次の日"
+              >
+                <Icon name="chevronRight" size={20} />
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Timeline Body */}
-      <div className="flex flex-col h-full">
         {/* Trainer Headers */}
         <div className="flex border-b border-border-strong ml-12">
           {trainers.map((trainer) => (
@@ -538,11 +538,14 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
               {trainer.name}
             </div>
           ))}
-          {/* Fallback column for unassigned if needed, or just hide? 
-              User requested specific layout. Let's stick to trainers. 
+          {/* Fallback column for unassigned if needed, or just hide?
+              User requested specific layout. Let's stick to trainers.
           */}
         </div>
+      </div>
 
+      {/* Timeline Body */}
+      <div className="flex flex-col h-full">
         <div className="flex-1 overflow-y-auto touch-pan-y" style={{ WebkitOverflowScrolling: 'touch' }}>
           <div className="flex relative min-h-[768px]"> {/* 16 hours * 48px */}
             {/* Time Labels */}
@@ -676,7 +679,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
                 const currentTimePosition = ((currentHour - 8) + currentMinute / 60) * 48
                 return (
                   <div
-                    className="absolute left-0 right-0 border-t-2 border-red-400 z-50 pointer-events-none"
+                    className="absolute left-0 right-0 border-t-2 border-red-400 z-20 pointer-events-none"
                     style={{ top: `${currentTimePosition}px` }}
                   >
                     <div className="absolute -left-2 -top-1 w-2 h-2 bg-red-400 rounded-full"></div>
