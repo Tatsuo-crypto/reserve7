@@ -329,7 +329,9 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
       if (trainerId) url += `&trainerId=${trainerId}`
 
       setIsNavigating(true)
-      window.location.href = url
+      // AH-3: window.location.href(フルページ遷移)からNext.jsのクライアントサイド遷移に変更。
+      // フルリロードだと戻るボタン(キャンセル)でダッシュボードに戻る際も再度フルロードになり体感速度が悪化していたため。
+      router.push(url)
     }
   }
 

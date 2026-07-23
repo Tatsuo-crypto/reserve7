@@ -807,11 +807,11 @@ function NewReservationContent() {
                   参加トレーナー * (複数選択可)
                 </label>
                 {loadingTrainers ? (
-                  <div className="w-full px-3 py-2 border border-border-strong rounded-lg bg-surface-base text-text-secondary">
+                  <div className="w-full text-sm px-3 py-2 border border-border-strong rounded-lg bg-surface-base text-text-secondary">
                     トレーナー情報を読み込み中...
                   </div>
                 ) : trainers.length === 0 ? (
-                  <div className="w-full px-3 py-2 border border-yellow-500/30 rounded-lg bg-yellow-500/15 text-yellow-300">
+                  <div className="w-full text-sm px-3 py-2 border border-yellow-500/30 rounded-lg bg-yellow-500/15 text-yellow-300">
                     ⚠️ アクティブなトレーナーが見つかりません
                   </div>
                 ) : (
@@ -880,7 +880,7 @@ function NewReservationContent() {
                           }}
                           className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-border-strong rounded-lg"
                         />
-                        <span className="ml-3 text-text-primary">{trainer.full_name}</span>
+                        <span className="ml-3 text-sm text-text-primary">{trainer.full_name}</span>
                       </label>
                     ))}
                   </div>
@@ -895,11 +895,11 @@ function NewReservationContent() {
                   会員選択 *
                 </label>
                 {loadingClients ? (
-                  <div className="w-full px-3 py-2 border border-border-strong rounded-lg bg-surface-base text-text-secondary">
+                  <div className="w-full text-sm px-3 py-2 border border-border-strong rounded-lg bg-surface-base text-text-secondary">
                     会員情報を読み込み中...
                   </div>
                 ) : clients.length === 0 ? (
-                  <div className="w-full px-3 py-2 border border-yellow-500/30 rounded-lg bg-yellow-500/15 text-yellow-300">
+                  <div className="w-full text-sm px-3 py-2 border border-yellow-500/30 rounded-lg bg-yellow-500/15 text-yellow-300">
                     ⚠️ 登録されている会員が見つかりません
                   </div>
                 ) : (
@@ -909,7 +909,7 @@ function NewReservationContent() {
                     value={formData.clientId}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-3 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+                    className="w-full text-sm px-3 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                   >
                     <option value="">会員を選択してください</option>
                     {clients && clients.map(client => (
@@ -935,7 +935,7 @@ function NewReservationContent() {
                   value={formData.trialClientName}
                   onChange={handleInputChange}
                   required
-                  className="w-full px-3 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+                  className="w-full text-sm px-3 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                   placeholder="体験者の名前を入力してください"
                 />
               </div>
@@ -954,7 +954,7 @@ function NewReservationContent() {
                   value={formData.guestName}
                   onChange={handleInputChange}
                   required
-                  className="w-full px-3 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+                  className="w-full text-sm px-3 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                   placeholder="ゲストの名前を入力してください"
                 />
               </div>
@@ -981,7 +981,7 @@ function NewReservationContent() {
                     id="trainingDate"
                     value={formData.trainingDate}
                     onChange={(e) => setFormData({ ...formData, trainingDate: e.target.value })}
-                    className="w-full min-w-0 px-2 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                    className="w-full min-w-0 text-sm px-2 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                     required
                   />
                 </div>
@@ -994,7 +994,7 @@ function NewReservationContent() {
                     id="trainingStartTime"
                     value={formData.trainingStartTime}
                     onChange={(e) => setFormData({ ...formData, trainingStartTime: e.target.value })}
-                    className="w-full min-w-0 px-2 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                    className="w-full min-w-0 text-sm px-2 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                     required
                   />
                 </div>
@@ -1007,7 +1007,7 @@ function NewReservationContent() {
                     id="trainingEndTime"
                     value={formData.trainingEndTime}
                     onChange={(e) => setFormData({ ...formData, trainingEndTime: e.target.value })}
-                    className="w-full min-w-0 px-2 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                    className="w-full min-w-0 text-sm px-2 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                     required
                   />
                 </div>
@@ -1024,7 +1024,7 @@ function NewReservationContent() {
                     id="blockedDate"
                     value={formData.blockedDate}
                     onChange={(e) => setFormData({ ...formData, blockedDate: e.target.value })}
-                    className="w-full min-w-0 px-2 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                    className="w-full min-w-0 text-sm px-2 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                     required
                   />
                 </div>
@@ -1037,7 +1037,7 @@ function NewReservationContent() {
                     id="blockedStartTime"
                     value={formData.blockedStartTime}
                     onChange={(e) => setFormData({ ...formData, blockedStartTime: e.target.value })}
-                    className="w-full min-w-0 px-2 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                    className="w-full min-w-0 text-sm px-2 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                     required
                   />
                 </div>
@@ -1050,7 +1050,7 @@ function NewReservationContent() {
                     id="blockedEndTime"
                     value={formData.blockedEndTime}
                     onChange={(e) => setFormData({ ...formData, blockedEndTime: e.target.value })}
-                    className="w-full min-w-0 px-2 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                    className="w-full min-w-0 text-sm px-2 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                     required
                   />
                 </div>
@@ -1068,7 +1068,7 @@ function NewReservationContent() {
                     id="startTime"
                     value={formData.startTime}
                     onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
-                    className="w-full min-w-0 px-2 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                    className="w-full min-w-0 text-sm px-2 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                     required
                   />
                 </div>
@@ -1080,7 +1080,7 @@ function NewReservationContent() {
                     id="duration"
                     value={formData.duration}
                     onChange={(e) => setFormData({ ...formData, duration: parseInt(e.target.value) })}
-                    className="w-full min-w-0 px-2 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                    className="w-full min-w-0 text-sm px-2 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                     required
                   >
                     <option value={30}>30分</option>
@@ -1104,7 +1104,7 @@ function NewReservationContent() {
                 onChange={handleInputChange}
                 rows={2}
                 maxLength={1000}
-                className="w-full px-3 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+                className="w-full text-sm px-3 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                 placeholder={formData.isBlocked ? "予約不可の理由（例：定期メンテナンス、休業日）" : "特記事項があれば入力してください"}
               />
             </div>
