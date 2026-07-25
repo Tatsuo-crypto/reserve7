@@ -108,10 +108,18 @@ export async function GET(request: NextRequest) {
             historyByUser.set(h.user_id, list)
         }
 
+        // AK-2: membership_history.plan が空のレコードがある(平柳さん・米谷さん等、履歴作成時に
+        // planを保存していなかった/後から追加したplanカラムの過去データが未補完、等が原因と判明)。
+        // アプリの会員詳細画面に表示される「月額プラン」はusers.plan(joinしたusers)なので、
+        // history側のplanが空の場合はusers.plan側の値にフォールバックし、アプリで見える値と
+        // 集計・表示を一致させる。
+        const getJoinedUser = (h: any) => Array.isArray(h.users) ? h.users[0] : h.users
+        const effectivePlan = (h: any): string | null => h.plan || getJoinedUser(h)?.plan || null
+
         // ダイエットコースは3ヶ月で自動終了扱いにする(明示的なend_dateがそれより早い場合はそちらを優先)
         const effectiveEndDate = (h: any): string | null => {
             let endStr = h.end_date
-            if (h.plan?.includes('ダイエット')) {
+            if (effectivePlan(h)?.includes('ダイエット')) {
                 const autoEnd = endOfMonth(addMonths(new Date(h.start_date), 2))
                 if (!endStr || new Date(endStr) > autoEnd) {
                     endStr = format(autoEnd, 'yyyy-MM-dd')
@@ -132,7 +140,7 @@ export async function GET(request: NextRequest) {
             } else if (status === 'suspended' && latest.end_date && latest.end_date < asOf) {
                 status = 'withdrawn'
             }
-            return { status, plan: latest.plan, row: latest }
+            return { status, plan: effectivePlan(latest), row: latest }
         }
 
         // Aggregate counts per month
@@ -172,7 +180,7 @@ export async function GET(request: NextRequest) {
                     
                     // AUTO-EXPIRY FOR DIET COURSE:
                     // If it's a Diet Course, it automatically ends after 3 months unless a specific end_date is earlier
-                    if (h.plan?.includes('ダイエット')) {
+                    if (effectivePlan(h)?.includes('ダイエット')) {
                         const autoEnd = endOfMonth(addMonths(start, 2))
                         if (!endStr || new Date(endStr) > autoEnd) {
                             endStr = format(autoEnd, 'yyyy-MM-dd')
@@ -237,7 +245,7 @@ export async function GET(request: NextRequest) {
                 return {
                     user_id: h.user_id,
                     full_name: user?.full_name || '不明',
-                    plan: h.plan,
+                    plan: effectivePlan(h),
                     date: h.status === 'withdrawn' ? h.start_date : (h.end_date || h.start_date)
                 }
             })
@@ -268,7 +276,7 @@ export async function GET(request: NextRequest) {
                 return {
                     user_id: h.user_id,
                     full_name: user?.full_name || '不明',
-                    plan: h.plan,
+                    plan: effectivePlan(h),
                     date: h.start_date
                 }
             })
@@ -305,7 +313,7 @@ export async function GET(request: NextRequest) {
                 return {
                     user_id: h.user_id,
                     full_name: user?.full_name || '不明',
-                    plan: h.plan,
+                    plan: effectivePlan(h),
                     date: h.start_date
                 }
             })

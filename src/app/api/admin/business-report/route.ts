@@ -97,6 +97,13 @@ export async function GET(request: NextRequest) {
       return derived === 'active'
     })
 
+    // AK-2: membership_history.plan が空のレコードがある(履歴作成時にplanを保存していなかった/
+    // 後からplanカラムを追加したが過去データが未補完、等が原因と判明)。アプリの会員詳細画面に
+    // 表示される「月額プラン」はusers.plan なので、history側のplanが空の場合はusers.plan側の値に
+    // フォールバックし、アプリで見える値と集計・表示を一致させる。
+    const userPlanById = new Map<string, string | null>((allUsers || []).map((u: any) => [u.id, u.plan ?? null]))
+    const effectivePlan = (h: HistoryRow): string | null => h.plan || userPlanById.get(h.user_id) || null
+
     // AK-1: 月末会員数を「いずれかのレコードが月末をカバーしているか」というOR判定ではなく、
     // 「その時点までの最新レコード1件」だけで判定するように変更。従来のOR判定だと、
     // 退会済み(end_dateで終了済み)の正しいレコードの他に古い/重複したactiveレコードが
@@ -111,7 +118,7 @@ export async function GET(request: NextRequest) {
       const latest = resolveMembershipAsOf(userId, asOf)
       if (!latest) return false
       if (latest.status !== 'active') return false
-      if (latest.plan === '都度') return false
+      if (effectivePlan(latest) === '都度') return false
       if (latest.end_date && latest.end_date < asOf) return false
       return true
     }
@@ -135,7 +142,7 @@ export async function GET(request: NextRequest) {
       // その月に新規で始まった在籍(直前32日以内に別記録の終了がある場合はプラン変更/更新とみなし除外)
       const newRecordsRaw = history.filter((h) => {
         if (h.status !== 'active') return false
-        if (h.plan === '都度') return false
+        if (effectivePlan(h) === '都度') return false
         const start = new Date(h.start_date)
         if (start < monthStart || start > monthEnd) return false
 
@@ -152,7 +159,7 @@ export async function GET(request: NextRequest) {
       // その月に本当に辞めた(在籍記録が終了し、32日以内の再開がない)
       const withdrawnRaw = history.filter((h) => {
         if (h.status !== 'active' || !h.end_date) return false
-        if (h.plan === '都度') return false
+        if (effectivePlan(h) === '都度') return false
         const end = endOfDay(new Date(h.end_date))
         if (end < monthStart || end > monthEnd) return false
 
