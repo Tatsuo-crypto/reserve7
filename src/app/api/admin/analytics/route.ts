@@ -107,8 +107,10 @@ export async function GET(request: NextRequest) {
             // end_date is treated as the last paid/covered membership day.
 
             // Filter active records for this month, then deduplicate by user_id
+            // AJ-3: 「会員数」には都度(プラン)の人を含めない
             const activeRecordsThisMonth = history.filter(h => {
                 if (h.status !== 'active') return false
+                if (h.plan === '都度') return false
 
                 const start = new Date(h.start_date)
                 let endStr = h.end_date

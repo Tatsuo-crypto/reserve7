@@ -108,8 +108,10 @@ export async function GET(request: NextRequest) {
       const monthEnd = endOfMonth(date)
 
       // 月末時点で在籍中(status=active, start<=monthEnd<=end_date or end_date null)
+      // AJ-3: 「会員数」には都度(プラン)の人を含めない
       const activeRecords = history.filter((h) => {
         if (h.status !== 'active') return false
+        if (h.plan === '都度') return false
         const start = new Date(h.start_date)
         const end = h.end_date ? endOfDay(new Date(h.end_date)) : null
         return start <= monthEnd && (!end || end >= monthEnd)
@@ -119,6 +121,7 @@ export async function GET(request: NextRequest) {
       // その月に新規で始まった在籍(直前32日以内に別記録の終了がある場合はプラン変更/更新とみなし除外)
       const newRecordsRaw = history.filter((h) => {
         if (h.status !== 'active') return false
+        if (h.plan === '都度') return false
         const start = new Date(h.start_date)
         if (start < monthStart || start > monthEnd) return false
 
@@ -135,6 +138,7 @@ export async function GET(request: NextRequest) {
       // その月に本当に辞めた(在籍記録が終了し、32日以内の再開がない)
       const withdrawnRaw = history.filter((h) => {
         if (h.status !== 'active' || !h.end_date) return false
+        if (h.plan === '都度') return false
         const end = endOfDay(new Date(h.end_date))
         if (end < monthStart || end > monthEnd) return false
 
@@ -173,7 +177,11 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const currentMembers = (activeUsers || [])
+    // AJ-3: 「現会員」の人数・リスト・月額会費合計には都度(プラン)の人を含めない。
+    // ただしプラン別内訳は都度も1つのプランとして表示したいので、そちらは全員(都度含む)を対象にする。
+    const countedMembers = (activeUsers || []).filter((u: any) => u.plan !== '都度')
+
+    const currentMembers = countedMembers
       .map((u: any) => ({
         id: u.id,
         name: u.full_name,
@@ -184,7 +192,7 @@ export async function GET(request: NextRequest) {
       }))
       .sort((a: any, b: any) => (a.joinDate || '').localeCompare(b.joinDate || ''))
 
-    // --- プラン内訳 ---
+    // --- プラン内訳(都度も1つのプランとして表示) ---
     const planCountMap = new Map<string, number>()
     for (const u of activeUsers || []) {
       const plan = (u as any).plan || '不明'
@@ -192,8 +200,8 @@ export async function GET(request: NextRequest) {
     }
     const planBreakdown = Array.from(planCountMap.entries()).map(([plan, count]) => ({ plan, count }))
 
-    // --- 現構成での月額会費合計(会費のみの理論値。旗艦・体験料等は含まれない) ---
-    const activeMonthlyFeeSum = (activeUsers || []).reduce((sum: number, u: any) => sum + (u.monthly_fee || 0), 0)
+    // --- 現構成での月額会費合計(会費のみの理論値。旗艦・体験料等は含まれない。都度は除く) ---
+    const activeMonthlyFeeSum = countedMembers.reduce((sum: number, u: any) => sum + (u.monthly_fee || 0), 0)
 
     // --- salesテーブル(type=monthly_fee)の当月実績合計。実際の入金記録があれば理論値との差分の目安になる ---
     const thisMonthStr = format(today, 'yyyy-MM')
@@ -220,7 +228,7 @@ export async function GET(request: NextRequest) {
       currentMembers,
       planBreakdown,
       revenue: {
-        activeMemberCount: (activeUsers || []).length,
+        activeMemberCount: countedMembers.length,
         activeMonthlyFeeSum,
         salesTableThisMonth,
       },
