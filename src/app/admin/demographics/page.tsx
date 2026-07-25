@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { useStoreChange } from '@/hooks/useStoreChange'
 import { AdminStoreOption, fetchAdminStoresOnce } from '@/lib/admin-stores-client'
 import BreakdownList from '@/components/ui/BreakdownList'
+import StatCard from '@/components/ui/StatCard'
 
 type DemographicsData = {
     totalMembers: number
@@ -14,6 +15,11 @@ type DemographicsData = {
     jobBreakdown: { label: string; count: number }[]
     mainPurposeBreakdown: { label: string; count: number }[]
     routeBreakdown: { label: string; count: number }[]
+    retention: {
+        churnedMemberCount: number
+        averageTenureDays: number | null
+        averageTenureLabel: string | null
+    }
 }
 
 export default function DemographicsPage() {
@@ -107,13 +113,30 @@ export default function DemographicsPage() {
             {demographicsLoading ? (
                 <p className="text-sm font-normal text-text-secondary">読み込み中...</p>
             ) : demographics ? (
-                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                    <BreakdownList title="年齢層" items={demographics.ageGroups.map((a) => ({ label: a.label, count: a.count }))} />
-                    <BreakdownList title="男女比" items={demographics.genderBreakdown.map((g) => ({ label: g.label, count: g.count }))} />
-                    <BreakdownList title="職業傾向" items={demographics.jobBreakdown.map((j) => ({ label: j.label, count: j.count }))} note="自由入力(カウンセリング「職業」欄)の集計のため表記ゆれあり" />
-                    <BreakdownList title="主な入会目的" items={demographics.mainPurposeBreakdown.map((p) => ({ label: p.label, count: p.count }))} />
-                    <BreakdownList title="入会経路" items={demographics.routeBreakdown.map((r) => ({ label: r.label, count: r.count }))} />
-                </div>
+                <>
+                    <div className="mb-6 grid grid-cols-2 gap-3 sm:max-w-sm">
+                        <StatCard
+                            label="平均継続期間"
+                            value={demographics.retention.averageTenureLabel ?? '―'}
+                            unit=""
+                        />
+                        <StatCard
+                            label="退会済み会員数"
+                            value={demographics.retention.churnedMemberCount}
+                            unit="名"
+                        />
+                    </div>
+                    <p className="mb-4 -mt-3 text-xs font-normal text-text-secondary">
+                        ※入会から退会までを完了している会員の実績値のみで算出(現在在籍中の会員は含みません)
+                    </p>
+                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                        <BreakdownList title="年齢層" items={demographics.ageGroups.map((a) => ({ label: a.label, count: a.count }))} />
+                        <BreakdownList title="男女比" items={demographics.genderBreakdown.map((g) => ({ label: g.label, count: g.count }))} />
+                        <BreakdownList title="職業傾向" items={demographics.jobBreakdown.map((j) => ({ label: j.label, count: j.count }))} note="自由入力(カウンセリング「職業」欄)の集計のため表記ゆれあり" />
+                        <BreakdownList title="主な入会目的" items={demographics.mainPurposeBreakdown.map((p) => ({ label: p.label, count: p.count }))} />
+                        <BreakdownList title="入会経路" items={demographics.routeBreakdown.map((r) => ({ label: r.label, count: r.count }))} />
+                    </div>
+                </>
             ) : (
                 <p className="text-sm font-normal text-text-secondary">データを取得できませんでした</p>
             )}
