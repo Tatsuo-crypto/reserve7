@@ -15,6 +15,27 @@ type HistoryRow = {
   monthly_fee: number | null
 }
 
+// AI-3: 「現会員」の判定は users.status を直接見るのではなく、/api/admin/members と同じ
+// deriveCurrentStatus(membership_historyの最新レコードから真の在籍状態を導出する)ロジックに
+// 合わせる。users.status は退会時に更新され忘れているケースがあり、直接見ると退会済み会員が
+// 「在籍中」として混ざってしまう不具合があった(オーナー実機フィードバックで発覚)。
+function deriveCurrentStatus(
+  rawStatus: string | null | undefined,
+  histories: { status: string; start_date: string; end_date: string | null }[],
+  today: string
+): string {
+  const latest = histories
+    .filter((h) => h.start_date <= today)
+    .sort((a, b) => b.start_date.localeCompare(a.start_date))[0]
+
+  if (!latest) return rawStatus || 'active'
+  if (latest.status === 'withdrawn') return 'withdrawn'
+  if (latest.status === 'active' && latest.end_date && latest.end_date < today) return 'withdrawn'
+  if (latest.status === 'suspended' && latest.end_date && latest.end_date < today) return 'withdrawn'
+
+  return latest.status || rawStatus || 'active'
+}
+
 // AI-1: オーナーからの経営相談リスト(最優先5項目+第2優先の一部)に、アプリのデータだけで
 // 答えられる範囲で回答するための集計API。GBPインサイト・広告管理画面・現預金・固定費など
 // アプリ外のデータが必要な項目はここには含まれない(チャット側で別途案内)。
@@ -51,15 +72,30 @@ export async function GET(request: NextRequest) {
       if (route) routeByUserId.set(row.user_id, route)
     }
 
-    // 3. 現会員(在籍中)一覧
-    const { data: activeUsers, error: activeUsersError } = await supabaseAdmin
+    // 3. 全会員(在籍中/休会/退会を問わず取得し、deriveCurrentStatusで真の在籍状態を判定する)。
+    // 管理者ログイン用の2アカウント(店舗代表メール)は会員ではないので除外する。
+    const { data: allUsers, error: allUsersError } = await supabaseAdmin
       .from('users')
-      .select('id, full_name, plan, monthly_fee, store_id, created_at')
-      .eq('status', 'active')
+      .select('id, full_name, plan, monthly_fee, store_id, created_at, status')
+      .neq('email', 'tandjgym@gmail.com')
+      .neq('email', 'tandjgym2goutenn@gmail.com')
 
-    if (activeUsersError) {
-      console.error('BusinessReport: active users error', activeUsersError)
+    if (allUsersError) {
+      console.error('BusinessReport: users error', allUsersError)
     }
+
+    const todayStr = format(new Date(), 'yyyy-MM-dd')
+    const historiesByUserId = new Map<string, HistoryRow[]>()
+    for (const h of history) {
+      const list = historiesByUserId.get(h.user_id) || []
+      list.push(h)
+      historiesByUserId.set(h.user_id, list)
+    }
+
+    const activeUsers = (allUsers || []).filter((u: any) => {
+      const derived = deriveCurrentStatus(u.status, historiesByUserId.get(u.id) || [], todayStr)
+      return derived === 'active'
+    })
 
     // --- 過去6ヶ月(直近の完了月まで)の月末会員数・入会・退会を集計 ---
     const today = new Date()
