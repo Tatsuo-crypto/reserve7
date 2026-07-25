@@ -1,9 +1,17 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { getAuthenticatedUser, createErrorResponse } from '@/lib/api-utils'
 
 export const dynamic = 'force-dynamic'
 
+// AI-2: このデバッグ用エンドポイントに認証チェックが無く、未認証で売上データ(店舗・金額)が
+// 誰でも閲覧できてしまっていたのを修正(経営レポート作成中の監査で発見)。
 export async function GET() {
+    const user = await getAuthenticatedUser()
+    if (!user || !user.isAdmin) {
+        return createErrorResponse('Unauthorized', 401)
+    }
+
     // Check stores
     const { data: stores } = await supabaseAdmin.from('stores').select('*')
 

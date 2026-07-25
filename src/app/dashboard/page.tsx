@@ -132,6 +132,7 @@ const AdminDashboard = () => {
               <OtherGridItem href="/admin/mail-settings" label="配信設定" iconName="envelope" />
               <OtherGridItem href="/admin/capacity" label="稼働率" iconName="chartBar" />
               <OtherGridItem href="/admin/demographics" label="会員統計" iconName="userGroup" />
+              <OtherGridItem href="/admin/business-report" label="経営レポート" iconName="documentText" />
             </div>
           </div>
         )}
