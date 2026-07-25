@@ -94,50 +94,70 @@ export async function GET(request: NextRequest) {
 
         if (error) throw error
 
+        // AK-1: 月末会員数を「いずれかのレコードが月末をカバーしているか」というOR判定ではなく、
+        // 「その時点までの最新レコード1件」だけで判定するように変更。
+        // 従来のOR判定だと、退会済み(end_dateで終了済み)の正しいレコードの他に、古い/重複した
+        // activeレコードが残っていた場合、そちらが独立してヒットしてしまい、実際には
+        // とっくに退会している会員が後の月の会員数に数え続けられてしまう不具合があった。
+        // (/api/admin/members等で使われているderiveCurrentStatusと同じ「最新レコードが正」という
+        // 考え方を、「今日時点」だけでなく任意の月末時点にも一般化したもの)
+        const historyByUser = new Map<string, any[]>()
+        for (const h of history) {
+            const list = historyByUser.get(h.user_id) || []
+            list.push(h)
+            historyByUser.set(h.user_id, list)
+        }
+
+        // ダイエットコースは3ヶ月で自動終了扱いにする(明示的なend_dateがそれより早い場合はそちらを優先)
+        const effectiveEndDate = (h: any): string | null => {
+            let endStr = h.end_date
+            if (h.plan?.includes('ダイエット')) {
+                const autoEnd = endOfMonth(addMonths(new Date(h.start_date), 2))
+                if (!endStr || new Date(endStr) > autoEnd) {
+                    endStr = format(autoEnd, 'yyyy-MM-dd')
+                }
+            }
+            return endStr
+        }
+
+        // 指定日時点(asOf)で、そのユーザーの在籍状態を「最新の該当レコード1件」から導出する
+        const resolveMembershipAsOf = (userId: string, asOf: string): { status: string; plan: string | null; row: any } | null => {
+            const rows = (historyByUser.get(userId) || []).filter(h => h.start_date <= asOf)
+            if (rows.length === 0) return null
+            const latest = rows.sort((a, b) => b.start_date.localeCompare(a.start_date))[0]
+            let status = latest.status
+            if (status === 'active') {
+                const end = effectiveEndDate(latest)
+                if (end && end < asOf) status = 'withdrawn'
+            } else if (status === 'suspended' && latest.end_date && latest.end_date < asOf) {
+                status = 'withdrawn'
+            }
+            return { status, plan: latest.plan, row: latest }
+        }
+
         // Aggregate counts per month
         const memberHistory = monthList.map(date => {
             const monthStart = startOfMonth(date)
             const monthEnd = endOfMonth(date)
+            const monthEndStr = format(monthEnd, 'yyyy-MM-dd')
 
-            // Count active members at the end of this month
-            // Active condition: 
-            // 1. status == 'active'
-            // 2. start_date <= monthEnd
-            // 3. (end_date is null OR end_date >= monthEnd)
-            // end_date is treated as the last paid/covered membership day.
-
-            // Filter active records for this month, then deduplicate by user_id
+            // Count active members at the end of this month using latest-record-as-of resolution.
             // AJ-3: 「会員数」には都度(プラン)の人を含めない
-            const activeRecordsThisMonth = history.filter(h => {
-                if (h.status !== 'active') return false
-                if (h.plan === '都度') return false
-
-                const start = new Date(h.start_date)
-                let endStr = h.end_date
-
-                // AUTO-EXPIRY FOR DIET COURSE:
-                // If it's a Diet Course, it automatically ends after 3 months unless a specific end_date is earlier
-                if (h.plan?.includes('ダイエット')) {
-                    const autoEnd = endOfMonth(addMonths(start, 2))
-                    if (!endStr || new Date(endStr) > autoEnd) {
-                        endStr = format(autoEnd, 'yyyy-MM-dd')
-                    }
-                }
-                const end = endStr ? endOfDay(new Date(endStr)) : null
-
-                if (!(start <= monthEnd && (!end || end >= monthEnd))) return false
+            const activeUserIds = new Set<string>()
+            for (const userId of Array.from(historyByUser.keys())) {
+                const resolved = resolveMembershipAsOf(userId, monthEndStr)
+                if (!resolved || resolved.status !== 'active') continue
+                if (resolved.plan === '都度') continue
 
                 // Exclude months before billing start month
-                const user = Array.isArray((h as any).users) ? (h as any).users[0] : (h as any).users
+                const user = Array.isArray(resolved.row.users) ? resolved.row.users[0] : resolved.row.users
                 if (user?.billing_start_month) {
                     const billingStart = startOfMonth(new Date(user.billing_start_month))
-                    if (monthStart < billingStart) return false
+                    if (monthStart < billingStart) continue
                 }
 
-                return true
-            })
-            // Deduplicate: count unique users only
-            const activeUserIds = new Set(activeRecordsThisMonth.map(h => h.user_id))
+                activeUserIds.add(userId)
+            }
             const activeCount = activeUserIds.size
 
             // Withdrawn in this month

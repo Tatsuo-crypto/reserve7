@@ -97,6 +97,25 @@ export async function GET(request: NextRequest) {
       return derived === 'active'
     })
 
+    // AK-1: 月末会員数を「いずれかのレコードが月末をカバーしているか」というOR判定ではなく、
+    // 「その時点までの最新レコード1件」だけで判定するように変更。従来のOR判定だと、
+    // 退会済み(end_dateで終了済み)の正しいレコードの他に古い/重複したactiveレコードが
+    // 残っていた場合、そちらが独立してヒットしてしまい、とっくに退会している会員が
+    // 後の月の会員数に数え続けられてしまう不具合があった(オーナー実機フィードバックで発覚)。
+    const resolveMembershipAsOf = (userId: string, asOf: string): HistoryRow | null => {
+      const rows = (historiesByUserId.get(userId) || []).filter((h) => h.start_date <= asOf)
+      if (rows.length === 0) return null
+      return rows.sort((a, b) => b.start_date.localeCompare(a.start_date))[0]
+    }
+    const isActiveAsOf = (userId: string, asOf: string): boolean => {
+      const latest = resolveMembershipAsOf(userId, asOf)
+      if (!latest) return false
+      if (latest.status !== 'active') return false
+      if (latest.plan === '都度') return false
+      if (latest.end_date && latest.end_date < asOf) return false
+      return true
+    }
+
     // --- 過去6ヶ月(直近の完了月まで)の月末会員数・入会・退会を集計 ---
     const today = new Date()
     const rangeEnd = startOfMonth(today) // 今月分は月末を迎えていないため、直近6"完了"月は前月まで
@@ -106,17 +125,12 @@ export async function GET(request: NextRequest) {
     const monthly = monthList.map((date) => {
       const monthStart = startOfMonth(date)
       const monthEnd = endOfMonth(date)
+      const monthEndStr = format(monthEnd, 'yyyy-MM-dd')
 
-      // 月末時点で在籍中(status=active, start<=monthEnd<=end_date or end_date null)
-      // AJ-3: 「会員数」には都度(プラン)の人を含めない
-      const activeRecords = history.filter((h) => {
-        if (h.status !== 'active') return false
-        if (h.plan === '都度') return false
-        const start = new Date(h.start_date)
-        const end = h.end_date ? endOfDay(new Date(h.end_date)) : null
-        return start <= monthEnd && (!end || end >= monthEnd)
-      })
-      const activeEnd = new Set(activeRecords.map((h) => h.user_id)).size
+      // 月末時点で在籍中かどうかは、そのユーザーの最新レコード1件だけで判定する
+      const activeEnd = Array.from(historiesByUserId.keys()).filter((userId) =>
+        isActiveAsOf(userId, monthEndStr)
+      ).length
 
       // その月に新規で始まった在籍(直前32日以内に別記録の終了がある場合はプラン変更/更新とみなし除外)
       const newRecordsRaw = history.filter((h) => {
