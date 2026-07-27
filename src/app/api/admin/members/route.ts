@@ -479,12 +479,16 @@ export async function PATCH(request: NextRequest) {
       return createErrorResponse('Failed to update member', 500)
     }
 
-    // Record history if status, plan, or fee was updated
+    // Record history if status, plan, fee, or store was updated
+    // AL-1: 店舗のみ変更(店舗異動)した場合、この条件に含まれていないとmembership_historyに
+    // 反映されず、users.store_idだけが新店舗になり履歴側は旧店舗のまま取り残される不具合があった
+    // (DB調査で当時のデータには実害なしと確認したが、書き込み経路の穴として修正する)
     const isStatusChanged = updateData.status && updateData.status !== member.status
     const isPlanChanged = updateData.plan && updateData.plan !== member.plan
     const isFeeChanged = updateData.monthly_fee !== undefined && updateData.monthly_fee !== member.monthly_fee
+    const isStoreChanged = updateData.store_id !== undefined && updateData.store_id !== member.store_id
 
-    if (isStatusChanged || isPlanChanged || isFeeChanged) {
+    if (isStatusChanged || isPlanChanged || isFeeChanged || isStoreChanged) {
       // Use provided changeDate/statusChangeDate or default to today
       const effectiveDateStr = changeDate || statusChangeDate
       const effectiveDate = effectiveDateStr ? new Date(effectiveDateStr) : new Date()
