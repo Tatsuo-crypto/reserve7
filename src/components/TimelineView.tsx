@@ -768,9 +768,14 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
                 fullWidth
                 onClick={() => {
                   setShowActionChoice(false)
-                  // カルテ機能は未実装(方針確定のみ)。実装完了までの暫定案内。
-                  alert('トレーニングカルテ機能は準備中です。実装が完了次第使えるようになります。')
+                  // AN-4: カルテ機能本体を実装。予約IDからfind-or-createでセッションを開く。
+                  const backPath = typeof window !== 'undefined' ? window.location.pathname : undefined
+                  const backParam = backPath ? `&back=${encodeURIComponent(backPath)}` : ''
+                  const kartePath = trainerToken
+                    ? `/trainer/${trainerToken}/karte/new?reservationId=${choiceEvent.id}${backParam}`
+                    : `/admin/karte/new?reservationId=${choiceEvent.id}${backParam}`
                   setChoiceEvent(null)
+                  router.push(kartePath)
                 }}
               >
                 カルテ入力

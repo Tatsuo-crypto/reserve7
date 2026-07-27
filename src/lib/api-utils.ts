@@ -2,7 +2,7 @@
  * API utility functions for common operations
  */
 
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { cookies } from 'next/headers'
 import { authOptions } from '@/lib/auth-config'
@@ -135,6 +135,41 @@ export async function requireAdminAuth(): Promise<NextResponse | { user: any }> 
   }
 
   return { user: authResult.user }
+}
+
+// AN-4: トレーニングカルテAPI用の共通認証。/api/reservations/[id]で使われている
+// 「?token=あり→トレーナー、なし→管理者セッション」というパターンを共通化したもの。
+// カルテはトレーナー・管理者のみが入力・閲覧できる(会員には非公開)。
+export type TrainerOrAdminAuth = {
+  actorType: 'trainer' | 'admin'
+  trainerId: string | null
+}
+
+export async function resolveTrainerOrAdmin(request: NextRequest): Promise<NextResponse | TrainerOrAdminAuth> {
+  const { searchParams } = new URL(request.url)
+  const token = searchParams.get('token')
+
+  if (token) {
+    const { data: trainer, error } = await supabaseAdmin
+      .from('trainers')
+      .select('id')
+      .eq('access_token', token)
+      .eq('status', 'active')
+      .single()
+
+    if (error || !trainer) {
+      return createErrorResponse('無効なトークンです', 401)
+    }
+
+    return { actorType: 'trainer', trainerId: trainer.id }
+  }
+
+  const authResult = await requireAuth()
+  if (authResult instanceof NextResponse) return authResult
+  if (!authResult.isAdmin) {
+    return createErrorResponse('権限がありません', 403)
+  }
+  return { actorType: 'admin', trainerId: null }
 }
 
 export function createErrorResponse(message: string, status: number = 400): NextResponse {

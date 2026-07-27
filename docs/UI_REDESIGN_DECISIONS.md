@@ -1567,6 +1567,17 @@ AG章のモバイル一画面コンパクト化で、通常予約の「開始日
 - **今後**: カルテ機能本体(テーブル設計・入力画面・会員一覧/詳細画面)は別途実装する
 - **AN-3 (2026-07-27追記)**: 選択メニューはトレーナー画面限定だったが、管理者画面(`/admin/calendar`)でも同じ選択を出してほしいとの要望があり、`trainerToken`の有無に関わらず通常予約なら常に選択メニューを出すよう変更した
 
+### AN-4. トレーニングカルテ機能を実装
+
+- **DBスキーマ**(`supabase/migrations/20260727_create_training_records_tables.sql`、Supabase MCP経由で本番にも適用済み): `training_sessions`(来店1回分。reservation_id/user_id/trainer_id/session_date/session_type/approach/overall_note)、`training_exercises`(セッション内の種目カード)、`training_sets`(種目内のセット。weight/reps/assisted/memo)、`exercise_master`(種目名の選択肢、既存スプレッドシートの種目を初期登録)。`reservation_id`には部分ユニークインデックスを張り、同じ予約から複数セッションが作られないようにした。トレーナー・管理者のみが使う内部データのため、既存の`trainer_shift_requests`等と同様にRLSは付けていない(APIルート側で認可)
+- **共通認証ヘルパー**: `src/lib/api-utils.ts`に`resolveTrainerOrAdmin()`を追加。`/api/reservations/[id]`で使われている「?tokenありならトレーナー、無しなら管理者セッション」というパターンを共通化し、カルテ関連APIで使い回す
+- **API**: `/api/training-records`(POST: reservationId経由のfind-or-create、またはuserId経由の単発新規作成)、`/api/training-records/[id]`(GET/PUT/DELETE)、`/api/training-records/last-exercise`(前回記録参照)、`/api/training-records/exercise-master`(種目マスタ取得・追加)、`/api/training-records/members`・`/api/training-records/members/[id]`(トレーナー向け会員一覧・カルテ履歴、既存の`/api/admin/members`とは別に用意し既存機能には手を入れていない)
+- **共通UI**: `src/components/TrainingKarteForm.tsx`。セッション種別・アプローチ・種目カード(種目名+セット×重さ/回数/補助/メモ)・推定1RM(Epleyの式、表示のみで保存はしない)・前回記録参照・感想欄で構成。トレーナー画面(`/trainer/[token]/karte/[sessionId]`)・管理者画面(`/admin/karte/[sessionId]`)の両方から同じコンポーネントを利用
+- **画面**: トレーナー向けに「会員一覧」(`/trainer/[token]/members`)・「会員詳細+カルテ履歴」(`/trainer/[token]/members/[memberId]`)を新設し、下部ナビに「会員」タブを追加。管理者側は既存の会員詳細ページに「トレーニングカルテ」の導線を1行追加し、専用の履歴画面(`/admin/members/[id]/karte`)に飛ばす形にした(既存の会員詳細ページ自体の構造は変更していない)
+- **予約タップからの導線**: これまで「準備中」アラートだった「カルテ入力」ボタンを、実際に`/trainer/[token]/karte/new?reservationId=...`(または管理者側の`/admin/karte/new?reservationId=...`)へ遷移するよう接続
+- **セキュリティアドバイザリ(要確認)**: 新設した4テーブル(`exercise_master`/`training_sessions`/`training_exercises`/`training_sets`)はRLS無効。Supabaseの監査ツールから「anon/authenticatedロールに対して全公開されている」という指摘が出ている。既存の`trainer_shift_templates`/`trainer_shifts`/`online_lessons`も同様にRLS無効のまま運用されており(アプリがすべてサーバー側のservice roleキー経由でアクセスし、クライアントから直接Supabaseを叩く設計になっていないため実害は無い想定)、今回はその既存方針に合わせた。将来的にRLSを有効化する場合は、有効化と同時に適切なポリシーを追加しないと全アクセスがブロックされる点に注意(SQLは自動適用せず、必要になったタイミングで別途対応する)
+- **未検証**: このサンドボックスはSWCバイナリの制約で`next build`(本番ビルド)が実行できないため、`tsc --noEmit`と`eslint`のみで検証した。App Routerの`useSearchParams`はSuspense境界が必要なため、既存の`/admin/reservations/new`と同じパターン(内側コンポーネント+外側`Suspense`)を踏襲している
+
 ## AL. Supabase MCP接続によるDB実データ監査+店舗異動の書き込み経路修正+重複データ削除（2026-07-27）
 
 オーナーの許可を得てSupabase MCPコネクタを接続し、初めてこのセッションから本番DBに直接クエリできるようになった(それまではサンドボックスがネットワーク隔離されておりDBに接続できず、画面のスクリーンショット等でしか確認できなかった)。AJ/AK章で洗い出した「スナップショットと現在値の食い違い」の疑いについて、実データで検証した。

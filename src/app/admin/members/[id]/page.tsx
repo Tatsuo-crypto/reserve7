@@ -244,6 +244,11 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
                 label="月額プラン"
                 iconName="clipboardList"
               />
+              <MemberActionRow
+                href={`/admin/members/${memberId}/karte`}
+                label="トレーニングカルテ"
+                iconName="documentText"
+              />
             </div>
           </section>
 
