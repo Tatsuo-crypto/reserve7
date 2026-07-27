@@ -49,6 +49,10 @@ interface OnlineLessonOption {
   userIds: string[]
 }
 
+// AO-5: 「送信可能」= 通知ONかつスマホ側で購読登録済み(pushSubscriptionCount > 0)。
+// 通知ONにしていても未許可(購読登録なし)の会員には実際には届かないため、配信先の選択肢にすら出さない
+const isReceivable = (member: MemberNotificationSetting) => member.pushEnabled && member.pushSubscriptionCount > 0
+
 export default function AdminMailSettingsPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
@@ -151,7 +155,8 @@ export default function AdminMailSettingsPage() {
     ))
   }
 
-  // AO-3: レッスン参加者の氏名・通知状態一覧(membersと突き合わせ)。参加者名簿に無い(退会等)場合は除く
+  // AO-3: レッスン参加者の氏名・通知状態一覧(membersと突き合わせ)。参加者名簿に無い(退会等)場合や
+  // 送信不可能な会員(AO-5)は除く
   const lessonParticipants = useMemo(() => {
     const lesson = onlineLessons.find(l => l.id === selectedLessonId)
     if (!lesson) return []
@@ -159,13 +164,14 @@ export default function AdminMailSettingsPage() {
     return lesson.userIds
       .map(id => memberMap.get(id))
       .filter((m): m is MemberNotificationSetting => Boolean(m))
+      .filter(isReceivable)
       .sort((a, b) => a.fullName.localeCompare(b.fullName, 'ja'))
   }, [onlineLessons, selectedLessonId, members])
 
-  // レッスンを切り替えたら、通知ONの参加者を初期状態で全員☑にする
+  // レッスンを切り替えたら、送信可能な参加者を初期状態で全員☑にする
   useEffect(() => {
     if (broadcastTargetMode !== 'lesson') return
-    setSelectedLessonMemberIds(lessonParticipants.filter(m => m.pushEnabled).map(m => m.id))
+    setSelectedLessonMemberIds(lessonParticipants.map(m => m.id))
   }, [selectedLessonId, broadcastTargetMode, lessonParticipants])
 
   const fetchBroadcastHistory = async () => {
@@ -364,10 +370,10 @@ export default function AdminMailSettingsPage() {
     }))
   }, [members])
 
-  // AO-2: 個別選択候補は「通知ONの会員」のみ(そもそも通知が届かない相手を選べても意味が無いため)
+  // AO-2/AO-5: 個別選択候補は「送信可能な会員」のみ(通知ONかつ購読登録済み。それ以外は選べても届かないため)
   const individualCandidates = useMemo(() => {
     return members
-      .filter(m => m.pushEnabled)
+      .filter(isReceivable)
       .filter(m => !individualSearchQuery || m.fullName.includes(individualSearchQuery))
       .sort((a, b) => a.fullName.localeCompare(b.fullName, 'ja'))
   }, [members, individualSearchQuery])
@@ -822,30 +828,24 @@ export default function AdminMailSettingsPage() {
 
                     {selectedLessonId && (
                       <div className="mt-3 space-y-2">
-                        <p className="text-xs text-text-muted">{selectedLessonMemberIds.length}名選択中(このレッスンの参加者から送る相手を選べます)</p>
+                        <p className="text-xs text-text-muted">{selectedLessonMemberIds.length}名選択中(送信可能な参加者のみ表示)</p>
                         <div className="max-h-56 overflow-y-auto border border-border-subtle rounded-2xl divide-y divide-border-subtle">
                           {lessonParticipants.length === 0 ? (
-                            <p className="p-4 text-center text-xs text-text-muted">このレッスンの参加者が登録されていません</p>
+                            <p className="p-4 text-center text-xs text-text-muted">このレッスンに送信可能な参加者がいません</p>
                           ) : (
                             lessonParticipants.map(member => (
                               <label
                                 key={member.id}
-                                className={`flex items-center gap-2 px-4 py-2.5 select-none ${
-                                  member.pushEnabled ? 'cursor-pointer hover:bg-surface-base/70' : 'opacity-50 cursor-not-allowed'
-                                }`}
+                                className="flex items-center gap-2 px-4 py-2.5 cursor-pointer select-none hover:bg-surface-base/70"
                               >
                                 <input
                                   type="checkbox"
                                   checked={selectedLessonMemberIds.includes(member.id)}
-                                  disabled={!member.pushEnabled}
                                   onChange={() => toggleLessonMember(member.id)}
-                                  className="w-4.5 h-4.5 text-brand-600 border-border-strong rounded-lg focus:ring-brand-500 cursor-pointer disabled:cursor-not-allowed"
+                                  className="w-4.5 h-4.5 text-brand-600 border-border-strong rounded-lg focus:ring-brand-500 cursor-pointer"
                                 />
                                 <span className="text-sm text-text-primary">{member.fullName}</span>
                                 <span className="text-xs text-text-muted">{member.storeName}</span>
-                                {!member.pushEnabled && (
-                                  <span className="text-xs text-text-muted">(通知OFF)</span>
-                                )}
                               </label>
                             ))
                           )}
@@ -864,7 +864,7 @@ export default function AdminMailSettingsPage() {
                       placeholder="名前で検索"
                       className="w-full min-w-0 max-w-full box-border px-4 py-2 border border-border-strong rounded-2xl text-sm bg-surface-raised focus:outline-none focus:ring-2 focus:ring-brand-500"
                     />
-                    <p className="text-xs text-text-muted">{selectedMemberIds.length}名選択中(通知ONの会員のみ表示)</p>
+                    <p className="text-xs text-text-muted">{selectedMemberIds.length}名選択中(送信可能な会員のみ表示)</p>
                     <div className="max-h-56 overflow-y-auto border border-border-subtle rounded-2xl divide-y divide-border-subtle">
                       {individualCandidates.length === 0 ? (
                         <p className="p-4 text-center text-xs text-text-muted">該当する会員がいません</p>
