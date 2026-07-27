@@ -86,6 +86,9 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
     trainerId: ''
   })
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false)
+  // AN-1: トレーナー向けの予約タップ時に「カルテ入力」「予約変更」を選べるようにする
+  const [showActionChoice, setShowActionChoice] = useState(false)
+  const [choiceEvent, setChoiceEvent] = useState<CalendarEvent | null>(null)
 
   const timeSlots = TIME_SLOTS
 
@@ -360,8 +363,20 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
   }
 
   // Open edit modal from an event click
+  // AN-1: トレーナー画面(trainerToken有)かつ通常予約の場合は、直接編集モーダルを開かず
+  // 「カルテ入力」「予約変更」の選択を先に出す。管理者画面やブロック時間・ゲスト枠は従来どおり
+  // 直接編集モーダルを開く(カルテはトレーナーの通常予約に対してのみ意味を持つため)。
   const openEditFromEvent = (e: React.MouseEvent<HTMLDivElement>, ev: CalendarEvent) => {
     e.stopPropagation()
+    if (trainerToken && ev.type === 'reservation') {
+      setChoiceEvent(ev)
+      setShowActionChoice(true)
+      return
+    }
+    proceedToEditReservation(ev)
+  }
+
+  const proceedToEditReservation = (ev: CalendarEvent) => {
     // Parse start and end from ev.time "HH:MM - HH:MM"
     const [startStr, endStr] = ev.time.split(' - ')
     const startIso = `${selectedDate}T${startStr}`
@@ -733,6 +748,59 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
         </div>
       )}
 
+      {/* Action Choice Modal: トレーナーが予約をタップした際に「カルテ入力」「予約変更」を選ぶ(AN-1) */}
+      {showActionChoice && choiceEvent && (
+        <div
+          className="fixed inset-0 bg-gray-900 bg-opacity-60 z-[200] flex items-center justify-center p-4 backdrop-blur-sm"
+          onClick={() => { setShowActionChoice(false); setChoiceEvent(null) }}
+        >
+          <div
+            className="relative w-full max-w-xs bg-surface-raised shadow-xl rounded-2xl border border-border-subtle p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-xl font-semibold text-text-primary mb-1">{formatReservationTitle(choiceEvent.title, choiceEvent.plan)}</h3>
+            <p className="text-sm font-normal text-text-secondary mb-4">{choiceEvent.time}</p>
+            <div className="space-y-3">
+              <Button
+                type="button"
+                variant="primary"
+                fullWidth
+                onClick={() => {
+                  setShowActionChoice(false)
+                  // カルテ機能は未実装(方針確定のみ)。実装完了までの暫定案内。
+                  alert('トレーニングカルテ機能は準備中です。実装が完了次第使えるようになります。')
+                  setChoiceEvent(null)
+                }}
+              >
+                カルテ入力
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                fullWidth
+                onClick={() => {
+                  setShowActionChoice(false)
+                  proceedToEditReservation(choiceEvent)
+                  setChoiceEvent(null)
+                }}
+              >
+                予約変更
+              </Button>
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              fullWidth
+              className="mt-3"
+              onClick={() => { setShowActionChoice(false); setChoiceEvent(null) }}
+            >
+              キャンセル
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Edit Modal */}
       {showEditModal && editingReservation && (
         <div className="fixed inset-0 bg-gray-900 bg-opacity-60 z-[200] flex items-center justify-center p-4 backdrop-blur-sm">
@@ -769,7 +837,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
                     type="datetime-local"
                     value={editFormData.startTime}
                     onChange={handleStartTimeChange}
-                    className="w-full px-3 py-2 border border-border-strong rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    className="w-full min-w-0 max-w-full box-border px-3 py-2 text-sm border border-border-strong rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
                     required
                   />
                 </div>
@@ -779,7 +847,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
                     type="datetime-local"
                     value={editFormData.endTime}
                     onChange={(e) => setEditFormData(prev => ({ ...prev, endTime: e.target.value }))}
-                    className="w-full px-3 py-2 border border-border-strong rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    className="w-full min-w-0 max-w-full box-border px-3 py-2 text-sm border border-border-strong rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
                     required
                   />
                 </div>
