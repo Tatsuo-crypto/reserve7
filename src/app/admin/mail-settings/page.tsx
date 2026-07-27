@@ -86,10 +86,12 @@ export default function AdminMailSettingsPage() {
   const [membersLoading, setMembersLoading] = useState(true)
   const [membersSaving, setMembersSaving] = useState(false)
 
-  // AO-4: メイン画面は配信先選択(お知らせを送る)。会員別の通知・リマインダーの時間は
-  // 右上の⚙️(配信設定)から開く設定モーダルに移動した
+  // AO-7: 画面を開いたらまず配信の種類を3つから選ぶ。
+  // broadcast=予定変更などの連絡(自由記述の送信フォーム)、
+  // reminder=セッションのリマインダー(自動送信の設定)、lesson=オンラインレッスンの通知(自動送信の設定)
+  const [section, setSection] = useState<'broadcast' | 'reminder' | 'lesson' | null>(null)
+  // 会員別の通知ON/OFF一覧は画面下部のテキストリンクから開くモーダルに残す
   const [showSettingsModal, setShowSettingsModal] = useState(false)
-  const [settingsTab, setSettingsTab] = useState<'members' | 'reminder'>('members')
 
   // AO-1: 「配信」タブ(お知らせを送る)。テンプレートは無し、自由記述のみ。
   const [broadcastTitle, setBroadcastTitle] = useState('')
@@ -485,56 +487,63 @@ export default function AdminMailSettingsPage() {
           </div>
         )}
 
-        {/* AO-6: 「配信」の見出しはグローバルヘッダーと重複するため出さず、⚙️のみを右寄せで置く */}
-        <div className="flex justify-end mb-3">
+        {/* AO-7: まず配信の種類を選ぶ */}
+        {section === null && (
+          <div className="space-y-3 animate-fadeIn">
+            {([
+              { key: 'broadcast', label: '配信', description: '予定変更などの連絡をその場で送る', iconName: 'envelope' },
+              { key: 'reminder', label: 'セッションのリマインダー', description: '前日リマインダーの自動送信設定', iconName: 'clock' },
+              { key: 'lesson', label: 'オンラインレッスンの通知', description: 'レッスン開始前の自動通知設定', iconName: 'video' },
+            ] as const).map(item => (
+              <button
+                key={item.key}
+                type="button"
+                onClick={() => setSection(item.key)}
+                className="w-full flex items-center gap-4 rounded-2xl border border-border-subtle bg-surface-raised p-5 text-left shadow-sm transition-colors hover:bg-surface-overlay"
+              >
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-500/15 text-brand-300">
+                  <Icon name={item.iconName} size={22} />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-medium text-text-primary">{item.label}</span>
+                  <span className="mt-0.5 block text-xs font-normal text-text-muted">{item.description}</span>
+                </span>
+                <Icon name="chevronRight" size={18} className="shrink-0 text-text-muted" />
+              </button>
+            ))}
+
+            <div className="pt-2 text-center">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setShowSettingsModal(true)}
+                className="py-3 text-sm font-normal text-text-secondary hover:text-text-primary bg-transparent border-0"
+              >
+                会員別の通知設定
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {section !== null && (
           <Button
             type="button"
             variant="ghost"
-            size="sm"
-            onClick={() => setShowSettingsModal(true)}
-            className="h-10 w-10 rounded-full border-0 bg-transparent p-0 text-text-secondary hover:text-text-primary flex items-center justify-center shrink-0"
-            aria-label="配信設定"
+            onClick={() => setSection(null)}
+            className="mb-3 px-0 py-2 text-sm font-normal text-text-secondary hover:text-text-primary bg-transparent border-0"
           >
-            <Icon name="settings" size={22} />
+            <Icon name="chevronLeft" size={16} />
+            配信の種類を選び直す
           </Button>
-        </div>
+        )}
 
         {showSettingsModal && (
           <AppModal
-            title="配信設定"
+            title="会員別の通知"
             onClose={() => setShowSettingsModal(false)}
             size="lg"
           >
-            <div className="p-4 sm:p-5 space-y-6">
-              <div className="flex bg-surface-overlay/60 p-1.5 rounded-2xl border border-border-strong/50 shadow-inner">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => setSettingsTab('members')}
-                  className={`flex-1 py-3 text-sm font-medium rounded-2xl transition-all duration-200 ${
-                    settingsTab === 'members'
-                      ? 'bg-surface-raised text-brand-600 shadow-sm border border-border-subtle'
-                      : 'text-text-secondary hover:text-text-secondary'
-                  }`}
-                >
-                  会員別の通知
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => setSettingsTab('reminder')}
-                  className={`flex-1 py-3 text-sm font-medium rounded-2xl transition-all duration-200 ${
-                    settingsTab === 'reminder'
-                      ? 'bg-surface-raised text-brand-600 shadow-sm border border-border-subtle'
-                      : 'text-text-secondary hover:text-text-secondary'
-                  }`}
-                >
-                  リマインダーの時間
-                </Button>
-              </div>
-
-        {/* TAB: Members */}
-        {settingsTab === 'members' && (
+            <div className="p-4 sm:p-5">
           <div className="space-y-6 animate-fadeIn">
             <div className="bg-surface-raised rounded-2xl shadow-sm border border-border-subtle p-6 space-y-5">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -680,41 +689,58 @@ export default function AdminMailSettingsPage() {
               </Button>
             </div>
           </div>
+            </div>
+          </AppModal>
         )}
 
-        {/* TAB: Reminder timing */}
-        {settingsTab === 'reminder' && (
+        {/* AO-7: セッションのリマインダー(前日リマインダーの自動送信設定) */}
+        {section === 'reminder' && (
           <form onSubmit={handleSave} className="space-y-6 animate-fadeIn">
-            <div className="bg-surface-raised rounded-2xl shadow-sm border border-border-subtle p-6 space-y-6">
-              <div className="space-y-4 border-b border-border-subtle pb-6">
-                <h3 className="text-xs font-bold text-text-muted uppercase tracking-wider">
-                  パーソナルセッション前日リマインダー
-                </h3>
-
-                <div className="p-4 bg-surface-base/50 rounded-2xl border border-border-subtle space-y-3">
-                  <label className="flex items-center gap-3 cursor-pointer select-none">
-                    <input
-                      type="checkbox"
-                      disabled={!tableExists}
-                      checked={settings.personal_reminder_enabled}
-                      onChange={() => handleToggle('personal_reminder_enabled')}
-                      className="w-4.5 h-4.5 text-brand-600 border-border-strong rounded-lg focus:ring-brand-500 cursor-pointer disabled:opacity-50"
-                    />
-                    <span className="text-sm font-medium text-text-secondary">自動リマインダー通知を有効にする</span>
-                  </label>
-                  <p className="pl-7 text-xs text-text-muted">※ 通知ONかつスマホ側で許可済みの会員様にのみ届きます。</p>
-                  <p className="pl-7 text-xs text-text-muted">毎晩21:00に、翌日ご予約のある会員様へまとめて送信します（サーバー側の制約で1日1回のみ）。</p>
-                </div>
+            <div className="bg-surface-raised rounded-2xl shadow-sm border border-border-subtle p-5 space-y-4">
+              <div className="p-4 bg-surface-base/50 rounded-2xl border border-border-subtle space-y-3">
+                <label className="flex items-center gap-3 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    disabled={!tableExists}
+                    checked={settings.personal_reminder_enabled}
+                    onChange={() => handleToggle('personal_reminder_enabled')}
+                    className="w-4.5 h-4.5 text-brand-600 border-border-strong rounded-lg focus:ring-brand-500 cursor-pointer disabled:opacity-50"
+                  />
+                  <span className="text-sm font-medium text-text-secondary">自動リマインダー通知を有効にする</span>
+                </label>
+                <p className="pl-7 text-xs text-text-muted">毎晩21:00に、翌日ご予約のある会員様へまとめて送信します（サーバー側の制約で1日1回のみ）。</p>
+                <p className="pl-7 text-xs text-text-muted">※ 通知ONかつスマホ側で許可済みの会員様にのみ届きます。</p>
               </div>
+            </div>
 
-              <div className="space-y-4 pt-2">
-                <h3 className="text-xs font-bold text-text-muted uppercase tracking-wider">
-                  オンラインレッスン用自動リマインダー設定
-                </h3>
+            <div className="bg-surface-raised p-4 rounded-2xl shadow-sm border border-border-subtle">
+              <Button
+                type="submit"
+                variant="primary"
+                disabled={saving || !tableExists}
+                className="w-full px-6 py-2.5 bg-brand-700 hover:bg-brand-800 text-white rounded-2xl text-sm font-medium disabled:opacity-50 disabled:hover:bg-brand-700 transition-colors flex items-center justify-center gap-2 shadow-md shadow-brand-500/10"
+              >
+                {saving ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                    保存中...
+                  </>
+                ) : (
+                  '保存する'
+                )}
+              </Button>
+            </div>
+          </form>
+        )}
 
+        {/* AO-7: オンラインレッスンの通知(開始前の自動通知設定) */}
+        {section === 'lesson' && (
+          <form onSubmit={handleSave} className="space-y-6 animate-fadeIn">
+            <div className="bg-surface-raised rounded-2xl shadow-sm border border-border-subtle p-5 space-y-6">
+              <div className="space-y-4">
                 <div>
                   <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1.5">
-                    リマインダー自動送信タイミング
+                    自動送信タイミング
                   </label>
                   <select
                     disabled={!tableExists}
@@ -737,20 +763,12 @@ export default function AdminMailSettingsPage() {
               </div>
             </div>
 
-            <div className="bg-surface-raised p-4 rounded-2xl shadow-sm border border-border-subtle flex justify-between gap-3">
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => setShowSettingsModal(false)}
-                className="px-5 py-2.5 border border-border-strong hover:bg-surface-base text-text-secondary rounded-2xl text-sm font-medium transition-colors flex-1 text-center"
-              >
-                閉じる
-              </Button>
+            <div className="bg-surface-raised p-4 rounded-2xl shadow-sm border border-border-subtle">
               <Button
                 type="submit"
                 variant="primary"
                 disabled={saving || !tableExists}
-                className="px-6 py-2.5 bg-brand-700 hover:bg-brand-800 text-white rounded-2xl text-sm font-medium disabled:opacity-50 disabled:hover:bg-brand-700 transition-colors flex items-center justify-center gap-2 flex-[2] shadow-md shadow-brand-500/10"
+                className="w-full px-6 py-2.5 bg-brand-700 hover:bg-brand-800 text-white rounded-2xl text-sm font-medium disabled:opacity-50 disabled:hover:bg-brand-700 transition-colors flex items-center justify-center gap-2 shadow-md shadow-brand-500/10"
               >
                 {saving ? (
                   <>
@@ -764,11 +782,9 @@ export default function AdminMailSettingsPage() {
             </div>
           </form>
         )}
-              </div>
-          </AppModal>
-        )}
 
-        {/* お知らせを送る(メインコンテンツ) */}
+        {/* AO-7: 配信(予定変更などの連絡を自由記述で送る) */}
+        {section === 'broadcast' && (
         <div className="space-y-6 animate-fadeIn">
             <div className="bg-surface-raised rounded-2xl shadow-sm border border-border-subtle p-5 space-y-4">
               {broadcastError && (
@@ -977,7 +993,8 @@ export default function AdminMailSettingsPage() {
                 )}
               </div>
             )}
-          </div>
+        </div>
+        )}
       </div>
     </div>
   )
