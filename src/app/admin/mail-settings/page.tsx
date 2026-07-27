@@ -73,7 +73,25 @@ export default function AdminMailSettingsPage() {
   const [membersLoading, setMembersLoading] = useState(true)
   const [membersSaving, setMembersSaving] = useState(false)
 
-  const [activeTab, setActiveTab] = useState<'members' | 'reminder'>('members')
+  const [activeTab, setActiveTab] = useState<'members' | 'reminder' | 'broadcast'>('members')
+
+  // AO-1: 「配信」タブ(お知らせを送る)。テンプレートは無し、自由記述のみ。
+  const [broadcastTitle, setBroadcastTitle] = useState('')
+  const [broadcastBody, setBroadcastBody] = useState('')
+  const [broadcastImportant, setBroadcastImportant] = useState(false)
+  const [broadcastSending, setBroadcastSending] = useState(false)
+  const [broadcastResult, setBroadcastResult] = useState<{ targetCount: number; successCount: number } | null>(null)
+  const [broadcastError, setBroadcastError] = useState<string | null>(null)
+  const [broadcastHistory, setBroadcastHistory] = useState<Array<{
+    id: string
+    title: string
+    body: string
+    important: boolean
+    target_count: number
+    success_count: number
+    created_at: string
+  }>>([])
+  const [broadcastHistoryLoading, setBroadcastHistoryLoading] = useState(true)
 
   useEffect(() => {
     if (status === 'loading') return
@@ -83,7 +101,60 @@ export default function AdminMailSettingsPage() {
     }
     fetchSettings()
     fetchMembers()
+    fetchBroadcastHistory()
   }, [status])
+
+  const fetchBroadcastHistory = async () => {
+    setBroadcastHistoryLoading(true)
+    try {
+      const res = await fetch('/api/admin/broadcast')
+      if (res.ok) {
+        const data = await res.json()
+        setBroadcastHistory(data.messages || [])
+      }
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setBroadcastHistoryLoading(false)
+    }
+  }
+
+  const handleSendBroadcast = async () => {
+    if (!broadcastTitle.trim() || !broadcastBody.trim()) {
+      setBroadcastError('タイトルと本文を入力してください。')
+      return
+    }
+    if (!window.confirm('通知ONの会員全員にこの内容を配信します。よろしいですか？')) return
+
+    setBroadcastSending(true)
+    setBroadcastError(null)
+    setBroadcastResult(null)
+    try {
+      const res = await fetch('/api/admin/broadcast', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: broadcastTitle.trim(),
+          body: broadcastBody.trim(),
+          important: broadcastImportant,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        throw new Error(data.error || '配信に失敗しました。')
+      }
+      setBroadcastResult({ targetCount: data.targetCount, successCount: data.successCount })
+      setBroadcastTitle('')
+      setBroadcastBody('')
+      setBroadcastImportant(false)
+      fetchBroadcastHistory()
+    } catch (err: any) {
+      console.error(err)
+      setBroadcastError(err instanceof Error ? err.message : '配信に失敗しました。')
+    } finally {
+      setBroadcastSending(false)
+    }
+  }
 
   const fetchSettings = async () => {
     setLoading(true)
@@ -331,6 +402,18 @@ export default function AdminMailSettingsPage() {
           >
             リマインダーの時間
           </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => setActiveTab('broadcast')}
+            className={`flex-1 py-3 text-sm font-medium rounded-2xl transition-all duration-200 ${
+              activeTab === 'broadcast'
+                ? 'bg-surface-raised text-brand-600 shadow-sm border border-border-subtle'
+                : 'text-text-secondary hover:text-text-secondary'
+            }`}
+          >
+            お知らせを送る
+          </Button>
         </div>
 
         {/* TAB: Members */}
@@ -563,6 +646,104 @@ export default function AdminMailSettingsPage() {
               </Button>
             </div>
           </form>
+        )}
+
+        {/* TAB: Broadcast (お知らせを送る) */}
+        {activeTab === 'broadcast' && (
+          <div className="space-y-6 animate-fadeIn">
+            <div className="bg-surface-raised rounded-2xl shadow-sm border border-border-subtle p-6 space-y-4">
+              <div>
+                <h2 className="text-xl font-semibold text-text-primary">お知らせを送る</h2>
+                <p className="mt-1 text-xs text-text-secondary">アプリ通知ONの会員全員に、その場で自由な内容を配信します(テンプレートはありません)。</p>
+              </div>
+
+              {broadcastError && (
+                <div className="p-3 bg-state-danger-500/15 border border-state-danger-500/25 rounded-2xl text-sm text-state-danger-300">
+                  {broadcastError}
+                </div>
+              )}
+              {broadcastResult && (
+                <div className="p-3 bg-state-success-500/15 border border-state-success-500/25 rounded-2xl text-sm text-state-success-300">
+                  配信しました({broadcastResult.successCount} / {broadcastResult.targetCount}名に到達)
+                </div>
+              )}
+
+              <div>
+                <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1.5">タイトル</label>
+                <input
+                  type="text"
+                  value={broadcastTitle}
+                  onChange={(e) => setBroadcastTitle(e.target.value)}
+                  placeholder="例: オンラインセッション時間変更のお知らせ"
+                  className="w-full min-w-0 max-w-full box-border px-4 py-2.5 border border-border-strong rounded-2xl text-sm bg-surface-raised focus:outline-none focus:ring-2 focus:ring-brand-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1.5">本文</label>
+                <textarea
+                  value={broadcastBody}
+                  onChange={(e) => setBroadcastBody(e.target.value)}
+                  rows={4}
+                  placeholder="例: 本日19時からのオンラインセッションを20時に変更します。"
+                  className="w-full min-w-0 max-w-full box-border px-4 py-2.5 border border-border-strong rounded-2xl text-sm bg-surface-raised focus:outline-none focus:ring-2 focus:ring-brand-500"
+                />
+              </div>
+
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={broadcastImportant}
+                  onChange={(e) => setBroadcastImportant(e.target.checked)}
+                  className="w-4.5 h-4.5 text-brand-600 border-border-strong rounded-lg focus:ring-brand-500 cursor-pointer"
+                />
+                <span className="text-sm font-normal text-text-secondary">重要なお知らせとして送る(タイトルに「【重要】」を付ける)</span>
+              </label>
+
+              <Button
+                type="button"
+                variant="primary"
+                onClick={handleSendBroadcast}
+                disabled={broadcastSending}
+                className="w-full px-6 py-2.5 bg-brand-700 hover:bg-brand-800 text-white rounded-2xl text-sm font-medium disabled:opacity-50 transition-colors flex items-center justify-center gap-2 shadow-md shadow-brand-500/10"
+              >
+                {broadcastSending ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                    送信中...
+                  </>
+                ) : (
+                  '配信する'
+                )}
+              </Button>
+            </div>
+
+            <div className="bg-surface-raised rounded-2xl shadow-sm border border-border-subtle p-6 space-y-3">
+              <h3 className="text-xs font-bold text-text-muted uppercase tracking-wider">配信履歴</h3>
+              {broadcastHistoryLoading ? (
+                <div className="py-6 text-center text-sm text-text-muted">読み込み中...</div>
+              ) : broadcastHistory.length === 0 ? (
+                <div className="py-6 text-center text-sm text-text-muted">まだ配信履歴がありません</div>
+              ) : (
+                <div className="space-y-2">
+                  {broadcastHistory.map((message) => (
+                    <div key={message.id} className="rounded-2xl border border-border-subtle bg-surface-base p-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="text-sm font-normal text-text-primary">{message.title}</div>
+                        <div className="shrink-0 text-xs font-normal text-text-muted">
+                          {new Date(message.created_at).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' })}
+                        </div>
+                      </div>
+                      <p className="mt-1 text-xs font-normal text-text-secondary whitespace-pre-wrap">{message.body}</p>
+                      <div className="mt-2 text-xs font-normal text-text-muted">
+                        到達 {message.success_count} / {message.target_count}名
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
         )}
       </div>
     </div>
