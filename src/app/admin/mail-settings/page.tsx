@@ -109,6 +109,8 @@ export default function AdminMailSettingsPage() {
     created_at: string
   }>>([])
   const [broadcastHistoryLoading, setBroadcastHistoryLoading] = useState(true)
+  // AO-6: 配信履歴は既定で非表示(「配信履歴を見る」ボタンで開く)
+  const [showBroadcastHistory, setShowBroadcastHistory] = useState(false)
 
   // AO-2: 配信先の絞り込み(全員/オンラインレッスン参加者/個別選択)
   const [broadcastTargetMode, setBroadcastTargetMode] = useState<'all' | 'lesson' | 'individual'>('all')
@@ -483,18 +485,17 @@ export default function AdminMailSettingsPage() {
           </div>
         )}
 
-        {/* AO-4: ヘッダー。会員別の通知・リマインダーの時間は右端の⚙️(配信設定)モーダルへ移動 */}
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-xl font-semibold text-text-primary">配信</h1>
+        {/* AO-6: 「配信」の見出しはグローバルヘッダーと重複するため出さず、⚙️のみを右寄せで置く */}
+        <div className="flex justify-end mb-3">
           <Button
             type="button"
-            variant="secondary"
+            variant="ghost"
             size="sm"
             onClick={() => setShowSettingsModal(true)}
-            className="h-10 w-10 rounded-full border border-border-strong p-0 text-text-secondary hover:bg-surface-base flex items-center justify-center shrink-0"
+            className="h-10 w-10 rounded-full border-0 bg-transparent p-0 text-text-secondary hover:text-text-primary flex items-center justify-center shrink-0"
             aria-label="配信設定"
           >
-            <Icon name="settings" size={20} />
+            <Icon name="settings" size={22} />
           </Button>
         </div>
 
@@ -769,12 +770,7 @@ export default function AdminMailSettingsPage() {
 
         {/* お知らせを送る(メインコンテンツ) */}
         <div className="space-y-6 animate-fadeIn">
-            <div className="bg-surface-raised rounded-2xl shadow-sm border border-border-subtle p-6 space-y-4">
-              <div>
-                <h2 className="text-xl font-semibold text-text-primary">お知らせを送る</h2>
-                <p className="mt-1 text-xs text-text-secondary">アプリ通知ONの会員全員に、その場で自由な内容を配信します(テンプレートはありません)。</p>
-              </div>
-
+            <div className="bg-surface-raised rounded-2xl shadow-sm border border-border-subtle p-5 space-y-4">
               {broadcastError && (
                 <div className="p-3 bg-state-danger-500/15 border border-state-danger-500/25 rounded-2xl text-sm text-state-danger-300">
                   {broadcastError}
@@ -787,21 +783,21 @@ export default function AdminMailSettingsPage() {
               )}
 
               <div>
-                <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1.5">配信先</label>
-                <div className="flex gap-2">
+                {/* AO-6: 配信先はタブ形式(セグメンテッドコントロール)。ラベルは枠内に収まる短さにする */}
+                <div className="flex bg-surface-overlay/60 p-1 rounded-2xl border border-border-strong/50">
                   {([
                     { key: 'all', label: '全員' },
-                    { key: 'lesson', label: 'オンラインレッスン' },
-                    { key: 'individual', label: '個別選択' },
+                    { key: 'lesson', label: 'レッスン' },
+                    { key: 'individual', label: '個別' },
                   ] as const).map(opt => (
                     <button
                       key={opt.key}
                       type="button"
                       onClick={() => setBroadcastTargetMode(opt.key)}
-                      className={`flex-1 py-2 text-xs font-medium rounded-2xl border transition-colors ${
+                      className={`flex-1 min-w-0 py-2.5 text-sm font-medium rounded-2xl transition-all duration-200 ${
                         broadcastTargetMode === opt.key
-                          ? 'bg-brand-500/15 text-brand-300 border-brand-500/30'
-                          : 'bg-surface-base text-text-secondary border-border-subtle hover:bg-surface-overlay'
+                          ? 'bg-surface-raised text-brand-600 shadow-sm border border-border-subtle'
+                          : 'text-text-secondary hover:text-text-primary'
                       }`}
                     >
                       {opt.label}
@@ -887,27 +883,22 @@ export default function AdminMailSettingsPage() {
                 )}
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1.5">タイトル</label>
-                <input
-                  type="text"
-                  value={broadcastTitle}
-                  onChange={(e) => setBroadcastTitle(e.target.value)}
-                  placeholder="例: オンラインセッション時間変更のお知らせ"
-                  className="w-full min-w-0 max-w-full box-border px-4 py-2.5 border border-border-strong rounded-2xl text-sm bg-surface-raised focus:outline-none focus:ring-2 focus:ring-brand-500"
-                />
-              </div>
+              {/* AO-6: ラベルは省き、プレースホルダーは入力済みと誤認しないよう薄く表示する */}
+              <input
+                type="text"
+                value={broadcastTitle}
+                onChange={(e) => setBroadcastTitle(e.target.value)}
+                placeholder="タイトル"
+                className="w-full min-w-0 max-w-full box-border px-4 py-3 border border-border-strong rounded-2xl text-sm bg-surface-raised placeholder:text-text-muted/50 focus:outline-none focus:ring-2 focus:ring-brand-500"
+              />
 
-              <div>
-                <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1.5">本文</label>
-                <textarea
-                  value={broadcastBody}
-                  onChange={(e) => setBroadcastBody(e.target.value)}
-                  rows={4}
-                  placeholder="例: 本日19時からのオンラインセッションを20時に変更します。"
-                  className="w-full min-w-0 max-w-full box-border px-4 py-2.5 border border-border-strong rounded-2xl text-sm bg-surface-raised focus:outline-none focus:ring-2 focus:ring-brand-500"
-                />
-              </div>
+              <textarea
+                value={broadcastBody}
+                onChange={(e) => setBroadcastBody(e.target.value)}
+                rows={5}
+                placeholder="本文"
+                className="w-full min-w-0 max-w-full box-border px-4 py-3 border border-border-strong rounded-2xl text-sm bg-surface-raised placeholder:text-text-muted/50 focus:outline-none focus:ring-2 focus:ring-brand-500"
+              />
 
               <label className="flex items-center gap-2 cursor-pointer select-none">
                 <input
@@ -916,7 +907,7 @@ export default function AdminMailSettingsPage() {
                   onChange={(e) => setBroadcastImportant(e.target.checked)}
                   className="w-4.5 h-4.5 text-brand-600 border-border-strong rounded-lg focus:ring-brand-500 cursor-pointer"
                 />
-                <span className="text-sm font-normal text-text-secondary">重要なお知らせとして送る(タイトルに「【重要】」を付ける)</span>
+                <span className="text-sm font-normal text-text-secondary">タイトルに【重要】を付ける</span>
               </label>
 
               <Button
@@ -937,32 +928,55 @@ export default function AdminMailSettingsPage() {
               </Button>
             </div>
 
-            <div className="bg-surface-raised rounded-2xl shadow-sm border border-border-subtle p-6 space-y-3">
-              <h3 className="text-xs font-bold text-text-muted uppercase tracking-wider">配信履歴</h3>
-              {broadcastHistoryLoading ? (
-                <div className="py-6 text-center text-sm text-text-muted">読み込み中...</div>
-              ) : broadcastHistory.length === 0 ? (
-                <div className="py-6 text-center text-sm text-text-muted">まだ配信履歴がありません</div>
-              ) : (
-                <div className="space-y-2">
-                  {broadcastHistory.map((message) => (
-                    <div key={message.id} className="rounded-2xl border border-border-subtle bg-surface-base p-4">
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="text-sm font-normal text-text-primary">{message.title}</div>
-                        <div className="shrink-0 text-xs font-normal text-text-muted">
-                          {new Date(message.created_at).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' })}
+            {/* AO-6: 配信履歴は既定で隠し、ボタンを押したときだけ開く */}
+            {!showBroadcastHistory ? (
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setShowBroadcastHistory(true)}
+                className="w-full py-3 text-sm font-normal text-text-secondary hover:text-text-primary bg-transparent border-0"
+              >
+                配信履歴を見る
+              </Button>
+            ) : (
+              <div className="bg-surface-raised rounded-2xl shadow-sm border border-border-subtle p-5 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-bold text-text-muted uppercase tracking-wider">配信履歴</h3>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowBroadcastHistory(false)}
+                    className="px-2 py-1 text-xs font-normal text-text-secondary hover:text-text-primary bg-transparent border-0"
+                  >
+                    閉じる
+                  </Button>
+                </div>
+                {broadcastHistoryLoading ? (
+                  <div className="py-6 text-center text-sm text-text-muted">読み込み中...</div>
+                ) : broadcastHistory.length === 0 ? (
+                  <div className="py-6 text-center text-sm text-text-muted">まだ配信履歴がありません</div>
+                ) : (
+                  <div className="space-y-2">
+                    {broadcastHistory.map((message) => (
+                      <div key={message.id} className="rounded-2xl border border-border-subtle bg-surface-base p-4">
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="text-sm font-normal text-text-primary">{message.title}</div>
+                          <div className="shrink-0 text-xs font-normal text-text-muted">
+                            {new Date(message.created_at).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' })}
+                          </div>
+                        </div>
+                        <p className="mt-1 text-xs font-normal text-text-secondary whitespace-pre-wrap">{message.body}</p>
+                        <div className="mt-2 flex items-center gap-2 text-xs font-normal text-text-muted">
+                          <span className="rounded-full bg-surface-overlay px-2 py-0.5">{message.target_label || '全員'}</span>
+                          <span>到達 {message.success_count} / {message.target_count}名</span>
                         </div>
                       </div>
-                      <p className="mt-1 text-xs font-normal text-text-secondary whitespace-pre-wrap">{message.body}</p>
-                      <div className="mt-2 flex items-center gap-2 text-xs font-normal text-text-muted">
-                        <span className="rounded-full bg-surface-overlay px-2 py-0.5">{message.target_label || '全員'}</span>
-                        <span>到達 {message.success_count} / {message.target_count}名</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
       </div>
     </div>
