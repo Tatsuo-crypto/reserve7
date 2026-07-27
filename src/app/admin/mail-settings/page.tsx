@@ -40,6 +40,12 @@ interface MemberNotificationSetting {
   pushSubscriptionCount: number
 }
 
+// AO-2: 配信先を絞り込むためのオンラインレッスン一覧(既存の/api/admin/online-lessonを流用)
+interface OnlineLessonOption {
+  id: string
+  title: string
+}
+
 export default function AdminMailSettingsPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
@@ -89,9 +95,17 @@ export default function AdminMailSettingsPage() {
     important: boolean
     target_count: number
     success_count: number
+    target_label: string | null
     created_at: string
   }>>([])
   const [broadcastHistoryLoading, setBroadcastHistoryLoading] = useState(true)
+
+  // AO-2: 配信先の絞り込み(全員/オンラインレッスン参加者/個別選択)
+  const [broadcastTargetMode, setBroadcastTargetMode] = useState<'all' | 'lesson' | 'individual'>('all')
+  const [onlineLessons, setOnlineLessons] = useState<OnlineLessonOption[]>([])
+  const [selectedLessonId, setSelectedLessonId] = useState('')
+  const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([])
+  const [individualSearchQuery, setIndividualSearchQuery] = useState('')
 
   useEffect(() => {
     if (status === 'loading') return
@@ -102,7 +116,26 @@ export default function AdminMailSettingsPage() {
     fetchSettings()
     fetchMembers()
     fetchBroadcastHistory()
+    fetchOnlineLessons()
   }, [status])
+
+  const fetchOnlineLessons = async () => {
+    try {
+      const res = await fetch('/api/admin/online-lesson')
+      if (res.ok) {
+        const data = await res.json()
+        setOnlineLessons((data.lessons || []).map((l: any) => ({ id: l.id, title: l.title })))
+      }
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  const toggleSelectedMember = (memberId: string) => {
+    setSelectedMemberIds(prev => (
+      prev.includes(memberId) ? prev.filter(id => id !== memberId) : [...prev, memberId]
+    ))
+  }
 
   const fetchBroadcastHistory = async () => {
     setBroadcastHistoryLoading(true)
@@ -124,7 +157,22 @@ export default function AdminMailSettingsPage() {
       setBroadcastError('タイトルと本文を入力してください。')
       return
     }
-    if (!window.confirm('通知ONの会員全員にこの内容を配信します。よろしいですか？')) return
+    if (broadcastTargetMode === 'lesson' && !selectedLessonId) {
+      setBroadcastError('オンラインレッスンを選択してください。')
+      return
+    }
+    if (broadcastTargetMode === 'individual' && selectedMemberIds.length === 0) {
+      setBroadcastError('送信する会員を選択してください。')
+      return
+    }
+
+    const confirmLabel =
+      broadcastTargetMode === 'lesson'
+        ? `「${onlineLessons.find(l => l.id === selectedLessonId)?.title || '選択したレッスン'}」の参加者`
+        : broadcastTargetMode === 'individual'
+          ? `選択した${selectedMemberIds.length}名`
+          : '通知ONの会員全員'
+    if (!window.confirm(`${confirmLabel}にこの内容を配信します。よろしいですか？`)) return
 
     setBroadcastSending(true)
     setBroadcastError(null)
@@ -137,6 +185,9 @@ export default function AdminMailSettingsPage() {
           title: broadcastTitle.trim(),
           body: broadcastBody.trim(),
           important: broadcastImportant,
+          targetMode: broadcastTargetMode,
+          lessonId: broadcastTargetMode === 'lesson' ? selectedLessonId : undefined,
+          userIds: broadcastTargetMode === 'individual' ? selectedMemberIds : undefined,
         }),
       })
       const data = await res.json()
@@ -147,6 +198,7 @@ export default function AdminMailSettingsPage() {
       setBroadcastTitle('')
       setBroadcastBody('')
       setBroadcastImportant(false)
+      setSelectedMemberIds([])
       fetchBroadcastHistory()
     } catch (err: any) {
       console.error(err)
@@ -270,6 +322,14 @@ export default function AdminMailSettingsPage() {
       members: storeMembers,
     }))
   }, [members])
+
+  // AO-2: 個別選択候補は「通知ONの会員」のみ(そもそも通知が届かない相手を選べても意味が無いため)
+  const individualCandidates = useMemo(() => {
+    return members
+      .filter(m => m.pushEnabled)
+      .filter(m => !individualSearchQuery || m.fullName.includes(individualSearchQuery))
+      .sort((a, b) => a.fullName.localeCompare(b.fullName, 'ja'))
+  }, [members, individualSearchQuery])
 
   const notificationStats = useMemo(() => {
     const readyCount = members.filter(member => member.pushEnabled && member.pushSubscriptionCount > 0).length
@@ -669,6 +729,80 @@ export default function AdminMailSettingsPage() {
               )}
 
               <div>
+                <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1.5">配信先</label>
+                <div className="flex gap-2">
+                  {([
+                    { key: 'all', label: '全員' },
+                    { key: 'lesson', label: 'オンラインレッスン' },
+                    { key: 'individual', label: '個別選択' },
+                  ] as const).map(opt => (
+                    <button
+                      key={opt.key}
+                      type="button"
+                      onClick={() => setBroadcastTargetMode(opt.key)}
+                      className={`flex-1 py-2 text-xs font-medium rounded-2xl border transition-colors ${
+                        broadcastTargetMode === opt.key
+                          ? 'bg-brand-500/15 text-brand-300 border-brand-500/30'
+                          : 'bg-surface-base text-text-secondary border-border-subtle hover:bg-surface-overlay'
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+
+                {broadcastTargetMode === 'lesson' && (
+                  <div className="mt-3">
+                    {onlineLessons.length === 0 ? (
+                      <p className="text-xs text-text-muted">登録されているオンラインレッスンがありません。</p>
+                    ) : (
+                      <select
+                        value={selectedLessonId}
+                        onChange={(e) => setSelectedLessonId(e.target.value)}
+                        className="w-full min-w-0 max-w-full box-border px-4 py-2.5 border border-border-strong rounded-2xl text-sm bg-surface-raised focus:outline-none focus:ring-2 focus:ring-brand-500"
+                      >
+                        <option value="">レッスンを選択してください</option>
+                        {onlineLessons.map(lesson => (
+                          <option key={lesson.id} value={lesson.id}>{lesson.title}</option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+                )}
+
+                {broadcastTargetMode === 'individual' && (
+                  <div className="mt-3 space-y-2">
+                    <input
+                      type="text"
+                      value={individualSearchQuery}
+                      onChange={(e) => setIndividualSearchQuery(e.target.value)}
+                      placeholder="名前で検索"
+                      className="w-full min-w-0 max-w-full box-border px-4 py-2 border border-border-strong rounded-2xl text-sm bg-surface-raised focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    />
+                    <p className="text-xs text-text-muted">{selectedMemberIds.length}名選択中(通知ONの会員のみ表示)</p>
+                    <div className="max-h-56 overflow-y-auto border border-border-subtle rounded-2xl divide-y divide-border-subtle">
+                      {individualCandidates.length === 0 ? (
+                        <p className="p-4 text-center text-xs text-text-muted">該当する会員がいません</p>
+                      ) : (
+                        individualCandidates.map(member => (
+                          <label key={member.id} className="flex items-center gap-2 px-4 py-2.5 cursor-pointer select-none hover:bg-surface-base/70">
+                            <input
+                              type="checkbox"
+                              checked={selectedMemberIds.includes(member.id)}
+                              onChange={() => toggleSelectedMember(member.id)}
+                              className="w-4.5 h-4.5 text-brand-600 border-border-strong rounded-lg focus:ring-brand-500 cursor-pointer"
+                            />
+                            <span className="text-sm text-text-primary">{member.fullName}</span>
+                            <span className="text-xs text-text-muted">{member.storeName}</span>
+                          </label>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div>
                 <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1.5">タイトル</label>
                 <input
                   type="text"
@@ -735,8 +869,9 @@ export default function AdminMailSettingsPage() {
                         </div>
                       </div>
                       <p className="mt-1 text-xs font-normal text-text-secondary whitespace-pre-wrap">{message.body}</p>
-                      <div className="mt-2 text-xs font-normal text-text-muted">
-                        到達 {message.success_count} / {message.target_count}名
+                      <div className="mt-2 flex items-center gap-2 text-xs font-normal text-text-muted">
+                        <span className="rounded-full bg-surface-overlay px-2 py-0.5">{message.target_label || '全員'}</span>
+                        <span>到達 {message.success_count} / {message.target_count}名</span>
                       </div>
                     </div>
                   ))}
