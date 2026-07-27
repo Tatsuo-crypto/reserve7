@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Button from '@/components/ui/Button'
 import Icon from '@/components/ui/icons'
+import AppModal from '@/components/ui/AppModal'
 
 // メール送信機能は廃止（2026-07決定）。通知はアプリのプッシュ通知のみ。
 // APIとの互換性のため、これらのフィールドはやり取りするが画面上には出さない。
@@ -81,7 +82,10 @@ export default function AdminMailSettingsPage() {
   const [membersLoading, setMembersLoading] = useState(true)
   const [membersSaving, setMembersSaving] = useState(false)
 
-  const [activeTab, setActiveTab] = useState<'members' | 'reminder' | 'broadcast'>('members')
+  // AO-4: メイン画面は配信先選択(お知らせを送る)。会員別の通知・リマインダーの時間は
+  // 右上の⚙️(配信設定)から開く設定モーダルに移動した
+  const [showSettingsModal, setShowSettingsModal] = useState(false)
+  const [settingsTab, setSettingsTab] = useState<'members' | 'reminder'>('members')
 
   // AO-1: 「配信」タブ(お知らせを送る)。テンプレートは無し、自由記述のみ。
   const [broadcastTitle, setBroadcastTitle] = useState('')
@@ -473,48 +477,57 @@ export default function AdminMailSettingsPage() {
           </div>
         )}
 
-        {/* Main Tab Bar */}
-        <div className="flex bg-surface-overlay/60 p-1.5 rounded-2xl mb-8 border border-border-strong/50 shadow-inner">
+        {/* AO-4: ヘッダー。会員別の通知・リマインダーの時間は右端の⚙️(配信設定)モーダルへ移動 */}
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-xl font-semibold text-text-primary">配信</h1>
           <Button
             type="button"
-            variant="ghost"
-            onClick={() => setActiveTab('members')}
-            className={`flex-1 py-3 text-sm font-medium rounded-2xl transition-all duration-200 ${
-              activeTab === 'members'
-                ? 'bg-surface-raised text-brand-600 shadow-sm border border-border-subtle'
-                : 'text-text-secondary hover:text-text-secondary'
-            }`}
+            variant="secondary"
+            size="sm"
+            onClick={() => setShowSettingsModal(true)}
+            className="h-10 w-10 rounded-full border border-border-strong p-0 text-text-secondary hover:bg-surface-base flex items-center justify-center shrink-0"
+            aria-label="配信設定"
           >
-            会員別の通知
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={() => setActiveTab('reminder')}
-            className={`flex-1 py-3 text-sm font-medium rounded-2xl transition-all duration-200 ${
-              activeTab === 'reminder'
-                ? 'bg-surface-raised text-brand-600 shadow-sm border border-border-subtle'
-                : 'text-text-secondary hover:text-text-secondary'
-            }`}
-          >
-            リマインダーの時間
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={() => setActiveTab('broadcast')}
-            className={`flex-1 py-3 text-sm font-medium rounded-2xl transition-all duration-200 ${
-              activeTab === 'broadcast'
-                ? 'bg-surface-raised text-brand-600 shadow-sm border border-border-subtle'
-                : 'text-text-secondary hover:text-text-secondary'
-            }`}
-          >
-            お知らせを送る
+            <Icon name="settings" size={20} />
           </Button>
         </div>
 
+        {showSettingsModal && (
+          <AppModal
+            title="配信設定"
+            onClose={() => setShowSettingsModal(false)}
+            size="lg"
+          >
+            <div className="p-4 sm:p-5 space-y-6">
+              <div className="flex bg-surface-overlay/60 p-1.5 rounded-2xl border border-border-strong/50 shadow-inner">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => setSettingsTab('members')}
+                  className={`flex-1 py-3 text-sm font-medium rounded-2xl transition-all duration-200 ${
+                    settingsTab === 'members'
+                      ? 'bg-surface-raised text-brand-600 shadow-sm border border-border-subtle'
+                      : 'text-text-secondary hover:text-text-secondary'
+                  }`}
+                >
+                  会員別の通知
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => setSettingsTab('reminder')}
+                  className={`flex-1 py-3 text-sm font-medium rounded-2xl transition-all duration-200 ${
+                    settingsTab === 'reminder'
+                      ? 'bg-surface-raised text-brand-600 shadow-sm border border-border-subtle'
+                      : 'text-text-secondary hover:text-text-secondary'
+                  }`}
+                >
+                  リマインダーの時間
+                </Button>
+              </div>
+
         {/* TAB: Members */}
-        {activeTab === 'members' && (
+        {settingsTab === 'members' && (
           <div className="space-y-6 animate-fadeIn">
             <div className="bg-surface-raised rounded-2xl shadow-sm border border-border-subtle p-6 space-y-5">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -663,7 +676,7 @@ export default function AdminMailSettingsPage() {
         )}
 
         {/* TAB: Reminder timing */}
-        {activeTab === 'reminder' && (
+        {settingsTab === 'reminder' && (
           <form onSubmit={handleSave} className="space-y-6 animate-fadeIn">
             <div className="bg-surface-raised rounded-2xl shadow-sm border border-border-subtle p-6 space-y-6">
               <div className="space-y-4 border-b border-border-subtle pb-6">
@@ -721,10 +734,10 @@ export default function AdminMailSettingsPage() {
               <Button
                 type="button"
                 variant="secondary"
-                onClick={() => router.push('/dashboard?tab=others')}
+                onClick={() => setShowSettingsModal(false)}
                 className="px-5 py-2.5 border border-border-strong hover:bg-surface-base text-text-secondary rounded-2xl text-sm font-medium transition-colors flex-1 text-center"
               >
-                キャンセル
+                閉じる
               </Button>
               <Button
                 type="submit"
@@ -744,10 +757,12 @@ export default function AdminMailSettingsPage() {
             </div>
           </form>
         )}
+              </div>
+          </AppModal>
+        )}
 
-        {/* TAB: Broadcast (お知らせを送る) */}
-        {activeTab === 'broadcast' && (
-          <div className="space-y-6 animate-fadeIn">
+        {/* お知らせを送る(メインコンテンツ) */}
+        <div className="space-y-6 animate-fadeIn">
             <div className="bg-surface-raised rounded-2xl shadow-sm border border-border-subtle p-6 space-y-4">
               <div>
                 <h2 className="text-xl font-semibold text-text-primary">お知らせを送る</h2>
@@ -949,7 +964,6 @@ export default function AdminMailSettingsPage() {
               )}
             </div>
           </div>
-        )}
       </div>
     </div>
   )
