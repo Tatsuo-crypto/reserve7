@@ -363,12 +363,13 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
   }
 
   // Open edit modal from an event click
-  // AN-1: トレーナー画面(trainerToken有)かつ通常予約の場合は、直接編集モーダルを開かず
-  // 「カルテ入力」「予約変更」の選択を先に出す。管理者画面やブロック時間・ゲスト枠は従来どおり
-  // 直接編集モーダルを開く(カルテはトレーナーの通常予約に対してのみ意味を持つため)。
+  // AN-3: トレーナー画面・管理者画面のどちらでも、通常予約の場合は直接編集モーダルを開かず
+  // 「カルテ入力」「予約変更」の選択を先に出す(AN-1ではトレーナー画面限定だったが、管理者側でも
+  // 使いたいとの要望により両方で表示するよう変更)。ブロック時間・ゲスト枠は従来どおり
+  // 直接編集モーダルを開く(カルテは通常予約に対してのみ意味を持つため)。
   const openEditFromEvent = (e: React.MouseEvent<HTMLDivElement>, ev: CalendarEvent) => {
     e.stopPropagation()
-    if (trainerToken && ev.type === 'reservation') {
+    if (ev.type === 'reservation') {
       setChoiceEvent(ev)
       setShowActionChoice(true)
       return
