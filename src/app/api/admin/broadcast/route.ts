@@ -71,10 +71,18 @@ export async function POST(request: NextRequest) {
 
       if (lessonUsersError) return createErrorResponse('送信対象会員の取得に失敗しました', 500)
 
-      targetUsers = (lessonUsers || [])
+      let lessonTargetUsers = (lessonUsers || [])
         .map((lu: any) => lu.users)
         .filter((u: any) => u?.push_notification_enabled === true && Boolean(u.access_token))
-      targetLabel = `オンラインレッスン: ${lesson.title}`
+
+      // AO-3: 画面側で参加者一覧からチェックを外した人がいる場合、その絞り込みをここでも適用する
+      if (userIds && userIds.length > 0) {
+        const idSet = new Set(userIds)
+        lessonTargetUsers = lessonTargetUsers.filter((u: any) => idSet.has(u.id))
+      }
+
+      targetUsers = lessonTargetUsers
+      targetLabel = `オンラインレッスン: ${lesson.title}(${targetUsers.length}名)`
     } else if (targetMode === 'individual') {
       if (!userIds || userIds.length === 0) return createErrorResponse('送信する会員を選択してください', 400)
 

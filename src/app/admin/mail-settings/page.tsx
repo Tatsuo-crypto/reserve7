@@ -41,9 +41,11 @@ interface MemberNotificationSetting {
 }
 
 // AO-2: 配信先を絞り込むためのオンラインレッスン一覧(既存の/api/admin/online-lessonを流用)
+// AO-3: 参加者(userIds)も保持し、レッスン選択時にチェックボックス付きの氏名一覧を表示できるようにする
 interface OnlineLessonOption {
   id: string
   title: string
+  userIds: string[]
 }
 
 export default function AdminMailSettingsPage() {
@@ -106,6 +108,8 @@ export default function AdminMailSettingsPage() {
   const [selectedLessonId, setSelectedLessonId] = useState('')
   const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([])
   const [individualSearchQuery, setIndividualSearchQuery] = useState('')
+  // AO-3: 選択中のレッスン参加者のうち、実際に送る相手として☑が付いている人
+  const [selectedLessonMemberIds, setSelectedLessonMemberIds] = useState<string[]>([])
 
   useEffect(() => {
     if (status === 'loading') return
@@ -124,7 +128,7 @@ export default function AdminMailSettingsPage() {
       const res = await fetch('/api/admin/online-lesson')
       if (res.ok) {
         const data = await res.json()
-        setOnlineLessons((data.lessons || []).map((l: any) => ({ id: l.id, title: l.title })))
+        setOnlineLessons((data.lessons || []).map((l: any) => ({ id: l.id, title: l.title, userIds: l.userIds || [] })))
       }
     } catch (err) {
       console.error(err)
@@ -136,6 +140,29 @@ export default function AdminMailSettingsPage() {
       prev.includes(memberId) ? prev.filter(id => id !== memberId) : [...prev, memberId]
     ))
   }
+
+  const toggleLessonMember = (memberId: string) => {
+    setSelectedLessonMemberIds(prev => (
+      prev.includes(memberId) ? prev.filter(id => id !== memberId) : [...prev, memberId]
+    ))
+  }
+
+  // AO-3: レッスン参加者の氏名・通知状態一覧(membersと突き合わせ)。参加者名簿に無い(退会等)場合は除く
+  const lessonParticipants = useMemo(() => {
+    const lesson = onlineLessons.find(l => l.id === selectedLessonId)
+    if (!lesson) return []
+    const memberMap = new Map(members.map(m => [m.id, m]))
+    return lesson.userIds
+      .map(id => memberMap.get(id))
+      .filter((m): m is MemberNotificationSetting => Boolean(m))
+      .sort((a, b) => a.fullName.localeCompare(b.fullName, 'ja'))
+  }, [onlineLessons, selectedLessonId, members])
+
+  // レッスンを切り替えたら、通知ONの参加者を初期状態で全員☑にする
+  useEffect(() => {
+    if (broadcastTargetMode !== 'lesson') return
+    setSelectedLessonMemberIds(lessonParticipants.filter(m => m.pushEnabled).map(m => m.id))
+  }, [selectedLessonId, broadcastTargetMode, lessonParticipants])
 
   const fetchBroadcastHistory = async () => {
     setBroadcastHistoryLoading(true)
@@ -161,6 +188,10 @@ export default function AdminMailSettingsPage() {
       setBroadcastError('オンラインレッスンを選択してください。')
       return
     }
+    if (broadcastTargetMode === 'lesson' && selectedLessonMemberIds.length === 0) {
+      setBroadcastError('送信する参加者を選択してください。')
+      return
+    }
     if (broadcastTargetMode === 'individual' && selectedMemberIds.length === 0) {
       setBroadcastError('送信する会員を選択してください。')
       return
@@ -168,7 +199,7 @@ export default function AdminMailSettingsPage() {
 
     const confirmLabel =
       broadcastTargetMode === 'lesson'
-        ? `「${onlineLessons.find(l => l.id === selectedLessonId)?.title || '選択したレッスン'}」の参加者`
+        ? `「${onlineLessons.find(l => l.id === selectedLessonId)?.title || '選択したレッスン'}」の参加者のうち選択した${selectedLessonMemberIds.length}名`
         : broadcastTargetMode === 'individual'
           ? `選択した${selectedMemberIds.length}名`
           : '通知ONの会員全員'
@@ -187,7 +218,12 @@ export default function AdminMailSettingsPage() {
           important: broadcastImportant,
           targetMode: broadcastTargetMode,
           lessonId: broadcastTargetMode === 'lesson' ? selectedLessonId : undefined,
-          userIds: broadcastTargetMode === 'individual' ? selectedMemberIds : undefined,
+          userIds:
+            broadcastTargetMode === 'individual'
+              ? selectedMemberIds
+              : broadcastTargetMode === 'lesson'
+                ? selectedLessonMemberIds
+                : undefined,
         }),
       })
       const data = await res.json()
@@ -199,6 +235,7 @@ export default function AdminMailSettingsPage() {
       setBroadcastBody('')
       setBroadcastImportant(false)
       setSelectedMemberIds([])
+      setSelectedLessonMemberIds([])
       fetchBroadcastHistory()
     } catch (err: any) {
       console.error(err)
@@ -766,6 +803,39 @@ export default function AdminMailSettingsPage() {
                           <option key={lesson.id} value={lesson.id}>{lesson.title}</option>
                         ))}
                       </select>
+                    )}
+
+                    {selectedLessonId && (
+                      <div className="mt-3 space-y-2">
+                        <p className="text-xs text-text-muted">{selectedLessonMemberIds.length}名選択中(このレッスンの参加者から送る相手を選べます)</p>
+                        <div className="max-h-56 overflow-y-auto border border-border-subtle rounded-2xl divide-y divide-border-subtle">
+                          {lessonParticipants.length === 0 ? (
+                            <p className="p-4 text-center text-xs text-text-muted">このレッスンの参加者が登録されていません</p>
+                          ) : (
+                            lessonParticipants.map(member => (
+                              <label
+                                key={member.id}
+                                className={`flex items-center gap-2 px-4 py-2.5 select-none ${
+                                  member.pushEnabled ? 'cursor-pointer hover:bg-surface-base/70' : 'opacity-50 cursor-not-allowed'
+                                }`}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={selectedLessonMemberIds.includes(member.id)}
+                                  disabled={!member.pushEnabled}
+                                  onChange={() => toggleLessonMember(member.id)}
+                                  className="w-4.5 h-4.5 text-brand-600 border-border-strong rounded-lg focus:ring-brand-500 cursor-pointer disabled:cursor-not-allowed"
+                                />
+                                <span className="text-sm text-text-primary">{member.fullName}</span>
+                                <span className="text-xs text-text-muted">{member.storeName}</span>
+                                {!member.pushEnabled && (
+                                  <span className="text-xs text-text-muted">(通知OFF)</span>
+                                )}
+                              </label>
+                            ))
+                          )}
+                        </div>
+                      </div>
                     )}
                   </div>
                 )}
