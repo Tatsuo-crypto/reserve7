@@ -35,17 +35,29 @@ const emptyLesson = (): Omit<OnlineLesson, 'id'> => ({
     userIds: [],
 })
 
-// AP-1: その日だけ休講にするための例外日
+// AP-1/AP-3: その日だけ休講にする / 別の日に振替するための例外日
 interface LessonException {
     id: string
     online_lesson_id: string
     exception_date: string
     reason: string | null
+    moved_to_date: string | null
+    moved_to_start_time: string | null
+    moved_to_end_time: string | null
 }
 
 function formatExceptionDate(dateStr: string): string {
     const d = new Date(`${dateStr}T00:00:00+09:00`)
     return d.toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo', month: 'long', day: 'numeric', weekday: 'short' })
+}
+
+/** 「7月28日(火) 休講」/「7月28日(火) → 7月29日(水) 21:30 に振替」のような表示にする */
+function formatExceptionLabel(ex: LessonException): string {
+    const from = formatExceptionDate(ex.exception_date)
+    if (!ex.moved_to_date) return `${from} 休講`
+    const to = formatExceptionDate(ex.moved_to_date)
+    const time = ex.moved_to_start_time ? ` ${ex.moved_to_start_time.substring(0, 5)}` : ''
+    return `${from} → ${to}${time} に振替`
 }
 
 function formatSchedule(lesson: OnlineLesson | Omit<OnlineLesson, 'id'>): string {
@@ -77,6 +89,10 @@ export default function AdminOnlineLessonPage() {
     const [allExceptions, setAllExceptions] = useState<LessonException[]>([])
     const [newExceptionDate, setNewExceptionDate] = useState('')
     const [savingException, setSavingException] = useState(false)
+    // AP-3: 振替先(未入力なら休講扱い)
+    const [newMovedToDate, setNewMovedToDate] = useState('')
+    const [newMovedToStartTime, setNewMovedToStartTime] = useState('')
+    const [newMovedToEndTime, setNewMovedToEndTime] = useState('')
 
     useEffect(() => {
         if (status === 'loading') return
@@ -115,15 +131,24 @@ export default function AdminOnlineLessonPage() {
             const res = await fetch('/api/admin/online-lesson/exceptions', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ lessonId: editingId, exceptionDate: newExceptionDate }),
+                body: JSON.stringify({
+                    lessonId: editingId,
+                    exceptionDate: newExceptionDate,
+                    movedToDate: newMovedToDate || null,
+                    movedToStartTime: newMovedToStartTime || null,
+                    movedToEndTime: newMovedToEndTime || null,
+                }),
             })
             const data = await res.json()
-            if (!res.ok) throw new Error(data.error || '休講日を登録できませんでした。')
+            if (!res.ok) throw new Error(data.error || '登録できませんでした。')
             setNewExceptionDate('')
+            setNewMovedToDate('')
+            setNewMovedToStartTime('')
+            setNewMovedToEndTime('')
             await fetchExceptions(editingId)
             await fetchAllExceptions()
         } catch (e) {
-            setError(e instanceof Error ? e.message : '休講日を登録できませんでした。')
+            setError(e instanceof Error ? e.message : '登録できませんでした。')
         } finally {
             setSavingException(false)
         }
@@ -132,12 +157,20 @@ export default function AdminOnlineLessonPage() {
     const handleRemoveException = async (id: string) => {
         try {
             const res = await fetch(`/api/admin/online-lesson/exceptions?id=${id}`, { method: 'DELETE' })
-            if (!res.ok) throw new Error('休講日を解除できませんでした。')
+            if (!res.ok) throw new Error('解除できませんでした。')
             if (editingId && editingId !== 'new') await fetchExceptions(editingId)
             await fetchAllExceptions()
         } catch (e) {
-            setError(e instanceof Error ? e.message : '休講日を解除できませんでした。')
+            setError(e instanceof Error ? e.message : '解除できませんでした。')
         }
+    }
+
+    const resetExceptionForm = () => {
+        setExceptions([])
+        setNewExceptionDate('')
+        setNewMovedToDate('')
+        setNewMovedToStartTime('')
+        setNewMovedToEndTime('')
     }
 
     const fetchLessons = async () => {
@@ -185,22 +218,19 @@ export default function AdminOnlineLessonPage() {
                 userIds: lesson.userIds || [],
             })
             setEditingId(lesson.id)
-            setExceptions([])
-            setNewExceptionDate('')
+            resetExceptionForm()
             fetchExceptions(lesson.id)
         } else {
             setForm(emptyLesson())
             setEditingId('new')
-            setExceptions([])
-            setNewExceptionDate('')
+            resetExceptionForm()
         }
         setError(null)
     }
 
     const cancelEdit = () => {
         setEditingId(null)
-        setExceptions([])
-        setNewExceptionDate('')
+        resetExceptionForm()
         setError(null)
     }
 
@@ -543,25 +573,51 @@ export default function AdminOnlineLessonPage() {
                             {/* AP-1: その日だけ休講(繰り返し設定は変えずに1回だけ休みにする) */}
                             {editingId !== 'new' && (
                                 <div className="border-t border-border-subtle pt-5">
-                                    <label className="block text-sm font-normal text-text-secondary mb-1.5">休講日（この日だけお休み）</label>
-                                    <p className="text-xs text-text-muted mb-2">開催曜日はそのままで、指定した日だけ開催なしにします。その日は自動リマインダーも送られません。</p>
+                                    <label className="block text-sm font-normal text-text-secondary mb-1.5">休講・振替（この回だけ変更）</label>
+                                    <p className="text-xs text-text-muted mb-3">開催曜日はそのままで、指定した日だけ変更します。振替先を入れると、その日時に自動リマインダーが飛びます。</p>
 
-                                    <div className="flex gap-2">
-                                        <input
-                                            type="date"
-                                            value={newExceptionDate}
-                                            onChange={e => setNewExceptionDate(e.target.value)}
-                                            className="flex-1 min-w-0 max-w-full box-border px-4 py-2.5 border border-border-strong rounded-2xl text-sm bg-surface-raised focus:outline-none focus:ring-2 focus:ring-brand-500"
-                                        />
+                                    <div className="space-y-2">
+                                        <div>
+                                            <label className="block text-xs text-text-muted mb-1">お休みにする日</label>
+                                            <input
+                                                type="date"
+                                                value={newExceptionDate}
+                                                onChange={e => setNewExceptionDate(e.target.value)}
+                                                className="w-full min-w-0 max-w-full box-border px-4 py-2.5 border border-border-strong rounded-2xl text-sm bg-surface-raised focus:outline-none focus:ring-2 focus:ring-brand-500"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs text-text-muted mb-1">振替先（空ならそのまま休講）</label>
+                                            <div className="flex gap-2">
+                                                <input
+                                                    type="date"
+                                                    value={newMovedToDate}
+                                                    onChange={e => setNewMovedToDate(e.target.value)}
+                                                    className="flex-1 min-w-0 box-border px-4 py-2.5 border border-border-strong rounded-2xl text-sm bg-surface-raised focus:outline-none focus:ring-2 focus:ring-brand-500"
+                                                />
+                                                <input
+                                                    type="time"
+                                                    value={newMovedToStartTime}
+                                                    onChange={e => setNewMovedToStartTime(e.target.value)}
+                                                    disabled={!newMovedToDate}
+                                                    className="w-28 shrink-0 min-w-0 box-border px-3 py-2.5 border border-border-strong rounded-2xl text-sm bg-surface-raised focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:opacity-50"
+                                                />
+                                            </div>
+                                            {newMovedToDate && (
+                                                <p className="mt-1 text-xs text-text-muted">時刻を空にすると、通常の開催時刻（{form.start_time || '未設定'}）のままになります。</p>
+                                            )}
+                                        </div>
+
                                         <Button
                                             type="button"
                                             variant="secondary"
                                             size="sm"
                                             onClick={handleAddException}
                                             disabled={!newExceptionDate || savingException}
-                                            className="shrink-0 px-4 py-2.5 border border-border-strong text-text-secondary rounded-2xl hover:bg-surface-base text-sm disabled:opacity-50"
+                                            className="w-full px-4 py-2.5 border border-border-strong text-text-secondary rounded-2xl hover:bg-surface-base text-sm disabled:opacity-50"
                                         >
-                                            {savingException ? '登録中...' : '休講にする'}
+                                            {savingException ? '登録中...' : newMovedToDate ? '振替を登録する' : '休講にする'}
                                         </Button>
                                     </div>
 
@@ -569,13 +625,13 @@ export default function AdminOnlineLessonPage() {
                                         <div className="mt-3 space-y-2">
                                             {exceptions.map(ex => (
                                                 <div key={ex.id} className="flex items-center justify-between gap-3 rounded-2xl border border-border-subtle bg-surface-base px-4 py-2.5">
-                                                    <span className="text-sm text-text-primary">{formatExceptionDate(ex.exception_date)}</span>
+                                                    <span className="text-sm text-text-primary">{formatExceptionLabel(ex)}</span>
                                                     <Button
                                                         type="button"
                                                         variant="ghost"
                                                         size="sm"
                                                         onClick={() => handleRemoveException(ex.id)}
-                                                        className="px-2 py-1 text-xs text-text-secondary hover:text-text-primary bg-transparent border-0"
+                                                        className="shrink-0 px-2 py-1 text-xs text-text-secondary hover:text-text-primary bg-transparent border-0"
                                                     >
                                                         解除
                                                     </Button>
@@ -676,12 +732,13 @@ export default function AdminOnlineLessonPage() {
                                             📅 {formatSchedule(lesson)}
                                         </p>
                                         {allExceptions.filter(ex => ex.online_lesson_id === lesson.id).length > 0 && (
-                                            <p className="text-xs text-amber-300 mb-1">
-                                                休講予定: {allExceptions
+                                            <div className="mb-1 space-y-0.5">
+                                                {allExceptions
                                                     .filter(ex => ex.online_lesson_id === lesson.id)
-                                                    .map(ex => formatExceptionDate(ex.exception_date))
-                                                    .join('、')}
-                                            </p>
+                                                    .map(ex => (
+                                                        <p key={ex.id} className="text-xs text-amber-300">{formatExceptionLabel(ex)}</p>
+                                                    ))}
+                                            </div>
                                         )}
                                         <p className="text-xs text-text-muted truncate">{lesson.meet_url}</p>
                                         {lesson.description && (

@@ -196,23 +196,47 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ message: 'No active online lessons found' })
         }
 
-        // AP-1: 対象日が「その日だけ休講」に登録されているレッスンは通知を送らない
+        // AP-1/AP-3: 対象日に関係する例外(休講・振替)を取得する。
+        // exception_date === 対象日  → その日の通常開催は無し(休講でも振替でも元の日は開催されない)
+        // moved_to_date === 対象日   → 振替先として対象日に開催される(曜日が合っていなくても通知する)
         const { data: exceptionsForTargetDate, error: exceptionsError } = await supabaseAdmin
             .from('online_lesson_exceptions')
-            .select('online_lesson_id')
-            .eq('exception_date', onlineTargetDateStr)
+            .select('online_lesson_id, exception_date, moved_to_date, moved_to_start_time, moved_to_end_time')
+            .or(`exception_date.eq.${onlineTargetDateStr},moved_to_date.eq.${onlineTargetDateStr}`)
 
         if (exceptionsError) {
             console.error('Failed to fetch online lesson exceptions:', exceptionsError)
         }
-        const canceledLessonIds = new Set((exceptionsForTargetDate || []).map((e: any) => e.online_lesson_id))
+
+        const canceledLessonIds = new Set(
+            (exceptionsForTargetDate || [])
+                .filter((e: any) => e.exception_date === onlineTargetDateStr)
+                .map((e: any) => e.online_lesson_id)
+        )
+
+        // 振替でこの日に開催されるレッスン → レッスンIDごとの振替後の開始・終了時刻
+        const movedInLessons = new Map<string, { startTime: string | null; endTime: string | null }>()
+        for (const e of exceptionsForTargetDate || []) {
+            if ((e as any).moved_to_date === onlineTargetDateStr) {
+                movedInLessons.set((e as any).online_lesson_id, {
+                    startTime: (e as any).moved_to_start_time,
+                    endTime: (e as any).moved_to_end_time,
+                })
+            }
+        }
 
         const sentReminders: { lessonId: string; title: string; recipientCount: number }[] = []
         const matchedLessons: { lessonId: string; title: string; startTime: string; recipientCount: number; pushRecipientCount: number; emailRecipientCount: number }[] = []
         const skippedLessons: { lessonId: string; title: string; reason: string; startTime?: string | null; dayOfWeek?: number[] | null }[] = []
 
         for (const lesson of lessons) {
-            if (canceledLessonIds.has(lesson.id)) {
+            const movedIn = movedInLessons.get(lesson.id)
+
+            // 振替でこの日に来ているレッスンは、元の開催曜日に関係なく対象にする。
+            // 振替先の時刻が省略されている場合は元のレッスンの時刻をそのまま使う。
+            const effectiveStartTime = movedIn ? (movedIn.startTime || lesson.start_time) : lesson.start_time
+
+            if (!movedIn && canceledLessonIds.has(lesson.id)) {
                 skippedLessons.push({
                     lessonId: lesson.id,
                     title: lesson.title,
@@ -223,7 +247,8 @@ export async function GET(request: NextRequest) {
                 continue
             }
 
-            const isScheduledForTargetDay = lesson.day_of_week && Array.isArray(lesson.day_of_week) && lesson.day_of_week.includes(onlineTargetDow)
+            const isScheduledForTargetDay = movedIn
+                || (lesson.day_of_week && Array.isArray(lesson.day_of_week) && lesson.day_of_week.includes(onlineTargetDow))
             if (!isScheduledForTargetDay) {
                 skippedLessons.push({
                     lessonId: lesson.id,
@@ -235,7 +260,7 @@ export async function GET(request: NextRequest) {
                 continue
             }
 
-            const lessonStartMinutes = minutesFromTime(lesson.start_time)
+            const lessonStartMinutes = minutesFromTime(effectiveStartTime)
             if (lessonStartMinutes === null || lessonStartMinutes < onlineWindowStartMinutes || lessonStartMinutes > onlineWindowEndMinutes) {
                 skippedLessons.push({
                     lessonId: lesson.id,
@@ -310,13 +335,13 @@ export async function GET(request: NextRequest) {
                 continue
             }
 
-            console.log(`[Online Lesson Cron] Sending push reminders for "${lesson.title}" at ${lesson.start_time} to ${pushUsers.length} users`)
+            console.log(`[Online Lesson Cron] Sending push reminders for "${lesson.title}" at ${effectiveStartTime}${movedIn ? ' (振替開催)' : ''} to ${pushUsers.length} users`)
 
             let successCount = 0
             matchedLessons.push({
                 lessonId: lesson.id,
                 title: lesson.title,
-                startTime: lesson.start_time,
+                startTime: effectiveStartTime,
                 recipientCount: pushUsers.length,
                 pushRecipientCount: pushUsers.length,
                 emailRecipientCount: 0
@@ -325,10 +350,12 @@ export async function GET(request: NextRequest) {
             if (!dryRun) {
                 for (const user of pushUsers) {
                     try {
-                        const formattedStartTime = lesson.start_time.substring(0, 5)
+                        const formattedStartTime = (effectiveStartTime || '').substring(0, 5)
                         const pushCount = await sendPushNotificationToUser(user.id, {
                             title: 'オンラインセッションのお知らせ',
-                            body: `${lesson.title}が${formattedStartTime}から始まります。`,
+                            body: movedIn
+                                ? `【振替】${lesson.title}が本日${formattedStartTime}から始まります。`
+                                : `${lesson.title}が${formattedStartTime}から始まります。`,
                             url: `/client/${user.access_token}?tab=online`
                         })
                         if (pushCount > 0) successCount++

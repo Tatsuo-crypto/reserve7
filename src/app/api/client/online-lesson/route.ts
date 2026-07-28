@@ -35,28 +35,33 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ lessons: [] })
         }
 
-        // AP-1: 「この日だけ休講」を会員側にも出す(今日以降の分のみ)
+        // AP-1/AP-3: 「この日だけ休講」「別の日に振替」を会員側にも出す(今日以降の分のみ)
         const lessonIds = (lessons ?? []).map(l => l.id)
-        let canceledDatesByLesson: Record<string, string[]> = {}
+        let exceptionsByLesson: Record<string, any[]> = {}
 
         if (lessonIds.length > 0) {
             const todayJst = new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' })
             const { data: exceptions } = await supabaseAdmin
                 .from('online_lesson_exceptions')
-                .select('online_lesson_id, exception_date')
+                .select('online_lesson_id, exception_date, moved_to_date, moved_to_start_time, moved_to_end_time')
                 .in('online_lesson_id', lessonIds)
-                .gte('exception_date', todayJst)
+                .or(`exception_date.gte.${todayJst},moved_to_date.gte.${todayJst}`)
                 .order('exception_date', { ascending: true })
 
-            canceledDatesByLesson = (exceptions ?? []).reduce((acc: Record<string, string[]>, ex: any) => {
-                acc[ex.online_lesson_id] = [...(acc[ex.online_lesson_id] || []), ex.exception_date]
+            exceptionsByLesson = (exceptions ?? []).reduce((acc: Record<string, any[]>, ex: any) => {
+                acc[ex.online_lesson_id] = [...(acc[ex.online_lesson_id] || []), {
+                    date: ex.exception_date,
+                    movedToDate: ex.moved_to_date,
+                    movedToStartTime: ex.moved_to_start_time,
+                    movedToEndTime: ex.moved_to_end_time,
+                }]
                 return acc
             }, {})
         }
 
         const lessonsWithExceptions = (lessons ?? []).map(lesson => ({
             ...lesson,
-            canceled_dates: canceledDatesByLesson[lesson.id] || [],
+            exceptions: exceptionsByLesson[lesson.id] || [],
         }))
 
         return NextResponse.json({ lessons: lessonsWithExceptions })

@@ -11,8 +11,17 @@ export interface OnlineLesson {
     start_time: string | null
     end_time: string | null
     difficulty: string
-    /** AP-1: 「この日だけ休講」の日付(YYYY-MM-DD, 今日以降のみ) */
-    canceled_dates?: string[]
+    /** AP-1/AP-3: 休講・振替の例外(今日以降のみ)。movedToDateが無ければ休講、あれば振替 */
+    exceptions?: LessonException[]
+}
+
+export interface LessonException {
+    /** 元の開催日(この日は開催されない) */
+    date: string
+    /** 振替先の日付。nullなら休講 */
+    movedToDate: string | null
+    movedToStartTime: string | null
+    movedToEndTime: string | null
 }
 
 export const DAYS_JA = ['日', '月', '火', '水', '木', '金', '土']
@@ -22,21 +31,30 @@ export function getJoinStatus(lesson: OnlineLesson) {
     const jstNow = new Date(now.getTime() + (now.getTimezoneOffset() * 60000) + (9 * 60 * 60 * 1000))
     const todayDow = jstNow.getDay()
     const currentMinutes = jstNow.getHours() * 60 + jstNow.getMinutes()
-
-    // AP-1: 今日が休講日に登録されていれば、曜日が合っていても開催なしとして扱う
     const todayStr = jstNow.toISOString().substring(0, 10)
-    if (lesson.canceled_dates?.includes(todayStr)) {
-        return { canJoin: false, isToday: false, label: '本日は休講です' }
+
+    // AP-3: 今日が振替先なら、曜日が合っていなくても本日開催として扱う(時刻は振替先の指定を優先)
+    const movedInToday = lesson.exceptions?.find(ex => ex.movedToDate === todayStr)
+    // AP-1: 今日が休講・振替の「元の日」なら、曜日が合っていても開催なしとして扱う
+    const canceledToday = !movedInToday && lesson.exceptions?.find(ex => ex.date === todayStr)
+
+    if (canceledToday) {
+        return canceledToday.movedToDate
+            ? { canJoin: false, isToday: false, label: '本日は休講（別日に振替）' }
+            : { canJoin: false, isToday: false, label: '本日は休講です' }
     }
 
-    if (!lesson.day_of_week || !lesson.start_time) return { canJoin: true, isToday: true, label: '開催中' }
+    const effectiveStart = movedInToday ? (movedInToday.movedToStartTime || lesson.start_time) : lesson.start_time
+    const effectiveEnd = movedInToday ? (movedInToday.movedToEndTime || lesson.end_time) : lesson.end_time
 
-    const startParts = lesson.start_time.split(':')
-    const endParts = (lesson.end_time || '23:59').split(':')
+    if (!lesson.day_of_week || !effectiveStart) return { canJoin: true, isToday: true, label: '開催中' }
+
+    const startParts = effectiveStart.split(':')
+    const endParts = (effectiveEnd || '23:59').split(':')
     const startMin = parseInt(startParts[0]) * 60 + parseInt(startParts[1])
     const endMin = parseInt(endParts[0]) * 60 + parseInt(endParts[1])
 
-    if (!lesson.day_of_week.includes(todayDow)) return { canJoin: false, isToday: false, label: '次回開催をお楽しみに' }
+    if (!movedInToday && !lesson.day_of_week.includes(todayDow)) return { canJoin: false, isToday: false, label: '次回開催をお楽しみに' }
 
     // Allow joining from 5 minutes before
     if (currentMinutes >= startMin - 5 && currentMinutes < startMin) {
