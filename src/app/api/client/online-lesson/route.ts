@@ -35,7 +35,31 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ lessons: [] })
         }
 
-        return NextResponse.json({ lessons: lessons ?? [] })
+        // AP-1: 「この日だけ休講」を会員側にも出す(今日以降の分のみ)
+        const lessonIds = (lessons ?? []).map(l => l.id)
+        let canceledDatesByLesson: Record<string, string[]> = {}
+
+        if (lessonIds.length > 0) {
+            const todayJst = new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' })
+            const { data: exceptions } = await supabaseAdmin
+                .from('online_lesson_exceptions')
+                .select('online_lesson_id, exception_date')
+                .in('online_lesson_id', lessonIds)
+                .gte('exception_date', todayJst)
+                .order('exception_date', { ascending: true })
+
+            canceledDatesByLesson = (exceptions ?? []).reduce((acc: Record<string, string[]>, ex: any) => {
+                acc[ex.online_lesson_id] = [...(acc[ex.online_lesson_id] || []), ex.exception_date]
+                return acc
+            }, {})
+        }
+
+        const lessonsWithExceptions = (lessons ?? []).map(lesson => ({
+            ...lesson,
+            canceled_dates: canceledDatesByLesson[lesson.id] || [],
+        }))
+
+        return NextResponse.json({ lessons: lessonsWithExceptions })
     } catch (error) {
         console.error('Client online lesson API error:', error)
         return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })

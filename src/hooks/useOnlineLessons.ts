@@ -11,6 +11,8 @@ export interface OnlineLesson {
     start_time: string | null
     end_time: string | null
     difficulty: string
+    /** AP-1: 「この日だけ休講」の日付(YYYY-MM-DD, 今日以降のみ) */
+    canceled_dates?: string[]
 }
 
 export const DAYS_JA = ['日', '月', '火', '水', '木', '金', '土']
@@ -20,6 +22,12 @@ export function getJoinStatus(lesson: OnlineLesson) {
     const jstNow = new Date(now.getTime() + (now.getTimezoneOffset() * 60000) + (9 * 60 * 60 * 1000))
     const todayDow = jstNow.getDay()
     const currentMinutes = jstNow.getHours() * 60 + jstNow.getMinutes()
+
+    // AP-1: 今日が休講日に登録されていれば、曜日が合っていても開催なしとして扱う
+    const todayStr = jstNow.toISOString().substring(0, 10)
+    if (lesson.canceled_dates?.includes(todayStr)) {
+        return { canJoin: false, isToday: false, label: '本日は休講です' }
+    }
 
     if (!lesson.day_of_week || !lesson.start_time) return { canJoin: true, isToday: true, label: '開催中' }
 

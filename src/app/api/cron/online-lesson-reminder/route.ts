@@ -49,7 +49,8 @@ export async function GET(request: NextRequest) {
         const dryRun = searchParams.get('dryRun') === 'true'
         const force = searchParams.get('force') === 'true'
 
-        // Get current JST time. This cron is expected to run once per day at 21:00 JST.
+        // AP-2: Vercel Proに移行したため、このcronは10分おきに実行される(旧: 1日1回21:00 JST)。
+        // これにより土日・任意の時刻に開催されるオンラインレッスンでも「開始◯分前」に通知できる。
         const nowParam = searchParams.get('now')
         const jstDateStr = nowParam
             ? new Date(nowParam).toLocaleString("en-US", { timeZone: "Asia/Tokyo" })
@@ -64,7 +65,12 @@ export async function GET(request: NextRequest) {
 
         const sentPersonalReminders: { reservationId: string; clientName: string; pushCount: number }[] = []
 
-        if (settings.personal_reminder_enabled && !dryRun) {
+        // AP-2: 前日リマインダーは従来どおり「毎晩21時台に1回」だけ動かす。
+        // (10分おきに全予約を走査しても reservation_reminders の重複チェックで送信自体は防げるが、
+        //  無駄なクエリが1日144回走るため、21時台以外は最初からスキップする)
+        const isPersonalReminderHour = jstNow.getHours() === 21
+
+        if (settings.personal_reminder_enabled && !dryRun && (force || isPersonalReminderHour)) {
             const { data: reservations, error: fetchError } = await supabaseAdmin
                 .from('reservations')
                 .select(`
@@ -156,11 +162,11 @@ export async function GET(request: NextRequest) {
             }
         }
 
-        // Vercel無料プランではcronを1日1回(21:00 JST)しか実行できない。
-        // オンラインレッスンは「21:00の◯分後」に開催されるケース(例: 火曜21:30開催)を想定し、
-        // 今回のチェック時刻(21:00)から reminder_before_minutes 分後の同日レッスンを対象にする。
-        const configuredGraceMinutes = Number(searchParams.get('graceMinutes') || process.env.ONLINE_REMINDER_GRACE_MINUTES || 10)
-        const graceMinutes = Number.isFinite(configuredGraceMinutes) ? Math.max(0, configuredGraceMinutes) : 10
+        // AP-2: cronが10分おきに走るので、「今から reminder_before_minutes 分後」に開始するレッスンを毎回探す。
+        // 判定の取りこぼしと二重ヒットを防ぐため、許容幅(grace)は実行間隔の半分の5分を既定値にする。
+        // (万一二重にヒットしても online_lesson_reminders の当日重複チェックで送信は1回に抑えられる)
+        const configuredGraceMinutes = Number(searchParams.get('graceMinutes') || process.env.ONLINE_REMINDER_GRACE_MINUTES || 5)
+        const graceMinutes = Number.isFinite(configuredGraceMinutes) ? Math.max(0, configuredGraceMinutes) : 5
         const reminderBeforeMinutes = settings.reminder_before_minutes ?? 30
         const onlineTargetTime = addMinutes(jstNow, reminderBeforeMinutes)
         const onlineWindowStart = addMinutes(onlineTargetTime, -graceMinutes)
@@ -190,11 +196,33 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ message: 'No active online lessons found' })
         }
 
+        // AP-1: 対象日が「その日だけ休講」に登録されているレッスンは通知を送らない
+        const { data: exceptionsForTargetDate, error: exceptionsError } = await supabaseAdmin
+            .from('online_lesson_exceptions')
+            .select('online_lesson_id')
+            .eq('exception_date', onlineTargetDateStr)
+
+        if (exceptionsError) {
+            console.error('Failed to fetch online lesson exceptions:', exceptionsError)
+        }
+        const canceledLessonIds = new Set((exceptionsForTargetDate || []).map((e: any) => e.online_lesson_id))
+
         const sentReminders: { lessonId: string; title: string; recipientCount: number }[] = []
         const matchedLessons: { lessonId: string; title: string; startTime: string; recipientCount: number; pushRecipientCount: number; emailRecipientCount: number }[] = []
         const skippedLessons: { lessonId: string; title: string; reason: string; startTime?: string | null; dayOfWeek?: number[] | null }[] = []
 
         for (const lesson of lessons) {
+            if (canceledLessonIds.has(lesson.id)) {
+                skippedLessons.push({
+                    lessonId: lesson.id,
+                    title: lesson.title,
+                    reason: 'canceled-on-target-date',
+                    startTime: lesson.start_time,
+                    dayOfWeek: lesson.day_of_week
+                })
+                continue
+            }
+
             const isScheduledForTargetDay = lesson.day_of_week && Array.isArray(lesson.day_of_week) && lesson.day_of_week.includes(onlineTargetDow)
             if (!isScheduledForTargetDay) {
                 skippedLessons.push({
@@ -334,6 +362,8 @@ export async function GET(request: NextRequest) {
             success: true,
             personal: {
                 targetDate: personalTargetDateStr,
+                // AP-2: 21時台以外の実行では前日リマインダーは処理しない
+                skippedReason: (force || isPersonalReminderHour) ? undefined : 'not-personal-reminder-hour',
                 processedCount: sentPersonalReminders.length,
                 sentReminders: sentPersonalReminders
             },

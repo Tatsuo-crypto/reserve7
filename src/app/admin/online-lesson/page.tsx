@@ -35,6 +35,19 @@ const emptyLesson = (): Omit<OnlineLesson, 'id'> => ({
     userIds: [],
 })
 
+// AP-1: その日だけ休講にするための例外日
+interface LessonException {
+    id: string
+    online_lesson_id: string
+    exception_date: string
+    reason: string | null
+}
+
+function formatExceptionDate(dateStr: string): string {
+    const d = new Date(`${dateStr}T00:00:00+09:00`)
+    return d.toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo', month: 'long', day: 'numeric', weekday: 'short' })
+}
+
 function formatSchedule(lesson: OnlineLesson | Omit<OnlineLesson, 'id'>): string {
     const days = lesson.day_of_week?.map(d => DAYS_JA[d]).join('・') ?? ''
     const start = lesson.start_time ? lesson.start_time.substring(0, 5) : ''
@@ -59,12 +72,73 @@ export default function AdminOnlineLessonPage() {
     const [dropdownOpen, setDropdownOpen] = useState(false)
     const [sendingAnnouncement, setSendingAnnouncement] = useState(false)
 
+    // AP-1: その日だけ休講
+    const [exceptions, setExceptions] = useState<LessonException[]>([])
+    const [allExceptions, setAllExceptions] = useState<LessonException[]>([])
+    const [newExceptionDate, setNewExceptionDate] = useState('')
+    const [savingException, setSavingException] = useState(false)
+
     useEffect(() => {
         if (status === 'loading') return
         if (status === 'unauthenticated') { router.push('/login'); return }
         fetchLessons()
         fetchMembers()
+        fetchAllExceptions()
     }, [status])
+
+    // AP-1: 一覧カードに「休講予定あり」を出すため、全レッスン分の今日以降の休講日をまとめて取得する
+    const fetchAllExceptions = async () => {
+        try {
+            const res = await fetch('/api/admin/online-lesson/exceptions')
+            if (res.ok) {
+                const data = await res.json()
+                setAllExceptions(data.exceptions || [])
+            }
+        } catch (e) { console.error(e) }
+    }
+
+    const fetchExceptions = async (lessonId: string) => {
+        try {
+            const res = await fetch(`/api/admin/online-lesson/exceptions?lessonId=${lessonId}`)
+            if (res.ok) {
+                const data = await res.json()
+                setExceptions(data.exceptions || [])
+            }
+        } catch (e) { console.error(e) }
+    }
+
+    const handleAddException = async () => {
+        if (!editingId || editingId === 'new' || !newExceptionDate) return
+        setSavingException(true)
+        setError(null)
+        try {
+            const res = await fetch('/api/admin/online-lesson/exceptions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ lessonId: editingId, exceptionDate: newExceptionDate }),
+            })
+            const data = await res.json()
+            if (!res.ok) throw new Error(data.error || '休講日を登録できませんでした。')
+            setNewExceptionDate('')
+            await fetchExceptions(editingId)
+            await fetchAllExceptions()
+        } catch (e) {
+            setError(e instanceof Error ? e.message : '休講日を登録できませんでした。')
+        } finally {
+            setSavingException(false)
+        }
+    }
+
+    const handleRemoveException = async (id: string) => {
+        try {
+            const res = await fetch(`/api/admin/online-lesson/exceptions?id=${id}`, { method: 'DELETE' })
+            if (!res.ok) throw new Error('休講日を解除できませんでした。')
+            if (editingId && editingId !== 'new') await fetchExceptions(editingId)
+            await fetchAllExceptions()
+        } catch (e) {
+            setError(e instanceof Error ? e.message : '休講日を解除できませんでした。')
+        }
+    }
 
     const fetchLessons = async () => {
         setLoading(true)
@@ -111,15 +185,22 @@ export default function AdminOnlineLessonPage() {
                 userIds: lesson.userIds || [],
             })
             setEditingId(lesson.id)
+            setExceptions([])
+            setNewExceptionDate('')
+            fetchExceptions(lesson.id)
         } else {
             setForm(emptyLesson())
             setEditingId('new')
+            setExceptions([])
+            setNewExceptionDate('')
         }
         setError(null)
     }
 
     const cancelEdit = () => {
         setEditingId(null)
+        setExceptions([])
+        setNewExceptionDate('')
         setError(null)
     }
 
@@ -459,6 +540,52 @@ export default function AdminOnlineLessonPage() {
                                 <p className="text-xs text-text-secondary mt-1">※チェックを入れた会員に対し、レッスン開始30分前にリマインダーが自動送信されます</p>
                             </div>
 
+                            {/* AP-1: その日だけ休講(繰り返し設定は変えずに1回だけ休みにする) */}
+                            {editingId !== 'new' && (
+                                <div className="border-t border-border-subtle pt-5">
+                                    <label className="block text-sm font-normal text-text-secondary mb-1.5">休講日（この日だけお休み）</label>
+                                    <p className="text-xs text-text-muted mb-2">開催曜日はそのままで、指定した日だけ開催なしにします。その日は自動リマインダーも送られません。</p>
+
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="date"
+                                            value={newExceptionDate}
+                                            onChange={e => setNewExceptionDate(e.target.value)}
+                                            className="flex-1 min-w-0 max-w-full box-border px-4 py-2.5 border border-border-strong rounded-2xl text-sm bg-surface-raised focus:outline-none focus:ring-2 focus:ring-brand-500"
+                                        />
+                                        <Button
+                                            type="button"
+                                            variant="secondary"
+                                            size="sm"
+                                            onClick={handleAddException}
+                                            disabled={!newExceptionDate || savingException}
+                                            className="shrink-0 px-4 py-2.5 border border-border-strong text-text-secondary rounded-2xl hover:bg-surface-base text-sm disabled:opacity-50"
+                                        >
+                                            {savingException ? '登録中...' : '休講にする'}
+                                        </Button>
+                                    </div>
+
+                                    {exceptions.length > 0 && (
+                                        <div className="mt-3 space-y-2">
+                                            {exceptions.map(ex => (
+                                                <div key={ex.id} className="flex items-center justify-between gap-3 rounded-2xl border border-border-subtle bg-surface-base px-4 py-2.5">
+                                                    <span className="text-sm text-text-primary">{formatExceptionDate(ex.exception_date)}</span>
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() => handleRemoveException(ex.id)}
+                                                        className="px-2 py-1 text-xs text-text-secondary hover:text-text-primary bg-transparent border-0"
+                                                    >
+                                                        解除
+                                                    </Button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
                             {error && (
                                 <div className="p-3 bg-red-500/15 border border-red-500/30 rounded-2xl text-sm text-red-300">{error}</div>
                             )}
@@ -548,6 +675,14 @@ export default function AdminOnlineLessonPage() {
                                         <p className="text-sm text-brand-600 mb-1">
                                             📅 {formatSchedule(lesson)}
                                         </p>
+                                        {allExceptions.filter(ex => ex.online_lesson_id === lesson.id).length > 0 && (
+                                            <p className="text-xs text-amber-300 mb-1">
+                                                休講予定: {allExceptions
+                                                    .filter(ex => ex.online_lesson_id === lesson.id)
+                                                    .map(ex => formatExceptionDate(ex.exception_date))
+                                                    .join('、')}
+                                            </p>
+                                        )}
                                         <p className="text-xs text-text-muted truncate">{lesson.meet_url}</p>
                                         {lesson.description && (
                                             <p className="text-xs text-text-secondary mt-1 line-clamp-2">{lesson.description}</p>
