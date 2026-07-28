@@ -414,23 +414,23 @@ export default function AdminOnlineLessonPage() {
                             </div>
 
                             {/* Start / End Time */}
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="min-w-0">
                                     <label className="block text-sm font-normal text-text-secondary mb-1.5">開始時刻</label>
                                     <input
                                         type="time"
                                         value={form.start_time || ''}
                                         onChange={e => setForm(p => ({ ...p, start_time: e.target.value }))}
-                                        className="w-full px-4 py-3 border border-border-strong rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                                        className="w-full px-3 py-3 border border-border-strong rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                                     />
                                 </div>
-                                <div>
+                                <div className="min-w-0">
                                     <label className="block text-sm font-normal text-text-secondary mb-1.5">終了時刻</label>
                                     <input
                                         type="time"
                                         value={form.end_time || ''}
                                         onChange={e => setForm(p => ({ ...p, end_time: e.target.value }))}
-                                        className="w-full px-4 py-3 border border-border-strong rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                                        className="w-full px-3 py-3 border border-border-strong rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                                     />
                                 </div>
                             </div>
@@ -716,15 +716,16 @@ export default function AdminOnlineLessonPage() {
                                 type="button"
                                 variant="secondary"
                                 size="md"
+                                block
                                 key={lesson.id}
                                 onClick={() => startEdit(lesson)}
-                                className="w-full text-left bg-surface-raised rounded-2xl shadow-sm border border-border-subtle p-5 hover:border-brand-500/40 hover:shadow-md transition-all group focus:outline-none focus:ring-2 focus:ring-brand-500 block"
+                                className="w-full text-left bg-surface-raised rounded-2xl shadow-sm border border-border-subtle p-5 hover:border-brand-500/40 hover:shadow-md transition-all group focus:outline-none focus:ring-2 focus:ring-brand-500 whitespace-normal"
                             >
                                 <div className="flex flex-col space-y-3">
                                     <div className="flex-1 min-w-0">
-                                        <div className="flex items-center space-x-2 mb-1">
-                                            <h3 className="font-semibold text-text-primary text-xl group-hover:text-brand-600 transition-colors">{lesson.title}</h3>
-                                            <span className="text-xs px-2 py-0.5 rounded-full font-normal bg-brand-500/15 text-brand-300">
+                                        <div className="flex items-center gap-2 mb-1 min-w-0">
+                                            <h3 className="min-w-0 truncate font-semibold text-text-primary text-xl group-hover:text-brand-600 transition-colors">{lesson.title}</h3>
+                                            <span className="shrink-0 text-xs px-2 py-0.5 rounded-full font-normal bg-brand-500/15 text-brand-300">
                                                 {lesson.difficulty || '初心者'}
                                             </span>
                                         </div>

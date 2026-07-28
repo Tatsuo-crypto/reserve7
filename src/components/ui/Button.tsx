@@ -10,6 +10,16 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
     size?: Size
     fullWidth?: boolean
     loading?: boolean
+    /**
+     * AQ-2: カード型の「押せる領域」としてButtonを使う場合に指定する。
+     * 既定の `inline-flex items-center justify-center` は、中に見出し+本文のような
+     * 縦積みの中身を入れると全部が中央に寄って潰れてしまう。className側に `block` や
+     * `text-left` を足しても、displayユーティリティはTailwindの出力順で inline-flex が
+     * 後に来るため上書きできず、「カードの中身が見えない/はみ出す」不具合になっていた。
+     * このpropを立てると display と配置指定をベースから外し、中身のレイアウトを
+     * 呼び出し側に委ねる。
+     */
+    block?: boolean
 }
 
 // Q-6: primary/destructiveはbrand/状態色そのもの(ベーステーマに依存しないため据え置き)。
@@ -36,14 +46,16 @@ const SIZE_CLASSES: Record<Size, string> = {
  * 4つで打ち止め(N-2の決定どおり)。角丸はN-4のトークンに従い常に rounded-lg。
  */
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
-    { variant = 'primary', size = 'md', fullWidth = false, loading = false, disabled, className = '', children, ...rest },
+    { variant = 'primary', size = 'md', fullWidth = false, loading = false, block = false, disabled, className = '', children, ...rest },
     ref
 ) {
+    const layoutClasses = block ? '' : 'inline-flex items-center justify-center gap-2'
+
     return (
         <button
             ref={ref}
             disabled={disabled || loading}
-            className={`inline-flex items-center justify-center gap-2 rounded-lg font-normal transition-colors disabled:cursor-not-allowed ${VARIANT_CLASSES[variant]} ${SIZE_CLASSES[size]} ${fullWidth ? 'w-full' : ''} ${className}`}
+            className={`${layoutClasses} rounded-lg font-normal transition-colors disabled:cursor-not-allowed ${VARIANT_CLASSES[variant]} ${SIZE_CLASSES[size]} ${fullWidth ? 'w-full' : ''} ${className}`}
             {...rest}
         >
             {loading && (

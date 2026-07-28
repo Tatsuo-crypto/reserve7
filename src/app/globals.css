@@ -71,6 +71,70 @@
     overflow-wrap: normal;
   }
 
+  /*
+    AQ-1: 上の nowrap は「ボタンのラベルを途中で折り返さない」ための指定だが、
+    white-space は子孫に継承されるため、カード型のボタン(レッスン一覧など)の中に置いた
+    説明文や見出しまで1行になり、カードの左右にはみ出して読めなくなっていた。
+    ボタン内に置かれた段落・見出しは通常の折り返しに戻す。
+  */
+  button :is(p, h1, h2, h3, h4, h5, h6, li, td),
+  [role='button'] :is(p, h1, h2, h3, h4, h5, h6, li, td) {
+    white-space: normal;
+    word-break: normal;
+    overflow-wrap: anywhere;
+  }
+
+  /*
+    AQ-1: フォーム部品の既定スタイル。
+    これまで入力欄の背景色・文字色は各画面のclassNameに個別に書く運用だったため、
+    書き忘れた箇所がブラウザ既定の白背景のまま残り、黒ベースのテーマで浮いて見えていた
+    (調査時点で172箇所)。同様に、date/time系のネイティブウィジェットは中身の実寸に応じて
+    親の幅を突き破るため、min-width:0 / max-width:100% / box-sizing:border-box を
+    書き忘れた箇所(39箇所)で枠からはみ出す・重なる不具合が出ていた。
+    これらは「書き忘れたら壊れる」類のもので個別対応では再発し続けるため、base層の既定値として
+    一括で効かせる。個別に変えたい箇所はTailwindのユーティリティ(utilities層)が
+    base層より優先されるため、従来どおりclassNameで上書きできる。
+  */
+  input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']):not([type='color']):not([type='submit']):not([type='button']),
+  select,
+  textarea {
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    background-color: rgb(var(--color-surface-raised));
+    color: rgb(var(--color-text-primary));
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: rgb(var(--color-text-muted) / 0.7);
+  }
+
+  /* iOS Safariはdate/time入力に独自の内側余白と最小幅を持たせるため、明示的に解除する */
+  input[type='date'],
+  input[type='time'],
+  input[type='datetime-local'],
+  input[type='month'],
+  input[type='week'] {
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  input[type='time']::-webkit-calendar-picker-indicator,
+  input[type='week']::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    filter: invert(1);
+    opacity: 0.72;
+  }
+
+  /* 値が空のときにiOSが表示するグレーのプレースホルダー文字も本文色に揃える */
+  input[type='date']::-webkit-date-and-time-value,
+  input[type='time']::-webkit-date-and-time-value,
+  input[type='datetime-local']::-webkit-date-and-time-value,
+  input[type='month']::-webkit-date-and-time-value {
+    text-align: left;
+  }
+
   :root {
     --color-surface-base: 9 9 11;         /* zinc-950相当。画面地 */
     --color-surface-raised: 24 24 27;     /* zinc-900相当。カード */

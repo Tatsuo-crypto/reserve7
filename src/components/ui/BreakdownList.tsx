@@ -16,7 +16,7 @@ export default function BreakdownList({
                 ) : (
                     items.map((item) => (
                         <div key={item.label} className="flex items-center justify-between text-sm font-normal text-text-secondary">
-                            <span className="truncate text-text-primary">{item.label}</span>
+                            <span className="min-w-0 truncate text-text-primary">{item.label}</span>
                             <span className="shrink-0 tabular-nums">{item.count}{item.unit || '件'}</span>
                         </div>
                     ))

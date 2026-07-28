@@ -137,7 +137,7 @@ function SalesPageContent() {
                                     className="flex items-center px-3 py-2.5 hover:bg-surface-base transition-colors"
                                 >
                                     <span className="flex-shrink-0 w-1.5 h-1.5 rounded-full mr-2 bg-surface-overlay" />
-                                    <span className="font-normal text-sm text-text-primary truncate" style={{flex: '1 1 35%'}}>{item.full_name}</span>
+                                    <span className="min-w-0 font-normal text-sm text-text-primary truncate" style={{flex: '1 1 35%'}}>{item.full_name}</span>
                                     <span className="text-xs text-text-secondary whitespace-nowrap text-left" style={{flex: '1 1 35%'}}>{item.plan}</span>
                                     <span className="text-sm font-normal text-text-primary whitespace-nowrap text-right" style={{flex: '0 0 auto'}}>¥{item.amount.toLocaleString()}</span>
                                 </Link>
