@@ -70,16 +70,18 @@ export function DisplayModeToggle({ mode, onChange }: { mode: DisplayMode; onCha
         { key: 'average', label: '平均' },
     ]
 
+    // AT-2: 外側の枠が丸(pill)で、選択中の背景が角丸四角という組み合わせになっていて形が揃って
+    // いなかったため、外枠も選択中も同じ角丸四角に統一する。
     return (
         <div className="px-2 flex justify-center">
-            <div className="inline-flex items-center gap-1 bg-surface-overlay rounded-full p-1">
+            <div className="inline-flex items-center gap-1 bg-surface-overlay rounded-2xl p-1">
                 {options.map(opt => (
                     <Button
                         key={opt.key}
                         type="button"
                         variant="ghost"
                         onClick={() => onChange(opt.key)}
-                        className={`min-w-[3.5rem] px-4 py-1.5 rounded-full text-xs font-normal leading-none transition-all ${
+                        className={`min-w-[3.5rem] px-4 py-2 rounded-xl text-xs font-normal leading-none transition-all ${
                             mode === opt.key ? 'bg-surface-raised text-text-primary shadow-sm' : 'text-text-muted'
                         }`}
                     >
@@ -91,22 +93,61 @@ export function DisplayModeToggle({ mode, onChange }: { mode: DisplayMode; onCha
     )
 }
 
-/** O-5: 記録チェック表。7日分の食事記録の有無を丸アイコンで見せる。 */
-export function RecordCheckTable({ weekDays }: { weekDays: WeekDayRecordFlag[] }) {
+/**
+ * O-5: 記録チェック表。7日分の食事記録の有無を丸アイコンで見せる。
+ * AT-1: 曜日をタップするとその日の数値に切り替わるようにした(onSelectDateを渡したときのみ)。
+ *       選択中の日はリングで示す。
+ */
+export function RecordCheckTable({
+    weekDays,
+    selectedDate,
+    onSelectDate,
+}: {
+    weekDays: WeekDayRecordFlag[]
+    /** AT-1: 「日」表示で選択中の日付。タップ操作を有効にした場合のみ意味を持つ。 */
+    selectedDate?: string
+    onSelectDate?: (date: string) => void
+}) {
+    const interactive = Boolean(onSelectDate)
+
     return (
         <Card padding="sm">
-            <h3 className="text-sm font-semibold text-text-primary mb-3">記録チェック表</h3>
+            <div className="mb-3 flex items-baseline justify-between gap-3">
+                <h3 className="text-sm font-semibold text-text-primary">記録チェック表</h3>
+                {interactive && <span className="text-xs font-normal text-text-muted">曜日をタップでその日を表示</span>}
+            </div>
             <div className="grid grid-cols-7 gap-1.5">
-                {weekDays.map(day => (
-                    <div key={day.date} className="flex flex-col items-center gap-1">
-                        <span className={`text-xs font-normal ${day.isToday ? 'text-brand-600' : 'text-text-muted'}`}>{day.label}</span>
+                {weekDays.map(day => {
+                    const isSelected = interactive && day.date === selectedDate
+                    const circle = (
                         <div
-                            className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${day.recorded ? 'bg-brand-500 text-white' : 'bg-surface-overlay text-text-muted'} ${day.isToday ? 'ring-2 ring-brand-500 ring-offset-1 ring-offset-surface-raised' : ''}`}
+                            className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${day.recorded ? 'bg-brand-500 text-white' : 'bg-surface-overlay text-text-muted'} ${
+                                isSelected
+                                    ? 'ring-2 ring-blue-400 ring-offset-1 ring-offset-surface-raised'
+                                    : day.isToday ? 'ring-2 ring-brand-500 ring-offset-1 ring-offset-surface-raised' : ''
+                            }`}
                         >
                             {day.recorded ? <Icon name="check" size={14} /> : <Icon name="plus" size={12} />}
                         </div>
-                    </div>
-                ))}
+                    )
+
+                    return (
+                        <div key={day.date} className="flex flex-col items-center gap-1">
+                            <span className={`text-xs font-normal ${day.isToday ? 'text-brand-600' : 'text-text-muted'}`}>{day.label}</span>
+                            {interactive ? (
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    onClick={() => onSelectDate?.(day.date)}
+                                    className="p-0 bg-transparent active:scale-90 transition-transform"
+                                    aria-label={`${day.label}曜日の記録を表示`}
+                                >
+                                    {circle}
+                                </Button>
+                            ) : circle}
+                        </div>
+                    )
+                })}
             </div>
         </Card>
     )

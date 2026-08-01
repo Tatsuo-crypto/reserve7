@@ -75,6 +75,8 @@ export function useDaySelection(
         dayTarget,
         goPrevDay,
         goNextDay,
+        /** AT-1: 記録チェック表の曜日タップから、その日を直接選ぶ用 */
+        selectDate: setSelectedDate,
         isNextDayDisabled: effectiveDate >= todayStr,
     }
 }

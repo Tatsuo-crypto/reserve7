@@ -39,7 +39,7 @@ export default function WeeklyProgressPanel({
 }: WeeklyProgressPanelProps) {
     const [open, setOpen] = useState(defaultOpen)
     const [mode, setMode] = useState<DisplayMode>('average')
-    const { dayLabel, dayActual, dayTarget, goPrevDay, goNextDay, isNextDayDisabled } =
+    const { selectedDate, dayLabel, dayActual, dayTarget, goPrevDay, goNextDay, selectDate, isNextDayDisabled } =
         useDaySelection(weeklyStats, weekOffset, setWeekOffset, mode === 'day')
     const showNutrition = sections === 'all' || sections === 'nutrition'
     const showLife = sections === 'all' || sections === 'life'
@@ -53,9 +53,9 @@ export default function WeeklyProgressPanel({
                             type="button"
                             variant="ghost"
                             onClick={() => (mode === 'day' ? goPrevDay() : setWeekOffset(prev => prev - 1))}
-                            className="w-9 h-9 flex items-center justify-center hover:bg-surface-raised rounded-2xl p-0 transition-all text-text-secondary active:scale-90"
+                            className="w-11 h-11 flex items-center justify-center hover:bg-surface-raised rounded-2xl p-0 transition-all text-text-secondary active:scale-90"
                         >
-                            <Icon name="chevronLeft" size={16} />
+                            <Icon name="chevronLeft" size={24} />
                         </Button>
 
                         <div className="flex-1 text-center">
@@ -79,10 +79,10 @@ export default function WeeklyProgressPanel({
                             type="button"
                             variant="ghost"
                             onClick={() => (mode === 'day' ? goNextDay() : setWeekOffset(prev => Math.min(0, prev + 1)))}
-                            className={`w-9 h-9 flex items-center justify-center rounded-2xl p-0 transition-all active:scale-90 ${(mode === 'day' ? isNextDayDisabled : weekOffset === 0) ? 'text-text-muted cursor-not-allowed' : 'hover:bg-surface-raised text-text-secondary'}`}
+                            className={`w-11 h-11 flex items-center justify-center rounded-2xl p-0 transition-all active:scale-90 ${(mode === 'day' ? isNextDayDisabled : weekOffset === 0) ? 'text-text-muted cursor-not-allowed' : 'hover:bg-surface-raised text-text-secondary'}`}
                             disabled={mode === 'day' ? isNextDayDisabled : weekOffset === 0}
                         >
-                            <Icon name="chevronRight" size={16} />
+                            <Icon name="chevronRight" size={24} />
                         </Button>
                     </div>
                 </div>
@@ -100,7 +100,11 @@ export default function WeeklyProgressPanel({
 
                     {simpleMemberView ? (
                         <>
-                            <RecordCheckTable weekDays={weeklyStats.weekDays} />
+                            <RecordCheckTable
+                        weekDays={weeklyStats.weekDays}
+                        selectedDate={mode === 'day' ? selectedDate : undefined}
+                        onSelectDate={(date) => { setMode('day'); selectDate(date) }}
+                    />
                             <MemberWeeklyResultListCard
                                 mode={mode}
                                 items={[
@@ -182,7 +186,11 @@ export default function WeeklyProgressPanel({
                     ) : showNutrition && (
                         <>
                             {/* O-5: 記録チェック表。7日分の食事記録の有無を一目で見せる */}
-                            <RecordCheckTable weekDays={weeklyStats.weekDays} />
+                            <RecordCheckTable
+                        weekDays={weeklyStats.weekDays}
+                        selectedDate={mode === 'day' ? selectedDate : undefined}
+                        onSelectDate={(date) => { setMode('day'); selectDate(date) }}
+                    />
 
                             {/* O-5: カロリー主役行。週合計/記録日平均をボタンで切替 */}
                             <CalorieHeroCard

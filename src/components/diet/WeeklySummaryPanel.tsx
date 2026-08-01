@@ -34,7 +34,7 @@ export default function WeeklySummaryPanel({
     showWeekSwitcher = true,
 }: WeeklySummaryPanelProps) {
     const [mode, setMode] = useState<DisplayMode>('average')
-    const { selectedDate, dayLabel, dayActual, dayTarget, goPrevDay, goNextDay, isNextDayDisabled } =
+    const { selectedDate, dayLabel, dayActual, dayTarget, goPrevDay, goNextDay, selectDate, isNextDayDisabled } =
         useDaySelection(weeklyStats, weekOffset, setWeekOffset, mode === 'day')
 
     return (
@@ -46,9 +46,9 @@ export default function WeeklySummaryPanel({
                             type="button"
                             variant="ghost"
                             onClick={() => (mode === 'day' ? goPrevDay() : setWeekOffset(prev => prev - 1))}
-                            className="w-9 h-9 flex items-center justify-center hover:bg-surface-raised rounded-2xl p-0 transition-all text-text-secondary active:scale-90"
+                            className="w-11 h-11 flex items-center justify-center hover:bg-surface-raised rounded-2xl p-0 transition-all text-text-secondary active:scale-90"
                         >
-                            <Icon name="chevronLeft" size={16} />
+                            <Icon name="chevronLeft" size={24} />
                         </Button>
 
                         <div className="flex-1 text-center">
@@ -72,10 +72,10 @@ export default function WeeklySummaryPanel({
                             type="button"
                             variant="ghost"
                             onClick={() => (mode === 'day' ? goNextDay() : setWeekOffset(prev => Math.min(0, prev + 1)))}
-                            className={`w-9 h-9 flex items-center justify-center rounded-2xl p-0 transition-all active:scale-90 ${(mode === 'day' ? isNextDayDisabled : weekOffset === 0) ? 'text-text-muted cursor-not-allowed' : 'hover:bg-surface-raised text-text-secondary'}`}
+                            className={`w-11 h-11 flex items-center justify-center rounded-2xl p-0 transition-all active:scale-90 ${(mode === 'day' ? isNextDayDisabled : weekOffset === 0) ? 'text-text-muted cursor-not-allowed' : 'hover:bg-surface-raised text-text-secondary'}`}
                             disabled={mode === 'day' ? isNextDayDisabled : weekOffset === 0}
                         >
-                            <Icon name="chevronRight" size={16} />
+                            <Icon name="chevronRight" size={24} />
                         </Button>
                     </div>
                 </div>
@@ -91,7 +91,11 @@ export default function WeeklySummaryPanel({
                 <div className="space-y-4">
                     <DisplayModeToggle mode={mode} onChange={setMode} />
 
-                    <RecordCheckTable weekDays={weeklyStats.weekDays} />
+                    <RecordCheckTable
+                        weekDays={weeklyStats.weekDays}
+                        selectedDate={mode === 'day' ? selectedDate : undefined}
+                        onSelectDate={(date) => { setMode('day'); selectDate(date) }}
+                    />
 
                     <CalorieHeroCard
                         mode={mode}
