@@ -74,14 +74,14 @@ export function DisplayModeToggle({ mode, onChange }: { mode: DisplayMode; onCha
     // いなかったため、外枠も選択中も同じ角丸四角に統一する。
     return (
         <div className="px-2 flex justify-center">
-            <div className="inline-flex items-center gap-1 bg-surface-overlay rounded-2xl p-1">
+            <div className="inline-flex items-center gap-1 bg-surface-overlay rounded-2xl p-0.5">
                 {options.map(opt => (
                     <Button
                         key={opt.key}
                         type="button"
                         variant="ghost"
                         onClick={() => onChange(opt.key)}
-                        className={`min-w-[3.5rem] px-4 py-2 rounded-xl text-xs font-normal leading-none transition-all ${
+                        className={`min-w-[3.5rem] px-4 py-1.5 rounded-xl text-xs font-normal leading-none transition-all ${
                             mode === opt.key ? 'bg-surface-raised text-text-primary shadow-sm' : 'text-text-muted'
                         }`}
                     >

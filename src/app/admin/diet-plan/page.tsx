@@ -811,7 +811,8 @@ function DietPlanPageContent() {
     );
 
     return (
-        <div className={`min-h-screen bg-surface-base pb-12 text-text-primary ${selectedMember ? 'pt-0' : 'pt-4'}`}>
+        // AU-1: 会員を開いている間は下部ナビ(この画面専用)の高さぶん余白を確保する
+        <div className={`min-h-screen bg-surface-base text-text-primary ${selectedMember ? 'pt-2 pb-28' : 'pt-4 pb-12'}`}>
             <div className="max-w-2xl mx-auto px-4 sm:px-6">
                 {!selectedMember ? (
                     <div className="bg-surface-raised rounded-2xl shadow-sm border border-border-subtle overflow-hidden">
@@ -858,29 +859,9 @@ function DietPlanPageContent() {
                         </div>
                     </div>
                 ) : (
-                    <div className="space-y-5 mt-0">
-                        {/* Q-3: ライトモード時代のrgba(249,250,251,...)という白いシャドウが黒背景で
-                            発光ブロブのように見えてしまっていたため、素の背景色のみで区切る形に変更 */}
-                        <div className="sticky top-16 z-40 max-w-2xl mx-auto bg-surface-base px-1 pt-2 pb-2">
-                            <div className="grid grid-cols-5 bg-surface-raised/95 backdrop-blur-md p-1.5 rounded-2xl border border-border-subtle shadow-sm gap-1">
-                                {/* AR-4: オーナー指定により「週間」を「ホーム」に改称し、並びも
-                                    体重 / グラフ / ホーム / 目標 / カロリー設定 に変更した。
-                                    中身は従来の週間パネル(会員の習慣画面と同じ内容)のままで、
-                                    日/週/平均の切替はこのタブの中にある。 */}
-                                {[
-                                    { id: 'weight', label: '体重' },
-                                    { id: 'graph', label: 'グラフ' },
-                                    { id: 'panel', label: 'ホーム' },
-                                    { id: 'goals', label: '目標' },
-                                    { id: 'plan', label: 'カロリー\n設定' }
-                                ].map(tab => (
-                                    <Button type="button" variant="ghost" size="sm" key={tab.id} onClick={() => setActiveTab(tab.id as TabType)} className={`min-w-0 h-12 px-1 text-xs sm:text-sm leading-tight font-normal transition-all duration-300 rounded-2xl flex items-center justify-center text-center ${activeTab === tab.id ? 'bg-surface-overlay text-text-primary shadow-xl scale-[1.02]' : 'text-text-muted hover:text-text-secondary hover:bg-surface-base/50'}`}>
-                                        <span className="whitespace-pre-line">{tab.label}</span>
-                                    </Button>
-                                ))}
-                            </div>
-                        </div>
-
+                    <div className="space-y-4 mt-0">
+                        {/* AU-1: タブは画面下部のナビに移した(この位置にあった上部タブバーは削除)。
+                            上に詰めることで、日付送りや日/週/平均を画面上部で操作できるようにする。 */}
                         {/* J-1: 週間パネルタブ（初期表示）。WeeklySummaryPanel全項目 + 折りたたみ「日別の記録」 */}
                         {!loadingData && activeTab === 'panel' && (
                             <div className="space-y-4 animate-fadeIn">
@@ -1229,6 +1210,39 @@ function DietPlanPageContent() {
                     onSave={handleModalSave}
                     onDelete={goalModal.mode === 'edit' ? handleModalDelete : undefined}
                 />
+            )}
+
+            {/* AU-1: 会員を開いている間だけ、下部ナビをこの会員用のタブに差し替える。
+                共通の下部ナビ(売上/ダイエット/予約/会員/その他)はBottomNavigation側で非表示にしている。 */}
+            {selectedMember && (
+                <div
+                    className="fixed bottom-0 left-0 right-0 z-50 border-t border-border-subtle bg-surface-raised/95 backdrop-blur-md"
+                    style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
+                >
+                    <div className="max-w-md mx-auto grid grid-cols-5 px-2 pt-1.5">
+                        {([
+                            { id: 'weight', label: '体重', iconName: 'scale' },
+                            { id: 'graph', label: 'グラフ', iconName: 'chartBar' },
+                            { id: 'panel', label: 'ホーム', iconName: 'home' },
+                            { id: 'goals', label: '目標', iconName: 'flag' },
+                            { id: 'plan', label: 'カロリー', iconName: 'clipboardList' },
+                        ] as const).map(tab => {
+                            const isActive = activeTab === tab.id
+                            return (
+                                <Button
+                                    key={tab.id}
+                                    type="button"
+                                    variant="ghost"
+                                    onClick={() => setActiveTab(tab.id as TabType)}
+                                    className={`flex flex-col items-center justify-center gap-0.5 px-1 py-1 bg-transparent ${isActive ? 'text-brand-600' : 'text-text-muted'}`}
+                                >
+                                    <Icon name={tab.iconName as any} size={22} />
+                                    <span className="text-xs font-normal leading-none">{tab.label}</span>
+                                </Button>
+                            )
+                        })}
+                    </div>
+                </div>
             )}
         </div>
     );

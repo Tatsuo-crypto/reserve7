@@ -13,10 +13,15 @@ const BottomNavigationContent = () => {
   
   // 管理者以外、または会員用画面（/client/...）、トレーナー画面（/trainer/...）では表示しない
   if (
-    session?.user?.role !== 'ADMIN' || 
-    pathname.startsWith('/client') || 
+    session?.user?.role !== 'ADMIN' ||
+    pathname.startsWith('/client') ||
     pathname.startsWith('/trainer')
   ) return null;
+
+  // AU-1: ダイエットタブから会員を開いている間は、下部ナビをその会員用のタブ
+  // (体重/グラフ/ホーム/目標/カロリー設定)に差し替える。実体は /admin/diet-plan 側で
+  // 描画するので、ここでは共通ナビを引っ込めるだけにする。
+  if (pathname.startsWith('/admin/diet-plan') && searchParams.get('userId')) return null;
 
   // 現在のタブを取得
   let activeTab = searchParams.get('tab') || (pathname === '/dashboard' ? 'home' : '');
