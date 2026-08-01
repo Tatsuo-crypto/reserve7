@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from 'react'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import EmptyState from '@/components/ui/EmptyState'
-import Icon from '@/components/ui/icons'
 import { SkeletonCard } from '@/components/ui/Skeleton'
 
 interface GoalsTabProps {
@@ -277,23 +276,28 @@ export default function GoalsTab({ userId, token, isAdmin }: GoalsTabProps) {
                                         </p>
                                         {goal.note && <p className="text-xs text-text-secondary mt-2">{goal.note}</p>}
                                     </div>
+                                    {/* AV-1: 以前はブラウザ標準のチェックボックス(白い四角)と、
+                                        小さな鉛筆アイコンだけの丸ボタンが並んでいて何のボタンか読み取れなかった。
+                                        文字ラベル付きのボタンに変更する。管理者は達成操作をせず編集のみ。 */}
                                     <div className="flex items-center gap-2 shrink-0">
-                                        <label className="flex items-center justify-center h-9 w-9 rounded-full bg-surface-raised border border-border-subtle cursor-pointer hover:bg-surface-overlay" aria-label="達成にする">
-                                            <input
-                                                type="checkbox"
-                                                checked={false}
-                                                onChange={() => updateStatus(goal, 'achieved')}
-                                                className="h-4 w-4 rounded-lg border-border-strong bg-surface-base accent-brand-600"
-                                            />
-                                        </label>
+                                        {!isAdmin && (
+                                            <Button
+                                                type="button"
+                                                variant="secondary"
+                                                size="sm"
+                                                onClick={() => updateStatus(goal, 'achieved')}
+                                                className="rounded-full px-3 py-1.5 text-xs whitespace-nowrap"
+                                            >
+                                                達成にする
+                                            </Button>
+                                        )}
                                         <Button
                                             type="button"
                                             variant="ghost"
                                             onClick={() => openEditGoal(goal)}
-                                            aria-label="目標を編集"
-                                            className="h-9 w-9 rounded-full border border-brand-500/20 bg-brand-500/15 p-0 text-brand-300 hover:bg-brand-500/25 flex items-center justify-center"
+                                            className="rounded-full border border-brand-500/20 bg-brand-500/15 px-3 py-1.5 text-xs text-brand-300 hover:bg-brand-500/25 whitespace-nowrap"
                                         >
-                                            <Icon name="pencil" size={16} />
+                                            編集
                                         </Button>
                                     </div>
                                 </div>
@@ -393,23 +397,31 @@ export default function GoalsTab({ userId, token, isAdmin }: GoalsTabProps) {
                                     </p>
                                     {goal.note && <p className="text-xs text-text-muted mt-1">{goal.note}</p>}
                                 </div>
+                                {/* AV-1: 過去の目標は「達成/未達成」を状態バッジで示す。
+                                    会員はタップで切り替えられ、管理者は表示のみ+編集ボタン。 */}
                                 <div className="flex items-center gap-2 shrink-0">
-                                    <label className="flex items-center justify-center h-9 w-9 rounded-full bg-surface-raised border border-border-subtle cursor-pointer hover:bg-surface-overlay" aria-label={goal.status === 'achieved' ? '未達成にする' : '達成にする'}>
-                                        <input
-                                            type="checkbox"
-                                            checked={goal.status === 'achieved'}
-                                            onChange={(e) => updateStatus(goal, e.target.checked ? 'achieved' : 'missed')}
-                                            className="h-4 w-4 rounded-lg border-border-strong bg-surface-base accent-brand-600"
-                                        />
-                                    </label>
+                                    {isAdmin ? (
+                                        <span className={`rounded-full px-3 py-1.5 text-xs font-normal whitespace-nowrap ${goal.status === 'achieved' ? 'bg-state-success-500/15 text-state-success-300' : 'bg-surface-overlay text-text-muted'}`}>
+                                            {goal.status === 'achieved' ? '達成' : '未達成'}
+                                        </span>
+                                    ) : (
+                                        <Button
+                                            type="button"
+                                            variant="secondary"
+                                            size="sm"
+                                            onClick={() => updateStatus(goal, goal.status === 'achieved' ? 'missed' : 'achieved')}
+                                            className={`rounded-full px-3 py-1.5 text-xs whitespace-nowrap ${goal.status === 'achieved' ? 'bg-state-success-500/15 text-state-success-300 border-state-success-500/25' : ''}`}
+                                        >
+                                            {goal.status === 'achieved' ? '達成' : '未達成'}
+                                        </Button>
+                                    )}
                                     <Button
                                         type="button"
                                         variant="ghost"
                                         onClick={() => openEditGoal(goal)}
-                                        aria-label="目標を編集"
-                                        className="h-9 w-9 rounded-full border border-brand-500/20 bg-brand-500/15 p-0 text-brand-300 hover:bg-brand-500/25 flex items-center justify-center"
+                                        className="rounded-full border border-brand-500/20 bg-brand-500/15 px-3 py-1.5 text-xs text-brand-300 hover:bg-brand-500/25 whitespace-nowrap"
                                     >
-                                        <Icon name="pencil" size={16} />
+                                        編集
                                     </Button>
                                 </div>
                             </div>
