@@ -48,14 +48,14 @@ export default function WeeklyProgressPanel({
         <div className="space-y-3">
             {showWeekSwitcher && (
                 <div className="px-2 flex flex-col items-center">
-                    <div className="flex items-center gap-2 bg-surface-overlay rounded-2xl p-1 w-full max-w-[300px] shadow-sm">
+                    <div className="flex items-center gap-1 bg-surface-overlay rounded-xl p-0.5 w-full max-w-[300px] shadow-sm">
                         <Button
                             type="button"
                             variant="ghost"
                             onClick={() => (mode === 'day' ? goPrevDay() : setWeekOffset(prev => prev - 1))}
-                            className="w-10 h-9 shrink-0 flex items-center justify-center hover:bg-surface-raised rounded-xl p-0 transition-all text-text-secondary active:scale-90"
+                            className="w-11 h-8 shrink-0 flex items-center justify-center hover:bg-surface-raised rounded-lg p-0 transition-all text-text-secondary active:scale-90"
                         >
-                            <Icon name="chevronLeft" size={24} />
+                            <Icon name="chevronLeft" size={28} />
                         </Button>
 
                         <div className="flex-1 text-center">
@@ -79,10 +79,10 @@ export default function WeeklyProgressPanel({
                             type="button"
                             variant="ghost"
                             onClick={() => (mode === 'day' ? goNextDay() : setWeekOffset(prev => Math.min(0, prev + 1)))}
-                            className={`w-10 h-9 shrink-0 flex items-center justify-center rounded-xl p-0 transition-all active:scale-90 ${(mode === 'day' ? isNextDayDisabled : weekOffset === 0) ? 'text-text-muted cursor-not-allowed' : 'hover:bg-surface-raised text-text-secondary'}`}
+                            className={`w-11 h-8 shrink-0 flex items-center justify-center rounded-lg p-0 transition-all active:scale-90 ${(mode === 'day' ? isNextDayDisabled : weekOffset === 0) ? 'text-text-muted cursor-not-allowed' : 'hover:bg-surface-raised text-text-secondary'}`}
                             disabled={mode === 'day' ? isNextDayDisabled : weekOffset === 0}
                         >
-                            <Icon name="chevronRight" size={24} />
+                            <Icon name="chevronRight" size={28} />
                         </Button>
                     </div>
                 </div>

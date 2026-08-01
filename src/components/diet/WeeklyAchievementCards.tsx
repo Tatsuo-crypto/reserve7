@@ -74,14 +74,14 @@ export function DisplayModeToggle({ mode, onChange }: { mode: DisplayMode; onCha
     // いなかったため、外枠も選択中も同じ角丸四角に統一する。
     return (
         <div className="px-2 flex justify-center">
-            <div className="inline-flex items-center gap-1 bg-surface-overlay rounded-2xl p-0.5">
+            <div className="inline-flex items-center gap-0.5 bg-surface-overlay rounded-xl p-0.5">
                 {options.map(opt => (
                     <Button
                         key={opt.key}
                         type="button"
                         variant="ghost"
                         onClick={() => onChange(opt.key)}
-                        className={`min-w-[3.5rem] px-4 py-1.5 rounded-xl text-xs font-normal leading-none transition-all ${
+                        className={`min-w-[3.5rem] px-4 py-1 rounded-lg text-xs font-normal leading-none transition-all ${
                             mode === opt.key ? 'bg-surface-raised text-text-primary shadow-sm' : 'text-text-muted'
                         }`}
                     >
@@ -123,7 +123,7 @@ export function RecordCheckTable({
                         <div
                             className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${day.recorded ? 'bg-brand-500 text-white' : 'bg-surface-overlay text-text-muted'} ${
                                 isSelected
-                                    ? 'ring-2 ring-blue-400 ring-offset-1 ring-offset-surface-raised'
+                                    ? 'ring-2 ring-white ring-offset-1 ring-offset-surface-raised'
                                     : day.isToday ? 'ring-2 ring-brand-500 ring-offset-1 ring-offset-surface-raised' : ''
                             }`}
                         >

@@ -110,10 +110,10 @@ function NavigationContent() {
               type="button"
               variant="ghost"
               onClick={handleBack}
-              className="w-11 h-11 flex items-center justify-center p-0 text-text-secondary bg-transparent border-0 shadow-none transition-all active:scale-90 hover:text-text-primary"
+              className="w-12 h-12 flex items-center justify-center p-0 text-text-primary bg-transparent border-0 shadow-none transition-all active:scale-90 hover:text-text-primary"
               aria-label="戻る"
             >
-              <Icon name="chevronLeft" size={28} />
+              <Icon name="chevronLeft" size={34} />
             </Button>
           ) : session?.user?.role === 'ADMIN' ? (
             <StoreSwitcher defaultStoreName={getStoreDisplayName(session.user.email)} />
@@ -135,10 +135,10 @@ function NavigationContent() {
                 type="button"
                 variant="ghost"
                 onClick={() => setIsMenuOpen((value) => !value)}
-                className="w-11 h-11 flex items-center justify-center p-0 text-text-secondary bg-transparent border-0 shadow-none transition-all active:scale-90 hover:text-text-primary"
+                className="w-12 h-12 flex items-center justify-center p-0 text-text-primary bg-transparent border-0 shadow-none transition-all active:scale-90 hover:text-text-primary"
                 aria-label="メニュー"
               >
-                <Icon name="menu" size={28} />
+                <Icon name="menu" size={34} />
               </Button>
 
               {isMenuOpen && (
