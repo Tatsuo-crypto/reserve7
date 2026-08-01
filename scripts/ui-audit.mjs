@@ -52,14 +52,14 @@ for (const file of walk(SRC)) {
     }
   }
 
-  // 3) Button をカード(中に見出し+本文)として使っているのに block を付けていない
-  for (const m of src.matchAll(/<Button\b((?:[^<>]|\{[^{}]*\})*?)>/gs)) {
-    const attrs = m[1]
-    const cls = classOf(attrs)
-    const tail = src.slice(m.index + m[0].length, m.index + m[0].length + 600)
-    const looksLikeCard = /\btext-left\b/.test(cls) && /<\s*(h[1-6]|p)\b/.test(tail)
-    if (looksLikeCard && !/\bblock\b(?![-\w])/.test(attrs)) {
-      add('button-as-card', file, lineOf(src, m.index), 'カード用途のButtonに block prop が無い')
+  // 3) 見出しやラベルに truncate を掛けている(長文が読めなくなる)
+  //    AS-2: 目標カードで「【睡眠】お…」と切れて読めなくなっていた事例の再発防止。
+  //    数値(tabular-nums)の切り詰めは桁が揃っていて問題になりにくいので対象外。
+  for (const m of src.matchAll(/className="([^"]*\btruncate\b[^"]*)"/g)) {
+    const cls = m[1]
+    if (/\btabular-nums\b/.test(cls)) continue
+    if (/\btext-(2xl|3xl|4xl|5xl)\b/.test(cls)) {
+      add('truncate-large-text', file, lineOf(src, m.index), '大きい文字にtruncate(長文が読めなくなる)')
     }
   }
 
@@ -82,7 +82,7 @@ const byRule = findings.reduce((acc, f) => {
 const RULE_LABEL = {
   'input-light-bg': '入力欄に白系背景を明示指定(黒テーマから浮く)',
   'input-fixed-width': '入力欄に固定幅(max-w-fullなし=はみ出す恐れ)',
-  'button-as-card': 'カード用途のButtonに block prop が無い(中身が中央寄せで潰れる)',
+  'truncate-large-text': '大きい文字にtruncate(長文が途中で切れて読めない)',
   'flex-child-no-min-w': 'truncateの親に min-w-0 が無い(省略されず押し出される)',
 }
 

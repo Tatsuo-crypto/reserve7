@@ -20,6 +20,15 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
      * 呼び出し側に委ねる。
      */
     block?: boolean
+    /**
+     * AS-1: 見た目をすべて呼び出し側のclassNameで指定したい場合に使う。
+     * variantの色クラス(例: primaryの `bg-brand-700 text-white`)は、className側に
+     * `bg-white text-brand-600` のような別の色を書いても、CSSの出力順しだいで
+     * どちらが勝つか決まってしまう。実際にこれが原因で「白いボタンに白い文字」になり
+     * ラベルが消えていた箇所があった。このpropを立てるとvariant/sizeのクラスを一切付けず、
+     * classNameの指定だけが効くようにする。
+     */
+    unstyled?: boolean
 }
 
 // Q-6: primary/destructiveはbrand/状態色そのもの(ベーステーマに依存しないため据え置き)。
@@ -39,6 +48,23 @@ const SIZE_CLASSES: Record<Size, string> = {
     md: 'px-4 py-3 text-sm',
 }
 
+/*
+  AS-1: 「classNameに書いたのに効かない」問題をコンポーネント側で吸収する。
+
+  Tailwindのユーティリティは同じ詳細度なので、どちらが勝つかは記述順ではなく
+  生成CSSの出力順で決まる。そのため呼び出し側が className に色や display を書いても、
+  ベースの variant / inline-flex に負けることがあり、
+    - 白背景に白文字でラベルが消える(bg-white text-brand-600 が primary の text-white に負ける)
+    - カードが中央寄せで潰れる(block が inline-flex に負ける)
+  といった崩れが実際に起きていた。
+  そこで「呼び出し側が同じ種類の指定をしているなら、ベース側の該当クラスを外す」ようにして、
+  className が常に勝つ状態にする。block / unstyled は明示的に外したいとき用に残す。
+*/
+const COLOR_NAMES = 'brand|state|surface|text|border|red|blue|amber|green|sky|zinc|gray|slate|neutral|stone|orange|emerald|purple|indigo|pink|rose|yellow|lime|teal|cyan|violet|fuchsia'
+const CALLER_SETS_BG = new RegExp(`(^|\\s)bg-(white|black|transparent|current|inherit|gradient-to-|(?:${COLOR_NAMES})-)`)
+const CALLER_SETS_TEXT_COLOR = new RegExp(`(^|\\s)text-(white|black|transparent|current|inherit|(?:${COLOR_NAMES})-)`)
+const CALLER_SETS_DISPLAY = /(^|\s)(block|inline-block|inline|flow-root|contents|hidden|grid|inline-grid|flex|inline-flex|table)(\s|$)/
+
 /**
  * N-2: 共通ボタンコンポーネント。
  * これまで211箇所で個別に手書きされていたボタンの角丸・余白・色の組み合わせをここに集約する。
@@ -46,16 +72,35 @@ const SIZE_CLASSES: Record<Size, string> = {
  * 4つで打ち止め(N-2の決定どおり)。角丸はN-4のトークンに従い常に rounded-lg。
  */
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
-    { variant = 'primary', size = 'md', fullWidth = false, loading = false, block = false, disabled, className = '', children, ...rest },
+    { variant = 'primary', size = 'md', fullWidth = false, loading = false, block = false, unstyled = false, disabled, className = '', children, ...rest },
     ref
 ) {
-    const layoutClasses = block ? '' : 'inline-flex items-center justify-center gap-2'
+    const callerSetsDisplay = CALLER_SETS_DISPLAY.test(className)
+    const callerSetsBg = CALLER_SETS_BG.test(className)
+    const callerSetsTextColor = CALLER_SETS_TEXT_COLOR.test(className)
+
+    // 呼び出し側がdisplayを指定しているなら、ベースのinline-flex(と中央寄せ)は付けない
+    const layoutClasses = block || callerSetsDisplay ? '' : 'inline-flex items-center justify-center gap-2'
+
+    // 呼び出し側が背景色/文字色を指定しているなら、variant側の同種クラスを外して衝突させない
+    const variantClasses = VARIANT_CLASSES[variant]
+        .split(' ')
+        .filter(cls => {
+            if (callerSetsBg && /^(hover:|disabled:|active:|focus:)?bg-/.test(cls)) return false
+            if (callerSetsTextColor && /^(hover:|disabled:|active:|focus:)?text-/.test(cls)) return false
+            return true
+        })
+        .join(' ')
+
+    const baseClasses = unstyled
+        ? 'transition-colors disabled:cursor-not-allowed'
+        : `rounded-lg font-normal transition-colors disabled:cursor-not-allowed ${variantClasses} ${SIZE_CLASSES[size]}`
 
     return (
         <button
             ref={ref}
             disabled={disabled || loading}
-            className={`${layoutClasses} rounded-lg font-normal transition-colors disabled:cursor-not-allowed ${VARIANT_CLASSES[variant]} ${SIZE_CLASSES[size]} ${fullWidth ? 'w-full' : ''} ${className}`}
+            className={`${layoutClasses} ${baseClasses} ${fullWidth ? 'w-full' : ''} ${className}`}
             {...rest}
         >
             {loading && (

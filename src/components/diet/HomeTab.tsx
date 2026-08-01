@@ -249,29 +249,37 @@ export default function HomeTab({ token, userName, isDietPlan = true, todayDraft
             <section className="space-y-2">
                 <SectionTitle>目標</SectionTitle>
                 <Card padding="sm" className="!p-3">
+                    {/* AS-2: 目標が体重(数値)のときは数値ファーストで大きく出すが、
+                        文章の目標(例:「【睡眠】お風呂は…」)まで3xl+truncateにすると
+                        ほとんど読めなくなるため、文章のときは小さめ+折り返して全文を見せる。 */}
                     <div className="rounded-2xl bg-brand-600 px-4 py-4">
-                        <div className="flex items-center justify-between gap-4">
-                            <div className="min-w-0">
-                                <p className="text-xs font-normal text-white/75">
-                                    {primaryGoal?.type === 'weight' ? '目標体重' : primaryGoal ? '目標' : '目標'}
-                                </p>
-                                <p className="mt-1 truncate text-3xl font-bold text-white tabular-nums">
-                                    {primaryGoal
-                                        ? primaryGoal.type === 'weight' && primaryGoal.target_value != null
-                                            ? `${primaryGoal.target_value}kg`
-                                            : primaryGoal.title
-                                        : '未設定'}
-                                </p>
-                            </div>
-                            {primaryGoalRemain !== null && (
-                                <div className="shrink-0 text-center">
-                                    <p className="rounded-full bg-white/15 px-3 py-1.5 text-xs font-normal tabular-nums text-white">あと{primaryGoalRemain}日</p>
-                                    {goalEndLong && (
-                                        <p className="mt-1 text-sm font-semibold tabular-nums text-white">{goalEndLong}</p>
+                        {(() => {
+                            const isWeightGoal = primaryGoal?.type === 'weight' && primaryGoal?.target_value != null
+                            const goalText = primaryGoal
+                                ? isWeightGoal ? `${primaryGoal.target_value}kg` : primaryGoal.title
+                                : '未設定'
+
+                            return (
+                                <div className="flex items-start justify-between gap-4">
+                                    <div className="min-w-0 flex-1">
+                                        <p className="text-xs font-normal text-white/75">
+                                            {isWeightGoal ? '目標体重' : '目標'}
+                                        </p>
+                                        <p className={`mt-1 text-white ${isWeightGoal ? 'text-3xl font-bold tabular-nums' : 'text-sm font-semibold leading-relaxed break-words'}`}>
+                                            {goalText}
+                                        </p>
+                                    </div>
+                                    {primaryGoalRemain !== null && (
+                                        <div className="shrink-0 text-right">
+                                            <p className="inline-block rounded-full bg-white/15 px-3 py-1.5 text-xs font-normal tabular-nums text-white">あと{primaryGoalRemain}日</p>
+                                            {goalEndLong && (
+                                                <p className="mt-1 text-sm font-semibold tabular-nums text-white">{goalEndLong}</p>
+                                            )}
+                                        </div>
                                     )}
                                 </div>
-                            )}
-                        </div>
+                            )
+                        })()}
                     </div>
                 </Card>
             </section>
@@ -322,9 +330,12 @@ export default function HomeTab({ token, userName, isDietPlan = true, todayDraft
 
             <section className="space-y-2">
                 <SectionTitle>今後</SectionTitle>
+                {/* AS-3: block propが無いとButtonのinline-flex中央寄せが効いてしまい、
+                    このカードだけ中央に寄って「目標」「今日」と幅も揃わなくなっていた。 */}
                 <Button
                     type="button"
                     variant="ghost"
+                    block
                     onClick={() => onNavigate?.('res')}
                     className="block w-full p-0 text-left active:scale-[0.99] transition-transform"
                 >

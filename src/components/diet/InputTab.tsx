@@ -569,12 +569,15 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                             <h2 className="text-xl font-semibold mb-1">食事写真を解析</h2>
                             <p className="text-brand-100 text-xs mb-6 text-center opacity-80">スクリーンショットを読み取って栄養バランスを一律入力します</p>
 
+                            {/* AS-1: variantの色(bg-brand-700 text-white)とclassNameの色(bg-white text-brand-600)が
+                                衝突し、白背景に白文字でラベルが消えていた。unstyledでvariantの色を外す。 */}
                             <Button
                                 type="button"
+                                unstyled
                                 fullWidth
                                 onClick={() => fileInputRef.current?.click()}
                                 disabled={analyzing}
-                                className={`w-full bg-white text-brand-600 py-3 rounded-2xl font-normal shadow-md hover:bg-brand-50 transition-colors disabled:opacity-50 flex items-center justify-center ${analyzing ? 'animate-pulse' : ''}`}
+                                className={`w-full bg-white text-brand-600 py-3 rounded-2xl font-semibold shadow-md hover:bg-brand-50 disabled:opacity-50 flex items-center justify-center ${analyzing ? 'animate-pulse' : ''}`}
                             >
                                 {analyzing ? '解析中...' : '写真をアップロード'}
                             </Button>
