@@ -52,11 +52,15 @@ function todayInputValue() {
     return `${year}-${month}-${day}`
 }
 
+// AW-1: 期限を設けない目標(「毎日続ける」系の習慣など)も作れるようにする。
+// DB側は元々 deadline が null 可だったが、フォームが常に今日の日付を初期値に入れており、
+// 空にする手段が無かったため実質「期限あり」しか作れなかった。
 function initialGoalForm() {
     return {
         type: 'weight' as GoalType,
         title: '',
         targetValue: '60',
+        hasDeadline: true,
         deadline: todayInputValue(),
         note: '',
     }
@@ -67,6 +71,8 @@ function goalToForm(goal: Goal) {
         type: goal.type,
         title: goal.type === 'habit' ? goal.title : '',
         targetValue: goal.target_value != null ? String(goal.target_value) : '60',
+        // 期限なしで保存した目標を編集しても、勝手に今日の日付が入らないようにする
+        hasDeadline: Boolean(goal.deadline),
         deadline: goal.deadline || todayInputValue(),
         note: goal.note || '',
     }
@@ -154,7 +160,8 @@ export default function GoalsTab({ userId, token, isAdmin }: GoalsTabProps) {
                     type: newGoal.type,
                     title,
                     targetValue: newGoal.type === 'weight' ? parseFloat(newGoal.targetValue) : null,
-                    deadline: newGoal.deadline || null,
+                    // AW-1: 「期限なし」を選んだ場合はnullで保存する
+                    deadline: newGoal.hasDeadline ? (newGoal.deadline || null) : null,
                     note: newGoal.note.trim() || null,
                 })
             })
@@ -268,11 +275,10 @@ export default function GoalsTab({ userId, token, isAdmin }: GoalsTabProps) {
                                         </p>
                                         <p className="text-xs text-text-muted mt-1">
                                             {goal.type === 'habit' && `${streak}日目`}
-                                            {goal.deadline && remain !== null && (
-                                                <span className={goal.type === 'habit' ? 'ml-2' : ''}>
-                                                    期限まであと{remain}日
-                                                </span>
-                                            )}
+                                            {/* AW-1: 期限なしの目標は空欄にせず「期限なし」と明示する */}
+                                            <span className={goal.type === 'habit' ? 'ml-2' : ''}>
+                                                {goal.deadline && remain !== null ? `期限まであと${remain}日` : '期限なし'}
+                                            </span>
                                         </p>
                                         {goal.note && <p className="text-xs text-text-secondary mt-2">{goal.note}</p>}
                                     </div>
@@ -335,9 +341,32 @@ export default function GoalsTab({ userId, token, isAdmin }: GoalsTabProps) {
                         </div>
                     )}
 
-                    <div className="space-y-1">
-                        <label className="text-xs font-normal text-text-muted uppercase tracking-widest pl-1">期限（任意）</label>
-                        <input type="date" value={newGoal.deadline} onChange={e => setNewGoal(prev => ({ ...prev, deadline: e.target.value }))} className="w-full bg-surface-base border-none rounded-2xl px-3 py-3 text-sm font-normal focus:ring-2 focus:ring-brand-500" />
+                    {/* AW-1: 期限あり / 期限なし を選べるようにする */}
+                    <div className="space-y-2">
+                        <label className="text-xs font-normal text-text-muted uppercase tracking-widest pl-1">期限</label>
+                        <div className="flex gap-2">
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                onClick={() => setNewGoal(prev => ({ ...prev, hasDeadline: true }))}
+                                className={`flex-1 py-3 rounded-2xl text-sm transition-colors ${newGoal.hasDeadline ? 'bg-surface-overlay text-text-primary' : 'bg-surface-base text-text-secondary hover:bg-surface-overlay'}`}
+                            >
+                                期限あり
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                onClick={() => setNewGoal(prev => ({ ...prev, hasDeadline: false }))}
+                                className={`flex-1 py-3 rounded-2xl text-sm transition-colors ${!newGoal.hasDeadline ? 'bg-surface-overlay text-text-primary' : 'bg-surface-base text-text-secondary hover:bg-surface-overlay'}`}
+                            >
+                                期限なし
+                            </Button>
+                        </div>
+                        {newGoal.hasDeadline ? (
+                            <input type="date" value={newGoal.deadline} onChange={e => setNewGoal(prev => ({ ...prev, deadline: e.target.value }))} className="w-full bg-surface-base border-none rounded-2xl px-3 py-3 text-sm font-normal focus:ring-2 focus:ring-brand-500" />
+                        ) : (
+                            <p className="pl-1 text-xs font-normal text-text-muted">期限を決めずに続ける目標になります。</p>
+                        )}
                     </div>
 
                     <div className="space-y-1">
@@ -389,11 +418,9 @@ export default function GoalsTab({ userId, token, isAdmin }: GoalsTabProps) {
                                     </p>
                                     <p className="text-xs text-text-muted mt-1">
                                         {goal.type === 'habit' && `${streak}日目`}
-                                        {goal.deadline && remain !== null && (
-                                            <span className={goal.type === 'habit' ? 'ml-2' : ''}>
-                                                期限まであと{remain}日
-                                            </span>
-                                        )}
+                                        <span className={goal.type === 'habit' ? 'ml-2' : ''}>
+                                            {goal.deadline && remain !== null ? `期限まであと${remain}日` : '期限なし'}
+                                        </span>
                                     </p>
                                     {goal.note && <p className="text-xs text-text-muted mt-1">{goal.note}</p>}
                                 </div>
