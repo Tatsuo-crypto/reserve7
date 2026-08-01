@@ -7,6 +7,7 @@ import Button from '@/components/ui/Button'
 import EmptyState from '@/components/ui/EmptyState'
 import Icon from '@/components/ui/icons'
 import { RecordCheckTable, CalorieHeroCard, AchievementItemCard, DisplayModeToggle, NutritionListCard, MemberWeeklyResultListCard, type DisplayMode } from './WeeklyAchievementCards'
+import { useDaySelection } from '@/hooks/useDaySelection'
 
 interface WeeklyProgressPanelProps {
     weeklyStats: WeeklyProgressStats | null
@@ -38,6 +39,8 @@ export default function WeeklyProgressPanel({
 }: WeeklyProgressPanelProps) {
     const [open, setOpen] = useState(defaultOpen)
     const [mode, setMode] = useState<DisplayMode>('average')
+    const { dayLabel, dayActual, dayTarget, goPrevDay, goNextDay, isNextDayDisabled } =
+        useDaySelection(weeklyStats, weekOffset, setWeekOffset, mode === 'day')
     const showNutrition = sections === 'all' || sections === 'nutrition'
     const showLife = sections === 'all' || sections === 'life'
 
@@ -49,7 +52,7 @@ export default function WeeklyProgressPanel({
                         <Button
                             type="button"
                             variant="ghost"
-                            onClick={() => setWeekOffset(prev => prev - 1)}
+                            onClick={() => (mode === 'day' ? goPrevDay() : setWeekOffset(prev => prev - 1))}
                             className="w-9 h-9 flex items-center justify-center hover:bg-surface-raised rounded-2xl p-0 transition-all text-text-secondary active:scale-90"
                         >
                             <Icon name="chevronLeft" size={16} />
@@ -57,21 +60,27 @@ export default function WeeklyProgressPanel({
 
                         <div className="flex-1 text-center">
                             <div className="flex items-center justify-center gap-2">
-                                <span className="text-sm font-normal text-text-primary">
-                                    {weekOffset === 0 ? '今週' : weekOffset === -1 ? '先週' : `${Math.abs(weekOffset)}週間前`}
-                                </span>
-                                <span className="text-xs font-normal text-text-secondary tabular-nums">
-                                    ({weeklyStats?.weekRangeStr})
-                                </span>
+                                {mode === 'day' ? (
+                                    <span className="text-sm font-normal text-text-primary tabular-nums">{dayLabel}</span>
+                                ) : (
+                                    <>
+                                        <span className="text-sm font-normal text-text-primary">
+                                            {weekOffset === 0 ? '今週' : weekOffset === -1 ? '先週' : `${Math.abs(weekOffset)}週間前`}
+                                        </span>
+                                        <span className="text-xs font-normal text-text-secondary tabular-nums">
+                                            ({weeklyStats?.weekRangeStr})
+                                        </span>
+                                    </>
+                                )}
                             </div>
                         </div>
 
                         <Button
                             type="button"
                             variant="ghost"
-                            onClick={() => setWeekOffset(prev => Math.min(0, prev + 1))}
-                            className={`w-9 h-9 flex items-center justify-center rounded-2xl p-0 transition-all active:scale-90 ${weekOffset === 0 ? 'text-text-muted cursor-not-allowed' : 'hover:bg-surface-raised text-text-secondary'}`}
-                            disabled={weekOffset === 0}
+                            onClick={() => (mode === 'day' ? goNextDay() : setWeekOffset(prev => Math.min(0, prev + 1)))}
+                            className={`w-9 h-9 flex items-center justify-center rounded-2xl p-0 transition-all active:scale-90 ${(mode === 'day' ? isNextDayDisabled : weekOffset === 0) ? 'text-text-muted cursor-not-allowed' : 'hover:bg-surface-raised text-text-secondary'}`}
+                            disabled={mode === 'day' ? isNextDayDisabled : weekOffset === 0}
                         >
                             <Icon name="chevronRight" size={16} />
                         </Button>
@@ -98,56 +107,56 @@ export default function WeeklyProgressPanel({
                                     {
                                         label: 'カロリー',
                                         unit: 'kcal',
-                                        actual: mode === 'total' ? weeklyStats.actual.calories : weeklyStats.avgOnRecordedDays.calories,
-                                        target: mode === 'total' ? weeklyStats.targets.calories : weeklyStats.dietTargetPerDay.calories,
+                                        actual: mode === 'day' ? (dayActual.calories ?? 0) : mode === 'total' ? weeklyStats.actual.calories : weeklyStats.avgOnRecordedDays.calories,
+                                        target: mode === 'day' ? (dayTarget.calories ?? 0) : mode === 'total' ? weeklyStats.targets.calories : weeklyStats.dietTargetPerDay.calories,
                                         rule: 'upper',
                                         fractionDigits: 0,
                                     },
                                     {
                                         label: 'P',
                                         unit: 'g',
-                                        actual: mode === 'total' ? weeklyStats.actual.protein : weeklyStats.avgOnRecordedDays.protein,
-                                        target: mode === 'total' ? weeklyStats.targets.protein : weeklyStats.dietTargetPerDay.protein,
+                                        actual: mode === 'day' ? (dayActual.protein ?? 0) : mode === 'total' ? weeklyStats.actual.protein : weeklyStats.avgOnRecordedDays.protein,
+                                        target: mode === 'day' ? (dayTarget.protein ?? 0) : mode === 'total' ? weeklyStats.targets.protein : weeklyStats.dietTargetPerDay.protein,
                                         rule: 'minimum',
                                         fractionDigits: 0,
                                     },
                                     {
                                         label: 'F',
                                         unit: 'g',
-                                        actual: mode === 'total' ? weeklyStats.actual.fat : weeklyStats.avgOnRecordedDays.fat,
-                                        target: mode === 'total' ? weeklyStats.targets.fat : weeklyStats.dietTargetPerDay.fat,
+                                        actual: mode === 'day' ? (dayActual.fat ?? 0) : mode === 'total' ? weeklyStats.actual.fat : weeklyStats.avgOnRecordedDays.fat,
+                                        target: mode === 'day' ? (dayTarget.fat ?? 0) : mode === 'total' ? weeklyStats.targets.fat : weeklyStats.dietTargetPerDay.fat,
                                         rule: 'upper',
                                         fractionDigits: 0,
                                     },
                                     {
                                         label: 'C',
                                         unit: 'g',
-                                        actual: mode === 'total' ? weeklyStats.actual.carbs : weeklyStats.avgOnRecordedDays.carbs,
-                                        target: mode === 'total' ? weeklyStats.targets.carbs : weeklyStats.dietTargetPerDay.carbs,
+                                        actual: mode === 'day' ? (dayActual.carbs ?? 0) : mode === 'total' ? weeklyStats.actual.carbs : weeklyStats.avgOnRecordedDays.carbs,
+                                        target: mode === 'day' ? (dayTarget.carbs ?? 0) : mode === 'total' ? weeklyStats.targets.carbs : weeklyStats.dietTargetPerDay.carbs,
                                         rule: 'upper',
                                         fractionDigits: 0,
                                     },
                                     {
                                         label: '食物繊維',
                                         unit: 'g',
-                                        actual: mode === 'total' ? weeklyStats.actual.fiber : weeklyStats.avgOnRecordedDays.fiber,
-                                        target: mode === 'total' ? weeklyStats.targets.fiber : weeklyStats.dietTargetPerDay.fiber,
+                                        actual: mode === 'day' ? (dayActual.fiber ?? 0) : mode === 'total' ? weeklyStats.actual.fiber : weeklyStats.avgOnRecordedDays.fiber,
+                                        target: mode === 'day' ? (dayTarget.fiber ?? 0) : mode === 'total' ? weeklyStats.targets.fiber : weeklyStats.dietTargetPerDay.fiber,
                                         rule: 'minimum',
                                         fractionDigits: 0,
                                     },
                                     {
                                         label: '水分',
                                         unit: 'L',
-                                        actual: mode === 'total' ? weeklyStats.actual.water : weeklyStats.avgOnRecordedDays.water,
-                                        target: mode === 'total' ? weeklyStats.targets.water : weeklyStats.lifeTargetPerDay.water,
+                                        actual: mode === 'day' ? (dayActual.water ?? 0) : mode === 'total' ? weeklyStats.actual.water : weeklyStats.avgOnRecordedDays.water,
+                                        target: mode === 'day' ? (dayTarget.water ?? 0) : mode === 'total' ? weeklyStats.targets.water : weeklyStats.lifeTargetPerDay.water,
                                         rule: 'minimum',
                                         fractionDigits: 1,
                                     },
                                     {
                                         label: '歩数',
                                         unit: '歩',
-                                        actual: mode === 'total' ? weeklyStats.actual.steps : weeklyStats.avgOnRecordedDays.steps,
-                                        target: mode === 'total' ? weeklyStats.targets.steps : weeklyStats.lifeTargetPerDay.steps,
+                                        actual: mode === 'day' ? (dayActual.steps ?? 0) : mode === 'total' ? weeklyStats.actual.steps : weeklyStats.avgOnRecordedDays.steps,
+                                        target: mode === 'day' ? (dayTarget.steps ?? 0) : mode === 'total' ? weeklyStats.targets.steps : weeklyStats.lifeTargetPerDay.steps,
                                         rule: 'minimum',
                                         fractionDigits: 0,
                                     },
@@ -162,8 +171,8 @@ export default function WeeklyProgressPanel({
                                     {
                                         label: '睡眠',
                                         unit: 'h',
-                                        actual: mode === 'total' ? weeklyStats.actual.sleep : weeklyStats.avgOnRecordedDays.sleep,
-                                        target: mode === 'total' ? weeklyStats.targets.sleep : weeklyStats.lifeTargetPerDay.sleep,
+                                        actual: mode === 'day' ? (dayActual.sleep ?? 0) : mode === 'total' ? weeklyStats.actual.sleep : weeklyStats.avgOnRecordedDays.sleep,
+                                        target: mode === 'day' ? (dayTarget.sleep ?? 0) : mode === 'total' ? weeklyStats.targets.sleep : weeklyStats.lifeTargetPerDay.sleep,
                                         rule: 'minimum',
                                         fractionDigits: 1,
                                     },
@@ -182,6 +191,8 @@ export default function WeeklyProgressPanel({
                                 weekTarget={weeklyStats.targets.calories}
                                 avg={weeklyStats.avgOnRecordedDays.calories}
                                 perDayTarget={weeklyStats.dietTargetPerDay.calories}
+                                dayActual={dayActual.calories}
+                                dayTarget={dayTarget.calories}
                             />
 
                             {simpleMemberView ? (
@@ -195,12 +206,12 @@ export default function WeeklyProgressPanel({
                                 />
                             ) : (
                                 <div className="grid grid-cols-2 gap-3">
-                                    <AchievementItemCard label="タンパク質 (P)" unit="g" mode={mode} perDayTarget={weeklyStats.dietTargetPerDay.protein} weekTarget={weeklyStats.targets.protein} avg={weeklyStats.avgOnRecordedDays.protein} prevAvg={weeklyStats.previousAvgOnRecordedDays.protein} actualTotal={weeklyStats.actual.protein} prevActualTotal={weeklyStats.previousActual.protein} prevRecordedDays={weeklyStats.previousCounts.protein} />
-                                    <AchievementItemCard label="脂質 (F)" unit="g" mode={mode} perDayTarget={weeklyStats.dietTargetPerDay.fat} weekTarget={weeklyStats.targets.fat} avg={weeklyStats.avgOnRecordedDays.fat} prevAvg={weeklyStats.previousAvgOnRecordedDays.fat} actualTotal={weeklyStats.actual.fat} prevActualTotal={weeklyStats.previousActual.fat} prevRecordedDays={weeklyStats.previousCounts.fat} />
-                                    <AchievementItemCard label="炭水化物 (C)" unit="g" mode={mode} perDayTarget={weeklyStats.dietTargetPerDay.carbs} weekTarget={weeklyStats.targets.carbs} avg={weeklyStats.avgOnRecordedDays.carbs} prevAvg={weeklyStats.previousAvgOnRecordedDays.carbs} actualTotal={weeklyStats.actual.carbs} prevActualTotal={weeklyStats.previousActual.carbs} prevRecordedDays={weeklyStats.previousCounts.carbs} />
-                                    <AchievementItemCard label="糖質" unit="g" mode={mode} perDayTarget={weeklyStats.dietTargetPerDay.sugar} weekTarget={weeklyStats.targets.sugar} avg={weeklyStats.avgOnRecordedDays.sugar} prevAvg={weeklyStats.previousAvgOnRecordedDays.sugar} actualTotal={weeklyStats.actual.sugar} prevActualTotal={weeklyStats.previousActual.sugar} prevRecordedDays={weeklyStats.previousCounts.sugar} />
-                                    <AchievementItemCard label="食物繊維" unit="g" mode={mode} perDayTarget={weeklyStats.dietTargetPerDay.fiber} weekTarget={weeklyStats.targets.fiber} avg={weeklyStats.avgOnRecordedDays.fiber} prevAvg={weeklyStats.previousAvgOnRecordedDays.fiber} actualTotal={weeklyStats.actual.fiber} prevActualTotal={weeklyStats.previousActual.fiber} prevRecordedDays={weeklyStats.previousCounts.fiber} />
-                                    <AchievementItemCard label="塩分" unit="g" mode={mode} perDayTarget={weeklyStats.dietTargetPerDay.salt} weekTarget={weeklyStats.targets.salt} avg={weeklyStats.avgOnRecordedDays.salt} prevAvg={weeklyStats.previousAvgOnRecordedDays.salt} actualTotal={weeklyStats.actual.salt} prevActualTotal={weeklyStats.previousActual.salt} prevRecordedDays={weeklyStats.previousCounts.salt} />
+                                    <AchievementItemCard label="タンパク質 (P)" unit="g" mode={mode} perDayTarget={weeklyStats.dietTargetPerDay.protein} weekTarget={weeklyStats.targets.protein} avg={weeklyStats.avgOnRecordedDays.protein} prevAvg={weeklyStats.previousAvgOnRecordedDays.protein} actualTotal={weeklyStats.actual.protein} prevActualTotal={weeklyStats.previousActual.protein} prevRecordedDays={weeklyStats.previousCounts.protein} dayActual={dayActual.protein} dayTarget={dayTarget.protein} />
+                                    <AchievementItemCard label="脂質 (F)" unit="g" mode={mode} perDayTarget={weeklyStats.dietTargetPerDay.fat} weekTarget={weeklyStats.targets.fat} avg={weeklyStats.avgOnRecordedDays.fat} prevAvg={weeklyStats.previousAvgOnRecordedDays.fat} actualTotal={weeklyStats.actual.fat} prevActualTotal={weeklyStats.previousActual.fat} prevRecordedDays={weeklyStats.previousCounts.fat} dayActual={dayActual.fat} dayTarget={dayTarget.fat} />
+                                    <AchievementItemCard label="炭水化物 (C)" unit="g" mode={mode} perDayTarget={weeklyStats.dietTargetPerDay.carbs} weekTarget={weeklyStats.targets.carbs} avg={weeklyStats.avgOnRecordedDays.carbs} prevAvg={weeklyStats.previousAvgOnRecordedDays.carbs} actualTotal={weeklyStats.actual.carbs} prevActualTotal={weeklyStats.previousActual.carbs} prevRecordedDays={weeklyStats.previousCounts.carbs} dayActual={dayActual.carbs} dayTarget={dayTarget.carbs} />
+                                    <AchievementItemCard label="糖質" unit="g" mode={mode} perDayTarget={weeklyStats.dietTargetPerDay.sugar} weekTarget={weeklyStats.targets.sugar} avg={weeklyStats.avgOnRecordedDays.sugar} prevAvg={weeklyStats.previousAvgOnRecordedDays.sugar} actualTotal={weeklyStats.actual.sugar} prevActualTotal={weeklyStats.previousActual.sugar} prevRecordedDays={weeklyStats.previousCounts.sugar} dayActual={dayActual.sugar} dayTarget={dayTarget.sugar} />
+                                    <AchievementItemCard label="食物繊維" unit="g" mode={mode} perDayTarget={weeklyStats.dietTargetPerDay.fiber} weekTarget={weeklyStats.targets.fiber} avg={weeklyStats.avgOnRecordedDays.fiber} prevAvg={weeklyStats.previousAvgOnRecordedDays.fiber} actualTotal={weeklyStats.actual.fiber} prevActualTotal={weeklyStats.previousActual.fiber} prevRecordedDays={weeklyStats.previousCounts.fiber} dayActual={dayActual.fiber} dayTarget={dayTarget.fiber} />
+                                    <AchievementItemCard label="塩分" unit="g" mode={mode} perDayTarget={weeklyStats.dietTargetPerDay.salt} weekTarget={weeklyStats.targets.salt} avg={weeklyStats.avgOnRecordedDays.salt} prevAvg={weeklyStats.previousAvgOnRecordedDays.salt} actualTotal={weeklyStats.actual.salt} prevActualTotal={weeklyStats.previousActual.salt} prevRecordedDays={weeklyStats.previousCounts.salt} dayActual={dayActual.salt} dayTarget={dayTarget.salt} />
                                 </div>
                             )}
                         </>
@@ -208,9 +219,9 @@ export default function WeeklyProgressPanel({
 
                     {showLife && !simpleMemberView && (
                         <div className="grid grid-cols-2 gap-3">
-                            <AchievementItemCard label="合計歩数" unit="歩" mode={mode} perDayTarget={weeklyStats.lifeTargetPerDay.steps} weekTarget={weeklyStats.targets.steps} avg={weeklyStats.avgOnRecordedDays.steps} prevAvg={weeklyStats.previousAvgOnRecordedDays.steps} actualTotal={weeklyStats.actual.steps} prevActualTotal={weeklyStats.previousActual.steps} prevRecordedDays={weeklyStats.previousCounts.steps} />
-                            <AchievementItemCard label="水分摂取量" unit="L" mode={mode} perDayTarget={weeklyStats.lifeTargetPerDay.water} weekTarget={weeklyStats.targets.water} avg={weeklyStats.avgOnRecordedDays.water} prevAvg={weeklyStats.previousAvgOnRecordedDays.water} actualTotal={weeklyStats.actual.water} prevActualTotal={weeklyStats.previousActual.water} prevRecordedDays={weeklyStats.previousCounts.water} />
-                            <AchievementItemCard label="睡眠時間" unit="h" mode={mode} perDayTarget={weeklyStats.lifeTargetPerDay.sleep} weekTarget={weeklyStats.targets.sleep} avg={weeklyStats.avgOnRecordedDays.sleep} prevAvg={weeklyStats.previousAvgOnRecordedDays.sleep} actualTotal={weeklyStats.actual.sleep} prevActualTotal={weeklyStats.previousActual.sleep} prevRecordedDays={weeklyStats.previousCounts.sleep} />
+                            <AchievementItemCard label="合計歩数" unit="歩" mode={mode} perDayTarget={weeklyStats.lifeTargetPerDay.steps} weekTarget={weeklyStats.targets.steps} avg={weeklyStats.avgOnRecordedDays.steps} prevAvg={weeklyStats.previousAvgOnRecordedDays.steps} actualTotal={weeklyStats.actual.steps} prevActualTotal={weeklyStats.previousActual.steps} prevRecordedDays={weeklyStats.previousCounts.steps} dayActual={dayActual.steps} dayTarget={dayTarget.steps} />
+                            <AchievementItemCard label="水分摂取量" unit="L" mode={mode} perDayTarget={weeklyStats.lifeTargetPerDay.water} weekTarget={weeklyStats.targets.water} avg={weeklyStats.avgOnRecordedDays.water} prevAvg={weeklyStats.previousAvgOnRecordedDays.water} actualTotal={weeklyStats.actual.water} prevActualTotal={weeklyStats.previousActual.water} prevRecordedDays={weeklyStats.previousCounts.water} dayActual={dayActual.water} dayTarget={dayTarget.water} />
+                            <AchievementItemCard label="睡眠時間" unit="h" mode={mode} perDayTarget={weeklyStats.lifeTargetPerDay.sleep} weekTarget={weeklyStats.targets.sleep} avg={weeklyStats.avgOnRecordedDays.sleep} prevAvg={weeklyStats.previousAvgOnRecordedDays.sleep} actualTotal={weeklyStats.actual.sleep} prevActualTotal={weeklyStats.previousActual.sleep} prevRecordedDays={weeklyStats.previousCounts.sleep} dayActual={dayActual.sleep} dayTarget={dayTarget.sleep} />
                             <AchievementItemCard label="筋トレ実施回数" unit="回" mode={mode} isFrequency actual={weeklyStats.actual.workout} target={weeklyStats.targets.workout} />
                         </div>
                     )}

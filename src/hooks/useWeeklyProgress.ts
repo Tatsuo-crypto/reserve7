@@ -40,6 +40,10 @@ export interface WeeklyProgressStats {
     weight: WeightWeeklyStats
     /** O-5: 「記録チェック表」用。月〜日の7日分、食事記録の有無を実際の日付ベースで持つ。 */
     weekDays: WeekDayRecordFlag[]
+    /** AR-1: 「日」表示用。日付(YYYY-MM-DD)ごとのその日の実績。 */
+    dailyActual: Record<string, Record<string, number>>
+    /** AR-1: 「日」表示用。日付ごとのその日の目標(食事は日タイプ反映後の値、生活は1日あたりの目標)。 */
+    dailyTarget: Record<string, Record<string, number>>
 }
 
 interface UseWeeklyProgressOptions {
@@ -236,6 +240,9 @@ export function useWeeklyProgress(token: string, options: UseWeeklyProgressOptio
         }
         const dayTypeSettings = lifestyleSettings?.habit_targets?.diet_day_type_targets || null
 
+        // AR-1: 「日」表示のために、日別の目標も同じループで保持しておく
+        const dietTargetByDate: Record<string, Record<string, number>> = {}
+
         const dietTargets = weekDates.reduce((sum, dateStr) => {
             const goal = getGoalForDate(dietGoals, dateStr) || { calories: 0, protein: 0, fat: 0, carbs: 0 }
             const goalWithDayTypeSettings = dayTypeSettings ? { ...goal, ...dayTypeSettings } : goal
@@ -243,6 +250,15 @@ export function useWeeklyProgress(token: string, options: UseWeeklyProgressOptio
             const lifeLog = lifeLogByDate.get(dateStr)
             const dayType = normalizeDietDayType(lifeLog?.habits?.diet_day_type || log?.day_type) || 'rest'
             const effective = getEffectiveDietGoal(goalWithDayTypeSettings, dayType)
+            dietTargetByDate[dateStr] = {
+                calories: effective.calories,
+                protein: effective.protein,
+                fat: effective.fat,
+                carbs: effective.carbs,
+                sugar: effective.sugar,
+                fiber: effective.fiber,
+                salt: effective.salt,
+            }
             return {
                 calories: sum.calories + effective.calories,
                 protein: sum.protein + effective.protein,
@@ -341,6 +357,53 @@ export function useWeeklyProgress(token: string, options: UseWeeklyProgressOptio
             }
         })
 
+        // AR-1: 「日」表示用。週内の各日について、その日だけの実績と目標をまとめる。
+        // 週合計や記録日平均と同じ元データ(processLogs後のログ)から作るので数字がずれない。
+        const weekDietLogsForDaily = processLogs(dietLogs, true, monday, sunday)
+        const weekLifeLogsForDaily = processLogs(lifestyleLogs, false, monday, sunday)
+        const dietLogForDaily = new Map<string, any>()
+        weekDietLogsForDaily.forEach(log => { if (log?.date) dietLogForDaily.set(log.date, log) })
+        const lifeLogForDaily = new Map<string, any>()
+        weekLifeLogsForDaily.forEach(log => { if (log?.date) lifeLogForDaily.set(log.date, log) })
+
+        const dailyActual: Record<string, Record<string, number>> = {}
+        const dailyTarget: Record<string, Record<string, number>> = {}
+        for (const dateStr of weekDates) {
+            const d = dietLogForDaily.get(dateStr)
+            const l = lifeLogForDaily.get(dateStr)
+            const num = (v: any) => (v !== null && v !== undefined ? Number(v) || 0 : 0)
+
+            dailyActual[dateStr] = {
+                calories: num(d?.calories),
+                protein: num(d?.protein),
+                fat: num(d?.fat),
+                carbs: num(d?.carbs),
+                sugar: num(d?.sugar),
+                fiber: num(d?.fiber),
+                salt: num(d?.salt),
+                steps: num(l?.steps),
+                water: num(l?.water_liters ?? l?.water ?? l?.water_intake ?? l?.water_amount),
+                sleep: num(l?.sleep_hours ?? l?.sleep),
+                workout: (l?.habits?.workout || 0) > 0 ? 1 : 0,
+            }
+
+            const dt = dietTargetByDate[dateStr] || {}
+            dailyTarget[dateStr] = {
+                calories: dt.calories || 0,
+                protein: dt.protein || 0,
+                fat: dt.fat || 0,
+                carbs: dt.carbs || 0,
+                sugar: dt.sugar || 0,
+                fiber: dt.fiber || 0,
+                salt: dt.salt || 0,
+                steps: lifeTargets.steps || lifeTargets.step_target || 8000,
+                water: lifeTargets.water || lifeTargets.water_target || 2.0,
+                sleep: lifeTargets.sleep || lifeTargets.sleep_target || 8.0,
+                // 筋トレは「その日にやったか」の1/0で見るため目標は1回
+                workout: 1,
+            }
+        }
+
         const avgOnRecordedDays: Record<string, number> = {}
         const previousAvgOnRecordedDays: Record<string, number> = {}
         for (const key of METRIC_KEYS) {
@@ -395,6 +458,8 @@ export function useWeeklyProgress(token: string, options: UseWeeklyProgressOptio
             },
             weight,
             weekDays,
+            dailyActual,
+            dailyTarget,
         }
     }, [dietLogs, lifestyleLogs, dietGoals, lifestyleSettings, weekOffset, todayDraft, todayStr, enabled])
 

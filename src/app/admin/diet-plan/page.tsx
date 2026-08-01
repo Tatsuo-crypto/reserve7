@@ -863,10 +863,14 @@ function DietPlanPageContent() {
                             発光ブロブのように見えてしまっていたため、素の背景色のみで区切る形に変更 */}
                         <div className="sticky top-16 z-40 max-w-2xl mx-auto bg-surface-base px-1 pt-2 pb-2">
                             <div className="grid grid-cols-5 bg-surface-raised/95 backdrop-blur-md p-1.5 rounded-2xl border border-border-subtle shadow-sm gap-1">
+                                {/* AR-4: オーナー指定により「週間」を「ホーム」に改称し、並びも
+                                    体重 / グラフ / ホーム / 目標 / カロリー設定 に変更した。
+                                    中身は従来の週間パネル(会員の習慣画面と同じ内容)のままで、
+                                    日/週/平均の切替はこのタブの中にある。 */}
                                 {[
-                                    { id: 'panel', label: '週間' },
                                     { id: 'weight', label: '体重' },
                                     { id: 'graph', label: 'グラフ' },
+                                    { id: 'panel', label: 'ホーム' },
                                     { id: 'goals', label: '目標' },
                                     { id: 'plan', label: 'カロリー\n設定' }
                                 ].map(tab => (
