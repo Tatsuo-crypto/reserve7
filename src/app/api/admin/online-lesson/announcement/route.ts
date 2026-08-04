@@ -96,7 +96,8 @@ export async function POST(request: NextRequest) {
         const pushCount = await sendPushNotificationToUser(user.id, {
           title: 'オンラインレッスンのお知らせ',
           body: `${lesson.title}（${scheduleStr}）のお知らせです。`,
-          url: `/client/${user.access_token}?tab=online`
+          url: `/client/${user.access_token}?tab=online`,
+          category: 'online_lesson'
         })
         if (pushCount > 0) successCount++
       } catch (err: any) {

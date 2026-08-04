@@ -134,7 +134,8 @@ export async function GET(request: NextRequest) {
                         pushCount = await sendPushNotificationToUser(client.id, {
                             title: 'ご予約前日のお知らせ',
                             body: `${dateStr} ${timeStr}のセッション予定があります。`,
-                            url: `/client/${client.access_token}`
+                            url: `/client/${client.access_token}`,
+                            category: 'reservation'
                         })
                     }
 
@@ -356,7 +357,8 @@ export async function GET(request: NextRequest) {
                             body: movedIn
                                 ? `【振替】${lesson.title}が本日${formattedStartTime}から始まります。`
                                 : `${lesson.title}が${formattedStartTime}から始まります。`,
-                            url: `/client/${user.access_token}?tab=online`
+                            url: `/client/${user.access_token}?tab=online`,
+                            category: 'online_lesson'
                         })
                         if (pushCount > 0) successCount++
                     } catch (pushError) {

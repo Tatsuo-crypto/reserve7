@@ -13,19 +13,43 @@ self.addEventListener('push', (event) => {
   event.waitUntil(self.registration.showNotification(title, options))
 })
 
+/**
+ * AX-4: 通知をタップしたら、その通知に対応する画面を開く。
+ *
+ * 以前は `client.url.includes(url)` で既存タブを探して focus() するだけだったため、
+ *   - アプリが別の画面(例: ホーム)で開いたままだと、focusするだけで画面が変わらない
+ *   - 逆にクエリ違い(?view=notifications など)は一致せず、毎回新しいタブが開く
+ * という2つの問題があった。
+ * 「同じ会員ページが開いていれば navigate() で目的の画面へ移動し、無ければ新規に開く」
+ * という形に変更する。
+ */
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()
   const url = event.notification.data?.url || '/'
+  const targetUrl = new URL(url, self.location.origin)
 
   event.waitUntil(
-    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
-      for (const client of clients) {
-        if ('focus' in client && client.url.includes(url)) {
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        let clientUrl
+        try {
+          clientUrl = new URL(client.url)
+        } catch (e) {
+          continue
+        }
+
+        // 同じページ(会員ページはトークンを含むパスなので、パスが同じなら同じ会員)が
+        // 既に開いていれば、そのタブを目的のURLへ移動させてから前面に出す
+        if (clientUrl.pathname === targetUrl.pathname) {
+          if ('navigate' in client) {
+            return client.navigate(targetUrl.href).then((navigated) => (navigated || client).focus())
+          }
           return client.focus()
         }
       }
+
       if (self.clients.openWindow) {
-        return self.clients.openWindow(url)
+        return self.clients.openWindow(targetUrl.href)
       }
     })
   )

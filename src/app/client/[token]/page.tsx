@@ -24,6 +24,12 @@ const InputTab = dynamic(() => import('@/components/diet/InputTab'), {
   loading: TabLoading,
 })
 
+// AX-3: お知らせ(通知の読み返し)。開いたときだけ読み込む
+const NotificationsTab = dynamic(() => import('@/components/diet/NotificationsTab'), {
+  ssr: false,
+  loading: TabLoading,
+})
+
 const WeeklyTab = dynamic(() => import('@/components/diet/WeeklyTab'), {
   ssr: false,
   loading: TabLoading,
@@ -57,7 +63,7 @@ const TrackingModal = dynamic(() => import('@/app/admin/members/TrackingModal'),
   )
 })
 
-type TabType = 'home' | 'res' | 'record' | 'weekly' | 'analyze' | 'plan' | 'settings'
+type TabType = 'home' | 'res' | 'record' | 'weekly' | 'analyze' | 'plan' | 'settings' | 'notifications'
 
 type ClientBootstrap = {
   goals: any[]
@@ -84,6 +90,8 @@ export default function ClientReservationsPage() {
   const [settingsLoaded, setSettingsLoaded] = useState(false)
   const [visibleTabs, setVisibleTabs] = useState({ input: false, analyze: false, progress: false })
   const [homeBootstrap, setHomeBootstrap] = useState<ClientBootstrap | null>(null)
+  // AX-3: ヘッダーのベルに出す未読件数
+  const [unreadCount, setUnreadCount] = useState(0)
   const isDietFeatureEnabled = visibleTabs.input || visibleTabs.analyze || visibleTabs.progress
   const isDietPlan = isDietFeatureEnabled
   
@@ -140,11 +148,36 @@ export default function ClientReservationsPage() {
     }
   }, [token])
 
+  // AX-4: 通知をタップして ?view=notifications で開かれた場合はお知らせ画面から始める
   useEffect(() => {
-    if (!isDietPlan && activeTab !== 'home' && activeTab !== 'settings') {
+    if (searchParams?.get('view') === 'notifications') {
+      setActiveTab('notifications')
+    }
+  }, [searchParams])
+
+  useEffect(() => {
+    if (!isDietPlan && activeTab !== 'home' && activeTab !== 'settings' && activeTab !== 'notifications') {
       setActiveTab('home')
     }
   }, [isDietPlan, activeTab])
+
+  // AX-3: 未読件数を取得する。お知らせ画面を開いた/閉じたタイミングでも数え直す。
+  useEffect(() => {
+    if (!token) return
+    let cancelled = false
+    const fetchUnread = async () => {
+      try {
+        const res = await fetch(`/api/client/notifications?token=${encodeURIComponent(token)}`)
+        if (!res.ok) return
+        const data = await res.json()
+        if (!cancelled) setUnreadCount(data.unreadCount || 0)
+      } catch (error) {
+        console.error('Failed to fetch unread count:', error)
+      }
+    }
+    fetchUnread()
+    return () => { cancelled = true }
+  }, [token, activeTab])
 
   useEffect(() => {
     if (!token || !userId || !isDietPlan) return
@@ -214,7 +247,8 @@ export default function ClientReservationsPage() {
     weekly: '習慣',
     analyze: '分析',
     plan: '推移',
-    settings: '設定'
+    settings: '設定',
+    notifications: 'お知らせ'
   };
 
   const formatName = (fullName: string | null | undefined) => {
@@ -233,6 +267,22 @@ export default function ClientReservationsPage() {
         onBack={() => router.push('/admin/members')}
         rightElement={
           <div className="flex min-w-0 items-center justify-end gap-1.5">
+            {/* AX-3: お知らせ(通知の読み返し)。未読があれば件数バッジを出す */}
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setActiveTab('notifications')}
+              aria-label="お知らせ"
+              className={`relative h-10 w-10 shrink-0 p-0 rounded-full shadow-sm border border-border-subtle transition-all active:scale-95 ${activeTab === 'notifications' ? 'bg-brand-500/15 text-brand-300' : 'bg-surface-raised text-text-secondary'}`}
+            >
+              <Icon name="bell" size={20} />
+              {unreadCount > 0 && (
+                <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-brand-600 px-1 text-xs font-normal tabular-nums text-white">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+            </Button>
             <Button
               type="button"
               variant="ghost"
@@ -298,6 +348,9 @@ export default function ClientReservationsPage() {
                 : undefined
             }
           />
+        )}
+        {activeTab === 'notifications' && (
+          <NotificationsTab token={token} />
         )}
         {activeTab === 'settings' && (
           <SettingsTab token={token} userId={userId} userName={userName} />
