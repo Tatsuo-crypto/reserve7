@@ -10,18 +10,20 @@ interface AdminHeaderProps {
   subTitle?: string
   onBack?: () => void
   rightElement?: React.ReactNode
+  /** AY-1: 左側(戻るボタンの隣)に置く要素。会員画面ではここにベルを置く。 */
+  leftElement?: React.ReactNode
   showBack?: boolean
 }
 
-export default function AdminHeader({ title, subTitle, onBack, rightElement, showBack = true }: AdminHeaderProps) {
+export default function AdminHeader({ title, subTitle, onBack, rightElement, leftElement, showBack = true }: AdminHeaderProps) {
   const router = useRouter()
   const handleBack = onBack || (() => router.back())
 
   return (
     <div className="mb-8 mt-2 sticky top-0 z-50 bg-surface-base/80 backdrop-blur-sm pt-2 pb-2">
-      <div className="grid grid-cols-[44px_minmax(0,1fr)_auto] items-center gap-2 min-h-[56px] px-1 max-w-5xl mx-auto">
-        {/* Left: Circular Back Button */}
-        <div className="min-w-0">
+      <div className="grid grid-cols-[minmax(44px,auto)_minmax(0,1fr)_auto] items-center gap-2 min-h-[56px] px-1 max-w-5xl mx-auto">
+        {/* Left: Circular Back Button (+ 任意の左側要素) */}
+        <div className="flex min-w-0 items-center gap-1.5">
           {showBack && (
             <Button
               type="button"
@@ -33,6 +35,7 @@ export default function AdminHeader({ title, subTitle, onBack, rightElement, sho
               <Icon name="chevronLeft" size={24} />
             </Button>
           )}
+          {leftElement}
         </div>
 
         {/* Center: Page Title */}

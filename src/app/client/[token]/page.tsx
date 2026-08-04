@@ -265,24 +265,27 @@ export default function ClientReservationsPage() {
         title={tabTitles[activeTab]} 
         showBack={fromAdmin && isAdmin}
         onBack={() => router.push('/admin/members')}
+        leftElement={
+          /* AY-1: ヘッダーの並びは ベル / マイページ(中央) / 歯車 / 名前。
+             ベルだけ左に置き、設定と名前は右にまとめる。 */
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => setActiveTab('notifications')}
+            aria-label="お知らせ"
+            className={`relative h-10 w-10 shrink-0 p-0 rounded-full shadow-sm border border-border-subtle transition-all active:scale-95 ${activeTab === 'notifications' ? 'bg-brand-500/15 text-brand-300' : 'bg-surface-raised text-text-secondary'}`}
+          >
+            <Icon name="bell" size={20} />
+            {unreadCount > 0 && (
+              <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-brand-600 px-1 text-xs font-normal tabular-nums text-white">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
+          </Button>
+        }
         rightElement={
           <div className="flex min-w-0 items-center justify-end gap-1.5">
-            {/* AX-3: お知らせ(通知の読み返し)。未読があれば件数バッジを出す */}
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => setActiveTab('notifications')}
-              aria-label="お知らせ"
-              className={`relative h-10 w-10 shrink-0 p-0 rounded-full shadow-sm border border-border-subtle transition-all active:scale-95 ${activeTab === 'notifications' ? 'bg-brand-500/15 text-brand-300' : 'bg-surface-raised text-text-secondary'}`}
-            >
-              <Icon name="bell" size={20} />
-              {unreadCount > 0 && (
-                <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-brand-600 px-1 text-xs font-normal tabular-nums text-white">
-                  {unreadCount > 9 ? '9+' : unreadCount}
-                </span>
-              )}
-            </Button>
             <Button
               type="button"
               variant="ghost"
