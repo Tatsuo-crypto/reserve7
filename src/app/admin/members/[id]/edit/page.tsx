@@ -399,7 +399,7 @@ export default function EditMemberPage() {
 
       {error && (
         <div className="mb-4 bg-red-500/15 border border-red-500/30 rounded-lg p-4">
-          <p className="text-sm text-red-300">{error}</p>
+          <p className="text-sm text-red-700">{error}</p>
         </div>
       )}
 
@@ -810,8 +810,8 @@ function SwitchCard({ name, checked, onChange, title, description, color = 'blue
 function SummaryBox({ summaryText, formData, counseling }: { summaryText: string; formData: { fullName: string; gender: string; heightCm: string }; counseling: CounselingData }) {
   return (
     <div className="mt-6 rounded-lg border border-brand-500/30 bg-brand-500/15 p-4">
-      <h3 className="text-xl font-semibold text-brand-300 mb-3">保存後のカウンセリング要約</h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-brand-300">
+      <h3 className="text-xl font-semibold text-brand-700 mb-3">保存後のカウンセリング要約</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-brand-700">
         <SummaryItem label="氏名" value={formData.fullName} />
         <SummaryItem label="性別" value={genderLabel(formData.gender)} />
         <SummaryItem label="身長" value={formData.heightCm ? `${formData.heightCm}cm` : ''} />

@@ -15,11 +15,11 @@ export default function HomeIconSetupPage() {
         <div className="bg-red-500/15 border-l-4 border-red-500 p-4 mb-6">
           <div className="flex">
             <div className="flex-shrink-0">
-              <Icon name="warning" size={20} className="text-red-400" />
+              <Icon name="warning" size={20} className="text-red-700" />
             </div>
             <div className="ml-3">
-              <h3 className="text-sm font-normal text-red-300">まず古いアイコンを削除してください</h3>
-              <div className="mt-2 text-sm text-red-300">
+              <h3 className="text-sm font-normal text-red-700">まず古いアイコンを削除してください</h3>
+              <div className="mt-2 text-sm text-red-700">
                 <p>ホーム画面の古い「T&J GYM」アイコンを長押しして削除してください。</p>
               </div>
             </div>
@@ -76,8 +76,8 @@ export default function HomeIconSetupPage() {
 
         {/* 補足情報 */}
         <div className="mt-6 bg-brand-500/15 border border-brand-500/30 rounded-lg p-4">
-          <h3 className="text-sm font-normal text-brand-300 mb-2">💡 ポイント</h3>
-          <ul className="text-sm text-brand-300 space-y-1">
+          <h3 className="text-sm font-normal text-brand-700 mb-2">💡 ポイント</h3>
+          <ul className="text-sm text-brand-700 space-y-1">
             <li>• 必ずSafariブラウザで開いてください（Chrome等では動作しません）</li>
             <li>• 古いアイコンの削除とキャッシュクリアが重要です</li>
             <li>• 新しいアイコンは白い「T&J」の文字が表示されます</li>

@@ -345,7 +345,7 @@ export default function AdminOnlineLessonPage() {
 
                 {/* Global success */}
                 {success && (
-                    <div className="mb-4 p-3 bg-state-success-500/15 border border-state-success-500/30 rounded-2xl text-sm text-state-success-300">
+                    <div className="mb-4 p-3 bg-state-success-500/15 border border-state-success-500/30 rounded-2xl text-sm text-state-success-700">
                         ✓ {success}
                     </div>
                 )}
@@ -389,12 +389,12 @@ export default function AdminOnlineLessonPage() {
                                     {[0, 1, 2, 3, 4, 5, 6].map(d => {
                                         const selected = (form.day_of_week || []).includes(d)
                                         const colors = [
-                                            'bg-red-500/15 text-red-300 border-red-500/30',
-                                            'bg-brand-500/15 text-brand-300 border-brand-500/30',
-                                            'bg-brand-500/15 text-brand-300 border-brand-500/30',
-                                            'bg-brand-500/15 text-brand-300 border-brand-500/30',
-                                            'bg-brand-500/15 text-brand-300 border-brand-500/30',
-                                            'bg-brand-500/15 text-brand-300 border-brand-500/30',
+                                            'bg-red-500/15 text-red-700 border-red-500/30',
+                                            'bg-brand-500/15 text-brand-700 border-brand-500/30',
+                                            'bg-brand-500/15 text-brand-700 border-brand-500/30',
+                                            'bg-brand-500/15 text-brand-700 border-brand-500/30',
+                                            'bg-brand-500/15 text-brand-700 border-brand-500/30',
+                                            'bg-brand-500/15 text-brand-700 border-brand-500/30',
                                             'bg-orange-500/15 text-orange-300 border-orange-500/30',
                                         ]
                                         return (
@@ -498,7 +498,7 @@ export default function AdminOnlineLessonPage() {
                                                     members.filter(m => (form.userIds || []).includes(m.id)).map(member => (
                                                         <span 
                                                             key={member.id} 
-                                                            className="inline-flex items-center gap-1 bg-brand-500/15 border border-brand-500/25 text-brand-300 px-2 py-0.5 rounded-lg text-xs font-normal"
+                                                            className="inline-flex items-center gap-1 bg-brand-500/15 border border-brand-500/25 text-brand-700 px-2 py-0.5 rounded-lg text-xs font-normal"
                                                         >
                                                             {member.full_name}
                                                             <Button
@@ -512,7 +512,7 @@ export default function AdminOnlineLessonPage() {
                                                                         userIds: (prev.userIds || []).filter(id => id !== member.id)
                                                                     }))
                                                                 }}
-                                                                className="hover:bg-brand-500/25 p-0.5 rounded-lg transition-colors text-brand-500 hover:text-brand-300"
+                                                                className="hover:bg-brand-500/25 p-0.5 rounded-lg transition-colors text-brand-500 hover:text-brand-700"
                                                             >
                                                                 <Icon name="close" size={12} />
                                                             </Button>
@@ -643,7 +643,7 @@ export default function AdminOnlineLessonPage() {
                             )}
 
                             {error && (
-                                <div className="p-3 bg-red-500/15 border border-red-500/30 rounded-2xl text-sm text-red-300">{error}</div>
+                                <div className="p-3 bg-red-500/15 border border-red-500/30 rounded-2xl text-sm text-red-700">{error}</div>
                             )}
 
                             <div className="flex flex-col sm:flex-row gap-3 pt-2">
@@ -654,7 +654,7 @@ export default function AdminOnlineLessonPage() {
                                         size="md"
                                         onClick={() => handleDelete(editingId!)}
                                         disabled={deletingId === editingId}
-                                        className="py-3 px-4 sm:flex-none border border-red-500/30 text-red-400 rounded-2xl hover:bg-red-500/25 transition-colors font-normal text-sm flex items-center justify-center space-x-2"
+                                        className="py-3 px-4 sm:flex-none border border-red-500/30 text-red-700 rounded-2xl hover:bg-red-500/25 transition-colors font-normal text-sm flex items-center justify-center space-x-2"
                                     >
                                         {deletingId === editingId ? (
                                             <div className="animate-spin h-5 w-5 border-b-2 border-red-600 rounded-full" />
@@ -681,7 +681,7 @@ export default function AdminOnlineLessonPage() {
                                             size="md"
                                             onClick={handleSendAnnouncement}
                                             disabled={saving || sendingAnnouncement}
-                                            className="flex-1 py-3 border border-brand-500/30 text-brand-400 rounded-2xl hover:bg-brand-500/25 transition-colors font-normal text-sm disabled:opacity-50"
+                                            className="flex-1 py-3 border border-brand-500/30 text-brand-700 rounded-2xl hover:bg-brand-500/25 transition-colors font-normal text-sm disabled:opacity-50"
                                         >
                                             {sendingAnnouncement ? '送信中...' : '告知メールを送る'}
                                         </Button>
@@ -725,7 +725,7 @@ export default function AdminOnlineLessonPage() {
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2 mb-1 min-w-0">
                                             <h3 className="min-w-0 truncate font-semibold text-text-primary text-xl group-hover:text-brand-600 transition-colors">{lesson.title}</h3>
-                                            <span className="shrink-0 text-xs px-2 py-0.5 rounded-full font-normal bg-brand-500/15 text-brand-300">
+                                            <span className="shrink-0 text-xs px-2 py-0.5 rounded-full font-normal bg-brand-500/15 text-brand-700">
                                                 {lesson.difficulty || '初心者'}
                                             </span>
                                         </div>
@@ -737,7 +737,7 @@ export default function AdminOnlineLessonPage() {
                                                 {allExceptions
                                                     .filter(ex => ex.online_lesson_id === lesson.id)
                                                     .map(ex => (
-                                                        <p key={ex.id} className="text-xs text-amber-300">{formatExceptionLabel(ex)}</p>
+                                                        <p key={ex.id} className="text-xs text-amber-700">{formatExceptionLabel(ex)}</p>
                                                     ))}
                                             </div>
                                         )}
@@ -746,7 +746,7 @@ export default function AdminOnlineLessonPage() {
                                             <p className="text-xs text-text-secondary mt-1 line-clamp-2">{lesson.description}</p>
                                         )}
                                         {lesson.url_expires_at && new Date(lesson.url_expires_at).getTime() - new Date().getTime() <= 7 * 24 * 60 * 60 * 1000 && (
-                                            <div className="mt-3 p-2 bg-red-500/15 border border-red-500/30 rounded-lg text-red-300 text-xs flex items-center">
+                                            <div className="mt-3 p-2 bg-red-500/15 border border-red-500/30 rounded-lg text-red-700 text-xs flex items-center">
                                                 <Icon name="warning" size={16} className="mr-1.5 flex-shrink-0" />
                                                 URLの有効期限が近づいています（{lesson.url_expires_at.substring(0, 10)}）
                                             </div>

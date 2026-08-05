@@ -20,7 +20,7 @@ export default function EmptyState({
 }: EmptyStateProps) {
     return (
         <div className={`rounded-2xl border border-border-subtle bg-surface-raised px-5 py-8 text-center shadow-sm ${className}`}>
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-brand-500/15 text-brand-300">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-brand-500/15 text-brand-700">
                 <Icon name={icon} size={22} />
             </div>
             <p className="text-xl font-semibold text-text-primary">{title}</p>

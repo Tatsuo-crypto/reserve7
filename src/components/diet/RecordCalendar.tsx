@@ -137,7 +137,7 @@ export default function RecordCalendar({ userId, token, isAdmin }: RecordCalenda
                                         : isRecorded
                                             ? 'bg-brand-500 text-white'
                                             : 'bg-surface-overlay text-text-secondary'
-                                } ${isToday ? 'ring-2 ring-white/80 ring-offset-2 ring-offset-surface-raised' : ''}`}
+                                } ${isToday ? 'ring-2 ring-brand-500 ring-offset-2 ring-offset-surface-raised' : ''}`}
                             >
                                 {day.date.getDate()}
                             </div>

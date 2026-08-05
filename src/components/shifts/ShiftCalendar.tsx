@@ -390,7 +390,7 @@ function ShiftEditModal({ shift, isOpen, onClose, onSave, onDelete }: {
             type="button"
             variant="destructive"
             onClick={handleDelete}
-            className="px-3 py-2 text-red-400 text-sm hover:bg-red-500/25 rounded-lg"
+            className="px-3 py-2 text-red-700 text-sm hover:bg-red-500/25 rounded-lg"
             disabled={loading}
           >
             削除
@@ -512,7 +512,7 @@ function TemplateShiftEditModal({ start, end, isOpen, onClose, onSave, onDelete 
               type="button"
               variant="destructive"
               onClick={handleDelete}
-              className="px-3 py-2 text-red-400 text-sm hover:bg-red-500/25 rounded-lg"
+              className="px-3 py-2 text-red-700 text-sm hover:bg-red-500/25 rounded-lg"
               disabled={loading}
             >
               削除

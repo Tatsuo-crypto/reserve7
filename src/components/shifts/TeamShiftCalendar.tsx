@@ -265,7 +265,7 @@ export default function TeamShiftCalendar({
                         style={getItemStyle(item, trainerItems)}
                         onClick={(e) => handleTemplateClick(e, item)}
                       >
-                        <span className="px-1 text-center text-xs leading-tight text-sky-200">{displayTime}</span>
+                        <span className="px-1 text-center text-xs leading-tight text-sky-700">{displayTime}</span>
                       </div>
                     )
                   } else {
@@ -570,7 +570,7 @@ function ShiftEditModal({ shift, trainerName, isOpen, onClose, onSave, onDelete 
             type="button"
             variant="destructive"
             onClick={handleDelete}
-            className="px-3 py-2 text-red-400 text-sm hover:bg-red-500/25 rounded-lg"
+            className="px-3 py-2 text-red-700 text-sm hover:bg-red-500/25 rounded-lg"
             disabled={loading}
           >
             削除
@@ -695,7 +695,7 @@ function TemplateShiftCreateModal({ trainerName, start, end, isOpen, onClose, on
               type="button"
               variant="destructive"
               onClick={handleDelete}
-              className="px-3 py-2 text-red-400 text-sm hover:bg-red-500/25 rounded-lg"
+              className="px-3 py-2 text-red-700 text-sm hover:bg-red-500/25 rounded-lg"
               disabled={loading}
             >
               削除

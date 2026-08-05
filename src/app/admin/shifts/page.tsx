@@ -124,7 +124,7 @@ function FixedShiftOverview({
                   onClick={() => onEdit(trainer.id)}
                   variant="ghost"
                   size="sm"
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-500/15 text-brand-200 active:scale-95"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-500/15 text-brand-700 active:scale-95"
                   aria-label={`${getTrainerLabel(trainer)}の固定シフトを編集`}
                 >
                   <Icon name="pencil" size={17} />
@@ -1003,7 +1003,7 @@ export default function ShiftManagementPage() {
           <>
             {selectionMode && (
               <div className="flex items-center justify-center gap-2 border-b border-border-subtle px-4 py-3">
-                <span className="rounded-full bg-brand-500/15 px-3 py-2 text-sm text-brand-200">{selectedShiftIds.length}件</span>
+                <span className="rounded-full bg-brand-500/15 px-3 py-2 text-sm text-brand-700">{selectedShiftIds.length}件</span>
                 <Button
                   type="button"
                   variant="destructive"

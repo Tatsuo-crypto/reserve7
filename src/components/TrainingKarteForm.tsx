@@ -321,7 +321,7 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
 
       <main className="mx-auto max-w-md space-y-4 px-4 pt-5">
         {error && (
-          <div className="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+          <div className="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-700">
             {error}
           </div>
         )}

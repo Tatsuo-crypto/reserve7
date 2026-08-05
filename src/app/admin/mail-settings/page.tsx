@@ -455,7 +455,7 @@ export default function AdminMailSettingsPage() {
       <div className="max-w-3xl mx-auto px-4 pt-4">
         {/* Success Alert */}
         {success && (
-          <div className="mb-6 p-4 bg-state-success-500/15 border border-state-success-500/25 rounded-2xl text-sm text-state-success-300 flex items-center gap-2 animate-fadeIn">
+          <div className="mb-6 p-4 bg-state-success-500/15 border border-state-success-500/25 rounded-2xl text-sm text-state-success-700 flex items-center gap-2 animate-fadeIn">
             <Icon name="check" size={20} className="text-state-success-500 shrink-0" />
             <span>{success}</span>
           </div>
@@ -463,7 +463,7 @@ export default function AdminMailSettingsPage() {
 
         {/* Error Alert */}
         {error && (
-          <div className="mb-6 p-4 bg-state-danger-500/15 border border-state-danger-500/25 rounded-2xl text-sm text-state-danger-300 flex items-center gap-2 animate-fadeIn">
+          <div className="mb-6 p-4 bg-state-danger-500/15 border border-state-danger-500/25 rounded-2xl text-sm text-state-danger-700 flex items-center gap-2 animate-fadeIn">
             <Icon name="exclamationCircle" size={20} className="text-state-danger-500 shrink-0" />
             <span>{error}</span>
           </div>
@@ -471,12 +471,12 @@ export default function AdminMailSettingsPage() {
 
         {/* Table Migration Warning */}
         {!tableExists && (
-          <div className="mb-6 p-4 bg-amber-500/15 border border-amber-500/30 rounded-2xl text-sm text-amber-300 animate-fadeIn">
+          <div className="mb-6 p-4 bg-amber-500/15 border border-amber-500/30 rounded-2xl text-sm text-amber-700 animate-fadeIn">
             <div className="flex gap-2">
               <Icon name="warning" size={20} className="text-amber-500 shrink-0 mt-0.5" />
               <div>
                 <p className="font-semibold mb-1">データベースの準備ができていません</p>
-                <p className="text-xs text-amber-300 leading-relaxed">
+                <p className="text-xs text-amber-700 leading-relaxed">
                   <code>mail_settings</code> テーブルがデータベースに存在しません。管理者ユーザーが Supabase の SQL Editor などで、以下のマイグレーションファイルの内容を実行するまで、この設定画面はデフォルト値の読み取り専用となります。
                 </p>
                 <p className="mt-2 text-xs font-mono bg-amber-500/10 p-2 rounded-lg border border-amber-500/15 select-all overflow-x-auto">
@@ -501,7 +501,7 @@ export default function AdminMailSettingsPage() {
                 onClick={() => setSection(item.key)}
                 className="w-full flex items-center gap-4 rounded-2xl border border-border-subtle bg-surface-raised p-5 text-left shadow-sm transition-colors hover:bg-surface-overlay"
               >
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-500/15 text-brand-300">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-500/15 text-brand-700">
                   <Icon name={item.iconName} size={22} />
                 </span>
                 <span className="min-w-0 flex-1">
@@ -581,7 +581,7 @@ export default function AdminMailSettingsPage() {
                   variant="primary"
                   size="sm"
                   onClick={() => setAllMembers(true)}
-                  className="px-4 py-2 text-xs rounded-2xl bg-brand-500/15 text-brand-300 border border-brand-500/20 hover:bg-brand-500/25"
+                  className="px-4 py-2 text-xs rounded-2xl bg-brand-500/15 text-brand-700 border border-brand-500/20 hover:bg-brand-500/25"
                 >
                   全員ON
                 </Button>
@@ -651,9 +651,9 @@ export default function AdminMailSettingsPage() {
                                 <td className="px-4 py-3 text-center">
                                   <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs ${
                                     receivable
-                                      ? 'bg-state-success-500/15 text-state-success-300'
+                                      ? 'bg-state-success-500/15 text-state-success-700'
                                       : member.pushEnabled
-                                        ? 'bg-amber-500/15 text-amber-300'
+                                        ? 'bg-amber-500/15 text-amber-700'
                                         : 'bg-surface-overlay text-text-muted'
                                   }`}>
                                     {receivable ? '受信可能' : member.pushEnabled ? '未許可' : 'OFF'}
@@ -788,12 +788,12 @@ export default function AdminMailSettingsPage() {
         <div className="space-y-6 animate-fadeIn">
             <div className="bg-surface-raised rounded-2xl shadow-sm border border-border-subtle p-5 space-y-4">
               {broadcastError && (
-                <div className="p-3 bg-state-danger-500/15 border border-state-danger-500/25 rounded-2xl text-sm text-state-danger-300">
+                <div className="p-3 bg-state-danger-500/15 border border-state-danger-500/25 rounded-2xl text-sm text-state-danger-700">
                   {broadcastError}
                 </div>
               )}
               {broadcastResult && (
-                <div className="p-3 bg-state-success-500/15 border border-state-success-500/25 rounded-2xl text-sm text-state-success-300">
+                <div className="p-3 bg-state-success-500/15 border border-state-success-500/25 rounded-2xl text-sm text-state-success-700">
                   配信しました({broadcastResult.successCount} / {broadcastResult.targetCount}名に到達)
                 </div>
               )}

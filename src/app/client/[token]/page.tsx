@@ -274,7 +274,7 @@ export default function ClientReservationsPage() {
             size="sm"
             onClick={() => setActiveTab('notifications')}
             aria-label="お知らせ"
-            className={`relative h-10 w-10 shrink-0 p-0 rounded-full shadow-sm border border-border-subtle transition-all active:scale-95 ${activeTab === 'notifications' ? 'bg-brand-500/15 text-brand-300' : 'bg-surface-raised text-text-secondary'}`}
+            className={`relative h-10 w-10 shrink-0 p-0 rounded-full shadow-sm border border-border-subtle transition-all active:scale-95 ${activeTab === 'notifications' ? 'bg-brand-500/15 text-brand-700' : 'bg-surface-raised text-text-secondary'}`}
           >
             <Icon name="bell" size={20} />
             {unreadCount > 0 && (
@@ -292,7 +292,7 @@ export default function ClientReservationsPage() {
               size="sm"
               onClick={() => setActiveTab('settings')}
               aria-label="設定"
-              className={`h-10 w-10 shrink-0 p-0 rounded-full shadow-sm border border-border-subtle transition-all active:scale-95 ${activeTab === 'settings' ? 'bg-brand-500/15 text-brand-300' : 'bg-surface-raised text-text-secondary'}`}
+              className={`h-10 w-10 shrink-0 p-0 rounded-full shadow-sm border border-border-subtle transition-all active:scale-95 ${activeTab === 'settings' ? 'bg-brand-500/15 text-brand-700' : 'bg-surface-raised text-text-secondary'}`}
             >
               <Icon name="settings" size={20} />
             </Button>
@@ -434,7 +434,7 @@ function CenterHomeBtn({ active, onClick }: { active: boolean, onClick: () => vo
       >
         <Icon name="home" size={28} />
       </Button>
-      <span className={`absolute bottom-2 text-xs font-normal transition-colors duration-300 ${active ? 'text-brand-300' : 'text-text-muted'}`}>ホーム</span>
+      <span className={`absolute bottom-2 text-xs font-normal transition-colors duration-300 ${active ? 'text-brand-700' : 'text-text-muted'}`}>ホーム</span>
     </div>
   )
 }
@@ -494,7 +494,7 @@ function DataRequestSection({
         ご自身の記録データのエクスポート、またはアカウントデータの削除をリクエストできます。リクエスト後、運営者が対応いたします。
       </p>
       {submittedType ? (
-        <p className="mt-3 text-xs font-normal text-brand-300">
+        <p className="mt-3 text-xs font-normal text-brand-700">
           {submittedType === 'export' ? 'エクスポート' : '削除'}のリクエストを受け付けました。運営者からの連絡をお待ちください。
         </p>
       ) : (
@@ -507,7 +507,7 @@ function DataRequestSection({
           </Button>
         </div>
       )}
-      {error && <p className="mt-2 text-xs text-red-300">{error}</p>}
+      {error && <p className="mt-2 text-xs text-red-700">{error}</p>}
     </div>
   )
 }

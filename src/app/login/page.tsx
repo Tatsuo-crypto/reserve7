@@ -81,7 +81,7 @@ function LoginForm() {
 
         {message && (
           <div className="rounded-lg bg-state-success-500/15 border border-state-success-500/30 p-4">
-            <p className="text-sm text-state-success-300">{message}</p>
+            <p className="text-sm text-state-success-700">{message}</p>
           </div>
         )}
         
@@ -123,7 +123,7 @@ function LoginForm() {
 
           {error && (
             <div className="rounded-lg bg-red-500/15 p-4">
-              <p className="text-sm text-red-300">{error}</p>
+              <p className="text-sm text-red-700">{error}</p>
             </div>
           )}
 

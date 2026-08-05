@@ -199,7 +199,7 @@ export default function StoresPage() {
                         <div className="text-text-primary">{s.memberCount ?? 0}</div>
                       </td>
                       <td className="px-3 py-2 border-b whitespace-nowrap text-center">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-normal ${s.status === 'active' ? 'bg-brand-500/15 text-brand-300' : 'bg-surface-overlay text-text-secondary'}`}>{s.status === 'active' ? '有効' : '無効'}</span>
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-normal ${s.status === 'active' ? 'bg-brand-500/15 text-brand-700' : 'bg-surface-overlay text-text-secondary'}`}>{s.status === 'active' ? '有効' : '無効'}</span>
                       </td>
                       <td className="px-3 py-2 border-b text-center whitespace-nowrap">
                         <div className="inline-flex items-center gap-2 whitespace-nowrap justify-center">

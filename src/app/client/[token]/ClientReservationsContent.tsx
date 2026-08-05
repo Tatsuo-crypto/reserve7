@@ -180,10 +180,10 @@ export default function ClientReservationsContent() {
           <div className="space-y-4">
             <div className="flex items-center p-4 bg-blue-500/15 rounded-lg border border-blue-500/25">
               <div className="flex items-center justify-center w-12 h-12 bg-blue-500/15 rounded-full mr-4">
-                <Icon name="user" size={24} className="text-blue-400" />
+                <Icon name="user" size={24} className="text-blue-700" />
               </div>
               <div>
-                <div className="text-sm text-blue-300 font-normal mb-1">お名前</div>
+                <div className="text-sm text-blue-700 font-normal mb-1">お名前</div>
                 <div className="text-xl font-semibold text-text-primary">{user.name} 様</div>
               </div>
             </div>

@@ -262,7 +262,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
 
         {/* メッセージ */}
         {message && (
-          <div className="mx-6 mt-4 p-3 bg-brand-500/15 border border-brand-500/30 rounded-lg text-sm text-brand-300">
+          <div className="mx-6 mt-4 p-3 bg-brand-500/15 border border-brand-500/30 rounded-lg text-sm text-brand-700">
             {message}
           </div>
         )}

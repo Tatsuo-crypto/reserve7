@@ -441,7 +441,7 @@ function AdminReservationsContent() {
                       }
                     >
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-normal min-w-[120px] border-r border-border-subtle">
-                        <div className="bg-brand-500/15 text-brand-300 px-2 py-1 rounded-lg text-center">
+                        <div className="bg-brand-500/15 text-brand-700 px-2 py-1 rounded-lg text-center">
                           {formatDate(reservation.startTime || reservation.start_time)}
                         </div>
                       </td>
@@ -481,7 +481,7 @@ function AdminReservationsContent() {
                         ) : (
                           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-normal ${
                             monthlyUsage[reservation.client.id]?.maxCount !== undefined && Number(getMonthlyCount(reservation, reservations)) >= monthlyUsage[reservation.client.id].maxCount
-                              ? 'bg-state-danger-500/15 text-state-danger-300'
+                              ? 'bg-state-danger-500/15 text-state-danger-700'
                               : 'bg-surface-overlay text-text-secondary'
                           }`}>
                             {`${getMonthlyCount(reservation, reservations)}/${monthlyUsage[reservation.client.id]?.maxCount ?? '-'}回（${new Date(reservation.startTime || reservation.start_time).getMonth() + 1}月）`}
@@ -502,7 +502,7 @@ function AdminReservationsContent() {
                               e.stopPropagation();
                               handleEdit(reservation);
                             }}
-                            className="bg-brand-500/15 text-brand-300 hover:bg-brand-500/25 px-3 py-1 rounded-lg transition-colors"
+                            className="bg-brand-500/15 text-brand-700 hover:bg-brand-500/25 px-3 py-1 rounded-lg transition-colors"
                           >
                             変更
                           </Button>
@@ -515,7 +515,7 @@ function AdminReservationsContent() {
                               e.stopPropagation();
                               handleDeleteReservation(reservation.id);
                             }}
-                            className="bg-red-500/15 text-red-300 hover:bg-red-500/25 px-3 py-1 rounded-lg transition-colors"
+                            className="bg-red-500/15 text-red-700 hover:bg-red-500/25 px-3 py-1 rounded-lg transition-colors"
                           >
                             キャンセル
                           </Button>

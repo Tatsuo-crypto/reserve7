@@ -313,7 +313,7 @@ export default function StaffShiftSubmitPage() {
                           : 'border-transparent bg-surface-base/65'
                   }`}
                 >
-                  <div className={`text-xs tabular-nums ${selected ? 'text-brand-200' : 'text-text-secondary'}`}>{day.getDate()}</div>
+                  <div className={`text-xs tabular-nums ${selected ? 'text-brand-700' : 'text-text-secondary'}`}>{day.getDate()}</div>
                   {hours > 0 && <div className="mt-1 text-xs tabular-nums text-text-primary">{formatHourValue(hours)}</div>}
                 </Button>
               )
@@ -365,7 +365,7 @@ export default function StaffShiftSubmitPage() {
                     <p className="text-sm font-semibold text-text-primary">{format(new Date(shift.start_time), 'M/d(E)', { locale: ja })}</p>
                     <p className="text-xs tabular-nums text-text-secondary">{format(new Date(shift.start_time), 'HH:mm')}〜{format(new Date(shift.end_time), 'HH:mm')}</p>
                   </div>
-                  <span className="rounded-full bg-brand-500/15 px-3 py-1 text-xs text-brand-200">{formatHours(shift.start_time, shift.end_time)}</span>
+                  <span className="rounded-full bg-brand-500/15 px-3 py-1 text-xs text-brand-700">{formatHours(shift.start_time, shift.end_time)}</span>
                 </div>
               )) : (
                 <div className="rounded-2xl bg-surface-base p-4 text-sm text-text-secondary">この月の確定シフトはありません</div>

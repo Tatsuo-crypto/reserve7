@@ -345,15 +345,15 @@ function DayTypeGoalCard({
     const accent = isTraining
         ? {
             dot: 'bg-brand-500',
-            text: 'text-brand-200',
+            text: 'text-brand-700',
             input: 'focus:ring-brand-500',
-            pill: 'bg-brand-500/12 text-brand-200 border-brand-500/20',
+            pill: 'bg-brand-500/12 text-brand-700 border-brand-500/20',
         }
         : {
             dot: 'bg-sky-400',
-            text: 'text-sky-200',
+            text: 'text-sky-700',
             input: 'focus:ring-sky-400',
-            pill: 'bg-sky-400/10 text-sky-200 border-sky-400/20',
+            pill: 'bg-sky-400/10 text-sky-700 border-sky-400/20',
         }
     return (
         <section className="space-y-5">
@@ -407,10 +407,10 @@ function PfcTotalStatus({ summary }: { summary: ReturnType<typeof getPfcSummary>
     return (
         <div className="space-y-1 text-center">
             <p className="text-sm font-semibold text-text-primary">
-                合計 <span className={over ? 'text-state-danger-400' : 'text-brand-300'}>{summary.total.toLocaleString()}</span>
+                合計 <span className={over ? 'text-state-danger-700' : 'text-brand-700'}>{summary.total.toLocaleString()}</span>
                 <span className="text-sm text-text-muted"> / {summary.target.toLocaleString()}kcal</span>
             </p>
-            <p className={`text-xs ${over ? 'text-state-danger-300' : 'text-text-muted'}`}>
+            <p className={`text-xs ${over ? 'text-state-danger-700' : 'text-text-muted'}`}>
                 {over
                     ? `目標カロリーを ${summary.overCalories.toLocaleString()}kcal 超えています`
                     : `あと ${summary.remainingCalories.toLocaleString()}kcal まで設定できます`}
@@ -483,12 +483,12 @@ function AdminStatCard({ label, value, unit, color, step = 1, onValueChange }: {
     // まま残っており、カードが白く浮いて見える不具合だったため、ダークバッジパターン
     // (bg-*-500/15 + border-*-500/25 + 明るめのtext-*-300)に統一する。
     const colorMap: any = {
-        amber: 'text-amber-300 bg-surface-base/60 border-border-strong',
-        blue: 'text-blue-300 bg-surface-base/60 border-border-strong',
-        purple: 'text-purple-300 bg-surface-base/60 border-border-strong',
+        amber: 'text-amber-700 bg-surface-base/60 border-border-strong',
+        blue: 'text-blue-700 bg-surface-base/60 border-border-strong',
+        purple: 'text-purple-700 bg-surface-base/60 border-border-strong',
         teal: 'text-teal-300 bg-surface-base/60 border-border-strong',
         gray: 'text-text-secondary bg-surface-base/60 border-border-strong',
-        sky: 'text-sky-300 bg-surface-base/60 border-border-strong',
+        sky: 'text-sky-700 bg-surface-base/60 border-border-strong',
         cyan: 'text-cyan-300 bg-surface-base/60 border-border-strong',
         orange: 'text-text-primary bg-surface-base/60 border-border-strong',
         violet: 'text-violet-300 bg-surface-base/60 border-border-strong'

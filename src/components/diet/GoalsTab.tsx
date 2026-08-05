@@ -301,7 +301,7 @@ export default function GoalsTab({ userId, token, isAdmin }: GoalsTabProps) {
                                             type="button"
                                             variant="ghost"
                                             onClick={() => openEditGoal(goal)}
-                                            className="rounded-full border border-brand-500/20 bg-brand-500/15 px-3 py-1.5 text-xs text-brand-300 hover:bg-brand-500/25 whitespace-nowrap"
+                                            className="rounded-full border border-brand-500/20 bg-brand-500/15 px-3 py-1.5 text-xs text-brand-700 hover:bg-brand-500/25 whitespace-nowrap"
                                         >
                                             編集
                                         </Button>
@@ -390,7 +390,7 @@ export default function GoalsTab({ userId, token, isAdmin }: GoalsTabProps) {
                             variant="destructive"
                             onClick={handleDeleteGoal}
                             disabled={saving}
-                            className="w-full rounded-2xl border border-state-danger-500/25 bg-state-danger-500/10 px-4 py-3 text-sm text-state-danger-300 hover:bg-state-danger-500/15 disabled:opacity-60"
+                            className="w-full rounded-2xl border border-state-danger-500/25 bg-state-danger-500/10 px-4 py-3 text-sm text-state-danger-700 hover:bg-state-danger-500/15 disabled:opacity-60"
                         >
                             削除
                         </Button>
@@ -428,7 +428,7 @@ export default function GoalsTab({ userId, token, isAdmin }: GoalsTabProps) {
                                     会員はタップで切り替えられ、管理者は表示のみ+編集ボタン。 */}
                                 <div className="flex items-center gap-2 shrink-0">
                                     {isAdmin ? (
-                                        <span className={`rounded-full px-3 py-1.5 text-xs font-normal whitespace-nowrap ${goal.status === 'achieved' ? 'bg-state-success-500/15 text-state-success-300' : 'bg-surface-overlay text-text-muted'}`}>
+                                        <span className={`rounded-full px-3 py-1.5 text-xs font-normal whitespace-nowrap ${goal.status === 'achieved' ? 'bg-state-success-500/15 text-state-success-700' : 'bg-surface-overlay text-text-muted'}`}>
                                             {goal.status === 'achieved' ? '達成' : '未達成'}
                                         </span>
                                     ) : (
@@ -437,7 +437,7 @@ export default function GoalsTab({ userId, token, isAdmin }: GoalsTabProps) {
                                             variant="secondary"
                                             size="sm"
                                             onClick={() => updateStatus(goal, goal.status === 'achieved' ? 'missed' : 'achieved')}
-                                            className={`rounded-full px-3 py-1.5 text-xs whitespace-nowrap ${goal.status === 'achieved' ? 'bg-state-success-500/15 text-state-success-300 border-state-success-500/25' : ''}`}
+                                            className={`rounded-full px-3 py-1.5 text-xs whitespace-nowrap ${goal.status === 'achieved' ? 'bg-state-success-500/15 text-state-success-700 border-state-success-500/25' : ''}`}
                                         >
                                             {goal.status === 'achieved' ? '達成' : '未達成'}
                                         </Button>
@@ -446,7 +446,7 @@ export default function GoalsTab({ userId, token, isAdmin }: GoalsTabProps) {
                                         type="button"
                                         variant="ghost"
                                         onClick={() => openEditGoal(goal)}
-                                        className="rounded-full border border-brand-500/20 bg-brand-500/15 px-3 py-1.5 text-xs text-brand-300 hover:bg-brand-500/25 whitespace-nowrap"
+                                        className="rounded-full border border-brand-500/20 bg-brand-500/15 px-3 py-1.5 text-xs text-brand-700 hover:bg-brand-500/25 whitespace-nowrap"
                                     >
                                         編集
                                     </Button>

@@ -112,7 +112,7 @@ function LessonCard({ lesson, onJoin }: { lesson: OnlineLesson; onJoin: (url: st
                             <h3 className={`font-semibold text-xl ${status.isOngoing ? 'text-white' : 'text-text-primary'}`}>
                                 {lesson.title}
                             </h3>
-                            <span className="text-xs px-2 py-0.5 rounded-full font-normal bg-brand-500/15 text-brand-300">
+                            <span className="text-xs px-2 py-0.5 rounded-full font-normal bg-brand-500/15 text-brand-700">
                                 {lesson.difficulty || '初心者'}
                             </span>
                         </div>
@@ -140,7 +140,7 @@ function LessonCard({ lesson, onJoin }: { lesson: OnlineLesson; onJoin: (url: st
                 <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
                         <div className={`w-2.5 h-2.5 rounded-full ${status.canJoin ? 'bg-state-success-500 animate-pulse' : 'bg-surface-overlay'}`} />
-                        <span className={`text-sm font-normal ${status.canJoin ? 'text-state-success-300' : 'text-text-secondary'}`}>
+                        <span className={`text-sm font-normal ${status.canJoin ? 'text-state-success-700' : 'text-text-secondary'}`}>
                             {status.statusLabel}
                         </span>
                     </div>
@@ -280,7 +280,7 @@ export default function OnlineLessonPage() {
                                     variant="ghost"
                                     size="sm"
                                     onClick={() => setShowIOSBanner(false)}
-                                    className="ml-1 p-0 text-brand-200 hover:bg-transparent hover:text-white"
+                                    className="ml-1 p-0 text-brand-700 hover:bg-transparent hover:text-white"
                                     aria-label="閉じる"
                                 >
                                     <Icon name="close" size={20} />
@@ -295,7 +295,7 @@ export default function OnlineLessonPage() {
                 {error ? (
                     <div className="text-center py-16">
                         <div className="w-16 h-16 bg-red-500/15 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <Icon name="exclamationCircle" size={32} className="text-red-400" />
+                            <Icon name="exclamationCircle" size={32} className="text-red-700" />
                         </div>
                         <p className="text-text-secondary font-normal">{error}</p>
                         <Button
@@ -311,7 +311,7 @@ export default function OnlineLessonPage() {
                 ) : lessons.length === 0 ? (
                     <div className="text-center py-16">
                         <div className="w-24 h-24 bg-brand-500/15 rounded-full flex items-center justify-center mx-auto mb-6">
-                            <Icon name="video" size={48} className="text-brand-400" />
+                            <Icon name="video" size={48} className="text-brand-700" />
                         </div>
                         <h2 className="text-xl font-semibold text-text-secondary mb-2">現在準備中です</h2>
                         <p className="text-text-secondary text-sm">オンラインレッスンの詳細は<br />もうしばらくお待ちください</p>
@@ -338,7 +338,7 @@ export default function OnlineLessonPage() {
                                 ]).map(item => (
                                     <div key={item.step} className="flex items-start space-x-3">
                                         <div className="w-6 h-6 rounded-full bg-brand-500/15 flex items-center justify-center flex-shrink-0">
-                                            <span className="text-brand-300 font-normal text-xs">{item.step}</span>
+                                            <span className="text-brand-700 font-normal text-xs">{item.step}</span>
                                         </div>
                                         <p className="text-text-secondary text-sm leading-relaxed pt-0.5">{item.text}</p>
                                     </div>

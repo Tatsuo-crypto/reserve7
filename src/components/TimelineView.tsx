@@ -646,9 +646,9 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
                       const isGuest = event.type === 'guest' || (event.title && event.title.includes('ゲスト'))
                       const isTraining = event.type === 'training'
                       const colorClass = isTrial
-                        ? 'bg-blue-500/15 border border-blue-500/30 text-blue-300'
+                        ? 'bg-blue-500/15 border border-blue-500/30 text-blue-700'
                         : isGuest
-                          ? 'bg-purple-500/25 border border-purple-500/40 text-purple-200'
+                          ? 'bg-purple-500/25 border border-purple-500/40 text-purple-700'
                           : isTraining
                             ? 'bg-orange-500/15 border border-orange-500/30 text-orange-300'
                             : event.type === 'blocked'
@@ -910,7 +910,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
           <div className="relative p-6 w-full max-w-sm shadow-xl rounded-2xl bg-surface-raised">
             <div className="text-center">
               <div className="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-red-500/15 mb-4">
-                <Icon name="trash" size={28} className="text-red-400" />
+                <Icon name="trash" size={28} className="text-red-700" />
               </div>
               <h3 className="text-xl font-semibold text-text-primary mb-2">予約を削除しますか？</h3>
               <p className="text-sm text-text-secondary mb-6">この操作は取り消せません。</p>

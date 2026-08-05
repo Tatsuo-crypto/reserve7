@@ -151,7 +151,7 @@ function PayrollWorkCalendar({ rows, month }: { rows: PayrollRow[], month: strin
                   : 'border-transparent bg-surface-raised/40'
               }`}
             >
-              <div className={`text-xs tabular-nums ${hasWork ? 'text-brand-200' : 'text-text-muted'}`}>
+              <div className={`text-xs tabular-nums ${hasWork ? 'text-brand-700' : 'text-text-muted'}`}>
                 {day.getDate()}
               </div>
               {hasWork && (
@@ -470,7 +470,7 @@ export default function AdminPayrollPage() {
                     <div className="text-sm text-text-primary">
                       {formatDateLabel(row.workDate)}
                       {row.countsForTransportation && (
-                        <span className="ml-2 text-xs text-brand-400">交通費対象</span>
+                        <span className="ml-2 text-xs text-brand-700">交通費対象</span>
                       )}
                     </div>
                     <div className="mt-0.5 text-xs tabular-nums text-text-secondary">
@@ -568,7 +568,7 @@ export default function AdminPayrollPage() {
                       onChange={(event) => setSettingsBreakRuleThresholdHours(event.target.value)}
                     />
                     <span className="whitespace-nowrap text-text-muted">時間以上</span>
-                    <span className="text-brand-400">→</span>
+                    <span className="text-brand-700">→</span>
                     <input
                       className="w-14 rounded-lg border border-border-subtle bg-surface-raised px-2 py-2 text-center text-sm tabular-nums text-text-primary outline-none focus:border-brand-500"
                       type="number"

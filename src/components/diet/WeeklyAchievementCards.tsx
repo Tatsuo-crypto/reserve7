@@ -21,8 +21,8 @@ import type { WeekDayRecordFlag } from '@/hooks/useWeeklyProgress'
  * アプリ全体の差し色がオレンジである点は変わらない(バーだけがこの規則に従う)。
  */
 export function achievementColor(pct: number): { bar: string; text: string } {
-    if (pct > 100) return { bar: 'bg-red-500', text: 'text-red-300' }
-    return { bar: 'bg-blue-500', text: 'text-blue-300' }
+    if (pct > 100) return { bar: 'bg-red-500', text: 'text-red-700' }
+    return { bar: 'bg-blue-500', text: 'text-blue-700' }
 }
 
 /** AR-1: 'day'(1日分) / 'total'(週合計) / 'average'(記録日平均) の3表示。 */
@@ -41,9 +41,9 @@ function statusClasses(status: MetricStatus) {
     // AR-2: 通常=青、超過=赤。未達(下限型の未到達)は「超過」とは別の状態なので従来どおり amber。
     const map = {
         empty: { bar: 'bg-surface-overlay', text: 'text-text-muted', badge: 'bg-surface-overlay text-text-muted' },
-        normal: { bar: 'bg-blue-500', text: 'text-blue-300', badge: 'bg-blue-500/15 text-blue-300' },
-        warning: { bar: 'bg-amber-500', text: 'text-amber-300', badge: 'bg-amber-500/15 text-amber-300' },
-        danger: { bar: 'bg-red-500', text: 'text-red-300', badge: 'bg-red-500/15 text-red-300' },
+        normal: { bar: 'bg-blue-500', text: 'text-blue-700', badge: 'bg-blue-500/15 text-blue-700' },
+        warning: { bar: 'bg-amber-500', text: 'text-amber-700', badge: 'bg-amber-500/15 text-amber-700' },
+        danger: { bar: 'bg-red-500', text: 'text-red-700', badge: 'bg-red-500/15 text-red-700' },
     } satisfies Record<MetricStatus, { bar: string; text: string; badge: string }>
     return map[status]
 }
@@ -123,7 +123,7 @@ export function RecordCheckTable({
                         <div
                             className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${day.recorded ? 'bg-brand-500 text-white' : 'bg-surface-overlay text-text-muted'} ${
                                 isSelected
-                                    ? 'ring-2 ring-white ring-offset-1 ring-offset-surface-raised'
+                                    ? 'ring-2 ring-text-primary ring-offset-1 ring-offset-surface-raised'
                                     : day.isToday ? 'ring-2 ring-brand-500 ring-offset-1 ring-offset-surface-raised' : ''
                             }`}
                         >

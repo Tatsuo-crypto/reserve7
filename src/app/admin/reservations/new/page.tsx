@@ -664,10 +664,10 @@ function NewReservationContent() {
         {success && (
           <div className="mb-3 bg-state-success-500/15 border border-state-success-500/30 rounded-lg p-3">
             <div className="flex items-center">
-              <Icon name="check" size={18} className="text-state-success-300 mr-2" />
-              <p className="text-sm text-state-success-300">{success}</p>
+              <Icon name="check" size={18} className="text-state-success-700 mr-2" />
+              <p className="text-sm text-state-success-700">{success}</p>
             </div>
-            <p className="text-state-success-300 text-xs mt-1">カレンダーに移動します...</p>
+            <p className="text-state-success-700 text-xs mt-1">カレンダーに移動します...</p>
           </div>
         )}
 
@@ -675,7 +675,7 @@ function NewReservationContent() {
           <div className="mb-3 bg-brand-500/15 border border-brand-500/30 rounded-lg p-3">
             <div className="flex items-center">
               <div className="mr-3 h-2.5 w-2.5 rounded-full bg-brand-500 animate-pulse" />
-              <p className="text-sm text-brand-200">{optimisticMessage}</p>
+              <p className="text-sm text-brand-700">{optimisticMessage}</p>
             </div>
           </div>
         )}
@@ -683,7 +683,7 @@ function NewReservationContent() {
         {/* Error Message */}
         {error && (
           <div className="mb-3 bg-red-500/15 border border-red-500/30 rounded-lg p-3">
-            <p className="text-sm text-red-300">{error}</p>
+            <p className="text-sm text-red-700">{error}</p>
           </div>
         )}
 
@@ -708,7 +708,7 @@ function NewReservationContent() {
                     onChange={() => setFormData(prev => ({ ...prev, isBlocked: false, isTrial: false, isGuest: false, isTraining: false, clientId: '' }))}
                     className="sr-only"
                   />
-                  <Icon name="user" size={16} className="text-brand-300" />
+                  <Icon name="user" size={16} className="text-brand-700" />
                   <span className="text-xs font-normal leading-none text-text-primary">予約</span>
                 </label>
 
@@ -724,7 +724,7 @@ function NewReservationContent() {
                     onChange={() => setFormData(prev => ({ ...prev, isBlocked: false, isTrial: true, isGuest: false, isTraining: false, clientId: '' }))}
                     className="sr-only"
                   />
-                  <Icon name="star" size={16} className="text-blue-300" />
+                  <Icon name="star" size={16} className="text-blue-700" />
                   <span className="text-xs font-normal leading-none text-text-primary">体験</span>
                 </label>
 
@@ -740,7 +740,7 @@ function NewReservationContent() {
                     onChange={() => setFormData(prev => ({ ...prev, isBlocked: false, isTrial: false, isGuest: true, isTraining: false, clientId: '' }))}
                     className="sr-only"
                   />
-                  <Icon name="userGroup" size={16} className="text-purple-300" />
+                  <Icon name="userGroup" size={16} className="text-purple-700" />
                   <span className="text-xs font-normal leading-none text-text-primary">ゲスト</span>
                 </label>
 
@@ -962,7 +962,7 @@ function NewReservationContent() {
 
             {/* On-duty Trainer Display */}
             {!formData.isBlocked && !formData.isTraining && detectedTrainer && (
-              <div className="flex items-center justify-between rounded-lg bg-brand-500/15 px-3 py-1.5 text-sm text-brand-300">
+              <div className="flex items-center justify-between rounded-lg bg-brand-500/15 px-3 py-1.5 text-sm text-brand-700">
                 <span className="text-xs text-text-secondary">担当トレーナー(シフトから自動判定)</span>
                 <span className="font-normal">{detectedTrainer.name}</span>
               </div>

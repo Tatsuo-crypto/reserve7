@@ -80,7 +80,7 @@ function AdminCalendarPageContent() {
                   <span className="text-text-secondary font-normal">
                     {getStoreDisplayName(trainer.storeId)}
                   </span>
-                  <span className="px-3 py-1 rounded-full text-xs font-normal border bg-brand-500/15 text-brand-300 border-brand-500/30">
+                  <span className="px-3 py-1 rounded-full text-xs font-normal border bg-brand-500/15 text-brand-700 border-brand-500/30">
                     トレーナー
                   </span>
                 </div>

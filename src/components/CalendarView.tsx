@@ -472,9 +472,9 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
               const isGuest = event.type === 'guest'
               const isTraining = event.type === 'training'
               const colorClass = isTrial
-                ? 'bg-blue-500/15 text-blue-300 border border-blue-500/30'    // Trial = Blue (highest priority)
+                ? 'bg-blue-500/15 text-blue-700 border border-blue-500/30'    // Trial = Blue (highest priority)
                 : isGuest
-                  ? 'bg-purple-500/25 text-purple-200 border border-purple-500/40'   // Guest = Purple(明るめ)
+                  ? 'bg-purple-500/25 text-purple-700 border border-purple-500/40'   // Guest = Purple(明るめ)
                   : isTraining
                     ? 'bg-orange-500/15 text-orange-300 border border-orange-500/30' // Training = Orange
                     : event.type === 'reservation'
@@ -564,7 +564,7 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
               size="sm"
               onClick={handleCalendarSync}
               disabled={syncing}
-              className="absolute right-12 h-10 w-10 p-0 rounded-full text-text-secondary bg-surface-overlay hover:bg-surface-base hover:text-brand-300 border border-border-subtle disabled:opacity-50"
+              className="absolute right-12 h-10 w-10 p-0 rounded-full text-text-secondary bg-surface-overlay hover:bg-surface-base hover:text-brand-700 border border-border-subtle disabled:opacity-50"
               aria-label="Googleカレンダーと同期"
               title="Googleカレンダーと同期"
             >
@@ -594,7 +594,7 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
               {/* Days of week header (no divider line) */}
               <div className="grid grid-cols-7">
                 {['月', '火', '水', '木', '金', '土', '日'].map((day, index) => (
-                  <div key={day} className={`py-1 text-center text-xs font-normal ${index === 5 ? 'text-brand-300' : index === 6 ? 'text-brand-600' : 'text-text-secondary'
+                  <div key={day} className={`py-1 text-center text-xs font-normal ${index === 5 ? 'text-brand-700' : index === 6 ? 'text-brand-600' : 'text-text-secondary'
                     }`}>
                     {day}
                   </div>

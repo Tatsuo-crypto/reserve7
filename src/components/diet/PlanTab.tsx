@@ -163,7 +163,7 @@ export default function PlanTab({ token, onEditPlan }: PlanTabProps) {
                             variant="ghost"
                             onClick={onEditPlan}
                             aria-label="目標を編集"
-                            className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-500/15 p-0 text-brand-300 transition-colors active:scale-95"
+                            className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-500/15 p-0 text-brand-700 transition-colors active:scale-95"
                         >
                             <Icon name="pencil" size={17} />
                         </Button>
@@ -231,7 +231,7 @@ function TargetSetCard({ row, type }: { row: GoalRow; type?: 'training' | 'rest'
 
     return (
         <div className={`rounded-2xl border px-4 py-4 ${isTraining ? 'border-brand-500/25 bg-brand-500/10' : 'border-border-subtle bg-surface-base'}`}>
-            <p className={`text-sm font-normal ${isTraining ? 'text-brand-300' : isRest ? 'text-blue-300' : 'text-text-muted'}`}>
+            <p className={`text-sm font-normal ${isTraining ? 'text-brand-700' : isRest ? 'text-blue-700' : 'text-text-muted'}`}>
                 {label}
             </p>
             <p className="mt-1 text-3xl font-bold tabular-nums text-text-primary">
@@ -251,7 +251,7 @@ function TargetSetCard({ row, type }: { row: GoalRow; type?: 'training' | 'rest'
 }
 
 function Chip({ label, value, tone }: { label: string; value: string; tone?: 'p' | 'f' | 'c' }) {
-    const color = tone === 'p' ? 'text-orange-300' : tone === 'f' ? 'text-amber-700' : tone === 'c' ? 'text-amber-200' : 'text-text-muted'
+    const color = tone === 'p' ? 'text-orange-300' : tone === 'f' ? 'text-amber-700' : tone === 'c' ? 'text-amber-700' : 'text-text-muted'
     return (
         <span className="rounded-full border border-border-subtle bg-surface-base px-3 py-1.5 text-xs tabular-nums text-text-secondary">
             <span className={color}>{label}</span> {value}
@@ -304,7 +304,7 @@ function GoalHistoryChart({ rows, onEditPlan }: { rows: GoalRow[]; onEditPlan?: 
             <div className="mb-6 flex items-center justify-between gap-3">
                 <SectionTitle>カロリー推移</SectionTitle>
                 {hasDayType && (
-                    <span className="rounded-full bg-brand-500/10 px-2.5 py-1 text-xs text-brand-300">筋トレ日基準</span>
+                    <span className="rounded-full bg-brand-500/10 px-2.5 py-1 text-xs text-brand-700">筋トレ日基準</span>
                 )}
             </div>
 
@@ -386,7 +386,7 @@ function GoalHistoryChart({ rows, onEditPlan }: { rows: GoalRow[]; onEditPlan?: 
                                 variant="ghost"
                                 onClick={onEditPlan}
                                 aria-label="目標を編集"
-                                className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-500/15 p-0 text-brand-300 transition-colors active:scale-95"
+                                className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-500/15 p-0 text-brand-700 transition-colors active:scale-95"
                             >
                                 <Icon name="pencil" size={15} />
                             </Button>

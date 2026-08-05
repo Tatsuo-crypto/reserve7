@@ -382,13 +382,13 @@ export default function ReservationsPage() {
         </div>
         {error && (
           <div className="mb-6 bg-red-500/15 border border-red-500/30 rounded-lg p-4">
-            <p className="text-red-300">{error}</p>
+            <p className="text-red-700">{error}</p>
             <Button
               type="button"
               variant="ghost"
               size="sm"
               onClick={fetchReservations}
-              className="mt-2 text-red-400 hover:text-red-300 underline"
+              className="mt-2 text-red-700 hover:text-red-700 underline"
             >
               再試行
             </Button>
@@ -444,7 +444,7 @@ export default function ReservationsPage() {
                     {reservations && reservations.map((reservation) => (
                       <tr key={reservation.id} className={getRowClassName(reservation)}>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-normal min-w-[120px] border-r border-border-subtle">
-                          <div className="bg-brand-500/15 text-brand-300 px-2 py-1 rounded-lg text-center">
+                          <div className="bg-brand-500/15 text-brand-700 px-2 py-1 rounded-lg text-center">
                             {formatDate(reservation.startTime)}
                           </div>
                         </td>
@@ -484,7 +484,7 @@ export default function ReservationsPage() {
                           ) : (
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-normal ${
                               Number(getMonthlyCount(reservation, reservations)) >= getPlanMaxCount(reservation.client.plan)
-                                ? 'bg-state-danger-500/15 text-state-danger-300'
+                                ? 'bg-state-danger-500/15 text-state-danger-700'
                                 : 'bg-surface-overlay text-text-secondary'
                             }`}>
                               {`${getMonthlyCount(reservation, reservations)}/${getPlanMaxCount(reservation.client.plan)}回（${new Date(reservation.startTime).getMonth() + 1}月）`}
@@ -506,7 +506,7 @@ export default function ReservationsPage() {
                                   e.stopPropagation()
                                   handleEdit(reservation)
                                 }}
-                                className="bg-brand-500/15 text-brand-300 hover:bg-brand-500/25 px-3 py-1 rounded-lg transition-colors"
+                                className="bg-brand-500/15 text-brand-700 hover:bg-brand-500/25 px-3 py-1 rounded-lg transition-colors"
                               >
                                 変更
                               </Button>
@@ -519,7 +519,7 @@ export default function ReservationsPage() {
                                   e.stopPropagation()
                                   handleCancel(reservation.id)
                                 }}
-                                className="bg-red-500/15 text-red-300 hover:bg-red-500/25 px-3 py-1 rounded-lg transition-colors"
+                                className="bg-red-500/15 text-red-700 hover:bg-red-500/25 px-3 py-1 rounded-lg transition-colors"
                               >
                                 キャンセル
                               </Button>
@@ -637,7 +637,7 @@ export default function ReservationsPage() {
           <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-lg bg-surface-raised">
             <div className="mt-3">
               <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-500/15 mb-4">
-                <Icon name="warning" size={24} className="text-red-400" />
+                <Icon name="warning" size={24} className="text-red-700" />
               </div>
               <h3 className="text-xl font-semibold text-text-primary text-center mb-4">
                 予約をキャンセルしますか？

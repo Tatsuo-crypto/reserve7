@@ -428,7 +428,7 @@ export default function TrainersPage() {
                         type="button"
                         variant="secondary"
                         size="sm"
-                        className="ui-control-nowrap min-w-12 rounded-full bg-brand-500/15 px-3 py-1 text-center text-xs font-normal text-brand-300 transition-colors hover:bg-brand-500/25"
+                        className="ui-control-nowrap min-w-12 rounded-full bg-brand-500/15 px-3 py-1 text-center text-xs font-normal text-brand-700 transition-colors hover:bg-brand-500/25"
                         onClick={() => handleCopyAccessUrl(t.access_token!, t.full_name)}
                       >
                         URL
@@ -462,7 +462,7 @@ export default function TrainersPage() {
                 <Button
                   type="button"
                   variant="destructive"
-                  className="mr-auto rounded-full px-4 py-2 text-sm text-red-400 transition-colors hover:bg-red-500/10"
+                  className="mr-auto rounded-full px-4 py-2 text-sm text-red-700 transition-colors hover:bg-red-500/10"
                   onClick={deleteTrainer}
                 >
                   削除

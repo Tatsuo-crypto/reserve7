@@ -54,12 +54,12 @@
     margin: 0;
   }
 
+  /* AZ-1: 白基調に戻したため、暗い背景用に白へ反転させていた指定(invert)を外す */
   input[type='date']::-webkit-calendar-picker-indicator,
   input[type='month']::-webkit-calendar-picker-indicator,
   input[type='datetime-local']::-webkit-calendar-picker-indicator {
     cursor: pointer;
-    filter: invert(1);
-    opacity: 0.72;
+    opacity: 0.6;
   }
 
   button,
@@ -123,8 +123,7 @@
   input[type='time']::-webkit-calendar-picker-indicator,
   input[type='week']::-webkit-calendar-picker-indicator {
     cursor: pointer;
-    filter: invert(1);
-    opacity: 0.72;
+    opacity: 0.6;
   }
 
   /* 値が空のときにiOSが表示するグレーのプレースホルダー文字も本文色に揃える */
@@ -135,18 +134,24 @@
     text-align: left;
   }
 
+  /*
+    AZ-1: 白基調へ戻す。Q-6で用意したCSS変数の値だけを差し替えており、
+    bg-surface-*/text-*/border-* を参照している全画面がここだけで切り替わる
+    (黒に切り替えたPR-Q2と同じ仕組みを逆向きに使う)。
+    オレンジの差し色(brandスケール)と状態色(state)の定義自体は変更していない。
+  */
   :root {
-    --color-surface-base: 9 9 11;         /* zinc-950相当。画面地 */
-    --color-surface-raised: 24 24 27;     /* zinc-900相当。カード */
-    --color-surface-overlay: 39 39 42;    /* zinc-800相当。モーダル・ドロップダウン */
-    --color-text-primary: 244 244 245;    /* zinc-100相当 */
-    --color-text-secondary: 161 161 170;  /* zinc-400相当 */
-    --color-text-muted: 132 132 140;      /* zinc-500よりわずかに明るいカスタム値。
-      Q-3のAA検証でzinc-500(113 113 122)がzinc-950/zinc-900背景に対し
-      4.5:1を割り込む(4.12/3.67)ことが判明したため、4.5:1を満たす最小限の明度まで
-      引き上げた(5.36/4.78)。text-secondaryとの階調差は維持。 */
-    --color-border-subtle: 255 255 255;   /* white、tailwind.config側で/10固定 */
-    --color-border-strong: 255 255 255;   /* white、tailwind.config側で/20固定 */
+    --color-surface-base: 249 250 251;    /* gray-50相当。画面地 */
+    --color-surface-raised: 255 255 255;  /* white。カード */
+    --color-surface-overlay: 243 244 246; /* gray-100相当。モーダル・トグルの下地 */
+    --color-text-primary: 24 24 27;       /* zinc-900相当 */
+    --color-text-secondary: 63 63 70;     /* zinc-700相当 */
+    --color-text-muted: 100 100 110;      /* zinc-600とzinc-500の中間のカスタム値。
+      zinc-500(113 113 122)はgray-100背景に対し4.39:1でAAを割り込むため、
+      4.5:1を満たす最小限まで暗くした(白背景5.85:1 / gray-100背景5.31:1)。
+      text-secondaryとの階調差は維持。 */
+    --color-border-subtle: 0 0 0;         /* black、tailwind.config側で/10固定 */
+    --color-border-strong: 0 0 0;         /* black、tailwind.config側で/20固定 */
   }
 }
 

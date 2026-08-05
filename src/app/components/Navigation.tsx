@@ -153,7 +153,7 @@ function NavigationContent() {
                           onClick={() => setIsMenuOpen(false)}
                           className={`flex items-center gap-3 px-4 py-3 text-sm font-normal transition-colors ${
                             isActive
-                              ? 'bg-brand-500/15 text-brand-300'
+                              ? 'bg-brand-500/15 text-brand-700'
                               : 'text-text-secondary hover:bg-surface-overlay hover:text-text-primary'
                           }`}
                         >
