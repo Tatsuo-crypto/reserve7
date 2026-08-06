@@ -390,11 +390,11 @@ export default function AdminOnlineLessonPage() {
                                         const selected = (form.day_of_week || []).includes(d)
                                         const colors = [
                                             'bg-red-500/15 text-red-700 border-red-500/30',
-                                            'bg-brand-500/15 text-brand-700 border-brand-500/30',
-                                            'bg-brand-500/15 text-brand-700 border-brand-500/30',
-                                            'bg-brand-500/15 text-brand-700 border-brand-500/30',
-                                            'bg-brand-500/15 text-brand-700 border-brand-500/30',
-                                            'bg-brand-500/15 text-brand-700 border-brand-500/30',
+                                            'bg-brand-500/15 text-brand-600 border-brand-500/30',
+                                            'bg-brand-500/15 text-brand-600 border-brand-500/30',
+                                            'bg-brand-500/15 text-brand-600 border-brand-500/30',
+                                            'bg-brand-500/15 text-brand-600 border-brand-500/30',
+                                            'bg-brand-500/15 text-brand-600 border-brand-500/30',
                                             'bg-orange-500/15 text-orange-300 border-orange-500/30',
                                         ]
                                         return (
@@ -498,7 +498,7 @@ export default function AdminOnlineLessonPage() {
                                                     members.filter(m => (form.userIds || []).includes(m.id)).map(member => (
                                                         <span 
                                                             key={member.id} 
-                                                            className="inline-flex items-center gap-1 bg-brand-500/15 border border-brand-500/25 text-brand-700 px-2 py-0.5 rounded-lg text-xs font-normal"
+                                                            className="inline-flex items-center gap-1 bg-brand-500/15 border border-brand-500/25 text-brand-600 px-2 py-0.5 rounded-lg text-xs font-normal"
                                                         >
                                                             {member.full_name}
                                                             <Button
@@ -512,7 +512,7 @@ export default function AdminOnlineLessonPage() {
                                                                         userIds: (prev.userIds || []).filter(id => id !== member.id)
                                                                     }))
                                                                 }}
-                                                                className="hover:bg-brand-500/25 p-0.5 rounded-lg transition-colors text-brand-500 hover:text-brand-700"
+                                                                className="hover:bg-brand-500/25 p-0.5 rounded-lg transition-colors text-brand-500 hover:text-brand-600"
                                                             >
                                                                 <Icon name="close" size={12} />
                                                             </Button>
@@ -681,7 +681,7 @@ export default function AdminOnlineLessonPage() {
                                             size="md"
                                             onClick={handleSendAnnouncement}
                                             disabled={saving || sendingAnnouncement}
-                                            className="flex-1 py-3 border border-brand-500/30 text-brand-700 rounded-2xl hover:bg-brand-500/25 transition-colors font-normal text-sm disabled:opacity-50"
+                                            className="flex-1 py-3 border border-brand-500/30 text-brand-600 rounded-2xl hover:bg-brand-500/25 transition-colors font-normal text-sm disabled:opacity-50"
                                         >
                                             {sendingAnnouncement ? '送信中...' : '告知メールを送る'}
                                         </Button>
@@ -725,7 +725,7 @@ export default function AdminOnlineLessonPage() {
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2 mb-1 min-w-0">
                                             <h3 className="min-w-0 truncate font-semibold text-text-primary text-xl group-hover:text-brand-600 transition-colors">{lesson.title}</h3>
-                                            <span className="shrink-0 text-xs px-2 py-0.5 rounded-full font-normal bg-brand-500/15 text-brand-700">
+                                            <span className="shrink-0 text-xs px-2 py-0.5 rounded-full font-normal bg-brand-500/15 text-brand-600">
                                                 {lesson.difficulty || '初心者'}
                                             </span>
                                         </div>

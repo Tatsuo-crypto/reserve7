@@ -810,8 +810,8 @@ function SwitchCard({ name, checked, onChange, title, description, color = 'blue
 function SummaryBox({ summaryText, formData, counseling }: { summaryText: string; formData: { fullName: string; gender: string; heightCm: string }; counseling: CounselingData }) {
   return (
     <div className="mt-6 rounded-lg border border-brand-500/30 bg-brand-500/15 p-4">
-      <h3 className="text-xl font-semibold text-brand-700 mb-3">保存後のカウンセリング要約</h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-brand-700">
+      <h3 className="text-xl font-semibold text-brand-600 mb-3">保存後のカウンセリング要約</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-brand-600">
         <SummaryItem label="氏名" value={formData.fullName} />
         <SummaryItem label="性別" value={genderLabel(formData.gender)} />
         <SummaryItem label="身長" value={formData.heightCm ? `${formData.heightCm}cm` : ''} />
@@ -833,7 +833,7 @@ function SummaryBox({ summaryText, formData, counseling }: { summaryText: string
 function SummaryItem({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-lg bg-surface-raised/70 px-3 py-2">
-      <span className="text-xs text-brand-700">{label}</span>
+      <span className="text-xs text-brand-600">{label}</span>
       <div className="text-sm text-text-primary">{value || '-'}</div>
     </div>
   )

@@ -444,7 +444,7 @@ export default function ReservationsPage() {
                     {reservations && reservations.map((reservation) => (
                       <tr key={reservation.id} className={getRowClassName(reservation)}>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-normal min-w-[120px] border-r border-border-subtle">
-                          <div className="bg-brand-500/15 text-brand-700 px-2 py-1 rounded-lg text-center">
+                          <div className="bg-brand-500/15 text-brand-600 px-2 py-1 rounded-lg text-center">
                             {formatDate(reservation.startTime)}
                           </div>
                         </td>
@@ -506,7 +506,7 @@ export default function ReservationsPage() {
                                   e.stopPropagation()
                                   handleEdit(reservation)
                                 }}
-                                className="bg-brand-500/15 text-brand-700 hover:bg-brand-500/25 px-3 py-1 rounded-lg transition-colors"
+                                className="bg-brand-500/15 text-brand-600 hover:bg-brand-500/25 px-3 py-1 rounded-lg transition-colors"
                               >
                                 変更
                               </Button>

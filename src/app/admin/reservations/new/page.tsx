@@ -675,7 +675,7 @@ function NewReservationContent() {
           <div className="mb-3 bg-brand-500/15 border border-brand-500/30 rounded-lg p-3">
             <div className="flex items-center">
               <div className="mr-3 h-2.5 w-2.5 rounded-full bg-brand-500 animate-pulse" />
-              <p className="text-sm text-brand-700">{optimisticMessage}</p>
+              <p className="text-sm text-brand-600">{optimisticMessage}</p>
             </div>
           </div>
         )}
@@ -708,7 +708,7 @@ function NewReservationContent() {
                     onChange={() => setFormData(prev => ({ ...prev, isBlocked: false, isTrial: false, isGuest: false, isTraining: false, clientId: '' }))}
                     className="sr-only"
                   />
-                  <Icon name="user" size={16} className="text-brand-700" />
+                  <Icon name="user" size={16} className="text-brand-600" />
                   <span className="text-xs font-normal leading-none text-text-primary">予約</span>
                 </label>
 
@@ -962,7 +962,7 @@ function NewReservationContent() {
 
             {/* On-duty Trainer Display */}
             {!formData.isBlocked && !formData.isTraining && detectedTrainer && (
-              <div className="flex items-center justify-between rounded-lg bg-brand-500/15 px-3 py-1.5 text-sm text-brand-700">
+              <div className="flex items-center justify-between rounded-lg bg-brand-500/15 px-3 py-1.5 text-sm text-brand-600">
                 <span className="text-xs text-text-secondary">担当トレーナー(シフトから自動判定)</span>
                 <span className="font-normal">{detectedTrainer.name}</span>
               </div>

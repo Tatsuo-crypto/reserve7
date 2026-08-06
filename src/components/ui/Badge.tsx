@@ -13,7 +13,7 @@ export interface BadgeProps {
 // 「bg-*-500/15 text-*-300」の暗地パターンへ機械的に総置換(黒ベースでのコントラスト確保)。
 const TONE_CLASSES: Record<Tone, string> = {
     neutral: 'bg-surface-base text-text-secondary',
-    brand: 'bg-brand-500/15 text-brand-700',
+    brand: 'bg-brand-500/15 text-brand-600',
     success: 'bg-emerald-500/15 text-emerald-700',
     warning: 'bg-amber-500/15 text-amber-700',
     danger: 'bg-red-500/15 text-red-700',

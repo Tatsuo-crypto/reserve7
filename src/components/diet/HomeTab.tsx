@@ -351,7 +351,7 @@ export default function HomeTab({ token, userName, isDietPlan = true, todayDraft
                         ) : (
                             <div className="flex items-center justify-between gap-3">
                                 <p className="text-xs text-text-muted">次回の予約はありません</p>
-                                <span className="shrink-0 text-xs font-normal text-brand-700 bg-brand-500/15 px-3 py-1.5 rounded-full">予約する</span>
+                                <span className="shrink-0 text-xs font-normal text-brand-600 bg-brand-500/15 px-3 py-1.5 rounded-full">予約する</span>
                             </div>
                         )}
                     </Card>

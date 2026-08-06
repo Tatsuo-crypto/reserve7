@@ -88,7 +88,7 @@ export default function ReservationTab({ token, userName }: ReservationTabProps)
                                 <p className="text-xl font-semibold text-text-primary">{formatTitle(nextReservation.title, userName)}</p>
                                 <p className="mt-1 text-sm font-normal tabular-nums text-text-secondary">{formatDate(nextReservation.start_time)}</p>
                             </div>
-                            <span className="shrink-0 rounded-full bg-brand-500/15 px-3 py-1 text-xs font-normal text-brand-700">
+                            <span className="shrink-0 rounded-full bg-brand-500/15 px-3 py-1 text-xs font-normal text-brand-600">
                                 予約済み
                             </span>
                         </div>

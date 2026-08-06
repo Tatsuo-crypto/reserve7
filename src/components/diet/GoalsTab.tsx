@@ -301,7 +301,7 @@ export default function GoalsTab({ userId, token, isAdmin }: GoalsTabProps) {
                                             type="button"
                                             variant="ghost"
                                             onClick={() => openEditGoal(goal)}
-                                            className="rounded-full border border-brand-500/20 bg-brand-500/15 px-3 py-1.5 text-xs text-brand-700 hover:bg-brand-500/25 whitespace-nowrap"
+                                            className="rounded-full border border-brand-500/20 bg-brand-500/15 px-3 py-1.5 text-xs text-brand-600 hover:bg-brand-500/25 whitespace-nowrap"
                                         >
                                             編集
                                         </Button>
@@ -446,7 +446,7 @@ export default function GoalsTab({ userId, token, isAdmin }: GoalsTabProps) {
                                         type="button"
                                         variant="ghost"
                                         onClick={() => openEditGoal(goal)}
-                                        className="rounded-full border border-brand-500/20 bg-brand-500/15 px-3 py-1.5 text-xs text-brand-700 hover:bg-brand-500/25 whitespace-nowrap"
+                                        className="rounded-full border border-brand-500/20 bg-brand-500/15 px-3 py-1.5 text-xs text-brand-600 hover:bg-brand-500/25 whitespace-nowrap"
                                     >
                                         編集
                                     </Button>

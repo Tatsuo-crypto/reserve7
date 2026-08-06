@@ -501,7 +501,7 @@ export default function AdminMailSettingsPage() {
                 onClick={() => setSection(item.key)}
                 className="w-full flex items-center gap-4 rounded-2xl border border-border-subtle bg-surface-raised p-5 text-left shadow-sm transition-colors hover:bg-surface-overlay"
               >
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-500/15 text-brand-700">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-500/15 text-brand-600">
                   <Icon name={item.iconName} size={22} />
                 </span>
                 <span className="min-w-0 flex-1">
@@ -581,7 +581,7 @@ export default function AdminMailSettingsPage() {
                   variant="primary"
                   size="sm"
                   onClick={() => setAllMembers(true)}
-                  className="px-4 py-2 text-xs rounded-2xl bg-brand-500/15 text-brand-700 border border-brand-500/20 hover:bg-brand-500/25"
+                  className="px-4 py-2 text-xs rounded-2xl bg-brand-500/15 text-brand-600 border border-brand-500/20 hover:bg-brand-500/25"
                 >
                   全員ON
                 </Button>

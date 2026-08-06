@@ -112,7 +112,7 @@ function LessonCard({ lesson, onJoin }: { lesson: OnlineLesson; onJoin: (url: st
                             <h3 className={`font-semibold text-xl ${status.isOngoing ? 'text-white' : 'text-text-primary'}`}>
                                 {lesson.title}
                             </h3>
-                            <span className="text-xs px-2 py-0.5 rounded-full font-normal bg-brand-500/15 text-brand-700">
+                            <span className="text-xs px-2 py-0.5 rounded-full font-normal bg-brand-500/15 text-brand-600">
                                 {lesson.difficulty || '初心者'}
                             </span>
                         </div>
@@ -224,7 +224,7 @@ export default function OnlineLessonPage() {
             <div className="min-h-screen bg-surface-base flex items-center justify-center">
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600 mx-auto" />
-                    <p className="mt-4 text-brand-700 text-sm">読み込み中...</p>
+                    <p className="mt-4 text-brand-600 text-sm">読み込み中...</p>
                 </div>
             </div>
         )
@@ -280,7 +280,7 @@ export default function OnlineLessonPage() {
                                     variant="ghost"
                                     size="sm"
                                     onClick={() => setShowIOSBanner(false)}
-                                    className="ml-1 p-0 text-brand-700 hover:bg-transparent hover:text-white"
+                                    className="ml-1 p-0 text-brand-600 hover:bg-transparent hover:text-white"
                                     aria-label="閉じる"
                                 >
                                     <Icon name="close" size={20} />
@@ -311,7 +311,7 @@ export default function OnlineLessonPage() {
                 ) : lessons.length === 0 ? (
                     <div className="text-center py-16">
                         <div className="w-24 h-24 bg-brand-500/15 rounded-full flex items-center justify-center mx-auto mb-6">
-                            <Icon name="video" size={48} className="text-brand-700" />
+                            <Icon name="video" size={48} className="text-brand-600" />
                         </div>
                         <h2 className="text-xl font-semibold text-text-secondary mb-2">現在準備中です</h2>
                         <p className="text-text-secondary text-sm">オンラインレッスンの詳細は<br />もうしばらくお待ちください</p>
@@ -338,7 +338,7 @@ export default function OnlineLessonPage() {
                                 ]).map(item => (
                                     <div key={item.step} className="flex items-start space-x-3">
                                         <div className="w-6 h-6 rounded-full bg-brand-500/15 flex items-center justify-center flex-shrink-0">
-                                            <span className="text-brand-700 font-normal text-xs">{item.step}</span>
+                                            <span className="text-brand-600 font-normal text-xs">{item.step}</span>
                                         </div>
                                         <p className="text-text-secondary text-sm leading-relaxed pt-0.5">{item.text}</p>
                                     </div>

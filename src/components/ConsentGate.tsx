@@ -87,10 +87,10 @@ export default function ConsentGate({ subjectType, subjectId, children }: Consen
           </p>
 
           <div className="mt-4 space-y-2 text-sm font-normal">
-            <Link href="/terms" target="_blank" className="block text-brand-700 underline underline-offset-2">
+            <Link href="/terms" target="_blank" className="block text-brand-600 underline underline-offset-2">
               利用規約を読む
             </Link>
-            <Link href="/privacy" target="_blank" className="block text-brand-700 underline underline-offset-2">
+            <Link href="/privacy" target="_blank" className="block text-brand-600 underline underline-offset-2">
               プライバシーポリシーを読む
             </Link>
           </div>

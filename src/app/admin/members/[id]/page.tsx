@@ -43,7 +43,7 @@ function MemberActionRow({
   const content = (
     <>
       <div className="flex min-w-0 items-center gap-3">
-        <Icon name={iconName} size={20} className="shrink-0 text-text-secondary transition-colors group-hover:text-brand-700" />
+        <Icon name={iconName} size={20} className="shrink-0 text-text-secondary transition-colors group-hover:text-brand-600" />
         <span className="ui-nowrap text-sm font-normal text-text-primary">{label}</span>
       </div>
       <Icon name="chevronRight" size={16} className="shrink-0 text-text-muted" />
@@ -95,7 +95,7 @@ function InlineActionButton({
   const className = `rounded-full px-4 py-2 text-xs font-normal transition-colors ${
     disabled
       ? 'cursor-not-allowed bg-surface-overlay text-text-muted opacity-60'
-      : 'bg-surface-overlay text-text-primary hover:bg-brand-500/15 hover:text-brand-700'
+      : 'bg-surface-overlay text-text-primary hover:bg-brand-500/15 hover:text-brand-600'
   }`
 
   if (href && !disabled) {
@@ -178,7 +178,7 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
   }
 
   const statusClassName = (status?: string) => {
-    if (status === 'active') return 'bg-brand-500/15 text-brand-700'
+    if (status === 'active') return 'bg-brand-500/15 text-brand-600'
     if (status === 'suspended') return 'bg-yellow-500/15 text-yellow-300'
     if (status === 'withdrawn') return 'bg-surface-overlay text-text-muted'
     return 'bg-surface-overlay text-text-secondary'

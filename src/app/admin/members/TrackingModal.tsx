@@ -262,7 +262,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
 
         {/* メッセージ */}
         {message && (
-          <div className="mx-6 mt-4 p-3 bg-brand-500/15 border border-brand-500/30 rounded-lg text-sm text-brand-700">
+          <div className="mx-6 mt-4 p-3 bg-brand-500/15 border border-brand-500/30 rounded-lg text-sm text-brand-600">
             {message}
           </div>
         )}
@@ -580,7 +580,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                         ) : (
                           <div className="flex items-center justify-between">
                             <div>
-                              <div className="text-sm font-normal text-brand-700">{goal.year}年{goal.month}月</div>
+                              <div className="text-sm font-normal text-brand-600">{goal.year}年{goal.month}月</div>
                               <div className="text-sm text-text-primary">{goal.goal_text}</div>
                             </div>
                             <div className="flex gap-2">

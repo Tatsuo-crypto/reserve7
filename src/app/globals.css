@@ -147,12 +147,14 @@
     --color-surface-base: 249 250 251;    /* gray-50相当。画面地 */
     --color-surface-raised: 255 255 255;  /* white。カード */
     --color-surface-overlay: 243 244 246; /* gray-100相当。モーダル・トグルの下地 */
-    --color-text-primary: 24 24 27;       /* zinc-900相当 */
-    --color-text-secondary: 63 63 70;     /* zinc-700相当 */
-    --color-text-muted: 100 100 110;      /* zinc-600とzinc-500の中間のカスタム値。
+    /* BB-2: 「黒の文字が相当強い」との指摘を受け、全体を一段やわらげた。
+       ほぼ黒(zinc-900)をやめ、本文はzinc-800、副次はzinc-600、注釈はさらに一段薄い値にする。
+       いずれも白背景・gray-100背景の両方でAA(4.5:1)を満たす範囲に収めている。 */
+    --color-text-primary: 39 39 42;       /* zinc-800相当。白背景14.6:1 */
+    --color-text-secondary: 82 82 91;     /* zinc-600相当。白背景7.7:1 */
+    --color-text-muted: 106 106 116;      /* zinc-500よりわずかに暗いカスタム値。
       zinc-500(113 113 122)はgray-100背景に対し4.39:1でAAを割り込むため、
-      4.5:1を満たす最小限まで暗くした(白背景5.85:1 / gray-100背景5.31:1)。
-      text-secondaryとの階調差は維持。 */
+      4.5:1を満たす最小限だけ暗くした(白背景5.35:1 / gray-100背景4.86:1)。 */
     --color-border-subtle: 0 0 0;         /* black、tailwind.config側で/10固定 */
     --color-border-strong: 0 0 0;         /* black、tailwind.config側で/20固定 */
   }

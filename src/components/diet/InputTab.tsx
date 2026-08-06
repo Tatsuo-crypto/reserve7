@@ -402,7 +402,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                     <div className="flex items-center justify-between">
                         <h2 className="text-sm font-normal text-text-muted uppercase tracking-widest">記録する日を選択</h2>
                         {isAdmin && (
-                            <Button type="button" variant="ghost" size="sm" className="text-xs font-normal text-brand-700 px-3 py-1 bg-brand-500/15 rounded-full">項目編集</Button>
+                            <Button type="button" variant="ghost" size="sm" className="text-xs font-normal text-brand-600 px-3 py-1 bg-brand-500/15 rounded-full">項目編集</Button>
                         )}
                     </div>
 
@@ -511,7 +511,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
 
                         <div className="grid grid-cols-2 gap-4">
                             <div className={`col-span-2 p-4 rounded-2xl transition-colors ${isSaved ? 'bg-surface-overlay' : 'bg-brand-500/10'}`}>
-                                <div className={`text-xs font-normal uppercase mb-2 tracking-widest text-center ${isSaved ? 'text-text-secondary' : 'text-brand-700'}`}>総エネルギー</div>
+                                <div className={`text-xs font-normal uppercase mb-2 tracking-widest text-center ${isSaved ? 'text-text-secondary' : 'text-brand-600'}`}>総エネルギー</div>
                                 <div className="flex items-center justify-center space-x-3">
                                     <div className="text-3xl font-bold text-text-primary tabular-nums">{ocrResult.calories}</div>
                                     <div className="text-sm font-normal text-text-muted">/</div>
@@ -534,7 +534,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                                     variant="ghost"
                                     size="sm"
                                     onClick={() => fileInputRef.current?.click()}
-                                    className="text-xs font-normal text-brand-700 px-3 py-1.5 bg-brand-500/15 rounded-full hover:bg-brand-500/25 transition-colors flex items-center gap-2"
+                                    className="text-xs font-normal text-brand-600 px-3 py-1.5 bg-brand-500/15 rounded-full hover:bg-brand-500/25 transition-colors flex items-center gap-2"
                                 >
                                     <Icon name="upload" size={12} />
                                     写真を再アップロード

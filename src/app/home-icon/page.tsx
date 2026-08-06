@@ -76,8 +76,8 @@ export default function HomeIconSetupPage() {
 
         {/* 補足情報 */}
         <div className="mt-6 bg-brand-500/15 border border-brand-500/30 rounded-lg p-4">
-          <h3 className="text-sm font-normal text-brand-700 mb-2">💡 ポイント</h3>
-          <ul className="text-sm text-brand-700 space-y-1">
+          <h3 className="text-sm font-normal text-brand-600 mb-2">💡 ポイント</h3>
+          <ul className="text-sm text-brand-600 space-y-1">
             <li>• 必ずSafariブラウザで開いてください（Chrome等では動作しません）</li>
             <li>• 古いアイコンの削除とキャッシュクリアが重要です</li>
             <li>• 新しいアイコンは白い「T&J」の文字が表示されます</li>

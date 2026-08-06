@@ -904,7 +904,7 @@ function DietPlanPageContent() {
                                                         <tr key={i} className="group hover:bg-surface-base transition-colors">
                                                             <td className="py-5 text-sm font-normal text-text-primary">
                                                                 {h.date.slice(5).replace(/-/g, '/')}
-                                                                {h.image_url && <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-lg text-xs bg-brand-500/15 text-brand-700 uppercase tracking-tighter font-bold">Image</span>}
+                                                                {h.image_url && <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-lg text-xs bg-brand-500/15 text-brand-600 uppercase tracking-tighter font-bold">Image</span>}
                                                             </td>
                                                             <td className="py-5 text-sm font-normal text-text-primary text-right tabular-nums">{h.calories?.toLocaleString()} <span className="text-xs text-text-muted">kcal</span></td>
                                                             <td className="py-5 text-sm font-normal text-text-secondary text-center tabular-nums">
@@ -1090,7 +1090,7 @@ function DietPlanPageContent() {
                                             <h2 className="text-xl font-semibold text-text-primary tracking-tight">現在の目標設定</h2>
                                         </div>
                                         {!editingCurrentPlan && (
-                                            <Button type="button" variant="ghost" size="sm" onClick={() => setEditingCurrentPlan(true)} className="text-xs text-brand-700 bg-brand-500/15 px-4 py-2 rounded-full hover:bg-brand-500/25">編集</Button>
+                                            <Button type="button" variant="ghost" size="sm" onClick={() => setEditingCurrentPlan(true)} className="text-xs text-brand-600 bg-brand-500/15 px-4 py-2 rounded-full hover:bg-brand-500/25">編集</Button>
                                         )}
                                     </div>
                                     {editingCurrentPlan ? (
@@ -1133,7 +1133,7 @@ function DietPlanPageContent() {
                                                         },
                                                     ].map(item => (
                                                         <div key={item.label} className={`rounded-2xl border px-4 py-4 ${item.tone === 'training' ? 'bg-brand-500/10 border-brand-500/25' : 'bg-surface-base border-border-subtle'}`}>
-                                                            <p className={`text-xs ${item.tone === 'training' ? 'text-brand-700' : 'text-blue-700'}`}>{item.label}</p>
+                                                            <p className={`text-xs ${item.tone === 'training' ? 'text-brand-600' : 'text-blue-700'}`}>{item.label}</p>
                                                             <p className="mt-1 text-3xl font-bold text-text-primary tabular-nums">{Math.round(Number(item.calories)).toLocaleString()}<span className="ml-1 text-sm text-text-muted">kcal</span></p>
                                                             <div className="mt-3 flex flex-wrap gap-2">
                                                                 {[
@@ -1344,7 +1344,7 @@ function GoalHistoryCharts({ data, habitTargets, onEditRequest }: { data: any[],
                 : row.calories
         return (
             <div className={`rounded-2xl border px-4 py-4 ${isTraining ? 'bg-brand-500/10 border-brand-500/25' : 'bg-surface-base border-border-subtle'}`}>
-                {label && <p className={`text-xs ${isTraining ? 'text-brand-700' : 'text-blue-700'}`}>{label}</p>}
+                {label && <p className={`text-xs ${isTraining ? 'text-brand-600' : 'text-blue-700'}`}>{label}</p>}
                 <p className={`${label ? 'mt-1' : ''} text-3xl font-bold text-text-primary tabular-nums`}>
                     {formatKcal(calories)}<span className="ml-1 text-sm text-text-muted">kcal</span>
                 </p>
@@ -1375,7 +1375,7 @@ function GoalHistoryCharts({ data, habitTargets, onEditRequest }: { data: any[],
                 <div className="mb-3">
                     <div className="flex items-center justify-between gap-3">
                         <h3 className="text-sm font-normal text-text-primary">カロリー推移</h3>
-                        <span className="rounded-full bg-brand-500/10 px-2.5 py-1 text-xs text-brand-700">筋トレ日基準</span>
+                        <span className="rounded-full bg-brand-500/10 px-2.5 py-1 text-xs text-brand-600">筋トレ日基準</span>
                     </div>
                 </div>
                 {chartRows.length === 1 ? (
@@ -1473,7 +1473,7 @@ function GoalHistoryCharts({ data, habitTargets, onEditRequest }: { data: any[],
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => onEditRequest(selected.date)}
-                                className="rounded-full bg-brand-500/15 px-3 py-1.5 text-xs text-brand-700 hover:bg-brand-500/25"
+                                className="rounded-full bg-brand-500/15 px-3 py-1.5 text-xs text-brand-600 hover:bg-brand-500/25"
                             >
                                 編集
                             </Button>

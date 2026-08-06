@@ -428,7 +428,7 @@ export default function TrainersPage() {
                         type="button"
                         variant="secondary"
                         size="sm"
-                        className="ui-control-nowrap min-w-12 rounded-full bg-brand-500/15 px-3 py-1 text-center text-xs font-normal text-brand-700 transition-colors hover:bg-brand-500/25"
+                        className="ui-control-nowrap min-w-12 rounded-full bg-brand-500/15 px-3 py-1 text-center text-xs font-normal text-brand-600 transition-colors hover:bg-brand-500/25"
                         onClick={() => handleCopyAccessUrl(t.access_token!, t.full_name)}
                       >
                         URL

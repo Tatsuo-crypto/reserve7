@@ -277,7 +277,7 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
                               </span>
                               <div className="flex gap-1">
                                 {isFutureMonth && (
-                                  <span className="text-xs font-normal bg-brand-500/15 text-brand-700 px-1.5 py-0.5 rounded-full uppercase tracking-tighter">予定</span>
+                                  <span className="text-xs font-normal bg-brand-500/15 text-brand-600 px-1.5 py-0.5 rounded-full uppercase tracking-tighter">予定</span>
                                 )}
                                 {isCurrentMonth && (
                                   <span className="text-xs font-normal bg-surface-overlay text-text-secondary px-1.5 py-0.5 rounded-full uppercase tracking-tighter">今月</span>
@@ -307,7 +307,7 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
                               size="sm"
                               className={`text-xs font-normal uppercase tracking-widest px-3 py-2 rounded-2xl border transition-all ${
                                 isFutureMonth 
-                                  ? 'bg-brand-500/15 text-brand-700 border-brand-500/20 hover:bg-brand-500/25'
+                                  ? 'bg-brand-500/15 text-brand-600 border-brand-500/20 hover:bg-brand-500/25'
                                   : 'bg-surface-raised text-brand-600 border-border-subtle hover:border-brand-500/30 hover:bg-brand-500/15'
                               }`}
                               onClick={() => handleEditClick(p)}
@@ -333,14 +333,14 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
               <div className="flex items-center gap-2 mb-4">
                 <h3 className="text-xl font-semibold">{formatMonth(editingItem.month)} の設定</h3>
                 {editingItem.status === 'future' && (
-                  <span className="text-xs bg-brand-500/15 text-brand-700 px-2 py-0.5 rounded-lg font-normal">翌月以降の予定</span>
+                  <span className="text-xs bg-brand-500/15 text-brand-600 px-2 py-0.5 rounded-lg font-normal">翌月以降の予定</span>
                 )}
               </div>
 
               {editingItem.status === 'future' && (
-                <div className="mb-4 bg-brand-500/15 border border-brand-500/30 rounded-lg p-3 text-sm text-brand-700">
+                <div className="mb-4 bg-brand-500/15 border border-brand-500/30 rounded-lg p-3 text-sm text-brand-600">
                   📅 <strong>{formatMonth(editingItem.month)}</strong> からのプラン変更予定を設定します。<br />
-                  <span className="text-xs text-brand-700 mt-1 block">現在のプランは今月末まで継続されます。</span>
+                  <span className="text-xs text-brand-600 mt-1 block">現在のプランは今月末まで継続されます。</span>
                 </div>
               )}
               

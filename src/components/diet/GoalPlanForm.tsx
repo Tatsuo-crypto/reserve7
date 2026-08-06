@@ -345,9 +345,9 @@ function DayTypeGoalCard({
     const accent = isTraining
         ? {
             dot: 'bg-brand-500',
-            text: 'text-brand-700',
+            text: 'text-brand-600',
             input: 'focus:ring-brand-500',
-            pill: 'bg-brand-500/12 text-brand-700 border-brand-500/20',
+            pill: 'bg-brand-500/12 text-brand-600 border-brand-500/20',
         }
         : {
             dot: 'bg-sky-400',
@@ -407,7 +407,7 @@ function PfcTotalStatus({ summary }: { summary: ReturnType<typeof getPfcSummary>
     return (
         <div className="space-y-1 text-center">
             <p className="text-sm font-semibold text-text-primary">
-                合計 <span className={over ? 'text-state-danger-700' : 'text-brand-700'}>{summary.total.toLocaleString()}</span>
+                合計 <span className={over ? 'text-state-danger-700' : 'text-brand-600'}>{summary.total.toLocaleString()}</span>
                 <span className="text-sm text-text-muted"> / {summary.target.toLocaleString()}kcal</span>
             </p>
             <p className={`text-xs ${over ? 'text-state-danger-700' : 'text-text-muted'}`}>
