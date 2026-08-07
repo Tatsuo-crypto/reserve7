@@ -143,6 +143,16 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
   const [viewMode, setViewMode] = useState<'month' | 'timeline'>('month')
   const [selectedDate, setSelectedDate] = useState<string>('')
   const { count: storeChangeCount, currentStoreId } = useStoreChange()
+  // BF-1: Googleカレンダーと同じく、月グリッドを画面の高さいっぱいに広げる。
+  // 行の高さが可変になるので「1日に何件のチップが入るか」も可変になる。
+  // 親ページの構造が3種類(dashboard / admin/calendar / trainer)あり、どれも
+  // 高さが固定されたflexチェーンになっていないため、グリッド自身の位置を実測して
+  // 「ビューポート下端まで」を計算する方式にしている。
+  const gridRef = useRef<HTMLDivElement>(null)
+  const legendRef = useRef<HTMLDivElement>(null)
+  const [gridHeight, setGridHeight] = useState<number | null>(null)
+  const [maxChipsPerDay, setMaxChipsPerDay] = useState(4)
+
   const lastFetchRef = useRef<{ key: string, at: number } | null>(null)
   const lastAvailabilityFetchRef = useRef<string | null>(null)
 
@@ -369,6 +379,50 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
     return (day + 6) % 7
   }, [])
 
+  // BF-1: 月グリッドの行数(月によって5行/6行が変わる)。高さ計算と行定義の両方で使う。
+  const gridRowCount = useMemo(() => {
+    return Math.ceil((getFirstDayOfMonth(currentDate) + getDaysInMonth(currentDate)) / 7)
+  }, [currentDate, getFirstDayOfMonth, getDaysInMonth])
+
+  /**
+   * BF-1: グリッドの高さと、1マスに入るチップ数を実測して決める。
+   *
+   * 「ビューポートの高さ - グリッド上端の位置 - 凡例の高さ - 下部ナビの高さ」が使える高さ。
+   * 下部ナビは fixed のためレイアウト上の高さを持たず、放っておくと凡例がナビの裏に隠れる
+   * (オーナー指摘: 凡例が予約ボタンに被る)。data-bottom-nav を実測して必ず避ける。
+   */
+  useEffect(() => {
+    const DAY_NUMBER_H = 18   // 日付の数字の行
+    const CHIP_H = 15         // チップ13px + 隙間2px
+    const NAV_FAB_OVERHANG = 18 // 中央の丸ボタンがナビ上端から飛び出す分(-translate-y-4)
+    const BREATHING = 6
+    const MIN_ROW_H = 64      // これ以上潰れるくらいなら画面外にはみ出させる
+
+    const measure = () => {
+      const grid = gridRef.current
+      if (!grid) return
+
+      const gridTop = grid.getBoundingClientRect().top
+      const nav = document.querySelector('[data-bottom-nav]')
+      const navH = nav ? nav.getBoundingClientRect().height + NAV_FAB_OVERHANG : 0
+      const legendH = legendRef.current?.getBoundingClientRect().height ?? 0
+
+      const available = window.innerHeight - gridTop - legendH - navH - BREATHING
+      const height = Math.max(gridRowCount * MIN_ROW_H, available)
+
+      setGridHeight(height)
+      setMaxChipsPerDay(Math.max(1, Math.floor((height / gridRowCount - DAY_NUMBER_H) / CHIP_H)))
+    }
+
+    measure()
+    window.addEventListener('resize', measure)
+    window.addEventListener('orientationchange', measure)
+    return () => {
+      window.removeEventListener('resize', measure)
+      window.removeEventListener('orientationchange', measure)
+    }
+  }, [gridRowCount, viewMode, loading])
+
   const eventsByDate = useMemo(() => {
     const grouped = new Map<string, CalendarEvent[]>()
 
@@ -431,10 +485,15 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
     const firstDay = getFirstDayOfMonth(currentDate)
     const days = []
 
+    // BF-1: 枠線は各セルの右・下だけに引く。全辺に引くと隣同士で線が重なって
+    // 2pxの太い罫線になり、Googleカレンダーのような細い方眼にならない。
+    // グリッド側で上端・左端の線を引いて閉じる。
+    const cellBorder = 'border-r border-b border-border-subtle'
+
     // Empty cells for days before the first day of the month
     for (let i = 0; i < firstDay; i++) {
       days.push(
-        <div key={`empty-${i}`} className="h-[82px] bg-surface-base border border-border-subtle"></div>
+        <div key={`empty-${i}`} className={`bg-surface-base ${cellBorder}`}></div>
       )
     }
 
@@ -445,13 +504,15 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
       const today = new Date()
       const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
       const isToday = dateStr === todayStr
-      const visibleEvents = dayEvents.length > 4 ? dayEvents.slice(0, 3) : dayEvents.slice(0, 4)
-      const hiddenEventCount = dayEvents.length > 4 ? dayEvents.length - 3 : 0
+      // BF-1: 入る枚数は行の高さ次第で変わる。溢れる場合は最後の1枠を「+N」に使う。
+      const overflowing = dayEvents.length > maxChipsPerDay
+      const visibleEvents = overflowing ? dayEvents.slice(0, maxChipsPerDay - 1) : dayEvents
+      const hiddenEventCount = overflowing ? dayEvents.length - (maxChipsPerDay - 1) : 0
 
       days.push(
         <div
           key={day}
-          className="h-[82px] p-[2px] overflow-hidden cursor-pointer flex flex-col bg-surface-raised hover:bg-surface-base border border-border-subtle"
+          className={`min-h-0 p-[2px] overflow-hidden cursor-pointer flex flex-col bg-surface-raised hover:bg-surface-base ${cellBorder}`}
           onClick={() => handleDateClick(dateStr)}
         >
           <div className="h-4 text-cell font-normal mb-0.5 flex-shrink-0 flex justify-start">
@@ -465,7 +526,7 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
               </div>
             )}
           </div>
-          <div className="flex-1 min-h-0 overflow-hidden space-y-[1px]">
+          <div className="flex-1 min-h-0 overflow-hidden space-y-[2px]">
             {visibleEvents.map(event => {
               // BD-1: 配色は src/lib/reservation-colors.ts に集約(タイムラインと凡例で共通)
               const colorClass = reservationChipClass(event)
@@ -473,7 +534,7 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
               return (
                 <div
                   key={event.id}
-                  className={`h-[13px] min-w-0 text-cell px-[2px] flex items-center rounded-[5px] truncate font-normal ${colorClass}`}
+                  className={`h-[13px] min-w-0 text-cell px-[3px] flex items-center rounded-[3px] truncate font-normal ${colorClass}`}
                   title={`${event.title} (${event.time})`}
                 >
                   {formatReservationTitle(event.title, event.plan)}
@@ -481,12 +542,21 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
               )
             })}
             {hiddenEventCount > 0 && (
-              <div className="h-[13px] min-w-0 text-cell px-[2px] flex items-center rounded-[5px] bg-surface-overlay text-text-secondary border border-border-subtle font-normal">
+              <div className="h-[13px] min-w-0 text-cell px-[3px] flex items-center rounded-[3px] text-text-secondary font-normal">
                 +{hiddenEventCount}
               </div>
             )}
           </div>
         </div>
+      )
+    }
+
+    // BF-1: 最終行の余りを空セルで埋めて、グリッドを常に長方形にする。
+    // 埋めないと最終週だけ罫線が途切れて方眼が崩れる(8/31の行が該当していた)。
+    const trailing = (7 - ((firstDay + daysInMonth) % 7)) % 7
+    for (let i = 0; i < trailing; i++) {
+      days.push(
+        <div key={`trailing-${i}`} className={`bg-surface-base ${cellBorder}`}></div>
       )
     }
 
@@ -528,9 +598,12 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
   }
 
   return (
-    <div className="w-full">
-      {/* White container: Month title -> Calendar grid -> Legend */}
-      <div className="bg-surface-raised rounded-2xl border border-border-subtle shadow-sm overflow-hidden">
+    // BF-1: Googleカレンダーと同じく画面いっぱいに広げるため、カード(角丸・枠線・影)を外し、
+    // 親ページの左右パディング(dashboardは px-2)を打ち消して端まで届かせる。
+    // 幅は指定しない。ブロック要素の自動幅 + 負のマージンで、親のパディングぶん外へ広げる
+    // (w-full を併用すると左だけはみ出して右が揃わなくなる)。
+    <div className="-mx-2 sm:mx-0">
+      <div className="bg-surface-raised">
         {/* Month Navigation */}
         <div className="py-1 px-2">
           <div className="relative flex h-11 items-center justify-center">
@@ -590,17 +663,27 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
                 ))}
               </div>
 
-              {/* Calendar grid */}
-              <div className="grid grid-cols-7 gap-0">
+              {/* Calendar grid: 高さは実測(BF-1)。上端・左端の罫線はここで引く。 */}
+              <div
+                ref={gridRef}
+                className="grid grid-cols-7 gap-0 border-t border-l border-border-subtle"
+                style={{
+                  // minHeightは実測前の初回描画用。これが無いと行が中身の高さまで潰れ、
+                  // 計測後に一瞬で伸びるちらつきになる。
+                  minHeight: gridRowCount * 64,
+                  height: gridHeight ?? undefined,
+                  gridTemplateRows: `repeat(${gridRowCount}, minmax(0, 1fr))`,
+                }}
+              >
                 {renderCalendarDays()}
               </div>
             </div>
           )}
         </div>
 
-        {/* Legend inside white container */}
-        <div className="px-3 py-2">
-          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-xs">
+        {/* Legend: 高さを実測してグリッドの取り分から差し引く(BF-1)。下部ナビの裏に隠れない。 */}
+        <div ref={legendRef} className="px-3 py-1.5">
+          <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs">
             {RESERVATION_LEGEND_ORDER.map(key => (
               <div key={key} className="flex shrink-0 items-center gap-1.5 whitespace-nowrap">
                 <div className={`h-2.5 w-2.5 shrink-0 rounded-lg ${RESERVATION_LEGEND_CLASSES[key]}`}></div>

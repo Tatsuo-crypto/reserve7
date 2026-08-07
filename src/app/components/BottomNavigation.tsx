@@ -37,7 +37,11 @@ const BottomNavigationContent = () => {
   ];
 
   return (
+    // BF-1: カレンダーが画面の高さいっぱいに広がる際、このナビの高さを実測して
+    // その分を差し引くため data-bottom-nav を付けている。中央の丸ボタンは
+    // -translate-y-4 でナビの上に飛び出すので、計測側でそのぶんも上乗せする。
     <div
+      data-bottom-nav
       className="fixed bottom-0 left-0 right-0 z-50 border-t border-border-subtle bg-surface-raised/95 backdrop-blur-md shadow-[0_-1px_10px_rgba(0,0,0,0.02)]"
       style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
     >
