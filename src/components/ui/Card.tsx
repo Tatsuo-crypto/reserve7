@@ -1,12 +1,15 @@
 import { HTMLAttributes } from 'react'
 
-type Padding = 'sm' | 'md' | 'lg'
+type Padding = 'xs' | 'sm' | 'md' | 'lg'
 
 export interface CardProps extends HTMLAttributes<HTMLDivElement> {
     padding?: Padding
 }
 
 const PADDING_CLASSES: Record<Padding, string> = {
+    // BE-4: 数値カードを縦に詰めて1画面に収めるための最小パディング。
+    // スマホで数値カードが縦に10枚以上並ぶ画面(週間まとめ)向け。
+    xs: 'p-3',
     sm: 'p-5',
     md: 'p-6 sm:p-8',
     lg: 'p-8 sm:p-10',

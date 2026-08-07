@@ -54,6 +54,23 @@ function formatMetricValue(value: number, fractionDigits = 1) {
 }
 
 /**
+ * BE-4: 画面に出す数値は「小数第1位までの切り上げ」で統一する。
+ *
+ * 目標値は「週の目標 ÷ 7」のような割り算で出るため 66.42857142857143 のような
+ * 生の浮動小数がそのまま表示されてしまっていた(平均表示の目標欄)。
+ * 切り捨てでも四捨五入でもなく切り上げにしているのは、目標は「ここまで摂ってよい/
+ * ここまで摂るべき」の線であり、表示のために内側に丸めると実際の判定(pct)と
+ * ズレて見えるため。整数になる場合は小数点以下を出さない。
+ */
+function ceil1(value: number) {
+    return Math.ceil(value * 10) / 10
+}
+
+function fmt1(value: number) {
+    return ceil1(value).toLocaleString(undefined, { maximumFractionDigits: 1 })
+}
+
+/**
  * オーナー確認後の修正（2026-07-06）: 「週の合計」「平均値」どちらか一方に固定せず、
  * ボタンで切り替えられるようにする。WeeklyProgressPanel/WeeklySummaryPanelそれぞれで
  * mode stateを持ち、このトグルとCalorieHeroCard/AchievementItemCardに渡す。
@@ -111,17 +128,18 @@ export function RecordCheckTable({
     const interactive = Boolean(onSelectDate)
 
     return (
-        <Card padding="sm">
-            <div className="mb-3 flex items-baseline justify-between gap-3">
-                <h3 className="text-sm font-semibold text-text-primary">記録チェック表</h3>
-                {interactive && <span className="text-xs font-normal text-text-muted">曜日をタップでその日を表示</span>}
+        <Card padding="xs">
+            {/* BE-4: 「曜日をタップでその日を表示」の説明文は削除。丸が押せることは
+                タップすれば分かるうえ、この画面は縦の情報量を優先する。 */}
+            <div className="mb-1.5">
+                <h3 className="text-xs font-semibold text-text-primary">記録チェック表</h3>
             </div>
-            <div className="grid grid-cols-7 gap-1.5">
+            <div className="grid grid-cols-7 gap-1">
                 {weekDays.map(day => {
                     const isSelected = interactive && day.date === selectedDate
                     const circle = (
                         <div
-                            className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${day.recorded ? 'bg-brand-500 text-white' : 'bg-surface-overlay text-text-muted'} ${
+                            className={`w-7 h-7 rounded-full flex items-center justify-center transition-colors ${day.recorded ? 'bg-brand-500 text-white' : 'bg-surface-overlay text-text-muted'} ${
                                 isSelected
                                     ? 'ring-2 ring-text-primary ring-offset-1 ring-offset-surface-raised'
                                     : day.isToday ? 'ring-2 ring-brand-500 ring-offset-1 ring-offset-surface-raised' : ''
@@ -132,8 +150,8 @@ export function RecordCheckTable({
                     )
 
                     return (
-                        <div key={day.date} className="flex flex-col items-center gap-1">
-                            <span className={`text-xs font-normal ${day.isToday ? 'text-brand-600' : 'text-text-muted'}`}>{day.label}</span>
+                        <div key={day.date} className="flex flex-col items-center gap-0.5">
+                            <span className={`text-xs font-normal leading-none ${day.isToday ? 'text-brand-600' : 'text-text-muted'}`}>{day.label}</span>
                             {interactive ? (
                                 <Button
                                     type="button"
@@ -183,16 +201,17 @@ export function CalorieHeroCard({
     const diffUnit = isTotal ? 'kcal' : 'kcal/日'
 
     return (
-        <Card padding="sm">
-            <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-semibold text-text-primary">カロリー</h3>
+        <Card padding="xs">
+            <div className="flex items-center justify-between mb-1">
+                <h3 className="text-xs font-semibold text-text-primary">カロリー</h3>
                 <Badge tone={over ? 'danger' : 'brand'}>{over ? `+${diffAbs}${diffUnit}` : `あと${diffAbs}${diffUnit}`}</Badge>
             </div>
-            <div className="flex items-baseline gap-1.5 mb-2">
-                <span className="stat-value">{Math.round(baseVal).toLocaleString()}</span>
-                <span className="stat-unit">/{Math.round(targetVal).toLocaleString()}{mainUnit}</span>
+            {/* BE-4: 「実績/目標 単位」の並びに統一(他の項目カードと同じ形にする) */}
+            <div className="flex items-baseline gap-1 mb-1.5">
+                <span className="stat-value !text-3xl">{fmt1(baseVal)}</span>
+                <span className="stat-unit">/{fmt1(targetVal)} {mainUnit}</span>
             </div>
-            <ProgressBar pct={pct} barClassName={bar} segmented={isTotal} heightClassName="h-2.5" />
+            <ProgressBar pct={pct} barClassName={bar} segmented={isTotal} heightClassName="h-2" />
         </Card>
     )
 }
@@ -267,37 +286,29 @@ export function AchievementItemCard({
     // AR-1: 筋トレ等の頻度型は「日」表示でも週の実施回数のままにする(1日単位だと0/1で意味が薄いため)
     const isDay = !isFrequency && mode === 'day'
     const useTotal = !isFrequency && mode === 'total'
-    const roundVal = (v: number) => (isFrequency || useTotal || isDay ? Math.round(v) : Math.round(v * 10) / 10)
     const targetVal = isFrequency ? (target || 0) : isDay ? (dayTarget || 0) : (useTotal ? (weekTarget || 0) : (perDayTarget || 0))
     const baseVal = isFrequency ? (actual || 0) : isDay ? (dayActual || 0) : (useTotal ? (actualTotal || 0) : (avg || 0))
     const pct = targetVal > 0 ? Math.round((baseVal / targetVal) * 100) : 0
     const { bar, text } = achievementColor(pct)
 
+    // BE-4: 3分岐あった数値表示を「実績/目標 単位」の1つに統一する。
+    // 平均表示だけ「82.4g（目標94g）」という別形式で、しかも目標を丸めずに出していたため
+    // 「66.42857142857143」のような生の値が画面に出ていた。形式を揃えると同時に潰す。
+    const hasValue = isFrequency || avg !== undefined || isDay || useTotal
+
     return (
-        <Card padding="sm">
-            <div className="flex justify-between items-center mb-1">
-                <p className="text-xs font-normal text-text-muted uppercase tracking-widest leading-none">{label}</p>
-                <p className={`text-xs font-normal tabular-nums leading-none ${text}`}>{pct}%</p>
+        <Card padding="xs">
+            <div className="flex justify-between items-center gap-1 mb-0.5">
+                <p className="min-w-0 text-xs font-normal text-text-muted leading-none truncate">{label}</p>
+                <p className={`text-xs font-normal tabular-nums leading-none shrink-0 ${text}`}>{pct}%</p>
             </div>
 
-            {isFrequency ? (
-                <div className="flex items-baseline gap-1">
-                    <span className="stat-value !text-xl">{actual}</span>
-                    <span className="stat-unit">/{target}{unit}</span>
-                </div>
-            ) : isDay || useTotal ? (
-                <div className="flex items-baseline gap-1">
-                    <span className="stat-value !text-xl">{roundVal(baseVal).toLocaleString()}</span>
-                    <span className="stat-unit">/ {roundVal(targetVal).toLocaleString()}{unit}</span>
-                </div>
-            ) : (
-                <div className="flex items-baseline gap-1">
-                    <span className="stat-value !text-xl">{avg !== undefined ? roundVal(avg).toLocaleString() : '-'}</span>
-                    <span className="stat-unit">{unit}（目標{targetVal}{unit}）</span>
-                </div>
-            )}
+            <div className="flex items-baseline gap-1">
+                <span className="stat-value !text-xl">{hasValue ? fmt1(baseVal) : '-'}</span>
+                <span className="stat-unit">/{fmt1(targetVal)} {unit}</span>
+            </div>
 
-            <div className="mt-2">
+            <div className="mt-1.5">
                 <ProgressBar pct={pct} barClassName={bar} segmented={useTotal} />
             </div>
         </Card>
