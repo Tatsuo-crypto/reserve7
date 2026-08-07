@@ -7,6 +7,35 @@ import Icon from '@/components/ui/icons'
 import Button from '@/components/ui/Button'
 import { reservationChipClass, RESERVATION_LEGEND_ORDER, RESERVATION_LEGEND_CLASSES, RESERVATION_LEGEND_LABELS } from '@/lib/reservation-colors'
 
+/**
+ * BF-2: 1マスに何枚のチップが入るかの計算。
+ *
+ * BF-1では「(行の高さ − 日付欄) ÷ 15px」というざっくり計算にしていたため、
+ * セルの上下パディング4pxを勘定に入れておらず、4枚目が2pxほどはみ出して
+ * 下が切れていた。マス目の実寸をそのまま式にする。
+ *
+ *   セルの中身 = 上下パディング + 日付欄 + (チップ × n) + (隙間 × (n−1))
+ *
+ * また「4枚目まではどの端末でも必ず入る」ことをオーナー指定の要件とし、
+ * MIN_ROW_HEIGHT を4枚ぶんちょうどの高さにする(画面が低い端末でも4枚は死守)。
+ */
+const CELL_PADDING_Y = 4   // p-[2px] の上下
+const DAY_NUMBER_H = 18    // 日付の数字 h-4(16px) + mb-0.5(2px)
+const CHIP_H = 13          // h-[13px]
+const CHIP_GAP = 1         // space-y-[1px]
+const MIN_VISIBLE_CHIPS = 4
+
+const rowHeightForChips = (chips: number) =>
+  CELL_PADDING_Y + DAY_NUMBER_H + chips * CHIP_H + (chips - 1) * CHIP_GAP
+
+const MIN_ROW_HEIGHT = rowHeightForChips(MIN_VISIBLE_CHIPS)
+
+const chipCapacity = (rowHeight: number) =>
+  Math.max(
+    MIN_VISIBLE_CHIPS,
+    Math.floor((rowHeight - CELL_PADDING_Y - DAY_NUMBER_H + CHIP_GAP) / (CHIP_H + CHIP_GAP))
+  )
+
 interface Reservation {
   id: string
   title: string
@@ -392,11 +421,8 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
    * (オーナー指摘: 凡例が予約ボタンに被る)。data-bottom-nav を実測して必ず避ける。
    */
   useEffect(() => {
-    const DAY_NUMBER_H = 18   // 日付の数字の行
-    const CHIP_H = 15         // チップ13px + 隙間2px
     const NAV_FAB_OVERHANG = 18 // 中央の丸ボタンがナビ上端から飛び出す分(-translate-y-4)
     const BREATHING = 6
-    const MIN_ROW_H = 64      // これ以上潰れるくらいなら画面外にはみ出させる
 
     const measure = () => {
       const grid = gridRef.current
@@ -408,10 +434,10 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
       const legendH = legendRef.current?.getBoundingClientRect().height ?? 0
 
       const available = window.innerHeight - gridTop - legendH - navH - BREATHING
-      const height = Math.max(gridRowCount * MIN_ROW_H, available)
+      const height = Math.max(gridRowCount * MIN_ROW_HEIGHT, available)
 
       setGridHeight(height)
-      setMaxChipsPerDay(Math.max(1, Math.floor((height / gridRowCount - DAY_NUMBER_H) / CHIP_H)))
+      setMaxChipsPerDay(chipCapacity(height / gridRowCount))
     }
 
     measure()
@@ -526,7 +552,7 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
               </div>
             )}
           </div>
-          <div className="flex-1 min-h-0 overflow-hidden space-y-[2px]">
+          <div className="flex-1 min-h-0 overflow-hidden space-y-[1px]">
             {visibleEvents.map(event => {
               // BD-1: 配色は src/lib/reservation-colors.ts に集約(タイムラインと凡例で共通)
               const colorClass = reservationChipClass(event)
@@ -670,7 +696,7 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
                 style={{
                   // minHeightは実測前の初回描画用。これが無いと行が中身の高さまで潰れ、
                   // 計測後に一瞬で伸びるちらつきになる。
-                  minHeight: gridRowCount * 64,
+                  minHeight: gridRowCount * MIN_ROW_HEIGHT,
                   height: gridHeight ?? undefined,
                   gridTemplateRows: `repeat(${gridRowCount}, minmax(0, 1fr))`,
                 }}
