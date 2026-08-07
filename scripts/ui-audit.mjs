@@ -74,6 +74,38 @@ for (const file of walk(SRC)) {
   }
 }
 
+// 5) BE-1: Tailwind の content グロブに含まれないファイルに className 文字列がある
+//    → そのクラスの CSS が一切生成されず、実機で無色/無背景になる(型検査もlintも素通りする)
+{
+  const cfg = readFileSync(join(ROOT, 'tailwind.config.js'), 'utf8')
+  const contentBlock = cfg.slice(cfg.indexOf('content:'), cfg.indexOf('theme:'))
+  const globDirs = [...contentBlock.matchAll(/'\.\/([^']+?)\/\*\*/g)].map((m) => m[1])
+
+  const walkAll = (dir, out = []) => {
+    for (const name of readdirSync(dir)) {
+      const p = join(dir, name)
+      if (statSync(p).isDirectory()) walkAll(p, out)
+      else if (/\.(ts|tsx|js|jsx)$/.test(p)) out.push(p)
+    }
+    return out
+  }
+
+  // 実際に使っている色/レイアウトのユーティリティらしき文字列だけを対象にする
+  const CLASSY =
+    /'[^']*\b(?:bg|text|border|ring|from|to|via)-(?:brand|state-[a-z]+|surface|blue|purple|green|red|amber|zinc|gray|slate|orange|yellow|teal|indigo|pink|cyan|violet|white|black)[-/][^']*'/
+
+  for (const file of walkAll(SRC)) {
+    const rel = relative(ROOT, file).replace(/\\/g, '/')
+    if (globDirs.some((d) => rel.startsWith(d + '/'))) continue
+    const src = readFileSync(file, 'utf8')
+    src.split('\n').forEach((line, i) => {
+      if (CLASSY.test(line)) {
+        add('class-outside-tailwind-content', file, i + 1, line.trim().slice(0, 80))
+      }
+    })
+  }
+}
+
 const byRule = findings.reduce((acc, f) => {
   ;(acc[f.rule] ||= []).push(f)
   return acc
@@ -84,6 +116,8 @@ const RULE_LABEL = {
   'input-fixed-width': '入力欄に固定幅(max-w-fullなし=はみ出す恐れ)',
   'truncate-large-text': '大きい文字にtruncate(長文が途中で切れて読めない)',
   'flex-child-no-min-w': 'truncateの親に min-w-0 が無い(省略されず押し出される)',
+  'class-outside-tailwind-content':
+    'tailwind.config.js の content 外にclassNameがある(CSSが生成されず無色になる)',
 }
 
 let total = 0

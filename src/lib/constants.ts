@@ -82,9 +82,11 @@ export const STATUS_LABELS: Record<string, string> = {
 // stores/page.tsxの「有効」ステータスも元々brandだったため、これで在籍系ステータス表示の配色が揃う。
 // 休会=amber、退会=state.danger(赤)はそのまま(緑を抜くだけで、状態の意味自体は変えない)。
 export const STATUS_COLORS: Record<string, string> = {
-  [STATUS.ACTIVE]: 'bg-brand-500/15 text-brand-300',
-  [STATUS.SUSPENDED]: 'bg-amber-500/15 text-amber-300',
-  [STATUS.WITHDRAWN]: 'bg-state-danger-500/15 text-state-danger-300',
+  // BE-1: AZ-2(白基調化)の一括置換は src/app と src/components しか見ていなかったため、
+  // ここの 300 系(黒基調時代の淡い文字色)が残っていた。白地の淡い塗りの上では読めないので 700 系にする。
+  [STATUS.ACTIVE]: 'bg-brand-500/15 text-brand-700',
+  [STATUS.SUSPENDED]: 'bg-amber-500/15 text-amber-700',
+  [STATUS.WITHDRAWN]: 'bg-state-danger-500/15 text-state-danger-700',
 };
 
 export const STATUS_DOT_COLORS: Record<string, string> = {

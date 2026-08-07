@@ -4,6 +4,12 @@ module.exports = {
     './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
+    // BE-1: src/lib や src/hooks にも className 文字列を持つファイルがある
+    // (reservation-colors.ts, constants.ts など)。ここを含めないと Tailwind が
+    // クラスを検出できず、そのクラスだけ CSS が生成されない = 無色で表示される。
+    // 新しいディレクトリに className を置くときは必ずここに追加すること。
+    './src/lib/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/hooks/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   theme: {
     extend: {
