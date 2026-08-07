@@ -586,7 +586,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
             {/* BE-3: 地を「予約できない時間」= 薄い黒にして、シフト帯(予約可能)を白で抜く。
                 従来は逆(白地に薄いオレンジの帯)だったが、予約チップのオレンジと帯のオレンジが
                 同系統で混ざって見えたため、帯からは色を抜いて明度だけで表す。 */}
-            <div className="flex flex-1 relative bg-black/[0.06]">
+            <div className="flex flex-1 relative bg-black/[0.11]">
               {trainers.map((trainer, trainerIndex) => (
                 <div
                   key={trainer.id}
@@ -721,7 +721,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
             <span className="text-text-secondary">予約可能時間(シフト)</span>
           </div>
           <div className="flex shrink-0 items-center gap-1.5 whitespace-nowrap">
-            <div className="h-2.5 w-2.5 shrink-0 rounded-lg border border-black/10 bg-black/[0.06]"></div>
+            <div className="h-2.5 w-2.5 shrink-0 rounded-lg border border-black/10 bg-black/[0.11]"></div>
             <span className="text-text-secondary">予約できない時間</span>
           </div>
         </div>
