@@ -465,7 +465,7 @@ function ShiftCreateModal({ trainers, date, initialHour, initialTrainerId, isOpe
             type="button"
             variant="primary"
             onClick={handleSave}
-            className="px-3 py-2 bg-brand-700 text-white text-sm rounded-lg hover:bg-brand-800"
+            className="px-3 py-2 bg-brand-500 text-white text-sm rounded-lg hover:bg-brand-600"
             disabled={loading}
           >
             保存
@@ -589,7 +589,7 @@ function ShiftEditModal({ shift, trainerName, isOpen, onClose, onSave, onDelete 
               type="button"
               variant="primary"
               onClick={handleSave}
-              className="px-3 py-2 bg-brand-700 text-white text-sm rounded-lg hover:bg-brand-800"
+              className="px-3 py-2 bg-brand-500 text-white text-sm rounded-lg hover:bg-brand-600"
               disabled={loading}
             >
               保存
@@ -715,7 +715,7 @@ function TemplateShiftCreateModal({ trainerName, start, end, isOpen, onClose, on
               type="button"
               variant="primary"
               onClick={handleSave}
-              className="px-3 py-2 bg-brand-700 text-white text-sm rounded-lg hover:bg-brand-800"
+              className="px-3 py-2 bg-brand-500 text-white text-sm rounded-lg hover:bg-brand-600"
               disabled={loading}
             >
               保存

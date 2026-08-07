@@ -236,7 +236,7 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
               size="sm"
               onClick={handleAddMonth}
               title="プランを追加・復帰"
-              className="w-12 h-12 p-0 bg-gradient-to-br from-brand-600 to-brand-800 text-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 hover:scale-105 active:scale-95 group"
+              className="w-12 h-12 p-0 bg-gradient-to-br from-brand-500 to-brand-600 text-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 hover:scale-105 active:scale-95 group"
             >
               <Icon name="plus" size={24} className="group-hover:rotate-90 transition-transform duration-300" />
             </Button>
@@ -432,8 +432,8 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
                   size="sm"
                   className={`px-4 py-2 text-sm rounded-lg text-white disabled:opacity-50 ${
                     editingItem.status === 'future'
-                      ? 'bg-brand-600 hover:bg-brand-800'
-                      : 'bg-brand-600 hover:bg-brand-800'
+                      ? 'bg-brand-600 hover:bg-brand-600'
+                      : 'bg-brand-600 hover:bg-brand-600'
                   }`}
                   onClick={handleSaveMonth}
                   disabled={saving}

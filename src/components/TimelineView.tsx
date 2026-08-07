@@ -653,7 +653,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
                             ? 'bg-orange-500/15 border border-orange-500/30 text-orange-300'
                             : event.type === 'blocked'
                               ? 'bg-surface-overlay border border-border-strong text-text-secondary'
-                              : 'bg-brand-700 border border-brand-800 text-white'
+                              : 'bg-brand-500 border border-brand-600 text-white'
 
                       return (
                         <div
@@ -716,7 +716,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
       <div className="shrink-0 px-4 py-2.5 border-t border-border-strong bg-surface-base">
         <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-xs">
           <div className="flex shrink-0 items-center gap-1.5 whitespace-nowrap">
-            <div className="h-2.5 w-2.5 shrink-0 rounded-lg border border-brand-800 bg-brand-700"></div>
+            <div className="h-2.5 w-2.5 shrink-0 rounded-lg border border-brand-600 bg-brand-500"></div>
             <span className="text-text-secondary">予約</span>
           </div>
           <div className="flex shrink-0 items-center gap-1.5 whitespace-nowrap">
@@ -892,7 +892,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
                       type="submit"
                       variant="primary"
                       size="sm"
-                      className="px-4 py-2 bg-brand-700 text-white rounded-lg hover:bg-brand-800 transition-colors"
+                      className="px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition-colors"
                     >
                       更新
                     </Button>

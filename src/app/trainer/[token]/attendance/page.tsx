@@ -130,7 +130,7 @@ export default function TrainerAttendancePage() {
         <section className="rounded-2xl border border-border-subtle bg-surface-raised p-5">
           {hasAttended && (
             <div className="mb-5 flex justify-center">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-brand-700 text-white shadow-lg shadow-brand-900/30">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-brand-500 text-white shadow-lg shadow-brand-900/30">
                 <Icon name="check" size={34} />
               </div>
             </div>
@@ -197,7 +197,7 @@ export default function TrainerAttendancePage() {
                       ? 'bg-surface-raised text-text-secondary'
                       : !isToday
                         ? 'bg-surface-overlay text-text-muted'
-                      : 'bg-brand-700 text-white'
+                      : 'bg-brand-500 text-white'
                   }`}
                 >
                   {shift.attended ? '取消' : '出勤'}

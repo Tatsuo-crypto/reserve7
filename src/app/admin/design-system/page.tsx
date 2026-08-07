@@ -112,7 +112,7 @@ export default function DesignSystemPage() {
                         <div className="w-10 h-10 rounded-lg bg-brand-400" title="brand-400" />
                         <div className="w-10 h-10 rounded-lg bg-brand-500" title="brand-500" />
                         <div className="w-10 h-10 rounded-lg bg-brand-600" title="brand-600" />
-                        <div className="w-10 h-10 rounded-lg bg-brand-700" title="brand-700" />
+                        <div className="w-10 h-10 rounded-lg bg-brand-500" title="brand-700" />
                         <div className="w-10 h-10 rounded-lg bg-brand-800" title="brand-800" />
                         <div className="w-10 h-10 rounded-lg bg-brand-900" title="brand-900" />
                     </div>

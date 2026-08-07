@@ -89,7 +89,7 @@ export default function GoalModal({ userId, token, onClose, onSave }: GoalModalP
                         variant="primary"
                         onClick={handleSave}
                         disabled={saving}
-                        className="rounded-full bg-brand-700 px-5 py-2 text-sm text-white disabled:opacity-50"
+                        className="rounded-full bg-brand-500 px-5 py-2 text-sm text-white disabled:opacity-50"
                     >
                         {saving ? '保存中...' : '保存'}
                     </Button>

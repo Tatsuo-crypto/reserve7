@@ -676,7 +676,7 @@ export default function AdminMailSettingsPage() {
                 variant="primary"
                 onClick={handleSaveMembers}
                 disabled={membersSaving || membersLoading}
-                className="px-6 py-2.5 bg-brand-700 hover:bg-brand-800 text-white rounded-2xl text-sm font-medium disabled:opacity-50 disabled:hover:bg-brand-700 transition-colors flex w-full items-center justify-center gap-2 shadow-md shadow-brand-500/10"
+                className="px-6 py-2.5 bg-brand-500 hover:bg-brand-600 text-white rounded-2xl text-sm font-medium disabled:opacity-50 disabled:hover:bg-brand-500 transition-colors flex w-full items-center justify-center gap-2 shadow-md shadow-brand-500/10"
               >
                 {membersSaving ? (
                   <>
@@ -718,7 +718,7 @@ export default function AdminMailSettingsPage() {
                 type="submit"
                 variant="primary"
                 disabled={saving || !tableExists}
-                className="w-full px-6 py-2.5 bg-brand-700 hover:bg-brand-800 text-white rounded-2xl text-sm font-medium disabled:opacity-50 disabled:hover:bg-brand-700 transition-colors flex items-center justify-center gap-2 shadow-md shadow-brand-500/10"
+                className="w-full px-6 py-2.5 bg-brand-500 hover:bg-brand-600 text-white rounded-2xl text-sm font-medium disabled:opacity-50 disabled:hover:bg-brand-500 transition-colors flex items-center justify-center gap-2 shadow-md shadow-brand-500/10"
               >
                 {saving ? (
                   <>
@@ -768,7 +768,7 @@ export default function AdminMailSettingsPage() {
                 type="submit"
                 variant="primary"
                 disabled={saving || !tableExists}
-                className="w-full px-6 py-2.5 bg-brand-700 hover:bg-brand-800 text-white rounded-2xl text-sm font-medium disabled:opacity-50 disabled:hover:bg-brand-700 transition-colors flex items-center justify-center gap-2 shadow-md shadow-brand-500/10"
+                className="w-full px-6 py-2.5 bg-brand-500 hover:bg-brand-600 text-white rounded-2xl text-sm font-medium disabled:opacity-50 disabled:hover:bg-brand-500 transition-colors flex items-center justify-center gap-2 shadow-md shadow-brand-500/10"
               >
                 {saving ? (
                   <>
@@ -931,7 +931,7 @@ export default function AdminMailSettingsPage() {
                 variant="primary"
                 onClick={handleSendBroadcast}
                 disabled={broadcastSending}
-                className="w-full px-6 py-2.5 bg-brand-700 hover:bg-brand-800 text-white rounded-2xl text-sm font-medium disabled:opacity-50 transition-colors flex items-center justify-center gap-2 shadow-md shadow-brand-500/10"
+                className="w-full px-6 py-2.5 bg-brand-500 hover:bg-brand-600 text-white rounded-2xl text-sm font-medium disabled:opacity-50 transition-colors flex items-center justify-center gap-2 shadow-md shadow-brand-500/10"
               >
                 {broadcastSending ? (
                   <>

@@ -373,7 +373,7 @@ export default function ReservationsPage() {
             {isAdmin && (
               <Link
                 href="/admin/reservations/new"
-                className="bg-brand-700 text-white px-4 py-2 rounded-lg hover:bg-brand-800 transition-colors"
+                className="bg-brand-500 text-white px-4 py-2 rounded-lg hover:bg-brand-600 transition-colors"
               >
                 新規予約作成
               </Link>
@@ -620,7 +620,7 @@ export default function ReservationsPage() {
                     type="submit"
                     variant="primary"
                     size="sm"
-                    className="px-4 py-2 bg-brand-700 text-white rounded-lg hover:bg-brand-800 transition-colors"
+                    className="px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition-colors"
                   >
                     更新
                   </Button>

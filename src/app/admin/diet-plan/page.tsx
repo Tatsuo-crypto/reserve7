@@ -1041,7 +1041,7 @@ function DietPlanPageContent() {
                                                             size="sm"
                                                             key={level.value}
                                                             onClick={() => setAragonInput(prev => ({ ...prev, neat: level.value }))}
-                                                            className={`text-xs py-3 px-2 rounded-2xl transition-colors ${aragonInput.neat === level.value ? 'bg-brand-700 text-white' : 'bg-surface-base text-text-secondary hover:bg-surface-overlay'}`}
+                                                            className={`text-xs py-3 px-2 rounded-2xl transition-colors ${aragonInput.neat === level.value ? 'bg-brand-500 text-white' : 'bg-surface-base text-text-secondary hover:bg-surface-overlay'}`}
                                                         >
                                                             {level.label}
                                                         </Button>
@@ -1069,7 +1069,7 @@ function DietPlanPageContent() {
                                                             <span className="mx-1 text-text-muted">/</span>
                                                             <span className="text-blue-500">C {aragonResult.carbs}g</span>
                                                         </p>
-                                                        <Button type="button" onClick={applyAragonPlanToGoal} className="mt-4 w-full sm:w-auto px-6 py-3 rounded-2xl bg-brand-700 text-white text-sm hover:bg-brand-800 transition-colors">目標に反映</Button>
+                                                        <Button type="button" onClick={applyAragonPlanToGoal} className="mt-4 w-full sm:w-auto px-6 py-3 rounded-2xl bg-brand-500 text-white text-sm hover:bg-brand-600 transition-colors">目標に反映</Button>
                                                     </div>
                                                 </>
                                             ) : (
@@ -1192,7 +1192,7 @@ function DietPlanPageContent() {
                                 )}
 
                                 {/* L-4: 目標履歴の一番下に配置 */}
-                                <Button type="button" fullWidth onClick={openNewGoalModal} className="w-full text-sm text-white bg-brand-700 hover:bg-brand-800 px-4 py-4 rounded-2xl shadow-sm transition-colors">新しい目標を追加</Button>
+                                <Button type="button" fullWidth onClick={openNewGoalModal} className="w-full text-sm text-white bg-brand-500 hover:bg-brand-600 px-4 py-4 rounded-2xl shadow-sm transition-colors">新しい目標を追加</Button>
                             </div>
                         )}
                     </div>

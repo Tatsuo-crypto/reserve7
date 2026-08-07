@@ -22,7 +22,7 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
     block?: boolean
     /**
      * AS-1: 見た目をすべて呼び出し側のclassNameで指定したい場合に使う。
-     * variantの色クラス(例: primaryの `bg-brand-700 text-white`)は、className側に
+     * variantの色クラス(例: primaryの `bg-brand-500 text-white`)は、className側に
      * `bg-white text-brand-600` のような別の色を書いても、CSSの出力順しだいで
      * どちらが勝つか決まってしまう。実際にこれが原因で「白いボタンに白い文字」になり
      * ラベルが消えていた箇所があった。このpropを立てるとvariant/sizeのクラスを一切付けず、
@@ -37,7 +37,7 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 // destructiveはQ-4のダークバッジパターン(bg-*-500/15 + text-*-300)に合わせ、
 // hover/disabledも同系の半透明レッドで揃える(黒地での淡色ボタンのコントラスト確保)。
 const VARIANT_CLASSES: Record<Variant, string> = {
-    primary: 'bg-brand-700 text-white hover:bg-brand-800 disabled:bg-brand-300',
+    primary: 'bg-brand-500 text-white hover:bg-brand-600 disabled:bg-brand-300',
     secondary: 'bg-surface-base text-text-secondary border border-border-subtle hover:bg-surface-raised disabled:text-text-muted',
     destructive: 'bg-red-500/15 text-red-700 hover:bg-red-500/25 disabled:text-red-500/40',
     ghost: 'bg-transparent text-text-secondary hover:bg-surface-base hover:text-text-primary disabled:text-text-muted',

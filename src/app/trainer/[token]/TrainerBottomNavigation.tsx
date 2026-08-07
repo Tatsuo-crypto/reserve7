@@ -48,7 +48,7 @@ export default function TrainerBottomNavigation() {
               <div
                 className={`flex items-center justify-center transition-all duration-300 ${
                   item.isCenter
-                    ? 'mb-1 h-14 w-14 -translate-y-4 rounded-full border-4 border-surface-raised bg-brand-700 text-white shadow-lg'
+                    ? 'mb-1 h-14 w-14 -translate-y-4 rounded-full border-4 border-surface-raised bg-brand-500 text-white shadow-lg'
                     : isActive
                       ? 'h-10 w-10 text-brand-600'
                       : 'h-10 w-10 text-text-muted'

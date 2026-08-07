@@ -1122,7 +1122,7 @@ function NewReservationContent() {
               <Button
                 type="submit"
                 disabled={loading}
-                className="flex-1 px-6 py-2.5 bg-brand-700 text-white rounded-lg hover:bg-brand-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="flex-1 px-6 py-2.5 bg-brand-500 text-white rounded-lg hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {loading ? '保存中...' : '予約作成'}
               </Button>
@@ -1159,7 +1159,7 @@ function NewReservationContent() {
                   type="button"
                   fullWidth
                   onClick={handleConfirmShift}
-                  className="flex-1 px-4 py-3 bg-brand-700 text-white rounded-2xl hover:bg-brand-800 transition-colors font-normal shadow-sm"
+                  className="flex-1 px-4 py-3 bg-brand-500 text-white rounded-2xl hover:bg-brand-600 transition-colors font-normal shadow-sm"
                 >
                   OK (作成)
                 </Button>

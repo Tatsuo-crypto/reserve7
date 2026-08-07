@@ -418,7 +418,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                             variant={selectedDate === new Date().toISOString().split('T')[0] ? 'primary' : 'secondary'}
                             size="sm"
                             onClick={() => setSelectedDate(new Date().toISOString().split('T')[0])}
-                            className={`px-4 py-2 rounded-2xl text-xs font-normal transition-all ${selectedDate === new Date().toISOString().split('T')[0] ? 'bg-brand-700 text-white shadow-md' : 'bg-surface-overlay text-text-secondary'}`}
+                            className={`px-4 py-2 rounded-2xl text-xs font-normal transition-all ${selectedDate === new Date().toISOString().split('T')[0] ? 'bg-brand-500 text-white shadow-md' : 'bg-surface-overlay text-text-secondary'}`}
                         >
                             今日
                         </Button>
@@ -437,7 +437,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                                     type="button"
                                     fullWidth
                                     onClick={() => handleDayTypeSelect('training')}
-                                    className="rounded-2xl bg-brand-700 px-4 py-4 text-sm font-normal text-white active:scale-95 transition-transform"
+                                    className="rounded-2xl bg-brand-500 px-4 py-4 text-sm font-normal text-white active:scale-95 transition-transform"
                                 >
                                     筋トレ日
                                 </Button>
@@ -466,7 +466,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                                         size="sm"
                                         key={type}
                                         onClick={() => handleDayTypeSelect(type)}
-                                        className={`rounded-full px-3 py-2 text-xs transition-colors ${selectedDayType === type ? 'bg-brand-700 text-white' : 'bg-surface-overlay text-text-secondary'}`}
+                                        className={`rounded-full px-3 py-2 text-xs transition-colors ${selectedDayType === type ? 'bg-brand-500 text-white' : 'bg-surface-overlay text-text-secondary'}`}
                                     >
                                         {getDietDayTypeLabel(type)}
                                     </Button>
@@ -560,7 +560,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
 
                 {/* Large Upload Button - Only show if no data */}
                 {(!dayTypeEnabled || selectedDayType) && !ocrResult && (
-                    <div className="bg-gradient-to-br from-brand-600 to-brand-800 rounded-2xl shadow-lg p-6 text-white overflow-hidden relative group">
+                    <div className="bg-gradient-to-br from-brand-500 to-brand-600 rounded-2xl shadow-lg p-6 text-white overflow-hidden relative group">
                         <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 bg-white bg-opacity-10 rounded-full group-hover:scale-150 transition-transform duration-700"></div>
                         <div className="relative z-10 flex flex-col items-center">
                             <div className="w-16 h-16 bg-white bg-opacity-20 rounded-2xl flex items-center justify-center mb-4">
@@ -569,7 +569,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                             <h2 className="text-xl font-semibold mb-1">食事写真を解析</h2>
                             <p className="text-brand-100 text-xs mb-6 text-center opacity-80">スクリーンショットを読み取って栄養バランスを一律入力します</p>
 
-                            {/* AS-1: variantの色(bg-brand-700 text-white)とclassNameの色(bg-white text-brand-600)が
+                            {/* AS-1: variantの色(bg-brand-500 text-white)とclassNameの色(bg-white text-brand-600)が
                                 衝突し、白背景に白文字でラベルが消えていた。unstyledでvariantの色を外す。 */}
                             <Button
                                 type="button"
@@ -766,7 +766,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                         fullWidth
                         onClick={handleAllSave}
                         disabled={saving}
-                        className="w-full py-4 rounded-2xl font-semibold shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 text-sm bg-brand-700 text-white hover:bg-brand-800"
+                        className="w-full py-4 rounded-2xl font-semibold shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 text-sm bg-brand-500 text-white hover:bg-brand-600"
                     >
                         {saving ? (
                             <>

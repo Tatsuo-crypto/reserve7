@@ -472,7 +472,7 @@ export default function TrainersPage() {
               <Button
                 type="button"
                 variant="primary"
-                className="rounded-full bg-brand-700 px-5 py-2 text-sm text-white hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-full bg-brand-500 px-5 py-2 text-sm text-white hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-60"
                 onClick={saveTrainer}
                 disabled={!form.fullName.trim() || !form.storeId.trim()}
               >

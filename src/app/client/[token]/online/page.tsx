@@ -153,7 +153,7 @@ function LessonCard({ lesson, onJoin }: { lesson: OnlineLesson; onJoin: (url: st
                         onClick={() => onJoin(lesson.meet_url)}
                         disabled={!status.canJoin}
                         className={`space-x-2 px-5 py-2.5 rounded-2xl text-sm transition-all ${status.canJoin
-                            ? 'bg-brand-700 text-white hover:bg-brand-800 shadow-md hover:shadow-lg transform hover:scale-105 active:scale-95'
+                            ? 'bg-brand-500 text-white hover:bg-brand-600 shadow-md hover:shadow-lg transform hover:scale-105 active:scale-95'
                             : 'bg-surface-overlay text-text-muted disabled:bg-surface-overlay disabled:text-text-muted cursor-not-allowed'
                             }`}
                     >
@@ -254,7 +254,7 @@ export default function OnlineLessonPage() {
 
             {/* iOS App Banner */}
             {isIOS && showIOSBanner && (
-                <div className="bg-brand-700 text-white">
+                <div className="bg-brand-500 text-white">
                     <div className="max-w-lg mx-auto px-4 py-3">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center space-x-3">
@@ -303,7 +303,7 @@ export default function OnlineLessonPage() {
                             variant="primary"
                             size="sm"
                             onClick={fetchLessons}
-                            className="mt-4 px-4 py-2 bg-brand-700 text-white rounded-lg text-sm"
+                            className="mt-4 px-4 py-2 bg-brand-500 text-white rounded-lg text-sm"
                         >
                             再試行
                         </Button>
@@ -348,7 +348,7 @@ export default function OnlineLessonPage() {
                                         href="https://apps.apple.com/jp/app/google-meet/id1270665395"
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="mt-2 flex items-center justify-center w-full py-3 bg-brand-700 text-white rounded-2xl font-normal text-sm space-x-2 hover:bg-brand-800 transition-colors"
+                                        className="mt-2 flex items-center justify-center w-full py-3 bg-brand-500 text-white rounded-2xl font-normal text-sm space-x-2 hover:bg-brand-600 transition-colors"
                                     >
                                         <Icon name="download" size={20} />
                                         <span>App StoreでGoogle Meetをダウンロード</span>

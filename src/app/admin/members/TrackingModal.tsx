@@ -328,7 +328,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                     fullWidth
                     onClick={() => handleSubmit('yearly_goal', yearlyForm)}
                     disabled={loading || !yearlyForm.goal_text}
-                    className="w-full bg-brand-700 text-white px-4 py-2 rounded-lg text-sm font-normal hover:bg-brand-800 disabled:opacity-50"
+                    className="w-full bg-brand-500 text-white px-4 py-2 rounded-lg text-sm font-normal hover:bg-brand-600 disabled:opacity-50"
                   >
                     保存
                   </Button>
@@ -362,7 +362,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                                 type="button"
                                 size="sm"
                                 onClick={() => handleUpdate('yearly_goal', goal.id)}
-                                className="px-3 py-1 bg-brand-700 text-white rounded-lg text-sm hover:bg-brand-800"
+                                className="px-3 py-1 bg-brand-500 text-white rounded-lg text-sm hover:bg-brand-600"
                               >
                                 保存
                               </Button>
@@ -517,7 +517,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                       }
                     }}
                     disabled={loading || (!monthlyForm.goal_text_1 && !monthlyForm.goal_text_2 && !monthlyForm.goal_text_3)}
-                    className="w-full bg-brand-700 text-white px-4 py-2 rounded-lg text-sm font-normal hover:bg-brand-800 disabled:opacity-50"
+                    className="w-full bg-brand-500 text-white px-4 py-2 rounded-lg text-sm font-normal hover:bg-brand-600 disabled:opacity-50"
                   >
                     まとめて保存
                   </Button>
@@ -562,7 +562,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                                 type="button"
                                 size="sm"
                                 onClick={() => handleUpdate('monthly_goal', goal.id)}
-                                className="px-3 py-1 bg-brand-700 text-white rounded-lg text-sm hover:bg-brand-800"
+                                className="px-3 py-1 bg-brand-500 text-white rounded-lg text-sm hover:bg-brand-600"
                               >
                                 保存
                               </Button>
@@ -655,7 +655,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                     fullWidth
                     onClick={() => handleSubmit('weight_record', { ...weightForm, weight_kg: parseFloat(weightForm.weight_kg) })}
                     disabled={loading || !weightForm.weight_kg}
-                    className="w-full bg-brand-700 text-white px-4 py-2 rounded-lg text-sm font-normal hover:bg-brand-800 disabled:opacity-50"
+                    className="w-full bg-brand-500 text-white px-4 py-2 rounded-lg text-sm font-normal hover:bg-brand-600 disabled:opacity-50"
                   >
                     保存
                   </Button>
@@ -697,7 +697,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                                 type="button"
                                 size="sm"
                                 onClick={() => handleUpdate('weight_record', record.id)}
-                                className="px-3 py-1 bg-brand-700 text-white rounded-lg text-sm hover:bg-brand-800"
+                                className="px-3 py-1 bg-brand-500 text-white rounded-lg text-sm hover:bg-brand-600"
                               >
                                 保存
                               </Button>
@@ -815,7 +815,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                       reps: squatForm.reps ? parseInt(squatForm.reps) : undefined,
                     })}
                     disabled={loading || !squatForm.weight_kg}
-                    className="w-full bg-brand-700 text-white px-4 py-2 rounded-lg text-sm font-normal hover:bg-brand-800 disabled:opacity-50"
+                    className="w-full bg-brand-500 text-white px-4 py-2 rounded-lg text-sm font-normal hover:bg-brand-600 disabled:opacity-50"
                   >
                     保存
                   </Button>
@@ -874,7 +874,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                                 type="button"
                                 size="sm"
                                 onClick={() => handleUpdate('squat_record', record.id)}
-                                className="px-3 py-1 bg-brand-700 text-white rounded-lg text-sm hover:bg-brand-800"
+                                className="px-3 py-1 bg-brand-500 text-white rounded-lg text-sm hover:bg-brand-600"
                               >
                                 保存
                               </Button>
@@ -974,7 +974,7 @@ export default function TrackingModal({ isOpen, onClose, memberId, memberName }:
                   fullWidth
                   onClick={handleSettingsSave}
                   disabled={loading}
-                  className="w-full bg-brand-700 text-white py-4 rounded-2xl font-semibold shadow-lg hover:bg-brand-800 transition-all active:scale-95 disabled:opacity-50 text-sm"
+                  className="w-full bg-brand-500 text-white py-4 rounded-2xl font-semibold shadow-lg hover:bg-brand-600 transition-all active:scale-95 disabled:opacity-50 text-sm"
                 >
                   {loading ? '保存中...' : '設定を保存する'}
                 </Button>

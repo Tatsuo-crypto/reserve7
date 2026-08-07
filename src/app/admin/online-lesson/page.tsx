@@ -692,7 +692,7 @@ export default function AdminOnlineLessonPage() {
                                         size="md"
                                         onClick={handleSave}
                                         disabled={saving}
-                                        className="flex-1 py-3 bg-brand-700 text-white rounded-2xl hover:bg-brand-800 transition-colors font-normal text-sm disabled:opacity-50"
+                                        className="flex-1 py-3 bg-brand-500 text-white rounded-2xl hover:bg-brand-600 transition-colors font-normal text-sm disabled:opacity-50"
                                     >
                                         {saving ? '保存中...' : '保存する'}
                                     </Button>

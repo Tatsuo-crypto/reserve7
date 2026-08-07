@@ -199,7 +199,7 @@ export default function PushNotificationPrompt({ token }: PushNotificationPrompt
               size="sm"
               onClick={enablePush}
               disabled={loading || !supported}
-              className="w-full rounded-full bg-brand-700 px-4 py-2 text-xs text-white disabled:opacity-50 sm:w-auto"
+              className="w-full rounded-full bg-brand-500 px-4 py-2 text-xs text-white disabled:opacity-50 sm:w-auto"
             >
               通知をオンにする
             </Button>
