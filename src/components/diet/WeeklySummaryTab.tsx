@@ -25,7 +25,7 @@ export default function WeeklySummaryTab({ userId, token, isAdmin, weekOffset: c
     if (loading) return <WeeklyPanelSkeleton />
 
     return (
-        <div className="space-y-4 pb-24 animate-fadeIn">
+        <div className="space-y-2 pb-24 animate-fadeIn">
             <WeeklySummaryPanel
                 weeklyStats={weeklyStats}
                 weekOffset={weekOffset}

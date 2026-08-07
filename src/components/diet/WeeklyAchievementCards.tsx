@@ -71,6 +71,15 @@ function fmt1(value: number) {
 }
 
 /**
+ * BE-5: カロリーだけは小数を出さず整数に切り上げる。
+ * 1,699.4kcal のような表示は精度が意味を持たないうえ、桁数が多いぶん
+ * 主役の数字の可読性を落とす。g/L/hの項目は0.1刻みに意味があるのでfmt1のまま。
+ */
+function fmt0(value: number) {
+    return Math.ceil(value).toLocaleString()
+}
+
+/**
  * オーナー確認後の修正（2026-07-06）: 「週の合計」「平均値」どちらか一方に固定せず、
  * ボタンで切り替えられるようにする。WeeklyProgressPanel/WeeklySummaryPanelそれぞれで
  * mode stateを持ち、このトグルとCalorieHeroCard/AchievementItemCardに渡す。
@@ -90,7 +99,8 @@ export function DisplayModeToggle({ mode, onChange }: { mode: DisplayMode; onCha
     // AT-2: 外側の枠が丸(pill)で、選択中の背景が角丸四角という組み合わせになっていて形が揃って
     // いなかったため、外枠も選択中も同じ角丸四角に統一する。
     return (
-        <div className="px-2 flex justify-center">
+        // BE-5: 週切替バーとこのトグルが縦に2段積まれるため、こちら側の高さを削る
+        <div className="flex justify-center">
             <div className="inline-flex items-center gap-0.5 bg-surface-overlay rounded-xl p-0.5">
                 {options.map(opt => (
                     <Button
@@ -208,8 +218,8 @@ export function CalorieHeroCard({
             </div>
             {/* BE-4: 「実績/目標 単位」の並びに統一(他の項目カードと同じ形にする) */}
             <div className="flex items-baseline gap-1 mb-1.5">
-                <span className="stat-value !text-3xl">{fmt1(baseVal)}</span>
-                <span className="stat-unit">/{fmt1(targetVal)} {mainUnit}</span>
+                <span className="stat-value !text-3xl">{fmt0(baseVal)}</span>
+                <span className="stat-unit">/{fmt0(targetVal)} {mainUnit}</span>
             </div>
             <ProgressBar pct={pct} barClassName={bar} segmented={isTotal} heightClassName="h-2" />
         </Card>

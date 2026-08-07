@@ -38,7 +38,7 @@ export default function WeeklySummaryPanel({
         useDaySelection(weeklyStats, weekOffset, setWeekOffset, mode === 'day')
 
     return (
-        <div className="space-y-3">
+        <div className="space-y-2">
             {showWeekSwitcher && (
                 <div className="px-2 flex flex-col items-center">
                     <div className="flex items-center gap-1 bg-surface-overlay rounded-xl p-0.5 w-full max-w-[300px] shadow-sm">

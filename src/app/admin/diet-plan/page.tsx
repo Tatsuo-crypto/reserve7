@@ -812,7 +812,7 @@ function DietPlanPageContent() {
 
     return (
         // AU-1: 会員を開いている間は下部ナビ(この画面専用)の高さぶん余白を確保する
-        <div className={`min-h-screen bg-surface-base text-text-primary ${selectedMember ? 'pt-2 pb-28' : 'pt-4 pb-12'}`}>
+        <div className={`min-h-screen bg-surface-base text-text-primary ${selectedMember ? 'pt-1 pb-28' : 'pt-4 pb-12'}`}>
             <div className="max-w-2xl mx-auto px-4 sm:px-6">
                 {!selectedMember ? (
                     <div className="bg-surface-raised rounded-2xl shadow-sm border border-border-subtle overflow-hidden">
@@ -859,12 +859,12 @@ function DietPlanPageContent() {
                         </div>
                     </div>
                 ) : (
-                    <div className="space-y-4 mt-0">
+                    <div className="space-y-3 mt-0">
                         {/* AU-1: タブは画面下部のナビに移した(この位置にあった上部タブバーは削除)。
                             上に詰めることで、日付送りや日/週/平均を画面上部で操作できるようにする。 */}
                         {/* J-1: 週間パネルタブ（初期表示）。WeeklySummaryPanel全項目 + 折りたたみ「日別の記録」 */}
                         {!loadingData && activeTab === 'panel' && (
-                            <div className="space-y-4 animate-fadeIn">
+                            <div className="space-y-3 animate-fadeIn">
                                 <WeeklySummaryTab
                                     userId={selectedMember.id}
                                     token={selectedMember.access_token!}
