@@ -583,7 +583,10 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
             </div>
 
             {/* Trainer Columns */}
-            <div className="flex flex-1 relative bg-surface-overlay">
+            {/* BE-3: 地を「予約できない時間」= 薄い黒にして、シフト帯(予約可能)を白で抜く。
+                従来は逆(白地に薄いオレンジの帯)だったが、予約チップのオレンジと帯のオレンジが
+                同系統で混ざって見えたため、帯からは色を抜いて明度だけで表す。 */}
+            <div className="flex flex-1 relative bg-black/[0.06]">
               {trainers.map((trainer, trainerIndex) => (
                 <div
                   key={trainer.id}
@@ -613,7 +616,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
                     handleTimelineClick(e, trainer.id)
                   }}
                 >
-                  {/* Availability Blocks (Shifts & Templates): シフトが入っている＝予約可能な時間帯を薄いオレンジで示す。
+                  {/* Availability Blocks (Shifts & Templates): シフトが入っている＝予約可能な時間帯を白で抜く。
                       時間の罫線はこのブロック内では描画せず、下のHour Grid Lines(全体に1系統のみ)に一本化する */}
                   {(availabilityByTrainer.get(trainer.id) || []).map((item, idx) => {
                     const startMinutes = item.start.getHours() * 60 + item.start.getMinutes()
@@ -624,7 +627,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
                     return (
                       <div
                         key={`avail-${idx}`}
-                        className="absolute w-full rounded-2xl border border-orange-500/25 bg-orange-500/10 z-0 pointer-events-none"
+                        className="absolute w-full rounded-2xl border border-black/10 bg-surface-raised z-0 pointer-events-none"
                         style={{
                           top: `${top}px`,
                           height: `${height}px`,
@@ -714,8 +717,12 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
           ))}
           {/* シフト帯は予定チップではなく背景の帯なので、種別の凡例とは別に残す */}
           <div className="flex shrink-0 items-center gap-1.5 whitespace-nowrap">
-            <div className="h-2.5 w-2.5 shrink-0 rounded-lg border border-orange-500/25 bg-orange-500/10"></div>
+            <div className="h-2.5 w-2.5 shrink-0 rounded-lg border border-black/10 bg-surface-raised"></div>
             <span className="text-text-secondary">予約可能時間(シフト)</span>
+          </div>
+          <div className="flex shrink-0 items-center gap-1.5 whitespace-nowrap">
+            <div className="h-2.5 w-2.5 shrink-0 rounded-lg border border-black/10 bg-black/[0.06]"></div>
+            <span className="text-text-secondary">予約できない時間</span>
           </div>
         </div>
       </div>
