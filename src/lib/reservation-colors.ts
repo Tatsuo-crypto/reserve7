@@ -9,11 +9,15 @@
  *
  * BD-3: 当初は予約以外を「淡い塗り(500/15〜20)」で統一したが、
  * カレンダーのチップは高さ13pxと小さく、淡い塗りでは色の違いが判別できず
- * 「予約以外が全部同じに見える」状態だった。予定を表す4種はいずれも
- * はっきり色が出る塗りつぶしにして、色相で見分けられるようにする。
+ * 「予約以外が全部同じに見える」状態だった。一度600系のベタ塗りにした。
+ *
+ * BE-2: 600系のベタ塗りは彩度が高すぎて画面がうるさくなったため、
+ * 「200の塗り + 400の枠 + 800の文字」に落ち着かせる。
+ * 淡さは戻すが、透過(/15)ではなく不透明な200を使い、さらに枠線で色相を補強するので
+ * BD-1のように「全部同じ」には見えない。塗りつぶしは主役の予約だけに戻る。
  *
  * 配色の考え方:
- *   予約     = 一番数が多く主役。アプリのオレンジ。
+ *   予約     = 一番数が多く主役。アプリのオレンジ。唯一のベタ塗り。
  *   体験     = 見込みのお客様。青。
  *   ゲスト   = 他店・外部の枠。紫。
  *   研修     = 社内の活動。緑(予約のオレンジと最も遠い色相)。
@@ -40,19 +44,19 @@ export function resolveReservationType(event: ReservationEventLike): Reservation
 /** チップ(予定ブロック)に当てるクラス。 */
 export const RESERVATION_CHIP_CLASSES: Record<ReservationVisualType, string> = {
   reservation: 'bg-brand-500 text-white border border-brand-600',
-  trial: 'bg-blue-600 text-white border border-blue-700',
-  guest: 'bg-purple-600 text-white border border-purple-700',
-  training: 'bg-green-600 text-white border border-green-700',
-  blocked: 'bg-zinc-200 text-zinc-700 border border-zinc-300',
+  trial: 'bg-blue-200 text-blue-800 border border-blue-400',
+  guest: 'bg-purple-200 text-purple-800 border border-purple-400',
+  training: 'bg-green-200 text-green-800 border border-green-400',
+  blocked: 'bg-zinc-100 text-zinc-600 border border-zinc-300',
 }
 
 /** 凡例のドットに当てるクラス(チップと同じ色合いで揃える)。 */
 export const RESERVATION_LEGEND_CLASSES: Record<ReservationVisualType, string> = {
   reservation: 'border border-brand-600 bg-brand-500',
-  trial: 'border border-blue-700 bg-blue-600',
-  guest: 'border border-purple-700 bg-purple-600',
-  training: 'border border-green-700 bg-green-600',
-  blocked: 'border border-zinc-300 bg-zinc-200',
+  trial: 'border border-blue-400 bg-blue-200',
+  guest: 'border border-purple-400 bg-purple-200',
+  training: 'border border-green-400 bg-green-200',
+  blocked: 'border border-zinc-300 bg-zinc-100',
 }
 
 export const RESERVATION_LEGEND_LABELS: Record<ReservationVisualType, string> = {
