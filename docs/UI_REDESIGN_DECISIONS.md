@@ -2362,6 +2362,37 @@ const chipCapacity = (h) => max(4, floor((h − CELL_PADDING_Y − DAY_NUMBER_H 
 
 ---
 
+## BG. ダイエット画面の管理者/会員の食い違いを解消（2026-08-08）
+
+### BG-1. `simpleMemberView` を廃止し、会員側を管理者側に揃える
+
+**同じ数字を見る画面が、管理者と会員でまったく別のレイアウトになっていた。**
+
+`WeeklyProgressPanel` に `simpleMemberView` というフラグがあり、会員側(`WeeklyTab`)だけがこれを渡していた。フラグが立つと栄養も生活も**1枚の一覧カード**(`MemberWeeklyResultListCard`)に畳まれ、管理者側の「カロリー主役行 + 2列カードのグリッド」とは別物になる。さらに:
+
+- カロリー行の表示モードが `simpleMemberView ? 'average' : mode` と固定され、会員は日/週に切り替えても平均のままだった
+- 生活の4項目(歩数/水分/睡眠/筋トレ)が `showLife && !simpleMemberView` で**会員側には出ていなかった**
+- 塩分も会員側には出ていなかった
+
+オーナー指示は「管理者側に合わせて」。フラグごと削除して分岐を1本にした。
+
+削除したもの:
+
+| 対象 | 理由 |
+|---|---|
+| `simpleMemberView` prop | 唯一の呼び出し元(`WeeklyTab`)が渡さなくなった |
+| `MemberWeeklyResultListCard` | 会員専用レイアウト。参照ゼロ |
+| `NutritionListCard` | 同上 |
+| `metricStatus` / `formatMetricValue` / `MetricRule` | 上記2つでしか使っていなかった補助関数 |
+
+**分岐を残して「同じに見えるように直す」のではなく、分岐そのものを消した。** 残したままだと今後どちらか片方だけ手を入れて再び食い違う(BD-1でCalendarView/TimelineViewが同じ理由で乖離していたのと同型の問題)。
+
+余白も揃えた(`WeeklyTab` の `space-y-4` → `space-y-2`、`WeeklyProgressPanel` の最外 `space-y-3` → `space-y-2`)。
+
+- **検証**: 両パネルが描画する要素と順序を機械的に突き合わせて**完全一致**を確認(DisplayModeToggle → RecordCheckTable → CalorieHeroCard → 栄養6項目 → 生活4項目)。`tsc --noEmit` エラー無し、`eslint` 0 error、`ui-audit.mjs` 0件、`css-check.js` 通過
+
+---
+
 
 「使える時間は白く抜ける / 使えない時間は沈む」という明度のルールになり、色はすべて予定チップ側に譲る。カレンダーの予約不可チップ(zinc-100)とも考え方が揃う。凡例には対になる「予約できない時間」を追加した。
 

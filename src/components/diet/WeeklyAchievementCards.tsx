@@ -27,15 +27,7 @@ export function achievementColor(pct: number): { bar: string; text: string } {
 
 /** AR-1: 'day'(1日分) / 'total'(週合計) / 'average'(記録日平均) の3表示。 */
 export type DisplayMode = 'day' | 'total' | 'average'
-type MetricRule = 'upper' | 'minimum'
 type MetricStatus = 'empty' | 'normal' | 'warning' | 'danger'
-
-function metricStatus(actual: number, target: number, rule: MetricRule): MetricStatus {
-    if (target <= 0 || actual <= 0) return 'empty'
-    const pct = (actual / target) * 100
-    if (rule === 'minimum') return pct >= 100 ? 'normal' : 'warning'
-    return pct > 100 ? 'danger' : 'normal'
-}
 
 function statusClasses(status: MetricStatus) {
     // AR-2: 通常=青、超過=赤。未達(下限型の未到達)は「超過」とは別の状態なので従来どおり amber。
@@ -46,11 +38,6 @@ function statusClasses(status: MetricStatus) {
         danger: { bar: 'bg-red-500', text: 'text-red-700', badge: 'bg-red-500/15 text-red-700' },
     } satisfies Record<MetricStatus, { bar: string; text: string; badge: string }>
     return map[status]
-}
-
-function formatMetricValue(value: number, fractionDigits = 1) {
-    const rounded = Math.round(value * Math.pow(10, fractionDigits)) / Math.pow(10, fractionDigits)
-    return Number.isInteger(rounded) ? rounded.toLocaleString() : rounded.toLocaleString(undefined, { maximumFractionDigits: fractionDigits })
 }
 
 /**
@@ -320,155 +307,6 @@ export function AchievementItemCard({
 
             <div className="mt-1.5">
                 <ProgressBar pct={pct} barClassName={bar} segmented={useTotal} />
-            </div>
-        </Card>
-    )
-}
-
-export function NutritionListCard({
-    items,
-}: {
-    items: Array<{
-        label: string
-        shortLabel: string
-        unit: string
-        actual: number
-        target: number
-        rule: MetricRule
-    }>
-}) {
-    return (
-        <Card padding="sm">
-            <div className="mb-4 flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-text-primary">栄養バランス</h3>
-                <span className="text-xs font-normal text-text-muted">実績/目標</span>
-            </div>
-            <div className="divide-y divide-border-subtle">
-                {items.map(item => {
-                    const pct = item.target > 0 ? Math.round((item.actual / item.target) * 100) : 0
-                    const status = metricStatus(item.actual, item.target, item.rule)
-                    const classes = statusClasses(status)
-                    const actualText = formatMetricValue(item.actual)
-                    const targetText = formatMetricValue(item.target)
-                    const statusText = status === 'danger' ? '超過' : status === 'warning' ? '未達' : status === 'empty' ? '未記録' : 'OK'
-
-                    return (
-                        <div key={item.label} className="py-3 first:pt-0 last:pb-0">
-                            <div className="mb-2 flex items-center justify-between gap-3">
-                                <div className="min-w-0">
-                                    <p className="text-sm font-semibold text-text-primary">{item.label}</p>
-                                    <p className="text-xs text-text-muted">{item.shortLabel}</p>
-                                </div>
-                                <div className="flex shrink-0 items-center gap-2">
-                                    <p className="text-sm font-semibold tabular-nums text-text-primary">
-                                        {actualText}/{targetText}<span className="ml-0.5 text-xs font-normal text-text-muted">{item.unit}</span>
-                                    </p>
-                                    <span className={`rounded-full px-2 py-0.5 text-xs font-normal ${classes.badge}`}>{statusText}</span>
-                                </div>
-                            </div>
-                            <div className="h-1.5 overflow-hidden rounded-full bg-surface-overlay">
-                                <div className={`h-full rounded-full transition-all ${classes.bar}`} style={{ width: `${Math.min(100, pct)}%` }} />
-                            </div>
-                        </div>
-                    )
-                })}
-            </div>
-        </Card>
-    )
-}
-
-export function HabitListCard({
-    items,
-}: {
-    items: Array<{
-        label: string
-        unit: string
-        actual: number
-        target: number
-        rule: MetricRule
-        fractionDigits?: number
-    }>
-}) {
-    return (
-        <Card padding="sm">
-            <div className="mb-4 flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-text-primary">習慣の進み具合</h3>
-                <span className="text-xs font-normal text-text-muted">実績/目標</span>
-            </div>
-            <div className="divide-y divide-border-subtle">
-                {items.map(item => {
-                    const pct = item.target > 0 ? Math.round((item.actual / item.target) * 100) : 0
-                    const status = metricStatus(item.actual, item.target, item.rule)
-                    const classes = statusClasses(status)
-                    const actualText = formatMetricValue(item.actual, item.fractionDigits ?? 1)
-                    const targetText = formatMetricValue(item.target, item.fractionDigits ?? 1)
-                    const statusText = status === 'warning' ? '未達' : status === 'empty' ? '未記録' : 'OK'
-
-                    return (
-                        <div key={item.label} className="py-3 first:pt-0 last:pb-0">
-                            <div className="mb-2 flex items-center justify-between gap-3">
-                                <p className="min-w-0 text-sm font-semibold text-text-primary">{item.label}</p>
-                                <div className="flex shrink-0 items-center gap-2">
-                                    <p className="text-sm font-semibold tabular-nums text-text-primary">
-                                        {actualText}/{targetText}<span className="ml-0.5 text-xs font-normal text-text-muted">{item.unit}</span>
-                                    </p>
-                                    <span className={`rounded-full px-2 py-0.5 text-xs font-normal ${classes.badge}`}>{statusText}</span>
-                                </div>
-                            </div>
-                            <div className="h-1.5 overflow-hidden rounded-full bg-surface-overlay">
-                                <div className={`h-full rounded-full transition-all ${classes.bar}`} style={{ width: `${Math.min(100, pct)}%` }} />
-                            </div>
-                        </div>
-                    )
-                })}
-            </div>
-        </Card>
-    )
-}
-
-export function MemberWeeklyResultListCard({
-    mode,
-    items,
-}: {
-    mode: DisplayMode
-    items: Array<{
-        label: string
-        unit: string
-        actual: number
-        target: number
-        rule: MetricRule
-        fractionDigits?: number
-    }>
-}) {
-    return (
-        <Card padding="sm">
-            <div className="mb-3 flex items-center justify-between">
-                <h3 className="text-xl font-semibold text-text-primary">{mode === 'day' ? 'この日の結果' : '今週の結果'}</h3>
-                <span className="text-xs font-normal text-text-muted">{mode === 'day' ? '1日' : mode === 'total' ? '週合計' : '平均'}</span>
-            </div>
-            <div className="divide-y divide-border-subtle">
-                {items.map(item => {
-                    const pct = item.target > 0 ? Math.round((item.actual / item.target) * 100) : 0
-                    const status = metricStatus(item.actual, item.target, item.rule)
-                    const classes = statusClasses(status)
-                    const actualText = formatMetricValue(item.actual, item.fractionDigits ?? 1)
-                    const targetText = formatMetricValue(item.target, item.fractionDigits ?? 1)
-
-                    return (
-                        <div key={item.label} className="py-3 first:pt-0 last:pb-0">
-                            <div className="mb-2 flex items-baseline justify-between gap-3">
-                                <p className="min-w-0 text-sm font-normal text-text-secondary">{item.label}</p>
-                                <p className="shrink-0 text-sm font-normal tabular-nums text-text-primary">
-                                    {actualText}<span className="mx-0.5 text-xs font-normal text-text-muted">/</span>{targetText}
-                                    <span className="ml-0.5 text-xs font-normal text-text-muted">{item.unit}</span>
-                                </p>
-                            </div>
-                            <div className="h-1.5 overflow-hidden rounded-full bg-surface-overlay">
-                                <div className={`h-full rounded-full transition-all ${classes.bar}`} style={{ width: `${Math.min(100, pct)}%` }} />
-                            </div>
-                        </div>
-                    )
-                })}
             </div>
         </Card>
     )

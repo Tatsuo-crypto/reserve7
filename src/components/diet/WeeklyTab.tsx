@@ -22,13 +22,15 @@ export default function WeeklyTab({ userId, token, isAdmin }: WeeklyTabProps) {
     const [calendarOpen, setCalendarOpen] = useState(false)
 
     return (
-        <div className="space-y-4 animate-fadeIn pb-24">
+        // BG-1: 管理者側(WeeklySummaryTab)と同じ余白・同じレイアウトに揃える。
+        // simpleMemberView は会員側だけ別レイアウト(1枚の一覧カード)にするフラグだったが、
+        // 同じ数値を見る画面が管理者と会員で違う形になっていたため廃止した。
+        <div className="space-y-2 animate-fadeIn pb-24">
             <WeeklyProgressPanel
                 weeklyStats={weeklyStats}
                 weekOffset={weekOffset}
                 setWeekOffset={setWeekOffset}
                 showWeekSwitcher
-                simpleMemberView
             />
             <section className="space-y-3">
                 <Button
