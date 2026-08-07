@@ -1308,7 +1308,7 @@ function GoalHistoryCharts({ data, habitTargets, onEditRequest }: { data: any[],
             <>
                 {getPfcValues(row, prefix).map(([label, value]) => (
                     <span key={label} className="rounded-full bg-surface-base border border-border-subtle px-3 py-1.5 text-xs text-text-secondary tabular-nums">
-                        <span className={label === 'P' ? 'text-orange-300' : label === 'F' ? 'text-amber-700' : 'text-amber-700'}>{label}</span> {value}g
+                        <span className={label === 'P' ? 'text-orange-700' : label === 'F' ? 'text-amber-700' : 'text-amber-700'}>{label}</span> {value}g
                     </span>
                 ))}
             </>

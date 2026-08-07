@@ -137,7 +137,7 @@ function FixedShiftOverview({
                     key={template.id}
                     className="flex items-center justify-between rounded-2xl border border-brand-500/20 bg-brand-500/10 px-3 py-2"
                   >
-                    <span className="text-sm text-brand-100">{WEEKDAY_LABELS_BY_DAY[template.day_of_week]}</span>
+                    <span className="text-sm text-brand-600">{WEEKDAY_LABELS_BY_DAY[template.day_of_week]}</span>
                     <span className="text-sm tabular-nums text-text-primary">{formatTemplateRange(template)}</span>
                   </div>
                 )) : (
@@ -296,7 +296,7 @@ function OverallCalendarSection({
                           {day.getDate()}
                         </div>
                         {hasWork && (
-                          <div className="mt-1 truncate text-xs tabular-nums text-brand-100">
+                          <div className="mt-1 truncate text-xs tabular-nums text-brand-600">
                             {formatHoursLabel(hours)}
                           </div>
                         )}

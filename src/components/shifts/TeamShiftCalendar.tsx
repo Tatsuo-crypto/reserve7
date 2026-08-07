@@ -284,7 +284,7 @@ export default function TeamShiftCalendar({
                         onClick={(e) => handleShiftClick(e, shift)}
                         title={`${trainer.full_name}: ${format(item.start, 'HH:mm')} - ${format(item.end, 'HH:mm')}`}
                       >
-                        <span className={`px-1 text-center text-xs leading-tight ${isSelected ? 'text-brand-100' : 'text-text-primary'}`}>
+                        <span className={`px-1 text-center text-xs leading-tight ${isSelected ? 'text-brand-600' : 'text-text-primary'}`}>
                           {displayTime}
                         </span>
                       </div>

@@ -179,7 +179,7 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
 
   const statusClassName = (status?: string) => {
     if (status === 'active') return 'bg-brand-500/15 text-brand-600'
-    if (status === 'suspended') return 'bg-yellow-500/15 text-yellow-300'
+    if (status === 'suspended') return 'bg-yellow-500/15 text-yellow-700'
     if (status === 'withdrawn') return 'bg-surface-overlay text-text-muted'
     return 'bg-surface-overlay text-text-secondary'
   }

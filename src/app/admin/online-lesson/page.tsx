@@ -395,7 +395,7 @@ export default function AdminOnlineLessonPage() {
                                             'bg-brand-500/15 text-brand-600 border-brand-500/30',
                                             'bg-brand-500/15 text-brand-600 border-brand-500/30',
                                             'bg-brand-500/15 text-brand-600 border-brand-500/30',
-                                            'bg-orange-500/15 text-orange-300 border-orange-500/30',
+                                            'bg-orange-500/15 text-orange-700 border-orange-500/30',
                                         ]
                                         return (
                                             <Button

@@ -567,7 +567,8 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                                 <Icon name="camera" size={32} className="text-white" />
                             </div>
                             <h2 className="text-xl font-semibold mb-1">食事写真を解析</h2>
-                            <p className="text-brand-100 text-xs mb-6 text-center opacity-80">スクリーンショットを読み取って栄養バランスを一律入力します</p>
+                            {/* BD-2: このカードは濃いオレンジのグラデーション地なので、文字は白系のまま */}
+                            <p className="text-white/85 text-xs mb-6 text-center">スクリーンショットを読み取って栄養バランスを一律入力します</p>
 
                             {/* AS-1: variantの色(bg-brand-500 text-white)とclassNameの色(bg-white text-brand-600)が
                                 衝突し、白背景に白文字でラベルが消えていた。unstyledでvariantの色を外す。 */}
@@ -677,7 +678,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                         <div className="space-y-3">
                             <div className="flex items-center justify-between p-3 border border-border-subtle rounded-2xl hover:bg-surface-base transition-colors">
                                 <div className="flex items-center space-x-3">
-                                    <div className="w-10 h-10 bg-orange-500/15 text-orange-400 rounded-2xl flex items-center justify-center shadow-sm">
+                                    <div className="w-10 h-10 bg-orange-500/15 text-orange-700 rounded-2xl flex items-center justify-center shadow-sm">
                                         <Icon name="tableCells" size={20} />
                                     </div>
                                     <span className="text-sm font-normal text-text-secondary">筋トレ</span>

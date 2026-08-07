@@ -117,7 +117,7 @@ function LessonCard({ lesson, onJoin }: { lesson: OnlineLesson; onJoin: (url: st
                             </span>
                         </div>
                         {schedule && (
-                            <p className={`text-sm mt-1 ${status.isOngoing ? 'text-brand-100' : 'text-text-secondary'}`}>
+                            <p className={`text-sm mt-1 ${status.isOngoing ? 'text-white/85' : 'text-text-secondary'}`}>
                                 📅 {schedule}
                             </p>
                         )}
@@ -263,7 +263,7 @@ export default function OnlineLessonPage() {
                                 </div>
                                 <div>
                                     <p className="text-sm font-normal">アプリのダウンロードが必要です</p>
-                                    <p className="text-xs text-brand-100">iPhoneではGoogle Meetアプリから参加します</p>
+                                    <p className="text-xs text-white/85">iPhoneではGoogle Meetアプリから参加します</p>
                                 </div>
                             </div>
                             <div className="flex items-center space-x-2">

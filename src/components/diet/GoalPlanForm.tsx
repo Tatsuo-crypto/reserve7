@@ -486,12 +486,12 @@ function AdminStatCard({ label, value, unit, color, step = 1, onValueChange }: {
         amber: 'text-amber-700 bg-surface-base/60 border-border-strong',
         blue: 'text-blue-700 bg-surface-base/60 border-border-strong',
         purple: 'text-purple-700 bg-surface-base/60 border-border-strong',
-        teal: 'text-teal-300 bg-surface-base/60 border-border-strong',
+        teal: 'text-teal-700 bg-surface-base/60 border-border-strong',
         gray: 'text-text-secondary bg-surface-base/60 border-border-strong',
         sky: 'text-sky-700 bg-surface-base/60 border-border-strong',
-        cyan: 'text-cyan-300 bg-surface-base/60 border-border-strong',
+        cyan: 'text-cyan-700 bg-surface-base/60 border-border-strong',
         orange: 'text-text-primary bg-surface-base/60 border-border-strong',
-        violet: 'text-violet-300 bg-surface-base/60 border-border-strong'
+        violet: 'text-violet-700 bg-surface-base/60 border-border-strong'
     }
     const style = colorMap[color] || colorMap.gray;
     const [baseColor, bgColor, borderColor] = style.split(' ');

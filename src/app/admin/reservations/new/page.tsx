@@ -794,7 +794,7 @@ function NewReservationContent() {
                     onChange={() => setFormData(prev => ({ ...prev, isBlocked: false, isTrial: false, isGuest: false, isTraining: true, clientId: '' }))}
                     className="sr-only"
                   />
-                  <Icon name="bookOpen" size={16} className="text-orange-300" />
+                  <Icon name="bookOpen" size={16} className="text-orange-700" />
                   <span className="text-xs font-normal leading-none text-text-primary">研修</span>
                 </label>
               </div>
@@ -811,7 +811,7 @@ function NewReservationContent() {
                     トレーナー情報を読み込み中...
                   </div>
                 ) : trainers.length === 0 ? (
-                  <div className="w-full text-sm px-3 py-2 border border-yellow-500/30 rounded-lg bg-yellow-500/15 text-yellow-300">
+                  <div className="w-full text-sm px-3 py-2 border border-yellow-500/30 rounded-lg bg-yellow-500/15 text-yellow-700">
                     ⚠️ アクティブなトレーナーが見つかりません
                   </div>
                 ) : (
@@ -899,7 +899,7 @@ function NewReservationContent() {
                     会員情報を読み込み中...
                   </div>
                 ) : clients.length === 0 ? (
-                  <div className="w-full text-sm px-3 py-2 border border-yellow-500/30 rounded-lg bg-yellow-500/15 text-yellow-300">
+                  <div className="w-full text-sm px-3 py-2 border border-yellow-500/30 rounded-lg bg-yellow-500/15 text-yellow-700">
                     ⚠️ 登録されている会員が見つかりません
                   </div>
                 ) : (
@@ -1137,7 +1137,7 @@ function NewReservationContent() {
           <div className="relative p-6 w-full max-w-sm shadow-xl rounded-2xl bg-surface-raised scale-100 transition-transform">
             <div className="text-center">
               <div className="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-yellow-500/15 mb-4">
-                <Icon name="warning" size={28} className="text-yellow-400" />
+                <Icon name="warning" size={28} className="text-yellow-700" />
               </div>
               <h3 className="text-xl font-semibold text-text-primary mb-2">
                 シフト外の予約
@@ -1175,7 +1175,7 @@ function NewReservationContent() {
           <div className="relative p-6 w-full max-w-sm shadow-xl rounded-2xl bg-surface-raised">
             <div className="text-center">
               <div className="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-orange-500/15 mb-4">
-                <Icon name="warning" size={28} className="text-orange-400" />
+                <Icon name="warning" size={28} className="text-orange-700" />
               </div>
               <h3 className="text-xl font-semibold text-text-primary mb-2">
                 シフト外のトレーナー

@@ -4,6 +4,7 @@ import { useMemo, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Icon from '@/components/ui/icons'
 import Button from '@/components/ui/Button'
+import { reservationChipClass, RESERVATION_LEGEND_ORDER, RESERVATION_LEGEND_CLASSES, RESERVATION_LEGEND_LABELS } from '@/lib/reservation-colors'
 
 interface CalendarEvent {
   id: string
@@ -642,18 +643,8 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
                       const widthPercent = 100 / layoutInfo.totalColumns
                       const leftPercent = layoutInfo.column * widthPercent
 
-                      const isTrial = event.title.includes('体験')
-                      const isGuest = event.type === 'guest' || (event.title && event.title.includes('ゲスト'))
-                      const isTraining = event.type === 'training'
-                      const colorClass = isTrial
-                        ? 'bg-blue-500/15 border border-blue-500/30 text-blue-700'
-                        : isGuest
-                          ? 'bg-purple-500/25 border border-purple-500/40 text-purple-700'
-                          : isTraining
-                            ? 'bg-orange-500/15 border border-orange-500/30 text-orange-300'
-                            : event.type === 'blocked'
-                              ? 'bg-surface-overlay border border-border-strong text-text-secondary'
-                              : 'bg-brand-500 border border-brand-600 text-white'
+                      // BD-1: 配色は src/lib/reservation-colors.ts に集約(カレンダーと凡例で共通)
+                      const colorClass = reservationChipClass(event)
 
                       return (
                         <div
@@ -715,22 +706,13 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
       {/* Legend */}
       <div className="shrink-0 px-4 py-2.5 border-t border-border-strong bg-surface-base">
         <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-xs">
-          <div className="flex shrink-0 items-center gap-1.5 whitespace-nowrap">
-            <div className="h-2.5 w-2.5 shrink-0 rounded-lg border border-brand-600 bg-brand-500"></div>
-            <span className="text-text-secondary">予約</span>
-          </div>
-          <div className="flex shrink-0 items-center gap-1.5 whitespace-nowrap">
-            <div className="h-2.5 w-2.5 shrink-0 rounded-lg border border-blue-500/30 bg-blue-500/15"></div>
-            <span className="text-text-secondary">体験</span>
-          </div>
-          <div className="flex shrink-0 items-center gap-1.5 whitespace-nowrap">
-            <div className="h-2.5 w-2.5 shrink-0 rounded-lg border border-border-strong bg-surface-overlay"></div>
-            <span className="text-text-secondary">予約不可時間</span>
-          </div>
-          <div className="flex shrink-0 items-center gap-1.5 whitespace-nowrap">
-            <div className="h-2.5 w-2.5 shrink-0 rounded-lg border border-purple-500/40 bg-purple-500/25"></div>
-            <span className="text-text-secondary">ゲスト</span>
-          </div>
+          {RESERVATION_LEGEND_ORDER.map(key => (
+            <div key={key} className="flex shrink-0 items-center gap-1.5 whitespace-nowrap">
+              <div className={`h-2.5 w-2.5 shrink-0 rounded-lg ${RESERVATION_LEGEND_CLASSES[key]}`}></div>
+              <span className="text-text-secondary">{RESERVATION_LEGEND_LABELS[key]}</span>
+            </div>
+          ))}
+          {/* シフト帯は予定チップではなく背景の帯なので、種別の凡例とは別に残す */}
           <div className="flex shrink-0 items-center gap-1.5 whitespace-nowrap">
             <div className="h-2.5 w-2.5 shrink-0 rounded-lg border border-orange-500/25 bg-orange-500/10"></div>
             <span className="text-text-secondary">予約可能時間(シフト)</span>

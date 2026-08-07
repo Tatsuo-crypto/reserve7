@@ -196,7 +196,7 @@ export default function ShiftCalendar({
                       onClick={(e) => handleTemplateClick(e, tmpl, start, end)}
                     >
                       <div className="w-full text-center px-0.5">
-                        <div className="text-xs text-indigo-300 leading-tight break-words font-normal">
+                        <div className="text-xs text-indigo-700 leading-tight break-words font-normal">
                           {surname}
                         </div>
                         {/* 
@@ -226,7 +226,7 @@ export default function ShiftCalendar({
                       onClick={(e) => handleShiftClick(e, shift)}
                     >
                       <div className="w-full px-0.5 text-center">
-                        <span className={`relative z-50 text-xs leading-tight break-words block ${isSelected ? 'text-orange-300 font-normal' : 'text-indigo-300'}`}>
+                        <span className={`relative z-50 text-xs leading-tight break-words block ${isSelected ? 'text-orange-700 font-normal' : 'text-indigo-700'}`}>
                           {surname}
                         </span>
                       </div>

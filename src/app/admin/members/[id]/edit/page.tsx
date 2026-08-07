@@ -547,7 +547,7 @@ export default function EditMemberPage() {
               {isChanged && (
                 <div className="bg-yellow-500/15 p-4 rounded-lg border border-yellow-500/30">
                   <TextField label="変更適用日" type="date" name="changeDate" value={formData.changeDate} onChange={handleChange} />
-                  <p className="mt-2 text-sm text-yellow-300">指定した日付から新しいプラン・会費が適用されます。</p>
+                  <p className="mt-2 text-sm text-yellow-700">指定した日付から新しいプラン・会費が適用されます。</p>
                 </div>
               )}
 

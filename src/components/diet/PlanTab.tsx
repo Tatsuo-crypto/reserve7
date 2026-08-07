@@ -251,7 +251,7 @@ function TargetSetCard({ row, type }: { row: GoalRow; type?: 'training' | 'rest'
 }
 
 function Chip({ label, value, tone }: { label: string; value: string; tone?: 'p' | 'f' | 'c' }) {
-    const color = tone === 'p' ? 'text-orange-300' : tone === 'f' ? 'text-amber-700' : tone === 'c' ? 'text-amber-700' : 'text-text-muted'
+    const color = tone === 'p' ? 'text-orange-700' : tone === 'f' ? 'text-amber-700' : tone === 'c' ? 'text-amber-700' : 'text-text-muted'
     return (
         <span className="rounded-full border border-border-subtle bg-surface-base px-3 py-1.5 text-xs tabular-nums text-text-secondary">
             <span className={color}>{label}</span> {value}
