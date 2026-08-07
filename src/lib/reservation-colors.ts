@@ -7,14 +7,17 @@
  *   - 「研修」のオレンジが主役である「予約」のオレンジと同系統で紛らわしい
  * という状態になっていた。判定と色をここにまとめ、両画面と凡例が必ず一致するようにする。
  *
+ * BD-3: 当初は予約以外を「淡い塗り(500/15〜20)」で統一したが、
+ * カレンダーのチップは高さ13pxと小さく、淡い塗りでは色の違いが判別できず
+ * 「予約以外が全部同じに見える」状態だった。予定を表す4種はいずれも
+ * はっきり色が出る塗りつぶしにして、色相で見分けられるようにする。
+ *
  * 配色の考え方:
- *   予約     = 一番数が多く主役なので唯一の「塗りつぶし」。アプリのオレンジ。
- *   体験     = 見込みのお客様。目を引く青。
+ *   予約     = 一番数が多く主役。アプリのオレンジ。
+ *   体験     = 見込みのお客様。青。
  *   ゲスト   = 他店・外部の枠。紫。
- *   研修     = 社内の活動。予約のオレンジと混同しないようティール。
- *   予約不可 = 埋まっていない/使えない時間。彩度を持たせずグレー。
- * 予約以外はすべて「淡い塗り + 同系の濃い文字 + 同系の枠線」で統一し、
- * 塗りつぶしの予約だけが視覚的に前に出るようにしている。
+ *   研修     = 社内の活動。緑(予約のオレンジと最も遠い色相)。
+ *   予約不可 = 予定ではなく「使えない時間」なので、唯一彩度を持たせずグレーで後ろに引く。
  */
 
 export type ReservationVisualType = 'reservation' | 'trial' | 'guest' | 'training' | 'blocked'
@@ -37,19 +40,19 @@ export function resolveReservationType(event: ReservationEventLike): Reservation
 /** チップ(予定ブロック)に当てるクラス。 */
 export const RESERVATION_CHIP_CLASSES: Record<ReservationVisualType, string> = {
   reservation: 'bg-brand-500 text-white border border-brand-600',
-  trial: 'bg-blue-500/15 text-blue-700 border border-blue-500/30',
-  guest: 'bg-purple-500/20 text-purple-700 border border-purple-500/35',
-  training: 'bg-teal-500/15 text-teal-700 border border-teal-500/30',
-  blocked: 'bg-surface-overlay text-text-muted border border-border-strong',
+  trial: 'bg-blue-600 text-white border border-blue-700',
+  guest: 'bg-purple-600 text-white border border-purple-700',
+  training: 'bg-green-600 text-white border border-green-700',
+  blocked: 'bg-zinc-200 text-zinc-700 border border-zinc-300',
 }
 
 /** 凡例のドットに当てるクラス(チップと同じ色合いで揃える)。 */
 export const RESERVATION_LEGEND_CLASSES: Record<ReservationVisualType, string> = {
   reservation: 'border border-brand-600 bg-brand-500',
-  trial: 'border border-blue-500/30 bg-blue-500/15',
-  guest: 'border border-purple-500/35 bg-purple-500/20',
-  training: 'border border-teal-500/30 bg-teal-500/15',
-  blocked: 'border border-border-strong bg-surface-overlay',
+  trial: 'border border-blue-700 bg-blue-600',
+  guest: 'border border-purple-700 bg-purple-600',
+  training: 'border border-green-700 bg-green-600',
+  blocked: 'border border-zinc-300 bg-zinc-200',
 }
 
 export const RESERVATION_LEGEND_LABELS: Record<ReservationVisualType, string> = {
