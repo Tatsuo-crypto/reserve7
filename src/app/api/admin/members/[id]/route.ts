@@ -82,9 +82,73 @@ export async function GET(
       console.error('Membership history fetch error:', historyError)
     }
 
+    const nowISO = new Date().toISOString()
+    const [settingsResult, reservationResult, trainingResult] = await Promise.all([
+      supabaseAdmin
+        .from('lifestyle_settings')
+        .select('visible_items, visible_tabs, quit_goals, habit_targets')
+        .eq('user_id', id)
+        .maybeSingle(),
+      supabaseAdmin
+        .from('reservations')
+        .select('id, title, start_time, end_time, notes')
+        .eq('client_id', id)
+        .gte('start_time', nowISO)
+        .order('start_time', { ascending: true })
+        .limit(1),
+      supabaseAdmin
+        .from('training_sessions')
+        .select('id, session_date, session_type, trainer_id, trainers:trainer_id(full_name), training_exercises(id)')
+        .eq('user_id', id)
+        .order('session_date', { ascending: false })
+        .limit(3),
+    ])
+
+    if (settingsResult.error) {
+      console.error('Lifestyle settings fetch error:', settingsResult.error)
+    }
+    if (reservationResult.error) {
+      console.error('Next reservation fetch error:', reservationResult.error)
+    }
+    if (trainingResult.error) {
+      console.error('Training sessions fetch error:', trainingResult.error)
+    }
+
+    let pushSubscriptionCount = 0
+    try {
+      const { count, error: subscriptionError } = await supabaseAdmin
+        .from('push_subscriptions')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', id)
+
+      if (subscriptionError) {
+        console.warn('Push subscription count fetch error:', subscriptionError.message)
+      } else {
+        pushSubscriptionCount = count || 0
+      }
+    } catch (subscriptionError) {
+      console.warn('push_subscriptions table is not ready yet.')
+    }
+
+    const lifestyleSettings = settingsResult.data || null
+    const visibleTabs = lifestyleSettings?.visible_tabs || {}
+    const dietSupportEnabled = Boolean(visibleTabs.input || visibleTabs.analyze || visibleTabs.progress)
+    const recentTrainingSessions = (trainingResult.data || []).map((session: any) => ({
+      id: session.id,
+      sessionDate: session.session_date,
+      sessionType: session.session_type,
+      trainerName: (Array.isArray(session.trainers) ? session.trainers[0]?.full_name : session.trainers?.full_name) || null,
+      exerciseCount: (session.training_exercises || []).length,
+    }))
+
     return createSuccessResponse({
       ...member,
-      status: deriveCurrentStatus(member, (histories || []) as MembershipHistoryStatus[])
+      status: deriveCurrentStatus(member, (histories || []) as MembershipHistoryStatus[]),
+      lifestyle_settings: lifestyleSettings,
+      diet_support_enabled: dietSupportEnabled,
+      push_subscription_count: pushSubscriptionCount,
+      next_reservation: reservationResult.data?.[0] || null,
+      recent_training_sessions: recentTrainingSessions,
     })
   } catch (error) {
     console.error('Member API error:', error)

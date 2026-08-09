@@ -300,13 +300,15 @@ export async function DELETE(
         const dateStr = startDate.toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo', month: 'long', day: 'numeric', weekday: 'short' })
         const timeStr = startDate.toLocaleTimeString('ja-JP', { timeZone: 'Asia/Tokyo', hour: '2-digit', minute: '2-digit' })
 
-        cancelEmailPromises.push(
-          sendPushNotificationToUser(clientUser.id, {
+        try {
+          await sendPushNotificationToUser(clientUser.id, {
             title: 'ご予約がキャンセルされました',
             body: `${dateStr} ${timeStr}〜のご予約をキャンセルしました。`,
             url: `/client/${clientUser.access_token}`,
-          }).catch(err => console.error('Client cancellation push error:', err))
-        )
+          })
+        } catch (err) {
+          console.error('Client cancellation push error:', err)
+        }
       }
 
       if (cancelEmailPromises.length > 0) {
@@ -729,13 +731,15 @@ export async function PUT(
           const dateStr = startDateTime.toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo', month: 'long', day: 'numeric', weekday: 'short' })
           const timeStr = startDateTime.toLocaleTimeString('ja-JP', { timeZone: 'Asia/Tokyo', hour: '2-digit', minute: '2-digit' })
 
-          updateEmailPromises.push(
-            sendPushNotificationToUser(clientUser.id, {
+          try {
+            await sendPushNotificationToUser(clientUser.id, {
               title: 'ご予約が変更されました',
               body: `${dateStr} ${timeStr}〜に変更されました。`,
               url: `/client/${clientUser.access_token}`,
-            }).catch(err => console.error('Client update push error:', err))
-          )
+            })
+          } catch (err) {
+            console.error('Client update push error:', err)
+          }
         }
 
         if (updateEmailPromises.length > 0) {

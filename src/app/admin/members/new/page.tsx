@@ -1,38 +1,32 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useEffect, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import Button from '@/components/ui/Button'
-import { PLAN_LIST } from '@/lib/constants'
+import { PLAN_FEES, PLAN_LIST } from '@/lib/constants'
+
+type StoreOption = {
+  id: string
+  name: string
+}
+
+const currentMonth = new Date().toISOString().slice(0, 7)
 
 export default function NewMemberPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [stores, setStores] = useState<{ id: string, name: string }[]>([])
+  const [stores, setStores] = useState<StoreOption[]>([])
   const [formData, setFormData] = useState({
-    lastName: '',
-    firstName: '',
-    email: '',
+    fullName: '',
     storeId: '',
     plan: '月4回',
     monthlyFee: '',
-    startMonth: '',
-    registrationDate: new Date().toISOString().split('T')[0],
-    status: 'active',
-    memo: '',
-    onlineReminderEnabled: true,
-    pushNotificationEnabled: false,
-    birthDate: '',
-    gender: '',
-    heightCm: '',
-    activityLevel: '',
-    targetWeightKg: '',
+    startMonth: currentMonth,
   })
 
-  // Check admin access
   useEffect(() => {
     if (status === 'loading') return
     if (status === 'unauthenticated') {
@@ -41,404 +35,205 @@ export default function NewMemberPage() {
     }
     if (status === 'authenticated' && session?.user?.role !== 'ADMIN') {
       router.push('/dashboard')
-      return
     }
   }, [status, session, router])
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  useEffect(() => {
+    const fetchStores = async () => {
+      try {
+        const response = await fetch('/api/admin/stores')
+        if (!response.ok) throw new Error()
+
+        const result = await response.json()
+        const data = result.data || result
+        const storesList = data.stores || []
+        setStores(storesList)
+
+        if (storesList.length > 0) {
+          setFormData(prev => ({ ...prev, storeId: storesList[0].id }))
+        } else {
+          setError('店舗情報を読み込めませんでした。')
+        }
+      } catch {
+        setError('店舗情報を読み込めませんでした。')
+      }
+    }
+
+    fetchStores()
+  }, [])
+
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target
+    setFormData(prev => ({
+      ...prev,
+      [name]: value,
+      ...(name === 'plan' && PLAN_FEES[value] !== undefined ? { monthlyFee: String(PLAN_FEES[value]) } : {}),
+    }))
+  }
+
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
+    if (loading) return
+
+    const fullName = formData.fullName.trim()
+    if (!fullName) {
+      setError('氏名を入力してください。')
+      return
+    }
+    if (!formData.storeId) {
+      setError('店舗を選択してください。')
+      return
+    }
+
     setLoading(true)
     setError('')
 
     try {
-      // Combine lastName and firstName with a space
-      const fullName = `${formData.lastName} ${formData.firstName}`.trim()
-
       const response = await fetch('/api/admin/members', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...formData,
           fullName,
+          storeId: formData.storeId,
+          plan: formData.plan,
+          monthlyFee: formData.monthlyFee,
+          startMonth: formData.startMonth,
+          registrationDate: new Date().toISOString().split('T')[0],
+          status: 'active',
+          onlineReminderEnabled: true,
+          pushNotificationEnabled: false,
         }),
       })
 
+      const result = await response.json().catch(() => ({}))
       if (!response.ok) {
-        const result = await response.json()
-        const errorMsg = result.error || '会員を追加できませんでした。入力内容を確認してください。'
-        console.error('会員登録エラー:', errorMsg, result)
-        setError(errorMsg)
+        setError(result.error || '会員を登録できませんでした。')
         return
       }
 
-      const result = await response.json()
-      console.log('会員登録成功:', result)
-      alert('会員を追加しました')
-      router.push('/admin/members')
-    } catch (error) {
-      console.error('Error:', error)
-      setError('会員を追加できませんでした。もう一度お試しください。')
+      const member = result.data?.member || result.member
+      if (!member?.id) {
+        setError('登録後の会員情報を取得できませんでした。')
+        return
+      }
+
+      router.push(`/admin/members/${member.id}`)
+    } catch {
+      setError('会員を登録できませんでした。もう一度お試しください。')
     } finally {
       setLoading(false)
     }
   }
 
-  // Fetch stores
-  useEffect(() => {
-    const fetchStores = async () => {
-      try {
-        const response = await fetch('/api/admin/stores')
-        if (response.ok) {
-          const result = await response.json()
-          const data = result.data || result
-          const storesList = data.stores || []
-          setStores(storesList)
-          // Set first store as default if available
-          if (storesList.length > 0) {
-            setFormData(prev => ({ ...prev, storeId: storesList[0].id }))
-          } else {
-            console.error('店舗情報が取得できませんでした')
-            setError('店舗情報を読み込めませんでした。画面を再読み込みしてください。')
-          }
-        } else {
-          console.error('Stores API error:', response.status)
-          setError('店舗情報を取得できませんでした。画面を再読み込みしてください。')
-        }
-      } catch (error) {
-        console.error('Failed to fetch stores:', error)
-        setError('店舗情報を読み込めませんでした。画面を再読み込みしてください。')
-      }
-    }
-    fetchStores()
-  }, [])
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value, type } = e.target
-    const val = type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
-    setFormData(prev => {
-      const newData = { ...prev, [name]: val }
-      // If status changed to suspended or withdrawn, set fee to 0
-      if (name === 'status' && (value === 'suspended' || value === 'withdrawn')) {
-        newData.monthlyFee = '0'
-        newData.onlineReminderEnabled = false
-        newData.pushNotificationEnabled = false
-      }
-      return newData
-    })
+  if (status === 'loading') {
+    return (
+      <div className="flex min-h-screen items-center justify-center text-sm text-text-secondary">
+        読み込み中...
+      </div>
+    )
   }
 
   return (
-    <div className="max-w-2xl mx-auto py-8 px-4">
-      {/* Header */}
-      <div className="mb-8 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-xl font-semibold text-text-primary">新規会員追加</h1>
-          <p className="mt-1 text-sm text-text-secondary">会員情報を入力してください</p>
+    <div className="min-h-screen bg-surface-base px-4 pb-28 pt-6">
+      <main className="mx-auto max-w-md">
+        <div className="mb-6 text-center">
+          <h1 className="text-2xl font-normal text-text-primary">会員を登録</h1>
         </div>
-      </div>
 
-      <div className="bg-surface-raised shadow-sm border border-border-strong rounded-lg p-6">
-        {error && (
-          <div className="mb-4 bg-red-500/15 border border-red-500/30 rounded-lg p-4">
-            <p className="text-sm text-red-700">{error}</p>
-          </div>
-        )}
+        <form onSubmit={handleSubmit} className="rounded-3xl border border-border-subtle bg-surface-raised p-5">
+          {error && (
+            <div className="mb-4 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-600">
+              {error}
+            </div>
+          )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* 氏名（苗字・名前） */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="lastName" className="block text-sm font-normal text-text-secondary mb-2">
-                苗字（任意）
-              </label>
+          <div className="space-y-4">
+            <Field label="氏名">
               <input
                 type="text"
-                id="lastName"
-                name="lastName"
-                value={formData.lastName}
+                name="fullName"
+                value={formData.fullName}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
-                placeholder="山田"
+                autoComplete="name"
+                className="h-12 w-full rounded-2xl border border-border-subtle bg-surface-base px-4 text-base text-text-primary outline-none focus:border-brand-500"
+                placeholder="山田 太郎"
+                required
               />
-            </div>
-            <div>
-              <label htmlFor="firstName" className="block text-sm font-normal text-text-secondary mb-2">
-                名前（任意）
-              </label>
-              <input
-                type="text"
-                id="firstName"
-                name="firstName"
-                value={formData.firstName}
+            </Field>
+
+            <Field label="店舗">
+              <select
+                name="storeId"
+                value={formData.storeId}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
-                placeholder="太郎"
-              />
-            </div>
-          </div>
-
-          {/* メールアドレス */}
-          <div>
-            <label htmlFor="email" className="block text-sm font-normal text-text-secondary mb-2">
-              メールアドレス（任意）
-            </label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
-              placeholder="example@email.com"
-            />
-            <p className="mt-1 text-sm text-text-secondary">会員専用URLの発行にはメールアドレスが必要ですが、空欄でも登録可能です（システムがダミーアドレスを生成します）</p>
-          </div>
-
-          {/* 店舗 */}
-          <div>
-            <label htmlFor="storeId" className="block text-sm font-normal text-text-secondary mb-2">
-              店舗 <span className="text-red-500">*</span>
-            </label>
-            <select
-              id="storeId"
-              name="storeId"
-              value={formData.storeId}
-              onChange={handleChange}
-              required
-              className="w-full px-3 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
-            >
-              <option value="">店舗を選択してください</option>
-              {stores.map(store => (
-                <option key={store.id} value={store.id}>{store.name}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* 入会時プラン */}
-          <div>
-            <label htmlFor="plan" className="block text-sm font-normal text-text-secondary mb-2">
-              入会時プラン
-            </label>
-            <select
-              id="plan"
-              name="plan"
-              value={formData.plan}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
-            >
-              {// @ts-ignore
-                PLAN_LIST.map(plan => (
-                  <option key={plan} value={plan}>{plan}</option>
+                className="h-12 w-full rounded-2xl border border-border-subtle bg-surface-base px-4 text-base text-text-primary outline-none focus:border-brand-500"
+                required
+              >
+                <option value="">選択してください</option>
+                {stores.map(store => (
+                  <option key={store.id} value={store.id}>{store.name}</option>
                 ))}
-            </select>
-          </div>
+              </select>
+            </Field>
 
-          {/* 入会時月会費 */}
-          <div>
-            <label htmlFor="monthlyFee" className="block text-sm font-normal text-text-secondary mb-2">
-              入会時月会費（円）
-            </label>
-            <input
-              type="number"
-              id="monthlyFee"
-              name="monthlyFee"
-              value={formData.monthlyFee}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
-              placeholder="13200"
-            />
-            <p className="mt-1 text-sm text-text-secondary">空欄の場合は0円として登録されます</p>
-          </div>
-
-          {/* 開始月 */}
-          <div>
-            <label htmlFor="startMonth" className="block text-sm font-normal text-text-secondary mb-2">
-              開始月
-            </label>
-            <input
-              type="month"
-              id="startMonth"
-              name="startMonth"
-              value={formData.startMonth}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
-            />
-            <p className="mt-1 text-sm text-text-secondary">
-              指定した月から売上に計上されます。
-            </p>
-          </div>
-
-          {/* 登録日 */}
-          <div>
-            <label htmlFor="registrationDate" className="block text-sm font-normal text-text-secondary mb-2">
-              登録日
-            </label>
-            <input
-              type="date"
-              id="registrationDate"
-              name="registrationDate"
-              value={formData.registrationDate}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
-            />
-          </div>
-
-          {/* ステータス */}
-          <div>
-            <label htmlFor="status" className="block text-sm font-normal text-text-secondary mb-2">
-              ステータス
-            </label>
-            <select
-              id="status"
-              name="status"
-              value={formData.status}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
-            >
-              <option value="active">有効</option>
-              <option value="suspended">休会</option>
-              <option value="withdrawn">退会</option>
-            </select>
-          </div>
-
-          {/* ダイエット基礎情報 */}
-          <div className="pt-6 border-t border-border-subtle">
-            <h3 className="text-xl font-semibold text-text-primary mb-2">ダイエット基礎情報</h3>
-            <p className="text-xs text-text-secondary mb-4">カロリー計算に使う情報です。ダイエット対象者だけ入力すれば大丈夫です。</p>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="birthDate" className="block text-sm font-normal text-text-secondary mb-2">生年月日</label>
-                <input
-                  type="date"
-                  id="birthDate"
-                  name="birthDate"
-                  value={formData.birthDate}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
-                />
-              </div>
-              <div>
-                <label htmlFor="gender" className="block text-sm font-normal text-text-secondary mb-2">性別</label>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="プラン">
                 <select
-                  id="gender"
-                  name="gender"
-                  value={formData.gender}
+                  name="plan"
+                  value={formData.plan}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+                  className="h-12 w-full rounded-2xl border border-border-subtle bg-surface-base px-4 text-base text-text-primary outline-none focus:border-brand-500"
                 >
-                  <option value="">未設定</option>
-                  <option value="female">女性</option>
-                  <option value="male">男性</option>
+                  {PLAN_LIST.map(plan => (
+                    <option key={plan} value={plan}>{plan}</option>
+                  ))}
                 </select>
-              </div>
-              <div>
-                <label htmlFor="heightCm" className="block text-sm font-normal text-text-secondary mb-2">身長(cm)</label>
+              </Field>
+
+              <Field label="開始月">
+                <input
+                  type="month"
+                  name="startMonth"
+                  value={formData.startMonth}
+                  onChange={handleChange}
+                  className="h-12 w-full rounded-2xl border border-border-subtle bg-surface-base px-4 text-base text-text-primary outline-none focus:border-brand-500"
+                />
+              </Field>
+            </div>
+
+            <Field label="月会費">
+              <div className="relative">
                 <input
                   type="number"
-                  id="heightCm"
-                  name="heightCm"
-                  value={formData.heightCm}
+                  name="monthlyFee"
+                  value={formData.monthlyFee}
                   onChange={handleChange}
-                  min="0"
-                  step="0.1"
-                  className="w-full px-3 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
-                  placeholder="160"
+                  inputMode="numeric"
+                  className="h-12 w-full rounded-2xl border border-border-subtle bg-surface-base px-4 pr-12 text-base text-text-primary outline-none focus:border-brand-500"
+                  placeholder="13200"
                 />
+                <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm text-text-secondary">円</span>
               </div>
-              <div>
-                <label htmlFor="targetWeightKg" className="block text-sm font-normal text-text-secondary mb-2">目標体重(kg)</label>
-                <input
-                  type="number"
-                  id="targetWeightKg"
-                  name="targetWeightKg"
-                  value={formData.targetWeightKg}
-                  onChange={handleChange}
-                  min="0"
-                  step="0.1"
-                  className="w-full px-3 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
-                  placeholder="55"
-                />
-              </div>
-              <div className="col-span-2">
-                <label htmlFor="activityLevel" className="block text-sm font-normal text-text-secondary mb-2">活動量</label>
-                <select
-                  id="activityLevel"
-                  name="activityLevel"
-                  value={formData.activityLevel}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
-                >
-                  <option value="">未設定</option>
-                  <option value="1.2">低い: デスクワーク中心</option>
-                  <option value="1.375">やや低い: 週1〜3回運動</option>
-                  <option value="1.55">普通: 週3〜5回運動</option>
-                  <option value="1.725">高い: 週6回以上運動</option>
-                  <option value="1.9">非常に高い: 肉体労働・アスリート</option>
-                </select>
-              </div>
+            </Field>
+          </div>
+
+          <div className="mt-6 rounded-2xl bg-surface-base px-4 py-3">
+            <div className="text-sm text-text-primary">登録後、初期設定へ進みます</div>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {['招待URL', 'ダイエット', '通知', 'プロフィール'].map(item => (
+                <span key={item} className="rounded-full bg-surface-overlay px-3 py-1 text-xs text-text-secondary">
+                  {item}
+                </span>
+              ))}
             </div>
           </div>
 
-          {/* 通知設定 */}
-          <div className="pt-6 border-t border-border-subtle">
-            <h3 className="text-xl font-semibold text-text-primary mb-4">通知設定</h3>
-            <div className="space-y-4">
-              <label className="flex items-center gap-4 p-4 bg-brand-500/10 border border-brand-500/25 rounded-2xl cursor-pointer hover:bg-brand-500/15 transition-colors">
-                <input
-                  type="checkbox"
-                  id="onlineReminderEnabled"
-                  name="onlineReminderEnabled"
-                  checked={formData.onlineReminderEnabled}
-                  onChange={handleChange}
-                  className="w-6 h-6 text-brand-600 border-border-strong rounded-lg focus:ring-brand-500"
-                />
-                <div>
-                  <div className="font-normal text-text-primary">メール通知（予約確定・変更・リマインダー）を送信する</div>
-                  <div className="text-xs text-text-secondary mt-1">チェックを外すと、この会員様宛のすべての自動通知メールが停止されます。</div>
-                </div>
-              </label>
-              <label className="flex items-center gap-4 p-4 bg-brand-500/10 border border-brand-500/25 rounded-2xl cursor-pointer hover:bg-brand-500/15 transition-colors">
-                <input
-                  type="checkbox"
-                  id="pushNotificationEnabled"
-                  name="pushNotificationEnabled"
-                  checked={formData.pushNotificationEnabled}
-                  onChange={handleChange}
-                  className="w-6 h-6 text-brand-600 border-border-strong rounded-lg focus:ring-brand-500"
-                />
-                <div>
-                  <div className="font-normal text-text-primary">プッシュ通知（アプリ通知）を送信する</div>
-                  <div className="text-xs text-text-secondary mt-1">お客様がアプリ通知を許可している場合に、スマホへ通知します。</div>
-                </div>
-              </label>
-            </div>
-          </div>
-
-          {/* メモ */}
-          <div>
-            <label htmlFor="memo" className="block text-sm font-normal text-text-secondary mb-2">
-              メモ（任意）
-            </label>
-            <textarea
-              id="memo"
-              name="memo"
-              value={formData.memo}
-              onChange={handleChange}
-              rows={4}
-              className="w-full px-3 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
-              placeholder="特記事項があれば入力してください"
-            />
-          </div>
-
-          {/* ボタン */}
-          <div className="flex justify-center space-x-4">
+          <div className="mt-6 flex gap-3">
             <Button
               type="button"
               variant="secondary"
               onClick={() => router.back()}
-              className="px-6 py-2 border border-border-strong rounded-lg text-text-secondary hover:bg-surface-base transition-colors"
+              className="h-12 flex-1 rounded-2xl"
             >
               キャンセル
             </Button>
@@ -446,23 +241,22 @@ export default function NewMemberPage() {
               type="submit"
               variant="primary"
               disabled={loading}
-              className="px-6 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="h-12 flex-1 rounded-2xl"
             >
-              {loading ? '追加中...' : '会員を追加'}
+              {loading ? '登録中...' : '登録'}
             </Button>
           </div>
         </form>
-
-        {/* Info Box */}
-        <div className="mt-6 bg-brand-500/15 border border-brand-500/30 rounded-lg p-4">
-          <h3 className="text-sm font-normal text-brand-600 mb-2">会員追加について</h3>
-          <ul className="text-sm text-brand-600 space-y-1">
-            <li>• 会員追加後、会員管理ページから専用URLを発行できます</li>
-            <li>• メールアドレスは専用URL発行時に必要です</li>
-            <li>• プランとステータスは後から変更できます</li>
-          </ul>
-        </div>
-      </div>
+      </main>
     </div>
+  )
+}
+
+function Field({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <label className="block">
+      <span className="mb-2 block text-sm font-normal text-text-secondary">{label}</span>
+      {children}
+    </label>
   )
 }

@@ -139,7 +139,7 @@ export async function GET(request: NextRequest) {
                         })
                     }
 
-                    if (pushCount > 0) {
+                    if (client.push_notification_enabled && client.access_token) {
                         const { error: insertError } = await supabaseAdmin
                             .from('reservation_reminders')
                             .insert({
@@ -338,6 +338,7 @@ export async function GET(request: NextRequest) {
 
             console.log(`[Online Lesson Cron] Sending push reminders for "${lesson.title}" at ${effectiveStartTime}${movedIn ? ' (振替開催)' : ''} to ${pushUsers.length} users`)
 
+            let attemptedCount = 0
             let successCount = 0
             matchedLessons.push({
                 lessonId: lesson.id,
@@ -351,6 +352,7 @@ export async function GET(request: NextRequest) {
             if (!dryRun) {
                 for (const user of pushUsers) {
                     try {
+                        attemptedCount++
                         const formattedStartTime = (effectiveStartTime || '').substring(0, 5)
                         const pushCount = await sendPushNotificationToUser(user.id, {
                             title: 'オンラインセッションのお知らせ',
@@ -367,7 +369,7 @@ export async function GET(request: NextRequest) {
                 }
             }
 
-            if (!dryRun && successCount > 0) {
+            if (!dryRun && attemptedCount > 0) {
                 const { error: insertError } = await supabaseAdmin
                     .from('online_lesson_reminders')
                     .insert({

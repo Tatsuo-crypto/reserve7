@@ -745,11 +745,15 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
           onClick={() => { setShowActionChoice(false); setChoiceEvent(null) }}
         >
           <div
-            className="relative w-full max-w-xs bg-surface-raised shadow-xl rounded-2xl border border-border-subtle p-6"
+            className="relative w-full max-w-sm bg-surface-raised shadow-xl rounded-3xl border border-border-subtle p-5"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-xl font-semibold text-text-primary mb-1">{formatReservationTitle(choiceEvent.title, choiceEvent.plan)}</h3>
-            <p className="text-sm font-normal text-text-secondary mb-4">{choiceEvent.time}</p>
+            <div className="mb-5 rounded-2xl bg-surface-base p-4">
+              <div className="text-xs font-normal text-text-muted">予約</div>
+              <h3 className="mt-1 text-xl font-semibold text-text-primary">{formatReservationTitle(choiceEvent.title, choiceEvent.plan)}</h3>
+              <div className="mt-2 text-sm font-normal text-text-secondary">{formatSelectedDate(choiceEvent.date)}</div>
+              <div className="mt-1 text-lg font-normal text-text-primary">{choiceEvent.time}</div>
+            </div>
             <div className="space-y-3">
               <Button
                 type="button"
@@ -767,7 +771,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
                   router.push(kartePath)
                 }}
               >
-                カルテ入力
+                カルテを書く
               </Button>
               <Button
                 type="button"
@@ -779,7 +783,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
                   setChoiceEvent(null)
                 }}
               >
-                予約変更
+                予約を変更
               </Button>
             </div>
             <Button

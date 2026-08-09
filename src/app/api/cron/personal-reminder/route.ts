@@ -131,7 +131,7 @@ export async function GET(request: NextRequest) {
         url: `/client/${client.access_token}`
       })
 
-        if (pushCount > 0) {
+        if (client.push_notification_enabled && client.access_token) {
           // 3. Record log
           const { error: insertError } = await supabaseAdmin
             .from('reservation_reminders')

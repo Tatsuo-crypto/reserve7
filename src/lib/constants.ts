@@ -13,6 +13,8 @@ export const PLANS = {
   MONTHLY_4: '月4回',
   MONTHLY_6: '月6回',
   MONTHLY_8: '月8回',
+  ONLINE_UNLIMITED: 'オンライン受け放題',
+  DIET_SUPPORT_3M: 'ダイエットサポート（3ヶ月）',
   DIET_COURSE: 'ダイエットコース',
   DIET_COURSE_2M: 'ダイエットコース【2ヶ月】',
   DIET_COURSE_3M: 'ダイエットコース【3ヶ月】',
@@ -26,6 +28,8 @@ export const PLAN_LIST = [
   PLANS.MONTHLY_4,
   PLANS.MONTHLY_6,
   PLANS.MONTHLY_8,
+  PLANS.ONLINE_UNLIMITED,
+  PLANS.DIET_SUPPORT_3M,
   PLANS.DIET_COURSE,
   PLANS.DIET_COURSE_2M,
   PLANS.DIET_COURSE_3M,
@@ -41,26 +45,52 @@ export const PLAN_RANK: Record<string, number> = {
   [PLANS.MONTHLY_4]: 3,
   [PLANS.MONTHLY_6]: 4,
   [PLANS.MONTHLY_8]: 5,
-  [PLANS.DIET_COURSE]: 100,
-  [PLANS.DIET_COURSE_2M]: 101,
-  [PLANS.DIET_COURSE_3M]: 102,
-  [PLANS.DIET_COURSE_6M]: 103,
+  [PLANS.ONLINE_UNLIMITED]: 6,
+  [PLANS.DIET_SUPPORT_3M]: 100,
+  [PLANS.DIET_COURSE]: 101,
+  [PLANS.DIET_COURSE_2M]: 102,
+  [PLANS.DIET_COURSE_3M]: 103,
+  [PLANS.DIET_COURSE_6M]: 104,
 };
 
-// Standard Plan Fees (Tax included)
-// TODO: Update these values with the correct pricing
+// Standard service fees (tax included)
 export const PLAN_FEES: Record<string, number> = {
   [PLANS.ONE_TIME]: 0,
-  [PLANS.MONTHLY_2]: 0,
-  [PLANS.MONTHLY_4]: 13200, // Based on placeholder
-  [PLANS.MONTHLY_6]: 0,
-  [PLANS.MONTHLY_8]: 0,
+  [PLANS.MONTHLY_2]: 15400,
+  [PLANS.MONTHLY_4]: 26400,
+  [PLANS.MONTHLY_6]: 36300,
+  [PLANS.MONTHLY_8]: 46200,
+  [PLANS.ONLINE_UNLIMITED]: 5500,
+  [PLANS.DIET_SUPPORT_3M]: 107800,
   [PLANS.DIET_COURSE]: 0,
   [PLANS.DIET_COURSE_2M]: 0,
   [PLANS.DIET_COURSE_3M]: 0,
   [PLANS.DIET_COURSE_6M]: 0,
   [PLANS.COUNSELING]: 0,
 };
+
+export const SUBSCRIPTION_PLANS = new Set<string>([
+  PLANS.MONTHLY_2,
+  PLANS.MONTHLY_4,
+  PLANS.MONTHLY_6,
+  PLANS.MONTHLY_8,
+  PLANS.ONLINE_UNLIMITED,
+  PLANS.COUNSELING,
+])
+
+export function isDietPlan(plan?: string | null): boolean {
+  return !!plan && plan.includes('ダイエット')
+}
+
+export function isPersonalPlan(plan?: string | null): boolean {
+  return !!plan && /月\d+回/.test(plan)
+}
+
+export function getPlanBillingLabel(plan?: string | null): string {
+  if (isDietPlan(plan)) return '3ヶ月 / 払い切り'
+  if (plan && SUBSCRIPTION_PLANS.has(plan)) return 'サブスク'
+  return '契約なし'
+}
 
 // ==============================
 // Status Constants

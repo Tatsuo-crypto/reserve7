@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     if (auth instanceof NextResponse) return auth
 
     if (!isPushConfigured()) {
-      return createErrorResponse('プッシュ通知が設定されていないため配信できません(VAPIDキー未設定)', 500)
+      return createErrorResponse('アプリ通知が設定されていないため配信できません(VAPIDキー未設定)', 500)
     }
 
     const body = await request.json()

@@ -77,17 +77,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: '通知設定の保存に失敗しました' }, { status: 500 })
   }
 
-  const { error: userError } = await supabaseAdmin
-    .from('users')
-    .update({ push_notification_enabled: true })
-    .eq('id', user.id)
-
-  if (userError) {
-    console.error('Failed to enable push notification flag:', userError)
-    return NextResponse.json({ error: '通知設定の保存に失敗しました' }, { status: 500 })
-  }
-
-  return NextResponse.json({ success: true, enabledByAdmin: true })
+  return NextResponse.json({
+    success: true,
+    enabledByAdmin: user.push_notification_enabled === true,
+  })
 }
 
 export async function DELETE(request: NextRequest) {
@@ -113,18 +106,8 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: '通知設定の解除に失敗しました' }, { status: 500 })
   }
 
-  const { data: remaining, error: remainingError } = await supabaseAdmin
-    .from('push_subscriptions')
-    .select('id')
-    .eq('user_id', user.id)
-    .limit(1)
-
-  if (!remainingError && (!remaining || remaining.length === 0)) {
-    await supabaseAdmin
-      .from('users')
-      .update({ push_notification_enabled: false })
-      .eq('id', user.id)
-  }
-
-  return NextResponse.json({ success: true })
+  return NextResponse.json({
+    success: true,
+    enabledByAdmin: user.push_notification_enabled === true,
+  })
 }

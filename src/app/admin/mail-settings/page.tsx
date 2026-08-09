@@ -549,8 +549,7 @@ export default function AdminMailSettingsPage() {
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                   <h2 className="text-xl font-semibold text-text-primary">会員ごとのアプリ通知</h2>
-                  <p className="mt-1 text-xs text-text-secondary">このスイッチ1つで、予約の確定・変更連絡と前日リマインダー、オンラインレッスン開始前の通知すべてを制御します。</p>
-                  <p className="mt-0.5 text-xs text-text-muted">メール送信は行わず、アプリのプッシュ通知だけで届きます。</p>
+                  <p className="mt-1 text-xs text-text-secondary">予約確定・変更・キャンセル・リマインダー、オンラインセッションの通知をまとめて管理します。</p>
                 </div>
                 <Button
                   type="button"
@@ -570,7 +569,7 @@ export default function AdminMailSettingsPage() {
                 </p>
                 {notificationStats.missingDeviceCount > 0 && (
                   <p className="mt-1 text-xs text-amber-700">
-                    うち{notificationStats.missingDeviceCount}名は通知ONですが、会員さん側でスマホの通知許可がまだのため届きません。
+                    うち{notificationStats.missingDeviceCount}名は端末設定待ちです。
                   </p>
                 )}
               </div>
@@ -656,7 +655,7 @@ export default function AdminMailSettingsPage() {
                                         ? 'bg-amber-500/15 text-amber-700'
                                         : 'bg-surface-overlay text-text-muted'
                                   }`}>
-                                    {receivable ? '受信可能' : member.pushEnabled ? '未許可' : 'OFF'}
+                                    {receivable ? '受信可能' : member.pushEnabled ? '端末設定待ち' : 'OFF'}
                                   </span>
                                 </td>
                               </tr>

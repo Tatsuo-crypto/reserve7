@@ -110,7 +110,7 @@ function NavigationContent() {
               type="button"
               variant="ghost"
               onClick={handleBack}
-              className="w-12 h-12 flex items-center justify-center p-0 text-text-primary bg-transparent border-0 shadow-none transition-all active:scale-90 hover:text-text-primary"
+              className="w-12 h-12 flex items-center justify-center p-0 text-text-secondary bg-transparent border-0 shadow-none transition-all active:scale-90 hover:text-text-primary"
               aria-label="戻る"
             >
               <Icon name="chevronLeft" size={34} />
@@ -122,7 +122,7 @@ function NavigationContent() {
 
         {/* Center: Dynamic Page Title */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <h1 className="text-xl font-semibold text-text-primary tracking-tight whitespace-nowrap pointer-events-auto">
+          <h1 className="text-xl font-normal text-text-primary tracking-tight whitespace-nowrap pointer-events-auto">
             {getPageTitle()}
           </h1>
         </div>
@@ -135,7 +135,7 @@ function NavigationContent() {
                 type="button"
                 variant="ghost"
                 onClick={() => setIsMenuOpen((value) => !value)}
-                className="w-12 h-12 flex items-center justify-center p-0 text-text-primary bg-transparent border-0 shadow-none transition-all active:scale-90 hover:text-text-primary"
+                className="w-12 h-12 flex items-center justify-center p-0 text-text-secondary bg-transparent border-0 shadow-none transition-all active:scale-90 hover:text-text-primary"
                 aria-label="メニュー"
               >
                 <Icon name="menu" size={34} />
@@ -153,7 +153,7 @@ function NavigationContent() {
                           onClick={() => setIsMenuOpen(false)}
                           className={`flex items-center gap-3 px-4 py-3 text-sm font-normal transition-colors ${
                             isActive
-                              ? 'bg-brand-500/15 text-brand-600'
+                              ? 'bg-brand-500/10 text-brand-500'
                               : 'text-text-secondary hover:bg-surface-overlay hover:text-text-primary'
                           }`}
                         >

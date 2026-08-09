@@ -30,6 +30,18 @@ export default function PushNotificationPrompt({ token }: PushNotificationPrompt
   const [loading, setLoading] = useState(true)
   const [supportMessage, setSupportMessage] = useState('')
 
+  const notificationStatus = subscribed
+    ? enabledByAdmin
+      ? '受信可能'
+      : '端末許可済み'
+    : 'オフ'
+
+  const notificationIconClass = subscribed
+    ? enabledByAdmin
+      ? 'bg-brand-500 text-white'
+      : 'bg-amber-500/15 text-amber-700'
+    : 'bg-surface-overlay text-text-secondary'
+
   useEffect(() => {
     const available =
       typeof window !== 'undefined' &&
@@ -123,7 +135,10 @@ export default function PushNotificationPrompt({ token }: PushNotificationPrompt
 
       setSubscribed(true)
       setEnabledByAdmin(saveData.enabledByAdmin === true)
-      setMessage('通知をオンにしました。')
+      setMessage(saveData.enabledByAdmin === true
+        ? 'アプリ通知を許可しました。'
+        : '端末の通知を許可しました。管理者側がONになると届きます。'
+      )
     } catch (error) {
       console.error('Failed to enable push notifications:', error)
       setMessage('通知を設定できませんでした。もう一度お試しください。')
@@ -164,13 +179,13 @@ export default function PushNotificationPrompt({ token }: PushNotificationPrompt
     <div className="rounded-2xl border border-border-subtle bg-surface-raised p-4 shadow-sm">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 items-center gap-3">
-          <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${subscribed && enabledByAdmin ? 'bg-brand-500 text-white' : 'bg-surface-overlay text-text-secondary'}`}>
+          <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${notificationIconClass}`}>
             <Icon name="bell" size={20} />
           </div>
           <div className="min-w-0">
-            <div className="text-sm font-normal text-text-primary">通知</div>
+            <div className="text-sm font-normal text-text-primary">アプリ通知</div>
             <div className="mt-0.5 text-xs text-text-secondary">
-              {subscribed && enabledByAdmin ? 'オン' : 'オフ'}
+              {notificationStatus}
             </div>
           </div>
         </div>
@@ -181,7 +196,7 @@ export default function PushNotificationPrompt({ token }: PushNotificationPrompt
               ブロック中
             </span>
           )}
-          {permission !== 'denied' && (subscribed && enabledByAdmin ? (
+          {permission !== 'denied' && (subscribed ? (
             <Button
               type="button"
               variant="secondary"
@@ -190,7 +205,7 @@ export default function PushNotificationPrompt({ token }: PushNotificationPrompt
               disabled={loading}
               className="w-full rounded-full border border-border-strong px-4 py-2 text-xs text-text-secondary disabled:opacity-50 sm:w-auto"
             >
-              オフにする
+              解除する
             </Button>
           ) : (
             <Button
@@ -201,7 +216,7 @@ export default function PushNotificationPrompt({ token }: PushNotificationPrompt
               disabled={loading || !supported}
               className="w-full rounded-full bg-brand-500 px-4 py-2 text-xs text-white disabled:opacity-50 sm:w-auto"
             >
-              通知をオンにする
+              通知を許可する
             </Button>
           ))}
         </div>

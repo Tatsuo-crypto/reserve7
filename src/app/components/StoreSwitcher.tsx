@@ -97,7 +97,7 @@ export default function StoreSwitcher({ defaultStoreName }: StoreSwitcherProps) 
             </Button>
 
             {isOpen && (
-                <div className="absolute right-0 mt-2 w-40 bg-surface-raised rounded-2xl shadow-xl py-1 z-50 border border-border-subtle animate-fadeIn overflow-hidden">
+                <div className="absolute left-0 mt-2 w-44 max-w-[calc(100vw-2rem)] bg-surface-raised rounded-2xl shadow-xl py-1 z-50 border border-border-subtle animate-fadeIn overflow-hidden">
                     <div className="px-4 py-2 text-xs font-normal text-text-muted uppercase tracking-widest border-b border-border-subtle">
                         店舗選択
                     </div>

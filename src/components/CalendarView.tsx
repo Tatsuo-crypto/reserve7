@@ -643,7 +643,7 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
             >
               <Icon name="chevronLeft" size={24} />
             </Button>
-            <h3 className="text-xl font-semibold text-text-primary text-center">
+            <h3 className="text-xl font-normal text-text-primary text-center">
               {formatMonth(currentDate)}
             </h3>
             <Button
@@ -652,7 +652,7 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
               size="sm"
               onClick={handleCalendarSync}
               disabled={syncing}
-              className="absolute right-12 h-10 w-10 p-0 rounded-full text-text-secondary bg-surface-overlay hover:bg-surface-base hover:text-brand-600 border border-border-subtle disabled:opacity-50"
+              className="absolute right-12 h-10 w-10 p-0 rounded-full text-text-secondary bg-surface-overlay hover:bg-surface-base hover:text-brand-500 border border-border-subtle disabled:opacity-50"
               aria-label="Googleカレンダーと同期"
               title="Googleカレンダーと同期"
             >
@@ -682,7 +682,7 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
               {/* Days of week header (no divider line) */}
               <div className="grid grid-cols-7">
                 {['月', '火', '水', '木', '金', '土', '日'].map((day, index) => (
-                  <div key={day} className={`py-1 text-center text-xs font-normal ${index === 5 ? 'text-brand-600' : index === 6 ? 'text-brand-600' : 'text-text-secondary'
+                  <div key={day} className={`py-1 text-center text-xs font-normal ${index === 5 ? 'text-brand-500' : index === 6 ? 'text-brand-500' : 'text-text-secondary'
                     }`}>
                     {day}
                   </div>

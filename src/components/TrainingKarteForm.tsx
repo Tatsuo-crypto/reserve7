@@ -70,6 +70,27 @@ function formatDate(dateStr?: string | null) {
   }
 }
 
+function formatTime(value?: string | null) {
+  if (!value) return ''
+  try {
+    return new Date(value).toLocaleTimeString('ja-JP', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+      timeZone: 'Asia/Tokyo',
+    })
+  } catch {
+    return ''
+  }
+}
+
+function formatTimeRange(start?: string | null, end?: string | null) {
+  const startText = formatTime(start)
+  const endText = formatTime(end)
+  if (startText && endText) return `${startText}〜${endText}`
+  return startText || endText || ''
+}
+
 export default function TrainingKarteForm({ trainerToken, sessionKey, reservationId, userId, backHref }: TrainingKarteFormProps) {
   const router = useRouter()
   const [resolvedId, setResolvedId] = useState<string | null>(sessionKey !== 'new' ? sessionKey : null)
@@ -82,11 +103,14 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
   const [resolvedUserId, setResolvedUserId] = useState<string | null>(userId || null)
   const [trainerName, setTrainerName] = useState<string | null>(null)
   const [sessionDate, setSessionDate] = useState<string | null>(null)
+  const [reservationStartTime, setReservationStartTime] = useState<string | null>(null)
+  const [reservationEndTime, setReservationEndTime] = useState<string | null>(null)
   const [sessionType, setSessionType] = useState('')
   const [approach, setApproach] = useState('')
   const [overallNote, setOverallNote] = useState('')
   const [exercises, setExercises] = useState<ExerciseRow[]>([])
   const [exerciseMasterNames, setExerciseMasterNames] = useState<string[]>([])
+  const [createdOnInit, setCreatedOnInit] = useState(false)
 
   const didInit = useRef(false)
 
@@ -101,6 +125,8 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
     setResolvedUserId(data.userId || null)
     setTrainerName(data.trainerName)
     setSessionDate(data.sessionDate)
+    setReservationStartTime(data.reservationStartTime || null)
+    setReservationEndTime(data.reservationEndTime || null)
     setSessionType(data.sessionType || '')
     setApproach(data.approach || '')
     setOverallNote(data.overallNote || '')
@@ -142,8 +168,9 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
             setError(data.error || 'カルテを作成できませんでした。')
             return
           }
-          const { id } = await res.json()
+          const { id, created } = await res.json()
           setResolvedId(id)
+          setCreatedOnInit(created === true)
           await loadSessionDetail(id)
         } else {
           setResolvedId(sessionKey)
@@ -277,6 +304,28 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
     }
   }
 
+  const hasInput = () => {
+    if (sessionType.trim() || approach.trim() || overallNote.trim()) return true
+    return exercises.some((exercise) => (
+      exercise.exerciseName.trim() ||
+      exercise.sets.some((set) => set.weight || set.reps || set.memo.trim() || set.assisted)
+    ))
+  }
+
+  const cleanupCreatedEmptySession = async () => {
+    if (!createdOnInit || !resolvedId || hasInput()) return
+    try {
+      await fetch(withToken(`/api/training-records/${resolvedId}`, trainerToken), { method: 'DELETE' })
+    } catch (err) {
+      console.error('Failed to cleanup empty karte:', err)
+    }
+  }
+
+  const handleBack = async () => {
+    await cleanupCreatedEmptySession()
+    router.push(backHref)
+  }
+
   const handleDelete = async () => {
     if (!resolvedId) return
     if (!window.confirm('このカルテを削除しますか？この操作は取り消せません。')) return
@@ -310,12 +359,12 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
         <div className="relative mx-auto flex h-full max-w-7xl items-center justify-center px-4">
           <button
             type="button"
-            onClick={() => router.push(backHref)}
+            onClick={handleBack}
             className="absolute left-4 flex h-10 w-10 items-center justify-center text-text-secondary"
           >
             <Icon name="chevronLeft" size={22} />
           </button>
-          <h1 className="text-xl font-semibold tracking-tight text-text-primary">トレーニングカルテ</h1>
+          <h1 className="text-xl font-semibold tracking-tight text-text-primary">カルテ</h1>
         </div>
       </header>
 
@@ -327,7 +376,7 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
         )}
 
         <Card padding="sm">
-          <div className="flex items-center justify-between">
+          <div className="flex items-start justify-between gap-4">
             <div>
               <div className="text-xs font-normal text-text-muted">会員</div>
               <div className="mt-1 text-xl font-semibold text-text-primary">{memberName || '-'}</div>
@@ -337,7 +386,16 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
               <div className="mt-1 text-sm font-normal text-text-secondary">{formatDate(sessionDate)}</div>
             </div>
           </div>
-          <div className="mt-2 text-xs font-normal text-text-muted">担当: {trainerName || '-'}</div>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {(reservationStartTime || reservationEndTime) && (
+              <span className="rounded-full bg-surface-overlay px-3 py-1 text-xs font-normal text-text-primary">
+                {formatTimeRange(reservationStartTime, reservationEndTime)}
+              </span>
+            )}
+            <span className="rounded-full bg-surface-overlay px-3 py-1 text-xs font-normal text-text-secondary">
+              {trainerName || '担当未設定'}
+            </span>
+          </div>
         </Card>
 
         <Card padding="sm">
@@ -356,11 +414,12 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
             <option value="カウンセリング" />
           </datalist>
 
-          <label className="block text-sm font-normal text-text-secondary mb-1 mt-3">アプローチ</label>
+          <label className="block text-sm font-normal text-text-secondary mb-1 mt-3">体調</label>
           <textarea
             value={approach}
             onChange={(e) => setApproach(e.target.value)}
             rows={2}
+            placeholder="疲労感・痛み・可動域など"
             className="w-full min-w-0 max-w-full box-border rounded-lg border border-border-strong px-3 py-2 text-sm text-text-primary bg-surface-base focus:outline-none focus:ring-2 focus:ring-brand-500"
           />
         </Card>
@@ -472,12 +531,12 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
         </Button>
 
         <Card padding="sm">
-          <label className="block text-sm font-normal text-text-secondary mb-1">感想・申し送り</label>
+          <label className="block text-sm font-normal text-text-secondary mb-1">次回への申し送り</label>
           <textarea
             value={overallNote}
             onChange={(e) => setOverallNote(e.target.value)}
             rows={3}
-            placeholder="次回トレーナーへの申し送り等"
+            placeholder="次回注意すること・継続すること"
             className="w-full min-w-0 max-w-full box-border rounded-lg border border-border-strong px-3 py-2 text-sm text-text-primary bg-surface-base focus:outline-none focus:ring-2 focus:ring-brand-500"
           />
         </Card>
@@ -487,7 +546,7 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
             削除
           </Button>
           <div className="flex gap-3">
-            <Button type="button" variant="secondary" onClick={() => router.push(backHref)}>
+            <Button type="button" variant="secondary" onClick={handleBack}>
               キャンセル
             </Button>
             <Button type="button" variant="primary" onClick={handleSave} loading={saving}>

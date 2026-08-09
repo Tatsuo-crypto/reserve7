@@ -598,13 +598,15 @@ export async function POST(request: NextRequest) {
         hour: '2-digit',
         minute: '2-digit',
       })
-      emailPromises.push(
-        sendPushNotificationToUser(clientUser.id, {
+      try {
+        await sendPushNotificationToUser(clientUser.id, {
           title: 'ご予約が確定しました',
           body: `${dateStr} ${timeStr}〜のご予約を承りました。`,
           url: `/client/${clientUser.access_token}`,
-        }).catch(err => console.error('Client push notification error:', err))
-      )
+        })
+      } catch (err) {
+        console.error('Client push notification error:', err)
+      }
     }
 
     if (emailPromises.length > 0) {

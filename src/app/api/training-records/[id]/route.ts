@@ -37,6 +37,17 @@ export async function GET(
 
     if (sessionError || !session) return createErrorResponse('カルテが見つかりません', 404)
 
+    let reservation: { title: string | null; start_time: string | null; end_time: string | null } | null = null
+    if (session.reservation_id) {
+      const { data: reservationData } = await supabaseAdmin
+        .from('reservations')
+        .select('title, start_time, end_time')
+        .eq('id', session.reservation_id)
+        .maybeSingle()
+
+      reservation = reservationData || null
+    }
+
     const { data: exercises, error: exercisesError } = await supabaseAdmin
       .from('training_exercises')
       .select('id, exercise_name, sort_order')
@@ -73,6 +84,9 @@ export async function GET(
       memberName: memberName || null,
       trainerName: trainerName || null,
       sessionDate: session.session_date,
+      reservationTitle: reservation?.title || null,
+      reservationStartTime: reservation?.start_time || null,
+      reservationEndTime: reservation?.end_time || null,
       sessionType: session.session_type,
       approach: session.approach,
       overallNote: session.overall_note,

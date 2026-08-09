@@ -65,7 +65,7 @@ const BottomNavigationContent = () => {
                   item.isCenter
                     ? 'w-14 h-14 bg-brand-500 text-white rounded-full shadow-lg -translate-y-4 border-4 border-surface-raised mb-1'
                     : isActive
-                    ? 'w-10 h-10 text-brand-600'
+                    ? 'w-10 h-10 text-brand-500'
                     : 'w-10 h-10 text-text-muted'
                 }`}
               >
@@ -75,7 +75,7 @@ const BottomNavigationContent = () => {
               <span className={`text-xs font-normal transition-colors ${
                 item.isCenter ? 'absolute bottom-1' : '-mt-1'
               } ${
-                isActive ? 'text-brand-600' : 'text-text-muted'
+                isActive ? 'text-brand-500' : 'text-text-muted'
               }`}>
                 {item.label}
               </span>

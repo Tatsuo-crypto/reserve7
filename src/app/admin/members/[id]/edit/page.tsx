@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
-import { PLAN_LIST } from '@/lib/constants'
+import { PLAN_FEES, PLAN_LIST } from '@/lib/constants'
 import Button from '@/components/ui/Button'
 
 type Choice = { label: string; value: string }
@@ -348,6 +348,9 @@ export default function EditMemberPage() {
     const val = type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
     setFormData(prev => {
       const newData = { ...prev, [name]: val }
+      if (name === 'plan' && PLAN_FEES[value] !== undefined) {
+        newData.monthlyFee = String(PLAN_FEES[value])
+      }
       if (name === 'status' && (value === 'suspended' || value === 'withdrawn')) {
         newData.monthlyFee = '0'
         newData.onlineReminderEnabled = false
@@ -577,8 +580,7 @@ export default function EditMemberPage() {
               <div className="pt-4 border-t border-border-subtle">
                 <h3 className="text-xl font-semibold text-text-primary mb-4">通知設定</h3>
                 <div className="space-y-4">
-                  <SwitchCard name="onlineReminderEnabled" checked={formData.onlineReminderEnabled} onChange={handleChange} title="メール通知を送信する" description="予約確定・変更・リマインダーの自動通知メールを送信します。" />
-                  <SwitchCard name="pushNotificationEnabled" checked={formData.pushNotificationEnabled} onChange={handleChange} title="プッシュ通知を送信する" description="お客様がアプリ通知を許可している場合にスマホへ通知します。" color="brand" />
+                  <SwitchCard name="pushNotificationEnabled" checked={formData.pushNotificationEnabled} onChange={handleChange} title="アプリ通知を送信する" description="予約確定・変更・キャンセル・リマインダーの通知対象にします。受信には会員側の端末許可が必要です。" color="brand" />
                 </div>
               </div>
 
