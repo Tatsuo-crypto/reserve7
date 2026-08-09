@@ -4,7 +4,7 @@ import { useEffect, useState, type ChangeEvent, type FormEvent, type ReactNode }
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import Button from '@/components/ui/Button'
-import { PLAN_FEES, PLAN_LIST } from '@/lib/constants'
+import { NEW_MEMBER_PLAN_LIST, PLAN_FEES } from '@/lib/constants'
 
 type StoreOption = {
   id: string
@@ -184,7 +184,7 @@ export default function NewMemberPage() {
                   onChange={handleChange}
                   className="h-12 w-full rounded-2xl border border-border-subtle bg-surface-base px-4 text-base text-text-primary outline-none focus:border-brand-500"
                 >
-                  {PLAN_LIST.map(plan => (
+                  {NEW_MEMBER_PLAN_LIST.map(plan => (
                     <option key={plan} value={plan}>{plan}</option>
                   ))}
                 </select>

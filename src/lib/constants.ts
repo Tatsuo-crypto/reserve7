@@ -37,6 +37,17 @@ export const PLAN_LIST = [
   PLANS.COUNSELING,
 ] as const;
 
+export const NEW_MEMBER_PLAN_LIST = [
+  PLANS.ONE_TIME,
+  PLANS.MONTHLY_2,
+  PLANS.MONTHLY_4,
+  PLANS.MONTHLY_6,
+  PLANS.MONTHLY_8,
+  PLANS.ONLINE_UNLIMITED,
+  PLANS.DIET_SUPPORT_3M,
+  PLANS.COUNSELING,
+] as const;
+
 // Plan display order for sorting
 export const PLAN_RANK: Record<string, number> = {
   [PLANS.COUNSELING]: 0,
