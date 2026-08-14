@@ -74,10 +74,12 @@ export default function GoalModal({ userId, token, onClose, onSave }: GoalModalP
     const handleSave = async () => {
         setSaving(true)
         try {
+            const payload: any = { ...form, token }
+            if (!payload.endDate) delete payload.endDate
             const res = await fetch(`/api/diet/goals?token=${token}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ...form, token })
+                body: JSON.stringify(payload)
             })
             if (res.ok) {
                 onSave()

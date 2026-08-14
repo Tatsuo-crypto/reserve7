@@ -3,6 +3,15 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-config';
 import { supabase, supabaseAdmin } from '@/lib/supabase';
 
+function isMissingEndDateColumn(error: any) {
+    const message = `${error?.message || ''} ${error?.details || ''} ${error?.hint || ''}`;
+    return message.includes('end_date') && (
+        message.includes('column')
+        || message.includes('schema cache')
+        || message.includes('Could not find')
+    );
+}
+
 async function resolveDietGoalUser(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const token = searchParams.get('token');
@@ -59,7 +68,7 @@ export async function PATCH(
         });
 
         if (startDate) filteredGoals.start_date = startDate;
-        if (endDate !== undefined) filteredGoals.end_date = endDate || null;
+        if (endDate) filteredGoals.end_date = endDate;
 
         const query = client
             .from('diet_goals')
@@ -73,7 +82,26 @@ export async function PATCH(
             query.eq('user_id', userId);
         }
 
-        const { data, error } = await query.select().single();
+        let { data, error } = await query.select().single();
+
+        if (error && filteredGoals.end_date !== undefined && isMissingEndDateColumn(error)) {
+            const { end_date: _endDate, ...goalsWithoutEndDate } = filteredGoals;
+            const fallbackQuery = client
+                .from('diet_goals')
+                .update({
+                    ...goalsWithoutEndDate,
+                    updated_at: new Date().toISOString(),
+                })
+                .eq('id', params.id);
+
+            if (client !== supabaseAdmin) {
+                fallbackQuery.eq('user_id', userId);
+            }
+
+            const fallbackResult = await fallbackQuery.select().single();
+            data = fallbackResult.data;
+            error = fallbackResult.error;
+        }
         if (error) throw error;
 
         return NextResponse.json({ success: true, data });

@@ -237,11 +237,12 @@ function goalFormValuesToPayload(values: GoalFormValues) {
 }
 
 function goalFormValuesToDietSaveBody(values: GoalFormValues) {
-    return {
+    const body: any = {
         startDate: values.startDate,
-        endDate: values.endDate || null,
         ...goalFormValuesToPayload(values),
     }
+    if (values.endDate) body.endDate = values.endDate
+    return body
 }
 
 function goalFormValuesToDayTypeSettings(values: GoalFormValues, habitTargets?: HabitTargetsValues) {

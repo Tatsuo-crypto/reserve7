@@ -36,6 +36,19 @@ function toggle(list: string[], value: string) {
   return list.includes(value) ? list.filter(item => item !== value) : [...list, value]
 }
 
+function inferMaterialType(file: File | null, externalUrl: string): Material['materialType'] {
+  if (file) return file.type.startsWith('image/') ? 'image' : 'pdf'
+  const normalizedUrl = externalUrl.toLowerCase()
+  if (normalizedUrl.includes('youtube.com') || normalizedUrl.includes('youtu.be') || normalizedUrl.includes('vimeo.com')) {
+    return 'video'
+  }
+  return 'link'
+}
+
+function fileTitle(file: File) {
+  return file.name.replace(/\.[^.]+$/, '')
+}
+
 export default function AdminMaterialsPage() {
   const [materials, setMaterials] = useState<Material[]>([])
   const [members, setMembers] = useState<MemberOption[]>([])
@@ -43,12 +56,11 @@ export default function AdminMaterialsPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [sourceMode, setSourceMode] = useState<'file' | 'url'>('file')
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
-  const [materialType, setMaterialType] = useState<Material['materialType']>('link')
   const [externalUrl, setExternalUrl] = useState('')
   const [file, setFile] = useState<File | null>(null)
-  const [isPublished, setIsPublished] = useState(true)
   const [targetGroups, setTargetGroups] = useState<string[]>(['all_members'])
   const [targetUserIds, setTargetUserIds] = useState<string[]>([])
   const [targetTrainerIds, setTargetTrainerIds] = useState<string[]>([])
@@ -96,10 +108,9 @@ export default function AdminMaterialsPage() {
   const resetForm = () => {
     setTitle('')
     setDescription('')
-    setMaterialType('link')
+    setSourceMode('file')
     setExternalUrl('')
     setFile(null)
-    setIsPublished(true)
     setTargetGroups(['all_members'])
     setTargetUserIds([])
     setTargetTrainerIds([])
@@ -111,15 +122,16 @@ export default function AdminMaterialsPage() {
     setError('')
     try {
       const formData = new FormData()
+      const inferredType = inferMaterialType(sourceMode === 'file' ? file : null, sourceMode === 'url' ? externalUrl : '')
       formData.set('title', title)
       formData.set('description', description)
-      formData.set('materialType', materialType)
-      formData.set('externalUrl', externalUrl)
-      formData.set('isPublished', String(isPublished))
+      formData.set('materialType', inferredType)
+      formData.set('externalUrl', sourceMode === 'url' ? externalUrl : '')
+      formData.set('isPublished', 'true')
       formData.set('targetGroups', JSON.stringify(targetGroups))
       formData.set('targetUserIds', JSON.stringify(targetUserIds))
       formData.set('targetTrainerIds', JSON.stringify(targetTrainerIds))
-      if (file) formData.set('file', file)
+      if (sourceMode === 'file' && file) formData.set('file', file)
 
       const res = await fetch('/api/admin/materials', { method: 'POST', body: formData })
       const data = await res.json().catch(() => ({}))
@@ -156,44 +168,67 @@ export default function AdminMaterialsPage() {
     <div className="mx-auto max-w-3xl space-y-5 px-4 py-4 pb-28">
       <Card padding="sm">
         <h1 className="text-xl font-semibold text-text-primary">資料管理</h1>
-        <p className="mt-1 text-xs text-text-secondary">PDF・画像はファイル保存、動画はURL共有が軽くて安定します。</p>
+        <p className="mt-1 text-xs text-text-secondary">ファイルかURLを選んで、必要な情報だけ登録します。</p>
 
         <form className="mt-5 space-y-4" onSubmit={handleSubmit}>
+          <div className="grid grid-cols-2 gap-2 rounded-2xl bg-surface-base p-1">
+            <Button
+              type="button"
+              variant={sourceMode === 'file' ? 'primary' : 'ghost'}
+              onClick={() => {
+                setSourceMode('file')
+                setExternalUrl('')
+              }}
+              className="rounded-xl"
+            >
+              ファイル
+            </Button>
+            <Button
+              type="button"
+              variant={sourceMode === 'url' ? 'primary' : 'ghost'}
+              onClick={() => {
+                setSourceMode('url')
+                setFile(null)
+              }}
+              className="rounded-xl"
+            >
+              URL
+            </Button>
+          </div>
+
+          {sourceMode === 'file' ? (
+            <div>
+              <label className="mb-1 block text-xs text-text-secondary">ファイル</label>
+              <input
+                type="file"
+                accept=".pdf,image/*"
+                onChange={e => {
+                  const nextFile = e.target.files?.[0] || null
+                  setFile(nextFile)
+                  if (nextFile && !title) setTitle(fileTitle(nextFile))
+                }}
+                className="w-full rounded-lg border border-border-strong bg-surface-base px-3 py-2 text-sm text-text-primary"
+              />
+            </div>
+          ) : (
+            <div>
+              <label className="mb-1 block text-xs text-text-secondary">URL</label>
+              <input
+                value={externalUrl}
+                onChange={e => setExternalUrl(e.target.value)}
+                placeholder="YouTube・外部ページなど"
+                className="w-full rounded-lg border border-border-strong bg-surface-base px-3 py-2 text-base text-text-primary"
+              />
+            </div>
+          )}
+
           <div>
             <label className="mb-1 block text-xs text-text-secondary">タイトル</label>
             <input value={title} onChange={e => setTitle(e.target.value)} className="w-full rounded-lg border border-border-strong bg-surface-base px-3 py-2 text-base text-text-primary" />
           </div>
           <div>
-            <label className="mb-1 block text-xs text-text-secondary">説明</label>
+            <label className="mb-1 block text-xs text-text-secondary">メモ</label>
             <textarea value={description} onChange={e => setDescription(e.target.value)} rows={2} className="w-full rounded-lg border border-border-strong bg-surface-base px-3 py-2 text-base text-text-primary" />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="mb-1 block text-xs text-text-secondary">種類</label>
-              <select value={materialType} onChange={e => setMaterialType(e.target.value as Material['materialType'])} className="w-full rounded-lg border border-border-strong bg-surface-base px-3 py-2 text-base text-text-primary">
-                <option value="link">リンク</option>
-                <option value="video">動画</option>
-                <option value="pdf">PDF</option>
-                <option value="image">画像</option>
-              </select>
-            </div>
-            <div>
-              <label className="mb-1 block text-xs text-text-secondary">公開</label>
-              <Button type="button" variant="secondary" fullWidth onClick={() => setIsPublished(value => !value)}>
-                {isPublished ? '公開中' : '下書き'}
-              </Button>
-            </div>
-          </div>
-
-          <div>
-            <label className="mb-1 block text-xs text-text-secondary">URL</label>
-            <input value={externalUrl} onChange={e => setExternalUrl(e.target.value)} placeholder="YouTube限定公開・外部ページなど" className="w-full rounded-lg border border-border-strong bg-surface-base px-3 py-2 text-base text-text-primary" />
-          </div>
-
-          <div>
-            <label className="mb-1 block text-xs text-text-secondary">ファイル</label>
-            <input type="file" accept=".pdf,image/*" onChange={e => setFile(e.target.files?.[0] || null)} className="w-full rounded-lg border border-border-strong bg-surface-base px-3 py-2 text-sm text-text-primary" />
           </div>
 
           <div className="space-y-2">

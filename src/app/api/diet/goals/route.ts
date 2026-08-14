@@ -3,6 +3,15 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-config';
 import { supabase, supabaseAdmin } from '@/lib/supabase';
 
+function isMissingEndDateColumn(error: any) {
+    const message = `${error?.message || ''} ${error?.details || ''} ${error?.hint || ''}`;
+    return message.includes('end_date') && (
+        message.includes('column')
+        || message.includes('schema cache')
+        || message.includes('Could not find')
+    );
+}
+
 // Get diet goals history for current user
 export async function GET(req: NextRequest) {
     try {
@@ -98,7 +107,7 @@ export async function POST(req: NextRequest) {
         allowedKeys.forEach(key => {
             if (goals[key] !== undefined) filteredGoals[key] = goals[key];
         });
-        if (endDate !== undefined) filteredGoals.end_date = endDate || null;
+        if (endDate) filteredGoals.end_date = endDate;
 
         // Check if goal for this date already exists
         const { data: existing } = await client
@@ -129,6 +138,31 @@ export async function POST(req: NextRequest) {
                 })
                 .select()
                 .single();
+        }
+
+        if (result.error && filteredGoals.end_date !== undefined && isMissingEndDateColumn(result.error)) {
+            const { end_date: _endDate, ...goalsWithoutEndDate } = filteredGoals;
+            if (existing) {
+                result = await client
+                    .from('diet_goals')
+                    .update({
+                        ...goalsWithoutEndDate,
+                        updated_at: new Date().toISOString(),
+                    })
+                    .eq('id', existing.id)
+                    .select()
+                    .single();
+            } else {
+                result = await client
+                    .from('diet_goals')
+                    .insert({
+                        user_id: userId,
+                        start_date: startDate || new Date().toISOString().split('T')[0],
+                        ...goalsWithoutEndDate,
+                    })
+                    .select()
+                    .single();
+            }
         }
 
         if (result.error) throw result.error;
