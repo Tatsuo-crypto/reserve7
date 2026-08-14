@@ -738,7 +738,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
         </div>
       )}
 
-      {/* Action Choice Modal: トレーナーが予約をタップした際に「カルテ入力」「予約変更」を選ぶ(AN-1) */}
+      {/* Action Choice Modal: 予約をタップした際に「カルテ」「予約の変更」を選ぶ */}
       {showActionChoice && choiceEvent && (
         <div
           className="fixed inset-0 bg-gray-900 bg-opacity-60 z-[200] flex items-center justify-center p-4 backdrop-blur-sm"
@@ -771,7 +771,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
                   router.push(kartePath)
                 }}
               >
-                カルテを書く
+                カルテ
               </Button>
               <Button
                 type="button"
@@ -783,7 +783,7 @@ export default function TimelineView({ selectedDate, events, shifts = [], templa
                   setChoiceEvent(null)
                 }}
               >
-                予約を変更
+                予約の変更
               </Button>
             </div>
             <Button

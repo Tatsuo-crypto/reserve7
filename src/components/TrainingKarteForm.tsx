@@ -30,6 +30,22 @@ type ExerciseRow = {
   lastRecordLoading: boolean
 }
 
+type PreviousSession = {
+  id: string
+  sessionDate: string | null
+}
+
+type PreviousSessionDetail = {
+  id: string
+  sessionDate: string | null
+  approach: string | null
+  overallNote: string | null
+  exercises: {
+    exerciseName: string
+    sets: { weight: number | null; reps: number | null }[]
+  }[]
+}
+
 interface TrainingKarteFormProps {
   trainerToken?: string | null
   sessionKey: string // 'new' または既存セッションID
@@ -47,12 +63,14 @@ function withToken(url: string, trainerToken?: string | null) {
   return url.includes('?') ? `${url}&token=${trainerToken}` : `${url}?token=${trainerToken}`
 }
 
-// AN-4: 推定1RM(Epleyの式)。あくまで目安表示で、保存はしない。
-function estimate1RM(weight: string, reps: string): number | null {
-  const w = Number(weight)
-  const r = Number(reps)
-  if (!w || !r || Number.isNaN(w) || Number.isNaN(r)) return null
-  return Math.round(w * (1 + r / 30) * 10) / 10
+function createEmptyExercise(): ExerciseRow {
+  return {
+    key: genKey(),
+    exerciseName: '',
+    sets: [{ key: genKey(), weight: '', reps: '', assisted: false, memo: '' }],
+    lastRecord: null,
+    lastRecordLoading: false,
+  }
 }
 
 function formatDate(dateStr?: string | null) {
@@ -96,6 +114,7 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
   const [resolvedId, setResolvedId] = useState<string | null>(sessionKey !== 'new' ? sessionKey : null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [deleting, setDeleting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -106,19 +125,22 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
   const [reservationStartTime, setReservationStartTime] = useState<string | null>(null)
   const [reservationEndTime, setReservationEndTime] = useState<string | null>(null)
   const [sessionType, setSessionType] = useState('')
-  const [approach, setApproach] = useState('')
-  const [overallNote, setOverallNote] = useState('')
+  const [karteMemo, setKarteMemo] = useState('')
   const [exercises, setExercises] = useState<ExerciseRow[]>([])
   const [exerciseMasterNames, setExerciseMasterNames] = useState<string[]>([])
+  const [previousSession, setPreviousSession] = useState<PreviousSession | null>(null)
+  const [previousSessionDetail, setPreviousSessionDetail] = useState<PreviousSessionDetail | null>(null)
   const [createdOnInit, setCreatedOnInit] = useState(false)
 
   const didInit = useRef(false)
+  const didSkipFirstAutoSave = useRef(false)
+  const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const loadSessionDetail = useCallback(async (id: string) => {
     const res = await fetch(withToken(`/api/training-records/${id}`, trainerToken), { cache: 'no-store' })
     if (!res.ok) {
       setError('カルテを読み込めませんでした。')
-      return
+      return null
     }
     const data = await res.json()
     setMemberName(data.memberName)
@@ -128,10 +150,8 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
     setReservationStartTime(data.reservationStartTime || null)
     setReservationEndTime(data.reservationEndTime || null)
     setSessionType(data.sessionType || '')
-    setApproach(data.approach || '')
-    setOverallNote(data.overallNote || '')
-    setExercises(
-      (data.exercises || []).map((ex: any) => ({
+    setKarteMemo(data.approach || data.overallNote || '')
+    const loadedExercises = (data.exercises || []).map((ex: any) => ({
         key: genKey(),
         id: ex.id,
         exerciseName: ex.exerciseName,
@@ -146,7 +166,47 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
         lastRecord: null,
         lastRecordLoading: false,
       }))
-    )
+    setExercises(loadedExercises.length > 0 ? loadedExercises : [createEmptyExercise()])
+    return data
+  }, [trainerToken])
+
+  const loadPreviousSession = useCallback(async (currentUserId: string | null, currentSessionId: string, currentDate?: string | null) => {
+    if (!currentUserId) {
+      setPreviousSession(null)
+      return
+    }
+
+    const res = await fetch(withToken(`/api/training-records/members/${currentUserId}`, trainerToken), { cache: 'no-store' })
+    if (!res.ok) return
+    const data = await res.json()
+    const history = (data.history || []) as PreviousSession[]
+    const previous = history.find((item) => {
+      if (item.id === currentSessionId) return false
+      if (!currentDate || !item.sessionDate) return true
+      return item.sessionDate < currentDate
+    })
+    setPreviousSession(previous || null)
+    if (!previous) {
+      setPreviousSessionDetail(null)
+      return
+    }
+
+    const detailRes = await fetch(withToken(`/api/training-records/${previous.id}`, trainerToken), { cache: 'no-store' })
+    if (!detailRes.ok) return
+    const detail = await detailRes.json()
+    setPreviousSessionDetail({
+      id: detail.id,
+      sessionDate: detail.sessionDate,
+      approach: detail.approach || null,
+      overallNote: detail.overallNote || null,
+      exercises: (detail.exercises || []).map((exercise: any) => ({
+        exerciseName: exercise.exerciseName,
+        sets: (exercise.sets || []).map((set: any) => ({
+          weight: set.weight,
+          reps: set.reps,
+        })),
+      })),
+    })
   }, [trainerToken])
 
   useEffect(() => {
@@ -171,10 +231,12 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
           const { id, created } = await res.json()
           setResolvedId(id)
           setCreatedOnInit(created === true)
-          await loadSessionDetail(id)
+          const detail = await loadSessionDetail(id)
+          await loadPreviousSession(detail?.userId || null, id, detail?.sessionDate)
         } else {
           setResolvedId(sessionKey)
-          await loadSessionDetail(sessionKey)
+          const detail = await loadSessionDetail(sessionKey)
+          await loadPreviousSession(detail?.userId || null, sessionKey, detail?.sessionDate)
         }
 
         const masterRes = await fetch(withToken('/api/training-records/exercise-master', trainerToken), { cache: 'no-store' })
@@ -195,10 +257,7 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
   }, [])
 
   const addExercise = () => {
-    setExercises((prev) => [
-      ...prev,
-      { key: genKey(), exerciseName: '', sets: [], lastRecord: null, lastRecordLoading: false },
-    ])
+    setExercises((prev) => [...prev, createEmptyExercise()])
   }
 
   const removeExercise = (exKey: string) => {
@@ -206,66 +265,70 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
   }
 
   const updateExerciseName = (exKey: string, name: string) => {
-    setExercises((prev) => prev.map((e) => (e.key === exKey ? { ...e, exerciseName: name, lastRecord: null } : e)))
+    setExercises((prev) => prev.map((e) => {
+      if (e.key !== exKey) return e
+      const shouldCreateFirstSet = name.trim() && e.sets.length === 0
+      return {
+        ...e,
+        exerciseName: name,
+        lastRecord: null,
+        sets: shouldCreateFirstSet ? [{ key: genKey(), weight: '', reps: '', assisted: false, memo: '' }] : e.sets,
+      }
+    }))
   }
 
-  const fetchLastRecord = async (exKey: string) => {
-    const exercise = exercises.find((e) => e.key === exKey)
-    if (!exercise || !exercise.exerciseName.trim() || !resolvedUserId) return
-
-    setExercises((prev) => prev.map((e) => (e.key === exKey ? { ...e, lastRecordLoading: true } : e)))
-
-    try {
-      const params = new URLSearchParams()
-      params.set('userId', resolvedUserId)
-      params.set('exerciseName', exercise.exerciseName.trim())
-      if (resolvedId) params.set('excludeSessionId', resolvedId)
-
-      const res = await fetch(withToken(`/api/training-records/last-exercise?${params.toString()}`, trainerToken), { cache: 'no-store' })
-      if (!res.ok) return
-      const data = await res.json()
-      setExercises((prev) => prev.map((e) => (e.key === exKey ? { ...e, lastRecord: data, lastRecordLoading: false } : e)))
-    } catch (err) {
-      console.error(err)
-      setExercises((prev) => prev.map((e) => (e.key === exKey ? { ...e, lastRecordLoading: false } : e)))
-    }
+  const ensureExerciseSet = (sets: SetRow[]) => {
+    if (sets.length > 0) return sets
+    return [{ key: genKey(), weight: '', reps: '', assisted: false, memo: '' }]
   }
 
-  const addSet = (exKey: string) => {
+  const updateExerciseSummary = (exKey: string, field: 'weight' | 'reps', value: string) => {
     setExercises((prev) =>
       prev.map((e) =>
         e.key === exKey
-          ? { ...e, sets: [...e.sets, { key: genKey(), weight: '', reps: '', assisted: false, memo: '' }] }
+          ? {
+              ...e,
+              sets: ensureExerciseSet(e.sets).map((s) => ({ ...s, [field]: value })),
+            }
           : e
       )
     )
   }
 
-  const removeSet = (exKey: string, setKey: string) => {
-    setExercises((prev) =>
-      prev.map((e) => (e.key === exKey ? { ...e, sets: e.sets.filter((s) => s.key !== setKey) } : e))
-    )
-  }
-
-  const updateSet = (exKey: string, setKey: string, field: keyof SetRow, value: string | boolean) => {
+  const updateSetCount = (exKey: string, value: string) => {
+    const count = Math.max(0, Math.min(20, Number(value) || 0))
     setExercises((prev) =>
       prev.map((e) =>
         e.key === exKey
-          ? { ...e, sets: e.sets.map((s) => (s.key === setKey ? { ...s, [field]: value } : s)) }
+          ? {
+              ...e,
+              sets: Array.from({ length: count }, (_, index) => {
+                const source = e.sets[index] || e.sets[0] || { weight: '', reps: '' }
+                return {
+                  key: e.sets[index]?.key || genKey(),
+                  id: e.sets[index]?.id,
+                  weight: source.weight,
+                  reps: source.reps,
+                  assisted: false,
+                  memo: '',
+                }
+              }),
+            }
           : e
       )
     )
   }
 
-  const handleSave = async () => {
+  const saveKarte = useCallback(async () => {
     if (!resolvedId) return
     setSaving(true)
+    setSaveStatus('saving')
     setError(null)
     try {
       const payload = {
         sessionType,
-        approach,
-        overallNote,
+        approach: karteMemo,
+        overallNote: null,
         exercises: exercises
           .filter((e) => e.exerciseName.trim())
           .map((e, index) => ({
@@ -277,8 +340,8 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
               setNumber: setIndex + 1,
               weight: s.weight ? Number(s.weight) : null,
               reps: s.reps ? Number(s.reps) : null,
-              assisted: s.assisted,
-              memo: s.memo || null,
+              assisted: false,
+              memo: null,
             })),
           })),
       }
@@ -292,25 +355,49 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
         setError(data.error || '保存できませんでした。')
-        return
+        setSaveStatus('error')
+        return false
       }
 
-      router.push(backHref)
+      setSaveStatus('saved')
+      return true
     } catch (err) {
       console.error(err)
       setError('保存できませんでした。')
+      setSaveStatus('error')
+      return false
     } finally {
       setSaving(false)
     }
-  }
+  }, [exercises, karteMemo, resolvedId, sessionType, trainerToken])
 
   const hasInput = () => {
-    if (sessionType.trim() || approach.trim() || overallNote.trim()) return true
+    if (karteMemo.trim()) return true
     return exercises.some((exercise) => (
       exercise.exerciseName.trim() ||
-      exercise.sets.some((set) => set.weight || set.reps || set.memo.trim() || set.assisted)
+      exercise.sets.some((set) => set.weight || set.reps)
     ))
   }
+
+  useEffect(() => {
+    if (loading || !resolvedId) return
+    if (!didSkipFirstAutoSave.current) {
+      didSkipFirstAutoSave.current = true
+      return
+    }
+    if (createdOnInit && !hasInput()) return
+
+    setSaveStatus('idle')
+    if (autosaveTimer.current) clearTimeout(autosaveTimer.current)
+    autosaveTimer.current = setTimeout(() => {
+      void saveKarte()
+    }, 700)
+
+    return () => {
+      if (autosaveTimer.current) clearTimeout(autosaveTimer.current)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [karteMemo, exercises, loading, resolvedId])
 
   const cleanupCreatedEmptySession = async () => {
     if (!createdOnInit || !resolvedId || hasInput()) return
@@ -322,6 +409,11 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
   }
 
   const handleBack = async () => {
+    if (autosaveTimer.current) clearTimeout(autosaveTimer.current)
+    if (hasInput()) {
+      const saved = await saveKarte()
+      if (saved === false) return
+    }
     await cleanupCreatedEmptySession()
     router.push(backHref)
   }
@@ -345,6 +437,23 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
     }
   }
 
+  const handleOpenPrevious = async () => {
+    if (!previousSession) return
+    if (autosaveTimer.current) clearTimeout(autosaveTimer.current)
+    if (hasInput()) {
+      const saved = await saveKarte()
+      if (saved === false) return
+    }
+    await cleanupCreatedEmptySession()
+    const currentPath = typeof window !== 'undefined'
+      ? `${window.location.pathname}${window.location.search}`
+      : backHref
+    const nextPath = trainerToken
+      ? `/trainer/${trainerToken}/karte/${previousSession.id}?back=${encodeURIComponent(currentPath)}`
+      : `/admin/karte/${previousSession.id}?back=${encodeURIComponent(currentPath)}`
+    router.push(nextPath)
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-surface-base pb-28 pt-20 text-center text-sm text-text-secondary">
@@ -355,202 +464,177 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
 
   return (
     <div className="min-h-screen bg-surface-base pb-28">
-      <header className="sticky top-0 z-50 h-16 border-b border-border-subtle bg-surface-raised/80 backdrop-blur-md">
-        <div className="relative mx-auto flex h-full max-w-7xl items-center justify-center px-4">
-          <button
-            type="button"
-            onClick={handleBack}
-            className="absolute left-4 flex h-10 w-10 items-center justify-center text-text-secondary"
-          >
-            <Icon name="chevronLeft" size={22} />
-          </button>
-          <h1 className="text-xl font-semibold tracking-tight text-text-primary">カルテ</h1>
-        </div>
-      </header>
+      {trainerToken && (
+        <header className="sticky top-0 z-50 h-16 border-b border-border-subtle bg-surface-raised/80 backdrop-blur-md">
+          <div className="relative mx-auto flex h-full max-w-7xl items-center justify-center px-4">
+            <button
+              type="button"
+              onClick={handleBack}
+              className="absolute left-4 flex h-10 w-10 items-center justify-center text-text-secondary"
+            >
+              <Icon name="chevronLeft" size={22} />
+            </button>
+            <h1 className="text-xl font-semibold tracking-tight text-text-primary">カルテ</h1>
+          </div>
+        </header>
+      )}
 
-      <main className="mx-auto max-w-md space-y-4 px-4 pt-5">
+      <main className="mx-auto max-w-md space-y-3 px-3 pt-3">
         {error && (
           <div className="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-700">
             {error}
           </div>
         )}
 
-        <Card padding="sm">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <div className="text-xs font-normal text-text-muted">会員</div>
-              <div className="mt-1 text-xl font-semibold text-text-primary">{memberName || '-'}</div>
-            </div>
-            <div className="text-right">
-              <div className="text-xs font-normal text-text-muted">日付</div>
-              <div className="mt-1 text-sm font-normal text-text-secondary">{formatDate(sessionDate)}</div>
-            </div>
-          </div>
-          <div className="mt-4 flex flex-wrap gap-2">
-            {(reservationStartTime || reservationEndTime) && (
-              <span className="rounded-full bg-surface-overlay px-3 py-1 text-xs font-normal text-text-primary">
-                {formatTimeRange(reservationStartTime, reservationEndTime)}
-              </span>
-            )}
-            <span className="rounded-full bg-surface-overlay px-3 py-1 text-xs font-normal text-text-secondary">
-              {trainerName || '担当未設定'}
+        <Card padding="xs">
+          <div className="mb-2 flex items-center justify-between gap-3">
+            <h2 className="text-sm font-semibold text-text-primary">メモ</h2>
+            <span className="text-xs font-normal text-text-muted">
+              {saveStatus === 'saving' ? '保存中' : saveStatus === 'saved' ? '保存済み' : saveStatus === 'error' ? '保存失敗' : ''}
             </span>
           </div>
-        </Card>
-
-        <Card padding="sm">
-          <label className="block text-sm font-normal text-text-secondary mb-1">セッション種別</label>
-          <input
-            type="text"
-            list="session-type-options"
-            value={sessionType}
-            onChange={(e) => setSessionType(e.target.value)}
-            placeholder="通常 / 体験 / カウンセリング"
-            className="w-full min-w-0 max-w-full box-border rounded-lg border border-border-strong px-3 py-2 text-sm text-text-primary bg-surface-base focus:outline-none focus:ring-2 focus:ring-brand-500"
-          />
-          <datalist id="session-type-options">
-            <option value="通常" />
-            <option value="体験" />
-            <option value="カウンセリング" />
-          </datalist>
-
-          <label className="block text-sm font-normal text-text-secondary mb-1 mt-3">体調</label>
           <textarea
-            value={approach}
-            onChange={(e) => setApproach(e.target.value)}
+            value={karteMemo}
+            onChange={(e) => setKarteMemo(e.target.value)}
             rows={2}
-            placeholder="疲労感・痛み・可動域など"
-            className="w-full min-w-0 max-w-full box-border rounded-lg border border-border-strong px-3 py-2 text-sm text-text-primary bg-surface-base focus:outline-none focus:ring-2 focus:ring-brand-500"
+            placeholder="体調・痛み・今日の内容"
+            className="w-full min-w-0 max-w-full box-border rounded-lg border border-border-strong px-3 py-2 text-base text-text-primary bg-surface-base focus:outline-none focus:ring-2 focus:ring-brand-500"
           />
         </Card>
 
-        {exercises.map((exercise) => (
-          <Card key={exercise.key} padding="sm">
-            <div className="flex items-center gap-2">
-              <input
-                type="text"
-                list="exercise-master-options"
-                value={exercise.exerciseName}
-                onChange={(e) => updateExerciseName(exercise.key, e.target.value)}
-                onBlur={() => fetchLastRecord(exercise.key)}
-                placeholder="種目名"
-                className="flex-1 min-w-0 rounded-lg border border-border-strong px-3 py-2 text-sm font-semibold text-text-primary bg-surface-base focus:outline-none focus:ring-2 focus:ring-brand-500"
-              />
-              <Button type="button" variant="ghost" size="sm" onClick={() => removeExercise(exercise.key)}>
-                <Icon name="trash" size={16} />
+        {previousSessionDetail && (
+          <Card padding="xs" className="bg-surface-base">
+            <div className="mb-2 flex items-center justify-between gap-3">
+              <div>
+                <h2 className="text-sm font-semibold text-text-primary">前回記録</h2>
+                <div className="text-xs text-text-muted">{formatDate(previousSessionDetail.sessionDate)}</div>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={handleOpenPrevious}
+                className="shrink-0 px-2 text-text-secondary"
+              >
+                開く
+                <Icon name="chevronRight" size={16} />
               </Button>
             </div>
-
-            {exercise.lastRecordLoading && (
-              <div className="mt-2 text-xs font-normal text-text-muted">前回記録を確認中...</div>
-            )}
-            {exercise.lastRecord && exercise.lastRecord.found && (
-              <div className="mt-2 rounded-lg bg-surface-overlay px-3 py-2 text-xs font-normal text-text-secondary">
-                前回({formatDate(exercise.lastRecord.sessionDate)}): {' '}
-                {(exercise.lastRecord.sets || [])
-                  .map((s) => `${s.weight ?? '-'}kg×${s.reps ?? '-'}回${s.assisted ? '(補助)' : ''}`)
-                  .join(' / ')}
+            {(previousSessionDetail.approach || previousSessionDetail.overallNote) && (
+              <div className="mb-2 rounded-lg bg-surface-raised px-3 py-2 text-xs text-text-secondary">
+                {previousSessionDetail.approach || previousSessionDetail.overallNote}
               </div>
             )}
-            {exercise.lastRecord && !exercise.lastRecord.found && (
-              <div className="mt-2 text-xs font-normal text-text-muted">前回記録なし</div>
-            )}
-
-            <div className="mt-3 space-y-2">
-              {exercise.sets.map((set, setIndex) => {
-                const rm = estimate1RM(set.weight, set.reps)
+            <div className="space-y-1.5">
+              {previousSessionDetail.exercises.slice(0, 4).map((exercise, index) => {
+                const firstSet = exercise.sets[0]
                 return (
-                  <div key={set.key} className="rounded-lg border border-border-subtle bg-surface-base p-2">
-                    <div className="flex items-center gap-2">
-                      <span className="w-5 shrink-0 text-center text-xs font-normal text-text-muted">{setIndex + 1}</span>
-                      <input
-                        type="number"
-                        inputMode="decimal"
-                        value={set.weight}
-                        onChange={(e) => updateSet(exercise.key, set.key, 'weight', e.target.value)}
-                        placeholder="重さ"
-                        className="w-16 min-w-0 rounded-lg border border-border-strong px-2 py-1.5 text-sm text-text-primary bg-surface-raised focus:outline-none focus:ring-2 focus:ring-brand-500"
-                      />
-                      <span className="text-xs text-text-muted">kg ×</span>
-                      <input
-                        type="number"
-                        inputMode="numeric"
-                        value={set.reps}
-                        onChange={(e) => updateSet(exercise.key, set.key, 'reps', e.target.value)}
-                        placeholder="回数"
-                        className="w-14 min-w-0 rounded-lg border border-border-strong px-2 py-1.5 text-sm text-text-primary bg-surface-raised focus:outline-none focus:ring-2 focus:ring-brand-500"
-                      />
-                      <span className="text-xs text-text-muted">回</span>
-                      <span className="ml-auto shrink-0 whitespace-nowrap text-xs font-normal text-text-muted">
-                        {rm ? `推定1RM ${rm}kg` : ''}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => removeSet(exercise.key, set.key)}
-                        className="shrink-0 text-text-muted"
-                      >
-                        <Icon name="close" size={16} />
-                      </button>
-                    </div>
-                    <div className="mt-1.5 flex items-center gap-2">
-                      <label className="flex shrink-0 items-center gap-1 text-xs font-normal text-text-secondary">
-                        <input
-                          type="checkbox"
-                          checked={set.assisted}
-                          onChange={(e) => updateSet(exercise.key, set.key, 'assisted', e.target.checked)}
-                        />
-                        補助
-                      </label>
-                      <input
-                        type="text"
-                        value={set.memo}
-                        onChange={(e) => updateSet(exercise.key, set.key, 'memo', e.target.value)}
-                        placeholder="メモ(例: 肩に違和感なし)"
-                        className="flex-1 min-w-0 rounded-lg border border-border-strong px-2 py-1.5 text-xs text-text-primary bg-surface-raised focus:outline-none focus:ring-2 focus:ring-brand-500"
-                      />
-                    </div>
+                  <div key={`${exercise.exerciseName}-${index}`} className="flex items-center justify-between gap-2 text-xs">
+                    <span className="min-w-0 truncate text-text-primary">{exercise.exerciseName}</span>
+                    <span className="shrink-0 text-text-secondary">
+                      {firstSet?.weight ?? '-'}kg / {firstSet?.reps ?? '-'}回 / {exercise.sets.length}set
+                    </span>
                   </div>
                 )
               })}
             </div>
-
-            <Button type="button" variant="secondary" size="sm" fullWidth className="mt-2" onClick={() => addSet(exercise.key)}>
-              + セット追加
-            </Button>
           </Card>
-        ))}
+        )}
 
-        <datalist id="exercise-master-options">
-          {exerciseMasterNames.map((name) => (
-            <option key={name} value={name} />
-          ))}
-        </datalist>
+        <Card padding="xs">
+          <div className="mb-2 flex items-center justify-between gap-3">
+            <h2 className="text-sm font-semibold text-text-primary">カルテ</h2>
+            {previousSession && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={handleOpenPrevious}
+                className="shrink-0 px-2 text-text-secondary"
+              >
+                前回
+                <Icon name="chevronRight" size={16} />
+              </Button>
+            )}
+          </div>
+          <div className="space-y-2">
+            {exercises.map((exercise) => {
+              const firstSet = exercise.sets[0]
+              const setCount = exercise.sets.length
+              return (
+                <div key={exercise.key} className="rounded-lg border border-border-subtle bg-surface-base p-2">
+                  <div className="mb-1.5 flex items-center gap-2">
+                    <input
+                      type="text"
+                      list="exercise-master-options"
+                      value={exercise.exerciseName}
+                      onChange={(e) => updateExerciseName(exercise.key, e.target.value)}
+                      autoComplete="off"
+                      placeholder="種目"
+                      className="min-w-0 flex-1 rounded-lg border border-border-strong bg-surface-raised px-2.5 py-1.5 text-base font-semibold text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    />
+                    <Button type="button" variant="ghost" size="sm" onClick={() => removeExercise(exercise.key)}>
+                      <Icon name="trash" size={16} />
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <label className="min-w-0">
+                      <span className="mb-0.5 block text-xs font-normal text-text-muted">重さ</span>
+                      <input
+                        type="number"
+                        inputMode="decimal"
+                        value={firstSet?.weight || ''}
+                        onChange={(e) => updateExerciseSummary(exercise.key, 'weight', e.target.value)}
+                        placeholder="kg"
+                        className="w-full min-w-0 rounded-lg border border-border-strong bg-surface-raised px-2 py-1.5 text-base text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-500"
+                      />
+                    </label>
+                    <label className="min-w-0">
+                      <span className="mb-0.5 block text-xs font-normal text-text-muted">回数</span>
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        value={firstSet?.reps || ''}
+                        onChange={(e) => updateExerciseSummary(exercise.key, 'reps', e.target.value)}
+                        placeholder="回"
+                        className="w-full min-w-0 rounded-lg border border-border-strong bg-surface-raised px-2 py-1.5 text-base text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-500"
+                      />
+                    </label>
+                    <label className="min-w-0">
+                      <span className="mb-0.5 block text-xs font-normal text-text-muted">セット</span>
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        value={setCount || ''}
+                        onChange={(e) => updateSetCount(exercise.key, e.target.value)}
+                        placeholder="数"
+                        className="w-full min-w-0 rounded-lg border border-border-strong bg-surface-raised px-2 py-1.5 text-base text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-500"
+                      />
+                    </label>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
 
-        <Button type="button" variant="secondary" fullWidth onClick={addExercise}>
-          + 種目を追加
-        </Button>
+          <datalist id="exercise-master-options">
+            {exerciseMasterNames.map((name) => (
+              <option key={name} value={name} />
+            ))}
+          </datalist>
 
-        <Card padding="sm">
-          <label className="block text-sm font-normal text-text-secondary mb-1">次回への申し送り</label>
-          <textarea
-            value={overallNote}
-            onChange={(e) => setOverallNote(e.target.value)}
-            rows={3}
-            placeholder="次回注意すること・継続すること"
-            className="w-full min-w-0 max-w-full box-border rounded-lg border border-border-strong px-3 py-2 text-sm text-text-primary bg-surface-base focus:outline-none focus:ring-2 focus:ring-brand-500"
-          />
+          <Button type="button" variant="secondary" fullWidth className="mt-2 py-2" onClick={addExercise}>
+            + 種目を追加
+          </Button>
         </Card>
 
-        <div className="flex items-center justify-between gap-3 pt-2">
+        <div className="flex items-center justify-between gap-3 pt-1">
           <Button type="button" variant="destructive" onClick={handleDelete} disabled={deleting}>
             削除
           </Button>
           <div className="flex gap-3">
             <Button type="button" variant="secondary" onClick={handleBack}>
-              キャンセル
-            </Button>
-            <Button type="button" variant="primary" onClick={handleSave} loading={saving}>
-              保存
+              戻る
             </Button>
           </div>
         </div>
