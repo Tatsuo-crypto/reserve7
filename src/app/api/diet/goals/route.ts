@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
         const tokenFromQuery = searchParams.get('token');
 
         const body = await req.json();
-        const { startDate, token: tokenFromBody, targetCalories, ...goals } = body;
+        const { startDate, endDate, token: tokenFromBody, targetCalories, ...goals } = body;
         const token = tokenFromQuery || tokenFromBody;
 
         let userId: string;
@@ -92,11 +92,13 @@ export async function POST(req: NextRequest) {
             'fiber',
             'salt',
             'title',
+            'end_date',
         ];
         const filteredGoals: any = {};
         allowedKeys.forEach(key => {
             if (goals[key] !== undefined) filteredGoals[key] = goals[key];
         });
+        if (endDate !== undefined) filteredGoals.end_date = endDate || null;
 
         // Check if goal for this date already exists
         const { data: existing } = await client

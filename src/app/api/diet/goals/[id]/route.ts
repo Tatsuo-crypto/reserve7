@@ -40,7 +40,7 @@ export async function PATCH(
         if (resolved.error) return resolved.error;
         const { userId, client } = resolved;
         const body = await req.json();
-        const { startDate, token: _token, targetCalories: _targetCalories, ...goals } = body;
+        const { startDate, endDate, token: _token, targetCalories: _targetCalories, ...goals } = body;
 
         const allowedKeys = [
             'calories',
@@ -51,6 +51,7 @@ export async function PATCH(
             'fiber',
             'salt',
             'title',
+            'end_date',
         ];
         const filteredGoals: any = {};
         allowedKeys.forEach(key => {
@@ -58,6 +59,7 @@ export async function PATCH(
         });
 
         if (startDate) filteredGoals.start_date = startDate;
+        if (endDate !== undefined) filteredGoals.end_date = endDate || null;
 
         const query = client
             .from('diet_goals')

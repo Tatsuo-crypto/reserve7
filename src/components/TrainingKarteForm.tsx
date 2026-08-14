@@ -42,7 +42,7 @@ type PreviousSessionDetail = {
   overallNote: string | null
   exercises: {
     exerciseName: string
-    sets: { weight: number | null; reps: number | null }[]
+    sets: { weight: number | null; reps: number | null; setCount: string | null }[]
   }[]
 }
 
@@ -71,6 +71,15 @@ function createEmptyExercise(): ExerciseRow {
     lastRecord: null,
     lastRecordLoading: false,
   }
+}
+
+function createEmptySet(): SetRow {
+  return { key: genKey(), weight: '', reps: '', assisted: false, memo: '' }
+}
+
+function normalizeSetCount(value: unknown) {
+  const text = value == null ? '' : String(value)
+  return /^\d+$/.test(text) ? text : ''
 }
 
 function formatDate(dateStr?: string | null) {
@@ -161,7 +170,7 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
           weight: s.weight !== null && s.weight !== undefined ? String(s.weight) : '',
           reps: s.reps !== null && s.reps !== undefined ? String(s.reps) : '',
           assisted: !!s.assisted,
-          memo: s.memo || '',
+          memo: normalizeSetCount(s.memo),
         })),
         lastRecord: null,
         lastRecordLoading: false,
@@ -204,6 +213,7 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
         sets: (exercise.sets || []).map((set: any) => ({
           weight: set.weight,
           reps: set.reps,
+          setCount: normalizeSetCount(set.memo),
         })),
       })),
     })
@@ -277,42 +287,43 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
     }))
   }
 
-  const ensureExerciseSet = (sets: SetRow[]) => {
-    if (sets.length > 0) return sets
-    return [{ key: genKey(), weight: '', reps: '', assisted: false, memo: '' }]
+  const addSetRow = (exKey: string) => {
+    setExercises((prev) =>
+      prev.map((e) =>
+        e.key === exKey
+          ? { ...e, sets: [...e.sets, createEmptySet()] }
+          : e
+      )
+    )
   }
 
-  const updateExerciseSummary = (exKey: string, field: 'weight' | 'reps', value: string) => {
+  const removeSetRow = (exKey: string, setKey: string) => {
     setExercises((prev) =>
       prev.map((e) =>
         e.key === exKey
           ? {
               ...e,
-              sets: ensureExerciseSet(e.sets).map((s) => ({ ...s, [field]: value })),
+              sets: e.sets.length > 1 ? e.sets.filter((s) => s.key !== setKey) : e.sets,
             }
           : e
       )
     )
   }
 
-  const updateSetCount = (exKey: string, value: string) => {
-    const count = Math.max(0, Math.min(20, Number(value) || 0))
+  const updateSetRow = (exKey: string, setKey: string, field: 'weight' | 'reps' | 'setCount', value: string) => {
     setExercises((prev) =>
       prev.map((e) =>
         e.key === exKey
           ? {
               ...e,
-              sets: Array.from({ length: count }, (_, index) => {
-                const source = e.sets[index] || e.sets[0] || { weight: '', reps: '' }
-                return {
-                  key: e.sets[index]?.key || genKey(),
-                  id: e.sets[index]?.id,
-                  weight: source.weight,
-                  reps: source.reps,
-                  assisted: false,
-                  memo: '',
-                }
-              }),
+              sets: e.sets.map((s) =>
+                s.key === setKey
+                  ? {
+                      ...s,
+                      [field === 'setCount' ? 'memo' : field]: value,
+                    }
+                  : s
+              ),
             }
           : e
       )
@@ -341,7 +352,7 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
               weight: s.weight ? Number(s.weight) : null,
               reps: s.reps ? Number(s.reps) : null,
               assisted: false,
-              memo: null,
+              memo: normalizeSetCount(s.memo) || null,
             })),
           })),
       }
@@ -527,13 +538,17 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
             )}
             <div className="space-y-1.5">
               {previousSessionDetail.exercises.slice(0, 4).map((exercise, index) => {
-                const firstSet = exercise.sets[0]
                 return (
-                  <div key={`${exercise.exerciseName}-${index}`} className="flex items-center justify-between gap-2 text-xs">
-                    <span className="min-w-0 truncate text-text-primary">{exercise.exerciseName}</span>
-                    <span className="shrink-0 text-text-secondary">
-                      {firstSet?.weight ?? '-'}kg / {firstSet?.reps ?? '-'}回 / {exercise.sets.length}set
-                    </span>
+                  <div key={`${exercise.exerciseName}-${index}`} className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 text-xs">
+                    <span className="min-w-0 truncate font-semibold text-text-primary">{exercise.exerciseName}</span>
+                    <span className="shrink-0 text-text-secondary">{exercise.sets.length}行</span>
+                    <div className="col-span-2 flex flex-wrap gap-1">
+                      {exercise.sets.slice(0, 4).map((set, setIndex) => (
+                        <span key={setIndex} className="rounded-full bg-surface-raised px-2 py-0.5 text-text-secondary">
+                          {set.weight ?? '-'}kg {set.reps ?? '-'}回 {set.setCount || '-'}set
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 )
               })}
@@ -559,8 +574,6 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
           </div>
           <div className="space-y-2">
             {exercises.map((exercise) => {
-              const firstSet = exercise.sets[0]
-              const setCount = exercise.sets.length
               return (
                 <div key={exercise.key} className="rounded-lg border border-border-subtle bg-surface-base p-2">
                   <div className="mb-1.5 flex items-center gap-2">
@@ -577,41 +590,49 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
                       <Icon name="trash" size={16} />
                     </Button>
                   </div>
-                  <div className="grid grid-cols-3 gap-2">
-                    <label className="min-w-0">
-                      <span className="mb-0.5 block text-xs font-normal text-text-muted">重さ</span>
-                      <input
-                        type="number"
-                        inputMode="decimal"
-                        value={firstSet?.weight || ''}
-                        onChange={(e) => updateExerciseSummary(exercise.key, 'weight', e.target.value)}
-                        placeholder="kg"
-                        className="w-full min-w-0 rounded-lg border border-border-strong bg-surface-raised px-2 py-1.5 text-base text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-500"
-                      />
-                    </label>
-                    <label className="min-w-0">
-                      <span className="mb-0.5 block text-xs font-normal text-text-muted">回数</span>
-                      <input
-                        type="number"
-                        inputMode="numeric"
-                        value={firstSet?.reps || ''}
-                        onChange={(e) => updateExerciseSummary(exercise.key, 'reps', e.target.value)}
-                        placeholder="回"
-                        className="w-full min-w-0 rounded-lg border border-border-strong bg-surface-raised px-2 py-1.5 text-base text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-500"
-                      />
-                    </label>
-                    <label className="min-w-0">
-                      <span className="mb-0.5 block text-xs font-normal text-text-muted">セット</span>
-                      <input
-                        type="number"
-                        inputMode="numeric"
-                        value={setCount || ''}
-                        onChange={(e) => updateSetCount(exercise.key, e.target.value)}
-                        placeholder="数"
-                        className="w-full min-w-0 rounded-lg border border-border-strong bg-surface-raised px-2 py-1.5 text-base text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-500"
-                      />
-                    </label>
+                  <div className="space-y-1.5">
+                    {exercise.sets.map((set) => (
+                      <div key={set.key} className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_2rem] gap-1.5">
+                        <input
+                          type="number"
+                          inputMode="decimal"
+                          value={set.weight}
+                          onChange={(e) => updateSetRow(exercise.key, set.key, 'weight', e.target.value)}
+                          placeholder="kg"
+                          className="min-w-0 rounded-lg border border-border-strong bg-surface-raised px-2 py-1.5 text-base text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-500"
+                        />
+                        <input
+                          type="number"
+                          inputMode="numeric"
+                          value={set.reps}
+                          onChange={(e) => updateSetRow(exercise.key, set.key, 'reps', e.target.value)}
+                          placeholder="回"
+                          className="min-w-0 rounded-lg border border-border-strong bg-surface-raised px-2 py-1.5 text-base text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-500"
+                        />
+                        <input
+                          type="number"
+                          inputMode="numeric"
+                          value={set.memo || ''}
+                          onChange={(e) => updateSetRow(exercise.key, set.key, 'setCount', e.target.value)}
+                          placeholder="set"
+                          className="min-w-0 rounded-lg border border-border-strong bg-surface-raised px-2 py-1.5 text-base text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-500"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          disabled={exercise.sets.length <= 1}
+                          onClick={() => removeSetRow(exercise.key, set.key)}
+                          className="h-9 w-8 p-0 text-text-muted disabled:opacity-20"
+                        >
+                          <Icon name="close" size={14} />
+                        </Button>
+                      </div>
+                    ))}
                   </div>
+                  <Button type="button" variant="ghost" size="sm" fullWidth className="mt-1.5 py-1.5 text-text-secondary" onClick={() => addSetRow(exercise.key)}>
+                    + 重量行
+                  </Button>
                 </div>
               )
             })}

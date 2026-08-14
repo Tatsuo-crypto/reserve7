@@ -23,6 +23,8 @@ export type DietGoalLike = {
     rest_sugar?: number | string | null
     rest_fiber?: number | string | null
     rest_salt?: number | string | null
+    start_date?: string | null
+    end_date?: string | null
 }
 
 export type EffectiveDietGoal = {
@@ -80,9 +82,11 @@ export function getEffectiveDietGoal(goal: DietGoalLike | null | undefined, dayT
 
 export function getGoalForDate(goals: any[], dateStr: string) {
     return [...goals]
-        .filter(goal => goal?.start_date && goal.start_date <= dateStr)
+        .filter(goal => (
+            goal?.start_date
+            && goal.start_date <= dateStr
+            && (!goal.end_date || goal.end_date >= dateStr)
+        ))
         .sort((a, b) => b.start_date.localeCompare(a.start_date))[0]
-        || goals[goals.length - 1]
         || null
 }
-

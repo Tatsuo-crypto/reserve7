@@ -27,6 +27,7 @@ const BottomNavigationContent = () => {
   let activeTab = searchParams.get('tab') || (pathname === '/dashboard' ? 'home' : '');
   if (pathname.startsWith('/admin/members')) activeTab = 'members';
   if (pathname.startsWith('/admin/analytics')) activeTab = 'sales';
+  if (pathname.startsWith('/admin/materials')) activeTab = 'others';
 
   const navItems: { id: string, label: string, iconName: IconName, isCenter?: boolean }[] = [
     { id: 'sales', label: '売上', iconName: 'chartBar' },

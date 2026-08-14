@@ -23,6 +23,7 @@ import EmptyState from '@/components/ui/EmptyState'
 import Icon from '@/components/ui/icons'
 import { ChartSkeleton } from '@/components/ui/Skeleton'
 import { fetchJsonCached } from '@/lib/client-fetch-cache'
+import { getGoalForDate } from '@/lib/utils/dietDayType'
 
 interface AnalyzeTabProps {
     userId: string
@@ -137,7 +138,7 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
             let diet = dietLogs.find(l => l.date === dStr)
             let lifestyle = lifestyleLogs.find(l => l.date === dStr)
             
-            const target = [...sortedGoals].reverse().find(t => t.start_date <= dStr) || sortedGoals[0]
+            const target = getGoalForDate(sortedGoals, dStr) || sortedGoals[0]
 
             const hasDraftChanges = Boolean(todayDraft?.isSaved || (Array.isArray(todayDraft?.touchedFields) && todayDraft.touchedFields.length > 0) || todayDraft?.ocrResult)
             if (dStr === selectedDate && todayDraft && hasDraftChanges) {

@@ -7,6 +7,7 @@ import Button from '@/components/ui/Button'
 import Icon from '@/components/ui/icons'
 import { SkeletonCard } from '@/components/ui/Skeleton'
 import { fetchJsonCached } from '@/lib/client-fetch-cache'
+import MaterialsList from '@/components/materials/MaterialsList'
 
 interface HomeTabProps {
     token: string
@@ -19,7 +20,7 @@ interface HomeTabProps {
         nextReservation: any | null
         todayLesson: any | null
     } | null
-    onNavigate?: (tab: 'res' | 'record' | 'analyze' | 'plan') => void
+    onNavigate?: (tab: 'res' | 'record' | 'analyze' | 'plan' | 'materials') => void
     onOpenSettings?: () => void
 }
 
@@ -236,6 +237,13 @@ export default function HomeTab({ token, userName, isDietPlan = true, todayDraft
                         )}
                     </Card>
                 </section>
+
+                <MaterialsList
+                    endpoint={`/api/client/materials?token=${encodeURIComponent(token)}`}
+                    limit={3}
+                    preview
+                    onOpenAll={() => onNavigate?.('materials')}
+                />
             </div>
         )
     }
@@ -327,6 +335,13 @@ export default function HomeTab({ token, userName, isDietPlan = true, todayDraft
                     </Button>
                 </Card>
             </section>
+
+            <MaterialsList
+                endpoint={`/api/client/materials?token=${encodeURIComponent(token)}`}
+                limit={3}
+                preview
+                onOpenAll={() => onNavigate?.('materials')}
+            />
 
             <section className="space-y-2">
                 <SectionTitle>今後</SectionTitle>

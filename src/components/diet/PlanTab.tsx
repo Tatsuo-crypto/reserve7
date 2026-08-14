@@ -7,6 +7,7 @@ import EmptyState from '@/components/ui/EmptyState'
 import Icon from '@/components/ui/icons'
 import { SkeletonCard } from '@/components/ui/Skeleton'
 import { fetchJsonCached } from '@/lib/client-fetch-cache'
+import { getGoalForDate } from '@/lib/utils/dietDayType'
 
 interface PlanTabProps {
     token: string
@@ -46,6 +47,32 @@ type GoalRow = {
     sleep: number
 }
 
+function getGoalPeriodInfo(goal: any, next: any) {
+    const startDate = new Date(`${goal.start_date}T00:00:00`)
+    let endDate: Date
+    let isOngoing = false
+
+    if (goal.end_date) {
+        endDate = new Date(`${goal.end_date}T00:00:00`)
+    } else if (next?.start_date) {
+        endDate = new Date(`${next.start_date}T00:00:00`)
+        endDate.setDate(endDate.getDate() - 1)
+    } else {
+        isOngoing = true
+        endDate = new Date()
+    }
+
+    const periodDays = Math.max(1, Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1)
+    const endLabel = isOngoing ? '継続中' : `${endDate.getMonth() + 1}/${endDate.getDate()}`
+    const [, month, day] = goal.start_date.split('-')
+
+    return {
+        displayDate: `${Number(month)}/${Number(day)}`,
+        periodDays,
+        periodLabel: `${Number(month)}/${Number(day)}〜${endLabel}（${periodDays}日間）`,
+    }
+}
+
 export default function PlanTab({ token, onEditPlan }: PlanTabProps) {
     const [goals, setGoals] = useState<any[]>([])
     const [lifestyleSettings, setLifestyleSettings] = useState<any>(null)
@@ -76,15 +103,13 @@ export default function PlanTab({ token, onEditPlan }: PlanTabProps) {
         const sorted = [...goals]
             .filter(goal => goal?.start_date)
             .sort((a, b) => a.start_date.localeCompare(b.start_date))
+        const today = new Date().toLocaleDateString('sv-SE')
+        const activeGoal = getGoalForDate(sorted, today)
 
         return sorted.map((goal, index) => {
-            const [year, month, day] = goal.start_date.split('-')
             const next = sorted[index + 1]
-            const startDate = new Date(goal.start_date)
-            const endDate = next ? new Date(next.start_date) : new Date()
-            const periodDays = Math.max(1, Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)))
-            const isCurrent = index === sorted.length - 1
-            const endLabel = next ? `${endDate.getMonth() + 1}/${endDate.getDate()}` : '継続中'
+            const isCurrent = activeGoal ? goal.start_date === activeGoal.start_date : index === sorted.length - 1
+            const period = getGoalPeriodInfo(goal, next)
             const baseCalories = Math.round(Number(goal.calories || 0))
             const baseProtein = Math.round(Number(goal.protein || 0))
             const baseFat = Math.round(Number(goal.fat || 0))
@@ -96,9 +121,9 @@ export default function PlanTab({ token, onEditPlan }: PlanTabProps) {
 
             return {
                 date: goal.start_date,
-                displayDate: `${Number(month)}/${Number(day)}`,
-                periodLabel: `${Number(month)}/${Number(day)}〜${endLabel}（${periodDays}日間）`,
-                periodDays,
+                displayDate: period.displayDate,
+                periodLabel: period.periodLabel,
+                periodDays: period.periodDays,
                 isCurrent,
                 dayTypeEnabled,
                 calories: baseCalories,
@@ -129,7 +154,7 @@ export default function PlanTab({ token, onEditPlan }: PlanTabProps) {
         })
     }, [goals, habitTargets, dayTypeTargets])
 
-    const currentGoal = goalRows[goalRows.length - 1]
+    const currentGoal = goalRows.find(row => row.isCurrent) || goalRows[goalRows.length - 1]
 
     if (loading) {
         return (

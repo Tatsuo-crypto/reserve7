@@ -50,6 +50,11 @@ const ReservationTab = dynamic(() => import('@/components/diet/ReservationTab'),
   loading: TabLoading,
 })
 
+const MaterialsList = dynamic(() => import('@/components/materials/MaterialsList'), {
+  ssr: false,
+  loading: TabLoading,
+})
+
 // TrackingModalをアドミン専用に遅延読み込み
 const TrackingModal = dynamic(() => import('@/app/admin/members/TrackingModal'), {
   ssr: false,
@@ -63,7 +68,7 @@ const TrackingModal = dynamic(() => import('@/app/admin/members/TrackingModal'),
   )
 })
 
-type TabType = 'home' | 'res' | 'record' | 'weekly' | 'analyze' | 'plan' | 'settings' | 'notifications'
+type TabType = 'home' | 'res' | 'record' | 'weekly' | 'analyze' | 'plan' | 'settings' | 'notifications' | 'materials'
 
 type ClientBootstrap = {
   goals: any[]
@@ -156,7 +161,7 @@ export default function ClientReservationsPage() {
   }, [searchParams])
 
   useEffect(() => {
-    if (!isDietPlan && activeTab !== 'home' && activeTab !== 'settings' && activeTab !== 'notifications') {
+  if (!isDietPlan && activeTab !== 'home' && activeTab !== 'settings' && activeTab !== 'notifications' && activeTab !== 'materials') {
       setActiveTab('home')
     }
   }, [isDietPlan, activeTab])
@@ -248,7 +253,8 @@ export default function ClientReservationsPage() {
     analyze: '分析',
     plan: '推移',
     settings: '設定',
-    notifications: 'お知らせ'
+    notifications: 'お知らせ',
+    materials: '資料'
   };
 
   const formatName = (fullName: string | null | undefined) => {
@@ -307,7 +313,7 @@ export default function ClientReservationsPage() {
 
       {/* Main Content */}
       <main className="flex-1 max-w-lg mx-auto w-full p-4 overflow-x-hidden pb-24">
-        {(activeTab === 'home' || (!isDietPlan && activeTab !== 'settings')) && (
+        {(activeTab === 'home' || (!isDietPlan && activeTab !== 'settings' && activeTab !== 'notifications' && activeTab !== 'materials')) && (
           <HomeTab
             token={token}
             userName={userName}
@@ -354,6 +360,9 @@ export default function ClientReservationsPage() {
         )}
         {activeTab === 'notifications' && (
           <NotificationsTab token={token} />
+        )}
+        {activeTab === 'materials' && (
+          <MaterialsList endpoint={`/api/client/materials?token=${encodeURIComponent(token)}`} />
         )}
         {activeTab === 'settings' && (
           <SettingsTab token={token} userId={userId} userName={userName} />

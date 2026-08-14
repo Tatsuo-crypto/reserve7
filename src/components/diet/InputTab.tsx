@@ -5,7 +5,7 @@ import GoalModal from './GoalModal'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import Icon, { type IconName } from '@/components/ui/icons'
-import { getDietDayTypeLabel, getEffectiveDietGoal, isDayTypeTargetEnabled, normalizeDietDayType, type DietDayType } from '@/lib/utils/dietDayType'
+import { getDietDayTypeLabel, getEffectiveDietGoal, getGoalForDate, isDayTypeTargetEnabled, normalizeDietDayType, type DietDayType } from '@/lib/utils/dietDayType'
 import { fetchJsonCached, invalidateClientFetchCache } from '@/lib/client-fetch-cache'
 
 interface InputTabProps {
@@ -111,7 +111,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
                 if (goalDataResult.status === 'fulfilled') {
                     const { data } = goalDataResult.value
                     if (data && data.length > 0) {
-                        currentPlan = data.find((g: any) => g.start_date <= selectedDate) || data[data.length - 1]
+                        currentPlan = getGoalForDate(data, selectedDate)
                         if (dayTypeTargetSettings) {
                             currentPlan = { ...currentPlan, ...dayTypeTargetSettings }
                         }

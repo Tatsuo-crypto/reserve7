@@ -10,6 +10,7 @@ import type { GoalFormValues, HabitTargetsValues } from '@/components/diet/GoalP
 // Reusing some logic from members page
 import { getStatusDotColor } from '@/lib/utils/member'
 import { calculateAragonPlan, caloriesFromMacros, NEAT_LEVELS } from '@/lib/utils/dietGoalCalc'
+import { getGoalForDate } from '@/lib/utils/dietDayType'
 import Button from '@/components/ui/Button'
 import Icon from '@/components/ui/icons'
 
@@ -134,12 +135,35 @@ function addDaysToDateInput(value: string, days: number) {
     return toDateInputValue(date)
 }
 
-function nextSundayOnOrAfter(value: string) {
-    const date = new Date(`${value}T00:00:00`)
-    const day = date.getDay()
-    const daysUntilSunday = day === 0 ? 0 : 7 - day
-    date.setDate(date.getDate() + daysUntilSunday)
-    return toDateInputValue(date)
+function tomorrowDateInput() {
+    return addDaysToDateInput(toDateInputValue(new Date()), 1)
+}
+
+function getGoalPeriodInfo(goal: any, next: any) {
+    const startDate = new Date(`${goal.start_date}T00:00:00`)
+    let endDate: Date
+    let isOngoing = false
+
+    if (goal.end_date) {
+        endDate = new Date(`${goal.end_date}T00:00:00`)
+    } else if (next?.start_date) {
+        endDate = new Date(`${next.start_date}T00:00:00`)
+        endDate.setDate(endDate.getDate() - 1)
+    } else {
+        isOngoing = true
+        endDate = new Date()
+    }
+
+    const periodDays = Math.max(1, Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1)
+    const endLabel = isOngoing ? '継続中' : `${endDate.getMonth() + 1}/${endDate.getDate()}`
+    const [year, month, day] = goal.start_date.split('-')
+
+    return {
+        displayDate: `${Number(month)}/${Number(day)}`,
+        fullDate: `${year}/${Number(month)}/${Number(day)}`,
+        periodDays,
+        periodLabel: `${Number(month)}/${Number(day)}〜${endLabel}（${periodDays}日間）`,
+    }
 }
 
 function normalizeGoalValues(values: GoalFormValues): GoalFormValues {
@@ -157,6 +181,7 @@ function normalizeGoalValues(values: GoalFormValues): GoalFormValues {
         sugar: Math.max(0, Math.round(Number(values.sugar ?? Math.max(0, carbs - fiber)))),
         salt: Math.max(0, Number(values.salt || 0)),
         targetCalories,
+        endDate: values.endDate || null,
         dayTypeEnabled: Boolean(values.dayTypeEnabled),
         trainingCalories,
         trainingProtein: Math.max(0, Math.round(Number(values.trainingProtein ?? values.protein ?? 0))),
@@ -180,6 +205,7 @@ function goalRecordToFormValues(record: any): GoalFormValues {
         targetCalories: Math.round(Number(record.calories || 1600)),
         salt: Number(record.salt || DEFAULT_SALT),
         startDate: record.start_date,
+        endDate: record.end_date || null,
         title: record.title || '',
         dayTypeEnabled: Boolean(record.day_type_enabled),
         trainingCalories: Math.round(Number(record.training_calories || record.calories || 1600)),
@@ -213,6 +239,7 @@ function goalFormValuesToPayload(values: GoalFormValues) {
 function goalFormValuesToDietSaveBody(values: GoalFormValues) {
     return {
         startDate: values.startDate,
+        endDate: values.endDate || null,
         ...goalFormValuesToPayload(values),
     }
 }
@@ -311,6 +338,7 @@ function DietPlanPageContent() {
         restFat: DEFAULT_FAT,
         restCarbs: DEFAULT_CARBS,
         dayTypeFieldsAvailable: false,
+        endDate: null,
     })
 
     const [lifestyleSettings, setLifestyleSettings] = useState({
@@ -351,8 +379,8 @@ function DietPlanPageContent() {
                     const { data } = JSON.parse(text)
                     setDietHistory(data || [])
                     if (data && data.length > 0) {
-                        const latest = data[0]
-                        setNutrientForm(goalRecordToFormValues(latest))
+                        const activeGoal = getGoalForDate(data, today)
+                        setNutrientForm(goalRecordToFormValues(activeGoal || data[0]))
                     }
                 }
             }
@@ -405,7 +433,7 @@ function DietPlanPageContent() {
         } finally {
             setLoadingData(false)
         }
-    }, [])
+    }, [today])
 
     // Fetch members
     useEffect(() => {
@@ -573,7 +601,8 @@ function DietPlanPageContent() {
     // K-2: 統合グラフのバーをタップして開く編集モーダル
     const openEditGoalModal = (record: any) => {
         const baseValues = goalRecordToFormValues(record)
-        const isLatestRecord = Boolean(record?.start_date && dietHistory[0]?.start_date === record.start_date)
+        const activeGoal = getGoalForDate(dietHistory, today)
+        const isLatestRecord = Boolean(record?.start_date && activeGoal?.start_date === record.start_date)
         const initialValues = isLatestRecord && habitTargets?.diet_day_type_targets
             ? applyDayTypeSettingsToGoal(baseValues, habitTargets.diet_day_type_targets)
             : baseValues
@@ -586,30 +615,25 @@ function DietPlanPageContent() {
         })
     }
 
-    // K-4: 新規作成時は現在の設定値をそのまま複製し、開始日は次の日曜日にする
+    // 新規作成時は現在の設定値をそのまま複製し、開始日は基本「明日」にする
     const openNewGoalModal = () => {
         const existingDates = new Set(dietHistory.map(goal => goal?.start_date).filter(Boolean))
-        const sortedDates = Array.from(existingDates).sort()
-        const latestDate = sortedDates[sortedDates.length - 1]
-        let nextStartDate = nextSundayOnOrAfter(latestDate && latestDate >= today ? addDaysToDateInput(latestDate, 1) : today)
+        let nextStartDate = tomorrowDateInput()
         while (existingDates.has(nextStartDate)) {
-            nextStartDate = addDaysToDateInput(nextStartDate, 7)
+            nextStartDate = addDaysToDateInput(nextStartDate, 1)
         }
 
         setGoalModal({
             mode: 'new',
-            initialValues: normalizeGoalValues({ ...nutrientForm, startDate: nextStartDate, title: '' }),
+            initialValues: normalizeGoalValues({ ...nutrientForm, startDate: nextStartDate, endDate: null, title: '' }),
             initialHabitTargets: habitTargets,
         })
     }
 
     const handleModalSave = async (values: GoalFormValues, targetHabitTargets: HabitTargetsValues) => {
-        const valuesWithSunday = goalModal?.mode === 'new'
-            ? { ...values, startDate: nextSundayOnOrAfter(values.startDate) }
-            : values
         const ok = goalModal?.mode === 'edit' && goalModal.recordId
-            ? await updateGoalPlan(goalModal.recordId, valuesWithSunday, targetHabitTargets)
-            : await saveGoalPlan(valuesWithSunday, targetHabitTargets)
+            ? await updateGoalPlan(goalModal.recordId, values, targetHabitTargets)
+            : await saveGoalPlan(values, targetHabitTargets)
         if (ok) setGoalModal(null)
     }
 
@@ -686,9 +710,7 @@ function DietPlanPageContent() {
         const prevWeight = filterByRange(weightHistory, prevStart, prevEnd)
         const prevLifestyle = filterByRange(lifestyleHistory, prevStart, prevEnd)
         const targetDateStr = end.toLocaleDateString('sv-SE')
-        const currentDietGoal = [...dietHistory]
-            .filter(goal => goal?.start_date && goal.start_date <= targetDateStr)
-            .sort((a, b) => b.start_date.localeCompare(a.start_date))[0]
+        const currentDietGoal = getGoalForDate(dietHistory, targetDateStr)
         const effectiveTargetCalories = Number(currentDietGoal?.calories || nutrientForm.targetCalories)
         const effectiveTargetProtein = Number(currentDietGoal?.protein || nutrientForm.protein)
         const effectiveTargetFat = Number(currentDietGoal?.fat || nutrientForm.fat)
@@ -739,7 +761,6 @@ function DietPlanPageContent() {
             .sort((a, b) => a.start_date.localeCompare(b.start_date))
 
         return sorted.map((goal, index) => {
-            const [year, month, day] = goal.start_date.split('-')
             const protein = Math.round(Number(goal.protein || 0))
             const fat = Math.round(Number(goal.fat || 0))
             const carbs = Math.round(Number(goal.carbs || 0))
@@ -753,21 +774,15 @@ function DietPlanPageContent() {
                 goal.rest_calories ?? (isLatest ? nutrientForm.restCalories : null) ?? calories
             ))
 
-            const startDate = new Date(goal.start_date)
             const next = sorted[index + 1]
-            const endDate = next ? new Date(next.start_date) : new Date()
-            const periodDays = Math.max(1, Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)))
-            const isOngoing = !next
-            const endLabel = isOngoing
-                ? '継続中'
-                : `${endDate.getMonth() + 1}/${endDate.getDate()}`
+            const period = getGoalPeriodInfo(goal, next)
 
             return {
                 date: goal.start_date,
-                displayDate: `${Number(month)}/${Number(day)}`,
-                fullDate: `${year}/${Number(month)}/${Number(day)}`,
-                periodDays,
-                periodLabel: `${Number(month)}/${Number(day)}〜${endLabel}（${periodDays}日間）`,
+                displayDate: period.displayDate,
+                fullDate: period.fullDate,
+                periodDays: period.periodDays,
+                periodLabel: period.periodLabel,
                 isCurrent: isLatest,
                 dayTypeEnabled,
                 calories: Math.round(calories),

@@ -5,7 +5,7 @@ import { useParams, usePathname } from 'next/navigation'
 import Icon, { type IconName } from '@/components/ui/icons'
 
 type TrainerNavItem = {
-  id: 'shifts' | 'reservations' | 'attendance' | 'members'
+  id: 'shifts' | 'reservations' | 'attendance' | 'members' | 'materials'
   label: string
   href: string
   iconName: IconName
@@ -25,6 +25,7 @@ export default function TrainerBottomNavigation() {
     { id: 'shifts', label: 'シフト管理', href: `${basePath}/shifts`, iconName: 'clock' },
     { id: 'reservations', label: '予約', href: basePath, iconName: 'calendar', isCenter: true },
     { id: 'members', label: '会員', href: `${basePath}/members`, iconName: 'userGroup' },
+    { id: 'materials', label: '資料', href: `${basePath}/materials`, iconName: 'documentText' },
     { id: 'attendance', label: '出勤', href: `${basePath}/attendance`, iconName: 'checkCircle' },
   ]
 
@@ -37,7 +38,7 @@ export default function TrainerBottomNavigation() {
       className="fixed bottom-0 left-0 right-0 z-50 border-t border-border-subtle bg-surface-raised/95 backdrop-blur-md shadow-[0_-1px_10px_rgba(0,0,0,0.02)]"
       style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
     >
-      <div className="mx-auto flex max-w-md items-end px-6 py-1">
+      <div className="mx-auto flex max-w-md items-end px-2 py-1">
         {items.map(item => {
           const isActive = item.id === 'reservations'
             ? pathname === basePath

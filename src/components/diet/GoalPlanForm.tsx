@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useRef, useState } from 'react'
 import type { MacroGrams } from '@/lib/utils/dietGoalCalc'
 import Button from '@/components/ui/Button'
 import Icon from '@/components/ui/icons'
@@ -8,6 +9,7 @@ export interface GoalFormValues extends MacroGrams {
     salt: number
     targetCalories: number
     startDate: string
+    endDate?: string | null
     title: string
     dayTypeEnabled?: boolean
     trainingCalories?: number
@@ -47,6 +49,8 @@ interface GoalPlanFormProps {
 const DEFAULT_HABIT_TARGETS = { steps: 8000, sleep: 7, water: 2, workout: 1 }
 type DayTypeKey = 'training' | 'rest'
 type HabitTargetKey = 'water' | 'steps' | 'workout' | 'sleep'
+type MacroKey = 'protein' | 'fat' | 'carbs'
+type MacroScope = 'base' | DayTypeKey
 
 function macroCalories(protein: number, fat: number, carbs: number) {
     return {
@@ -114,17 +118,87 @@ export default function GoalPlanForm({
     deleteLabel = 'このプランを削除',
     onCancel,
 }: GoalPlanFormProps) {
-    const handleGramInput = (key: 'protein' | 'fat' | 'carbs' | 'sugar' | 'fiber', value: number) => {
+    const macroEditOrderRef = useRef<Partial<Record<MacroScope, MacroKey[]>>>({})
+
+    const rememberMacroEdit = (scope: MacroScope, key: MacroKey) => {
+        const current = macroEditOrderRef.current[scope] || []
+        const next = [...current.filter(item => item !== key), key].slice(-2)
+        macroEditOrderRef.current = { ...macroEditOrderRef.current, [scope]: next }
+        return next
+    }
+
+    const getMacroValue = (source: GoalFormValues, scope: MacroScope, key: MacroKey) => {
+        if (scope === 'training') {
+            if (key === 'protein') return source.trainingProtein ?? source.protein
+            if (key === 'fat') return source.trainingFat ?? source.fat
+            return source.trainingCarbs ?? source.carbs
+        }
+        if (scope === 'rest') {
+            if (key === 'protein') return source.restProtein ?? source.protein
+            if (key === 'fat') return source.restFat ?? source.fat
+            return source.restCarbs ?? source.carbs
+        }
+        return source[key]
+    }
+
+    const getCaloriesValue = (source: GoalFormValues, scope: MacroScope) => {
+        if (scope === 'training') return source.trainingCalories ?? source.targetCalories
+        if (scope === 'rest') return source.restCalories ?? source.targetCalories
+        return source.targetCalories
+    }
+
+    const setMacroValue = (source: GoalFormValues, scope: MacroScope, key: MacroKey, value: number) => {
+        const nextValue = Math.max(0, Math.round(value || 0))
+        if (scope === 'training') {
+            const field = key === 'protein' ? 'trainingProtein' : key === 'fat' ? 'trainingFat' : 'trainingCarbs'
+            return { ...source, [field]: nextValue }
+        }
+        if (scope === 'rest') {
+            const field = key === 'protein' ? 'restProtein' : key === 'fat' ? 'restFat' : 'restCarbs'
+            return { ...source, [field]: nextValue }
+        }
+        const next = { ...source, [key]: nextValue }
+        if (key === 'carbs') {
+            next.sugar = Math.max(0, Math.round(next.carbs - next.fiber))
+        }
+        return next
+    }
+
+    const applyMacroAutoFill = (source: GoalFormValues, scope: MacroScope, order: MacroKey[]) => {
+        if (order.length < 2) return source
+        const fillKey = (['protein', 'fat', 'carbs'] as MacroKey[]).find(key => !order.includes(key))
+        if (!fillKey) return source
+
+        const calories = getCaloriesValue(source, scope)
+        const usedCalories = (['protein', 'fat', 'carbs'] as MacroKey[])
+            .filter(key => key !== fillKey)
+            .reduce((sum, key) => {
+                const grams = getMacroValue(source, scope, key)
+                return sum + grams * (key === 'fat' ? 9 : 4)
+            }, 0)
+        const remainingCalories = Math.max(0, Math.round(calories - usedCalories))
+        const nextGrams = fillKey === 'fat'
+            ? Math.round(remainingCalories / 9)
+            : Math.round(remainingCalories / 4)
+
+        return setMacroValue(source, scope, fillKey, nextGrams)
+    }
+
+    const handleCaloriesInput = (scope: MacroScope, value: number) => {
         onValuesChange(prev => {
-            const nextValue = Math.max(0, Math.round(value || 0))
-            const next = { ...prev, [key]: nextValue }
-            if (key === 'sugar' || key === 'fiber') {
-                next.carbs = Math.round(next.sugar + next.fiber)
-            } else if (key === 'carbs') {
-                next.sugar = Math.max(0, Math.round(next.carbs - next.fiber))
-            }
-            return next
+            const nextCalories = Math.max(0, Math.round(value || 0))
+            const next = scope === 'training'
+                ? { ...prev, trainingCalories: nextCalories }
+                : scope === 'rest'
+                    ? { ...prev, restCalories: nextCalories }
+                    : { ...prev, targetCalories: nextCalories }
+            return applyMacroAutoFill(next, scope, macroEditOrderRef.current[scope] || [])
         })
+    }
+
+    const handleMacroInput = (scope: MacroScope, key: MacroKey, value: number) => {
+        const order = rememberMacroEdit(scope, key)
+        onValuesChange(prev => applyMacroAutoFill(setMacroValue(prev, scope, key, value), scope, order))
     }
 
     const handleDayTypeToggle = (checked: boolean) => {
@@ -151,13 +225,6 @@ export default function GoalPlanForm({
         })
     }
 
-    const setDayGoalValue = (
-        key: 'trainingCalories' | 'trainingProtein' | 'trainingFat' | 'trainingCarbs' | 'restCalories' | 'restProtein' | 'restFat' | 'restCarbs',
-        value: number
-    ) => {
-        onValuesChange(prev => ({ ...prev, [key]: Math.max(0, Math.round(value || 0)) }))
-    }
-
     const getDayHabitValue = (dayType: DayTypeKey, key: HabitTargetKey) => {
         const dayTypeTargets = habitTargets.diet_day_type_targets || {}
         const value = dayTypeTargets[`${dayType}_${key}`] ?? habitTargets[key] ?? DEFAULT_HABIT_TARGETS[key]
@@ -182,14 +249,27 @@ export default function GoalPlanForm({
     return (
         <div className="space-y-8">
             {showStartDate && (
-                <div className="space-y-2">
-                    <label className="text-xs font-normal text-text-muted uppercase tracking-widest pl-1">開始日</label>
-                    <input
-                        type="date"
-                        value={values.startDate}
-                        onChange={(e) => onValuesChange(prev => ({ ...prev, startDate: e.target.value }))}
-                        className="w-full bg-surface-base border-none rounded-2xl p-4 text-sm font-normal focus:ring-2 focus:ring-brand-500"
-                    />
+                <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                        <label className="text-xs font-normal text-text-muted uppercase tracking-widest pl-1">開始日</label>
+                        <input
+                            type="date"
+                            value={values.startDate}
+                            onChange={(e) => onValuesChange(prev => ({ ...prev, startDate: e.target.value }))}
+                            className="w-full bg-surface-base border-none rounded-2xl p-4 text-sm font-normal focus:ring-2 focus:ring-brand-500"
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-xs font-normal text-text-muted uppercase tracking-widest pl-1">終了日</label>
+                        <input
+                            type="date"
+                            value={values.endDate || ''}
+                            min={values.startDate || undefined}
+                            onChange={(e) => onValuesChange(prev => ({ ...prev, endDate: e.target.value || null }))}
+                            className="w-full bg-surface-base border-none rounded-2xl p-4 text-sm font-normal focus:ring-2 focus:ring-brand-500"
+                        />
+                        <p className="pl-1 text-xs text-text-muted">空欄なら継続</p>
+                    </div>
                 </div>
             )}
 
@@ -217,10 +297,10 @@ export default function GoalPlanForm({
                         protein={values.trainingProtein ?? values.protein}
                         fat={values.trainingFat ?? values.fat}
                         carbs={values.trainingCarbs ?? values.carbs}
-                        onCaloriesChange={(value) => setDayGoalValue('trainingCalories', value)}
-                        onProteinChange={(value) => setDayGoalValue('trainingProtein', value)}
-                        onFatChange={(value) => setDayGoalValue('trainingFat', value)}
-                        onCarbsChange={(value) => setDayGoalValue('trainingCarbs', value)}
+                        onCaloriesChange={(value) => handleCaloriesInput('training', value)}
+                        onProteinChange={(value) => handleMacroInput('training', 'protein', value)}
+                        onFatChange={(value) => handleMacroInput('training', 'fat', value)}
+                        onCarbsChange={(value) => handleMacroInput('training', 'carbs', value)}
                         habitTargets={{
                             water: getDayHabitValue('training', 'water'),
                             steps: getDayHabitValue('training', 'steps'),
@@ -236,10 +316,10 @@ export default function GoalPlanForm({
                         protein={values.restProtein ?? values.protein}
                         fat={values.restFat ?? values.fat}
                         carbs={values.restCarbs ?? values.carbs}
-                        onCaloriesChange={(value) => setDayGoalValue('restCalories', value)}
-                        onProteinChange={(value) => setDayGoalValue('restProtein', value)}
-                        onFatChange={(value) => setDayGoalValue('restFat', value)}
-                        onCarbsChange={(value) => setDayGoalValue('restCarbs', value)}
+                        onCaloriesChange={(value) => handleCaloriesInput('rest', value)}
+                        onProteinChange={(value) => handleMacroInput('rest', 'protein', value)}
+                        onFatChange={(value) => handleMacroInput('rest', 'fat', value)}
+                        onCarbsChange={(value) => handleMacroInput('rest', 'carbs', value)}
                         habitTargets={{
                             water: getDayHabitValue('rest', 'water'),
                             steps: getDayHabitValue('rest', 'steps'),
@@ -254,16 +334,9 @@ export default function GoalPlanForm({
                     <div className="bg-surface-base/80 rounded-2xl p-8 text-center border border-border-subtle/50 relative space-y-4">
                         <h3 className="text-xl font-semibold text-text-primary">目標摂取量</h3>
                         <div className="flex items-center justify-center">
-                            <input
-                                type="number"
-                                inputMode="numeric"
-                                step={1}
-                                min={0}
+                            <NumericInput
                                 value={Math.round(values.targetCalories || 0)}
-                                onChange={(e) => {
-                                    const nextCalories = Math.max(0, Math.round(Number(e.target.value || 0)))
-                                    onValuesChange(prev => ({ ...prev, targetCalories: nextCalories }))
-                                }}
+                                onValueChange={(value) => handleCaloriesInput('base', value)}
                                 className="w-40 bg-surface-overlay border border-border-strong rounded-none px-4 py-3 text-3xl font-bold text-center tabular-nums focus:ring-2 focus:ring-brand-500 outline-none"
                             />
                         </div>
@@ -272,9 +345,9 @@ export default function GoalPlanForm({
                     <PfcBalanceEditor
                         values={values}
                         summary={pfcSummary}
-                        onProteinChange={(value) => handleGramInput('protein', value)}
-                        onFatChange={(value) => handleGramInput('fat', value)}
-                        onCarbsChange={(value) => handleGramInput('carbs', value)}
+                        onProteinChange={(value) => handleMacroInput('base', 'protein', value)}
+                        onFatChange={(value) => handleMacroInput('base', 'fat', value)}
+                        onCarbsChange={(value) => handleMacroInput('base', 'carbs', value)}
                     />
 
                     <PfcTotalStatus summary={pfcSummary} />
@@ -367,12 +440,9 @@ function DayTypeGoalCard({
             <div className="bg-surface-base/80 rounded-2xl p-8 text-center border border-border-subtle/50 relative space-y-4">
                 <h3 className="text-xl font-semibold text-text-primary">目標摂取量</h3>
                 <div className="mt-4 flex items-center justify-center">
-                    <input
-                        type="number"
-                        inputMode="numeric"
-                        min={0}
+                    <NumericInput
                         value={Math.round(calories || 0)}
-                        onChange={(e) => onCaloriesChange(Number(e.target.value || 0))}
+                        onValueChange={onCaloriesChange}
                         className={`w-40 bg-surface-overlay border border-border-strong rounded-none px-4 py-3 text-3xl font-bold text-center tabular-nums outline-none ${accent.input}`}
                     />
                 </div>
@@ -461,12 +531,9 @@ function EditableMacroSummary({
         <div className="space-y-1.5">
             <p className="text-xs font-semibold text-text-primary">{label} {name}</p>
             <div className="flex items-baseline justify-center gap-1">
-                <input
-                    type="number"
-                    inputMode="numeric"
-                    min={0}
+                <NumericInput
                     value={Math.round(value || 0)}
-                    onChange={(e) => onChange(Number(e.target.value || 0))}
+                    onValueChange={onChange}
                     className="w-16 bg-transparent border-none p-0 text-center text-3xl font-bold text-text-primary tabular-nums focus:ring-0"
                 />
                 <span className="text-xs text-text-secondary">g</span>
@@ -496,29 +563,74 @@ function AdminStatCard({ label, value, unit, color, step = 1, onValueChange }: {
     const style = colorMap[color] || colorMap.gray;
     const [baseColor, bgColor, borderColor] = style.split(' ');
     const shouldShowDecimal = step < 1
-    const displayValue = value === null
-        ? ''
-        : shouldShowDecimal
-            ? Number(value).toFixed(1)
-            : Math.round(value)
-
     return (
         <div className={`${bgColor} rounded-2xl p-4 border-2 ${borderColor} transition-all hover:shadow-md group relative overflow-hidden`}>
             <p className="text-xs font-normal text-text-muted mb-2 uppercase tracking-widest leading-none">{label}</p>
             <div className="flex items-center">
                 <div className="flex items-baseline gap-1">
-                    <input
-                        type="number"
-                        inputMode={shouldShowDecimal ? 'decimal' : 'numeric'}
+                    <NumericInput
                         step={step}
-                        min={0}
-                        value={displayValue}
-                        onChange={(e) => onValueChange?.(Number(e.target.value || 0))}
+                        value={value ?? 0}
+                        integer={!shouldShowDecimal}
+                        onValueChange={(nextValue) => onValueChange?.(nextValue)}
                         className={`w-20 bg-transparent border-none p-0 text-3xl font-bold tabular-nums leading-none focus:ring-0 outline-none ${baseColor}`}
                     />
                     <span className="text-xs font-normal text-text-muted uppercase tracking-tighter">{unit}</span>
                 </div>
             </div>
         </div>
+    )
+}
+
+function formatNumericInputValue(nextValue: number, integer: boolean) {
+    const numeric = Number(nextValue || 0)
+    return integer ? String(Math.round(numeric)) : String(numeric)
+}
+
+function NumericInput({
+    value,
+    onValueChange,
+    className,
+    step = 1,
+    integer = true,
+}: {
+    value: number
+    onValueChange: (value: number) => void
+    className?: string
+    step?: number
+    integer?: boolean
+}) {
+    const [draft, setDraft] = useState(formatNumericInputValue(value, integer))
+    const [focused, setFocused] = useState(false)
+
+    useEffect(() => {
+        if (!focused) setDraft(formatNumericInputValue(value, integer))
+    }, [focused, integer, value])
+
+    return (
+        <input
+            type="number"
+            inputMode={integer ? 'numeric' : 'decimal'}
+            min={0}
+            step={step}
+            value={draft}
+            onFocus={() => setFocused(true)}
+            onBlur={() => {
+                setFocused(false)
+                if (draft === '') setDraft('0')
+            }}
+            onChange={(e) => {
+                const raw = e.target.value
+                setDraft(raw)
+                if (raw === '') {
+                    onValueChange(0)
+                    return
+                }
+                const parsed = Number(raw)
+                if (!Number.isFinite(parsed)) return
+                onValueChange(integer ? Math.round(parsed) : parsed)
+            }}
+            className={className}
+        />
     )
 }
