@@ -116,7 +116,7 @@ export default function GoalsTab({ userId, token, isAdmin }: GoalsTabProps) {
 
     const activeGoals = goals.filter(g => g.status === 'active')
     const pastGoals = [...goals]
-        .filter(g => g.status === 'achieved' || g.status === 'missed')
+        .filter(g => g.status === 'achieved' || g.status === 'missed' || g.status === 'archived')
         .sort((a, b) => String(b.achieved_at || '').localeCompare(String(a.achieved_at || '')))
 
     // 習慣目標は quit_goals 配列（既存の日次○×トラッキング）とタイトルを同期させる。
@@ -151,6 +151,8 @@ export default function GoalsTab({ userId, token, isAdmin }: GoalsTabProps) {
         setSaving(true)
         try {
             const isEditing = Boolean(editingGoalId)
+            const editingGoal = editingGoalId ? goals.find(g => g.id === editingGoalId) : null
+            const restoresGoal = Boolean(isEditing && editingGoal?.status !== 'active')
             const res = await fetch(isEditing ? `/api/goals/${editingGoalId}?${query}` : `/api/goals?${query}`, {
                 method: isEditing ? 'PATCH' : 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -163,16 +165,24 @@ export default function GoalsTab({ userId, token, isAdmin }: GoalsTabProps) {
                     // AW-1: 「期限なし」を選んだ場合はnullで保存する
                     deadline: newGoal.hasDeadline ? (newGoal.deadline || null) : null,
                     note: newGoal.note.trim() || null,
+                    status: isEditing ? 'active' : undefined,
                 })
             })
             if (res.ok) {
                 if (!isEditing && newGoal.type === 'habit') {
                     await syncQuitGoals(current => current.includes(title) ? current : [...current, title])
+                } else if (isEditing) {
+                    if (editingGoal?.type === 'habit' && editingGoal.title !== title) {
+                        await syncQuitGoals(current => current.filter(g => g !== editingGoal.title))
+                    }
+                    if (newGoal.type === 'habit') {
+                        await syncQuitGoals(current => current.includes(title) ? current : [...current, title])
+                    }
                 }
                 setNewGoal(initialGoalForm())
                 setEditingGoalId(null)
                 setCreating(false)
-                setMessage(isEditing ? '目標を更新しました' : '目標を追加しました')
+                setMessage(restoresGoal ? '今の目標に戻しました' : isEditing ? '目標を更新しました' : '目標を追加しました')
                 await fetchGoals()
                 setTimeout(() => setMessage(''), 3000)
             }
@@ -208,7 +218,7 @@ export default function GoalsTab({ userId, token, isAdmin }: GoalsTabProps) {
                     await syncQuitGoals(current => current.filter(g => g !== goal.title))
                 }
                 closeGoalForm()
-                setMessage('目標を削除しました')
+                setMessage('目標を削除済みにしました')
                 await fetchGoals()
                 setTimeout(() => setMessage(''), 3000)
             }
@@ -427,9 +437,9 @@ export default function GoalsTab({ userId, token, isAdmin }: GoalsTabProps) {
                                 {/* AV-1: 過去の目標は「達成/未達成」を状態バッジで示す。
                                     会員はタップで切り替えられ、管理者は表示のみ+編集ボタン。 */}
                                 <div className="flex items-center gap-2 shrink-0">
-                                    {isAdmin ? (
+                                    {isAdmin || goal.status === 'archived' ? (
                                         <span className={`rounded-full px-3 py-1.5 text-xs font-normal whitespace-nowrap ${goal.status === 'achieved' ? 'bg-state-success-500/15 text-state-success-700' : 'bg-surface-overlay text-text-muted'}`}>
-                                            {goal.status === 'achieved' ? '達成' : '未達成'}
+                                            {goal.status === 'archived' ? '削除済み' : goal.status === 'achieved' ? '達成' : '未達成'}
                                         </span>
                                     ) : (
                                         <Button

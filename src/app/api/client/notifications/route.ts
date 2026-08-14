@@ -19,6 +19,13 @@ async function resolveUserByToken(token: string | null) {
   return data
 }
 
+function countsForUnreadBadge(notification: { title?: string | null; body?: string | null; category?: string | null }) {
+  if (notification.category === 'reservation') return false
+
+  const text = `${notification.title || ''} ${notification.body || ''}`
+  return !/(リマインダー|ご予約前日|セッション予定があります|オンラインセッションのお知らせ|ご予約が確定|予約が確定|予約を承りました|ご予約が変更|ご予約がキャンセル|予約変更|予約キャンセル)/.test(text)
+}
+
 // GET /api/client/notifications?token=xxx
 export async function GET(request: NextRequest) {
   try {
@@ -41,7 +48,7 @@ export async function GET(request: NextRequest) {
     }
 
     const notifications = data || []
-    const unreadCount = notifications.filter(n => !n.read_at).length
+    const unreadCount = notifications.filter(n => !n.read_at && countsForUnreadBadge(n)).length
 
     return NextResponse.json({ notifications, unreadCount })
   } catch (error) {

@@ -54,6 +54,8 @@ export async function PATCH(
             update.status = body.status;
             if (body.status === 'achieved' || body.status === 'missed') {
                 update.achieved_at = new Date().toISOString();
+            } else if (body.status === 'active') {
+                update.achieved_at = null;
             }
         }
 
@@ -91,7 +93,11 @@ export async function DELETE(
 
         const query = client
             .from('goals')
-            .delete()
+            .update({
+                status: 'archived',
+                achieved_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+            })
             .eq('id', id);
 
         if (client !== supabaseAdmin) {

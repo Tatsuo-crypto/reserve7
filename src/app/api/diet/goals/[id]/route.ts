@@ -68,7 +68,9 @@ export async function PATCH(
         });
 
         if (startDate) filteredGoals.start_date = startDate;
-        if (endDate) filteredGoals.end_date = endDate;
+        if (Object.prototype.hasOwnProperty.call(body, 'endDate')) {
+            filteredGoals.end_date = endDate || null;
+        }
 
         const query = client
             .from('diet_goals')

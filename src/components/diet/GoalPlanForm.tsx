@@ -115,7 +115,7 @@ export default function GoalPlanForm({
     saving,
     saveLabel,
     onDelete,
-    deleteLabel = 'このプランを削除',
+    deleteLabel = 'この目標を削除',
     onCancel,
 }: GoalPlanFormProps) {
     const macroEditOrderRef = useRef<Partial<Record<MacroScope, MacroKey[]>>>({})

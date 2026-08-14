@@ -128,7 +128,8 @@ export async function GET(request: NextRequest) {
       const pushCount = await sendPushNotificationToUser(client.id, {
         title: 'ご予約前日のお知らせ',
         body: `${dateStr} ${timeStr}のセッション予定があります。`,
-        url: `/client/${client.access_token}`
+        url: `/client/${client.access_token}`,
+        category: 'reservation',
       })
 
         if (client.push_notification_enabled && client.access_token) {

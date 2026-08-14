@@ -305,6 +305,7 @@ export async function DELETE(
             title: 'ご予約がキャンセルされました',
             body: `${dateStr} ${timeStr}〜のご予約をキャンセルしました。`,
             url: `/client/${clientUser.access_token}`,
+            category: 'reservation',
           })
         } catch (err) {
           console.error('Client cancellation push error:', err)
@@ -736,6 +737,7 @@ export async function PUT(
               title: 'ご予約が変更されました',
               body: `${dateStr} ${timeStr}〜に変更されました。`,
               url: `/client/${clientUser.access_token}`,
+              category: 'reservation',
             })
           } catch (err) {
             console.error('Client update push error:', err)

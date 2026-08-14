@@ -32,6 +32,13 @@ function formatDateTime(iso: string): string {
     return `${d.toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo', month: 'long', day: 'numeric' })} ${time}`
 }
 
+function countsForUnreadBadge(notification: ClientNotification): boolean {
+    if (notification.category === 'reservation') return false
+
+    const text = `${notification.title || ''} ${notification.body || ''}`
+    return !/(リマインダー|ご予約前日|セッション予定があります|オンラインセッションのお知らせ|ご予約が確定|予約が確定|予約を承りました|ご予約が変更|ご予約がキャンセル|予約変更|予約キャンセル)/.test(text)
+}
+
 /**
  * AX-3: 会員がアプリ内で通知を読み返す画面。
  * 通知は端末側で消えてしまうと二度と見られなかったため、送った通知をここに残す。
@@ -98,7 +105,7 @@ export default function NotificationsTab({ token }: { token: string }) {
         )
     }
 
-    const unreadCount = notifications.filter(n => !n.read_at).length
+    const unreadCount = notifications.filter(n => !n.read_at && countsForUnreadBadge(n)).length
 
     return (
         <div className="space-y-3 animate-fadeIn">

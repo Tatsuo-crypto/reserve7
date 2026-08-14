@@ -107,7 +107,9 @@ export async function POST(req: NextRequest) {
         allowedKeys.forEach(key => {
             if (goals[key] !== undefined) filteredGoals[key] = goals[key];
         });
-        if (endDate) filteredGoals.end_date = endDate;
+        if (Object.prototype.hasOwnProperty.call(body, 'endDate')) {
+            filteredGoals.end_date = endDate || null;
+        }
 
         // Check if goal for this date already exists
         const { data: existing } = await client

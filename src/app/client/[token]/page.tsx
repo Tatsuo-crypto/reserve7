@@ -318,7 +318,6 @@ export default function ClientReservationsPage() {
             token={token}
             userName={userName}
             isDietPlan={isDietPlan}
-            todayDraft={todayData}
             bootstrapData={homeBootstrap}
             onNavigate={(tab) => setActiveTab(tab)}
             onOpenSettings={() => setActiveTab('settings')}

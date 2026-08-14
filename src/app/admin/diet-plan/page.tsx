@@ -166,6 +166,13 @@ function getGoalPeriodInfo(goal: any, next: any) {
     }
 }
 
+function formatGoalDateLabel(value?: string | null) {
+    if (!value) return '継続中'
+    const [year, month, day] = value.split('-')
+    if (!year || !month || !day) return value
+    return `${year}/${Number(month)}/${Number(day)}`
+}
+
 function normalizeGoalValues(values: GoalFormValues): GoalFormValues {
     const fiber = Math.max(0, Math.round(Number(values.fiber || 0)))
     const carbs = Math.max(0, Math.round(Number(values.carbs || 0)))
@@ -240,8 +247,8 @@ function goalFormValuesToDietSaveBody(values: GoalFormValues) {
     const body: any = {
         startDate: values.startDate,
         ...goalFormValuesToPayload(values),
+        endDate: values.endDate || null,
     }
-    if (values.endDate) body.endDate = values.endDate
     return body
 }
 
@@ -362,6 +369,10 @@ function DietPlanPageContent() {
     const [weightHistory, setWeightHistory] = useState<any[]>([])
     const [lifestyleHistory, setLifestyleHistory] = useState<any[]>([])
     const [intakeHistory, setIntakeHistory] = useState<any[]>([])
+    const currentGoalRecord = useMemo(
+        () => getGoalForDate(dietHistory, today) || dietHistory[0] || null,
+        [dietHistory, today]
+    )
 
     const fetchMemberData = useCallback(async (userId: string, token: string) => {
         setLoadingData(true)
@@ -382,6 +393,30 @@ function DietPlanPageContent() {
                     if (data && data.length > 0) {
                         const activeGoal = getGoalForDate(data, today)
                         setNutrientForm(goalRecordToFormValues(activeGoal || data[0]))
+                    } else {
+                        setNutrientForm(prev => ({
+                            ...prev,
+                            protein: DEFAULT_PROTEIN,
+                            fat: DEFAULT_FAT,
+                            carbs: DEFAULT_CARBS,
+                            sugar: DEFAULT_SUGAR,
+                            fiber: DEFAULT_FIBER,
+                            salt: DEFAULT_SALT,
+                            targetCalories: 1600,
+                            trainingCalories: 1600,
+                            trainingProtein: DEFAULT_PROTEIN,
+                            trainingFat: DEFAULT_FAT,
+                            trainingCarbs: DEFAULT_CARBS,
+                            restCalories: 1600,
+                            restProtein: DEFAULT_PROTEIN,
+                            restFat: DEFAULT_FAT,
+                            restCarbs: DEFAULT_CARBS,
+                            dayTypeEnabled: false,
+                            dayTypeFieldsAvailable: false,
+                            startDate: today,
+                            endDate: null,
+                            title: '',
+                        }))
                     }
                 }
             }
@@ -585,18 +620,39 @@ function DietPlanPageContent() {
     }
 
     const handleDeleteHistory = async (id: string) => {
+        if (!selectedMember) return false
         try {
             const response = await fetch(`/api/diet/goals/${id}?token=${selectedMember?.access_token}`, {
                 method: 'DELETE'
             })
             if (response.ok) {
-                setMessage('履歴を削除しました')
-                await fetchMemberData(selectedMember!.id, selectedMember!.access_token || '')
+                setMessage('目標を削除しました')
+                await fetchMemberData(selectedMember.id, selectedMember.access_token || '')
                 setTimeout(() => setMessage(''), 3000)
+                return true
             }
+            setMessage('削除できませんでした。もう一度お試しください。')
+            setTimeout(() => setMessage(''), 3000)
         } catch (error) {
             console.error('Delete history error:', error)
+            setMessage('削除できませんでした。もう一度お試しください。')
+            setTimeout(() => setMessage(''), 3000)
         }
+        return false
+    }
+
+    const handleDeleteCurrentPlan = async () => {
+        if (!currentGoalRecord?.id) {
+            setMessage('削除できる目標がありません')
+            setTimeout(() => setMessage(''), 3000)
+            return
+        }
+        if (!confirm('現在の目標設定を削除してもよろしいですか？')) return
+
+        setSaving(true)
+        const ok = await handleDeleteHistory(currentGoalRecord.id)
+        setSaving(false)
+        if (ok) setEditingCurrentPlan(false)
     }
 
     // K-2: 統合グラフのバーをタップして開く編集モーダル
@@ -1115,17 +1171,27 @@ function DietPlanPageContent() {
                                             onValuesChange={setNutrientForm}
                                             habitTargets={habitTargets}
                                             onHabitTargetsChange={setHabitTargets}
-                                            showStartDate={false}
+                                            showStartDate
                                             onSave={async () => {
                                                 const ok = await handleSave()
                                                 if (ok) setEditingCurrentPlan(false)
                                             }}
                                             saving={saving}
                                             saveLabel="設定を保存"
+                                            onDelete={currentGoalRecord?.id ? handleDeleteCurrentPlan : undefined}
+                                            deleteLabel="この目標を削除"
                                             onCancel={() => setEditingCurrentPlan(false)}
                                         />
                                     ) : (
                                         <div className="space-y-5">
+                                            <div className="rounded-2xl bg-surface-base border border-border-subtle px-4 py-3">
+                                                <p className="text-xs font-normal text-text-muted uppercase tracking-widest mb-1">期間</p>
+                                                <p className="text-sm font-semibold text-text-primary">
+                                                    {formatGoalDateLabel(nutrientForm.startDate)}
+                                                    <span className="mx-2 text-text-muted">〜</span>
+                                                    {formatGoalDateLabel(nutrientForm.endDate)}
+                                                </p>
+                                            </div>
                                             {nutrientForm.dayTypeEnabled ? (
                                                 <div className="space-y-3">
                                                     {[

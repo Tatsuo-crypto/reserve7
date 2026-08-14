@@ -603,6 +603,7 @@ export async function POST(request: NextRequest) {
           title: 'ご予約が確定しました',
           body: `${dateStr} ${timeStr}〜のご予約を承りました。`,
           url: `/client/${clientUser.access_token}`,
+          category: 'reservation',
         })
       } catch (err) {
         console.error('Client push notification error:', err)

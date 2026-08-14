@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import type { ReactNode } from 'react'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
@@ -13,7 +13,6 @@ interface HomeTabProps {
     token: string
     userName: string
     isDietPlan?: boolean
-    todayDraft?: any
     bootstrapData?: {
         goals: Goal[]
         todayDietLog: any | null
@@ -54,15 +53,13 @@ function formatGoalDateLong(dateStr: string | null | undefined): string | null {
  * Home = 「今日の秘書」。数字の一覧ではなく、今日やることを最大4枚のカードで見せる。
  * 個々の栄養素・生活ログのバーはすべて分析タブへ移設済み（WeeklyProgressPanel）。
  */
-export default function HomeTab({ token, userName, isDietPlan = true, todayDraft, bootstrapData, onNavigate }: HomeTabProps) {
-    const [dietLogs, setDietLogs] = useState<any[]>([])
+export default function HomeTab({ token, userName, isDietPlan = true, bootstrapData, onNavigate }: HomeTabProps) {
     const [goals, setGoals] = useState<Goal[]>([])
     const [nextReservation, setNextReservation] = useState<any>(null)
     const [todayLesson, setTodayLesson] = useState<any>(null)
     const [loading, setLoading] = useState(true)
 
     const today = new Date()
-    const todayStr = today.toLocaleDateString('sv-SE')
     const todayLabel = today.toLocaleDateString('ja-JP', {
         month: 'numeric',
         day: 'numeric',
@@ -71,7 +68,6 @@ export default function HomeTab({ token, userName, isDietPlan = true, todayDraft
 
     useEffect(() => {
         if (bootstrapData) {
-            setDietLogs(bootstrapData.todayDietLog ? [bootstrapData.todayDietLog] : [])
             setGoals(bootstrapData.goals || [])
             setNextReservation(bootstrapData.nextReservation || null)
             setTodayLesson(bootstrapData.todayLesson || null)
@@ -82,14 +78,12 @@ export default function HomeTab({ token, userName, isDietPlan = true, todayDraft
         const fetchData = async () => {
             setLoading(true)
             try {
-                const [dietLogData, goalsData, resData, lessonData] = await Promise.all([
-                    isDietPlan ? fetchJsonCached<any>(`/api/diet/logs?date=${todayStr}&token=${token}`) : Promise.resolve({ data: null }),
+                const [goalsData, resData, lessonData] = await Promise.all([
                     fetchJsonCached<any>(`/api/goals?token=${token}&status=active`),
                     fetchJsonCached<any>(`/api/client/reservations?scope=next&token=${token}`),
                     fetchJsonCached<any>(`/api/client/online-lesson?token=${token}`),
                 ])
 
-                setDietLogs(dietLogData.data ? [dietLogData.data] : [])
                 setGoals(isDietPlan ? goalsData.data || [] : [])
 
                 setNextReservation(resData?.data?.nextReservation || null)
@@ -103,60 +97,7 @@ export default function HomeTab({ token, userName, isDietPlan = true, todayDraft
             }
         }
         if (token) fetchData()
-    }, [token, todayStr, isDietPlan, bootstrapData])
-
-    const todayLog = useMemo(() => dietLogs.find(l => l.date === todayStr) || null, [dietLogs, todayStr])
-
-    // --- Card 4: today's calorie ring ---
-    const todayCalorie = useMemo(() => {
-        let actualCalories: number | null = null
-
-        if (todayLog && Number(todayLog.calories || 0) > 0) actualCalories = Number(todayLog.calories) || 0
-
-        if (todayDraft?.selectedDate === todayStr && todayDraft?.ocrResult) {
-            actualCalories = Number(todayDraft.ocrResult.calories) || actualCalories || 0
-        }
-
-        const hasRecord = actualCalories !== null
-
-        return { actual: actualCalories, hasRecord }
-    }, [todayLog, todayDraft, todayStr])
-
-    const recordStatus = useMemo(() => {
-        const hasDraftChanges = Boolean(
-            todayDraft?.selectedDate === todayStr
-            && (
-                todayDraft?.ocrResult
-                || todayDraft?.isSaved
-                || (Array.isArray(todayDraft?.touchedFields) && todayDraft.touchedFields.length > 0)
-            )
-        )
-
-        if (todayCalorie.hasRecord) {
-            return {
-                title: '記録済み',
-                helper: '内容を確認できます',
-                button: '記録を見る',
-                done: true,
-            }
-        }
-
-        if (hasDraftChanges) {
-            return {
-                title: '記録途中',
-                helper: 'あと少しで今日の記録が完了です',
-                button: '記録を続ける',
-                done: false,
-            }
-        }
-
-        return {
-            title: 'まだです',
-            helper: '今日の食事を記録しましょう',
-            button: '記録する',
-            done: false,
-        }
-    }, [todayCalorie.hasRecord, todayDraft, todayStr])
+    }, [token, isDietPlan, bootstrapData])
 
     const formatReservationDate = (dateStr: string) => {
         const d = new Date(dateStr)
@@ -292,56 +233,31 @@ export default function HomeTab({ token, userName, isDietPlan = true, todayDraft
                 </Card>
             </section>
 
-            <section className="space-y-2">
-                <SectionTitle>今日</SectionTitle>
-                <Card padding="sm" className="!p-0 overflow-hidden">
-                    {todayLesson && (
-                        <div className="px-4 py-4">
-                            <div className="flex items-center justify-between gap-3">
-                                <div className="min-w-0">
-                                    <p className="text-sm font-semibold text-text-primary">オンラインセッション</p>
-                                    <p className="mt-1 text-sm font-normal tabular-nums text-text-secondary">
-                                        {todayLesson.start_time?.substring(0, 5)}〜{todayLesson.end_time?.substring(0, 5)}
-                                    </p>
-                                    <p className="mt-0.5 truncate text-sm font-normal text-text-secondary">{todayLesson.title}</p>
-                                </div>
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    onClick={() => window.open(todayLesson.meet_url, '_blank')}
-                                    className={`h-10 w-16 shrink-0 rounded-2xl p-0 text-sm font-semibold active:scale-[0.98] ${todayLesson.meet_url ? 'bg-brand-600 text-white' : 'bg-surface-overlay text-text-muted'}`}
-                                    disabled={!todayLesson.meet_url}
-                                >
-                                    参加
-                                </Button>
+            {todayLesson && (
+                <section className="space-y-2">
+                    <SectionTitle>今日</SectionTitle>
+                    <Card padding="sm" className="!p-4">
+                        <div className="flex items-center justify-between gap-3">
+                            <div className="min-w-0">
+                                <p className="text-sm font-semibold text-text-primary">オンラインセッション</p>
+                                <p className="mt-1 text-sm font-normal tabular-nums text-text-secondary">
+                                    {todayLesson.start_time?.substring(0, 5)}〜{todayLesson.end_time?.substring(0, 5)}
+                                </p>
+                                <p className="mt-0.5 truncate text-sm font-normal text-text-secondary">{todayLesson.title}</p>
                             </div>
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                onClick={() => window.open(todayLesson.meet_url, '_blank')}
+                                className={`h-10 w-16 shrink-0 rounded-2xl p-0 text-sm font-semibold active:scale-[0.98] ${todayLesson.meet_url ? 'bg-brand-600 text-white' : 'bg-surface-overlay text-text-muted'}`}
+                                disabled={!todayLesson.meet_url}
+                            >
+                                参加
+                            </Button>
                         </div>
-                    )}
-
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        onClick={() => onNavigate?.('record')}
-                        className={`grid w-full grid-cols-[1fr_auto] items-center gap-3 px-4 py-4 text-left active:scale-[0.99] ${todayLesson ? 'border-t border-border-subtle' : ''}`}
-                    >
-                        <p className="min-w-0 text-sm font-semibold text-text-primary">食事記録（{today.getMonth() + 1}/{today.getDate()}）</p>
-                        {recordStatus.done ? (
-                            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-500">
-                                <Icon name="check" size={14} className="text-white" />
-                            </div>
-                        ) : (
-                            <div className="h-7 w-7 shrink-0 rounded-full border-2 border-border-strong" />
-                        )}
-                    </Button>
-                </Card>
-            </section>
-
-            <MaterialsList
-                endpoint={`/api/client/materials?token=${encodeURIComponent(token)}`}
-                limit={3}
-                preview
-                onOpenAll={() => onNavigate?.('materials')}
-            />
+                    </Card>
+                </section>
+            )}
 
             <section className="space-y-2">
                 <SectionTitle>今後</SectionTitle>
@@ -349,12 +265,12 @@ export default function HomeTab({ token, userName, isDietPlan = true, todayDraft
                     このカードだけ中央に寄って「目標」「今日」と幅も揃わなくなっていた。 */}
                 <Button
                     type="button"
-                    variant="ghost"
+                    unstyled
                     block
                     onClick={() => onNavigate?.('res')}
                     className="block w-full p-0 text-left active:scale-[0.99] transition-transform"
                 >
-                    <Card padding="sm" className="!p-4">
+                    <Card padding="sm" className="w-full !p-4">
                         {nextReservation ? (
                             <div className="flex items-center justify-between gap-3">
                                 <div className="min-w-0">
@@ -372,6 +288,13 @@ export default function HomeTab({ token, userName, isDietPlan = true, todayDraft
                     </Card>
                 </Button>
             </section>
+
+            <MaterialsList
+                endpoint={`/api/client/materials?token=${encodeURIComponent(token)}`}
+                limit={3}
+                preview
+                onOpenAll={() => onNavigate?.('materials')}
+            />
         </div>
     )
 }

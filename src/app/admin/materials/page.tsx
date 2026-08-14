@@ -27,10 +27,15 @@ type Material = {
   openUrl: string
 }
 
-type MemberOption = { id: string; full_name: string; plan?: string; status?: string }
+type MemberOption = {
+  id: string
+  full_name: string
+  plan?: string
+  status?: string
+  lifestyle_settings?: { visible_tabs?: { input?: boolean } } | null
+  is_diet_member?: boolean
+}
 type TrainerOption = { id: string; full_name: string; status?: string }
-
-const GROUPS = Object.keys(MATERIAL_GROUP_LABELS) as MaterialGroup[]
 
 function toggle(list: string[], value: string) {
   return list.includes(value) ? list.filter(item => item !== value) : [...list, value]
@@ -49,6 +54,16 @@ function fileTitle(file: File) {
   return file.name.replace(/\.[^.]+$/, '')
 }
 
+function compactNames(names: string[]) {
+  if (names.length === 0) return ''
+  const shown = names.slice(0, 2).join('、')
+  return names.length > 2 ? `${shown} 他${names.length - 2}名` : shown
+}
+
+function isDietMember(member: MemberOption) {
+  return Boolean(member.is_diet_member) || Boolean(member.lifestyle_settings?.visible_tabs?.input) || /ダイエット|diet/i.test(member.plan || '')
+}
+
 export default function AdminMaterialsPage() {
   const [materials, setMaterials] = useState<Material[]>([])
   const [members, setMembers] = useState<MemberOption[]>([])
@@ -61,24 +76,73 @@ export default function AdminMaterialsPage() {
   const [description, setDescription] = useState('')
   const [externalUrl, setExternalUrl] = useState('')
   const [file, setFile] = useState<File | null>(null)
-  const [targetGroups, setTargetGroups] = useState<string[]>(['all_members'])
+  const [targetGroups, setTargetGroups] = useState<string[]>([])
   const [targetUserIds, setTargetUserIds] = useState<string[]>([])
   const [targetTrainerIds, setTargetTrainerIds] = useState<string[]>([])
+  const [openTargetPanel, setOpenTargetPanel] = useState(false)
+  const [openNormalPanel, setOpenNormalPanel] = useState(false)
+  const [openDietPanel, setOpenDietPanel] = useState(false)
+  const [openTrainerPanel, setOpenTrainerPanel] = useState(false)
+
+  const activeMembers = useMemo(
+    () => members.filter(member => member.status !== 'suspended' && member.status !== 'withdrawn'),
+    [members]
+  )
+  const normalMembers = useMemo(
+    () => activeMembers.filter(member => !isDietMember(member)),
+    [activeMembers]
+  )
+  const dietMembers = useMemo(
+    () => activeMembers.filter(member => isDietMember(member)),
+    [activeMembers]
+  )
 
   const targetSummary = useMemo(() => {
-    const labels = targetGroups.map(group => MATERIAL_GROUP_LABELS[group as MaterialGroup]).filter(Boolean)
-    if (targetUserIds.length) labels.push(`会員${targetUserIds.length}名`)
-    if (targetTrainerIds.length) labels.push(`トレーナー${targetTrainerIds.length}名`)
+    const labels = targetGroups
+      .filter(group => group !== 'all_members')
+      .map(group => MATERIAL_GROUP_LABELS[group as MaterialGroup])
+      .filter(Boolean)
+    const selectedMemberNames = compactNames(
+      activeMembers
+        .filter(member => targetUserIds.includes(member.id))
+        .map(member => member.full_name)
+    )
+    const selectedTrainerNames = compactNames(
+      trainers
+        .filter(trainer => targetTrainerIds.includes(trainer.id))
+        .map(trainer => trainer.full_name)
+    )
+    if (targetUserIds.length) labels.push(selectedMemberNames || `個別会員${targetUserIds.length}名`)
+    if (targetTrainerIds.length) labels.push(selectedTrainerNames || `個別トレーナー${targetTrainerIds.length}名`)
     return labels.join('、') || '未設定'
-  }, [targetGroups, targetUserIds, targetTrainerIds])
+  }, [activeMembers, targetGroups, targetTrainerIds, targetUserIds, trainers])
+
+  const toggleTargetGroup = (group: MaterialGroup) => {
+    setTargetGroups(prev => {
+      if (group === 'all_members') {
+        return prev.includes(group)
+          ? prev.filter(item => item !== group)
+          : [...prev.filter(item => item !== 'normal_members' && item !== 'diet_members'), group]
+      }
+      if (group === 'normal_members' || group === 'diet_members') {
+        return toggle(prev.filter(item => item !== 'all_members'), group)
+      }
+      return toggle(prev, group)
+    })
+  }
+
+  useEffect(() => {
+    setTargetGroups(prev => prev.filter(group => group !== 'all_members'))
+  }, [])
 
   const fetchData = async () => {
     setLoading(true)
     setError('')
     try {
-      const [materialsRes, membersRes, trainersRes] = await Promise.all([
+      const [materialsRes, membersRes, dietMembersRes, trainersRes] = await Promise.all([
         fetch('/api/admin/materials', { cache: 'no-store' }),
         fetch('/api/admin/members?compact=true&all_stores=true', { cache: 'no-store' }),
+        fetch('/api/admin/members?compact=true&diet_only=true&all_stores=true', { cache: 'no-store' }),
         fetch('/api/admin/trainers?status=active', { cache: 'no-store' }),
       ])
       if (materialsRes.ok) {
@@ -87,7 +151,16 @@ export default function AdminMaterialsPage() {
       }
       if (membersRes.ok) {
         const data = await membersRes.json()
-        setMembers(data.members || data.data?.members || [])
+        const allMembers = data.members || data.data?.members || []
+        let dietMemberIds = new Set<string>()
+        if (dietMembersRes.ok) {
+          const dietData = await dietMembersRes.json()
+          dietMemberIds = new Set((dietData.members || dietData.data?.members || []).map((member: MemberOption) => member.id))
+        }
+        setMembers(allMembers.map((member: MemberOption) => ({
+          ...member,
+          is_diet_member: dietMemberIds.has(member.id),
+        })))
       }
       if (trainersRes.ok) {
         const data = await trainersRes.json()
@@ -111,9 +184,13 @@ export default function AdminMaterialsPage() {
     setSourceMode('file')
     setExternalUrl('')
     setFile(null)
-    setTargetGroups(['all_members'])
+    setTargetGroups([])
     setTargetUserIds([])
     setTargetTrainerIds([])
+    setOpenTargetPanel(false)
+    setOpenNormalPanel(false)
+    setOpenDietPanel(false)
+    setOpenTrainerPanel(false)
   }
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -128,7 +205,7 @@ export default function AdminMaterialsPage() {
       formData.set('materialType', inferredType)
       formData.set('externalUrl', sourceMode === 'url' ? externalUrl : '')
       formData.set('isPublished', 'true')
-      formData.set('targetGroups', JSON.stringify(targetGroups))
+      formData.set('targetGroups', JSON.stringify(targetGroups.filter(group => group !== 'all_members')))
       formData.set('targetUserIds', JSON.stringify(targetUserIds))
       formData.set('targetTrainerIds', JSON.stringify(targetTrainerIds))
       if (sourceMode === 'file' && file) formData.set('file', file)
@@ -199,16 +276,20 @@ export default function AdminMaterialsPage() {
           {sourceMode === 'file' ? (
             <div>
               <label className="mb-1 block text-xs text-text-secondary">ファイル</label>
-              <input
-                type="file"
-                accept=".pdf,image/*"
-                onChange={e => {
-                  const nextFile = e.target.files?.[0] || null
-                  setFile(nextFile)
-                  if (nextFile && !title) setTitle(fileTitle(nextFile))
-                }}
-                className="w-full rounded-lg border border-border-strong bg-surface-base px-3 py-2 text-sm text-text-primary"
-              />
+              <label className="flex w-full cursor-pointer items-center justify-between gap-3 rounded-lg border border-border-strong bg-surface-base px-3 py-2 text-xs font-normal text-text-secondary">
+                <span className="truncate">{file ? file.name : 'ファイルを選択'}</span>
+                <Icon name="upload" size={16} className="shrink-0 text-text-muted" />
+                <input
+                  type="file"
+                  accept=".pdf,image/*"
+                  onChange={e => {
+                    const nextFile = e.target.files?.[0] || null
+                    setFile(nextFile)
+                    if (nextFile && !title) setTitle(fileTitle(nextFile))
+                  }}
+                  className="sr-only"
+                />
+              </label>
             </div>
           ) : (
             <div>
@@ -232,47 +313,138 @@ export default function AdminMaterialsPage() {
           </div>
 
           <div className="space-y-2">
-            <div className="text-xs text-text-secondary">対象</div>
-            <div className="flex flex-wrap gap-2">
-              {GROUPS.map(group => (
-                <Button
-                  key={group}
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setTargetGroups(prev => toggle(prev, group))}
-                  className={`rounded-full border px-3 ${targetGroups.includes(group) ? 'border-brand-500/60 bg-brand-500/15 text-brand-600' : 'border-border-subtle bg-surface-base text-text-secondary'}`}
-                >
-                  {MATERIAL_GROUP_LABELS[group]}
-                </Button>
-              ))}
+            <label className="block text-xs text-text-secondary">対象</label>
+            <div className="rounded-2xl border border-border-subtle bg-surface-base">
+              <button
+                type="button"
+                onClick={() => setOpenTargetPanel(prev => !prev)}
+                className="flex w-full items-center justify-between px-4 py-3 text-left text-xs font-normal text-text-secondary"
+              >
+                送信先を選ぶ
+                <Icon name={openTargetPanel ? 'chevronUp' : 'chevronDown'} size={16} className="text-text-muted" />
+              </button>
+              {openTargetPanel && (
+              <div className="border-t border-border-subtle px-3 py-2">
+                <div className="space-y-1">
+                  <div className="rounded-xl px-2 py-2">
+                    <div className="flex items-center gap-2 text-xs text-text-secondary">
+                      <input
+                        type="checkbox"
+                        checked={targetGroups.includes('normal_members')}
+                        onChange={() => toggleTargetGroup('normal_members')}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setOpenNormalPanel(prev => !prev)}
+                        className="flex items-center gap-1 text-left"
+                      >
+                        通常会員
+                        <Icon name={openNormalPanel ? 'chevronUp' : 'chevronDown'} size={14} className="text-text-muted" />
+                      </button>
+                    </div>
+                    {openNormalPanel && (
+                      <div className="mt-1 space-y-1 pl-5">
+                        {normalMembers.length === 0 ? (
+                          <p className="px-2 py-1.5 text-xs text-text-muted">対象者はいません</p>
+                        ) : normalMembers.map(member => (
+                          <label key={member.id} className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs text-text-muted">
+                            <input
+                              type="checkbox"
+                              checked={targetUserIds.includes(member.id)}
+                              onChange={() => setTargetUserIds(prev => toggle(prev, member.id))}
+                            />
+                            <span className="truncate">{member.full_name}</span>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="rounded-xl px-2 py-2">
+                    <div className="flex items-center gap-2 text-xs text-text-secondary">
+                      <input
+                        type="checkbox"
+                        checked={targetGroups.includes('diet_members')}
+                        onChange={() => toggleTargetGroup('diet_members')}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setOpenDietPanel(prev => !prev)}
+                        className="flex items-center gap-1 text-left"
+                      >
+                        ダイエット会員
+                        <Icon name={openDietPanel ? 'chevronUp' : 'chevronDown'} size={14} className="text-text-muted" />
+                      </button>
+                    </div>
+                    {openDietPanel && (
+                      <div className="mt-1 space-y-1 pl-5">
+                        {dietMembers.length === 0 ? (
+                          <p className="px-2 py-1.5 text-xs text-text-muted">対象者はいません</p>
+                        ) : dietMembers.map(member => (
+                          <label key={member.id} className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs text-text-muted">
+                            <input
+                              type="checkbox"
+                              checked={targetUserIds.includes(member.id)}
+                              onChange={() => setTargetUserIds(prev => toggle(prev, member.id))}
+                            />
+                            <span className="truncate">{member.full_name}</span>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="rounded-xl px-2 py-2">
+                    <div className="flex items-center gap-2 text-xs text-text-secondary">
+                      <input
+                        type="checkbox"
+                        checked={targetGroups.includes('admins')}
+                        onChange={() => toggleTargetGroup('admins')}
+                      />
+                      <span>管理者</span>
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl px-2 py-2">
+                    <div className="flex items-center gap-2 text-xs text-text-secondary">
+                      <input
+                        type="checkbox"
+                        checked={targetGroups.includes('trainers')}
+                        onChange={() => toggleTargetGroup('trainers')}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setOpenTrainerPanel(prev => !prev)}
+                        className="flex items-center gap-1 text-left"
+                      >
+                        トレーナー
+                        <Icon name={openTrainerPanel ? 'chevronUp' : 'chevronDown'} size={14} className="text-text-muted" />
+                      </button>
+                    </div>
+                    {openTrainerPanel && (
+                      <div className="mt-1 space-y-1 pl-5">
+                        {trainers.map(trainer => (
+                          <label key={trainer.id} className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs text-text-muted">
+                            <input
+                              type="checkbox"
+                              checked={targetTrainerIds.includes(trainer.id)}
+                              onChange={() => setTargetTrainerIds(prev => toggle(prev, trainer.id))}
+                            />
+                            <span className="truncate">{trainer.full_name}</span>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+              )}
             </div>
-            <div className="text-xs text-text-muted">選択中: {targetSummary}</div>
+            <div className="rounded-2xl border border-border-subtle bg-surface-base px-4 py-3">
+              <p className="text-xs text-text-muted">選択済み</p>
+              <p className="mt-1 text-xs font-normal text-text-secondary">{targetSummary}</p>
+            </div>
           </div>
-
-          <details className="rounded-xl border border-border-subtle bg-surface-base p-3">
-            <summary className="cursor-pointer text-sm text-text-primary">個別会員に追加</summary>
-            <div className="mt-3 grid max-h-44 grid-cols-1 gap-2 overflow-y-auto">
-              {members.map(member => (
-                <label key={member.id} className="flex items-center gap-2 text-sm text-text-secondary">
-                  <input type="checkbox" checked={targetUserIds.includes(member.id)} onChange={() => setTargetUserIds(prev => toggle(prev, member.id))} />
-                  <span>{member.full_name}</span>
-                </label>
-              ))}
-            </div>
-          </details>
-
-          <details className="rounded-xl border border-border-subtle bg-surface-base p-3">
-            <summary className="cursor-pointer text-sm text-text-primary">個別トレーナーに追加</summary>
-            <div className="mt-3 grid max-h-44 grid-cols-1 gap-2 overflow-y-auto">
-              {trainers.map(trainer => (
-                <label key={trainer.id} className="flex items-center gap-2 text-sm text-text-secondary">
-                  <input type="checkbox" checked={targetTrainerIds.includes(trainer.id)} onChange={() => setTargetTrainerIds(prev => toggle(prev, trainer.id))} />
-                  <span>{trainer.full_name}</span>
-                </label>
-              ))}
-            </div>
-          </details>
 
           {error && <div className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-700">{error}</div>}
 
@@ -283,7 +455,7 @@ export default function AdminMaterialsPage() {
       </Card>
 
       <Card padding="sm">
-        <h2 className="text-base font-semibold text-text-primary">登録済み</h2>
+        <h2 className="text-xs font-normal text-text-secondary">登録済み</h2>
         <div className="mt-3 space-y-2">
           {loading ? (
             <div className="py-8 text-center text-xs text-text-muted">読み込み中...</div>
