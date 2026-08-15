@@ -88,7 +88,7 @@ export default function TrainerDashboardPage() {
     <ConsentGate subjectType="trainer_staff" subjectId={trainer?.id}>
     <div className="min-h-screen bg-surface-base">
       {/* Top Navigation */}
-      <header className="bg-surface-raised/80 backdrop-blur-md border-b border-border-subtle sticky top-0 z-50 h-16">
+      <header className="fixed left-0 right-0 top-0 z-50 h-16 border-b border-border-subtle bg-surface-raised/95 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between relative">
           {/* Left: Spacer */}
           <div className="min-w-[44px]">
@@ -125,7 +125,7 @@ export default function TrainerDashboardPage() {
         </div>
       </header>
 
-      <div className="w-full pt-4 pb-28">
+      <div className="w-full pt-20 pb-28">
         {/* Calendar Content */}
         <Suspense fallback={<div className="p-8 text-center">読み込み中...</div>}>
           <CalendarView 

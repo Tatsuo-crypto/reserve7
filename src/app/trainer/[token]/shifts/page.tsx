@@ -51,7 +51,7 @@ export default function ShiftsPage() {
   return (
     <div className="min-h-screen bg-surface-base">
       {/* Top Navigation */}
-      <header className="bg-surface-raised/80 backdrop-blur-md border-b border-border-subtle sticky top-0 z-50 h-16">
+      <header className="fixed left-0 right-0 top-0 z-50 h-16 border-b border-border-subtle bg-surface-raised/95 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between relative">
           {/* Left: Back Button */}
           <div className="z-10 min-w-[44px]">
@@ -86,7 +86,7 @@ export default function ShiftsPage() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-28">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-28">
 
         <TrainerShiftPage token={token} trainerName={trainer?.name} />
       </main>

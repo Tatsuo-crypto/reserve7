@@ -20,39 +20,42 @@ export default function AdminHeader({ title, subTitle, onBack, rightElement, lef
   const handleBack = onBack || (() => router.back())
 
   return (
-    <div className="mb-8 mt-2 sticky top-0 z-50 bg-surface-base/80 backdrop-blur-sm pt-2 pb-2">
-      <div className="grid grid-cols-[minmax(44px,auto)_minmax(0,1fr)_auto] items-center gap-2 min-h-[56px] px-1 max-w-5xl mx-auto">
-        {/* Left: Circular Back Button (+ 任意の左側要素) */}
-        <div className="flex min-w-0 items-center gap-1.5">
-          {showBack && (
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={handleBack}
-              className="w-10 h-10 flex items-center justify-center p-0 text-brand-500 bg-surface-raised rounded-full shadow-sm border border-border-subtle transition-all active:scale-90 hover:bg-surface-base"
-              aria-label="戻る"
-            >
-              <Icon name="chevronLeft" size={24} />
-            </Button>
-          )}
-          {leftElement}
-        </div>
+    <>
+      <div className="fixed left-0 right-0 top-0 z-50 border-b border-border-subtle bg-surface-base/95 backdrop-blur-md">
+        <div className="grid min-h-16 grid-cols-[minmax(44px,auto)_minmax(0,1fr)_auto] items-center gap-2 px-4 max-w-5xl mx-auto">
+          {/* Left: Circular Back Button (+ 任意の左側要素) */}
+          <div className="flex min-w-0 items-center gap-1.5">
+            {showBack && (
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={handleBack}
+                className="w-10 h-10 flex items-center justify-center p-0 text-brand-500 bg-surface-raised rounded-full shadow-sm border border-border-subtle transition-all active:scale-90 hover:bg-surface-base"
+                aria-label="戻る"
+              >
+                <Icon name="chevronLeft" size={24} />
+              </Button>
+            )}
+            {leftElement}
+          </div>
 
-        {/* Center: Page Title */}
-        <div className="min-w-0 flex flex-col items-center justify-center pointer-events-none">
-          <h1 className="max-w-full truncate text-xl font-semibold text-text-primary tracking-tight whitespace-nowrap">
-            {title}
-          </h1>
-          {subTitle && (
-            <p className="text-xs text-text-muted font-normal uppercase tracking-widest mt-0.5">{subTitle}</p>
-          )}
-        </div>
+          {/* Center: Page Title */}
+          <div className="min-w-0 flex flex-col items-center justify-center pointer-events-none">
+            <h1 className="max-w-full truncate text-xl font-semibold text-text-primary tracking-tight whitespace-nowrap">
+              {title}
+            </h1>
+            {subTitle && (
+              <p className="text-xs text-text-muted font-normal uppercase tracking-widest mt-0.5">{subTitle}</p>
+            )}
+          </div>
 
-        {/* Right: Pill-shaped Info/Action Button */}
-        <div className="flex min-w-0 max-w-[46vw] justify-end overflow-hidden">
-          {rightElement}
+          {/* Right: Pill-shaped Info/Action Button */}
+          <div className="flex min-w-0 max-w-[46vw] justify-end overflow-hidden">
+            {rightElement}
+          </div>
         </div>
       </div>
-    </div>
+      <div className="h-16 mb-4" aria-hidden="true" />
+    </>
   )
 }

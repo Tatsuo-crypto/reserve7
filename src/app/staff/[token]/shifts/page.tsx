@@ -197,7 +197,7 @@ export default function StaffShiftSubmitPage() {
 
   return (
     <div className="min-h-screen bg-surface-base pb-10">
-      <header className="sticky top-0 z-30 border-b border-border-subtle bg-surface-raised/95 backdrop-blur">
+      <header className="fixed left-0 right-0 top-0 z-50 border-b border-border-subtle bg-surface-raised/95 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-md items-center justify-between px-4">
           <Button
             type="button"
@@ -217,7 +217,7 @@ export default function StaffShiftSubmitPage() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-md space-y-4 px-4 py-4">
+      <main className="mx-auto max-w-md space-y-4 px-4 pb-4 pt-20">
         <section className="rounded-2xl border border-border-subtle bg-surface-raised p-4">
           <div className="mb-3 flex items-center gap-2">
             <span className="h-5 w-1 rounded-full bg-brand-500" />

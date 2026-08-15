@@ -12,7 +12,7 @@ export default function TrainerMaterialsPage() {
 
   return (
     <div className="min-h-screen bg-surface-base pb-28">
-      <header className="sticky top-0 z-50 h-16 border-b border-border-subtle bg-surface-raised/80 backdrop-blur-md">
+      <header className="fixed left-0 right-0 top-0 z-50 h-16 border-b border-border-subtle bg-surface-raised/95 backdrop-blur-md">
         <div className="relative mx-auto flex h-full max-w-7xl items-center justify-center px-4">
           <Button
             type="button"
@@ -27,7 +27,7 @@ export default function TrainerMaterialsPage() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-lg px-4 py-4">
+      <main className="mx-auto max-w-lg px-4 pb-4 pt-20">
         <MaterialsList endpoint={`/api/trainer/materials?token=${encodeURIComponent(token)}`} />
       </main>
     </div>

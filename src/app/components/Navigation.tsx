@@ -4,7 +4,7 @@ import { useSession, signOut } from 'next-auth/react'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { getStoreDisplayName } from '@/lib/auth-utils'
 import Link from 'next/link'
-import { Suspense, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import StoreSwitcher from './StoreSwitcher'
 import Button from '@/components/ui/Button'
 import Icon, { type IconName } from '@/components/ui/icons'
@@ -14,6 +14,7 @@ function NavigationContent() {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
+  const [pageTitleOverride, setPageTitleOverride] = useState<string | null>(null)
 
   // Determine if we should show a back button instead of a menu button
   const isSubPage = pathname !== '/dashboard' && pathname !== '/admin/members' && pathname !== '/admin/analytics'
@@ -34,6 +35,16 @@ function NavigationContent() {
     await signOut({ redirect: false })
     router.push('/')
   }
+
+  useEffect(() => {
+    setPageTitleOverride(null)
+    const handleTitleOverride = (event: Event) => {
+      const title = (event as CustomEvent<{ title?: string | null }>).detail?.title
+      setPageTitleOverride(title || null)
+    }
+    window.addEventListener('reserve7:page-title', handleTitleOverride)
+    return () => window.removeEventListener('reserve7:page-title', handleTitleOverride)
+  }, [pathname])
 
   // Determine page title based on pathname and tab
   const getPageTitle = () => {
@@ -59,7 +70,7 @@ function NavigationContent() {
     if (pathname?.startsWith('/admin/analytics')) return '売上集計'
     if (pathname?.startsWith('/admin/sales')) return '売上管理'
     if (pathname?.startsWith('/admin/payroll')) return '給与計算'
-    if (pathname?.startsWith('/admin/karte')) return 'カルテ'
+    if (pathname?.startsWith('/admin/karte')) return pageTitleOverride || 'カルテ'
     if (pathname?.startsWith('/admin/materials')) return '資料管理'
     if (pathname?.startsWith('/admin/mail-settings')) return '配信'
     if (pathname?.startsWith('/admin/calendar')) return '予約'
@@ -103,7 +114,7 @@ function NavigationContent() {
   }
 
   return (
-    <header className="bg-surface-raised/80 backdrop-blur-md border-b border-border-subtle sticky top-0 z-50 h-16">
+    <header className="fixed left-0 right-0 top-0 z-50 h-16 border-b border-border-subtle bg-surface-raised/95 backdrop-blur-md">
       <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between relative">
         {/* Left: Store Switcher or Back Button */}
         <div className="z-10 flex min-w-[44px] justify-start">

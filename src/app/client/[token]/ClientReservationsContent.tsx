@@ -157,7 +157,7 @@ export default function ClientReservationsContent() {
   return (
     <div className="min-h-screen bg-surface-base">
       {/* Fixed Header */}
-      <header className="bg-surface-raised border-b border-border-strong shadow-sm sticky top-0 z-50">
+      <header className="fixed left-0 right-0 top-0 z-50 border-b border-border-strong bg-surface-raised shadow-sm">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <h1 className="text-xl font-semibold text-text-primary">T&J GYM</h1>
@@ -173,7 +173,7 @@ export default function ClientReservationsContent() {
         </div>
       </header>
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-8 pt-24">
         {/* User Info */}
         <div className="bg-surface-raised rounded-2xl shadow-md border border-border-strong p-8 mb-6">
           <h1 className="text-3xl font-normal text-text-primary mb-6 pb-4 border-b border-border-strong">予約一覧</h1>

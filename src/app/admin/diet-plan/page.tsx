@@ -370,7 +370,7 @@ function DietPlanPageContent() {
     const [lifestyleHistory, setLifestyleHistory] = useState<any[]>([])
     const [intakeHistory, setIntakeHistory] = useState<any[]>([])
     const currentGoalRecord = useMemo(
-        () => getGoalForDate(dietHistory, today) || dietHistory[0] || null,
+        () => getGoalForDate(dietHistory, today),
         [dietHistory, today]
     )
 
@@ -392,7 +392,33 @@ function DietPlanPageContent() {
                     setDietHistory(data || [])
                     if (data && data.length > 0) {
                         const activeGoal = getGoalForDate(data, today)
-                        setNutrientForm(goalRecordToFormValues(activeGoal || data[0]))
+                        if (activeGoal) {
+                            setNutrientForm(goalRecordToFormValues(activeGoal))
+                        } else {
+                            setNutrientForm(prev => ({
+                                ...prev,
+                                protein: DEFAULT_PROTEIN,
+                                fat: DEFAULT_FAT,
+                                carbs: DEFAULT_CARBS,
+                                sugar: DEFAULT_SUGAR,
+                                fiber: DEFAULT_FIBER,
+                                salt: DEFAULT_SALT,
+                                targetCalories: 1600,
+                                trainingCalories: 1600,
+                                trainingProtein: DEFAULT_PROTEIN,
+                                trainingFat: DEFAULT_FAT,
+                                trainingCarbs: DEFAULT_CARBS,
+                                restCalories: 1600,
+                                restProtein: DEFAULT_PROTEIN,
+                                restFat: DEFAULT_FAT,
+                                restCarbs: DEFAULT_CARBS,
+                                dayTypeEnabled: false,
+                                dayTypeFieldsAvailable: false,
+                                startDate: today,
+                                endDate: null,
+                                title: '',
+                            }))
+                        }
                     } else {
                         setNutrientForm(prev => ({
                             ...prev,
@@ -1155,8 +1181,8 @@ function DietPlanPageContent() {
                                 )}
 
                                 {/* L-2: 現在の目標設定。デフォルトは閲覧専用のコンパクト表示、「編集」で統一フォームを展開 */}
-                                <div className="bg-surface-raised rounded-2xl p-8 sm:p-10 shadow-sm border border-border-subtle">
-                                    <div className="flex items-center justify-between mb-6">
+                                <div className="bg-surface-raised rounded-2xl p-5 sm:p-6 shadow-sm border border-border-subtle">
+                                    <div className="flex items-center justify-between mb-4">
                                         <div className="flex items-center gap-2">
                                             <div className="w-1.5 h-6 bg-orange-500 rounded-full"></div>
                                             <h2 className="text-xl font-semibold text-text-primary tracking-tight">現在の目標設定</h2>
@@ -1183,81 +1209,88 @@ function DietPlanPageContent() {
                                             onCancel={() => setEditingCurrentPlan(false)}
                                         />
                                     ) : (
-                                        <div className="space-y-5">
-                                            <div className="rounded-2xl bg-surface-base border border-border-subtle px-4 py-3">
-                                                <p className="text-xs font-normal text-text-muted uppercase tracking-widest mb-1">期間</p>
-                                                <p className="text-sm font-semibold text-text-primary">
-                                                    {formatGoalDateLabel(nutrientForm.startDate)}
-                                                    <span className="mx-2 text-text-muted">〜</span>
-                                                    {formatGoalDateLabel(nutrientForm.endDate)}
-                                                </p>
-                                            </div>
-                                            {nutrientForm.dayTypeEnabled ? (
-                                                <div className="space-y-3">
-                                                    {[
-                                                        {
-                                                            label: '筋トレ日',
-                                                            tone: 'training',
-                                                            prefix: 'training',
-                                                            calories: nutrientForm.trainingCalories || nutrientForm.targetCalories,
-                                                            protein: nutrientForm.trainingProtein ?? nutrientForm.protein,
-                                                            fat: nutrientForm.trainingFat ?? nutrientForm.fat,
-                                                            carbs: nutrientForm.trainingCarbs ?? nutrientForm.carbs,
-                                                        },
-                                                        {
-                                                            label: '休養日',
-                                                            tone: 'rest',
-                                                            prefix: 'rest',
-                                                            calories: nutrientForm.restCalories || nutrientForm.targetCalories,
-                                                            protein: nutrientForm.restProtein ?? nutrientForm.protein,
-                                                            fat: nutrientForm.restFat ?? nutrientForm.fat,
-                                                            carbs: nutrientForm.restCarbs ?? nutrientForm.carbs,
-                                                        },
-                                                    ].map(item => (
-                                                        <div key={item.label} className={`rounded-2xl border px-4 py-4 ${item.tone === 'training' ? 'bg-brand-500/10 border-brand-500/25' : 'bg-surface-base border-border-subtle'}`}>
-                                                            <p className={`text-xs ${item.tone === 'training' ? 'text-brand-600' : 'text-blue-700'}`}>{item.label}</p>
-                                                            <p className="mt-1 text-3xl font-bold text-text-primary tabular-nums">{Math.round(Number(item.calories)).toLocaleString()}<span className="ml-1 text-sm text-text-muted">kcal</span></p>
-                                                            <div className="mt-3 flex flex-wrap gap-2">
-                                                                {[
-                                                                    ['P', item.protein, 'text-red-700'],
-                                                                    ['F', item.fat, 'text-blue-700'],
-                                                                    ['C', item.carbs, 'text-green-700'],
-                                                                    ['水分', `${habitTargets.diet_day_type_targets?.[`${item.prefix}_water`] ?? habitTargets.water ?? 2}L`, 'text-text-secondary'],
-                                                                    ['歩数', `${habitTargets.diet_day_type_targets?.[`${item.prefix}_steps`] ?? habitTargets.steps ?? 8000}`, 'text-text-secondary'],
-                                                                    ['筋トレ', `${habitTargets.diet_day_type_targets?.[`${item.prefix}_workout`] ?? habitTargets.workout ?? 1}回`, 'text-text-secondary'],
-                                                                    ['睡眠', `${habitTargets.diet_day_type_targets?.[`${item.prefix}_sleep`] ?? habitTargets.sleep ?? 7}h`, 'text-text-secondary'],
-                                                                ].map(([label, value, color]) => (
-                                                                    <span key={label} className="rounded-full bg-surface-base border border-border-subtle px-3 py-1.5 text-xs text-text-secondary tabular-nums">
-                                                                        <span className={String(color)}>{label}</span> {value}
-                                                                    </span>
-                                                                ))}
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            ) : (
-                                                <div className="rounded-2xl bg-surface-base border border-border-subtle px-4 py-4">
-                                                    <p className="text-3xl font-bold text-text-primary tabular-nums">
-                                                        {Math.round(nutrientForm.targetCalories).toLocaleString()}<span className="ml-1 text-sm font-normal text-text-muted">kcal</span>
+                                        currentGoalRecord ? (
+                                            <div className="space-y-3">
+                                                <div className="rounded-2xl bg-surface-base border border-border-subtle px-4 py-3">
+                                                    <p className="text-xs font-normal text-text-muted uppercase tracking-widest mb-1">期間</p>
+                                                    <p className="text-sm font-semibold text-text-primary">
+                                                        {formatGoalDateLabel(nutrientForm.startDate)}
+                                                        <span className="mx-2 text-text-muted">〜</span>
+                                                        {formatGoalDateLabel(nutrientForm.endDate)}
                                                     </p>
-                                                    <div className="mt-3 flex flex-wrap gap-2">
+                                                </div>
+                                                {nutrientForm.dayTypeEnabled ? (
+                                                    <div className="space-y-2">
                                                         {[
-                                                            ['P', `${nutrientForm.protein}g`, 'text-red-700'],
-                                                            ['F', `${nutrientForm.fat}g`, 'text-blue-700'],
-                                                            ['C', `${nutrientForm.carbs}g`, 'text-green-700'],
-                                                            ['水分', `${habitTargets.water ?? 2}L`, 'text-text-secondary'],
-                                                            ['歩数', `${habitTargets.steps ?? 8000}`, 'text-text-secondary'],
-                                                            ['筋トレ', `${habitTargets.workout ?? 1}回`, 'text-text-secondary'],
-                                                            ['睡眠', `${habitTargets.sleep ?? 7}h`, 'text-text-secondary'],
-                                                        ].map(([label, value, color]) => (
-                                                            <span key={label} className="rounded-full bg-surface-base border border-border-subtle px-3 py-1.5 text-xs text-text-secondary tabular-nums">
-                                                                <span className={String(color)}>{label}</span> {value}
-                                                            </span>
+                                                            {
+                                                                label: '筋トレ日',
+                                                                tone: 'training',
+                                                                prefix: 'training',
+                                                                calories: nutrientForm.trainingCalories || nutrientForm.targetCalories,
+                                                                protein: nutrientForm.trainingProtein ?? nutrientForm.protein,
+                                                                fat: nutrientForm.trainingFat ?? nutrientForm.fat,
+                                                                carbs: nutrientForm.trainingCarbs ?? nutrientForm.carbs,
+                                                            },
+                                                            {
+                                                                label: '休養日',
+                                                                tone: 'rest',
+                                                                prefix: 'rest',
+                                                                calories: nutrientForm.restCalories || nutrientForm.targetCalories,
+                                                                protein: nutrientForm.restProtein ?? nutrientForm.protein,
+                                                                fat: nutrientForm.restFat ?? nutrientForm.fat,
+                                                                carbs: nutrientForm.restCarbs ?? nutrientForm.carbs,
+                                                            },
+                                                        ].map(item => (
+                                                            <div key={item.label} className={`rounded-2xl border px-4 py-3 ${item.tone === 'training' ? 'bg-brand-500/10 border-brand-500/25' : 'bg-surface-base border-border-subtle'}`}>
+                                                                <p className={`text-xs ${item.tone === 'training' ? 'text-brand-600' : 'text-blue-700'}`}>{item.label}</p>
+                                                                <p className="mt-1 text-2xl font-bold text-text-primary tabular-nums">{Math.round(Number(item.calories)).toLocaleString()}<span className="ml-1 text-sm text-text-muted">kcal</span></p>
+                                                                <div className="mt-2 flex flex-wrap gap-1.5">
+                                                                    {[
+                                                                        ['P', item.protein, 'text-red-700'],
+                                                                        ['F', item.fat, 'text-blue-700'],
+                                                                        ['C', item.carbs, 'text-green-700'],
+                                                                        ['水分', `${habitTargets.diet_day_type_targets?.[`${item.prefix}_water`] ?? habitTargets.water ?? 2}L`, 'text-text-secondary'],
+                                                                        ['歩数', `${habitTargets.diet_day_type_targets?.[`${item.prefix}_steps`] ?? habitTargets.steps ?? 8000}`, 'text-text-secondary'],
+                                                                        ['筋トレ', `${habitTargets.diet_day_type_targets?.[`${item.prefix}_workout`] ?? habitTargets.workout ?? 1}回`, 'text-text-secondary'],
+                                                                        ['睡眠', `${habitTargets.diet_day_type_targets?.[`${item.prefix}_sleep`] ?? habitTargets.sleep ?? 7}h`, 'text-text-secondary'],
+                                                                    ].map(([label, value, color]) => (
+                                                                        <span key={label} className="rounded-full bg-surface-base border border-border-subtle px-2.5 py-1 text-xs text-text-secondary tabular-nums">
+                                                                            <span className={String(color)}>{label}</span> {value}
+                                                                        </span>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
                                                         ))}
                                                     </div>
-                                                </div>
-                                            )}
-                                        </div>
+                                                ) : (
+                                                    <div className="rounded-2xl bg-surface-base border border-border-subtle px-4 py-3">
+                                                        <p className="text-2xl font-bold text-text-primary tabular-nums">
+                                                            {Math.round(nutrientForm.targetCalories).toLocaleString()}<span className="ml-1 text-sm font-normal text-text-muted">kcal</span>
+                                                        </p>
+                                                        <div className="mt-2 flex flex-wrap gap-1.5">
+                                                            {[
+                                                                ['P', `${nutrientForm.protein}g`, 'text-red-700'],
+                                                                ['F', `${nutrientForm.fat}g`, 'text-blue-700'],
+                                                                ['C', `${nutrientForm.carbs}g`, 'text-green-700'],
+                                                                ['水分', `${habitTargets.water ?? 2}L`, 'text-text-secondary'],
+                                                                ['歩数', `${habitTargets.steps ?? 8000}`, 'text-text-secondary'],
+                                                                ['筋トレ', `${habitTargets.workout ?? 1}回`, 'text-text-secondary'],
+                                                                ['睡眠', `${habitTargets.sleep ?? 7}h`, 'text-text-secondary'],
+                                                            ].map(([label, value, color]) => (
+                                                                <span key={label} className="rounded-full bg-surface-base border border-border-subtle px-2.5 py-1 text-xs text-text-secondary tabular-nums">
+                                                                    <span className={String(color)}>{label}</span> {value}
+                                                                </span>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <div className="rounded-2xl bg-surface-base border border-border-subtle px-4 py-5">
+                                                <p className="text-xs font-normal text-text-muted uppercase tracking-widest">現在</p>
+                                                <p className="mt-1 text-lg font-semibold text-text-primary">未設定</p>
+                                            </div>
+                                        )
                                     )}
                                 </div>
 
@@ -1340,41 +1373,8 @@ function DietProfileStat({ label, value }: { label: string, value: string }) {
 }
 
 function GoalHistoryCharts({ data, habitTargets, onEditRequest }: { data: any[], habitTargets: any, onEditRequest: (date: string) => void }) {
-    const [selectedDate, setSelectedDate] = useState<string | null>(data[data.length - 1]?.date || null)
-    const latest = data[data.length - 1]
-    const selected = data.find(row => row.date === selectedDate) || latest
-    const chartRows = data.slice(-6)
-    const chart = { width: 320, height: 198, left: 38, right: 14, top: 20, bottom: 30 }
-    const plotWidth = chart.width - chart.left - chart.right
-    const plotHeight = chart.height - chart.top - chart.bottom
     const formatKcal = (value: number) => Math.round(value).toLocaleString()
-    const displayCalories = (row: any) => row.dayTypeEnabled ? row.trainingCalories : row.calories
-    const displayProtein = (row: any) => row.dayTypeEnabled ? row.trainingProtein : row.protein
-    const displayFat = (row: any) => row.dayTypeEnabled ? row.trainingFat : row.fat
-    const maxCalories = Math.max(...chartRows.map(displayCalories), 1)
-    const domainMax = Math.max(500, Math.ceil(maxCalories / 500) * 500)
-    const yTicks = Array.from({ length: Math.floor(domainMax / 500) }, (_, index) => (index + 1) * 500).reverse()
-    const valueToY = (value: number) => chart.top + ((domainMax - value) / Math.max(1, domainMax)) * plotHeight
-    const totalDays = chartRows.reduce((sum, row) => sum + row.periodDays, 0) || 1
-    const minBarWidth = 10
-    const rawWidths = chartRows.map(row => Math.max(minBarWidth, (row.periodDays / totalDays) * plotWidth))
-    const widthScale = plotWidth / rawWidths.reduce((sum, width) => sum + width, 0)
-    const barWidths = rawWidths.map(width => width * widthScale)
-    const barXs = barWidths.reduce<number[]>((positions, width, index) => {
-        positions.push(index === 0 ? chart.left : positions[index - 1] + barWidths[index - 1])
-        return positions
-    }, [])
-    const getSegments = (row: any) => {
-        const calories = displayCalories(row)
-        const proteinCalories = Math.max(0, Math.round(displayProtein(row) * 4))
-        const fatCalories = Math.max(0, Math.round(displayFat(row) * 9))
-        const carbCalories = Math.max(0, calories - proteinCalories - fatCalories)
-        return [
-            { key: 'C', value: carbCalories, color: '#e5c07b' },
-            { key: 'F', value: fatCalories, color: '#9a5b2e' },
-            { key: 'P', value: proteinCalories, color: '#f97316' },
-        ]
-    }
+    const rows = [...data].sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')))
     const getPfcValues = (row: any, prefix?: 'training' | 'rest') => {
         const p = prefix ? row[`${prefix}Protein`] : row.protein
         const f = prefix ? row[`${prefix}Fat`] : row.fat
@@ -1389,7 +1389,7 @@ function GoalHistoryCharts({ data, habitTargets, onEditRequest }: { data: any[],
         return (
             <>
                 {getPfcValues(row, prefix).map(([label, value]) => (
-                    <span key={label} className="rounded-full bg-surface-base border border-border-subtle px-3 py-1.5 text-xs text-text-secondary tabular-nums">
+                    <span key={label} className="rounded-full bg-surface-base border border-border-subtle px-2.5 py-1 text-xs text-text-secondary tabular-nums">
                         <span className={label === 'P' ? 'text-orange-700' : label === 'F' ? 'text-amber-700' : 'text-amber-700'}>{label}</span> {value}g
                     </span>
                 ))}
@@ -1409,7 +1409,7 @@ function GoalHistoryCharts({ data, habitTargets, onEditRequest }: { data: any[],
                 ['筋トレ', `${valueFor('workout', 1)}回`],
                 ['睡眠', `${valueFor('sleep', 7)}h`],
             ].map(([label, value]) => (
-                <span key={label} className="rounded-full bg-surface-base border border-border-subtle px-3 py-1.5 text-xs text-text-secondary tabular-nums">
+                <span key={label} className="rounded-full bg-surface-base border border-border-subtle px-2.5 py-1 text-xs text-text-secondary tabular-nums">
                     <span className="text-text-muted">{label}</span> {value}
                 </span>
             ))}
@@ -1425,153 +1425,55 @@ function GoalHistoryCharts({ data, habitTargets, onEditRequest }: { data: any[],
                 ? row.restCalories
                 : row.calories
         return (
-            <div className={`rounded-2xl border px-4 py-4 ${isTraining ? 'bg-brand-500/10 border-brand-500/25' : 'bg-surface-base border-border-subtle'}`}>
+            <div className={`rounded-2xl border px-4 py-3 ${isTraining ? 'bg-brand-500/10 border-brand-500/25' : 'bg-surface-base border-border-subtle'}`}>
                 {label && <p className={`text-xs ${isTraining ? 'text-brand-600' : 'text-blue-700'}`}>{label}</p>}
-                <p className={`${label ? 'mt-1' : ''} text-3xl font-bold text-text-primary tabular-nums`}>
+                <p className={`${label ? 'mt-1' : ''} text-2xl font-bold text-text-primary tabular-nums`}>
                     {formatKcal(calories)}<span className="ml-1 text-sm text-text-muted">kcal</span>
                 </p>
-                <div className="mt-3 flex flex-wrap gap-2">
+                <div className="mt-2 flex flex-wrap gap-1.5">
                     {renderPfcChips(row, type)}
                     {renderLifeChips(type)}
                 </div>
             </div>
         )
     }
-    useEffect(() => {
-        setSelectedDate(data[data.length - 1]?.date || null)
-    }, [data])
 
     return (
-        <div className="bg-surface-raised rounded-2xl p-5 sm:p-8 shadow-sm border border-border-subtle space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+        <div className="bg-surface-raised rounded-2xl p-4 sm:p-5 shadow-sm border border-border-subtle space-y-3">
+            <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
                     <div className="w-1.5 h-6 bg-brand-500 rounded-full"></div>
-                    <div>
-                        <h2 className="text-xl font-semibold text-text-primary tracking-tight">目標設定の推移</h2>
-                    </div>
+                    <h2 className="text-xl font-semibold text-text-primary tracking-tight">目標設定の推移</h2>
                 </div>
                 <span className="rounded-full bg-surface-base border border-border-subtle px-3 py-1 text-xs text-text-secondary whitespace-nowrap">{data.length}件</span>
             </div>
 
-            <div className="rounded-2xl bg-surface-base/80 border border-border-subtle p-4">
-                <div className="mb-3">
-                    <div className="flex items-center justify-between gap-3">
-                        <h3 className="text-sm font-normal text-text-primary">カロリー推移</h3>
-                        <span className="rounded-full bg-brand-500/10 px-2.5 py-1 text-xs text-brand-600">筋トレ日基準</span>
-                    </div>
-                </div>
-                {chartRows.length === 1 ? (
-                    <div className="h-44 rounded-2xl bg-surface-raised border border-border-subtle flex flex-col items-center justify-center text-center">
-                        <p className="text-3xl font-bold text-text-primary tabular-nums">
-                            {formatKcal(chartRows[0].dayTypeEnabled ? chartRows[0].trainingCalories : chartRows[0].calories)}<span className="ml-1 text-sm text-text-muted">kcal</span>
-                        </p>
-                        <p className="mt-2 text-xs text-text-muted">変更履歴はまだありません</p>
-                    </div>
-                ) : (
-                    <svg viewBox={`0 0 ${chart.width} ${chart.height}`} className="w-full h-auto overflow-visible">
-                        {yTicks.map(tick => {
-                            const y = valueToY(tick)
-                            return (
-                                <g key={tick}>
-                                    <line x1={chart.left} x2={chart.width - chart.right} y1={y} y2={y} stroke="rgba(255,255,255,0.08)" />
-                                    <text x={chart.left - 6} y={y + 3} textAnchor="end" className="fill-text-muted text-xs">{tick}</text>
-                                </g>
-                            )
-                        })}
-                        <line x1={chart.left} x2={chart.left} y1={chart.top} y2={chart.top + plotHeight} stroke="rgba(255,255,255,0.16)" />
-                        <line x1={chart.left} x2={chart.width - chart.right} y1={chart.top + plotHeight} y2={chart.top + plotHeight} stroke="rgba(255,255,255,0.16)" />
-                        {chartRows.map((row, index) => {
-                            const x = barXs[index]
-                            const barWidth = Math.max(4, barWidths[index] - 2)
-                            const calories = displayCalories(row)
-                            const isSelected = selected?.date === row.date
-                            const showSegmentLabels = row.periodDays >= 7 && barWidth >= 34
-                            let stackBase = 0
-                            return (
-                                <g
-                                    key={row.date}
-                                    className="cursor-pointer"
-                                    onMouseEnter={() => setSelectedDate(row.date)}
-                                    onClick={() => setSelectedDate(row.date)}
-                                >
-                                    <line
-                                        x1={x + 1}
-                                        x2={x + 1}
-                                        y1={chart.top + plotHeight}
-                                        y2={chart.top + plotHeight + 5}
-                                        stroke="rgba(255,255,255,0.34)"
-                                    />
-                                    {getSegments(row).map(segment => {
-                                        const yTop = valueToY(stackBase + segment.value)
-                                        const yBottom = valueToY(stackBase)
-                                        const height = Math.max(0, yBottom - yTop)
-                                        stackBase += segment.value
-                                        return (
-                                            <g key={segment.key}>
-                                            <rect
-                                                x={x + 1}
-                                                y={yTop}
-                                                width={barWidth}
-                                                height={height}
-                                                fill={segment.color}
-                                                opacity={isSelected ? 1 : 0.82}
-                                            />
-                                                {showSegmentLabels && height >= 18 && (
-                                                    <text
-                                                        x={x + 1 + barWidth / 2}
-                                                        y={yTop + height / 2 + 4}
-                                                        textAnchor="middle"
-                                                        className="fill-white text-xs font-semibold"
-                                                    >
-                                                        {segment.key}
-                                                    </text>
-                                                )}
-                                            </g>
-                                        )
-                                    })}
-                                    <rect
-                                        x={x + 1}
-                                        y={valueToY(calories)}
-                                        width={barWidth}
-                                        height={valueToY(0) - valueToY(calories)}
-                                        fill="transparent"
-                                        stroke={isSelected ? '#fb923c' : 'rgba(255,255,255,0.18)'}
-                                        strokeWidth={isSelected ? 2 : 1}
-                                        rx="2"
-                                    />
-                                    <text x={x + 1} y={chart.top + plotHeight + 17} textAnchor="middle" className="fill-text-muted text-xs">{row.displayDate}</text>
-                                </g>
-                            )
-                        })}
-                        <text x={chart.left - 24} y={chart.top - 6} textAnchor="start" className="fill-text-muted text-xs">kcal</text>
-                    </svg>
-                )}
-                {selected && (
-                    <div className="mt-3 space-y-3">
-                        <div className="flex items-center justify-between gap-2">
-                            <span className="rounded-full bg-surface-base border border-border-subtle px-2.5 py-1 text-xs text-text-muted">{selected.periodLabel}</span>
+            <div className="space-y-2">
+                {rows.map(row => (
+                    <div key={row.date} className="rounded-2xl bg-surface-base/80 border border-border-subtle p-3">
+                        <div className="mb-2 flex items-center justify-between gap-2">
+                            <span className="rounded-full bg-surface-base border border-border-subtle px-2.5 py-1 text-xs text-text-muted">{row.periodLabel}</span>
                             <Button
                                 type="button"
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => onEditRequest(selected.date)}
+                                onClick={() => onEditRequest(row.date)}
                                 className="rounded-full bg-brand-500/15 px-3 py-1.5 text-xs text-brand-600 hover:bg-brand-500/25"
                             >
                                 編集
                             </Button>
                         </div>
-                        {selected.dayTypeEnabled ? (
-                            <div className="space-y-3">
-                                {renderTargetSet(selected, 'training')}
-                                {renderTargetSet(selected, 'rest')}
+                        {row.dayTypeEnabled ? (
+                            <div className="space-y-2">
+                                {renderTargetSet(row, 'training')}
+                                {renderTargetSet(row, 'rest')}
                             </div>
                         ) : (
-                            renderTargetSet(selected)
+                            renderTargetSet(row)
                         )}
                     </div>
-                )}
+                ))}
             </div>
-
         </div>
     )
 }

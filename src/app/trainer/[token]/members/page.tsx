@@ -43,13 +43,13 @@ export default function TrainerMembersPage() {
 
   return (
     <div className="min-h-screen bg-surface-base pb-28">
-      <header className="sticky top-0 z-50 h-16 border-b border-border-subtle bg-surface-raised/80 backdrop-blur-md">
+      <header className="fixed left-0 right-0 top-0 z-50 h-16 border-b border-border-subtle bg-surface-raised/95 backdrop-blur-md">
         <div className="relative mx-auto flex h-full max-w-7xl items-center justify-center px-4">
           <h1 className="text-xl font-semibold tracking-tight text-text-primary">会員一覧</h1>
         </div>
       </header>
 
-      <main className="mx-auto max-w-md px-4 pt-5">
+      <main className="mx-auto max-w-md px-4 pt-20">
         <div className="mb-4 flex items-center gap-2 rounded-2xl border border-border-subtle bg-surface-raised px-4 py-2">
           <Icon name="search" size={18} className="text-text-muted" />
           <input

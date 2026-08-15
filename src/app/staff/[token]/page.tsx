@@ -70,7 +70,7 @@ export default function StaffPage() {
     <ConsentGate subjectType="trainer_staff" subjectId={staff?.id}>
     <div className="min-h-screen bg-surface-base">
       {/* Header */}
-      <header className="bg-surface-raised border-b border-border-strong shadow-sm sticky top-0 z-50">
+      <header className="fixed left-0 right-0 top-0 z-50 border-b border-border-strong bg-surface-raised shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <h1 className="text-xl font-semibold text-text-primary">T&J GYM - スタッフページ</h1>
@@ -80,7 +80,7 @@ export default function StaffPage() {
       </header>
 
       {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8 pt-24">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Button
             type="button"

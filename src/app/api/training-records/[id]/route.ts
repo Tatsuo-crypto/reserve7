@@ -20,6 +20,19 @@ type ExerciseInput = {
   sets: SetInput[]
 }
 
+function toJstDateKey(value: string) {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Tokyo',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date(value))
+  const year = parts.find((part) => part.type === 'year')?.value
+  const month = parts.find((part) => part.type === 'month')?.value
+  const day = parts.find((part) => part.type === 'day')?.value
+  return year && month && day ? `${year}-${month}-${day}` : value.slice(0, 10)
+}
+
 // AN-4: トレーニングカルテ1件(セッション+種目カード+セット)の取得・更新・削除。
 export async function GET(
   request: NextRequest,
@@ -76,6 +89,29 @@ export async function GET(
 
     const memberName = Array.isArray(session.users) ? session.users[0]?.full_name : (session.users as any)?.full_name
     const trainerName = Array.isArray(session.trainers) ? session.trainers[0]?.full_name : (session.trainers as any)?.full_name
+    let reservationDateOptions: { date: string; reservationId: string; title: string | null }[] = []
+
+    if (session.user_id) {
+      const { data: memberReservations } = await supabaseAdmin
+        .from('reservations')
+        .select('id, title, start_time')
+        .eq('client_id', session.user_id)
+        .order('start_time', { ascending: false })
+        .limit(120)
+
+      const seenDates = new Set<string>()
+      reservationDateOptions = (memberReservations || []).flatMap((memberReservation) => {
+        if (!memberReservation.start_time) return []
+        const date = toJstDateKey(memberReservation.start_time)
+        if (seenDates.has(date)) return []
+        seenDates.add(date)
+        return [{
+          date,
+          reservationId: memberReservation.id,
+          title: memberReservation.title || null,
+        }]
+      })
+    }
 
     return NextResponse.json({
       id: session.id,
@@ -87,6 +123,7 @@ export async function GET(
       reservationTitle: reservation?.title || null,
       reservationStartTime: reservation?.start_time || null,
       reservationEndTime: reservation?.end_time || null,
+      reservationDateOptions,
       sessionType: session.session_type,
       approach: session.approach,
       overallNote: session.overall_note,
@@ -119,7 +156,8 @@ export async function PUT(
     if (auth instanceof NextResponse) return auth
 
     const body = await request.json()
-    const { sessionType, approach, overallNote, exercises } = body as {
+    const { sessionDate, sessionType, approach, overallNote, exercises } = body as {
+      sessionDate?: string | null
       sessionType?: string
       approach?: string
       overallNote?: string
@@ -129,6 +167,7 @@ export async function PUT(
     const { error: updateError } = await supabaseAdmin
       .from('training_sessions')
       .update({
+        session_date: sessionDate || null,
         session_type: sessionType || null,
         approach: approach || null,
         overall_note: overallNote || null,

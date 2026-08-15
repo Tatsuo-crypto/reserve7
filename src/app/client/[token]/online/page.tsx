@@ -233,7 +233,7 @@ export default function OnlineLessonPage() {
     return (
         <div className="min-h-screen bg-surface-base">
             {/* Header */}
-            <div className="bg-surface-raised bg-opacity-80 backdrop-blur-sm border-b border-border-subtle sticky top-0 z-10">
+            <div className="fixed left-0 right-0 top-0 z-50 border-b border-border-subtle bg-surface-raised/95 backdrop-blur-md">
                 <div className="max-w-lg mx-auto px-4 py-4 flex items-center">
                     <Button
                         type="button"
@@ -251,6 +251,8 @@ export default function OnlineLessonPage() {
                     </div>
                 </div>
             </div>
+
+            <div className="h-16" aria-hidden="true" />
 
             {/* iOS App Banner */}
             {isIOS && showIOSBanner && (

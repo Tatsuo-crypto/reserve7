@@ -46,6 +46,12 @@ type PreviousSessionDetail = {
   }[]
 }
 
+type ReservationDateOption = {
+  date: string
+  reservationId: string
+  title: string | null
+}
+
 interface TrainingKarteFormProps {
   trainerToken?: string | null
   sessionKey: string // 'new' または既存セッションID
@@ -118,6 +124,14 @@ function formatTimeRange(start?: string | null, end?: string | null) {
   return startText || endText || ''
 }
 
+function formatSetSummary(set: SetRow) {
+  const parts = []
+  if (set.weight) parts.push(`${set.weight}kg`)
+  if (set.reps) parts.push(`${set.reps}回`)
+  if (set.memo) parts.push(`${normalizeSetCount(set.memo)}set`)
+  return parts.length > 0 ? parts.join(' / ') : '未入力'
+}
+
 export default function TrainingKarteForm({ trainerToken, sessionKey, reservationId, userId, backHref }: TrainingKarteFormProps) {
   const router = useRouter()
   const [resolvedId, setResolvedId] = useState<string | null>(sessionKey !== 'new' ? sessionKey : null)
@@ -133,6 +147,7 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
   const [sessionDate, setSessionDate] = useState<string | null>(null)
   const [reservationStartTime, setReservationStartTime] = useState<string | null>(null)
   const [reservationEndTime, setReservationEndTime] = useState<string | null>(null)
+  const [reservationDateOptions, setReservationDateOptions] = useState<ReservationDateOption[]>([])
   const [sessionType, setSessionType] = useState('')
   const [karteMemo, setKarteMemo] = useState('')
   const [exercises, setExercises] = useState<ExerciseRow[]>([])
@@ -140,6 +155,7 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
   const [previousSession, setPreviousSession] = useState<PreviousSession | null>(null)
   const [previousSessionDetail, setPreviousSessionDetail] = useState<PreviousSessionDetail | null>(null)
   const [createdOnInit, setCreatedOnInit] = useState(false)
+  const [isEditing, setIsEditing] = useState(sessionKey === 'new')
 
   const didInit = useRef(false)
   const didSkipFirstAutoSave = useRef(false)
@@ -158,6 +174,7 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
     setSessionDate(data.sessionDate)
     setReservationStartTime(data.reservationStartTime || null)
     setReservationEndTime(data.reservationEndTime || null)
+    setReservationDateOptions(data.reservationDateOptions || [])
     setSessionType(data.sessionType || '')
     setKarteMemo(data.approach || data.overallNote || '')
     const loadedExercises = (data.exercises || []).map((ex: any) => ({
@@ -337,6 +354,7 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
     setError(null)
     try {
       const payload = {
+        sessionDate,
         sessionType,
         approach: karteMemo,
         overallNote: null,
@@ -380,7 +398,7 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
     } finally {
       setSaving(false)
     }
-  }, [exercises, karteMemo, resolvedId, sessionType, trainerToken])
+  }, [exercises, karteMemo, resolvedId, sessionDate, sessionType, trainerToken])
 
   const hasInput = () => {
     if (karteMemo.trim()) return true
@@ -391,7 +409,7 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
   }
 
   useEffect(() => {
-    if (loading || !resolvedId) return
+    if (loading || !resolvedId || !isEditing) return
     if (!didSkipFirstAutoSave.current) {
       didSkipFirstAutoSave.current = true
       return
@@ -408,7 +426,15 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
       if (autosaveTimer.current) clearTimeout(autosaveTimer.current)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [karteMemo, exercises, loading, resolvedId])
+  }, [karteMemo, exercises, loading, resolvedId, isEditing, sessionDate])
+
+  useEffect(() => {
+    if (trainerToken || !memberName) return
+    window.dispatchEvent(new CustomEvent('reserve7:page-title', { detail: { title: memberName } }))
+    return () => {
+      window.dispatchEvent(new CustomEvent('reserve7:page-title', { detail: { title: null } }))
+    }
+  }, [memberName, trainerToken])
 
   const cleanupCreatedEmptySession = async () => {
     if (!createdOnInit || !resolvedId || hasInput()) return
@@ -421,12 +447,20 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
 
   const handleBack = async () => {
     if (autosaveTimer.current) clearTimeout(autosaveTimer.current)
-    if (hasInput()) {
+    if (isEditing && hasInput()) {
       const saved = await saveKarte()
       if (saved === false) return
     }
     await cleanupCreatedEmptySession()
     router.push(backHref)
+  }
+
+  const handleManualSave = async () => {
+    if (autosaveTimer.current) clearTimeout(autosaveTimer.current)
+    const saved = await saveKarte()
+    if (saved !== false && sessionKey !== 'new') {
+      setIsEditing(false)
+    }
   }
 
   const handleDelete = async () => {
@@ -451,7 +485,7 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
   const handleOpenPrevious = async () => {
     if (!previousSession) return
     if (autosaveTimer.current) clearTimeout(autosaveTimer.current)
-    if (hasInput()) {
+    if (isEditing && hasInput()) {
       const saved = await saveKarte()
       if (saved === false) return
     }
@@ -473,10 +507,19 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
     )
   }
 
+  const visibleExercises = exercises.filter((exercise) => (
+    exercise.exerciseName.trim() ||
+    exercise.sets.some((set) => set.weight || set.reps || set.memo)
+  ))
+  const hasVisibleContent = karteMemo.trim() || visibleExercises.length > 0
+  const dateOptions = sessionDate && !reservationDateOptions.some((option) => option.date === sessionDate)
+    ? [{ date: sessionDate, reservationId: 'current', title: null }, ...reservationDateOptions]
+    : reservationDateOptions
+
   return (
     <div className="min-h-screen bg-surface-base pb-28">
       {trainerToken && (
-        <header className="sticky top-0 z-50 h-16 border-b border-border-subtle bg-surface-raised/80 backdrop-blur-md">
+        <header className="fixed left-0 right-0 top-0 z-50 h-16 border-b border-border-subtle bg-surface-raised/95 backdrop-blur-md">
           <div className="relative mx-auto flex h-full max-w-7xl items-center justify-center px-4">
             <button
               type="button"
@@ -485,178 +528,270 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
             >
               <Icon name="chevronLeft" size={22} />
             </button>
-            <h1 className="text-xl font-semibold tracking-tight text-text-primary">カルテ</h1>
+            <h1 className="max-w-[70%] truncate text-xl font-semibold tracking-tight text-text-primary">
+              {memberName || 'カルテ'}
+            </h1>
           </div>
         </header>
       )}
 
-      <main className="mx-auto max-w-md space-y-3 px-3 pt-3">
+      <main className={`mx-auto max-w-md space-y-3 px-3 ${trainerToken ? 'pt-20' : 'pt-3'}`}>
+        <div className="flex items-center justify-center px-1 text-center text-sm font-normal text-text-primary">
+          <div className="shrink-0">
+            {isEditing ? (
+              dateOptions.length > 0 ? (
+                <select
+                  id="karte-session-date"
+                  value={sessionDate || ''}
+                  onChange={(e) => setSessionDate(e.target.value || null)}
+                  aria-label="日付"
+                  className="max-w-[11rem] border-0 bg-transparent px-0 py-0 text-center text-sm font-normal tabular-nums text-text-primary focus:outline-none focus:ring-0"
+                >
+                  {dateOptions.map((option) => (
+                    <option key={`${option.reservationId}-${option.date}`} value={option.date}>
+                      {formatDate(option.date)}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  id="karte-session-date"
+                  type="date"
+                  value={sessionDate || ''}
+                  onChange={(e) => setSessionDate(e.target.value || null)}
+                  aria-label="日付"
+                  className="max-w-[11rem] border-0 bg-transparent px-0 py-0 text-center text-sm font-normal tabular-nums text-text-primary focus:outline-none focus:ring-0"
+                />
+              )
+            ) : (
+              <span className="text-sm font-normal tabular-nums text-text-primary">
+                {formatDate(sessionDate)}
+              </span>
+            )}
+          </div>
+        </div>
+
         {error && (
           <div className="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-700">
             {error}
           </div>
         )}
 
-        <Card padding="xs">
-          <div className="mb-2 flex items-center justify-between gap-3">
-            <h2 className="text-sm font-semibold text-text-primary">メモ</h2>
-            <span className="text-xs font-normal text-text-muted">
-              {saveStatus === 'saving' ? '保存中' : saveStatus === 'saved' ? '保存済み' : saveStatus === 'error' ? '保存失敗' : ''}
-            </span>
-          </div>
-          <textarea
-            value={karteMemo}
-            onChange={(e) => setKarteMemo(e.target.value)}
-            rows={2}
-            placeholder="体調・痛み・今日の内容"
-            className="w-full min-w-0 max-w-full box-border rounded-lg border border-border-strong px-3 py-2 text-base text-text-primary bg-surface-base focus:outline-none focus:ring-2 focus:ring-brand-500"
-          />
-        </Card>
-
-        {previousSessionDetail && (
-          <Card padding="xs" className="bg-surface-base">
-            <div className="mb-2 flex items-center justify-between gap-3">
-              <div>
-                <h2 className="text-sm font-semibold text-text-primary">前回記録</h2>
-                <div className="text-xs text-text-muted">{formatDate(previousSessionDetail.sessionDate)}</div>
-              </div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={handleOpenPrevious}
-                className="shrink-0 px-2 text-text-secondary"
-              >
-                開く
-                <Icon name="chevronRight" size={16} />
-              </Button>
-            </div>
-            {(previousSessionDetail.approach || previousSessionDetail.overallNote) && (
-              <div className="mb-2 rounded-lg bg-surface-raised px-3 py-2 text-xs text-text-secondary">
-                {previousSessionDetail.approach || previousSessionDetail.overallNote}
-              </div>
-            )}
-            <div className="space-y-1.5">
-              {previousSessionDetail.exercises.slice(0, 4).map((exercise, index) => {
-                return (
-                  <div key={`${exercise.exerciseName}-${index}`} className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 text-xs">
-                    <span className="min-w-0 truncate font-semibold text-text-primary">{exercise.exerciseName}</span>
-                    <span className="shrink-0 text-text-secondary">{exercise.sets.length}行</span>
-                    <div className="col-span-2 flex flex-wrap gap-1">
-                      {exercise.sets.slice(0, 4).map((set, setIndex) => (
-                        <span key={setIndex} className="rounded-full bg-surface-raised px-2 py-0.5 text-text-secondary">
-                          {set.weight ?? '-'}kg {set.reps ?? '-'}回 {set.setCount || '-'}set
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </Card>
-        )}
-
-        <Card padding="xs">
-          <div className="mb-2 flex items-center justify-between gap-3">
-            <h2 className="text-sm font-semibold text-text-primary">カルテ</h2>
-            {previousSession && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={handleOpenPrevious}
-                className="shrink-0 px-2 text-text-secondary"
-              >
-                前回
-                <Icon name="chevronRight" size={16} />
-              </Button>
-            )}
-          </div>
-          <div className="space-y-2">
-            {exercises.map((exercise) => {
-              return (
-                <div key={exercise.key} className="rounded-lg border border-border-subtle bg-surface-base p-2">
-                  <div className="mb-1.5 flex items-center gap-2">
-                    <input
-                      type="text"
-                      list="exercise-master-options"
-                      value={exercise.exerciseName}
-                      onChange={(e) => updateExerciseName(exercise.key, e.target.value)}
-                      autoComplete="off"
-                      placeholder="種目"
-                      className="min-w-0 flex-1 rounded-lg border border-border-strong bg-surface-raised px-2.5 py-1.5 text-base font-semibold text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-500"
-                    />
-                    <Button type="button" variant="ghost" size="sm" onClick={() => removeExercise(exercise.key)}>
-                      <Icon name="trash" size={16} />
+        {!isEditing ? (
+          <>
+            <Card padding="xs">
+              <div className="mb-2 flex items-center justify-between gap-3">
+                <h2 className="text-sm font-semibold text-text-primary">カルテ</h2>
+                <div className="flex items-center gap-1">
+                  {previousSession && (
+                    <Button type="button" variant="ghost" size="sm" onClick={handleOpenPrevious} className="px-2 text-text-secondary">
+                      前回
+                      <Icon name="chevronRight" size={16} />
                     </Button>
-                  </div>
-                  <div className="space-y-1.5">
-                    {exercise.sets.map((set) => (
-                      <div key={set.key} className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_2rem] gap-1.5">
-                        <input
-                          type="number"
-                          inputMode="decimal"
-                          value={set.weight}
-                          onChange={(e) => updateSetRow(exercise.key, set.key, 'weight', e.target.value)}
-                          placeholder="kg"
-                          className="min-w-0 rounded-lg border border-border-strong bg-surface-raised px-2 py-1.5 text-base text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-500"
-                        />
-                        <input
-                          type="number"
-                          inputMode="numeric"
-                          value={set.reps}
-                          onChange={(e) => updateSetRow(exercise.key, set.key, 'reps', e.target.value)}
-                          placeholder="回"
-                          className="min-w-0 rounded-lg border border-border-strong bg-surface-raised px-2 py-1.5 text-base text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-500"
-                        />
-                        <input
-                          type="number"
-                          inputMode="numeric"
-                          value={set.memo || ''}
-                          onChange={(e) => updateSetRow(exercise.key, set.key, 'setCount', e.target.value)}
-                          placeholder="set"
-                          className="min-w-0 rounded-lg border border-border-strong bg-surface-raised px-2 py-1.5 text-base text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-500"
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          disabled={exercise.sets.length <= 1}
-                          onClick={() => removeSetRow(exercise.key, set.key)}
-                          className="h-9 w-8 p-0 text-text-muted disabled:opacity-20"
-                        >
-                          <Icon name="close" size={14} />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                  <Button type="button" variant="ghost" size="sm" fullWidth className="mt-1.5 py-1.5 text-text-secondary" onClick={() => addSetRow(exercise.key)}>
-                    + 重量行
+                  )}
+                  <Button type="button" variant="secondary" size="sm" onClick={() => setIsEditing(true)} className="px-3">
+                    編集
                   </Button>
                 </div>
-              )
-            })}
-          </div>
+              </div>
 
-          <datalist id="exercise-master-options">
-            {exerciseMasterNames.map((name) => (
-              <option key={name} value={name} />
-            ))}
-          </datalist>
+              {!hasVisibleContent ? (
+                <div className="rounded-lg bg-surface-base px-3 py-3 text-sm text-text-muted">
+                  記録はまだありません
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {karteMemo.trim() && (
+                    <div className="rounded-lg bg-surface-base px-3 py-2 text-sm leading-relaxed text-text-secondary whitespace-pre-wrap">
+                      {karteMemo.trim()}
+                    </div>
+                  )}
 
-          <Button type="button" variant="secondary" fullWidth className="mt-2 py-2" onClick={addExercise}>
-            + 種目を追加
-          </Button>
-        </Card>
+                  {visibleExercises.map((exercise) => (
+                    <div key={exercise.key} className="border-t border-border-subtle pt-2 first:border-t-0 first:pt-0">
+                      <div className="mb-1.5 text-sm font-normal text-text-primary">{exercise.exerciseName || '種目未設定'}</div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {exercise.sets.map((set) => (
+                          <span key={set.key} className="rounded-full bg-surface-base px-2 py-1 text-xs text-text-secondary">
+                            {formatSetSummary(set)}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Card>
+          </>
+        ) : (
+          <>
+            <Card padding="xs">
+              <div className="mb-2 flex items-center justify-between gap-3">
+                <h2 className="text-sm font-semibold text-text-primary">メモ</h2>
+                <span className="text-xs font-normal text-text-muted">
+                  {saveStatus === 'saving' ? '保存中' : saveStatus === 'saved' ? '保存済み' : saveStatus === 'error' ? '保存失敗' : ''}
+                </span>
+              </div>
+              <textarea
+                value={karteMemo}
+                onChange={(e) => setKarteMemo(e.target.value)}
+                rows={2}
+                placeholder="体調・痛み・今日の内容"
+                className="w-full min-w-0 max-w-full box-border rounded-lg border border-border-strong px-3 py-2 text-base text-text-primary bg-surface-base focus:outline-none focus:ring-2 focus:ring-brand-500"
+              />
+            </Card>
+
+            {previousSessionDetail && (
+              <Card padding="xs" className="bg-surface-base">
+                <div className="mb-2 flex items-center justify-between gap-3">
+                  <div>
+                    <h2 className="text-sm font-semibold text-text-primary">前回記録</h2>
+                    <div className="text-xs text-text-muted">{formatDate(previousSessionDetail.sessionDate)}</div>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleOpenPrevious}
+                    className="shrink-0 px-2 text-text-secondary"
+                  >
+                    開く
+                    <Icon name="chevronRight" size={16} />
+                  </Button>
+                </div>
+                {(previousSessionDetail.approach || previousSessionDetail.overallNote) && (
+                  <div className="mb-2 rounded-lg bg-surface-raised px-3 py-2 text-xs text-text-secondary">
+                    {previousSessionDetail.approach || previousSessionDetail.overallNote}
+                  </div>
+                )}
+                <div className="space-y-1.5">
+                  {previousSessionDetail.exercises.slice(0, 4).map((exercise, index) => {
+                    return (
+                      <div key={`${exercise.exerciseName}-${index}`} className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 text-xs">
+                        <span className="min-w-0 truncate font-normal text-text-primary">{exercise.exerciseName}</span>
+                        <span className="shrink-0 text-text-secondary">{exercise.sets.length}行</span>
+                        <div className="col-span-2 flex flex-wrap gap-1">
+                          {exercise.sets.slice(0, 4).map((set, setIndex) => (
+                            <span key={setIndex} className="rounded-full bg-surface-raised px-2 py-0.5 text-text-secondary">
+                              {set.weight ?? '-'}kg {set.reps ?? '-'}回 {set.setCount || '-'}set
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </Card>
+            )}
+
+            <Card padding="xs">
+              <div className="mb-2 flex items-center justify-between gap-3">
+                <h2 className="text-sm font-semibold text-text-primary">カルテ</h2>
+                {previousSession && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleOpenPrevious}
+                    className="shrink-0 px-2 text-text-secondary"
+                  >
+                    前回
+                    <Icon name="chevronRight" size={16} />
+                  </Button>
+                )}
+              </div>
+              <div className="space-y-2">
+                {exercises.map((exercise) => {
+                  return (
+                    <div key={exercise.key} className="rounded-lg border border-border-subtle bg-surface-base p-2">
+                      <div className="mb-1.5 flex items-center gap-2">
+                        <input
+                          type="text"
+                          list="exercise-master-options"
+                          value={exercise.exerciseName}
+                          onChange={(e) => updateExerciseName(exercise.key, e.target.value)}
+                          autoComplete="off"
+                          placeholder="種目"
+                          className="min-w-0 flex-1 rounded-lg border border-border-strong bg-surface-raised px-2.5 py-1.5 text-sm font-normal text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-500"
+                        />
+                        <Button type="button" variant="ghost" size="sm" onClick={() => removeExercise(exercise.key)}>
+                          <Icon name="trash" size={16} />
+                        </Button>
+                      </div>
+                      <div className="space-y-1.5">
+                        {exercise.sets.map((set) => (
+                          <div key={set.key} className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_2rem] gap-1.5">
+                            <input
+                              type="number"
+                              inputMode="decimal"
+                              value={set.weight}
+                              onChange={(e) => updateSetRow(exercise.key, set.key, 'weight', e.target.value)}
+                              placeholder="kg"
+                              className="min-w-0 rounded-lg border border-border-strong bg-surface-raised px-2 py-1.5 text-base text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-500"
+                            />
+                            <input
+                              type="number"
+                              inputMode="numeric"
+                              value={set.reps}
+                              onChange={(e) => updateSetRow(exercise.key, set.key, 'reps', e.target.value)}
+                              placeholder="回"
+                              className="min-w-0 rounded-lg border border-border-strong bg-surface-raised px-2 py-1.5 text-base text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-500"
+                            />
+                            <input
+                              type="number"
+                              inputMode="numeric"
+                              value={set.memo || ''}
+                              onChange={(e) => updateSetRow(exercise.key, set.key, 'setCount', e.target.value)}
+                              placeholder="set"
+                              className="min-w-0 rounded-lg border border-border-strong bg-surface-raised px-2 py-1.5 text-base text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-500"
+                            />
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              disabled={exercise.sets.length <= 1}
+                              onClick={() => removeSetRow(exercise.key, set.key)}
+                              className="h-9 w-8 p-0 text-text-muted disabled:opacity-20"
+                            >
+                              <Icon name="close" size={14} />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                      <Button type="button" variant="ghost" size="sm" fullWidth className="mt-1.5 py-1.5 text-text-secondary" onClick={() => addSetRow(exercise.key)}>
+                        + 重量行
+                      </Button>
+                    </div>
+                  )
+                })}
+              </div>
+
+              <datalist id="exercise-master-options">
+                {exerciseMasterNames.map((name) => (
+                  <option key={name} value={name} />
+                ))}
+              </datalist>
+
+              <Button type="button" variant="secondary" fullWidth className="mt-2 py-2" onClick={addExercise}>
+                + 種目を追加
+              </Button>
+            </Card>
+          </>
+        )}
 
         <div className="flex items-center justify-between gap-3 pt-1">
           <Button type="button" variant="destructive" onClick={handleDelete} disabled={deleting}>
             削除
           </Button>
-          <div className="flex gap-3">
+          <div className="flex gap-2">
             <Button type="button" variant="secondary" onClick={handleBack}>
               戻る
             </Button>
+            {isEditing && (
+              <Button type="button" variant="primary" onClick={handleManualSave} loading={saving}>
+                保存
+              </Button>
+            )}
           </div>
         </div>
       </main>
