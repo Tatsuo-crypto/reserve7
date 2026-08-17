@@ -499,13 +499,20 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    const { data: updatedReservationTitle } = await supabaseAdmin
+      .from('reservations')
+      .select('title')
+      .eq('id', reservation.id)
+      .maybeSingle()
+    const finalReservationTitle = updatedReservationTitle?.title || generatedTitle || reservation.title
+
     console.log('=== RESERVATION CREATED ===', JSON.stringify({
       trainerId,
       trainerName,
       trainerCalendarEmail,
       calendarId,
       calendarDebug,
-      title: reservation.title,
+      title: finalReservationTitle,
     }))
 
     const clientNameForCalendar = clientId === 'BLOCKED'
@@ -527,7 +534,7 @@ export async function POST(request: NextRequest) {
     runBackgroundTask('reservation-calendar-create', async () => {
       await createReservationCalendarEvent({
         reservationId: reservation.id,
-        title: generatedTitle,
+        title: finalReservationTitle,
         startTime: startDateTime.toISOString(),
         endTime: endDateTime.toISOString(),
         clientName: clientNameForCalendar,
@@ -557,7 +564,7 @@ export async function POST(request: NextRequest) {
           trainerEmail: trainerNotifyEmail,
           trainerName,
           clientName,
-          title: reservation.title,
+          title: finalReservationTitle,
           startTime: reservation.start_time,
           endTime: reservation.end_time,
           storeName,
@@ -575,7 +582,7 @@ export async function POST(request: NextRequest) {
           clientEmail: clientUser.email,
           clientName,
           trainerName: trainerName || '不明',
-          title: reservation.title,
+          title: finalReservationTitle,
           startTime: reservation.start_time,
           endTime: reservation.end_time,
           storeName,
@@ -620,7 +627,7 @@ export async function POST(request: NextRequest) {
       message: '予約が作成されました',
       reservation: {
         id: reservation.id,
-        title: reservation.title,
+        title: finalReservationTitle,
         startTime: reservation.start_time,
         endTime: reservation.end_time,
         notes: reservation.notes,

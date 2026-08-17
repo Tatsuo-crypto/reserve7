@@ -101,17 +101,16 @@ export async function updateMonthlyTitles(clientId: string, year: number, month:
         ? (reservation as any).users[0]
         : (reservation as any).users
 
-      // If Google Calendar is configured and we have client info, delete and recreate the event
-      if (calendarService && userRel) {
+      // If Google Calendar already has an event, delete and recreate it with the new title.
+      // For newly-created reservations external_event_id is still empty; creating here would
+      // duplicate the later calendar-create flow.
+      if (calendarService && userRel && reservation.external_event_id) {
         try {
-          // Delete existing event if any
-          if (reservation.external_event_id) {
-            try {
-              await calendarService.deleteEvent(reservation.external_event_id, reservation.calendar_id)
-            } catch (delErr) {
-              console.error(`Failed to delete calendar event ${reservation.external_event_id}:`, delErr)
-              // continue to recreate regardless
-            }
+          try {
+            await calendarService.deleteEvent(reservation.external_event_id, reservation.calendar_id)
+          } catch (delErr) {
+            console.error(`Failed to delete calendar event ${reservation.external_event_id}:`, delErr)
+            // continue to recreate regardless
           }
 
           // Create new event with updated title
@@ -345,11 +344,11 @@ export async function updateAllTitles(clientId: string) {
         ? (reservation as any).users[0]
         : (reservation as any).users
 
-      if (calendarService && u) {
+      // Only touch Google Calendar if this reservation already has an event.
+      // New reservations get their first event from the dedicated calendar-create flow.
+      if (calendarService && u && reservation.external_event_id) {
         try {
-          if (reservation.external_event_id) {
-            try { await calendarService.deleteEvent(reservation.external_event_id, reservation.calendar_id) } catch {}
-          }
+          try { await calendarService.deleteEvent(reservation.external_event_id, reservation.calendar_id) } catch {}
           const calResult = await calendarService.createEvent({
             title: newTitle,
             startTime: reservation.start_time,
