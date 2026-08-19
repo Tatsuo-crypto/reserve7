@@ -89,7 +89,7 @@ export async function GET(
 
     const memberName = Array.isArray(session.users) ? session.users[0]?.full_name : (session.users as any)?.full_name
     const trainerName = Array.isArray(session.trainers) ? session.trainers[0]?.full_name : (session.trainers as any)?.full_name
-    let reservationDateOptions: { date: string; reservationId: string; title: string | null }[] = []
+    let reservationDateOptions: { date: string; reservationId: string; title: string | null; sessionId: string | null }[] = []
 
     if (session.user_id) {
       const { data: memberReservations } = await supabaseAdmin
@@ -98,6 +98,22 @@ export async function GET(
         .eq('client_id', session.user_id)
         .order('start_time', { ascending: false })
         .limit(120)
+
+      const { data: memberSessions } = await supabaseAdmin
+        .from('training_sessions')
+        .select('id, reservation_id, session_date')
+        .eq('user_id', session.user_id)
+
+      const sessionByReservationId = new Map<string, string>()
+      const sessionByDate = new Map<string, string>()
+      for (const memberSession of memberSessions || []) {
+        if (memberSession.reservation_id) {
+          sessionByReservationId.set(memberSession.reservation_id, memberSession.id)
+        }
+        if (memberSession.session_date && !sessionByDate.has(memberSession.session_date)) {
+          sessionByDate.set(memberSession.session_date, memberSession.id)
+        }
+      }
 
       const seenDates = new Set<string>()
       reservationDateOptions = (memberReservations || []).flatMap((memberReservation) => {
@@ -109,6 +125,7 @@ export async function GET(
           date,
           reservationId: memberReservation.id,
           title: memberReservation.title || null,
+          sessionId: sessionByReservationId.get(memberReservation.id) || sessionByDate.get(date) || null,
         }]
       })
     }

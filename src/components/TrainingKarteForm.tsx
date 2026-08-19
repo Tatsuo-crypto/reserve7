@@ -36,21 +36,11 @@ type PreviousSession = {
   sessionDate: string | null
 }
 
-type PreviousSessionDetail = {
-  id: string
-  sessionDate: string | null
-  approach: string | null
-  overallNote: string | null
-  exercises: {
-    exerciseName: string
-    sets: { weight: number | null; reps: number | null; setCount: string | null; note: string | null }[]
-  }[]
-}
-
 type ReservationDateOption = {
   date: string
   reservationId: string
   title: string | null
+  sessionId?: string | null
 }
 
 interface TrainingKarteFormProps {
@@ -185,10 +175,10 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
   const [reservationDateOptions, setReservationDateOptions] = useState<ReservationDateOption[]>([])
   const [sessionType, setSessionType] = useState('')
   const [karteMemo, setKarteMemo] = useState('')
+  const [stretchNote, setStretchNote] = useState('')
   const [exercises, setExercises] = useState<ExerciseRow[]>([])
   const [exerciseMasterNames, setExerciseMasterNames] = useState<string[]>([])
   const [previousSession, setPreviousSession] = useState<PreviousSession | null>(null)
-  const [previousSessionDetail, setPreviousSessionDetail] = useState<PreviousSessionDetail | null>(null)
   const [createdOnInit, setCreatedOnInit] = useState(false)
   const [isEditing, setIsEditing] = useState(sessionKey === 'new')
 
@@ -196,6 +186,7 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
   const didSkipFirstAutoSave = useRef(false)
   const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const memoTextareaRef = useRef<HTMLTextAreaElement | null>(null)
+  const stretchTextareaRef = useRef<HTMLTextAreaElement | null>(null)
 
   const resizeMemoTextarea = useCallback((textarea?: HTMLTextAreaElement | null) => {
     if (!textarea) return
@@ -203,6 +194,12 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
     textarea.style.height = `${Math.max(112, textarea.scrollHeight + 2)}px`
     textarea.style.overflowY = 'hidden'
   }, [])
+
+  const buildKartePath = useCallback((id: string) => {
+    return trainerToken
+      ? `/trainer/${trainerToken}/karte/${id}?back=${encodeURIComponent(backHref)}`
+      : `/admin/karte/${id}?back=${encodeURIComponent(backHref)}`
+  }, [backHref, trainerToken])
 
   const loadSessionDetail = useCallback(async (id: string) => {
     const res = await fetch(withToken(`/api/training-records/${id}`, trainerToken), { cache: 'no-store' })
@@ -219,7 +216,10 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
     setReservationEndTime(data.reservationEndTime || null)
     setReservationDateOptions(data.reservationDateOptions || [])
     setSessionType(data.sessionType || '')
+    // 以前の記録はapproachに保存されていたため、体調欄へ引き継ぐ。
+    // approachが空の古い記録だけは、overall_noteも体調欄として表示して内容を失わない。
     setKarteMemo(data.approach || data.overallNote || '')
+    setStretchNote(data.approach ? data.overallNote || '' : '')
     const loadedExercises = (data.exercises || []).map((ex: any) => ({
         key: genKey(),
         id: ex.id,
@@ -256,29 +256,6 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
       return item.sessionDate < currentDate
     })
     setPreviousSession(previous || null)
-    if (!previous) {
-      setPreviousSessionDetail(null)
-      return
-    }
-
-    const detailRes = await fetch(withToken(`/api/training-records/${previous.id}`, trainerToken), { cache: 'no-store' })
-    if (!detailRes.ok) return
-    const detail = await detailRes.json()
-    setPreviousSessionDetail({
-      id: detail.id,
-      sessionDate: detail.sessionDate,
-      approach: detail.approach || null,
-      overallNote: detail.overallNote || null,
-      exercises: (detail.exercises || []).map((exercise: any) => ({
-        exerciseName: exercise.exerciseName,
-        sets: (exercise.sets || []).map((set: any) => ({
-          weight: set.weight,
-          reps: set.reps,
-          setCount: normalizeSetCount(set.memo),
-          note: parseSetNote(set.memo),
-        })),
-      })),
-    })
   }, [trainerToken])
 
   useEffect(() => {
@@ -402,7 +379,7 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
         sessionDate: nextSessionDate === undefined ? sessionDate : nextSessionDate,
         sessionType,
         approach: karteMemo,
-        overallNote: null,
+        overallNote: stretchNote,
         exercises: exercises
           .filter((e) => e.exerciseName.trim())
           .map((e, index) => ({
@@ -443,10 +420,58 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
     } finally {
       setSaving(false)
     }
-  }, [exercises, karteMemo, resolvedId, sessionDate, sessionType, trainerToken])
+  }, [exercises, karteMemo, resolvedId, sessionDate, sessionType, stretchNote, trainerToken])
 
-  const handleSessionDateChange = (value: string) => {
+  const handleSessionDateChange = async (value: string) => {
     const nextDate = value || null
+    const selectedOption = reservationDateOptions.find((option) => option.date === nextDate)
+
+    if (selectedOption?.sessionId && selectedOption.sessionId !== resolvedId) {
+      if (autosaveTimer.current) clearTimeout(autosaveTimer.current)
+      if (isEditing && hasInput()) {
+        const saved = await saveKarte()
+        if (saved === false) return
+      }
+      router.push(buildKartePath(selectedOption.sessionId))
+      return
+    }
+
+    if (selectedOption?.reservationId && selectedOption.reservationId !== 'current' && selectedOption.sessionId !== resolvedId) {
+      if (autosaveTimer.current) clearTimeout(autosaveTimer.current)
+      if (isEditing && hasInput()) {
+        const saved = await saveKarte()
+        if (saved === false) return
+      }
+      setLoading(true)
+      try {
+        const res = await fetch(withToken('/api/training-records', trainerToken), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reservationId: selectedOption.reservationId }),
+        })
+        if (!res.ok) {
+          setError('カルテを切り替えできませんでした。')
+          return
+        }
+        const data = await res.json()
+        if (data?.id && data.id !== resolvedId) {
+          router.push(buildKartePath(data.id))
+          return
+        }
+        if (data?.id) {
+          const detail = await loadSessionDetail(data.id)
+          await loadPreviousSession(detail?.userId || null, data.id, detail?.sessionDate)
+          setIsEditing(data.created === true)
+        }
+      } catch (err) {
+        console.error(err)
+        setError('カルテを切り替えできませんでした。')
+      } finally {
+        setLoading(false)
+      }
+      return
+    }
+
     setSessionDate(nextDate)
     if (!isEditing) {
       void saveKarte(nextDate)
@@ -454,7 +479,7 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
   }
 
   const hasInput = () => {
-    if (karteMemo.trim()) return true
+    if (karteMemo.trim() || stretchNote.trim()) return true
     return exercises.some((exercise) => (
       exercise.exerciseName.trim() ||
       exercise.sets.some((set) => set.weight || set.reps)
@@ -479,7 +504,7 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
       if (autosaveTimer.current) clearTimeout(autosaveTimer.current)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [karteMemo, exercises, loading, resolvedId, isEditing, sessionDate])
+  }, [karteMemo, stretchNote, exercises, loading, resolvedId, isEditing, sessionDate])
 
   useEffect(() => {
     if (trainerToken || !memberName) return
@@ -491,7 +516,8 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
 
   useLayoutEffect(() => {
     resizeMemoTextarea(memoTextareaRef.current)
-  }, [karteMemo, isEditing, resizeMemoTextarea])
+    resizeMemoTextarea(stretchTextareaRef.current)
+  }, [karteMemo, stretchNote, isEditing, resizeMemoTextarea])
 
   const cleanupCreatedEmptySession = async () => {
     if (!createdOnInit || !resolvedId || hasInput()) return
@@ -519,15 +545,11 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
       setIsEditing(false)
     }
     if (saved !== false) {
-      window.requestAnimationFrame(() => {
-        window.scrollTo({ top: 0, behavior: 'smooth' })
-      })
+      window.scrollTo({ top: 0, behavior: 'auto' })
       if (sessionKey === 'new' && resolvedId) {
-        const nextPath = trainerToken
-          ? `/trainer/${trainerToken}/karte/${resolvedId}?back=${encodeURIComponent(backHref)}`
-          : `/admin/karte/${resolvedId}?back=${encodeURIComponent(backHref)}`
-        router.replace(nextPath)
+        router.replace(buildKartePath(resolvedId))
       }
+      window.setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 80)
     }
   }
 
@@ -593,13 +615,16 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
     })
     return list
   }, [])
-  const hasVisibleContent = karteMemo.trim() || visibleExercises.length > 0
   const dateOptions = sessionDate && !reservationDateOptions.some((option) => option.date === sessionDate)
-    ? [{ date: sessionDate, reservationId: 'current', title: null }, ...reservationDateOptions]
+    ? [{ date: sessionDate, reservationId: 'current', title: null, sessionId: resolvedId }, ...reservationDateOptions]
     : reservationDateOptions
-  const memoRows = Math.max(
-    6,
+  const conditionRows = Math.max(
+    4,
     karteMemo.split('\n').reduce((total, line) => total + Math.max(1, Math.ceil(line.length / 24)), 0) + 1
+  )
+  const stretchRows = Math.max(
+    4,
+    stretchNote.split('\n').reduce((total, line) => total + Math.max(1, Math.ceil(line.length / 24)), 0) + 1
   )
 
   return (
@@ -621,9 +646,9 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
         </header>
       )}
 
-      <main className={`mx-auto max-w-md space-y-3 px-3 ${trainerToken ? 'pt-20' : 'pt-3'}`}>
-        <div className="flex items-center justify-center px-1 text-center text-sm font-normal text-text-primary">
-          <div className="shrink-0">
+      <main className={`mx-auto max-w-md space-y-3 px-3 ${trainerToken ? 'pt-20' : 'pt-0'}`}>
+        <div className="relative flex min-h-8 items-center justify-center px-10 text-center text-sm font-normal text-text-primary">
+          <div className="flex items-center justify-center">
             {dateOptions.length > 0 ? (
               <select
                 id="karte-session-date"
@@ -653,6 +678,20 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
               </span>
             )}
           </div>
+          {previousSession && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={handleOpenPrevious}
+              aria-label="前回のトレーニングを表示"
+              title="前回のトレーニング"
+              className="absolute left-0 h-8 px-2 text-xs text-text-secondary"
+            >
+              <Icon name="chevronLeft" size={16} />
+              前回
+            </Button>
+          )}
         </div>
 
         {error && (
@@ -664,27 +703,27 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
         {!isEditing ? (
           <>
             <Card padding="xs">
-              <div className="mb-2 flex items-center justify-end gap-1">
-                  {previousSession && (
-                    <Button type="button" variant="ghost" size="sm" onClick={handleOpenPrevious} className="px-2 text-text-secondary">
-                      前回
-                      <Icon name="chevronRight" size={16} />
-                    </Button>
-                  )}
+              <h2 className="mb-2 text-sm font-semibold text-text-primary">体調</h2>
+              <div className="rounded-lg bg-surface-base px-3 py-2 text-sm leading-relaxed text-text-secondary whitespace-pre-wrap">
+                {karteMemo.trim() || '記録はまだありません'}
               </div>
+            </Card>
 
-              {!hasVisibleContent ? (
+            <Card padding="xs">
+              <h2 className="mb-2 text-sm font-semibold text-text-primary">ストレッチ</h2>
+              <div className="rounded-lg bg-surface-base px-3 py-2 text-sm leading-relaxed text-text-secondary whitespace-pre-wrap">
+                {stretchNote.trim() || '記録はまだありません'}
+              </div>
+            </Card>
+
+            <Card padding="xs">
+              <h2 className="mb-2 text-sm font-semibold text-text-primary">トレーニング</h2>
+              {visibleExercises.length === 0 ? (
                 <div className="rounded-lg bg-surface-base px-3 py-3 text-sm text-text-muted">
                   記録はまだありません
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {karteMemo.trim() && (
-                    <div className="rounded-lg bg-surface-base px-3 py-2 text-sm leading-relaxed text-text-secondary whitespace-pre-wrap">
-                      {karteMemo.trim()}
-                    </div>
-                  )}
-
                   {groupedVisibleExercises.map((exercise) => (
                     <div key={exercise.key} className="border-t border-border-subtle pt-2 first:border-t-0 first:pt-0">
                       <div className="mb-1.5 text-sm font-normal text-text-primary">{exercise.exerciseName || '種目未設定'}</div>
@@ -708,87 +747,44 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
           <>
             <Card padding="xs">
               <div className="mb-2 flex items-center justify-between gap-3">
-                <h2 className="text-sm font-semibold text-text-primary">メモ</h2>
+                <h2 className="text-sm font-semibold text-text-primary">体調</h2>
                 <span className="text-xs font-normal text-text-muted">
                   {saveStatus === 'saving' ? '保存中' : saveStatus === 'saved' ? '保存済み' : saveStatus === 'error' ? '保存失敗' : ''}
                 </span>
               </div>
               <textarea
+                id="karte-condition"
                 ref={memoTextareaRef}
                 value={karteMemo}
                 onChange={(e) => setKarteMemo(e.target.value)}
                 onInput={(e) => resizeMemoTextarea(e.currentTarget)}
-                rows={memoRows}
-                placeholder="体調・痛み・今日の内容"
+                rows={conditionRows}
+                placeholder="体調・痛みなど"
                 className="w-full min-w-0 max-w-full box-border resize-none overflow-hidden rounded-lg border border-border-strong bg-surface-base px-3 py-2 !text-sm leading-6 text-text-secondary focus:outline-none focus:ring-2 focus:ring-brand-500"
               />
             </Card>
 
-            {previousSessionDetail && (
-              <Card padding="xs" className="bg-surface-base">
-                <div className="mb-2 flex items-center justify-between gap-3">
-                  <div>
-                    <h2 className="text-sm font-semibold text-text-primary">前回記録</h2>
-                    <div className="text-xs text-text-muted">{formatDate(previousSessionDetail.sessionDate)}</div>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleOpenPrevious}
-                    className="shrink-0 px-2 text-text-secondary"
-                  >
-                    開く
-                    <Icon name="chevronRight" size={16} />
-                  </Button>
-                </div>
-                {(previousSessionDetail.approach || previousSessionDetail.overallNote) && (
-                  <div className="mb-2 rounded-lg bg-surface-raised px-3 py-2 text-xs text-text-secondary">
-                    {previousSessionDetail.approach || previousSessionDetail.overallNote}
-                  </div>
-                )}
-                <div className="space-y-1.5">
-                  {previousSessionDetail.exercises.slice(0, 4).map((exercise, index) => {
-                    return (
-                      <div key={`${exercise.exerciseName}-${index}`} className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 text-xs">
-                        <span className="min-w-0 truncate font-normal text-text-primary">{exercise.exerciseName}</span>
-                        <span className="shrink-0 text-text-secondary">{exercise.sets.length}行</span>
-                        <div className="col-span-2 space-y-1">
-                          {exercise.sets.slice(0, 4).map((set, setIndex) => (
-                            <div key={setIndex} className="rounded-lg bg-surface-raised px-2 py-1 text-text-secondary">
-                              <div>{set.weight ?? '-'}kg {set.reps ?? '-'}回 {set.setCount || '-'}set</div>
-                              {set.note && <div className="mt-0.5 text-[11px] text-text-muted">{set.note}</div>}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </Card>
-            )}
+            <Card padding="xs">
+              <h2 className="mb-2 text-sm font-semibold text-text-primary">ストレッチ</h2>
+              <textarea
+                id="karte-stretch"
+                ref={stretchTextareaRef}
+                value={stretchNote}
+                onChange={(e) => setStretchNote(e.target.value)}
+                onInput={(e) => resizeMemoTextarea(e.currentTarget)}
+                rows={stretchRows}
+                placeholder="実施したストレッチ"
+                className="w-full min-w-0 max-w-full box-border resize-none overflow-hidden rounded-lg border border-border-strong bg-surface-base px-3 py-2 !text-sm leading-6 text-text-secondary focus:outline-none focus:ring-2 focus:ring-brand-500"
+              />
+            </Card>
 
             <Card padding="xs">
-              <div className="mb-2 flex items-center justify-between gap-3">
-                <h2 className="text-sm font-semibold text-text-primary">カルテ</h2>
-                {previousSession && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleOpenPrevious}
-                    className="shrink-0 px-2 text-text-secondary"
-                  >
-                    前回
-                    <Icon name="chevronRight" size={16} />
-                  </Button>
-                )}
-              </div>
+              <h2 className="mb-2 text-sm font-semibold text-text-primary">トレーニング</h2>
               <div className="space-y-2">
                 {exercises.map((exercise) => {
                   return (
-                    <div key={exercise.key} className="rounded-lg border border-border-subtle bg-surface-base p-2">
-                      <div className="mb-1.5 flex items-center gap-2">
+                    <div key={exercise.key} className="rounded-lg bg-surface-base px-2 py-2">
+                      <div className="mb-1 flex items-center gap-2">
                         <input
                           type="text"
                           list="exercise-master-options"
@@ -796,56 +792,57 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
                           onChange={(e) => updateExerciseName(exercise.key, e.target.value)}
                           autoComplete="off"
                           placeholder="種目"
-                          className="min-w-0 flex-1 rounded-lg border border-border-strong bg-surface-raised px-2.5 py-1.5 !text-sm font-normal text-text-secondary focus:outline-none focus:ring-2 focus:ring-brand-500"
+                          className="min-w-0 flex-1 border-0 border-b border-border-strong bg-transparent px-1 py-1.5 !text-sm font-normal text-text-primary focus:outline-none focus:ring-0"
                         />
                         <Button type="button" variant="ghost" size="sm" onClick={() => removeExercise(exercise.key)}>
                           <Icon name="trash" size={16} />
                         </Button>
                       </div>
-                      <div className="space-y-1.5">
-                        {exercise.sets.map((set) => (
-                          <div key={set.key} className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_2rem] gap-1.5">
-                            <input
-                              type="number"
-                              inputMode="decimal"
-                              value={set.weight}
-                              onChange={(e) => updateSetRow(exercise.key, set.key, 'weight', e.target.value)}
-                              placeholder="kg"
-                              className="min-w-0 rounded-lg border border-border-strong bg-surface-raised px-2 py-1.5 !text-sm text-text-secondary focus:outline-none focus:ring-2 focus:ring-brand-500"
-                            />
-                            <input
-                              type="number"
-                              inputMode="numeric"
-                              value={set.reps}
-                              onChange={(e) => updateSetRow(exercise.key, set.key, 'reps', e.target.value)}
-                              placeholder="回"
-                              className="min-w-0 rounded-lg border border-border-strong bg-surface-raised px-2 py-1.5 !text-sm text-text-secondary focus:outline-none focus:ring-2 focus:ring-brand-500"
-                            />
-                            <input
-                              type="number"
-                              inputMode="numeric"
-                              value={set.memo || ''}
-                              onChange={(e) => updateSetRow(exercise.key, set.key, 'setCount', e.target.value)}
-                              placeholder="set"
-                              className="min-w-0 rounded-lg border border-border-strong bg-surface-raised px-2 py-1.5 !text-sm text-text-secondary focus:outline-none focus:ring-2 focus:ring-brand-500"
-                            />
+                      <div className="divide-y divide-border-subtle">
+                        {exercise.sets.map((set, setIndex) => (
+                          <div key={set.key} className="grid grid-cols-[1.6rem_minmax(0,1fr)_2rem] gap-x-2 py-2">
+                            <div className="pt-1 text-base font-normal tabular-nums text-text-primary">
+                              {setIndex + 1}
+                            </div>
+                            <div className="min-w-0 space-y-2">
+                              <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)_auto] items-end gap-x-2">
+                                <input
+                                  type="number"
+                                  inputMode="decimal"
+                                  value={set.weight}
+                                  onChange={(e) => updateSetRow(exercise.key, set.key, 'weight', e.target.value)}
+                                  placeholder="重さ"
+                                  className="min-w-0 border-0 border-b border-border-strong bg-transparent px-1 py-1 text-center !text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-0"
+                                />
+                                <span className="pb-1 text-sm text-text-primary">kg</span>
+                                <input
+                                  type="number"
+                                  inputMode="numeric"
+                                  value={set.reps}
+                                  onChange={(e) => updateSetRow(exercise.key, set.key, 'reps', e.target.value)}
+                                  placeholder="回数"
+                                  className="min-w-0 border-0 border-b border-border-strong bg-transparent px-1 py-1 text-center !text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-0"
+                                />
+                                <span className="pb-1 text-sm text-text-primary">回</span>
+                              </div>
+                              <input
+                                type="text"
+                                value={set.note}
+                                onChange={(e) => updateSetRow(exercise.key, set.key, 'note', e.target.value)}
+                                placeholder="メモ"
+                                className="w-full min-w-0 border-0 border-b border-border-strong bg-transparent px-1 py-1 text-center !text-sm text-text-secondary placeholder:text-text-muted focus:outline-none focus:ring-0"
+                              />
+                            </div>
                             <Button
                               type="button"
                               variant="ghost"
                               size="sm"
                               disabled={exercise.sets.length <= 1}
                               onClick={() => removeSetRow(exercise.key, set.key)}
-                              className="h-9 w-8 p-0 text-text-muted disabled:opacity-20"
+                              className="h-8 w-8 p-0 text-text-muted disabled:opacity-20"
                             >
                               <Icon name="close" size={14} />
                             </Button>
-                            <input
-                              type="text"
-                              value={set.note}
-                              onChange={(e) => updateSetRow(exercise.key, set.key, 'note', e.target.value)}
-                              placeholder="メモ"
-                              className="col-span-3 min-w-0 rounded-lg border border-border-strong bg-surface-raised px-2 py-1.5 !text-sm text-text-secondary focus:outline-none focus:ring-2 focus:ring-brand-500"
-                            />
                           </div>
                         ))}
                       </div>
