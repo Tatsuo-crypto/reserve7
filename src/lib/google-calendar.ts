@@ -29,6 +29,33 @@ export class GoogleCalendarService {
     }
   }
 
+  private async findMatchingEvent(calendarId: string, event: any): Promise<string | null> {
+    if (!this.calendar) return null
+
+    try {
+      const response = await this.calendar.events.list({
+        calendarId,
+        timeMin: event.start.dateTime,
+        timeMax: event.end.dateTime,
+        singleEvents: true,
+        showDeleted: false,
+        maxResults: 10,
+      })
+
+      const match = (response.data.items || []).find((item: any) => {
+        return item.status !== 'cancelled'
+          && item.summary === event.summary
+          && item.start?.dateTime === event.start.dateTime
+          && item.end?.dateTime === event.end.dateTime
+      })
+
+      return match?.id || null
+    } catch (error) {
+      console.error('Failed to check duplicate Google Calendar event:', error instanceof Error ? error.message : error)
+      return null
+    }
+  }
+
   /**
    * Create a calendar event for a reservation
    */
@@ -65,37 +92,51 @@ export class GoogleCalendarService {
     }
 
     try {
-      // ジムのカレンダーにイベント作成（attendeesなしで確実に作成）
-      const response = await this.calendar.events.insert({
-        calendarId: reservation.calendarId,
-        requestBody: event,
-        sendUpdates: 'none',
-      })
-
-      if (!response.data.id) {
-        throw new Error('Event creation failed - no event ID returned')
+      const existingEventId = await this.findMatchingEvent(reservation.calendarId, event)
+      if (existingEventId) {
+        console.log(`ℹ️ Reusing existing Google Calendar event: ${existingEventId}`)
       }
 
-      const eventId = response.data.id
+      // ジムのカレンダーにイベント作成（attendeesなしで確実に作成）
+      let eventId = existingEventId
       let trainerEventId: string | undefined
-      console.log(`✅ Google Calendar event created: ${eventId}`)
+      if (!eventId) {
+        const response = await this.calendar.events.insert({
+          calendarId: reservation.calendarId,
+          requestBody: event,
+          sendUpdates: 'none',
+        })
+
+        if (!response.data.id) {
+          throw new Error('Event creation failed - no event ID returned')
+        }
+
+        eventId = response.data.id
+        console.log(`✅ Google Calendar event created: ${eventId}`)
+      }
 
       // トレーナーのカレンダーにも直接イベントを作成
       if (reservation.trainerCalendarEmail && reservation.trainerCalendarEmail.trim() !== '') {
         try {
-          const trainerResponse = await this.calendar.events.insert({
-            calendarId: reservation.trainerCalendarEmail,
-            requestBody: event,
-            sendUpdates: 'none',
-          })
-          trainerEventId = trainerResponse.data.id || undefined
-          console.log(`✅ Trainer calendar event created: ${reservation.trainerCalendarEmail} (${trainerEventId})`)
+          const existingTrainerEventId = await this.findMatchingEvent(reservation.trainerCalendarEmail, event)
+          if (existingTrainerEventId) {
+            trainerEventId = existingTrainerEventId
+            console.log(`ℹ️ Reusing existing trainer calendar event: ${reservation.trainerCalendarEmail} (${trainerEventId})`)
+          } else {
+            const trainerResponse = await this.calendar.events.insert({
+              calendarId: reservation.trainerCalendarEmail,
+              requestBody: event,
+              sendUpdates: 'none',
+            })
+            trainerEventId = trainerResponse.data.id || undefined
+            console.log(`✅ Trainer calendar event created: ${reservation.trainerCalendarEmail} (${trainerEventId})`)
+          }
         } catch (trainerError) {
           console.error(`⚠️ Failed to create event on trainer calendar (${reservation.trainerCalendarEmail}):`, trainerError instanceof Error ? trainerError.message : trainerError)
         }
       }
 
-      return { eventId, trainerEventId }
+      return { eventId: eventId!, trainerEventId }
     } catch (error) {
       console.error('Google Calendar event creation error:', error)
       throw error
