@@ -330,7 +330,17 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
     setExercises((prev) =>
       prev.map((e) =>
         e.key === exKey
-          ? { ...e, sets: [...e.sets, createEmptySet()] }
+          ? {
+              ...e,
+              sets: [
+                ...e.sets,
+                {
+                  ...createEmptySet(),
+                  weight: e.sets[e.sets.length - 1]?.weight || '',
+                  reps: e.sets[e.sets.length - 1]?.reps || '',
+                },
+              ],
+            }
           : e
       )
     )
