@@ -60,6 +60,7 @@ export class GoogleCalendarService {
    * Create a calendar event for a reservation
    */
   async createEvent(reservation: {
+    reservationId?: string
     title: string
     startTime: string
     endTime: string
@@ -92,6 +93,7 @@ export class GoogleCalendarService {
     }
 
     try {
+      const eventIdForInsert = this.buildEventId('r', reservation.reservationId)
       const existingEventId = await this.findMatchingEvent(reservation.calendarId, event)
       if (existingEventId) {
         console.log(`ℹ️ Reusing existing Google Calendar event: ${existingEventId}`)
@@ -101,17 +103,7 @@ export class GoogleCalendarService {
       let eventId = existingEventId
       let trainerEventId: string | undefined
       if (!eventId) {
-        const response = await this.calendar.events.insert({
-          calendarId: reservation.calendarId,
-          requestBody: event,
-          sendUpdates: 'none',
-        })
-
-        if (!response.data.id) {
-          throw new Error('Event creation failed - no event ID returned')
-        }
-
-        eventId = response.data.id
+        eventId = await this.insertEvent(reservation.calendarId, event, eventIdForInsert)
         console.log(`✅ Google Calendar event created: ${eventId}`)
       }
 
@@ -123,12 +115,8 @@ export class GoogleCalendarService {
             trainerEventId = existingTrainerEventId
             console.log(`ℹ️ Reusing existing trainer calendar event: ${reservation.trainerCalendarEmail} (${trainerEventId})`)
           } else {
-            const trainerResponse = await this.calendar.events.insert({
-              calendarId: reservation.trainerCalendarEmail,
-              requestBody: event,
-              sendUpdates: 'none',
-            })
-            trainerEventId = trainerResponse.data.id || undefined
+            const trainerEventIdForInsert = this.buildEventId('t', reservation.reservationId)
+            trainerEventId = await this.insertEvent(reservation.trainerCalendarEmail, event, trainerEventIdForInsert)
             console.log(`✅ Trainer calendar event created: ${reservation.trainerCalendarEmail} (${trainerEventId})`)
           }
         } catch (trainerError) {
@@ -139,6 +127,37 @@ export class GoogleCalendarService {
       return { eventId: eventId!, trainerEventId }
     } catch (error) {
       console.error('Google Calendar event creation error:', error)
+      throw error
+    }
+  }
+
+  private buildEventId(prefix: string, reservationId?: string): string | undefined {
+    if (!reservationId) return undefined
+
+    const safeId = reservationId.toLowerCase().replace(/[^a-v0-9]/g, '')
+    return safeId ? `${prefix}${safeId}` : undefined
+  }
+
+  private async insertEvent(calendarId: string, event: any, eventId?: string): Promise<string> {
+    const requestBody = eventId ? { ...event, id: eventId } : event
+
+    try {
+      const response = await this.calendar.events.insert({
+        calendarId,
+        requestBody,
+        sendUpdates: 'none',
+      })
+
+      if (!response.data.id) {
+        throw new Error('Event creation failed - no event ID returned')
+      }
+
+      return response.data.id
+    } catch (error: any) {
+      if (eventId && (error?.code === 409 || error?.response?.status === 409)) {
+        return eventId
+      }
+
       throw error
     }
   }

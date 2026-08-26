@@ -88,6 +88,7 @@ export async function createReservationCalendarEvent(payload: CalendarCreatePayl
 
   try {
     const result = await calendarService.createEvent({
+      reservationId: payload.reservationId,
       title: payload.title,
       startTime: payload.startTime,
       endTime: payload.endTime,

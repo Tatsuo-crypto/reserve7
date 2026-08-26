@@ -389,6 +389,7 @@ export async function POST(request: NextRequest) {
           for (const [trainerCalId, reservationIds] of Array.from(reservationsByCalendar.entries())) {
             try {
               const calResult = await calendarService.createEvent({
+                reservationId: reservationIds[0],
                 title: generatedTitle,
                 startTime: startDateTime.toISOString(),
                 endTime: endDateTime.toISOString(),

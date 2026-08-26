@@ -115,6 +115,7 @@ export async function updateMonthlyTitles(clientId: string, year: number, month:
 
           // Create new event with updated title
           const calResult = await calendarService.createEvent({
+            reservationId: reservation.id,
             title: newTitle,
             startTime: reservation.start_time,
             endTime: reservation.end_time,
@@ -350,6 +351,7 @@ export async function updateAllTitles(clientId: string) {
         try {
           try { await calendarService.deleteEvent(reservation.external_event_id, reservation.calendar_id) } catch {}
           const calResult = await calendarService.createEvent({
+            reservationId: reservation.id,
             title: newTitle,
             startTime: reservation.start_time,
             endTime: reservation.end_time,
