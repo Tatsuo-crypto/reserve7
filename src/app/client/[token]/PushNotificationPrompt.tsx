@@ -8,6 +8,11 @@ type PushNotificationPromptProps = {
   token: string
 }
 
+type BeforeInstallPromptEvent = Event & {
+  prompt: () => Promise<void>
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>
+}
+
 function urlBase64ToUint8Array(base64String: string) {
   const padding = '='.repeat((4 - base64String.length % 4) % 4)
   const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
@@ -29,6 +34,9 @@ export default function PushNotificationPrompt({ token }: PushNotificationPrompt
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(true)
   const [supportMessage, setSupportMessage] = useState('')
+  const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null)
+  const [installMessage, setInstallMessage] = useState('')
+  const [isInstalled, setIsInstalled] = useState(false)
 
   const notificationStatus = subscribed
     ? enabledByAdmin
@@ -41,6 +49,32 @@ export default function PushNotificationPrompt({ token }: PushNotificationPrompt
       ? 'bg-brand-500 text-white'
       : 'bg-amber-500/15 text-amber-700'
     : 'bg-surface-overlay text-text-secondary'
+
+  useEffect(() => {
+    const standalone = window.matchMedia?.('(display-mode: standalone)').matches
+      || (window.navigator as any).standalone === true
+    setIsInstalled(Boolean(standalone))
+
+    const handleBeforeInstallPrompt = (event: Event) => {
+      event.preventDefault()
+      setInstallPrompt(event as BeforeInstallPromptEvent)
+      setInstallMessage('')
+    }
+
+    const handleInstalled = () => {
+      setIsInstalled(true)
+      setInstallPrompt(null)
+      setInstallMessage('ホーム画面に追加しました。')
+    }
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
+    window.addEventListener('appinstalled', handleInstalled)
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
+      window.removeEventListener('appinstalled', handleInstalled)
+    }
+  }, [])
 
   useEffect(() => {
     const available =
@@ -92,7 +126,7 @@ export default function PushNotificationPrompt({ token }: PushNotificationPrompt
     loadStatus()
   }, [token])
 
-  const enablePush = async () => {
+  const enablePush = async (options: { reset?: boolean } = {}) => {
     setMessage('')
     setLoading(true)
 
@@ -115,7 +149,18 @@ export default function PushNotificationPrompt({ token }: PushNotificationPrompt
 
       const registration = await navigator.serviceWorker.register('/sw.js')
       const existingSubscription = await registration.pushManager.getSubscription()
-      const subscription = existingSubscription || await registration.pushManager.subscribe({
+
+      if (options.reset && existingSubscription) {
+        await fetch('/api/push/subscriptions', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token, endpoint: existingSubscription.endpoint }),
+        })
+        await existingSubscription.unsubscribe()
+      }
+
+      const currentSubscription = options.reset ? null : existingSubscription
+      const subscription = currentSubscription || await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(keyData.publicKey),
       })
@@ -135,9 +180,11 @@ export default function PushNotificationPrompt({ token }: PushNotificationPrompt
 
       setSubscribed(true)
       setEnabledByAdmin(saveData.enabledByAdmin === true)
-      setMessage(saveData.enabledByAdmin === true
-        ? 'アプリ通知を許可しました。'
-        : '端末の通知を許可しました。管理者側がONになると届きます。'
+      setMessage(options.reset
+        ? '通知を再設定しました。'
+        : saveData.enabledByAdmin === true
+          ? 'アプリ通知を許可しました。'
+          : '端末の通知を許可しました。管理者側がONになると届きます。'
       )
     } catch (error) {
       console.error('Failed to enable push notifications:', error)
@@ -175,60 +222,125 @@ export default function PushNotificationPrompt({ token }: PushNotificationPrompt
     }
   }
 
+  const installApp = async () => {
+    setInstallMessage('')
+
+    if (!installPrompt) {
+      setInstallMessage('Chromeのメニューから「ホーム画面に追加」を選んでください。')
+      return
+    }
+
+    await installPrompt.prompt()
+    const choice = await installPrompt.userChoice
+    setInstallPrompt(null)
+    setInstallMessage(choice.outcome === 'accepted'
+      ? 'ホーム画面に追加しました。'
+      : '追加がキャンセルされました。'
+    )
+  }
+
   return (
-    <div className="rounded-2xl border border-border-subtle bg-surface-raised p-4 shadow-sm">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex min-w-0 items-center gap-3">
-          <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${notificationIconClass}`}>
-            <Icon name="bell" size={20} />
-          </div>
-          <div className="min-w-0">
-            <div className="text-sm font-normal text-text-primary">アプリ通知</div>
-            <div className="mt-0.5 text-xs text-text-secondary">
-              {notificationStatus}
+    <div className="space-y-3">
+      <div className="rounded-2xl border border-border-subtle bg-surface-raised p-4 shadow-sm">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${notificationIconClass}`}>
+              <Icon name="bell" size={20} />
             </div>
+            <div className="min-w-0">
+              <div className="text-sm font-normal text-text-primary">アプリ通知</div>
+              <div className="mt-0.5 text-xs text-text-secondary">
+                {notificationStatus}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row">
+            {permission === 'denied' && (
+              <span className="inline-flex w-full items-center justify-center rounded-full border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-700 sm:w-auto">
+                ブロック中
+              </span>
+            )}
+            {permission !== 'denied' && (subscribed ? (
+              <>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => enablePush({ reset: true })}
+                  disabled={loading || !supported}
+                  className="w-full rounded-full border border-border-strong px-4 py-2 text-xs text-text-secondary disabled:opacity-50 sm:w-auto"
+                >
+                  再設定
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={disablePush}
+                  disabled={loading}
+                  className="w-full rounded-full border border-border-strong px-4 py-2 text-xs text-text-secondary disabled:opacity-50 sm:w-auto"
+                >
+                  解除
+                </Button>
+              </>
+            ) : (
+              <Button
+                type="button"
+                variant="primary"
+                size="sm"
+                onClick={() => enablePush()}
+                disabled={loading || !supported}
+                className="w-full rounded-full bg-brand-500 px-4 py-2 text-xs text-white disabled:opacity-50 sm:w-auto"
+              >
+                通知を許可する
+              </Button>
+            ))}
           </div>
         </div>
 
-        <div className="w-full shrink-0 sm:w-auto">
-          {permission === 'denied' && (
-            <span className="inline-flex w-full items-center justify-center rounded-full border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-700 sm:w-auto">
-              ブロック中
-            </span>
-          )}
-          {permission !== 'denied' && (subscribed ? (
+        {(supportMessage || message || permission === 'denied') && (
+          <div className="mt-3 rounded-lg bg-surface-overlay px-3 py-2 text-xs leading-relaxed text-text-secondary">
+            {permission === 'denied'
+              ? 'ブラウザ設定で通知がブロックされています。設定から通知を許可してください。'
+              : supportMessage || message}
+          </div>
+        )}
+      </div>
+
+      <div className="rounded-2xl border border-border-subtle bg-surface-raised p-4 shadow-sm">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${isInstalled ? 'bg-brand-500 text-white' : 'bg-surface-overlay text-text-secondary'}`}>
+              <Icon name="download" size={20} />
+            </div>
+            <div className="min-w-0">
+              <div className="text-sm font-normal text-text-primary">ホーム画面</div>
+              <div className="mt-0.5 text-xs text-text-secondary">
+                {isInstalled ? '追加済み' : '未追加'}
+              </div>
+            </div>
+          </div>
+
+          {!isInstalled && (
             <Button
               type="button"
               variant="secondary"
               size="sm"
-              onClick={disablePush}
-              disabled={loading}
-              className="w-full rounded-full border border-border-strong px-4 py-2 text-xs text-text-secondary disabled:opacity-50 sm:w-auto"
+              onClick={installApp}
+              className="w-full rounded-full border border-border-strong px-4 py-2 text-xs text-text-secondary sm:w-auto"
             >
-              解除する
+              ホームに追加
             </Button>
-          ) : (
-            <Button
-              type="button"
-              variant="primary"
-              size="sm"
-              onClick={enablePush}
-              disabled={loading || !supported}
-              className="w-full rounded-full bg-brand-500 px-4 py-2 text-xs text-white disabled:opacity-50 sm:w-auto"
-            >
-              通知を許可する
-            </Button>
-          ))}
+          )}
         </div>
-      </div>
 
-      {(supportMessage || message || permission === 'denied') && (
-        <div className="mt-3 rounded-lg bg-surface-overlay px-3 py-2 text-xs leading-relaxed text-text-secondary">
-          {permission === 'denied'
-            ? 'ブラウザ設定で通知がブロックされています。設定から通知を許可してください。'
-            : supportMessage || message}
-        </div>
-      )}
+        {installMessage && (
+          <div className="mt-3 rounded-lg bg-surface-overlay px-3 py-2 text-xs leading-relaxed text-text-secondary">
+            {installMessage}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
