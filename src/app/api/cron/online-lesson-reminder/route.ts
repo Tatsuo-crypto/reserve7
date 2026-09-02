@@ -65,10 +65,10 @@ export async function GET(request: NextRequest) {
 
         const sentPersonalReminders: { reservationId: string; clientName: string; pushCount: number }[] = []
 
-        // AP-2: 前日リマインダーは従来どおり「毎晩21時台に1回」だけ動かす。
+        // 前日リマインダーは管理画面の設定時刻に1回だけ動かす。
         // (10分おきに全予約を走査しても reservation_reminders の重複チェックで送信自体は防げるが、
-        //  無駄なクエリが1日144回走るため、21時台以外は最初からスキップする)
-        const isPersonalReminderHour = jstNow.getHours() === 21
+        //  無駄なクエリが1日144回走るため、設定時刻以外は最初からスキップする)
+        const isPersonalReminderHour = jstNow.getHours() === settings.personal_reminder_hour
 
         if (settings.personal_reminder_enabled && !dryRun && (force || isPersonalReminderHour)) {
             const { data: reservations, error: fetchError } = await supabaseAdmin
@@ -393,7 +393,7 @@ export async function GET(request: NextRequest) {
             success: true,
             personal: {
                 targetDate: personalTargetDateStr,
-                // AP-2: 21時台以外の実行では前日リマインダーは処理しない
+                // 設定時刻以外の実行では前日リマインダーは処理しない
                 skippedReason: (force || isPersonalReminderHour) ? undefined : 'not-personal-reminder-hour',
                 processedCount: sentPersonalReminders.length,
                 sentReminders: sentPersonalReminders

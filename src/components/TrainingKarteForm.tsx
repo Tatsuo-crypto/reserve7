@@ -201,6 +201,12 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
       : `/admin/karte/${id}?back=${encodeURIComponent(backHref)}`
   }, [backHref, trainerToken])
 
+  const loadSessionSnapshot = useCallback(async (id: string) => {
+    const res = await fetch(withToken(`/api/training-records/${id}`, trainerToken), { cache: 'no-store' })
+    if (!res.ok) return null
+    return res.json()
+  }, [trainerToken])
+
   const loadSessionDetail = useCallback(async (id: string) => {
     const res = await fetch(withToken(`/api/training-records/${id}`, trainerToken), { cache: 'no-store' })
     if (!res.ok) {
@@ -243,11 +249,11 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
   const loadPreviousSession = useCallback(async (currentUserId: string | null, currentSessionId: string, currentDate?: string | null) => {
     if (!currentUserId) {
       setPreviousSession(null)
-      return
+      return null
     }
 
     const res = await fetch(withToken(`/api/training-records/members/${currentUserId}`, trainerToken), { cache: 'no-store' })
-    if (!res.ok) return
+    if (!res.ok) return null
     const data = await res.json()
     const history = (data.history || []) as PreviousSession[]
     const previous = history.find((item) => {
@@ -256,6 +262,7 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
       return item.sessionDate < currentDate
     })
     setPreviousSession(previous || null)
+    return previous || null
   }, [trainerToken])
 
   useEffect(() => {
@@ -281,7 +288,25 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
           setResolvedId(id)
           setCreatedOnInit(created === true)
           const detail = await loadSessionDetail(id)
-          await loadPreviousSession(detail?.userId || null, id, detail?.sessionDate)
+          const previous = await loadPreviousSession(detail?.userId || null, id, detail?.sessionDate)
+          if (created === true && previous?.id && !detail?.overallNote) {
+            const previousDetail = await loadSessionSnapshot(previous.id)
+            const previousStretch = previousDetail?.approach ? String(previousDetail?.overallNote || '').trim() : ''
+            if (previousStretch) {
+              setStretchNote(previousStretch)
+              await fetch(withToken(`/api/training-records/${id}`, trainerToken), {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  sessionDate: detail?.sessionDate || null,
+                  sessionType: detail?.sessionType || '',
+                  approach: detail?.approach || '',
+                  overallNote: previousStretch,
+                  exercises: [],
+                }),
+              }).catch((err) => console.error('Failed to inherit previous stretch:', err))
+            }
+          }
         } else {
           setResolvedId(sessionKey)
           const detail = await loadSessionDetail(sessionKey)
@@ -599,6 +624,15 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
     router.push(nextPath)
   }
 
+  const handleOpenReturnKarte = async () => {
+    if (autosaveTimer.current) clearTimeout(autosaveTimer.current)
+    if (isEditing && hasInput()) {
+      const saved = await saveKarte()
+      if (saved === false) return
+    }
+    router.push(backHref)
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-surface-base pb-28 pt-20 text-center text-sm text-text-secondary">
@@ -628,6 +662,7 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
   const dateOptions = sessionDate && !reservationDateOptions.some((option) => option.date === sessionDate)
     ? [{ date: sessionDate, reservationId: 'current', title: null, sessionId: resolvedId }, ...reservationDateOptions]
     : reservationDateOptions
+  const showReturnKarteButton = backHref.includes('/karte/') && (!resolvedId || !backHref.includes(`/karte/${resolvedId}`))
   const conditionRows = Math.max(
     4,
     karteMemo.split('\n').reduce((total, line) => total + Math.max(1, Math.ceil(line.length / 24)), 0) + 1
@@ -700,6 +735,20 @@ export default function TrainingKarteForm({ trainerToken, sessionKey, reservatio
             >
               <Icon name="chevronLeft" size={16} />
               前回
+            </Button>
+          )}
+          {showReturnKarteButton && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={handleOpenReturnKarte}
+              aria-label="今日のカルテに戻る"
+              title="今日のカルテ"
+              className="absolute right-0 h-8 px-2 text-xs text-text-secondary"
+            >
+              今日
+              <Icon name="chevronRight" size={16} />
             </Button>
           )}
         </div>

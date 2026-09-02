@@ -116,6 +116,19 @@ export async function GET(request: NextRequest) {
         const getJoinedUser = (h: any) => Array.isArray(h.users) ? h.users[0] : h.users
         const effectivePlan = (h: any): string | null => h.plan || getJoinedUser(h)?.plan || null
 
+        const effectiveBillingStart = (h: any): Date => {
+            const start = startOfMonth(new Date(h.start_date))
+            const user = getJoinedUser(h)
+            if (!user?.billing_start_month) return start
+
+            const billingStart = startOfMonth(new Date(user.billing_start_month))
+            return billingStart > start ? billingStart : start
+        }
+
+        const hasBillingStartedByMonth = (h: any, monthEnd: Date): boolean => (
+            effectiveBillingStart(h) <= monthEnd
+        )
+
         // ダイエットコースは3ヶ月で自動終了扱いにする(明示的なend_dateがそれより早い場合はそちらを優先)
         const effectiveEndDate = (h: any): string | null => {
             let endStr = h.end_date
@@ -158,11 +171,7 @@ export async function GET(request: NextRequest) {
                 if (resolved.plan === '都度') continue
 
                 // Exclude months before billing start month
-                const user = Array.isArray(resolved.row.users) ? resolved.row.users[0] : resolved.row.users
-                if (user?.billing_start_month) {
-                    const billingStart = startOfMonth(new Date(user.billing_start_month))
-                    if (monthStart < billingStart) continue
-                }
+                if (!hasBillingStartedByMonth(resolved.row, monthEnd)) continue
 
                 activeUserIds.add(userId)
             }
@@ -190,6 +199,7 @@ export async function GET(request: NextRequest) {
                     if (!endStr) return false
                     const end = endOfDay(new Date(endStr))
                     if (end < monthStart || end > monthEnd) return false
+                    if (!hasBillingStartedByMonth(h, monthEnd)) return false
 
                     // Check for continuity (Renewal / Plan Change / Suspension)
                     // Look for any OTHER record that starts within 32 days
@@ -232,6 +242,7 @@ export async function GET(request: NextRequest) {
                     const hasPaidPeriodEnd = history.some((active: any) => {
                         if (active.user_id !== h.user_id) return false
                         if (active.status !== 'active' || !active.end_date) return false
+                        if (!hasBillingStartedByMonth(active, monthEnd)) return false
                         return endOfDay(new Date(active.end_date)) <= endOfDay(wDate)
                     })
                     if (hasPaidPeriodEnd) return false
@@ -284,13 +295,14 @@ export async function GET(request: NextRequest) {
             const suspendedCount = suspendedMembers.length
 
             // New members in this month
-            // start_date is within this month AND plan is recurring AND no immediate prior history
+            // 会費の支払いが発生した月を入会月にする。
             const newMembers = history.filter((h: any) => {
                 // Must be active to be a "new member"
                 if (h.status !== 'active') return false
+                if (effectivePlan(h) === '都度') return false
 
-                const start = new Date(h.start_date)
-                if (start < monthStart || start > monthEnd) return false
+                const billingStart = effectiveBillingStart(h)
+                if (billingStart < monthStart || billingStart > monthEnd) return false
 
                 // Check for continuity (Plan Change)
                 // Look for any OTHER record for this user that ended just before this start date
@@ -300,7 +312,7 @@ export async function GET(request: NextRequest) {
                     if (!prev.end_date) return false // Active ongoing record doesn't explain a new start
 
                     const prevEnd = new Date(prev.end_date)
-                    const diffTime = Math.abs(start.getTime() - prevEnd.getTime())
+                    const diffTime = Math.abs(billingStart.getTime() - prevEnd.getTime())
                     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
                     return diffDays <= 32 // Starts within 32 days of previous end
                 })
@@ -314,7 +326,7 @@ export async function GET(request: NextRequest) {
                     user_id: h.user_id,
                     full_name: user?.full_name || '不明',
                     plan: effectivePlan(h),
-                    date: h.start_date
+                    date: format(effectiveBillingStart(h), 'yyyy-MM-dd')
                 }
             })
 
@@ -338,12 +350,7 @@ export async function GET(request: NextRequest) {
             const activeRecords = history.filter(h => {
                 if (h.status !== 'active') return false
 
-                // Exclude months before billing start month (if configured)
-                const user = Array.isArray((h as any).users) ? (h as any).users[0] : (h as any).users
-                if (user?.billing_start_month) {
-                    const billingStart = startOfMonth(new Date(user.billing_start_month))
-                    if (monthStart < billingStart) return false
-                }
+                if (!hasBillingStartedByMonth(h, monthEnd)) return false
 
                 const start = new Date(h.start_date)
                 const end = h.end_date ? new Date(h.end_date) : null
