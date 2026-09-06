@@ -65,6 +65,8 @@ function isDietMember(member: MemberOption) {
 }
 
 export default function AdminMaterialsPage() {
+  const [presetTargetUserId, setPresetTargetUserId] = useState('')
+  const [presetTargetUserName, setPresetTargetUserName] = useState('')
   const [materials, setMaterials] = useState<Material[]>([])
   const [members, setMembers] = useState<MemberOption[]>([])
   const [trainers, setTrainers] = useState<TrainerOption[]>([])
@@ -112,10 +114,10 @@ export default function AdminMaterialsPage() {
         .filter(trainer => targetTrainerIds.includes(trainer.id))
         .map(trainer => trainer.full_name)
     )
-    if (targetUserIds.length) labels.push(selectedMemberNames || `個別会員${targetUserIds.length}名`)
+    if (targetUserIds.length) labels.push(selectedMemberNames || presetTargetUserName || `個別会員${targetUserIds.length}名`)
     if (targetTrainerIds.length) labels.push(selectedTrainerNames || `個別トレーナー${targetTrainerIds.length}名`)
     return labels.join('、') || '未設定'
-  }, [activeMembers, targetGroups, targetTrainerIds, targetUserIds, trainers])
+  }, [activeMembers, presetTargetUserName, targetGroups, targetTrainerIds, targetUserIds, trainers])
 
   const toggleTargetGroup = (group: MaterialGroup) => {
     setTargetGroups(prev => {
@@ -134,6 +136,17 @@ export default function AdminMaterialsPage() {
   useEffect(() => {
     setTargetGroups(prev => prev.filter(group => group !== 'all_members'))
   }, [])
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    setPresetTargetUserId(params.get('targetUserId') || '')
+    setPresetTargetUserName(params.get('targetUserName') || '')
+  }, [])
+
+  useEffect(() => {
+    if (!presetTargetUserId) return
+    setTargetUserIds(prev => prev.includes(presetTargetUserId) ? prev : [...prev, presetTargetUserId])
+  }, [presetTargetUserId])
 
   const fetchData = async () => {
     setLoading(true)
@@ -185,7 +198,7 @@ export default function AdminMaterialsPage() {
     setExternalUrl('')
     setFile(null)
     setTargetGroups([])
-    setTargetUserIds([])
+    setTargetUserIds(presetTargetUserId ? [presetTargetUserId] : [])
     setTargetTrainerIds([])
     setOpenTargetPanel(false)
     setOpenNormalPanel(false)

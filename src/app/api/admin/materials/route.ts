@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { requireAdminAuth } from '@/lib/api-utils'
-import { normalizeStringArray, toMaterialListItem, type SharedMaterialRow } from '@/lib/materials'
+import { canViewMaterial, isMaterialPublicNow, normalizeStringArray, toMaterialListItem, type SharedMaterialRow } from '@/lib/materials'
 
 export const dynamic = 'force-dynamic'
 
@@ -46,21 +46,62 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url)
   const limit = Math.min(Number(searchParams.get('limit')) || 100, 200)
+  const memberId = searchParams.get('memberId')
 
-  const { data, error } = await supabaseAdmin
+  let memberViewer: { audience: 'member'; id: string; isDiet: boolean } | null = null
+  if (memberId) {
+    const { data: member, error: memberError } = await supabaseAdmin
+      .from('users')
+      .select('id, status, lifestyle_settings!left(visible_tabs)')
+      .eq('id', memberId)
+      .maybeSingle()
+
+    if (memberError) {
+      console.error('admin materials member lookup error:', memberError)
+      return NextResponse.json({ error: '会員情報を取得できませんでした' }, { status: 500 })
+    }
+
+    if (!member || member.status !== 'active') {
+      return NextResponse.json({ materials: [] })
+    }
+
+    const settings = Array.isArray((member as any).lifestyle_settings)
+      ? (member as any).lifestyle_settings[0]
+      : (member as any).lifestyle_settings
+    const tabs = settings?.visible_tabs || {}
+    memberViewer = {
+      audience: 'member',
+      id: member.id,
+      isDiet: tabs.input === true || tabs.analyze === true || tabs.progress === true,
+    }
+  }
+
+  let query = supabaseAdmin
     .from('shared_materials')
     .select('*')
     .order('display_order', { ascending: true })
     .order('created_at', { ascending: false })
-    .limit(limit)
+    .limit(memberViewer ? 100 : limit)
+
+  if (memberViewer) {
+    query = query.eq('is_published', true)
+  }
+
+  const { data, error } = await query
 
   if (error) {
     console.error('admin materials GET error:', error)
     return NextResponse.json({ error: '資料を取得できませんでした' }, { status: 500 })
   }
 
+  const rows = memberViewer
+    ? ((data || []) as SharedMaterialRow[])
+      .filter(material => isMaterialPublicNow(material) && canViewMaterial(material, memberViewer))
+      .slice(0, limit)
+    : ((data || []) as SharedMaterialRow[])
+
   return NextResponse.json({
-    materials: ((data || []) as SharedMaterialRow[]).map(material =>
+    materials: rows.map(material =>
       toMaterialListItem(material, `/api/materials/${material.id}/open`)
     ),
   })

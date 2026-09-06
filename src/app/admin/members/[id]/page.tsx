@@ -51,6 +51,16 @@ type TrainingSessionSummary = {
   exerciseCount?: number
 }
 
+type MemberMaterial = {
+  id: string
+  title: string
+  description: string | null
+  materialType: 'pdf' | 'image' | 'video' | 'link'
+  openUrl: string
+}
+
+type MemberSection = 'status' | 'materials' | 'karte' | 'management' | 'invite'
+
 const DEFAULT_LIFESTYLE_SETTINGS: LifestyleSettings = {
   visible_items: { steps: false, sleep: false, water: false, alcohol: false, workout: false },
   visible_tabs: { input: false, analyze: false, progress: false },
@@ -151,12 +161,42 @@ function InlineActionButton({
   )
 }
 
-function SectionTitle({ children }: { children: ReactNode }) {
+function AccordionSection({
+  title,
+  iconName,
+  summary,
+  isOpen,
+  onToggle,
+  children,
+}: {
+  title: string
+  iconName: IconName
+  summary?: string
+  isOpen: boolean
+  onToggle: () => void
+  children: ReactNode
+}) {
   return (
-    <div className="mb-3 flex items-center gap-2">
-      <span className="h-5 w-1 rounded-full bg-brand-500" />
-      <h2 className="text-xl font-semibold text-text-primary">{children}</h2>
-    </div>
+    <section className="overflow-hidden rounded-2xl border border-border-subtle bg-surface-raised">
+      <Button
+        type="button"
+        variant="ghost"
+        onClick={onToggle}
+        className="flex w-full items-center justify-between gap-4 px-4 py-4 text-left hover:bg-surface-overlay/50"
+      >
+        <div className="flex min-w-0 items-center gap-3">
+          <Icon name={iconName} size={19} className="shrink-0 text-text-secondary" />
+          <div className="min-w-0">
+            <h2 className="text-base font-semibold text-text-primary">{title}</h2>
+            {summary && !isOpen && (
+              <p className="mt-0.5 truncate text-xs font-normal text-text-secondary">{summary}</p>
+            )}
+          </div>
+        </div>
+        <Icon name={isOpen ? 'chevronUp' : 'chevronDown'} size={17} className="shrink-0 text-text-muted" />
+      </Button>
+      {isOpen && <div className="border-t border-border-subtle p-4">{children}</div>}
+    </section>
   )
 }
 
@@ -222,6 +262,14 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
   const [notificationModalOpen, setNotificationModalOpen] = useState(false)
   const [notificationSaving, setNotificationSaving] = useState(false)
   const [notificationError, setNotificationError] = useState('')
+  const [materials, setMaterials] = useState<MemberMaterial[]>([])
+  const [openSections, setOpenSections] = useState<Record<MemberSection, boolean>>({
+    status: true,
+    materials: false,
+    karte: false,
+    management: false,
+    invite: false,
+  })
 
   useEffect(() => {
     if (status === 'loading') return
@@ -237,7 +285,10 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
     const fetchData = async () => {
       try {
         // Fetch member by ID directly
-        const memberRes = await fetch(`/api/admin/members/${memberId}`)
+        const [memberRes, materialsRes] = await Promise.all([
+          fetch(`/api/admin/members/${memberId}`),
+          fetch(`/api/admin/materials?memberId=${memberId}&limit=20`),
+        ])
         if (!memberRes.ok) throw new Error('会員情報を取得できませんでした。画面を再読み込みしてください。')
         const memberJson = await memberRes.json()
         const m = memberJson.data
@@ -261,6 +312,12 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
           nextReservation: m.next_reservation || null,
           recentTrainingSessions: m.recent_training_sessions || [],
         })
+        if (materialsRes.ok) {
+          const materialsJson = await materialsRes.json()
+          setMaterials(materialsJson.materials || [])
+        } else {
+          setMaterials([])
+        }
 
       } catch (e: any) {
         setError(e.message || '読み込めませんでした。画面を再読み込みしてください。')
@@ -316,6 +373,17 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
     const day = date.getDate()
     const weekday = ['日', '月', '火', '水', '木', '金', '土'][date.getDay()]
     return `${month}/${day}(${weekday})`
+  }
+
+  const materialTypeLabel = (type: MemberMaterial['materialType']) => {
+    if (type === 'pdf') return 'PDF'
+    if (type === 'image') return '画像'
+    if (type === 'video') return '動画'
+    return 'リンク'
+  }
+
+  const toggleSection = (section: MemberSection) => {
+    setOpenSections(prev => ({ ...prev, [section]: !prev[section] }))
   }
 
   const notificationLabel = (member?: MemberDetail | null) => {
@@ -455,9 +523,14 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
           </div>
         </section>
 
-        <div className="space-y-7">
-          <section>
-            <SectionTitle>状態</SectionTitle>
+        <div className="space-y-3">
+          <AccordionSection
+            title="状態"
+            iconName="userCircle"
+            summary={`${hasDietSupport(member) ? 'ダイエット利用中' : 'ダイエットなし'} / 通知 ${notificationLabel(member)}`}
+            isOpen={openSections.status}
+            onToggle={() => toggleSection('status')}
+          >
             <div className="space-y-3">
               <StatusRow
                 label="パーソナル"
@@ -492,35 +565,76 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
                 iconName="calendar"
               />
             </div>
-          </section>
+          </AccordionSection>
 
-          <section>
-            <SectionTitle>カルテ</SectionTitle>
-            <div className="rounded-2xl border border-border-subtle bg-surface-raised p-4">
-              <div className="space-y-3">
-                {(member.recentTrainingSessions || []).length > 0 ? (
-                  member.recentTrainingSessions!.map(session => (
-                    <Link
-                      key={session.id}
-                      href={`/admin/karte/${session.id}?back=${encodeURIComponent(`/admin/members/${memberId}`)}`}
-                      className="flex items-center justify-between gap-4 rounded-xl bg-surface-base px-4 py-3 active:scale-[0.99]"
-                    >
-                      <div className="min-w-0">
-                        <div className="text-sm font-normal text-text-primary">{formatDateOnly(session.sessionDate)}</div>
-                        <div className="mt-0.5 text-xs font-normal text-text-secondary">
-                          {session.trainerName || '担当未設定'} ・ {session.exerciseCount || 0}種目
-                        </div>
+          <AccordionSection
+            title="閲覧資料"
+            iconName="documentText"
+            summary={materials.length ? `${materials.length}件` : '未設定'}
+            isOpen={openSections.materials}
+            onToggle={() => toggleSection('materials')}
+          >
+            <div className="space-y-3">
+              {materials.length > 0 ? (
+                materials.map(material => (
+                  <a
+                    key={material.id}
+                    href={material.openUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center justify-between gap-4 rounded-xl bg-surface-base px-4 py-3 active:scale-[0.99]"
+                  >
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-normal text-text-primary">{material.title}</div>
+                      <div className="mt-0.5 text-xs font-normal text-text-secondary">{materialTypeLabel(material.materialType)}</div>
+                    </div>
+                    <Icon name="chevronRight" size={16} className="shrink-0 text-text-muted" />
+                  </a>
+                ))
+              ) : (
+                <div className="rounded-xl bg-surface-base px-4 py-4 text-sm font-normal text-text-secondary">
+                  この会員に表示中の資料はありません
+                </div>
+              )}
+              <Link
+                href={`/admin/materials?targetUserId=${memberId}&targetUserName=${encodeURIComponent(member.fullName)}`}
+                className="block rounded-full bg-brand-500/15 px-4 py-3 text-center text-xs font-normal text-brand-600"
+              >
+                この会員に資料を追加
+              </Link>
+            </div>
+          </AccordionSection>
+
+          <AccordionSection
+            title="カルテ"
+            iconName="clipboardList"
+            summary={(member.recentTrainingSessions || []).length ? `${member.recentTrainingSessions?.length}件` : '未登録'}
+            isOpen={openSections.karte}
+            onToggle={() => toggleSection('karte')}
+          >
+            <div className="space-y-3">
+              {(member.recentTrainingSessions || []).length > 0 ? (
+                member.recentTrainingSessions!.map(session => (
+                  <Link
+                    key={session.id}
+                    href={`/admin/karte/${session.id}?back=${encodeURIComponent(`/admin/members/${memberId}`)}`}
+                    className="flex items-center justify-between gap-4 rounded-xl bg-surface-base px-4 py-3 active:scale-[0.99]"
+                  >
+                    <div className="min-w-0">
+                      <div className="text-sm font-normal text-text-primary">{formatDateOnly(session.sessionDate)}</div>
+                      <div className="mt-0.5 text-xs font-normal text-text-secondary">
+                        {session.trainerName || '担当未設定'} ・ {session.exerciseCount || 0}種目
                       </div>
-                      <Icon name="chevronRight" size={16} className="shrink-0 text-text-muted" />
-                    </Link>
-                  ))
-                ) : (
-                  <div className="rounded-xl bg-surface-base px-4 py-4 text-sm font-normal text-text-secondary">
-                    まだカルテがありません
-                  </div>
-                )}
-              </div>
-              <div className="mt-4 grid grid-cols-2 gap-3">
+                    </div>
+                    <Icon name="chevronRight" size={16} className="shrink-0 text-text-muted" />
+                  </Link>
+                ))
+              ) : (
+                <div className="rounded-xl bg-surface-base px-4 py-4 text-sm font-normal text-text-secondary">
+                  まだカルテがありません
+                </div>
+              )}
+              <div className="grid grid-cols-2 gap-3">
                 <Link
                   href={`/admin/karte/new?userId=${memberId}&back=${encodeURIComponent(`/admin/members/${memberId}`)}`}
                   className="rounded-full bg-brand-500/15 px-4 py-3 text-center text-xs font-normal text-brand-600"
@@ -535,10 +649,15 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
                 </Link>
               </div>
             </div>
-          </section>
+          </AccordionSection>
 
-          <section>
-            <SectionTitle>管理</SectionTitle>
+          <AccordionSection
+            title="管理"
+            iconName="settings"
+            summary="基本情報・月額プラン"
+            isOpen={openSections.management}
+            onToggle={() => toggleSection('management')}
+          >
             <div className="space-y-3">
               <MemberActionRow
                 href={`/admin/members/${memberId}/edit`}
@@ -551,10 +670,15 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
                 iconName="clipboardList"
               />
             </div>
-          </section>
+          </AccordionSection>
 
-          <section>
-            <SectionTitle>招待URL</SectionTitle>
+          <AccordionSection
+            title="招待URL"
+            iconName="share"
+            summary={member.accessToken ? '発行済み' : '未発行'}
+            isOpen={openSections.invite}
+            onToggle={() => toggleSection('invite')}
+          >
             <div className="space-y-3">
               {member.accessToken ? (
                 <MemberActionRow
@@ -567,7 +691,7 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
                 <MemberActionRow label="会員画面なし" iconName="linkSlash" disabled />
               )}
 
-              <div className="rounded-2xl border border-border-subtle bg-surface-raised p-4">
+              <div className="rounded-2xl border border-border-subtle bg-surface-base p-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="flex min-w-0 items-center gap-3">
                     <Icon name="copy" size={18} className="shrink-0 text-text-secondary" />
@@ -588,7 +712,7 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
                 </div>
               </div>
             </div>
-          </section>
+          </AccordionSection>
         </div>
       </div>
 
