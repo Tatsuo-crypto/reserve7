@@ -5,6 +5,21 @@ import { sendPushNotificationToUser, isPushConfigured } from '@/lib/push'
 
 export const dynamic = 'force-dynamic'
 
+type BroadcastTargetUser = {
+  id: string
+  access_token: string | null
+}
+
+async function getSubscribedUserIds(): Promise<Set<string>> {
+  const { data, error } = await supabaseAdmin
+    .from('push_subscriptions')
+    .select('user_id')
+
+  if (error) throw error
+
+  return new Set((data || []).map((subscription: any) => subscription.user_id).filter(Boolean))
+}
+
 // AO-1: 「配信」機能。テンプレートは無し(自由記述のみ)。通知ON(push_notification_enabled=true)の
 // 会員全員にアプリのプッシュ通知でお知らせを送る。
 export async function GET() {
@@ -50,8 +65,9 @@ export async function POST(request: NextRequest) {
       return createErrorResponse('タイトルと本文を入力してください', 400)
     }
 
-    let targetUsers: Array<{ id: string; access_token: string | null }> = []
+    let targetUsers: BroadcastTargetUser[] = []
     let targetLabel = '全員'
+    const subscribedUserIds = await getSubscribedUserIds()
 
     if (targetMode === 'lesson') {
       if (!lessonId) return createErrorResponse('オンラインレッスンを選択してください', 400)
@@ -81,7 +97,7 @@ export async function POST(request: NextRequest) {
         lessonTargetUsers = lessonTargetUsers.filter((u: any) => idSet.has(u.id))
       }
 
-      targetUsers = lessonTargetUsers
+      targetUsers = lessonTargetUsers.filter((u: any) => subscribedUserIds.has(u.id))
       targetLabel = `オンラインレッスン: ${lesson.title}(${targetUsers.length}名)`
     } else if (targetMode === 'individual') {
       if (!userIds || userIds.length === 0) return createErrorResponse('送信する会員を選択してください', 400)
@@ -94,7 +110,7 @@ export async function POST(request: NextRequest) {
       if (selectedError) return createErrorResponse('送信対象会員の取得に失敗しました', 500)
 
       targetUsers = (selectedUsers || []).filter((u: any) =>
-        u?.push_notification_enabled === true && Boolean(u.access_token)
+        u?.push_notification_enabled === true && Boolean(u.access_token) && subscribedUserIds.has(u.id)
       )
       targetLabel = `個別選択(${targetUsers.length}名)`
     } else {
@@ -108,12 +124,12 @@ export async function POST(request: NextRequest) {
 
       if (usersError) return createErrorResponse('送信対象会員の取得に失敗しました', 500)
 
-      targetUsers = users || []
+      targetUsers = (users || []).filter((u: any) => subscribedUserIds.has(u.id))
       targetLabel = '全員'
     }
 
     if (targetUsers.length === 0) {
-      return createErrorResponse('アプリ通知が有効な送信対象会員が選択されていないか、登録されていません', 400)
+      return createErrorResponse('端末登録済みの送信対象会員がいません。会員画面で通知を再設定してください。', 400)
     }
 
     const finalTitle = important ? `【重要】${title}` : title

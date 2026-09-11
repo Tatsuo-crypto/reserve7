@@ -1,4 +1,5 @@
 import webpush from 'web-push'
+import { createHash } from 'crypto'
 import { supabaseAdmin } from './supabase'
 
 type PushPayload = {
@@ -19,6 +20,14 @@ type PushSubscriptionRow = {
   p256dh: string
   auth: string
 }
+
+type PushDeliveryStatus =
+  | 'sent'
+  | 'no_subscription'
+  | 'not_configured'
+  | 'subscription_fetch_error'
+  | 'expired_subscription'
+  | 'send_error'
 
 const VAPID_PUBLIC_KEY_FALLBACK =
   'BF3y2wkY1j3CjeP3X0EYgjVq0aJyk1MHwqDj_yjHH4wbN5mMJGc6gaGTuRoucCNEbaFCyFo9GfhIPFLarU_9JPk'
@@ -67,11 +76,52 @@ async function recordNotification(userId: string, payload: PushPayload): Promise
   }
 }
 
+function hashEndpoint(endpoint?: string | null): string | null {
+  if (!endpoint) return null
+  return createHash('sha256').update(endpoint).digest('hex')
+}
+
+async function recordPushDeliveryAttempt(params: {
+  userId: string
+  payload: PushPayload
+  status: PushDeliveryStatus
+  success: boolean
+  subscriptionId?: string | null
+  endpoint?: string | null
+  statusCode?: number | null
+  errorMessage?: string | null
+}): Promise<void> {
+  try {
+    await supabaseAdmin.from('push_delivery_logs').insert({
+      user_id: params.userId,
+      subscription_id: params.subscriptionId || null,
+      endpoint_hash: hashEndpoint(params.endpoint),
+      title: params.payload.title,
+      category: params.payload.category || 'other',
+      url: params.payload.url || null,
+      success: params.success,
+      status: params.status,
+      status_code: params.statusCode || null,
+      error_message: params.errorMessage ? params.errorMessage.slice(0, 500) : null,
+    })
+  } catch (error) {
+    console.warn('Failed to record push delivery log:', error)
+  }
+}
+
 export async function sendPushNotificationToUser(userId: string, payload: PushPayload): Promise<number> {
   // 送信可否(VAPID設定・購読の有無)に関わらず、まずアプリ内のお知らせとして残す
   await recordNotification(userId, payload)
 
-  if (!configureWebPush()) return 0
+  if (!configureWebPush()) {
+    await recordPushDeliveryAttempt({
+      userId,
+      payload,
+      status: 'not_configured',
+      success: false,
+    })
+    return 0
+  }
 
   const { data: subscriptions, error } = await supabaseAdmin
     .from('push_subscriptions')
@@ -80,6 +130,23 @@ export async function sendPushNotificationToUser(userId: string, payload: PushPa
 
   if (error) {
     console.error('Failed to fetch push subscriptions:', error)
+    await recordPushDeliveryAttempt({
+      userId,
+      payload,
+      status: 'subscription_fetch_error',
+      success: false,
+      errorMessage: error.message,
+    })
+    return 0
+  }
+
+  if (!subscriptions || subscriptions.length === 0) {
+    await recordPushDeliveryAttempt({
+      userId,
+      payload,
+      status: 'no_subscription',
+      success: false,
+    })
     return 0
   }
 
@@ -97,6 +164,14 @@ export async function sendPushNotificationToUser(userId: string, payload: PushPa
         },
         JSON.stringify(payload)
       )
+      await recordPushDeliveryAttempt({
+        userId,
+        payload,
+        status: 'sent',
+        success: true,
+        subscriptionId: subscription.id,
+        endpoint: subscription.endpoint,
+      })
       successCount++
     } catch (error: any) {
       if (error?.statusCode === 404 || error?.statusCode === 410) {
@@ -104,8 +179,28 @@ export async function sendPushNotificationToUser(userId: string, payload: PushPa
           .from('push_subscriptions')
           .delete()
           .eq('id', subscription.id)
+        await recordPushDeliveryAttempt({
+          userId,
+          payload,
+          status: 'expired_subscription',
+          success: false,
+          subscriptionId: subscription.id,
+          endpoint: subscription.endpoint,
+          statusCode: error?.statusCode || null,
+          errorMessage: error?.message || null,
+        })
       } else {
         console.error('Failed to send push notification:', error)
+        await recordPushDeliveryAttempt({
+          userId,
+          payload,
+          status: 'send_error',
+          success: false,
+          subscriptionId: subscription.id,
+          endpoint: subscription.endpoint,
+          statusCode: error?.statusCode || null,
+          errorMessage: error?.message || 'Unknown push send error',
+        })
       }
     }
   }
