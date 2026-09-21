@@ -44,6 +44,7 @@ const AdminDashboard = () => {
   const [mounted, setMounted] = useState(false);
   
   const [dietMembers, setDietMembers] = useState<any[]>([]);
+  const [unreadDietMemberIds, setUnreadDietMemberIds] = useState<string[]>([]);
   const [dietLoading, setDietLoading] = useState(false);
   const router = useRouter();
   
@@ -60,8 +61,15 @@ const AdminDashboard = () => {
       const fetchDietMembers = async () => {
         setDietLoading(true);
         try {
-          const data = await fetchJsonCached<any>('/api/admin/members?diet_only=true&compact=true', undefined, 30_000);
+          const [data, updatesRes] = await Promise.all([
+            fetchJsonCached<any>('/api/admin/members?diet_only=true&compact=true', undefined, 30_000),
+            fetch('/api/admin/diet-updates', { cache: 'no-store' }),
+          ]);
           setDietMembers(data.members || data.data?.members || []);
+          if (updatesRes.ok) {
+            const updates = await updatesRes.json();
+            setUnreadDietMemberIds(updates.unreadMemberIds || []);
+          }
         } catch (e) {
           console.error('Failed to fetch diet members', e);
         } finally {
@@ -102,6 +110,9 @@ const AdminDashboard = () => {
                           </span>
                         </div>
                       </div>
+                      {unreadDietMemberIds.includes(member.id) && (
+                        <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-brand-500 px-1.5 text-xs font-semibold text-white">1</span>
+                      )}
                       <Icon name="chevronRight" size={20} className="text-text-muted" />
                     </Link>
                   ))

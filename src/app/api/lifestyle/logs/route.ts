@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-config';
 import { supabase, supabaseAdmin } from '@/lib/supabase';
+import { recordDietMemberUpdate } from '@/lib/diet-admin-notifications';
 
 // Get lifestyle logs for current user
 export async function GET(req: NextRequest) {
@@ -145,6 +146,8 @@ export async function POST(req: NextRequest) {
         }
 
         if (result.error) throw result.error;
+
+        if (token) await recordDietMemberUpdate(userId);
 
         return NextResponse.json({ success: true, data: result.data });
     } catch (error: any) {

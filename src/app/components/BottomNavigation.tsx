@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { useSession } from 'next-auth/react'
@@ -10,6 +10,30 @@ const BottomNavigationContent = () => {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const { data: session } = useSession()
+  const [dietUnreadCount, setDietUnreadCount] = useState(0)
+
+  useEffect(() => {
+    if (session?.user?.role !== 'ADMIN') return
+    let active = true
+    const loadUnread = async () => {
+      try {
+        const response = await fetch('/api/admin/diet-updates', { cache: 'no-store' })
+        if (!response.ok) return
+        const data = await response.json()
+        if (active) setDietUnreadCount(Number(data.unreadCount) || 0)
+      } catch {
+        // ナビの件数取得に失敗しても画面操作は止めない。
+      }
+    }
+    loadUnread()
+    const timer = window.setInterval(loadUnread, 60_000)
+    window.addEventListener('reserve7:diet-updates-changed', loadUnread)
+    return () => {
+      active = false
+      window.clearInterval(timer)
+      window.removeEventListener('reserve7:diet-updates-changed', loadUnread)
+    }
+  }, [session?.user?.role])
   
   // 管理者以外、または会員用画面（/client/...）、トレーナー画面（/trainer/...）では表示しない
   if (
@@ -62,7 +86,7 @@ const BottomNavigationContent = () => {
               className="flex flex-col items-center justify-center transition-all duration-300 relative flex-1 pb-1"
             >
               <div
-                className={`flex items-center justify-center transition-all duration-300 ${
+                className={`relative flex items-center justify-center transition-all duration-300 ${
                   item.isCenter
                     ? 'w-14 h-14 bg-brand-500 text-white rounded-full shadow-lg -translate-y-4 border-4 border-surface-raised mb-1'
                     : isActive
@@ -71,6 +95,11 @@ const BottomNavigationContent = () => {
                 }`}
               >
                 <Icon name={item.iconName} size={item.isCenter ? 32 : 24} />
+                {item.id === 'diet' && dietUnreadCount > 0 && (
+                  <span className="absolute right-0 top-0 flex h-5 min-w-5 items-center justify-center rounded-full bg-brand-500 px-1 text-[10px] font-semibold leading-none text-white ring-2 ring-surface-raised">
+                    {dietUnreadCount > 99 ? '99+' : dietUnreadCount}
+                  </span>
+                )}
               </div>
               
               <span className={`text-xs font-normal transition-colors ${

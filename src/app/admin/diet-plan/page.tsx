@@ -290,6 +290,7 @@ function DietPlanPageContent() {
     const searchParams = useSearchParams()
     const [members, setMembers] = useState<Member[]>([])
     const [loadingMembers, setLoadingMembers] = useState(true)
+    const [unreadMemberIds, setUnreadMemberIds] = useState<string[]>([])
     const [searchTerm, setSearchTerm] = useState('')
     const [selectedMember, setSelectedMember] = useState<Member | null>(null)
     
@@ -501,7 +502,14 @@ function DietPlanPageContent() {
     useEffect(() => {
         const fetchMembers = async () => {
             try {
-                const response = await fetch('/api/admin/members?diet_only=true')
+                const [response, updatesResponse] = await Promise.all([
+                    fetch('/api/admin/members?diet_only=true'),
+                    fetch('/api/admin/diet-updates', { cache: 'no-store' }),
+                ])
+                if (updatesResponse.ok) {
+                    const updates = await updatesResponse.json()
+                    setUnreadMemberIds(updates.unreadMemberIds || [])
+                }
                 if (response.ok) {
                     const text = await response.text()
                     if (text) {
@@ -544,6 +552,18 @@ function DietPlanPageContent() {
             fetchMemberData(selectedMember.id, selectedMember.access_token || '')
         }
     }, [selectedMember, fetchMemberData])
+
+    useEffect(() => {
+        if (!selectedMember) return
+        setUnreadMemberIds(prev => prev.filter(id => id !== selectedMember.id))
+        fetch('/api/admin/diet-updates', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ memberId: selectedMember.id }),
+        }).then(response => {
+            if (response.ok) window.dispatchEvent(new Event('reserve7:diet-updates-changed'))
+        }).catch(() => undefined)
+    }, [selectedMember])
 
     // K-2/K-4: 「現在の目標設定」インライン保存とモーダル保存（新規作成・履歴編集）の両方から呼ぶ共通処理
     const saveGoalPlan = async (values: GoalFormValues, targetHabitTargets: HabitTargetsValues): Promise<boolean> => {
@@ -951,6 +971,9 @@ function DietPlanPageContent() {
                                             <div className="text-xs font-normal text-text-muted uppercase tracking-widest">{member.email}</div>
                                         </div>
                                     </div>
+                                    {unreadMemberIds.includes(member.id) && (
+                                        <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-brand-500 px-1.5 text-xs font-semibold text-white">1</span>
+                                    )}
                                     <div className="text-xs font-normal text-text-muted bg-surface-base px-4 py-2 rounded-full group-hover:bg-brand-500 group-hover:text-white transition-all uppercase tracking-widest">選択</div>
                                 </Button>
                             ))}
