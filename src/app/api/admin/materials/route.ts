@@ -124,6 +124,7 @@ export async function POST(request: NextRequest) {
     const targetGroups = normalizeStringArray(formData.get('targetGroups'))
     const targetUserIds = normalizeStringArray(formData.get('targetUserIds'))
     const targetTrainerIds = normalizeStringArray(formData.get('targetTrainerIds'))
+    const uploadedStoragePath = textValue(formData, 'storagePath')
     const file = formData.get('file')
 
     if (!title) return NextResponse.json({ error: 'タイトルを入力してください' }, { status: 400 })
@@ -134,7 +135,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '公開対象を選択してください' }, { status: 400 })
     }
 
-    let storagePath: string | null = null
+    let storagePath: string | null = uploadedStoragePath || null
+    if (storagePath && (storagePath.includes('/') || !/^[\w.-]+$/.test(storagePath))) {
+      return NextResponse.json({ error: '保存済みファイルの指定が不正です' }, { status: 400 })
+    }
     if (file instanceof File && file.size > 0) {
       storagePath = await uploadFile(file)
     }

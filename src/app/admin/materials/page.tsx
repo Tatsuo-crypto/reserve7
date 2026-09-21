@@ -1,6 +1,7 @@
 'use client'
 
 import { FormEvent, useEffect, useMemo, useState } from 'react'
+import { createClient } from '@supabase/supabase-js'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import Icon from '@/components/ui/icons'
@@ -36,6 +37,11 @@ type MemberOption = {
   is_diet_member?: boolean
 }
 type TrainerOption = { id: string; full_name: string; status?: string }
+
+const supabaseStorage = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+)
 
 function toggle(list: string[], value: string) {
   return list.includes(value) ? list.filter(item => item !== value) : [...list, value]
@@ -211,6 +217,49 @@ export default function AdminMaterialsPage() {
     setSaving(true)
     setError('')
     try {
+      if (sourceMode === 'file' && !file) {
+        setError('ファイルを選択してください。')
+        return
+      }
+      if (sourceMode === 'url' && !externalUrl.trim()) {
+        setError('URLを入力してください。')
+        return
+      }
+      if (!title.trim()) {
+        setError('タイトルを入力してください。')
+        return
+      }
+      if (targetGroups.length === 0 && targetUserIds.length === 0 && targetTrainerIds.length === 0) {
+        setError('送信先を選択してください。')
+        return
+      }
+
+      let storagePath = ''
+      if (sourceMode === 'file' && file) {
+        const prepareRes = await fetch('/api/admin/materials/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fileName: file.name, contentType: file.type, fileSize: file.size }),
+        })
+        const prepared = await prepareRes.json().catch(() => ({}))
+        if (!prepareRes.ok || !prepared.path || !prepared.token) {
+          setError(prepared.error || 'ファイルを保存できませんでした。')
+          return
+        }
+
+        const { error: uploadError } = await supabaseStorage.storage
+          .from('shared-materials')
+          .uploadToSignedUrl(prepared.path, prepared.token, file, {
+            contentType: file.type || 'application/octet-stream',
+          })
+        if (uploadError) {
+          console.error(uploadError)
+          setError('ファイルを保存できませんでした。通信状態を確認して、もう一度お試しください。')
+          return
+        }
+        storagePath = prepared.path
+      }
+
       const formData = new FormData()
       const inferredType = inferMaterialType(sourceMode === 'file' ? file : null, sourceMode === 'url' ? externalUrl : '')
       formData.set('title', title)
@@ -221,7 +270,7 @@ export default function AdminMaterialsPage() {
       formData.set('targetGroups', JSON.stringify(targetGroups.filter(group => group !== 'all_members')))
       formData.set('targetUserIds', JSON.stringify(targetUserIds))
       formData.set('targetTrainerIds', JSON.stringify(targetTrainerIds))
-      if (sourceMode === 'file' && file) formData.set('file', file)
+      if (storagePath) formData.set('storagePath', storagePath)
 
       const res = await fetch('/api/admin/materials', { method: 'POST', body: formData })
       const data = await res.json().catch(() => ({}))
