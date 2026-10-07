@@ -7,7 +7,7 @@ import { cookies } from 'next/headers'
 import { authOptions } from '@/lib/auth-config'
 import { getStoreDisplayName, getUserStoreId, isAdmin } from '@/lib/auth-utils'
 import { PLAN_LIST } from '@/lib/constants'
-import { recordStatusChange } from '@/lib/membership-utils'
+import { applyCurrentMembership, recordStatusChange } from '@/lib/membership-utils'
 import { format } from 'date-fns'
 
 type MembershipHistoryStatus = {
@@ -48,19 +48,6 @@ async function runSupabaseQuery<T>(
   }
 
   return lastResult
-}
-
-function deriveCurrentStatus(member: any, histories: MembershipHistoryStatus[], today = format(new Date(), 'yyyy-MM-dd')) {
-  const userHistories = histories.filter(history => history.start_date <= today)
-
-  const latest = userHistories[0]
-  if (!latest) return member.status || 'active'
-
-  if (latest.status === 'withdrawn') return 'withdrawn'
-  if (latest.status === 'active' && latest.end_date && latest.end_date < today) return 'withdrawn'
-  if (latest.status === 'suspended' && latest.end_date && latest.end_date < today) return 'withdrawn'
-
-  return latest.status || member.status || 'active'
 }
 
 function isUuid(value: string | undefined | null) {
@@ -231,7 +218,7 @@ export async function GET(request: NextRequest) {
       const { data: historyData, error: historyError } = await runSupabaseQuery((signal) =>
         supabaseAdmin
           .from('membership_history')
-          .select(compact ? 'user_id, status, start_date, end_date' : 'user_id, status, start_date, end_date, plan, monthly_fee')
+          .select('user_id, status, start_date, end_date, plan, monthly_fee')
           .in('user_id', memberIds)
           .lte('start_date', today)
           .order('start_date', { ascending: false })
@@ -258,8 +245,7 @@ export async function GET(request: NextRequest) {
 
     // Map stores to members using store UUID and derive current status from history.
     const membersWithStores = memberRows.map(member => ({
-      ...member,
-      status: deriveCurrentStatus(member, historiesByUserId.get(member.id) || [], today),
+      ...applyCurrentMembership(member, historiesByUserId.get(member.id) || [], today),
       stores: storesById.get(member.store_id) || null
     }))
 

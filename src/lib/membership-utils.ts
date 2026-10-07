@@ -1,7 +1,41 @@
 import { supabaseAdmin } from '@/lib/supabase-admin'
-import { format, subDays, parseISO } from 'date-fns'
+import { format, subDays } from 'date-fns'
 
 export type MembershipStatus = 'active' | 'suspended' | 'withdrawn'
+
+export type MembershipSnapshot = {
+    status: MembershipStatus
+    start_date: string
+    end_date: string | null
+    plan?: string | null
+    monthly_fee?: number | null
+}
+
+export function resolveCurrentMembership<T extends MembershipSnapshot>(
+    histories: T[],
+    today = format(new Date(), 'yyyy-MM-dd')
+): T | null {
+    return histories
+        .filter(history => history.start_date <= today)
+        .sort((a, b) => b.start_date.localeCompare(a.start_date))[0] || null
+}
+
+export function applyCurrentMembership<T extends {
+    status?: string | null
+    plan?: string | null
+    monthly_fee?: number | null
+}>(member: T, histories: MembershipSnapshot[], today = format(new Date(), 'yyyy-MM-dd')): T {
+    const current = resolveCurrentMembership(histories, today)
+    if (!current) return member
+
+    const periodEnded = Boolean(current.end_date && current.end_date < today)
+    return {
+        ...member,
+        status: periodEnded ? 'withdrawn' : current.status,
+        plan: current.plan ?? member.plan,
+        monthly_fee: current.monthly_fee ?? member.monthly_fee,
+    }
+}
 
 /**
  * Record membership status change in history.

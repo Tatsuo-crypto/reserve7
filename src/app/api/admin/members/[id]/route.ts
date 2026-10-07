@@ -2,25 +2,14 @@ import { NextRequest, NextResponse } from 'next/server'
 export const dynamic = 'force-dynamic'
 import { supabaseAdmin } from '@/lib/supabase'
 import { getAuthenticatedUser, createErrorResponse, createSuccessResponse } from '@/lib/api-utils'
-import { format } from 'date-fns'
+import { applyCurrentMembership } from '@/lib/membership-utils'
 
 type MembershipHistoryStatus = {
   status: 'active' | 'suspended' | 'withdrawn'
   start_date: string
   end_date: string | null
-}
-
-function deriveCurrentStatus(member: any, histories: MembershipHistoryStatus[], today = format(new Date(), 'yyyy-MM-dd')) {
-  const latest = histories
-    .filter(history => history.start_date <= today)
-    .sort((a, b) => b.start_date.localeCompare(a.start_date))[0]
-
-  if (!latest) return member.status || 'active'
-  if (latest.status === 'withdrawn') return 'withdrawn'
-  if (latest.status === 'active' && latest.end_date && latest.end_date < today) return 'withdrawn'
-  if (latest.status === 'suspended' && latest.end_date && latest.end_date < today) return 'withdrawn'
-
-  return latest.status || member.status || 'active'
+  plan?: string | null
+  monthly_fee?: number | null
 }
 
 export async function GET(
@@ -75,7 +64,7 @@ export async function GET(
 
     const { data: histories, error: historyError } = await supabaseAdmin
       .from('membership_history')
-      .select('status, start_date, end_date')
+      .select('status, start_date, end_date, plan, monthly_fee')
       .eq('user_id', id)
       .order('start_date', { ascending: true })
 
@@ -143,8 +132,7 @@ export async function GET(
     }))
 
     return createSuccessResponse({
-      ...member,
-      status: deriveCurrentStatus(member, (histories || []) as MembershipHistoryStatus[]),
+      ...applyCurrentMembership(member, (histories || []) as MembershipHistoryStatus[]),
       lifestyle_settings: lifestyleSettings,
       diet_support_enabled: dietSupportEnabled,
       push_subscription_count: pushSubscriptionCount,
