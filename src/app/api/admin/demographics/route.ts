@@ -10,20 +10,36 @@ type CounselingProfile = {
   route?: string
 }
 
-function calcAgeGroup(birthDate: string | null): string {
-  if (!birthDate) return '不明'
-  const birth = new Date(birthDate)
-  if (Number.isNaN(birth.getTime())) return '不明'
-  const now = new Date()
-  let age = now.getFullYear() - birth.getFullYear()
-  const m = now.getMonth() - birth.getMonth()
-  if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) age--
+function calcAgeGroup(birthDate: string | null, storedAge?: number | null): string {
+  let age = storedAge ?? null
+  if (age === null || age === undefined) {
+    if (!birthDate) return '不明'
+    const birth = new Date(birthDate)
+    if (Number.isNaN(birth.getTime())) return '不明'
+    const now = new Date()
+    age = now.getFullYear() - birth.getFullYear()
+    const m = now.getMonth() - birth.getMonth()
+    if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) age--
+  }
+  if (age < 0) return '不明'
   if (age < 20) return '10代以下'
   if (age < 30) return '20代'
   if (age < 40) return '30代'
   if (age < 50) return '40代'
   if (age < 60) return '50代'
   return '60代以上'
+}
+
+function getAge(birthDate: string | null, storedAge?: number | null): number | null {
+  if (storedAge !== null && storedAge !== undefined && storedAge >= 0) return storedAge
+  if (!birthDate) return null
+  const birth = new Date(birthDate)
+  if (Number.isNaN(birth.getTime())) return null
+  const now = new Date()
+  let age = now.getFullYear() - birth.getFullYear()
+  const monthDiff = now.getMonth() - birth.getMonth()
+  if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < birth.getDate())) age--
+  return age >= 0 ? age : null
 }
 
 const GENDER_LABELS: Record<string, string> = {
@@ -119,10 +135,14 @@ export async function GET(request: NextRequest) {
     }
 
     const storeId = request.nextUrl.searchParams.get('storeId')
+    const scope = request.nextUrl.searchParams.get('scope') || 'all'
 
-    let usersQuery = supabaseAdmin.from('users').select('id, birth_date, gender, store_id')
+    let usersQuery = supabaseAdmin.from('users').select('id, birth_date, age, gender, store_id').neq('role', 'ADMIN')
     if (storeId && storeId !== 'all') {
       usersQuery = usersQuery.eq('store_id', storeId)
+    }
+    if (scope === 'current') {
+      usersQuery = usersQuery.in('status', ['active', 'suspended'])
     }
     const { data: users, error: usersError } = await usersQuery
 
@@ -150,7 +170,11 @@ export async function GET(request: NextRequest) {
       if (profile) profileByUserId.set(row.user_id, profile)
     }
 
-    const ageGroups = tally((users || []).map((u) => calcAgeGroup(u.birth_date)), '不明')
+    const ageGroups = tally((users || []).map((u) => calcAgeGroup(u.birth_date, u.age)), '不明')
+    const ages = (users || [])
+      .map((u) => getAge(u.birth_date, u.age))
+      .filter((age): age is number => age !== null)
+    const averageAge = ages.length ? Math.round((ages.reduce((sum, age) => sum + age, 0) / ages.length) * 10) / 10 : null
     const genderBreakdown = tally(
       (users || []).map((u) => (u.gender ? GENDER_LABELS[u.gender] || u.gender : undefined)),
       '不明'
@@ -178,6 +202,8 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       totalMembers: users?.length || 0,
+      scope,
+      averageAge,
       ageGroups,
       genderBreakdown,
       jobBreakdown,

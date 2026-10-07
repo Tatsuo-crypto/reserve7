@@ -7,6 +7,8 @@ import Button from '@/components/ui/Button'
 import Icon, { type IconName } from '@/components/ui/icons'
 import { getDietDayTypeLabel, getEffectiveDietGoal, getGoalForDate, isDayTypeTargetEnabled, normalizeDietDayType, type DietDayType } from '@/lib/utils/dietDayType'
 import { fetchJsonCached, invalidateClientFetchCache } from '@/lib/client-fetch-cache'
+import { useWeeklyProgress } from '@/hooks/useWeeklyProgress'
+import WeeklyProgressPanel from './WeeklyProgressPanel'
 
 interface InputTabProps {
     userId: string;
@@ -41,6 +43,13 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
     const [visibleItems, setVisibleItems] = useState({ steps: true, sleep: true, water: true, alcohol: true, workout: true })
     const [showGoalModal, setShowGoalModal] = useState(false)
+    const [recordView, setRecordView] = useState<'input' | 'record'>('input')
+    const { weeklyStats, weekOffset, setWeekOffset } = useWeeklyProgress(token, {
+        userId,
+        isAdmin,
+        todayDraft: sharedState,
+        enabled: recordView === 'record',
+    })
 
     const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -186,6 +195,30 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
     }, [token, selectedDate])
 
     if (!sharedState) return null
+
+    const viewToggle = (
+        <div className="flex rounded-xl bg-surface-overlay p-1">
+            {(['input', 'record'] as const).map(view => (
+                <button key={view} type="button" onClick={() => setRecordView(view)} className={`flex-1 rounded-lg px-3 py-2 text-sm ${recordView === view ? 'bg-surface-raised text-text-primary shadow-sm' : 'text-text-muted'}`}>
+                    {view === 'input' ? '入力' : '記録'}
+                </button>
+            ))}
+        </div>
+    )
+
+    if (recordView === 'record') {
+        return (
+            <div className="space-y-4 pb-24">
+                {viewToggle}
+                <WeeklyProgressPanel
+                    weeklyStats={weeklyStats}
+                    weekOffset={weekOffset}
+                    setWeekOffset={setWeekOffset}
+                    showWeekSwitcher
+                />
+            </div>
+        )
+    }
 
     const updateSharedState = (updates: any) => {
         onStateChange({ ...sharedState, ...updates, isSaved: false })
@@ -373,6 +406,7 @@ export default function InputTab({ userId, token, isAdmin, sharedState, onStateC
 
     return (
         <div className="space-y-6">
+            {viewToggle}
             {/* Toast Message */}
             {message && (
                 <div className={`fixed top-16 left-4 right-4 z-50 p-4 rounded-2xl shadow-lg border text-sm font-normal flex items-center justify-between ${message.type === 'success' ? 'bg-state-success-500/15 border-state-success-500/30 text-state-success-700' : 'bg-state-danger-500/15 border-state-danger-500/30 text-state-danger-700'

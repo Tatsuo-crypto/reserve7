@@ -108,6 +108,16 @@ const emptyCounseling: CounselingData = {
   nextActionMemo: '',
 }
 
+function calculateAge(birthDate: string) {
+  if (!birthDate) return null
+  const birth = new Date(`${birthDate}T00:00:00`)
+  if (Number.isNaN(birth.getTime())) return null
+  const today = new Date()
+  let age = today.getFullYear() - birth.getFullYear()
+  if (today.getMonth() < birth.getMonth() || (today.getMonth() === birth.getMonth() && today.getDate() < birth.getDate())) age -= 1
+  return age >= 0 ? age : null
+}
+
 export default function EditMemberPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
@@ -141,6 +151,7 @@ export default function EditMemberPage() {
     onlineReminderEnabled: false,
     pushNotificationEnabled: false,
     birthDate: '',
+    age: '',
     gender: '',
     heightCm: '',
     activityLevel: '',
@@ -185,7 +196,7 @@ export default function EditMemberPage() {
             fullName: member.full_name || '',
             email: member.email || '',
             storeId: member.store_id || '',
-            plan: member.plan || '月4回',
+            plan: member.plan || '',
             monthlyFee: member.monthly_fee ? member.monthly_fee.toString() : '',
             startMonth,
             registrationDate: member.created_at ? member.created_at.split('T')[0] : '',
@@ -195,6 +206,7 @@ export default function EditMemberPage() {
             onlineReminderEnabled: member.online_reminder_enabled || false,
             pushNotificationEnabled: member.push_notification_enabled || false,
             birthDate: member.birth_date || '',
+            age: member.age !== null && member.age !== undefined ? member.age.toString() : '',
             gender: member.gender || '',
             heightCm: member.height_cm ? member.height_cm.toString() : '',
             activityLevel: member.activity_level ? member.activity_level.toString() : '',
@@ -284,6 +296,7 @@ export default function EditMemberPage() {
             onlineReminderEnabled: formData.onlineReminderEnabled,
             pushNotificationEnabled: formData.pushNotificationEnabled,
             birthDate: formData.birthDate,
+            age: formData.age,
             gender: formData.gender,
             heightCm: formData.heightCm,
             activityLevel: formData.activityLevel,
@@ -436,9 +449,13 @@ export default function EditMemberPage() {
         <div className="p-5 md:p-6">
           {activeTab === 0 && (
             <Section title="基本情報" description="初回カウンセリングで最初に確認する内容です。">
+              <TextArea label="基本情報メモ" name="basicMemo" value={valueOf(counseling.basicMemo)} onValue={updateCounseling} placeholder="例：デスクワーク中心、勤務時間が不規則など" />
               <TextField label="氏名" name="fullName" value={formData.fullName} onChange={handleChange} required placeholder="山田 太郎" />
               <TextField label="フリガナ" name="furigana" value={valueOf(counseling.furigana)} onValue={updateCounseling} placeholder="ヤマダ タロウ" />
-              <TextField label="生年月日" type="date" name="birthDate" value={formData.birthDate} onChange={handleChange} />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <TextField label="生年月日" type="date" name="birthDate" value={formData.birthDate} onChange={handleChange} />
+                <TextField label="年齢" type="number" name="age" value={formData.age} onChange={handleChange} unit="歳" placeholder="例：26" />
+              </div>
               <ChoiceGroup label="性別" name="gender" value={formData.gender} options={choices.gender} onValue={(name, value) => setFormData(prev => ({ ...prev, [name]: value }))} />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <TextField label="身長" type="number" name="heightCm" value={formData.heightCm} onChange={handleChange} required unit="cm" placeholder="160" />
@@ -446,12 +463,12 @@ export default function EditMemberPage() {
               </div>
               <TextField label="職業" name="job" value={valueOf(counseling.job)} onValue={updateCounseling} placeholder="会社員" />
               <ChoiceGroup label="来店経路" name="route" value={valueOf(counseling.route)} options={choices.route} onValue={updateCounseling} />
-              <TextArea label="基本情報メモ" name="basicMemo" value={valueOf(counseling.basicMemo)} onValue={updateCounseling} placeholder="例：デスクワーク中心、勤務時間が不規則など" />
             </Section>
           )}
 
           {activeTab === 1 && (
             <Section title="目的・悩み・目標" description="目的がダイエットの場合は、4タブ目に詳細項目が表示されます。">
+              <TextArea label="目的・目標メモ" name="goalMemo" value={valueOf(counseling.goalMemo)} onValue={updateCounseling} placeholder="会話で出た本音や背景を記録" />
               <CheckGroup label="パーソナルジムに通う目的" name="purposes" values={arrayOf(counseling.purposes)} options={choices.purposes} onToggle={toggleCounseling} required />
               <ChoiceGroup label="一番の目的" name="mainPurpose" value={valueOf(counseling.mainPurpose)} options={choices.mainPurpose} onValue={updateCounseling} required />
               <TextArea label="今回、一番変えたいこと" name="changeGoal" value={valueOf(counseling.changeGoal)} onValue={updateCounseling} required placeholder="例：体重を落として、昔履いていたパンツを履けるようになりたい" />
@@ -459,12 +476,12 @@ export default function EditMemberPage() {
               <TextArea label="いつまでにどうなりたいか" name="goalDeadline" value={valueOf(counseling.goalDeadline)} onValue={updateCounseling} placeholder="例：3ヶ月後までに-5kg、健康診断までに体重を落としたい" />
               <TextArea label="期待していること" name="expectation" value={valueOf(counseling.expectation)} onValue={updateCounseling} placeholder="例：食事も含めて自分に合った方法を知りたい" />
               <CheckGroup label="特に引き締めたい部位" name="bodyParts" values={arrayOf(counseling.bodyParts)} options={choices.bodyParts} onToggle={toggleCounseling} />
-              <TextArea label="目的・目標メモ" name="goalMemo" value={valueOf(counseling.goalMemo)} onValue={updateCounseling} placeholder="会話で出た本音や背景を記録" />
             </Section>
           )}
 
           {activeTab === 2 && (
             <Section title="生活・食事・運動" description="会話しながら選択できるように、選択式を中心にしています。">
+              <TextArea label="生活・食事・運動メモ" name="lifestyleMemo" value={valueOf(counseling.lifestyleMemo)} onValue={updateCounseling} placeholder="例：平日は帰宅が遅く、夕食が22時以降になりやすい。" />
               <ChoiceGroup label="日頃の活動量" name="dailyActivity" value={valueOf(counseling.dailyActivity || formData.activityLevel)} options={choices.dailyActivity} onValue={(name, value) => {
                 updateCounseling(name, value)
                 setFormData(prev => ({ ...prev, activityLevel: value }))
@@ -476,7 +493,6 @@ export default function EditMemberPage() {
               <ChoiceGroup label="飲酒" name="alcohol" value={valueOf(counseling.alcohol)} options={choices.alcohol} onValue={updateCounseling} />
               <ChoiceGroup label="喫煙" name="smoking" value={valueOf(counseling.smoking)} options={choices.smoking} onValue={updateCounseling} />
               <ChoiceGroup label="日々のストレス" name="stress" value={valueOf(counseling.stress)} options={choices.stress} onValue={updateCounseling} />
-              <TextArea label="生活・食事・運動メモ" name="lifestyleMemo" value={valueOf(counseling.lifestyleMemo)} onValue={updateCounseling} placeholder="例：平日は帰宅が遅く、夕食が22時以降になりやすい。" />
             </Section>
           )}
 
@@ -490,6 +506,7 @@ export default function EditMemberPage() {
               {isDietSelected ? (
                 <div className="mt-6 pt-6 border-t border-border-subtle space-y-5">
                   <h3 className="text-xl font-semibold text-text-primary">ダイエット詳細</h3>
+                  <TextArea label="ダイエット詳細メモ" name="dietDetailMemo" value={valueOf(counseling.dietDetailMemo)} onValue={updateCounseling} placeholder="例：お酒と夜の食事が課題。厳しい糖質制限は過去に続かなかった。" />
                   <ChoiceGroup label="ダイエット意欲" name="dietMotivation" value={valueOf(counseling.dietMotivation)} options={choices.dietMotivation} onValue={updateCounseling} />
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <TextField label="目標減量" type="number" name="targetLossKg" value={valueOf(counseling.targetLossKg)} onValue={updateCounseling} unit="kg" placeholder="5" />
@@ -500,7 +517,6 @@ export default function EditMemberPage() {
                   <CheckGroup label="減らすのが難しそうなもの" name="hardToReduce" values={arrayOf(counseling.hardToReduce)} options={choices.hardToReduce} onToggle={toggleCounseling} />
                   <ChoiceGroup label="食事管理の希望" name="foodSupport" value={valueOf(counseling.foodSupport)} options={choices.foodSupport} onValue={updateCounseling} />
                   <ChoiceGroup label="体重測定" name="weighIn" value={valueOf(counseling.weighIn)} options={choices.weighIn} onValue={updateCounseling} />
-                  <TextArea label="ダイエット詳細メモ" name="dietDetailMemo" value={valueOf(counseling.dietDetailMemo)} onValue={updateCounseling} placeholder="例：お酒と夜の食事が課題。厳しい糖質制限は過去に続かなかった。" />
                 </div>
               ) : (
                 <div className="mt-6 rounded-lg bg-surface-base border border-border-strong p-4 text-sm text-text-secondary">
@@ -512,28 +528,30 @@ export default function EditMemberPage() {
 
           {activeTab === 4 && (
             <Section title="健康確認・提案メモ" description="最後に提案内容と次回アクションまで残します。">
+              <TextArea label="医療・服薬・怪我メモ" name="medicalMemo" value={valueOf(counseling.medicalMemo)} onValue={updateCounseling} placeholder="例：右膝に違和感あり。階段の下りで痛みが出ることがある。" />
+              <TextArea label="次回アクションメモ" name="nextActionMemo" value={valueOf(counseling.nextActionMemo)} onValue={updateCounseling} placeholder="例：料金案内後、家族に相談してLINEで連絡予定" />
               <CheckGroup label="気になる不調" name="symptoms" values={arrayOf(counseling.symptoms)} options={choices.symptoms} onToggle={toggleCounseling} />
               <CheckGroup label="注意が必要な項目" name="cautions" values={arrayOf(counseling.cautions)} options={choices.cautions} onToggle={toggleCounseling} />
               <CheckGroup label="健康診断で指摘された項目" name="checkupFlags" values={arrayOf(counseling.checkupFlags)} options={choices.checkupFlags} onToggle={toggleCounseling} />
-              <TextArea label="医療・服薬・怪我メモ" name="medicalMemo" value={valueOf(counseling.medicalMemo)} onValue={updateCounseling} placeholder="例：右膝に違和感あり。階段の下りで痛みが出ることがある。" />
               <TextArea label="トレーナー所見" name="trainerFinding" value={valueOf(counseling.trainerFinding)} onValue={updateCounseling} required placeholder="例：運動習慣がなく、夕食が遅い。まずは週1〜2回の筋トレと食事リズムの改善から開始。" />
               <CheckGroup label="優先改善ポイント" name="improvementPriorities" values={arrayOf(counseling.improvementPriorities)} options={choices.improvementPriorities} onToggle={toggleCounseling} />
               <ChoiceGroup label="提案プラン" name="suggestedPlan" value={valueOf(counseling.suggestedPlan)} options={choices.suggestedPlan} onValue={updateCounseling} />
               <ChoiceGroup label="成約見込み" name="contractChance" value={valueOf(counseling.contractChance)} options={choices.contractChance} onValue={updateCounseling} />
               <CheckGroup label="次回アクション" name="nextActions" values={arrayOf(counseling.nextActions)} options={choices.nextActions} onToggle={toggleCounseling} />
-              <TextArea label="次回アクションメモ" name="nextActionMemo" value={valueOf(counseling.nextActionMemo)} onValue={updateCounseling} placeholder="例：料金案内後、家族に相談してLINEで連絡予定" />
               {saved && <SummaryBox summaryText={summaryText} formData={formData} counseling={counseling} />}
             </Section>
           )}
 
           {activeTab === 5 && (
             <Section title="入会情報" description="メールアドレス、プラン、店舗、通知設定など既存の管理項目です。">
+              <TextArea label="管理メモ" name="memo" value={formData.memo} onChange={handleChange} placeholder="入会・支払い・連絡事項など" />
               <TextField label="メールアドレス" type="email" name="email" value={formData.email} onChange={handleChange} required placeholder="example@email.com" />
               <SelectField label="店舗" name="storeId" value={formData.storeId} onChange={handleChange} required>
                 <option value="">店舗を選択してください</option>
                 {stores.map(store => <option key={store.id} value={store.id}>{store.name}</option>)}
               </SelectField>
               <SelectField label="入会時プラン" name="plan" value={formData.plan} onChange={handleChange}>
+                <option value="">未入会・未設定</option>
                 {PLAN_LIST.map(plan => <option key={plan} value={plan}>{plan}</option>)}
               </SelectField>
               <TextField label="入会時月会費" type="number" name="monthlyFee" value={formData.monthlyFee} onChange={handleChange} unit="円" placeholder="13200" />
@@ -584,7 +602,6 @@ export default function EditMemberPage() {
                 </div>
               </div>
 
-              <TextArea label="管理メモ" name="memo" value={formData.memo} onChange={handleChange} placeholder="入会・支払い・連絡事項など" />
             </Section>
           )}
         </div>

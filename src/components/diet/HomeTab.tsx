@@ -233,6 +233,27 @@ export default function HomeTab({ token, userName, isDietPlan = true, bootstrapD
                 </Card>
             </section>
 
+            <section className="space-y-2">
+                <SectionTitle>記録</SectionTitle>
+                <Button
+                    type="button"
+                    unstyled
+                    block
+                    onClick={() => onNavigate?.('record')}
+                    className="block w-full p-0 text-left active:scale-[0.99] transition-transform"
+                >
+                    <Card padding="sm" className="w-full !p-4">
+                        <div className="flex items-center justify-between gap-3">
+                            <div className="min-w-0">
+                                <p className="text-sm font-semibold text-text-primary">食事・体重を記録</p>
+                                <p className="mt-1 text-xs font-normal text-text-secondary">{todayLabel}</p>
+                            </div>
+                            <span className="shrink-0 rounded-full bg-brand-500/15 px-3 py-1.5 text-xs font-normal text-brand-600">開く</span>
+                        </div>
+                    </Card>
+                </Button>
+            </section>
+
             {todayLesson && (
                 <section className="space-y-2">
                     <SectionTitle>今日</SectionTitle>
@@ -289,12 +310,6 @@ export default function HomeTab({ token, userName, isDietPlan = true, bootstrapD
                 </Button>
             </section>
 
-            <MaterialsList
-                endpoint={`/api/client/materials?token=${encodeURIComponent(token)}`}
-                limit={3}
-                preview
-                onOpenAll={() => onNavigate?.('materials')}
-            />
         </div>
     )
 }

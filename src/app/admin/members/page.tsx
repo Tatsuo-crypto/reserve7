@@ -220,7 +220,8 @@ function MembersPageContent() {
               </div>
               <Link
                 href="/admin/members/new"
-                aria-label="新規登録"
+                aria-label="体験者を登録"
+                title="体験者を登録"
                 className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand-500 text-white shadow-md transition-all active:scale-95 hover:bg-brand-600"
               >
                 <Icon name="plus" size={28} />

@@ -1,0 +1,3 @@
+ALTER TABLE users ADD COLUMN IF NOT EXISTS age INTEGER;
+ALTER TABLE users DROP CONSTRAINT IF EXISTS users_age_check;
+ALTER TABLE users ADD CONSTRAINT users_age_check CHECK (age IS NULL OR (age >= 0 AND age <= 120));

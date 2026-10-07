@@ -7,7 +7,7 @@ import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import EmptyState from '@/components/ui/EmptyState'
 import Icon from '@/components/ui/icons'
-import { RecordCheckTable, CalorieHeroCard, AchievementItemCard, DisplayModeToggle, type DisplayMode } from './WeeklyAchievementCards'
+import { RecordCheckTable, CalorieHeroCard, AchievementItemCard, DisplayModeToggle, type DisplayMode, type RecordPeriod } from './WeeklyAchievementCards'
 
 interface WeeklySummaryPanelProps {
     weeklyStats: WeeklyProgressStats | null
@@ -34,6 +34,7 @@ export default function WeeklySummaryPanel({
     showWeekSwitcher = true,
 }: WeeklySummaryPanelProps) {
     const [mode, setMode] = useState<DisplayMode>('average')
+    const [period, setPeriod] = useState<RecordPeriod>('1w')
     const { selectedDate, dayLabel, dayActual, dayTarget, goPrevDay, goNextDay, selectDate, isNextDayDisabled } =
         useDaySelection(weeklyStats, weekOffset, setWeekOffset, mode === 'day')
 
@@ -89,7 +90,7 @@ export default function WeeklySummaryPanel({
                 />
             ) : (
                 <div className="space-y-2">
-                    <DisplayModeToggle mode={mode} onChange={setMode} />
+                    <DisplayModeToggle mode={mode} onChange={setMode} period={period} onPeriodChange={setPeriod} />
 
                     <RecordCheckTable
                         weekDays={weeklyStats.weekDays}

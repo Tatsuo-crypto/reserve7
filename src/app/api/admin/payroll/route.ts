@@ -421,6 +421,13 @@ export async function GET(request: NextRequest) {
         monthRow?.allowance_amount || 0,
         monthRow?.adjustment_amount || 0
       )
+      const actualTotals = calculatePayrollTotals(
+        toWorkRows(detailRows.filter(row => row.attended)),
+        rates,
+        trainer.daily_transportation_cost || 0,
+        monthRow?.allowance_amount || 0,
+        monthRow?.adjustment_amount || 0
+      )
 
       return {
         trainer: {
@@ -434,6 +441,7 @@ export async function GET(request: NextRequest) {
         rates,
         month: monthRow || null,
         totals,
+        actualTotals,
         rows: detailRows
       }
     })
@@ -589,7 +597,7 @@ export async function POST(request: NextRequest) {
     if (savedAttendanceError) throw savedAttendanceError
 
     const totals = calculatePayrollTotals(
-      ((savedAttendance || []) as AttendanceRow[]).map(row => ({
+      ((savedAttendance || []) as AttendanceRow[]).filter(row => row.attended).map(row => ({
         work_date: row.work_date,
         clock_in: row.clock_in,
         clock_out: row.clock_out,

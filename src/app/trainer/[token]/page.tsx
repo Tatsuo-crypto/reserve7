@@ -13,6 +13,7 @@ interface Trainer {
   name: string
   email: string
   storeId: string
+  stores?: Array<{ id: string; name: string; calendarId?: string | null }>
 }
 
 export default function TrainerDashboardPage() {
@@ -25,6 +26,7 @@ export default function TrainerDashboardPage() {
   const [error, setError] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<'month' | 'timeline'>('month')
   const [calendarKey, setCalendarKey] = useState(0)
+  const [selectedStoreId, setSelectedStoreId] = useState('')
 
   useEffect(() => {
     const fetchTrainer = async () => {
@@ -40,6 +42,7 @@ export default function TrainerDashboardPage() {
         }
         const data = await response.json()
         setTrainer(data.trainer)
+        setSelectedStoreId(data.trainer.storeId)
 
       } catch (err) {
         console.error('Error fetching trainer:', err)
@@ -80,6 +83,12 @@ export default function TrainerDashboardPage() {
   }
 
   const handleBackToMonth = () => {
+    setCalendarKey(prev => prev + 1)
+    setViewMode('month')
+  }
+
+  const handleStoreChange = (storeId: string) => {
+    setSelectedStoreId(storeId)
     setCalendarKey(prev => prev + 1)
     setViewMode('month')
   }
@@ -126,6 +135,20 @@ export default function TrainerDashboardPage() {
       </header>
 
       <div className="w-full pt-20 pb-28">
+        <div className="mx-auto mb-4 max-w-md px-4">
+          <div className="flex items-center gap-1 rounded-2xl border border-border-subtle bg-surface-raised p-1">
+            {(trainer.stores || [{ id: trainer.storeId, name: getStoreDisplayName(trainer.storeId) }]).map(store => (
+              <button
+                key={store.id}
+                type="button"
+                onClick={() => handleStoreChange(store.id)}
+                className={`min-w-0 flex-1 rounded-xl px-3 py-2 text-sm font-normal transition-colors ${selectedStoreId === store.id ? 'bg-brand-500 text-white' : 'text-text-muted hover:text-text-primary'}`}
+              >
+                {store.name.includes('1号') ? '1号店' : store.name.includes('2号') ? '2号店' : store.name}
+              </button>
+            ))}
+          </div>
+        </div>
         {/* Calendar Content */}
         <Suspense fallback={<div className="p-8 text-center">読み込み中...</div>}>
           <CalendarView 
@@ -133,6 +156,7 @@ export default function TrainerDashboardPage() {
             onViewModeChange={setViewMode}
             onBackToMonth={handleBackToMonth}
             trainerToken={token}
+            calendarStoreId={selectedStoreId}
           />
         </Suspense>
       </div>

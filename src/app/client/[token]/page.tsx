@@ -55,6 +55,11 @@ const MaterialsList = dynamic(() => import('@/components/materials/MaterialsList
   loading: TabLoading,
 })
 
+const SharedMemoList = dynamic(() => import('@/components/diet/SharedMemoList'), {
+  ssr: false,
+  loading: TabLoading,
+})
+
 // TrackingModalをアドミン専用に遅延読み込み
 const TrackingModal = dynamic(() => import('@/app/admin/members/TrackingModal'), {
   ssr: false,
@@ -249,8 +254,8 @@ export default function ClientReservationsPage() {
     home: 'マイページ',
     res: '予約確認',
     record: '記録',
-    weekly: '習慣',
-    analyze: '分析',
+    weekly: 'カロリー',
+    analyze: 'グラフ',
     plan: '推移',
     settings: '設定',
     notifications: 'お知らせ',
@@ -361,7 +366,10 @@ export default function ClientReservationsPage() {
           <NotificationsTab token={token} />
         )}
         {activeTab === 'materials' && (
-          <MaterialsList endpoint={`/api/client/materials?token=${encodeURIComponent(token)}`} />
+          <div className="space-y-5 animate-fadeIn">
+            <SharedMemoList endpoint={`/api/client/shared-memos?token=${encodeURIComponent(token)}`} />
+            <MaterialsList endpoint={`/api/client/materials?token=${encodeURIComponent(token)}`} />
+          </div>
         )}
         {activeTab === 'settings' && (
           <SettingsTab token={token} userId={userId} userName={userName} />
@@ -383,10 +391,10 @@ export default function ClientReservationsPage() {
         <div className={`grid ${isDietPlan ? 'grid-cols-5' : 'grid-cols-1'} items-center max-w-lg mx-auto h-20`}>
           {isDietPlan && (
             <NavBtn
-              active={activeTab === 'record'}
-              onClick={() => setActiveTab('record')}
-              iconName="camera"
-              label="記録"
+              active={activeTab === 'materials'}
+              onClick={() => setActiveTab('materials')}
+              iconName="documentText"
+              label="資料"
             />
           )}
 
@@ -395,7 +403,7 @@ export default function ClientReservationsPage() {
               active={activeTab === 'weekly'}
               onClick={() => setActiveTab('weekly')}
               iconName="clipboardList"
-              label="習慣"
+              label="カロリー"
             />
           )}
 
@@ -409,7 +417,7 @@ export default function ClientReservationsPage() {
               active={activeTab === 'analyze'}
               onClick={() => setActiveTab('analyze')}
               iconName="chartBar"
-              label="分析"
+              label="グラフ"
             />
           )}
 

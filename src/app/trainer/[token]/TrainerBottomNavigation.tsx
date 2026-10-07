@@ -20,12 +20,11 @@ export default function TrainerBottomNavigation() {
   if (!token) return null
 
   const basePath = `/trainer/${token}`
-  // AN-4: トレーニングカルテ機能の追加に伴い「会員」タブを新設
   const items: TrainerNavItem[] = [
     { id: 'shifts', label: 'シフト管理', href: `${basePath}/shifts`, iconName: 'clock' },
+    { id: 'materials', label: '資料', href: `${basePath}/materials`, iconName: 'documentText' },
     { id: 'reservations', label: '予約', href: basePath, iconName: 'calendar', isCenter: true },
     { id: 'members', label: '会員', href: `${basePath}/members`, iconName: 'userGroup' },
-    { id: 'materials', label: '資料', href: `${basePath}/materials`, iconName: 'documentText' },
     { id: 'attendance', label: '出勤', href: `${basePath}/attendance`, iconName: 'checkCircle' },
   ]
 

@@ -73,36 +73,22 @@ function fmt0(value: number) {
  * トグル自体がどちらのモードか示しているため、各カード内には「週合計」「記録日平均」
  * といった重複する文言は表示しない。
  */
-export function DisplayModeToggle({ mode, onChange }: { mode: DisplayMode; onChange: (mode: DisplayMode) => void }) {
-    // AR-1: 「日」を追加して 日/週/平均 の3択に。
-    // AR-3: ラベルが短くなったことに合わせ、選択中の背景も文字の形に沿った丸(pill)にする
-    // (以前は長い文言に引きずられて角ばった四角に見えていた)。
-    const options: Array<{ key: DisplayMode; label: string }> = [
-        { key: 'day', label: '日' },
-        { key: 'total', label: '週' },
-        { key: 'average', label: '平均' },
-    ]
+export type RecordPeriod = '1d' | '1w' | '2w' | '3w' | '1m' | '3m' | '6m' | '1y' | 'all'
 
-    // AT-2: 外側の枠が丸(pill)で、選択中の背景が角丸四角という組み合わせになっていて形が揃って
-    // いなかったため、外枠も選択中も同じ角丸四角に統一する。
+export function DisplayModeToggle({ mode, onChange, period = '1w', onPeriodChange }: { mode: DisplayMode; onChange: (mode: DisplayMode) => void; period?: RecordPeriod; onPeriodChange?: (period: RecordPeriod) => void }) {
+    const periodOptions: Array<{ key: RecordPeriod; label: string }> = [
+        { key: '1d', label: '日' }, { key: '1w', label: '週' }, { key: '2w', label: '2週間' }, { key: '3w', label: '3週間' },
+        { key: '1m', label: '月' }, { key: '3m', label: '3ヶ月' }, { key: '6m', label: '半年' }, { key: '1y', label: '1年' }, { key: 'all', label: '全期間' },
+    ]
     return (
-        // BE-5: 週切替バーとこのトグルが縦に2段積まれるため、こちら側の高さを削る
-        <div className="flex justify-center">
-            <div className="inline-flex items-center gap-0.5 bg-surface-overlay rounded-xl p-0.5">
-                {options.map(opt => (
-                    <Button
-                        key={opt.key}
-                        type="button"
-                        variant="ghost"
-                        onClick={() => onChange(opt.key)}
-                        className={`min-w-[3.5rem] px-4 py-1 rounded-lg text-xs font-normal leading-none transition-all ${
-                            mode === opt.key ? 'bg-surface-raised text-text-primary shadow-sm' : 'text-text-muted'
-                        }`}
-                    >
-                        {opt.label}
-                    </Button>
-                ))}
-            </div>
+        <div className="flex items-center justify-center gap-2 px-2">
+            <select aria-label="日付の範囲" value={period} onChange={e => onPeriodChange?.(e.target.value as RecordPeriod)} className="min-w-0 flex-1 rounded-lg border border-border-strong bg-surface-base px-3 py-2 text-xs text-text-primary">
+                {periodOptions.map(option => <option key={option.key} value={option.key}>{option.label}</option>)}
+            </select>
+            <select aria-label="集計方法" value={mode === 'day' ? 'average' : mode} onChange={e => onChange(e.target.value as DisplayMode)} className="min-w-0 flex-1 rounded-lg border border-border-strong bg-surface-base px-3 py-2 text-xs text-text-primary">
+                <option value="average">平均</option>
+                <option value="total">合計</option>
+            </select>
         </div>
     )
 }

@@ -9,18 +9,11 @@ import {
     YAxis,
     CartesianGrid,
     Tooltip,
-    ResponsiveContainer,
-    ReferenceLine,
-    Area,
-    Legend,
-    BarChart,
-    LineChart
+    ResponsiveContainer
 } from 'recharts'
 import { useWeeklyProgress } from '@/hooks/useWeeklyProgress'
 import WeeklyProgressPanel from './WeeklyProgressPanel'
-import Button from '@/components/ui/Button'
 import EmptyState from '@/components/ui/EmptyState'
-import Icon from '@/components/ui/icons'
 import { ChartSkeleton } from '@/components/ui/Skeleton'
 import { fetchJsonCached } from '@/lib/client-fetch-cache'
 import { getGoalForDate } from '@/lib/utils/dietDayType'
@@ -34,7 +27,7 @@ interface AnalyzeTabProps {
     showWeeklyGoals?: boolean
 }
 
-type PeriodType = '1w' | '1m' | '3m' | '6m' | '1y' | 'all'
+type PeriodType = '1d' | '1w' | '1m' | '3m' | '6m' | '1y' | 'all'
 
 export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWeeklyGoals = true }: AnalyzeTabProps) {
     const [period, setPeriod] = useState<PeriodType>('1m')
@@ -76,7 +69,8 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
                 const rangeStart = new Date()
                 rangeStart.setHours(0, 0, 0, 0)
 
-                if (period === '1w') rangeStart.setDate(rangeEnd.getDate() - 6)
+                if (period === '1d') rangeStart.setDate(rangeEnd.getDate())
+                else if (period === '1w') rangeStart.setDate(rangeEnd.getDate() - 6)
                 else if (period === '1m') rangeStart.setMonth(rangeEnd.getMonth() - 1)
                 else if (period === '3m') rangeStart.setMonth(rangeEnd.getMonth() - 3)
                 else if (period === '6m') rangeStart.setMonth(rangeEnd.getMonth() - 6)
@@ -115,7 +109,8 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
         const start = new Date()
         start.setHours(0, 0, 0, 0)
         
-        if (period === '1w') start.setDate(end.getDate() - 6)
+        if (period === '1d') start.setDate(end.getDate())
+        else if (period === '1w') start.setDate(end.getDate() - 6)
         else if (period === '1m') start.setMonth(end.getMonth() - 1)
         else if (period === '3m') start.setMonth(end.getMonth() - 3)
         else if (period === '6m') start.setMonth(end.getMonth() - 6)
@@ -170,6 +165,7 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
                 displayDate: `${parseInt(dStr.split('-')[1], 10)}/${parseInt(dStr.split('-')[2], 10)}`,
                 weight: lifestyle?.weight || null,
                 calories: diet?.calories || 0,
+                calories_chart: Number(diet?.calories) > 0 ? Number(diet.calories) : null,
                 protein: diet?.protein || 0,
                 fat: diet?.fat || 0,
                 carbs: diet?.carbs || 0,
@@ -210,13 +206,53 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
 
         if (!showAvg) return data
 
-        return data.map((d: any, i: number, arr: any[]) => {
-            const window = arr.slice(Math.max(0, i - 6), i + 1)
-            const weights = window.map(w => w.weight).filter(w => w != null)
-            const avgWeight = weights.length > 0 ? weights.reduce((acc, curr) => acc + curr, 0) / weights.length : null
+        const weekGroups = new Map<string, any[]>()
+        data.forEach((item) => {
+            const itemDate = new Date(`${item.date}T00:00:00`)
+            const day = itemDate.getDay()
+            const monday = new Date(itemDate)
+            monday.setDate(itemDate.getDate() - (day === 0 ? 6 : day - 1))
+            const key = formatDate(monday)
+            weekGroups.set(key, [...(weekGroups.get(key) || []), item])
+        })
+
+        const averageRecorded = (rows: any[], key: string, digits = 1) => {
+            const values = rows
+                .map(row => Number(row[key]))
+                .filter(value => Number.isFinite(value) && value > 0)
+            return values.length > 0
+                ? Number((values.reduce((sum, value) => sum + value, 0) / values.length).toFixed(digits))
+                : null
+        }
+
+        return Array.from(weekGroups.entries()).map(([weekStart, rows]) => {
+            const first = rows[0]
+            const last = rows[rows.length - 1]
             return {
-                ...d,
-                weight: avgWeight ? Number(avgWeight.toFixed(1)) : null
+                ...last,
+                date: weekStart,
+                displayDate: first.displayDate === last.displayDate
+                    ? first.displayDate
+                    : `${first.displayDate}〜${last.displayDate}`,
+                weight: averageRecorded(rows, 'weight'),
+                calories: averageRecorded(rows, 'calories', 0) ?? 0,
+                calories_chart: averageRecorded(rows, 'calories_chart', 0),
+                protein: averageRecorded(rows, 'protein') ?? 0,
+                fat: averageRecorded(rows, 'fat') ?? 0,
+                carbs: averageRecorded(rows, 'carbs') ?? 0,
+                sugar: averageRecorded(rows, 'sugar') ?? 0,
+                fiber: averageRecorded(rows, 'fiber') ?? 0,
+                salt: averageRecorded(rows, 'salt') ?? 0,
+                steps: averageRecorded(rows, 'steps', 0) ?? 0,
+                sleep: averageRecorded(rows, 'sleep') ?? 0,
+                water: averageRecorded(rows, 'water') ?? 0,
+                target_calories: averageRecorded(rows, 'target_calories', 0),
+                target_protein: averageRecorded(rows, 'target_protein'),
+                target_fat: averageRecorded(rows, 'target_fat'),
+                target_carbs: averageRecorded(rows, 'target_carbs'),
+                target_sugar: averageRecorded(rows, 'target_sugar'),
+                target_fiber: averageRecorded(rows, 'target_fiber'),
+                target_salt: averageRecorded(rows, 'target_salt'),
             }
         })
     }, [dietLogs, lifestyleLogs, goals, settings, period, showAvg, todayDraft, selectedDate])
@@ -233,20 +269,6 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
             rate: rate.toFixed(1)
         }
     }, [analysisData])
-
-    const [calendarDate, setCalendarDate] = useState(new Date())
-
-    const handlePrevMonth = () => {
-        const d = new Date(calendarDate)
-        d.setMonth(d.getMonth() - 1)
-        setCalendarDate(d)
-    }
-
-    const handleNextMonth = () => {
-        const d = new Date(calendarDate)
-        d.setMonth(d.getMonth() + 1)
-        setCalendarDate(d)
-    }
 
     if (loading) {
         return (
@@ -304,6 +326,40 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
     // Unified Tooltip cursor (Line) for all chart types
     const commonTooltip = <Tooltip cursor={{ stroke: '#52525b', strokeWidth: 1 }} contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', padding: '12px', fontSize: '10px' }} />
 
+    const buildTicks = (valueKey: string, targetKey: string, step: number) => {
+        const maxValue = Math.max(
+            ...analysisData.map(row => Number(row[valueKey]) || 0),
+            ...analysisData.map(row => Number(row[targetKey]) || 0),
+            step,
+        )
+        const upper = Math.ceil(maxValue / step) * step
+        return Array.from({ length: Math.floor(upper / step) + 1 }, (_, index) =>
+            Number((index * step).toFixed(2))
+        )
+    }
+
+    const axisTicks = {
+        calories: buildTicks('calories', 'target_calories', 500),
+        protein: buildTicks('protein', 'target_protein', 50),
+        fat: buildTicks('fat', 'target_fat', 20),
+        carbs: buildTicks('carbs', 'target_carbs', 50),
+        sugar: buildTicks('sugar', 'target_sugar', 50),
+        fiber: buildTicks('fiber', 'target_fiber', 10),
+        steps: buildTicks('steps', 'target_steps', 2000),
+        sleep: buildTicks('sleep', 'target_sleep', 2),
+        water: buildTicks('water', 'target_water', 0.5),
+    }
+    const calorieChartTicks = buildTicks('calories_chart', 'target_calories', 500)
+
+    const recordedWeights = analysisData
+        .map(row => Number(row.weight))
+        .filter(value => Number.isFinite(value) && value > 0)
+    const weightMin = recordedWeights.length > 0 ? Math.floor(Math.min(...recordedWeights) - 1) : 0
+    const weightMax = recordedWeights.length > 0 ? Math.ceil(Math.max(...recordedWeights) + 1) : 100
+    const weightDomain: [number, number] = weightMin === weightMax
+        ? [Math.max(0, weightMin - 1), weightMax + 1]
+        : [Math.max(0, weightMin), weightMax]
+
     return (
         <div className="space-y-6 pb-24">
             {/* 週間目標（旧ホームタブのバー11本の移設先。デフォルト折りたたみ）
@@ -321,64 +377,99 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
             {/* Controls */}
             <div className="bg-surface-raised p-3 sm:p-4 rounded-2xl border border-border-strong shadow-sm flex flex-row items-center gap-4 sm:gap-6 overflow-x-auto whitespace-nowrap">
                 <label className="flex items-center gap-2 text-xs sm:text-sm font-normal text-text-secondary shrink-0">
-                    期間：
-                    <select
-                        value={period}
-                        onChange={(e) => setPeriod(e.target.value as PeriodType)}
-                        className="bg-surface-base border border-border-strong text-text-primary text-xs sm:text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block py-1.5 px-2 outline-none font-normal"
-                    >
-                        <option value="1w">7日間</option>
-                        <option value="1m">1ヶ月</option>
-                        <option value="3m">3ヶ月</option>
-                        <option value="6m">6ヶ月</option>
-                        <option value="1y">1年</option>
-                        <option value="all">すべて</option>
-                    </select>
-                </label>
-                <label className="flex items-center gap-2 text-xs sm:text-sm font-normal text-text-secondary shrink-0">
                     表示：
                     <select
                         value={showAvg ? 'week' : 'day'}
                         onChange={(e) => setShowAvg(e.target.value === 'week')}
                         className="bg-surface-base border border-border-strong text-text-primary text-xs sm:text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block py-1.5 px-2 outline-none font-normal"
                     >
-                        <option value="day">日</option>
+                        <option value="day">毎日</option>
                         <option value="week">週平均</option>
+                    </select>
+                </label>
+                <label className="flex items-center gap-2 text-xs sm:text-sm font-normal text-text-secondary shrink-0">
+                    期間：
+                    <select
+                        value={period}
+                        onChange={(e) => setPeriod(e.target.value as PeriodType)}
+                        className="bg-surface-base border border-border-strong text-text-primary text-xs sm:text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block py-1.5 px-2 outline-none font-normal"
+                    >
+                        <option value="1d">日</option>
+                        <option value="1w">週</option>
+                        <option value="1m">月</option>
+                        <option value="3m">3ヶ月</option>
+                        <option value="6m">半年</option>
+                        <option value="1y">一年</option>
+                        <option value="all">全期間</option>
                     </select>
                 </label>
             </div>
 
-            {/* 1. Weight Chart */}
-            <AnalysisChartCard title="体重推移" color="blue">
-                <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={analysisData} syncId="analyzeSync" margin={chartMargin}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#3f3f46" />
-                        {commonXAxis}
-                        <YAxis width={40} axisLine={false} tickLine={false} domain={['dataMin - 1', 'dataMax + 1']} tick={{ fontSize: 9, fontWeight: 700, fill: '#a1a1aa' }} />
-                        {commonTooltip}
-                        <Line type="monotone" dataKey="weight" name="体重" stroke="#3b82f6" strokeWidth={4} dot={!showAvg ? { r: 4, strokeWidth: 2, fill: '#fff' } : false} connectNulls />
-                    </LineChart>
-                </ResponsiveContainer>
-            </AnalysisChartCard>
-
-            {/* 2. Calories Chart */}
-            <AnalysisChartCard title="摂取カロリー" color="purple">
-                <ResponsiveContainer width="100%" height="100%">
-                    <ComposedChart data={analysisData} syncId="analyzeSync" margin={chartMargin}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#3f3f46" />
-                        {commonXAxis}
-                        <YAxis 
-                            width={40} 
-                            axisLine={false} 
-                            tickLine={false} 
-                            tick={{ fontSize: 9, fontWeight: 700, fill: '#a1a1aa' }}
-                            domain={[0, (dataMax: number) => Math.ceil(Math.max(dataMax, analysisData[analysisData.length - 1]?.target_calories || 0) * 1.2)]}
-                        />
-                        {commonTooltip}
-                        <Bar dataKey="calories" name="摂取カロリー" fill="#f43f5e" radius={[4, 4, 0, 0]} />
-                        <Line type="stepAfter" dataKey="target_calories" name="目標設定" stroke="#f43f5e" strokeWidth={2} strokeDasharray="5 5" dot={false} />
-                    </ComposedChart>
-                </ResponsiveContainer>
+            {/* 体重と摂取カロリーを同じ時間軸で確認するメイングラフ */}
+            <AnalysisChartCard title="体重・摂取カロリー" color="blue">
+                <div className="flex h-full min-h-0 flex-col">
+                    <div className="mb-3 flex items-center justify-end gap-4 text-xs font-normal text-text-secondary">
+                        <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-blue-500" />カロリー</span>
+                        <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-brand-500" />体重</span>
+                    </div>
+                    <div className="min-h-0 flex-1">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <ComposedChart data={analysisData} syncId="analyzeSync" margin={{ top: 8, right: -4, left: -8, bottom: 0 }}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#3f3f46" />
+                                {commonXAxis}
+                                <YAxis
+                                    yAxisId="calories"
+                                    width={38}
+                                    axisLine={false}
+                                    tickLine={false}
+                                    tick={{ fontSize: 9, fontWeight: 600, fill: '#60a5fa' }}
+                                    ticks={calorieChartTicks}
+                                    domain={[0, calorieChartTicks[calorieChartTicks.length - 1]]}
+                                    unit=""
+                                />
+                                <YAxis
+                                    yAxisId="weight"
+                                    orientation="right"
+                                    width={38}
+                                    axisLine={false}
+                                    tickLine={false}
+                                    tick={{ fontSize: 9, fontWeight: 600, fill: '#f97316' }}
+                                    domain={weightDomain}
+                                />
+                                <Tooltip
+                                    cursor={{ stroke: '#52525b', strokeWidth: 1 }}
+                                    formatter={(value: any, name: any) => [
+                                        name === '体重' ? `${Number(value).toFixed(1)} kg` : `${Math.round(Number(value))} kcal`,
+                                        name,
+                                    ]}
+                                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.15)', padding: '10px', fontSize: '11px' }}
+                                />
+                                <Line
+                                    yAxisId="calories"
+                                    type="monotone"
+                                    dataKey="calories_chart"
+                                    name="カロリー"
+                                    stroke="#3b82f6"
+                                    strokeWidth={3}
+                                    dot={{ r: showAvg ? 4 : 2.5, strokeWidth: 0, fill: '#3b82f6' }}
+                                    activeDot={{ r: 5 }}
+                                    connectNulls
+                                />
+                                <Line
+                                    yAxisId="weight"
+                                    type="monotone"
+                                    dataKey="weight"
+                                    name="体重"
+                                    stroke="#f97316"
+                                    strokeWidth={3}
+                                    dot={{ r: showAvg ? 4 : 2.5, strokeWidth: 0, fill: '#f97316' }}
+                                    activeDot={{ r: 5 }}
+                                    connectNulls
+                                />
+                            </ComposedChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
             </AnalysisChartCard>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -393,7 +484,8 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
                                 axisLine={false} 
                                 tickLine={false} 
                                 tick={{ fontSize: 9, fontWeight: 700, fill: '#a1a1aa' }}
-                                domain={[0, (dataMax: number) => Math.ceil(Math.max(dataMax, analysisData[analysisData.length - 1]?.target_protein || 0) * 1.2)]}
+                                ticks={axisTicks.protein}
+                                domain={[0, axisTicks.protein[axisTicks.protein.length - 1]]}
                             />
                             {commonTooltip}
                             <Bar dataKey="protein" name="摂取量" fill="#fbbf24" radius={[4, 4, 0, 0]} />
@@ -413,7 +505,8 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
                                 axisLine={false}
                                 tickLine={false}
                                 tick={{ fontSize: 9, fontWeight: 700, fill: '#a1a1aa' }}
-                                domain={[0, (dataMax: number) => Math.ceil(Math.max(dataMax, analysisData[analysisData.length - 1]?.target_fat || 0) * 1.2)]}
+                                ticks={axisTicks.fat}
+                                domain={[0, axisTicks.fat[axisTicks.fat.length - 1]]}
                             />
                             {commonTooltip}
                             <Bar dataKey="fat" name="摂取量" fill="#a855f7" radius={[4, 4, 0, 0]} />
@@ -433,7 +526,8 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
                                 axisLine={false} 
                                 tickLine={false} 
                                 tick={{ fontSize: 9, fontWeight: 700, fill: '#a1a1aa' }}
-                                domain={[0, (dataMax: number) => Math.ceil(Math.max(dataMax, analysisData[analysisData.length - 1]?.target_carbs || 0) * 1.2)]}
+                                ticks={axisTicks.carbs}
+                                domain={[0, axisTicks.carbs[axisTicks.carbs.length - 1]]}
                             />
                             {commonTooltip}
                             <Bar dataKey="carbs" name="摂取量" fill="#3b82f6" radius={[4, 4, 0, 0]} />
@@ -453,7 +547,8 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
                                 axisLine={false} 
                                 tickLine={false} 
                                 tick={{ fontSize: 9, fontWeight: 700, fill: '#a1a1aa' }}
-                                domain={[0, (dataMax: number) => Math.ceil(Math.max(dataMax, analysisData[analysisData.length - 1]?.target_sugar || 0) * 1.2)]}
+                                ticks={axisTicks.sugar}
+                                domain={[0, axisTicks.sugar[axisTicks.sugar.length - 1]]}
                             />
                             {commonTooltip}
                             <Bar dataKey="sugar" name="摂取量" fill="#0ea5e9" radius={[4, 4, 0, 0]} />
@@ -473,7 +568,8 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
                                 axisLine={false} 
                                 tickLine={false} 
                                 tick={{ fontSize: 9, fontWeight: 700, fill: '#a1a1aa' }}
-                                domain={[0, (dataMax: number) => Math.ceil(Math.max(dataMax, analysisData[analysisData.length - 1]?.target_fiber || 0) * 1.2)]}
+                                ticks={axisTicks.fiber}
+                                domain={[0, axisTicks.fiber[axisTicks.fiber.length - 1]]}
                             />
                             {commonTooltip}
                             <Bar dataKey="fiber" name="摂取量" fill="#14b8a6" radius={[4, 4, 0, 0]} />
@@ -482,25 +578,6 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
                     </ResponsiveContainer>
                 </AnalysisChartCard>
 
-                {/* 8. Salt Chart */}
-                <AnalysisChartCard title="塩分" color="gray">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <ComposedChart data={analysisData} syncId="analyzeSync" margin={chartMargin}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#3f3f46" />
-                            {commonXAxis}
-                            <YAxis 
-                                width={40} 
-                                axisLine={false} 
-                                tickLine={false} 
-                                tick={{ fontSize: 9, fontWeight: 700, fill: '#a1a1aa' }}
-                                domain={[0, (dataMax: number) => Math.ceil(Math.max(dataMax, analysisData[analysisData.length - 1]?.target_salt || 0) * 1.2)]}
-                            />
-                            {commonTooltip}
-                            <Bar dataKey="salt" name="摂取量" fill="#94a3b8" radius={[4, 4, 0, 0]} />
-                            <Line type="stepAfter" dataKey="target_salt" name="目標設定" stroke="#94a3b8" strokeWidth={2} strokeDasharray="5 5" dot={false} />
-                        </ComposedChart>
-                    </ResponsiveContainer>
-                </AnalysisChartCard>
             </div>
 
             {/* 7. Steps Chart */}
@@ -514,7 +591,8 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
                             axisLine={false}
                             tickLine={false}
                             tick={{ fontSize: 9, fontWeight: 700, fill: '#a1a1aa' }}
-                            domain={[0, (dataMax: number) => Math.ceil(Math.max(dataMax, analysisData[analysisData.length - 1]?.target_steps || 8000) * 1.2)]}
+                            ticks={axisTicks.steps}
+                            domain={[0, axisTicks.steps[axisTicks.steps.length - 1]]}
                         />
                         {commonTooltip}
                         <Bar dataKey="steps" name="歩数" fill="#06b6d4" radius={[4, 4, 0, 0]} />
@@ -535,7 +613,8 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
                                 axisLine={false} 
                                 tickLine={false} 
                                 tick={{ fontSize: 9, fontWeight: 700, fill: '#a1a1aa' }}
-                                domain={[0, (dataMax: number) => Math.ceil(Math.max(dataMax, analysisData[analysisData.length - 1]?.target_sleep || 8) * 1.2)]}
+                                ticks={axisTicks.sleep}
+                                domain={[0, axisTicks.sleep[axisTicks.sleep.length - 1]]}
                             />
                             {commonTooltip}
                             <Bar dataKey="sleep" name="睡眠時間" fill="#6366f1" radius={[4, 4, 0, 0]} />
@@ -555,7 +634,8 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
                                 axisLine={false} 
                                 tickLine={false} 
                                 tick={{ fontSize: 9, fontWeight: 700, fill: '#a1a1aa' }}
-                                domain={[0, (dataMax: number) => Math.ceil(Math.max(dataMax, analysisData[analysisData.length - 1]?.target_water || 2) * 1.2)]}
+                                ticks={axisTicks.water}
+                                domain={[0, axisTicks.water[axisTicks.water.length - 1]]}
                             />
                             {commonTooltip}
                             <Bar dataKey="water" name="水分摂取量" fill="#0ea5e9" radius={[4, 4, 0, 0]} />
@@ -563,97 +643,6 @@ export default function AnalyzeTab({ userId, token, isAdmin, todayDraft, showWee
                         </ComposedChart>
                     </ResponsiveContainer>
                 </AnalysisChartCard>
-            </div>
-
-            {/* 9. Workout Chart - Spanning full width with enough height */}
-            <div className="bg-surface-raised rounded-2xl p-4 sm:p-6 border border-border-subtle shadow-sm flex flex-col min-h-[450px]">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
-                    <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                            <div className="w-1.5 h-6 bg-orange-500 rounded-full"></div>
-                            <h3 className="text-xl font-semibold text-text-primary">筋トレカレンダー</h3>
-                        </div>
-                        <div className="pl-3.5 text-sm font-normal text-orange-600">
-                            {calendarDate.getFullYear()}年 {calendarDate.getMonth() + 1}月
-                        </div>
-                    </div>
-                    <div className="flex items-center justify-between sm:justify-center gap-2 bg-orange-500/15 rounded-full p-1 shadow-inner w-full sm:w-auto">
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            onClick={handlePrevMonth}
-                            className="w-8 h-8 flex items-center justify-center hover:bg-surface-raised rounded-full p-0 transition-all text-orange-500 active:scale-90"
-                        >
-                            <Icon name="chevronLeft" size={20} />
-                        </Button>
-                        <span className="text-xs font-normal text-orange-500 min-w-[72px] text-center">月移動</span>
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            onClick={handleNextMonth}
-                            className="w-8 h-8 flex items-center justify-center hover:bg-surface-raised rounded-full p-0 transition-all text-orange-500 active:scale-90"
-                        >
-                            <Icon name="chevronRight" size={20} />
-                        </Button>
-                    </div>
-                </div>
-                
-                <div className="flex flex-col flex-1">
-                    <div className="grid grid-cols-7 gap-3 mb-4">
-                        {['日', '月', '火', '水', '木', '金', '土'].map(d => (
-                            <div key={d} className="text-xs font-normal text-text-muted text-center uppercase tracking-widest">{d}</div>
-                        ))}
-                    </div>
-                    <div className="grid grid-cols-7 gap-3 flex-1">
-                        {(() => {
-                            const calendarDays = []
-                            const start = new Date(calendarDate.getFullYear(), calendarDate.getMonth(), 1)
-                            start.setDate(start.getDate() - start.getDay()) 
-
-                            const todayStr = formatDate(new Date())
-
-                            for (let i = 0; i < 35; i++) {
-                                const date = new Date(start)
-                                date.setDate(start.getDate() + i)
-                                const dStr = formatDate(date)
-                                
-                                const dayData = analysisData.find(d => d.date === dStr)
-                                const isDone = dayData?.workout === 1
-                                const isToday = dStr === todayStr
-                                const isSelected = dStr === selectedDate
-                                const isCurrentMonth = date.getMonth() === calendarDate.getMonth()
-                                
-                                calendarDays.push(
-                                    <div key={dStr} className={`relative aspect-square flex flex-col items-center justify-center rounded-2xl border-2 transition-all overflow-hidden ${!isCurrentMonth ? 'opacity-10 pointer-events-none' : ''} ${isSelected ? 'border-orange-500 bg-orange-500/10' : 'border-border-subtle bg-surface-base/30 hover:border-border-subtle'}`}>
-                                        <span className={`text-xs font-normal z-10 ${isDone ? 'text-white opacity-40' : isToday ? 'text-blue-500' : 'text-text-muted'}`}>
-                                            {date.getDate()}
-                                        </span>
-                                        {isDone && (
-                                            <div className="absolute inset-0 flex items-center justify-center animate-popIn">
-                                                <div className="w-10 h-10 bg-[#FF6B00] rounded-full shadow-lg flex items-center justify-center relative">
-                                                    <Icon name="check" size={24} className="text-white" />
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                )
-                            }
-                            return calendarDays
-                        })()}
-                    </div>
-                    <div className="mt-10 flex items-center justify-center gap-10 pb-4">
-                        <div className="flex items-center gap-3">
-                            <div className="w-6 h-6 bg-orange-500 rounded-full shadow-md flex items-center justify-center">
-                                <Icon name="check" size={14} className="text-white" />
-                            </div>
-                            <span className="text-xs font-normal text-text-secondary uppercase tracking-tighter">実施済み</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                            <div className="w-6 h-6 bg-surface-base rounded-2xl border-2 border-border-subtle"></div>
-                            <span className="text-xs font-normal text-text-muted uppercase tracking-tighter">未実施</span>
-                        </div>
-                    </div>
-                </div>
             </div>
 
             {/* Custom Habits Charts */}

@@ -6,7 +6,7 @@ import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import EmptyState from '@/components/ui/EmptyState'
 import Icon from '@/components/ui/icons'
-import { RecordCheckTable, CalorieHeroCard, AchievementItemCard, DisplayModeToggle, type DisplayMode } from './WeeklyAchievementCards'
+import { RecordCheckTable, CalorieHeroCard, AchievementItemCard, DisplayModeToggle, type DisplayMode, type RecordPeriod } from './WeeklyAchievementCards'
 import { useDaySelection } from '@/hooks/useDaySelection'
 
 interface WeeklyProgressPanelProps {
@@ -36,6 +36,7 @@ export default function WeeklyProgressPanel({
 }: WeeklyProgressPanelProps) {
     const [open, setOpen] = useState(defaultOpen)
     const [mode, setMode] = useState<DisplayMode>('average')
+    const [period, setPeriod] = useState<RecordPeriod>('1w')
     const { selectedDate, dayLabel, dayActual, dayTarget, goPrevDay, goNextDay, selectDate, isNextDayDisabled } =
         useDaySelection(weeklyStats, weekOffset, setWeekOffset, mode === 'day')
     const showNutrition = sections === 'all' || sections === 'nutrition'
@@ -94,7 +95,7 @@ export default function WeeklyProgressPanel({
                 />
             ) : (
                 <div className="space-y-2">
-                    <DisplayModeToggle mode={mode} onChange={setMode} />
+                    <DisplayModeToggle mode={mode} onChange={setMode} period={period} onPeriodChange={setPeriod} />
 
                     {showNutrition && (
                         <>

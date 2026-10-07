@@ -31,6 +31,7 @@ export type Database = {
           online_reminder_enabled: boolean;
           push_notification_enabled: boolean;
           birth_date: string | null;
+          age: number | null;
           gender: string | null;
           height_cm: number | null;
           activity_level: number | null;
@@ -51,6 +52,7 @@ export type Database = {
           online_reminder_enabled?: boolean;
           push_notification_enabled?: boolean;
           birth_date?: string | null;
+          age?: number | null;
           gender?: string | null;
           height_cm?: number | null;
           activity_level?: number | null;
@@ -71,6 +73,7 @@ export type Database = {
           online_reminder_enabled?: boolean;
           push_notification_enabled?: boolean;
           birth_date?: string | null;
+          age?: number | null;
           gender?: string | null;
           height_cm?: number | null;
           activity_level?: number | null;

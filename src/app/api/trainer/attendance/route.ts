@@ -45,6 +45,7 @@ type AttendanceRow = {
   clock_out: string
   break_minutes: number
   attended?: boolean
+  checked_in_at?: string | null
 }
 
 function tokyoToday() {
@@ -112,7 +113,7 @@ function buildTemplateShiftsForDate(
 
 function isMissingColumnError(error: any) {
   const message = `${error?.message || ''} ${error?.details || ''}`
-  return message.includes('break_rule') || message.includes('attended')
+  return message.includes('break_rule') || message.includes('attended') || message.includes('checked_in_at')
 }
 
 async function verifyTrainerToken(token: string | null): Promise<TrainerRow | null> {
@@ -187,7 +188,7 @@ export async function GET(request: NextRequest) {
         .lte('work_date', addDays(requestedDate, 30)),
       supabaseAdmin
         .from('trainer_attendance_records')
-        .select('id, trainer_id, shift_id, work_date, scheduled_start, scheduled_end, clock_in, clock_out, break_minutes, attended')
+        .select('id, trainer_id, shift_id, work_date, scheduled_start, scheduled_end, clock_in, clock_out, break_minutes, attended, checked_in_at')
         .eq('trainer_id', trainer.id)
         .gte('work_date', requestedDate)
         .lte('work_date', addDays(requestedDate, 30))
@@ -262,7 +263,8 @@ export async function GET(request: NextRequest) {
         startTime: shift.start_time,
         endTime: shift.end_time,
         attendanceId: record?.id || null,
-        attended: record?.attended === true
+        attended: record?.attended === true,
+        checkedInAt: record?.checked_in_at || null
       }
     })
 
@@ -325,6 +327,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Attendance can only be changed on the work date' }, { status: 403 })
     }
 
+    if (!attended) {
+      return NextResponse.json({ error: 'Trainer attendance can only be checked in from this screen' }, { status: 400 })
+    }
+
     const breakMinutes = autoBreakMinutes(shift.start_time, shift.end_time, breakRuleFor(trainer))
 
     const payload = {
@@ -337,7 +343,8 @@ export async function POST(request: NextRequest) {
       clock_out: shift.end_time,
       break_minutes: breakMinutes,
       transportation_enabled: true,
-      attended
+      attended,
+      checked_in_at: new Date().toISOString()
     }
 
     const existing = shift.id
@@ -365,7 +372,7 @@ export async function POST(request: NextRequest) {
 
     if (save.error) {
       if (!isMissingColumnError(save.error)) throw save.error
-      const { attended: _attended, ...fallbackPayload } = payload
+      const { attended: _attended, checked_in_at: _checkedInAt, ...fallbackPayload } = payload
       const fallbackSave = existing.data?.id
         ? await supabaseAdmin
             .from('trainer_attendance_records')

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { requireAuth, handleApiError } from '@/lib/api-utils'
-import { updateMonthlyTitles, updateAllTitles, usesCumulativeCount } from '@/lib/title-utils'
+import { updateMonthlyTitles, updateAllTitles, usesCumulativeCount, getPersonalSessionNotificationLabel } from '@/lib/title-utils'
 import {
   sendClientCancellationNotification,
   sendTrainerCancellationNotification,
@@ -301,8 +301,9 @@ export async function DELETE(
         const timeStr = startDate.toLocaleTimeString('ja-JP', { timeZone: 'Asia/Tokyo', hour: '2-digit', minute: '2-digit' })
 
         try {
+          const sessionLabel = getPersonalSessionNotificationLabel(reservation.title)
           await sendPushNotificationToUser(clientUser.id, {
-            title: 'ご予約がキャンセルされました',
+            title: sessionLabel ? `${dateStr} ${timeStr}の${sessionLabel}のご予約がキャンセルされました` : 'ご予約がキャンセルされました',
             body: `${dateStr} ${timeStr}〜のご予約をキャンセルしました。`,
             url: `/client/${clientUser.access_token}`,
             category: 'reservation',
@@ -733,8 +734,9 @@ export async function PUT(
           const timeStr = startDateTime.toLocaleTimeString('ja-JP', { timeZone: 'Asia/Tokyo', hour: '2-digit', minute: '2-digit' })
 
           try {
+            const sessionLabel = getPersonalSessionNotificationLabel(title || reservation.title)
             await sendPushNotificationToUser(clientUser.id, {
-              title: 'ご予約が変更されました',
+              title: sessionLabel ? `${dateStr} ${timeStr}の${sessionLabel}のご予約が変更されました` : 'ご予約が変更されました',
               body: `${dateStr} ${timeStr}〜に変更されました。`,
               url: `/client/${clientUser.access_token}`,
               category: 'reservation',

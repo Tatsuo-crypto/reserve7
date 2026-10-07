@@ -86,6 +86,7 @@ interface CalendarViewProps {
   onViewModeChange?: (mode: 'month' | 'timeline') => void
   onBackToMonth?: () => void
   trainerToken?: string | null
+  calendarStoreId?: string | null
 }
 
 interface Trainer {
@@ -99,6 +100,7 @@ type CalendarApiData = {
   shifts: Shift[]
   templates: ShiftTemplate[]
   trainers: Trainer[]
+  weekStartsOn?: 0 | 1
 }
 
 const CALENDAR_CACHE_MS = 30 * 1000
@@ -159,7 +161,7 @@ async function fetchCalendarPayload(url: string, cacheKey: string, force = false
   return promise
 }
 
-export default function CalendarView({ onViewModeChange, onBackToMonth, trainerToken }: CalendarViewProps = {}) {
+export default function CalendarView({ onViewModeChange, onBackToMonth, trainerToken, calendarStoreId }: CalendarViewProps = {}) {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [events, setEvents] = useState<CalendarEvent[]>([])
   const [shifts, setShifts] = useState<Shift[]>([])
@@ -171,7 +173,9 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
   const [debugInfo, setDebugInfo] = useState<string>('')
   const [viewMode, setViewMode] = useState<'month' | 'timeline'>('month')
   const [selectedDate, setSelectedDate] = useState<string>('')
+  const [weekStartsOn, setWeekStartsOn] = useState<0 | 1>(1)
   const { count: storeChangeCount, currentStoreId } = useStoreChange()
+  const effectiveStoreId = trainerToken ? (calendarStoreId || 'default') : currentStoreId
   // BF-1: Googleカレンダーと同じく、月グリッドを画面の高さいっぱいに広げる。
   // 行の高さが可変になるので「1日に何件のチップが入るか」も可変になる。
   // 親ページの構造が3種類(dashboard / admin/calendar / trainer)あり、どれも
@@ -235,9 +239,10 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
     })
     if (trainerToken) {
       params.append('token', trainerToken)
+      if (calendarStoreId) params.append('storeId', calendarStoreId)
     }
     return params
-  }, [currentDate, trainerToken])
+  }, [calendarStoreId, currentDate, trainerToken])
 
   const applyReservations = useCallback((reservations: Reservation[]) => {
     setDebugInfo(`API Status: Calendar=200, ResCount=${reservations.length}`)
@@ -301,8 +306,9 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
 
       const params = buildCalendarParams('reservations')
       const queryString = params.toString()
-      const cacheKey = `${queryString}:store=${currentStoreId || 'default'}:storeChange=${storeChangeCount}`
+      const cacheKey = `${queryString}:store=${effectiveStoreId || 'default'}:storeChange=${storeChangeCount}`
       const data = await fetchCalendarPayload(`/api/calendar?${queryString}`, cacheKey, force)
+      if (data.weekStartsOn !== undefined) setWeekStartsOn(data.weekStartsOn)
       applyReservations(data.reservations)
 
     } catch (error) {
@@ -311,7 +317,7 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
     } finally {
       setLoading(false)
     }
-  }, [applyReservations, buildCalendarParams, currentStoreId, storeChangeCount])
+  }, [applyReservations, buildCalendarParams, effectiveStoreId, storeChangeCount])
 
   const fetchAvailabilityData = useCallback(async (force = false) => {
     try {
@@ -319,8 +325,9 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
 
       const params = buildCalendarParams('availability')
       const queryString = params.toString()
-      const cacheKey = `${queryString}:store=${currentStoreId || 'default'}:storeChange=${storeChangeCount}`
+      const cacheKey = `${queryString}:store=${effectiveStoreId || 'default'}:storeChange=${storeChangeCount}`
       const data = await fetchCalendarPayload(`/api/calendar?${queryString}`, cacheKey, force)
+      if (data.weekStartsOn !== undefined) setWeekStartsOn(data.weekStartsOn)
       setShifts(data.shifts)
       setTemplates(data.templates)
       setTrainers(data.trainers)
@@ -333,7 +340,7 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
     } finally {
       setAvailabilityLoading(false)
     }
-  }, [buildCalendarParams, currentStoreId, storeChangeCount])
+  }, [buildCalendarParams, effectiveStoreId, storeChangeCount])
 
   const fetchCalendarData = useCallback(async (force = false) => {
     await Promise.all([
@@ -345,7 +352,7 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
   // Get calendar data
   useEffect(() => {
     const range = getCalendarMonthRange(currentDate)
-    const fetchKey = `${trainerToken || 'admin'}:${currentStoreId || 'default'}:${storeChangeCount}:${range.key}`
+    const fetchKey = `${trainerToken || 'admin'}:${effectiveStoreId || 'default'}:${storeChangeCount}:${range.key}`
     const lastFetch = lastFetchRef.current
     if (lastFetch?.key === fetchKey && Date.now() - lastFetch.at < 2000) {
       return
@@ -353,17 +360,17 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
     lastFetchRef.current = { key: fetchKey, at: Date.now() }
 
     fetchReservationsData()
-  }, [currentDate, currentStoreId, fetchReservationsData, storeChangeCount, trainerToken])
+  }, [currentDate, effectiveStoreId, fetchReservationsData, storeChangeCount, trainerToken])
 
   useEffect(() => {
     if (viewMode === 'timeline' && selectedDate && !availabilityLoading) {
       const range = getCalendarMonthRange(currentDate)
-      const fetchKey = `${trainerToken || 'admin'}:${currentStoreId || 'default'}:${storeChangeCount}:${range.key}`
+      const fetchKey = `${trainerToken || 'admin'}:${effectiveStoreId || 'default'}:${storeChangeCount}:${range.key}`
       if (lastAvailabilityFetchRef.current === fetchKey) return
       lastAvailabilityFetchRef.current = fetchKey
       void fetchAvailabilityData()
     }
-  }, [availabilityLoading, currentDate, currentStoreId, fetchAvailabilityData, selectedDate, storeChangeCount, trainerToken, viewMode])
+  }, [availabilityLoading, currentDate, effectiveStoreId, fetchAvailabilityData, selectedDate, storeChangeCount, trainerToken, viewMode])
 
   const handleCalendarSync = useCallback(async () => {
     if (syncing) return
@@ -404,9 +411,12 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
 
   const getFirstDayOfMonth = useCallback((date: Date) => {
     const day = new Date(date.getFullYear(), date.getMonth(), 1).getDay()
-    // 月曜日始まりに調整: 日曜日(0)を6に、月曜日(1)を0に
-    return (day + 6) % 7
-  }, [])
+    return (day - weekStartsOn + 7) % 7
+  }, [weekStartsOn])
+
+  const weekdayLabels = weekStartsOn === 0
+    ? ['日', '月', '火', '水', '木', '金', '土']
+    : ['月', '火', '水', '木', '金', '土', '日']
 
   // BF-1: 月グリッドの行数(月によって5行/6行が変わる)。高さ計算と行定義の両方で使う。
   const gridRowCount = useMemo(() => {
@@ -681,7 +691,7 @@ export default function CalendarView({ onViewModeChange, onBackToMonth, trainerT
             <div className="">
               {/* Days of week header (no divider line) */}
               <div className="grid grid-cols-7">
-                {['月', '火', '水', '木', '金', '土', '日'].map((day, index) => (
+                {weekdayLabels.map((day, index) => (
                   <div key={day} className={`py-1 text-center text-xs font-normal ${index === 5 ? 'text-brand-500' : index === 6 ? 'text-brand-500' : 'text-text-secondary'
                     }`}>
                     {day}

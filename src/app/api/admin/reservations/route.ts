@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic'
 import { supabaseAdmin } from '@/lib/supabase'
 import { requireAdminAuth, handleApiError } from '@/lib/api-utils'
 import { createGoogleCalendarService } from '@/lib/google-calendar'
-import { generateReservationTitle, updateMonthlyTitles, updateAllTitles, usesCumulativeCount } from '@/lib/title-utils'
+import { generateReservationTitle, updateMonthlyTitles, updateAllTitles, usesCumulativeCount, getPersonalSessionNotificationLabel } from '@/lib/title-utils'
 import { sendTrainerNotification, sendClientNotification } from '@/lib/email'
 import { sendPushNotificationToUser } from '@/lib/push'
 import { runBackgroundTask } from '@/lib/background-task'
@@ -494,8 +494,9 @@ export async function POST(request: NextRequest) {
         await updateAllTitles(clientUser.id)
       } else {
         // Personal training: monthly reset
-        const startMonth = startDateTime.getMonth()
-        const startYear = startDateTime.getFullYear()
+        const startJst = new Date(startDateTime.getTime() + 9 * 60 * 60 * 1000)
+        const startMonth = startJst.getUTCMonth()
+        const startYear = startJst.getUTCFullYear()
         await updateMonthlyTitles(clientUser.id, startYear, startMonth)
       }
     }
@@ -607,8 +608,9 @@ export async function POST(request: NextRequest) {
         minute: '2-digit',
       })
       try {
+        const sessionLabel = getPersonalSessionNotificationLabel(finalReservationTitle)
         await sendPushNotificationToUser(clientUser.id, {
-          title: 'ご予約が確定しました',
+          title: sessionLabel ? `${sessionLabel}のご予約が確定しました` : 'ご予約が確定しました',
           body: `${dateStr} ${timeStr}〜のご予約を承りました。`,
           url: `/client/${clientUser.access_token}`,
           category: 'reservation',

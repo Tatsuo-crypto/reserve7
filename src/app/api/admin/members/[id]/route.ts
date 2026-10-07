@@ -59,6 +59,7 @@ export async function GET(
         online_reminder_enabled,
         push_notification_enabled,
         birth_date,
+        age,
         gender,
         height_cm,
         activity_level,

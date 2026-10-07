@@ -4,14 +4,11 @@ import { useEffect, useState, type ChangeEvent, type FormEvent, type ReactNode }
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import Button from '@/components/ui/Button'
-import { NEW_MEMBER_PLAN_LIST, PLAN_FEES } from '@/lib/constants'
 
 type StoreOption = {
   id: string
   name: string
 }
-
-const currentMonth = new Date().toISOString().slice(0, 7)
 
 export default function NewMemberPage() {
   const { data: session, status } = useSession()
@@ -22,9 +19,6 @@ export default function NewMemberPage() {
   const [formData, setFormData] = useState({
     fullName: '',
     storeId: '',
-    plan: '月4回',
-    monthlyFee: '',
-    startMonth: currentMonth,
   })
 
   useEffect(() => {
@@ -64,11 +58,7 @@ export default function NewMemberPage() {
 
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
-    setFormData(prev => ({
-      ...prev,
-      [name]: value,
-      ...(name === 'plan' && PLAN_FEES[value] !== undefined ? { monthlyFee: String(PLAN_FEES[value]) } : {}),
-    }))
+    setFormData(prev => ({ ...prev, [name]: value }))
   }
 
   const handleSubmit = async (e: FormEvent) => {
@@ -95,9 +85,9 @@ export default function NewMemberPage() {
         body: JSON.stringify({
           fullName,
           storeId: formData.storeId,
-          plan: formData.plan,
-          monthlyFee: formData.monthlyFee,
-          startMonth: formData.startMonth,
+          plan: null,
+          monthlyFee: 0,
+          startMonth: null,
           registrationDate: new Date().toISOString().split('T')[0],
           status: 'active',
           onlineReminderEnabled: true,
@@ -137,7 +127,8 @@ export default function NewMemberPage() {
     <div className="min-h-screen bg-surface-base px-4 pb-28 pt-6">
       <main className="mx-auto max-w-md">
         <div className="mb-6 text-center">
-          <h1 className="text-2xl font-normal text-text-primary">会員を登録</h1>
+          <h1 className="text-2xl font-normal text-text-primary">体験者を登録</h1>
+          <p className="mt-2 text-sm text-text-secondary">体験に来た方を登録します。入会が決まった後にプランや入会日を設定します。</p>
         </div>
 
         <form onSubmit={handleSubmit} className="rounded-3xl border border-border-subtle bg-surface-raised p-5">
@@ -176,49 +167,10 @@ export default function NewMemberPage() {
               </select>
             </Field>
 
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="プラン">
-                <select
-                  name="plan"
-                  value={formData.plan}
-                  onChange={handleChange}
-                  className="h-12 w-full rounded-2xl border border-border-subtle bg-surface-base px-4 text-base text-text-primary outline-none focus:border-brand-500"
-                >
-                  {NEW_MEMBER_PLAN_LIST.map(plan => (
-                    <option key={plan} value={plan}>{plan}</option>
-                  ))}
-                </select>
-              </Field>
-
-              <Field label="開始月">
-                <input
-                  type="month"
-                  name="startMonth"
-                  value={formData.startMonth}
-                  onChange={handleChange}
-                  className="h-12 w-full rounded-2xl border border-border-subtle bg-surface-base px-4 text-base text-text-primary outline-none focus:border-brand-500"
-                />
-              </Field>
-            </div>
-
-            <Field label="月会費">
-              <div className="relative">
-                <input
-                  type="number"
-                  name="monthlyFee"
-                  value={formData.monthlyFee}
-                  onChange={handleChange}
-                  inputMode="numeric"
-                  className="h-12 w-full rounded-2xl border border-border-subtle bg-surface-base px-4 pr-12 text-base text-text-primary outline-none focus:border-brand-500"
-                  placeholder="13200"
-                />
-                <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm text-text-secondary">円</span>
-              </div>
-            </Field>
           </div>
 
           <div className="mt-6 rounded-2xl bg-surface-base px-4 py-3">
-            <div className="text-sm text-text-primary">登録後、初期設定へ進みます</div>
+            <div className="text-sm text-text-primary">登録後、基本情報を入力できます</div>
             <div className="mt-2 flex flex-wrap gap-2">
               {['招待URL', 'ダイエット', '通知', 'プロフィール'].map(item => (
                 <span key={item} className="rounded-full bg-surface-overlay px-3 py-1 text-xs text-text-secondary">

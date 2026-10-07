@@ -10,6 +10,7 @@ type AttendanceShift = {
   startTime: string
   endTime: string
   attended: boolean
+  checkedInAt: string | null
 }
 
 type AttendanceResponse = {
@@ -33,6 +34,16 @@ function formatDate(date: string) {
 }
 
 function formatTime(value: string) {
+  return new Date(value).toLocaleTimeString('ja-JP', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone: 'Asia/Tokyo'
+  })
+}
+
+function formatCheckedInAt(value: string | null) {
+  if (!value) return ''
   return new Date(value).toLocaleTimeString('ja-JP', {
     hour: '2-digit',
     minute: '2-digit',
@@ -76,7 +87,8 @@ export default function TrainerAttendancePage() {
     if (token) fetchAttendance()
   }, [token])
 
-  const toggleAttendance = async (shift: AttendanceShift) => {
+  const checkIn = async (shift: AttendanceShift) => {
+    if (shift.attended) return
     try {
       setSavingId(shift.id)
       const response = await fetch('/api/trainer/attendance', {
@@ -87,7 +99,7 @@ export default function TrainerAttendancePage() {
           shiftId: shift.id,
           startTime: shift.startTime,
           endTime: shift.endTime,
-          attended: !shift.attended
+          attended: true
         })
       })
       if (!response.ok) {
@@ -180,28 +192,28 @@ export default function TrainerAttendancePage() {
             >
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <div className="text-sm font-normal text-text-primary">
+                  <div className="text-base font-normal tabular-nums text-text-primary">
                     {formatTime(shift.startTime)}〜{formatTime(shift.endTime)}
                   </div>
-                  <div className="mt-1 text-xs text-text-secondary">
-                    {shift.attended ? '出勤済み' : '未出勤'}
+                  <div className={`mt-1 text-sm ${shift.attended ? 'text-brand-400' : 'text-text-secondary'}`}>
+                    {shift.attended ? `出勤済み ${formatCheckedInAt(shift.checkedInAt)}` : '未確認'}
                   </div>
                 </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => toggleAttendance(shift)}
-                  disabled={!canToggle}
-                  className={`h-10 rounded-full px-4 text-sm font-normal transition active:scale-[0.98] disabled:opacity-50 ${
-                    shift.attended
-                      ? 'bg-surface-raised text-text-secondary'
-                      : !isToday
-                        ? 'bg-surface-overlay text-text-muted'
-                      : 'bg-brand-500 text-white'
-                  }`}
-                >
-                  {shift.attended ? '取消' : '出勤'}
-                </Button>
+                {shift.attended ? (
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-brand-500/60 bg-brand-500/15 text-brand-400" aria-label="出勤済み">
+                    <Icon name="check" size={26} />
+                  </div>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => checkIn(shift)}
+                    disabled={!canToggle}
+                    className={`h-11 rounded-full px-5 text-sm font-normal transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 ${isToday ? 'bg-brand-500 text-white' : 'bg-surface-overlay text-text-muted'}`}
+                  >
+                    出勤
+                  </Button>
+                )}
               </div>
             </div>
               )

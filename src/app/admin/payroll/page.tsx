@@ -50,6 +50,13 @@ type PayrollItem = {
     transportationPay: number
     totalPay: number
   }
+  actualTotals: {
+    payableHourTotal: number
+    basePay: number
+    transportationDays: number
+    transportationPay: number
+    totalPay: number
+  }
   rows: PayrollRow[]
 }
 
@@ -273,7 +280,9 @@ export default function AdminPayrollPage() {
           breakMinutes: row.breakMinutes,
           hours,
           wage,
-          pay: Math.round(hours * wage),
+          plannedPay: Math.round(hours * wage),
+          actualPay: row.attended ? Math.round(hours * wage) : 0,
+          attended: row.attended,
           countsForTransportation: hours > 0 && row.transportationEnabled !== false
         }
       })
@@ -389,10 +398,20 @@ export default function AdminPayrollPage() {
 
       {selectedPayrollItem && (
         <div className="mb-4 rounded-2xl bg-surface-raised p-5 shadow">
-          <div className="rounded-2xl bg-surface-base px-4 py-4">
-            <div className="text-xs text-text-muted">支給見込み</div>
-            <div className="mt-1 text-3xl font-bold leading-tight text-text-primary tabular-nums">
-              {formatYen(selectedPayrollItem.totals.totalPay)}
+          <div className="grid grid-cols-2 gap-2">
+            <div className="rounded-2xl bg-surface-base px-4 py-4">
+              <div className="text-xs text-text-muted">予定給与</div>
+              <div className="mt-1 text-xl font-normal leading-tight text-text-primary tabular-nums">
+                {formatYen(selectedPayrollItem.totals.totalPay)}
+              </div>
+              <div className="mt-1 text-xs text-text-muted">全シフト</div>
+            </div>
+            <div className="rounded-2xl border border-brand-500/40 bg-brand-500/10 px-4 py-4">
+              <div className="text-xs text-text-muted">実際の給与</div>
+              <div className="mt-1 text-xl font-normal leading-tight text-text-primary tabular-nums">
+                {formatYen(selectedPayrollItem.actualTotals.totalPay)}
+              </div>
+              <div className="mt-1 text-xs text-text-muted">出勤確認済み</div>
             </div>
           </div>
           <div className="mt-3 grid grid-cols-2 gap-2">
@@ -459,8 +478,8 @@ export default function AdminPayrollPage() {
           <PayrollWorkCalendar rows={selected.rows} month={month} />
 
           <div>
-            <h3 className="text-sm font-semibold text-text-primary mb-1">日付と値段の計算</h3>
-            <p className="text-xs text-text-secondary mb-2">実労働時間 × その日に適用される時給、で1日ごとに計算しています。</p>
+            <h3 className="text-sm font-semibold text-text-primary mb-1">日別の給与</h3>
+            <p className="text-xs text-text-secondary mb-2">予定額と、出勤確認後の実績額を表示しています。</p>
             <div className="space-y-1.5">
               {detailBreakdownRows.length === 0 ? (
                 <p className="text-sm text-text-secondary">対象データがありません</p>
@@ -478,7 +497,10 @@ export default function AdminPayrollPage() {
                     </div>
                   </div>
                   <div className="shrink-0 text-right">
-                    <div className="text-sm tabular-nums text-text-primary">{formatYen(row.pay)}</div>
+                    <div className="text-xs tabular-nums text-text-secondary">予定 {formatYen(row.plannedPay)}</div>
+                    <div className={`text-sm tabular-nums ${row.attended ? 'text-brand-400' : 'text-text-muted'}`}>
+                      実績 {row.attended ? formatYen(row.actualPay) : '未出勤'}
+                    </div>
                     <div className="mt-0.5 text-xs tabular-nums text-text-secondary">
                       {formatYen(row.wage)} × {formatHours(row.hours)}h
                     </div>
@@ -490,7 +512,7 @@ export default function AdminPayrollPage() {
 
           <div className="flex justify-between rounded-lg border border-border-subtle bg-surface-base p-3 text-sm">
             <span className="text-text-secondary">基本給(上記の日別合計)</span>
-            <span className="tabular-nums text-text-primary">{formatYen(selected.totals.basePay)}</span>
+            <span className="tabular-nums text-text-primary">予定 {formatYen(selected.totals.basePay)} / 実績 {formatYen(selected.actualTotals.basePay)}</span>
           </div>
         </AppModal>
       )}

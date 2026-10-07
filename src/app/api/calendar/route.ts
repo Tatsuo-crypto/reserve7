@@ -20,6 +20,7 @@ export async function GET(request: NextRequest) {
     const start = searchParams.get('start')
     const end = searchParams.get('end')
     const scope = searchParams.get('scope') || 'all'
+    const requestedStoreId = searchParams.get('storeId')
     const includeReservations = scope !== 'availability'
     const includeAvailability = scope !== 'reservations'
 
@@ -71,6 +72,27 @@ export async function GET(request: NextRequest) {
 
       if (!user) {
         return createErrorResponse('無効なアクセストークンです', 401)
+      }
+
+      // トレーナーは有効な店舗を切り替えて閲覧できる。書き込み権限や
+      // トレーナー本人の所属情報は変更せず、カレンダー取得先だけを切り替える。
+      if (user.isTrainer && requestedStoreId) {
+        const { data: requestedStore } = await supabaseAdmin
+          .from('stores')
+          .select('id, calendar_id')
+          .eq('id', requestedStoreId)
+          .eq('status', 'active')
+          .single()
+
+        if (!requestedStore) {
+          return createErrorResponse('店舗が見つかりません', 404)
+        }
+
+        user = {
+          ...user,
+          storeId: requestedStore.id,
+          calendarId: requestedStore.calendar_id,
+        }
       }
     } else {
       user = await getAuthenticatedUser() as CalendarUser | null
@@ -164,6 +186,7 @@ export async function GET(request: NextRequest) {
         shifts: [],
         templates: [],
         trainers: [],
+        weekStartsOn: calendarId === 'tandjgym2goutenn@gmail.com' ? 0 : 1,
       })
     }
 
@@ -276,6 +299,7 @@ export async function GET(request: NextRequest) {
         name: t.full_name,
         email: t.email,
       })),
+      weekStartsOn: calendarId === 'tandjgym2goutenn@gmail.com' ? 0 : 1,
     })
   } catch (error) {
     console.error('Calendar API error:', error)

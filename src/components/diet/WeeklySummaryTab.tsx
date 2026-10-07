@@ -2,7 +2,6 @@
 
 import { useWeeklyProgress } from '@/hooks/useWeeklyProgress'
 import WeeklySummaryPanel from './WeeklySummaryPanel'
-import { WeeklyPanelSkeleton } from '@/components/ui/Skeleton'
 
 interface WeeklySummaryTabProps {
     userId?: string
@@ -22,16 +21,16 @@ export default function WeeklySummaryTab({ userId, token, isAdmin, weekOffset: c
         onWeekOffsetChange,
     })
 
-    if (loading) return <WeeklyPanelSkeleton />
-
     return (
         <div className="space-y-2 pb-24 animate-fadeIn">
-            <WeeklySummaryPanel
-                weeklyStats={weeklyStats}
-                weekOffset={weekOffset}
-                setWeekOffset={setWeekOffset}
-                showWeekSwitcher={showWeekSwitcher}
-            />
+            {!loading && (
+                <WeeklySummaryPanel
+                    weeklyStats={weeklyStats}
+                    weekOffset={weekOffset}
+                    setWeekOffset={setWeekOffset}
+                    showWeekSwitcher={showWeekSwitcher}
+                />
+            )}
         </div>
     )
 }

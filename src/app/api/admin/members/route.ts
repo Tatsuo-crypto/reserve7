@@ -147,7 +147,7 @@ export async function GET(request: NextRequest) {
     // Build base query
     const listCompactMemberSelect = 'id, full_name, plan, status, store_id, created_at'
     const dietCompactMemberSelect = 'id, full_name, plan, status, store_id, created_at, lifestyle_settings!left(visible_tabs)'
-    const fullMemberSelect = 'id, full_name, email, plan, status, store_id, monthly_fee, transfer_day, billing_start_month, created_at, memo, access_token, online_reminder_enabled, push_notification_enabled, birth_date, gender, height_cm, activity_level, target_weight_kg, lifestyle_settings!left(visible_tabs)'
+    const fullMemberSelect = 'id, full_name, email, plan, status, store_id, monthly_fee, transfer_day, billing_start_month, created_at, memo, access_token, online_reminder_enabled, push_notification_enabled, birth_date, age, gender, height_cm, activity_level, target_weight_kg, lifestyle_settings!left(visible_tabs)'
     const memberSelect = compact ? (dietOnly ? dietCompactMemberSelect : listCompactMemberSelect) : fullMemberSelect
 
     const buildMembersQuery = (storeId?: string) => {
@@ -339,7 +339,7 @@ export async function POST(request: NextRequest) {
       email: finalEmail,
       google_calendar_email: googleCalendarEmail || null,
       password_hash: '', // トークンベース認証のためパスワードは不要
-      plan: plan || '月4回',
+      plan: plan || null,
       status: finalStatus,
       store_id: storeId,
       monthly_fee: monthlyFee ? parseInt(monthlyFee) : 0,
@@ -419,7 +419,7 @@ export async function PATCH(request: NextRequest) {
       return createErrorResponse('管理者権限が必要です', 403)
     }
 
-    const { memberId, fullName, email, googleCalendarEmail, storeId, status, plan, monthlyFee, memo, statusChangeDate, changeDate, startMonth, registrationDate, onlineReminderEnabled, pushNotificationEnabled, birthDate, gender, heightCm, activityLevel, targetWeightKg } = await request.json()
+    const { memberId, fullName, email, googleCalendarEmail, storeId, status, plan, monthlyFee, memo, statusChangeDate, changeDate, startMonth, registrationDate, onlineReminderEnabled, pushNotificationEnabled, birthDate, age, gender, heightCm, activityLevel, targetWeightKg } = await request.json()
 
     // Validate status if provided
     if (status && !['active', 'suspended', 'withdrawn'].includes(status)) {
@@ -462,6 +462,7 @@ export async function PATCH(request: NextRequest) {
     if (onlineReminderEnabled !== undefined) updateData.online_reminder_enabled = onlineReminderEnabled
     if (pushNotificationEnabled !== undefined) updateData.push_notification_enabled = pushNotificationEnabled
     if (birthDate !== undefined) updateData.birth_date = birthDate || null
+    if (age !== undefined) updateData.age = age === '' || age === null ? null : Number(age)
     if (gender !== undefined) updateData.gender = gender || null
     if (heightCm !== undefined) updateData.height_cm = heightCm ? Number(heightCm) : null
     if (activityLevel !== undefined) updateData.activity_level = activityLevel ? Number(activityLevel) : null

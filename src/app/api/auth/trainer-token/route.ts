@@ -51,6 +51,12 @@ export async function GET(request: NextRequest) {
       console.error('Store lookup error:', storeError)
     }
 
+    const { data: availableStores } = await supabaseAdmin
+      .from('stores')
+      .select('id, name, calendar_id')
+      .eq('status', 'active')
+      .order('name', { ascending: true })
+
     // Return trainer info (excluding sensitive data)
     return NextResponse.json({
       trainer: {
@@ -58,8 +64,13 @@ export async function GET(request: NextRequest) {
         name: trainer.full_name,
         email: trainer.email,
         storeId: trainer.store_id,
-        calendarId: store?.calendar_id
-      }
+        calendarId: store?.calendar_id,
+        stores: (availableStores || []).map(availableStore => ({
+          id: availableStore.id,
+          name: availableStore.name,
+          calendarId: availableStore.calendar_id,
+        })),
+      },
     })
 
   } catch (error) {

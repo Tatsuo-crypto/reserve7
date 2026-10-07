@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic'
 import { supabaseAdmin } from '@/lib/supabase'
 import { getMailSettings } from '@/lib/email'
 import { sendPushNotificationToUser } from '@/lib/push'
+import { getPersonalSessionNotificationLabel } from '@/lib/title-utils'
 
 export async function GET(request: NextRequest) {
   try {
@@ -126,7 +127,7 @@ export async function GET(request: NextRequest) {
         minute: '2-digit',
       })
       const pushCount = await sendPushNotificationToUser(client.id, {
-        title: 'ご予約前日のお知らせ',
+        title: getPersonalSessionNotificationLabel(res.title) || 'ご予約前日のお知らせ',
         body: `${dateStr} ${timeStr}のセッション予定があります。`,
         url: `/client/${client.access_token}`,
         category: 'reservation',

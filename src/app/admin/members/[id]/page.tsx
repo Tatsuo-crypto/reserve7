@@ -18,6 +18,10 @@ interface MemberDetail {
   memo?: string
   createdAt?: string
   googleCalendarEmail?: string
+  birthDate?: string
+  age?: number
+  gender?: string
+  heightCm?: number
   status?: string
   onlineReminderEnabled?: boolean
   pushNotificationEnabled?: boolean
@@ -57,6 +61,13 @@ type MemberMaterial = {
   description: string | null
   materialType: 'pdf' | 'image' | 'video' | 'link'
   openUrl: string
+}
+
+type MemberSharedMemo = {
+  id: string
+  body: string
+  is_published: boolean
+  created_at: string
 }
 
 type MemberSection = 'status' | 'materials' | 'karte' | 'management' | 'invite'
@@ -247,6 +258,15 @@ function StatusRow({
   )
 }
 
+function BasicInfoItem({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl bg-surface-base px-3 py-2.5">
+      <div className="text-xs text-text-muted">{label}</div>
+      <div className="mt-1 font-normal tabular-nums text-text-primary">{value}</div>
+    </div>
+  )
+}
+
 export default function MemberDetailPage({ params }: { params: { id: string } }) {
   const { data: session, status } = useSession()
   const router = useRouter()
@@ -263,6 +283,10 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
   const [notificationSaving, setNotificationSaving] = useState(false)
   const [notificationError, setNotificationError] = useState('')
   const [materials, setMaterials] = useState<MemberMaterial[]>([])
+  const [sharedMemos, setSharedMemos] = useState<MemberSharedMemo[]>([])
+  const [sharedMemoBody, setSharedMemoBody] = useState('')
+  const [sharedMemoSaving, setSharedMemoSaving] = useState(false)
+  const [sharedMemoError, setSharedMemoError] = useState('')
   const [openSections, setOpenSections] = useState<Record<MemberSection, boolean>>({
     status: true,
     materials: false,
@@ -285,9 +309,10 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
     const fetchData = async () => {
       try {
         // Fetch member by ID directly
-        const [memberRes, materialsRes] = await Promise.all([
+        const [memberRes, materialsRes, memosRes] = await Promise.all([
           fetch(`/api/admin/members/${memberId}`),
           fetch(`/api/admin/materials?memberId=${memberId}&limit=20`),
+          fetch(`/api/admin/shared-memos?userId=${memberId}&limit=10`),
         ])
         if (!memberRes.ok) throw new Error('会員情報を取得できませんでした。画面を再読み込みしてください。')
         const memberJson = await memberRes.json()
@@ -303,6 +328,10 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
           memo: m.memo,
           createdAt: m.created_at,
           googleCalendarEmail: m.google_calendar_email,
+          birthDate: m.birth_date || '',
+          age: m.age ?? undefined,
+          gender: m.gender || '',
+          heightCm: m.height_cm || undefined,
           status: m.status,
           onlineReminderEnabled: m.online_reminder_enabled,
           pushNotificationEnabled: m.push_notification_enabled,
@@ -317,6 +346,12 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
           setMaterials(materialsJson.materials || [])
         } else {
           setMaterials([])
+        }
+        if (memosRes.ok) {
+          const memosJson = await memosRes.json()
+          setSharedMemos(memosJson.memos || [])
+        } else {
+          setSharedMemos([])
         }
 
       } catch (e: any) {
@@ -334,7 +369,19 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
     return `${value.toLocaleString('ja-JP')}円`
   }
 
+  const calculateAge = (birthDate?: string) => {
+    if (!birthDate) return null
+    const birth = new Date(`${birthDate}T00:00:00`)
+    if (Number.isNaN(birth.getTime())) return null
+    const today = new Date()
+    let age = today.getFullYear() - birth.getFullYear()
+    const birthdayPassed = today.getMonth() > birth.getMonth() || (today.getMonth() === birth.getMonth() && today.getDate() >= birth.getDate())
+    if (!birthdayPassed) age -= 1
+    return age >= 0 ? age : null
+  }
+
   const formatPlanFee = (member: MemberDetail) => {
+    if (!member.plan) return '未入会'
     const fee = formatYen(member.monthlyFee)
     if (fee === '未設定') return fee
     return isDietPlan(member.plan) ? fee : `${fee} / 月`
@@ -384,6 +431,28 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
 
   const toggleSection = (section: MemberSection) => {
     setOpenSections(prev => ({ ...prev, [section]: !prev[section] }))
+  }
+
+  const saveSharedMemo = async () => {
+    const body = sharedMemoBody.trim()
+    if (!body) return
+    setSharedMemoSaving(true)
+    setSharedMemoError('')
+    try {
+      const res = await fetch('/api/admin/shared-memos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: memberId, body, isPublished: true }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data.error || '共有メモを保存できませんでした')
+      setSharedMemos(prev => data.memo ? [data.memo, ...prev] : prev)
+      setSharedMemoBody('')
+    } catch (e: any) {
+      setSharedMemoError(e.message || '共有メモを保存できませんでした')
+    } finally {
+      setSharedMemoSaving(false)
+    }
   }
 
   const notificationLabel = (member?: MemberDetail | null) => {
@@ -521,6 +590,19 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
               </div>
             </div>
           </div>
+
+          <div className="mt-3 rounded-2xl border border-border-subtle bg-surface-raised p-4">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <h2 className="text-sm font-semibold text-text-primary">基本情報</h2>
+              <Link href={`/admin/members/${memberId}/edit`} className="rounded-full bg-brand-500/15 px-3 py-1.5 text-xs font-normal text-brand-600">編集</Link>
+            </div>
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <BasicInfoItem label="誕生日" value={member.birthDate || '未登録'} />
+              <BasicInfoItem label="年齢" value={member.age !== undefined && member.age !== null ? `${member.age}歳` : (calculateAge(member.birthDate) !== null ? `${calculateAge(member.birthDate)}歳` : '未登録')} />
+              <BasicInfoItem label="性別" value={member.gender === 'male' ? '男性' : member.gender === 'female' ? '女性' : member.gender || '未登録'} />
+              <BasicInfoItem label="身長" value={member.heightCm ? `${member.heightCm}cm` : '未登録'} />
+            </div>
+          </div>
         </section>
 
         <div className="space-y-3">
@@ -570,11 +652,47 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
           <AccordionSection
             title="閲覧資料"
             iconName="documentText"
-            summary={materials.length ? `${materials.length}件` : '未設定'}
+            summary={(materials.length || sharedMemos.length) ? `資料${materials.length}件 / メモ${sharedMemos.length}件` : '未設定'}
             isOpen={openSections.materials}
             onToggle={() => toggleSection('materials')}
           >
             <div className="space-y-3">
+              <div className="rounded-2xl border border-border-subtle bg-surface-base p-3">
+                <p className="text-xs font-normal text-text-muted">共有メモ</p>
+                <textarea
+                  value={sharedMemoBody}
+                  onChange={event => setSharedMemoBody(event.target.value)}
+                  rows={3}
+                  placeholder="会員に共有するメモ"
+                  className="mt-2 w-full rounded-xl border border-border-subtle bg-surface-raised px-3 py-2 text-sm font-normal text-text-primary placeholder:text-text-muted"
+                />
+                <div className="mt-2 flex items-center justify-between gap-3">
+                  <p className="min-w-0 text-xs font-normal text-text-muted">会員の資料タブに表示されます</p>
+                  <Button
+                    type="button"
+                    variant="primary"
+                    size="sm"
+                    loading={sharedMemoSaving}
+                    disabled={!sharedMemoBody.trim()}
+                    onClick={saveSharedMemo}
+                    className="shrink-0 rounded-full"
+                  >
+                    追加
+                  </Button>
+                </div>
+                {sharedMemoError && <p className="mt-2 text-xs font-normal text-red-700">{sharedMemoError}</p>}
+              </div>
+
+              {sharedMemos.length > 0 && (
+                <div className="space-y-2">
+                  {sharedMemos.map(memo => (
+                    <div key={memo.id} className="rounded-xl bg-surface-base px-4 py-3">
+                      <p className="whitespace-pre-wrap text-sm font-normal leading-relaxed text-text-primary">{memo.body}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {materials.length > 0 ? (
                 materials.map(material => (
                   <a

@@ -97,7 +97,7 @@ export default function ClientReservationsContent() {
   const formatTitle = (title: string) => {
     const match = title.match(/(\d+)\/(\d+)$/)
     if (match) {
-      return `パーソナル${match[1]}/${match[2]}回目`
+      return `パーソナルトレーニング${match[1]}/${match[2]}回目`
     }
     return title
   }

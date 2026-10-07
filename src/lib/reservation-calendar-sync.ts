@@ -1,5 +1,6 @@
 import { supabaseAdmin } from '@/lib/supabase'
 import { createGoogleCalendarService } from '@/lib/google-calendar'
+import { getReservationCalendarTitle } from '@/lib/title-utils'
 
 type CalendarCreatePayload = {
   reservationId: string
@@ -37,7 +38,7 @@ type CalendarDeletePayload = {
   trainerExternalEventId?: string | null
 }
 
-type CalendarSyncStatus = 'pending' | 'synced' | 'failed' | 'skipped'
+type CalendarSyncStatus = 'pending' | 'processing' | 'synced' | 'failed' | 'skipped'
 type CalendarJobStatus = CalendarSyncStatus | 'processing'
 
 async function updateSyncStatus(
@@ -61,6 +62,28 @@ async function updateSyncStatus(
   }
 }
 
+// Claim a sync row before contacting Google so a request and a retry worker
+// cannot create the same event at the same time.
+async function claimReservationCalendarSync(reservationId: string): Promise<boolean> {
+  const { data, error } = await supabaseAdmin
+    .from('reservations')
+    .update({
+      calendar_sync_status: 'processing',
+      calendar_sync_attempted_at: new Date().toISOString(),
+    })
+    .eq('id', reservationId)
+    .in('calendar_sync_status', ['pending', 'failed'])
+    .select('id')
+    .maybeSingle()
+
+  if (error) {
+    console.error('Failed to claim reservation calendar sync:', error.message)
+    return false
+  }
+
+  return !!data
+}
+
 export async function markCalendarCreatePending(reservationId: string) {
   await updateSyncStatus(reservationId, 'pending', {
     calendar_sync_action: 'create',
@@ -76,6 +99,8 @@ export async function markCalendarUpdatePending(reservationId: string) {
 }
 
 export async function createReservationCalendarEvent(payload: CalendarCreatePayload) {
+  if (!(await claimReservationCalendarSync(payload.reservationId))) return
+
   const calendarService = createGoogleCalendarService()
 
   if (!calendarService) {
@@ -89,7 +114,7 @@ export async function createReservationCalendarEvent(payload: CalendarCreatePayl
   try {
     const result = await calendarService.createEvent({
       reservationId: payload.reservationId,
-      title: payload.title,
+      title: getReservationCalendarTitle(payload.title),
       startTime: payload.startTime,
       endTime: payload.endTime,
       clientName: payload.clientName,
@@ -126,6 +151,8 @@ export async function createReservationCalendarEvent(payload: CalendarCreatePayl
 }
 
 export async function updateReservationCalendarEvent(payload: CalendarUpdatePayload) {
+  if (!(await claimReservationCalendarSync(payload.reservationId))) return
+
   const calendarService = createGoogleCalendarService()
 
   if (!calendarService) {
@@ -138,7 +165,7 @@ export async function updateReservationCalendarEvent(payload: CalendarUpdatePayl
 
   try {
     await calendarService.updateEvent(payload.eventId, {
-      title: payload.title,
+      title: getReservationCalendarTitle(payload.title),
       startTime: payload.startTime,
       endTime: payload.endTime,
       clientName: payload.clientName,
@@ -339,7 +366,7 @@ export async function retryPendingCalendarCreates(limit = 20) {
     attempted += 1
     const basePayload = {
       reservationId: reservation.id,
-      title: reservation.title,
+      title: getReservationCalendarTitle(reservation.title),
       startTime: reservation.start_time,
       endTime: reservation.end_time,
       clientName: user?.full_name || reservation.title || '予約',
