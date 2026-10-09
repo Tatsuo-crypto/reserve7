@@ -36,15 +36,27 @@ function jstMonthKey(value: string | Date): string {
 async function getMonthlyPersonalAllowance(clientId: string, year: number, month: number, baseCount: number): Promise<number> {
   const rangeStart = monthStartJST(year, month - 2)
   const rangeEnd = monthStartJST(year, month)
-  const { data, error } = await supabaseAdmin
-    .from('reservations')
-    .select('start_time')
-    .eq('client_id', clientId)
-    .gte('start_time', rangeStart.toISOString())
-    .lt('start_time', rangeEnd.toISOString())
+  const [{ data, error }, { data: histories, error: historyError }, { data: user, error: userError }] = await Promise.all([
+    supabaseAdmin
+      .from('reservations')
+      .select('start_time')
+      .eq('client_id', clientId)
+      .gte('start_time', rangeStart.toISOString())
+      .lt('start_time', rangeEnd.toISOString()),
+    supabaseAdmin
+      .from('membership_history')
+      .select('start_date, end_date, status, plan')
+      .eq('user_id', clientId)
+      .order('start_date', { ascending: false }),
+    supabaseAdmin
+      .from('users')
+      .select('billing_start_month')
+      .eq('id', clientId)
+      .single(),
+  ])
 
-  if (error) {
-    console.error('Error fetching carryover reservations:', error)
+  if (error || historyError || userError) {
+    console.error('Error fetching carryover data:', error || historyError || userError)
     return baseCount
   }
 
@@ -61,12 +73,34 @@ async function getMonthlyPersonalAllowance(clientId: string, year: number, month
   const previousUsage = counts.get(previousKey) || 0
   const twoMonthsAgoUsage = counts.get(twoMonthsAgoKey) || 0
 
+  const monthlyEntitlement = (target: Date): number => {
+    const targetYear = target.getUTCFullYear()
+    const targetMonth = target.getUTCMonth()
+    const monthStart = `${targetYear}-${String(targetMonth + 1).padStart(2, '0')}-01`
+    const nextMonthStart = new Date(Date.UTC(targetYear, targetMonth + 1, 1))
+    nextMonthStart.setUTCDate(nextMonthStart.getUTCDate() - 1)
+    const monthEnd = nextMonthStart.toISOString().slice(0, 10)
+
+    if (user?.billing_start_month && user.billing_start_month > monthEnd) return 0
+
+    const history = (histories || []).find(record =>
+      record.start_date <= monthEnd &&
+      (!record.end_date || record.end_date >= monthStart)
+    )
+
+    if (!history || history.status !== 'active' || usesCumulativeCount(history.plan || '')) return 0
+    return getPlanMaxCount(history.plan || '')
+  }
+
+  const previousEntitlement = monthlyEntitlement(previousMonth)
+  const twoMonthsAgoEntitlement = monthlyEntitlement(twoMonthsAgo)
+
   // Older carryover is consumed first. This prevents the same unused session
   // from being counted again after it was already used in the next month.
-  const twoMonthsAgoCarryover = Math.max(0, baseCount - twoMonthsAgoUsage)
+  const twoMonthsAgoCarryover = Math.max(0, twoMonthsAgoEntitlement - twoMonthsAgoUsage)
   const remainingOlderCarryover = Math.max(0, twoMonthsAgoCarryover - previousUsage)
   const previousMonthUsageAfterCarryover = Math.max(0, previousUsage - twoMonthsAgoCarryover)
-  const previousMonthCarryover = Math.max(0, baseCount - previousMonthUsageAfterCarryover)
+  const previousMonthCarryover = Math.max(0, previousEntitlement - previousMonthUsageAfterCarryover)
 
   return baseCount + remainingOlderCarryover + previousMonthCarryover
 }
