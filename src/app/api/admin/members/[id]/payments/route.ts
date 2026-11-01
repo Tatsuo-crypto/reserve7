@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic'
 import { supabaseAdmin } from '@/lib/supabase'
 import { getAuthenticatedUser, createErrorResponse, createSuccessResponse } from '@/lib/api-utils'
 import { format, startOfMonth, endOfMonth, addMonths, subMonths, isSameMonth, parseISO } from 'date-fns'
+import { getPlanDefaultFee } from '@/lib/constants'
 
 export async function GET(
   request: NextRequest,
@@ -123,7 +124,11 @@ export async function GET(
 
       // C. Determine Status & Amount
       let planName = activeRecord?.plan || member.plan || ''
-      let fee = activeRecord?.monthly_fee ?? member.monthly_fee ?? 0
+      // 過去履歴の料金が空でも、現在の料金（休会なら0円）を過去へ流用しない。
+      // 履歴のプラン標準額を使い、実際の入金記録がある場合はactualAmountとして別表示する。
+      let fee = activeRecord
+        ? (activeRecord.monthly_fee ?? getPlanDefaultFee(activeRecord.plan) ?? 0)
+        : (member.monthly_fee ?? getPlanDefaultFee(member.plan) ?? 0)
       let mStatus = activeRecord?.status ?? member.status ?? 'active'
 
       // If status is suspended or withdrawn, expected fee should be 0

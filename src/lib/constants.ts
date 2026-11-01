@@ -80,6 +80,11 @@ export const PLAN_FEES: Record<string, number> = {
   [PLANS.COUNSELING]: 0,
 };
 
+export function getPlanDefaultFee(plan?: string | null): number | null {
+  if (!plan) return null
+  return Object.prototype.hasOwnProperty.call(PLAN_FEES, plan) ? PLAN_FEES[plan] : null
+}
+
 export const SUBSCRIPTION_PLANS = new Set<string>([
   PLANS.MONTHLY_2,
   PLANS.MONTHLY_4,

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { getAuthenticatedUser, createErrorResponse } from '@/lib/api-utils'
 import { format, subMonths, startOfMonth, endOfMonth, eachMonthOfInterval, addMonths, endOfDay } from 'date-fns'
+import { getPlanDefaultFee } from '@/lib/constants'
 
 export const dynamic = 'force-dynamic'
 
@@ -371,7 +372,7 @@ export async function GET(request: NextRequest) {
                 const user = Array.isArray(h.users) ? h.users[0] : h.users
                 let fee = h.monthly_fee
                 if (fee === null || fee === undefined) {
-                    fee = user?.monthly_fee ?? 0
+                    fee = getPlanDefaultFee(h.plan) ?? 0
                 }
                 return sum + fee
             }, 0)

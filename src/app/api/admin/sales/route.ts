@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { getAuthenticatedUser, createErrorResponse, createSuccessResponse } from '@/lib/api-utils'
 import { format, startOfMonth, endOfMonth } from 'date-fns'
+import { getPlanDefaultFee } from '@/lib/constants'
 
 export const dynamic = 'force-dynamic'
 
@@ -60,10 +61,11 @@ export async function GET(request: NextRequest) {
                 if (targetDateStart < billingStart) continue
             }
 
-            // Determine amount: history fee -> user fee -> 0
+            // Determine amount from the monthly snapshot. Never apply the current
+            // member fee (for example a later 0-yen suspension) to a past month.
             let amount = m.monthly_fee
             if (amount === null || amount === undefined) {
-                amount = user?.monthly_fee ?? 0
+                amount = getPlanDefaultFee(m.plan) ?? 0
             }
 
             if (amount > 0) {
