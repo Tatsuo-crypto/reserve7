@@ -16,6 +16,7 @@ interface MemberMovementModalProps {
         month: string
         newMembers: Member[]
         withdrawnMembers: Member[]
+        suspendedMembers: Member[]
     } | null
 }
 
@@ -39,7 +40,7 @@ export default function MemberMovementModal({ isOpen, onClose, data }: MemberMov
                                     {data.month} の入退会詳細
                                 </h3>
                                 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                     {/* New Members */}
                                     <div className="border rounded-lg p-4 bg-red-500/15">
                                         <h4 className="font-normal text-red-700 mb-3 flex items-center">
@@ -88,6 +89,35 @@ export default function MemberMovementModal({ isOpen, onClose, data }: MemberMov
                                                             </div>
                                                             <div className="text-text-muted text-xs mt-0.5">
                                                                 退会日: {format(new Date(member.date), 'yyyy/MM/dd', { locale: ja })}
+                                                            </div>
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            ) : (
+                                                <p className="text-sm text-text-secondary text-center py-4">該当者なし</p>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Suspended Members */}
+                                    <div className="border rounded-lg p-4 bg-blue-500/15">
+                                        <h4 className="font-normal text-blue-700 mb-3 flex items-center">
+                                            <span>休会</span>
+                                            <span className="ml-2 bg-blue-500/20 text-blue-700 text-xs px-2 py-0.5 rounded-full">
+                                                {data.suspendedMembers.length}名
+                                            </span>
+                                        </h4>
+                                        <div className="max-h-[400px] overflow-y-auto">
+                                            {data.suspendedMembers.length > 0 ? (
+                                                <ul className="divide-y divide-blue-500/20">
+                                                    {data.suspendedMembers.map((member) => (
+                                                        <li key={member.user_id} className="py-2 text-sm">
+                                                            <div className="font-normal text-text-primary">{member.full_name}</div>
+                                                            <div className="text-text-secondary text-xs">
+                                                                {member.plan}
+                                                            </div>
+                                                            <div className="text-text-muted text-xs mt-0.5">
+                                                                休会日: {format(new Date(member.date), 'yyyy/MM/dd', { locale: ja })}
                                                             </div>
                                                         </li>
                                                     ))}

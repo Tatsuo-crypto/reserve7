@@ -167,13 +167,15 @@ export default function AnalyticsPage() {
     // Calculate max for Y-axis scaling of block chart
     const maxNew = Math.max(...memberHistory.map(m => (m.new || 0)), 1)
     const maxWithdrawn = Math.max(...memberHistory.map(m => (m.withdrawn || 0)), 1)
-    const maxBlocks = Math.max(maxNew, maxWithdrawn)
+    const maxSuspended = Math.max(...memberHistory.map(m => (m.suspended || 0)), 1)
+    const maxBlocks = Math.max(maxNew, maxWithdrawn, maxSuspended)
 
     const handleMonthClick = (item: any) => {
         setSelectedMonthData({
             month: item.month,
             newMembers: item.newMembers || [],
             withdrawnMembers: item.withdrawnMembers || [],
+            suspendedMembers: item.suspendedMembers || [],
         })
         setIsModalOpen(true)
     }
@@ -291,13 +293,18 @@ export default function AnalyticsPage() {
                                 <span className="inline-block w-3 h-3 rounded-lg bg-state-danger-500"></span>
                                 退会
                             </span>
+                            <span className="flex items-center gap-1.5">
+                                <span className="inline-block w-3 h-3 rounded-lg bg-blue-500"></span>
+                                休会
+                            </span>
                         </div>
                     </div>
                     <div className="overflow-x-auto" ref={movementScrollRef}>
-                        <div className="flex items-end min-w-max" style={{ minHeight: `${(maxBlocks * 20) + 60 + (maxBlocks * 20)}px` }}>
+                        <div className="flex items-end min-w-max" style={{ minHeight: `${(maxBlocks * 20) + 60 + (maxBlocks * 20 * 2)}px` }}>
                             {memberHistory.map((item, idx) => {
                                 const newCount = item.new || 0
                                 const withdrawnCount = item.withdrawn || 0
+                                const suspendedCount = item.suspended || 0
                                 const [yearStr, monthNum] = (item.month || '').split('-')
                                 const monthLabel = `${parseInt(monthNum || '0')}月`
                                 const prevItem = idx > 0 ? memberHistory[idx - 1] : null
@@ -342,11 +349,17 @@ export default function AnalyticsPage() {
                                             </div>
                                             <div className="w-full border-t border-border-strong mb-1" />
                                             {/* Withdrawn blocks (below center line) */}
-                                            <div className="flex flex-col items-center gap-[2px]" style={{ minHeight: `${maxBlocks * 20}px`, justifyContent: 'flex-start' }}>
+                                            <div className="flex flex-col items-center gap-[2px]" style={{ minHeight: `${maxBlocks * 40}px`, justifyContent: 'flex-start' }}>
                                                 {Array.from({ length: withdrawnCount }).map((_, i) => (
                                                     <div
                                                         key={`w-${i}`}
                                                         className="w-5 h-4 rounded-lg bg-state-danger-500"
+                                                    />
+                                                ))}
+                                                {Array.from({ length: suspendedCount }).map((_, i) => (
+                                                    <div
+                                                        key={`s-${i}`}
+                                                        className="w-5 h-4 rounded-lg bg-blue-500"
                                                     />
                                                 ))}
                                             </div>

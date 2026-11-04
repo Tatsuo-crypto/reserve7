@@ -347,32 +347,27 @@ export async function GET(request: NextRequest) {
             const monthStart = startOfMonth(date)
             const monthEnd = endOfMonth(date)
 
-            // Estimate from membership history (all active members' monthly fees)
-            const activeRecords = history.filter(h => {
-                if (h.status !== 'active') return false
+            // Resolve one effective contract per member for this month. Choosing the
+            // highest fee from overlapping rows can ignore a return or plan change.
+            const activeRecords: any[] = []
+            for (const rows of Array.from(historyByUser.values())) {
+                const applicable = rows
+                    .filter((h: any) => {
+                        if (h.status !== 'active') return false
+                        if (!hasBillingStartedByMonth(h, monthEnd)) return false
+                        if (new Date(h.start_date) > monthEnd) return false
+                        const end = effectiveEndDate(h)
+                        return !end || new Date(end) >= monthStart
+                    })
+                    .sort((a: any, b: any) => b.start_date.localeCompare(a.start_date))
 
-                if (!hasBillingStartedByMonth(h, monthEnd)) return false
-
-                const start = new Date(h.start_date)
-                const end = h.end_date ? new Date(h.end_date) : null
-
-                // Active during this month
-                return start <= monthEnd && (!end || end >= monthStart)
-            })
-
-            // Deduplicate: keep the record with the highest monthly_fee per user
-            const userMap = new Map()
-            for (const h of activeRecords) {
-                const existing = userMap.get(h.user_id)
-                if (!existing || (h.monthly_fee || 0) > (existing.monthly_fee || 0)) {
-                    userMap.set(h.user_id, h)
-                }
+                if (applicable[0]) activeRecords.push(applicable[0])
             }
-            const estimatedSales = Array.from(userMap.values()).reduce((sum, h: any) => {
-                const user = Array.isArray(h.users) ? h.users[0] : h.users
+
+            const estimatedSales = activeRecords.reduce((sum, h: any) => {
                 let fee = h.monthly_fee
                 if (fee === null || fee === undefined) {
-                    fee = getPlanDefaultFee(h.plan) ?? 0
+                    fee = getPlanDefaultFee(effectivePlan(h)) ?? 0
                 }
                 return sum + fee
             }, 0)
