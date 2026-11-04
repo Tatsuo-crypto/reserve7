@@ -2,26 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 export const dynamic = 'force-dynamic'
 import { supabaseAdmin as supabase } from '@/lib/supabase-admin'
 import { requireAdminAuth, handleApiError } from '@/lib/api-utils'
-import { format } from 'date-fns'
-
-// AJ-2: users.statusを直接見るのではなく、/api/admin/membersと同じ
-// deriveCurrentStatus(membership_historyの最新レコードから真の在籍状態を導出する)を使う。
-function deriveCurrentStatus(
-  rawStatus: string | null | undefined,
-  histories: { status: string; start_date: string; end_date: string | null }[],
-  today: string
-): string {
-  const latest = histories
-    .filter((h) => h.start_date <= today)
-    .sort((a, b) => b.start_date.localeCompare(a.start_date))[0]
-
-  if (!latest) return rawStatus || 'active'
-  if (latest.status === 'withdrawn') return 'withdrawn'
-  if (latest.status === 'active' && latest.end_date && latest.end_date < today) return 'withdrawn'
-  if (latest.status === 'suspended' && latest.end_date && latest.end_date < today) return 'withdrawn'
-
-  return latest.status || rawStatus || 'active'
-}
+import { contractAtDate, countsAsMember, japanDate } from '@/lib/membership-ledger'
 
 async function runSupabaseQuery<T>(
   operation: (signal: AbortSignal) => PromiseLike<T>,
@@ -87,7 +68,7 @@ export async function GET(request: NextRequest) {
       const { data: users, error: usersError } = await runSupabaseQuery((signal) =>
         supabase
           .from('users')
-          .select('id, store_id, status, email, plan')
+          .select('id, store_id, status, email, plan, billing_start_month')
           .abortSignal(signal)
       )
 
@@ -100,7 +81,7 @@ export async function GET(request: NextRequest) {
         ? await runSupabaseQuery((signal) =>
             supabase
               .from('membership_history')
-              .select('user_id, status, start_date, end_date')
+              .select('user_id, status, start_date, end_date, plan, monthly_fee, store_id')
               .in('user_id', userIds)
               .abortSignal(signal)
           )
@@ -112,15 +93,13 @@ export async function GET(request: NextRequest) {
         list.push(h)
         historiesByUserId.set(h.user_id, list)
       }
-      const todayStr = format(new Date(), 'yyyy-MM-dd')
+      const todayStr = japanDate()
 
       if (users) {
         users.forEach((u: any) => {
           if (!u.store_id || adminEmails.includes(u.email)) return
-          if (u.plan === '都度') return
-
-          const derived = deriveCurrentStatus(u.status, historiesByUserId.get(u.id) || [], todayStr)
-          if (derived === 'active') {
+          const current = contractAtDate(u, historiesByUserId.get(u.id) || [], todayStr)
+          if (countsAsMember(current, todayStr)) {
             memberCounts[u.store_id] = (memberCounts[u.store_id] || 0) + 1
           }
         })

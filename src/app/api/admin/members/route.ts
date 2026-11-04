@@ -7,8 +7,8 @@ import { cookies } from 'next/headers'
 import { authOptions } from '@/lib/auth-config'
 import { getStoreDisplayName, getUserStoreId, isAdmin } from '@/lib/auth-utils'
 import { PLAN_LIST } from '@/lib/constants'
-import { applyCurrentMembership, recordStatusChange } from '@/lib/membership-utils'
-import { format } from 'date-fns'
+import { applyCurrentMembership } from '@/lib/membership-utils'
+import { japanDate } from '@/lib/membership-ledger'
 
 type MembershipHistoryStatus = {
   user_id: string
@@ -132,9 +132,9 @@ export async function GET(request: NextRequest) {
     const compact = searchParams.get('compact') === 'true'
 
     // Build base query
-    const listCompactMemberSelect = 'id, full_name, plan, status, store_id, created_at'
+    const listCompactMemberSelect = 'id, full_name, plan, status, store_id, created_at, billing_start_month'
     const dietCompactMemberSelect = 'id, full_name, plan, status, store_id, created_at, lifestyle_settings!left(visible_tabs)'
-    const fullMemberSelect = 'id, full_name, email, plan, status, store_id, monthly_fee, transfer_day, billing_start_month, created_at, memo, access_token, online_reminder_enabled, push_notification_enabled, birth_date, age, gender, height_cm, activity_level, target_weight_kg, lifestyle_settings!left(visible_tabs)'
+    const fullMemberSelect = 'id, full_name, email, plan, status, store_id, shared_calendar_store_ids, monthly_fee, transfer_day, billing_start_month, created_at, memo, access_token, online_reminder_enabled, push_notification_enabled, birth_date, age, gender, height_cm, activity_level, target_weight_kg, lifestyle_settings!left(visible_tabs)'
     const memberSelect = compact ? (dietOnly ? dietCompactMemberSelect : listCompactMemberSelect) : fullMemberSelect
 
     const buildMembersQuery = (storeId?: string) => {
@@ -155,14 +155,32 @@ export async function GET(request: NextRequest) {
       return query.order('created_at', { ascending: false })
     }
 
-    // Apply store filter if needed
+    // 通常の店舗画面では所属会員に加えて、会員ごとに共有設定された会員だけを表示する。
     let { data: members, error } = await runSupabaseQuery((signal) =>
       (allStores ? buildMembersQuery() : buildMembersQuery(user.storeId)).abortSignal(signal)
     )
 
+    if (!allStores && !error && user.storeId) {
+      const sharedResult = await runSupabaseQuery((signal) =>
+        supabaseAdmin
+          .from('users')
+          .select(memberSelect)
+          .neq('email', 'tandjgym@gmail.com')
+          .neq('email', 'tandjgym2goutenn@gmail.com')
+          .contains('shared_calendar_store_ids', [user.storeId])
+          .order('created_at', { ascending: false })
+          .abortSignal(signal)
+      )
+      if (!sharedResult.error) {
+        const byId = new Map<string, any>()
+        for (const member of [...((members as any[]) || []), ...((sharedResult.data as any[]) || [])]) byId.set(member.id, member)
+        members = Array.from(byId.values())
+      }
+    }
+
     // If dietOnly, further filter in JS to be safe with JSON nested fields
     if (dietOnly && members) {
-      members = members.filter((m: any) => 
+      members = (members as any[]).filter((m: any) =>
         m.lifestyle_settings && 
         m.lifestyle_settings.visible_tabs && 
         m.lifestyle_settings.visible_tabs.input === true
@@ -212,7 +230,7 @@ export async function GET(request: NextRequest) {
     const memberRows = (members || []) as any[]
     const memberIds = memberRows.map(member => member.id)
     let membershipHistories: MembershipHistoryStatus[] = []
-    const today = format(new Date(), 'yyyy-MM-dd')
+    const today = japanDate()
 
     if (memberIds.length > 0) {
       const { data: historyData, error: historyError } = await runSupabaseQuery((signal) =>
@@ -249,7 +267,7 @@ export async function GET(request: NextRequest) {
       stores: storesById.get(member.store_id) || null
     }))
 
-    return createSuccessResponse({ members: membersWithStores })
+    return createSuccessResponse({ members: membersWithStores, stores })
   } catch (error) {
     console.error('Error:', error)
     console.error('Error message:', (error as Error)?.message)
@@ -279,13 +297,26 @@ export async function POST(request: NextRequest) {
       return createErrorResponse('管理者権限が必要です', 403)
     }
 
-    const { fullName, email, googleCalendarEmail, plan, status, memo, storeId, monthlyFee, startMonth, registrationDate, onlineReminderEnabled, pushNotificationEnabled, birthDate, gender, heightCm, activityLevel, targetWeightKg } = await request.json()
+    const { fullName, email, googleCalendarEmail, plan, status, memo, storeId, monthlyFee, startMonth, registrationDate, onlineReminderEnabled, pushNotificationEnabled, birthDate, gender, heightCm, activityLevel, targetWeightKg, allowDuplicateName } = await request.json()
 
     // Validation
     // 名前とメールアドレスは任意（空欄の場合はダミー値を設定）
 
     if (!storeId) {
       return createErrorResponse('店舗の選択は必須です', 400)
+    }
+
+    const fee = monthlyFee === undefined || monthlyFee === null || monthlyFee === '' ? (plan ? null : 0) : Number(monthlyFee)
+    if (fee === null || !Number.isInteger(fee) || fee < 0 || fee > 2147483647) {
+      return createErrorResponse('月額費用を0以上の整数で入力してください', 400)
+    }
+    if (fullName && !allowDuplicateName) {
+      const { data: candidates, error: candidateError } = await supabaseAdmin.from('users')
+        .select('id, full_name, status').eq('store_id', storeId).neq('role', 'ADMIN')
+      if (candidateError) throw candidateError
+      const name = fullName.normalize('NFKC').replace(/\s/g, '')
+      const duplicates = (candidates || []).filter(candidate => candidate.full_name?.normalize('NFKC').replace(/\s/g, '') === name)
+      if (duplicates.length) return NextResponse.json({ error: '同じ氏名の会員が登録されています。復帰の場合は既存の会員から設定してください。', duplicates }, { status: 409 })
     }
 
 
@@ -328,7 +359,7 @@ export async function POST(request: NextRequest) {
       plan: plan || null,
       status: finalStatus,
       store_id: storeId,
-      monthly_fee: monthlyFee ? parseInt(monthlyFee) : 0,
+      monthly_fee: fee,
       billing_start_month: startMonth ? `${startMonth}-01` : null,
       created_at: registrationDate || new Date().toISOString(),
       memo: memo || null,
@@ -368,16 +399,7 @@ export async function POST(request: NextRequest) {
       return createErrorResponse(errorMessage, 500)
     }
 
-    // Record initial status in history
-    await recordStatusChange(
-      newMember.id,
-      insertData.status as any,
-      insertData.store_id,
-      insertData.created_at,
-      insertData.plan,
-      insertData.monthly_fee
-    ).catch(e => console.error('Failed to record initial status:', e))
-
+    // The database inserts the initial contract in the same transaction.
     return createSuccessResponse({ member: newMember })
   } catch (error) {
     console.error('Members API error:', error)
@@ -405,7 +427,7 @@ export async function PATCH(request: NextRequest) {
       return createErrorResponse('管理者権限が必要です', 403)
     }
 
-    const { memberId, fullName, email, googleCalendarEmail, storeId, status, plan, monthlyFee, memo, statusChangeDate, changeDate, startMonth, registrationDate, onlineReminderEnabled, pushNotificationEnabled, birthDate, age, gender, heightCm, activityLevel, targetWeightKg } = await request.json()
+    const { memberId, fullName, email, googleCalendarEmail, storeId, sharedCalendarStoreIds, status, plan, monthlyFee, memo, statusChangeDate, changeDate, startMonth, registrationDate, onlineReminderEnabled, pushNotificationEnabled, birthDate, age, gender, heightCm, activityLevel, targetWeightKg } = await request.json()
 
     // Validate status if provided
     if (status && !['active', 'suspended', 'withdrawn'].includes(status)) {
@@ -433,15 +455,28 @@ export async function PATCH(request: NextRequest) {
       return createErrorResponse('Member not found or access denied', 404)
     }
 
+    const contractChanged =
+      (plan !== undefined && plan !== member.plan) ||
+      (monthlyFee !== undefined && Number(monthlyFee) !== member.monthly_fee) ||
+      (status !== undefined && status !== member.status)
+    if (contractChanged) {
+      return createErrorResponse('プラン・料金・休会・復帰は月額プラン履歴から変更してください', 400)
+    }
+    if (startMonth !== undefined && (startMonth ? `${startMonth}-01` : null) !== member.billing_start_month) {
+      return createErrorResponse('開始月は過去の契約に影響するため、この画面では変更できません。月額プラン履歴から対象月を設定してください', 400)
+    }
+
     // Prepare update object
     const updateData: any = {}
     if (fullName !== undefined) updateData.full_name = fullName
     if (email !== undefined) updateData.email = email
     if (googleCalendarEmail !== undefined) updateData.google_calendar_email = googleCalendarEmail
     if (storeId !== undefined) updateData.store_id = storeId
-    if (status) updateData.status = status
-    if (plan) updateData.plan = plan
-    if (monthlyFee !== undefined) updateData.monthly_fee = monthlyFee ? parseInt(monthlyFee) : 0
+    if (sharedCalendarStoreIds !== undefined) {
+      updateData.shared_calendar_store_ids = Array.isArray(sharedCalendarStoreIds)
+        ? sharedCalendarStoreIds.filter((value: unknown): value is string => typeof value === 'string')
+        : []
+    }
     if (startMonth !== undefined) updateData.billing_start_month = startMonth ? `${startMonth}-01` : null
     if (registrationDate !== undefined) updateData.created_at = registrationDate
     if (memo !== undefined) updateData.memo = memo
@@ -464,36 +499,6 @@ export async function PATCH(request: NextRequest) {
     if (error) {
       console.error('Database error:', error)
       return createErrorResponse('Failed to update member', 500)
-    }
-
-    // Record history if status, plan, fee, or store was updated
-    // AL-1: 店舗のみ変更(店舗異動)した場合、この条件に含まれていないとmembership_historyに
-    // 反映されず、users.store_idだけが新店舗になり履歴側は旧店舗のまま取り残される不具合があった
-    // (DB調査で当時のデータには実害なしと確認したが、書き込み経路の穴として修正する)
-    const isStatusChanged = updateData.status && updateData.status !== member.status
-    const isPlanChanged = updateData.plan && updateData.plan !== member.plan
-    const isFeeChanged = updateData.monthly_fee !== undefined && updateData.monthly_fee !== member.monthly_fee
-    const isStoreChanged = updateData.store_id !== undefined && updateData.store_id !== member.store_id
-
-    if (isStatusChanged || isPlanChanged || isFeeChanged || isStoreChanged) {
-      // Use provided changeDate/statusChangeDate or default to today
-      const effectiveDateStr = changeDate || statusChangeDate
-      const effectiveDate = effectiveDateStr ? new Date(effectiveDateStr) : new Date()
-
-      // Determine values to record (new value or existing value)
-      const statusToRecord = updateData.status || member.status
-      const planToRecord = updateData.plan || member.plan
-      const feeToRecord = updateData.monthly_fee !== undefined ? updateData.monthly_fee : member.monthly_fee
-      const storeToRecord = updateData.store_id || member.store_id
-
-      await recordStatusChange(
-        memberId,
-        statusToRecord,
-        storeToRecord,
-        effectiveDate,
-        planToRecord,
-        feeToRecord
-      ).catch(e => console.error('Failed to record history change:', e))
     }
 
     return createSuccessResponse({ success: true })

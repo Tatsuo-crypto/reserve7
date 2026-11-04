@@ -16,6 +16,8 @@ function SalesPageContent() {
     const [isClient, setIsClient] = useState(false)
     const [members, setMembers] = useState<any[]>([])
     const [totalAmount, setTotalAmount] = useState(0)
+    const [paidAmount, setPaidAmount] = useState(0)
+    const [needsReviewCount, setNeedsReviewCount] = useState(0)
     const [loading, setLoading] = useState(true)
     const [month, setMonth] = useState(format(new Date(), 'yyyy-MM'))
     const getStoreFromCookie = () => {
@@ -65,6 +67,8 @@ function SalesPageContent() {
                 const result = await res.json()
                 setMembers(result.data?.members || [])
                 setTotalAmount(result.data?.totalAmount || 0)
+                setPaidAmount(result.data?.paidAmount || 0)
+                setNeedsReviewCount(result.data?.needsReviewCount || 0)
             } catch (error) {
                 console.error('Failed to fetch sales:', error)
             } finally {
@@ -118,6 +122,7 @@ function SalesPageContent() {
                         <div className="text-right">
                             <span className="text-xs text-text-secondary">月会費見込み</span>
                             <span className="ml-2 text-sm font-semibold text-text-primary">¥{totalAmount.toLocaleString()}</span>
+                            <div className="mt-1 text-xs text-text-secondary">入金済み ¥{paidAmount.toLocaleString()}{needsReviewCount > 0 ? ` / 料金未設定 ${needsReviewCount}名` : ''}</div>
                         </div>
                     </div>
                 </div>
@@ -133,13 +138,13 @@ function SalesPageContent() {
                             {members.map((item, index) => (
                                 <Link
                                     key={`${item.user_id}-${index}`}
-                                    href={`/admin/members/${item.user_id}?from=sales`}
+                                    href={`/admin/members/${item.user_id}/history`}
                                     className="flex items-center px-3 py-2.5 hover:bg-surface-base transition-colors"
                                 >
                                     <span className="flex-shrink-0 w-1.5 h-1.5 rounded-full mr-2 bg-surface-overlay" />
                                     <span className="min-w-0 font-normal text-sm text-text-primary truncate" style={{flex: '1 1 35%'}}>{item.full_name}</span>
                                     <span className="text-xs text-text-secondary whitespace-nowrap text-left" style={{flex: '1 1 35%'}}>{item.plan}</span>
-                                    <span className="text-sm font-normal text-text-primary whitespace-nowrap text-right" style={{flex: '0 0 auto'}}>¥{item.amount.toLocaleString()}</span>
+                                    <span className="text-sm font-normal text-text-primary whitespace-nowrap text-right" style={{flex: '0 0 auto'}}>{item.amount === null ? '料金未設定' : `¥${item.amount.toLocaleString()}`}</span>
                                 </Link>
                             ))}
                         </div>

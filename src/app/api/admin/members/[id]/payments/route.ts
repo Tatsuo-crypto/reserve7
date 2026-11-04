@@ -1,202 +1,58 @@
-import { NextRequest, NextResponse } from 'next/server'
-export const dynamic = 'force-dynamic'
+import { NextRequest } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { getAuthenticatedUser, createErrorResponse, createSuccessResponse } from '@/lib/api-utils'
-import { format, startOfMonth, endOfMonth, addMonths, subMonths, isSameMonth, parseISO } from 'date-fns'
-import { getPlanDefaultFee } from '@/lib/constants'
+import { addMonths, format, parseISO } from 'date-fns'
+import { contractAtDate, japanDate, monthlyContract } from '@/lib/membership-ledger'
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export const dynamic = 'force-dynamic'
+
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = await getAuthenticatedUser()
-    if (!user || !user.isAdmin) {
-      return createErrorResponse('管理者権限が必要です', 403)
-    }
-
-    const memberId = params.id
-    const today = new Date()
-
-    // 1. Fetch Membership History (to determine plan & fee for each period)
-    const { data: history, error: historyError } = await supabaseAdmin
-      .from('membership_history')
-      .select('*')
-      .eq('user_id', memberId)
-      .order('start_date', { ascending: true })
-
-    if (historyError) throw historyError
-
-    // 2. Fetch Actual Sales (Past payments)
-    const { data: sales, error: salesError } = await supabaseAdmin
-      .from('sales')
-      .select('*')
-      .eq('user_id', memberId)
-      .order('payment_date', { ascending: false })
-
-    if (salesError) throw salesError
-
-    console.log('Sales data fetched:', sales?.map(s => ({ target_date: s.target_date, memo: s.memo })))
-
-    // 3. Fetch Current User Info (fallback for current plan)
-    const { data: member, error: memberError } = await supabaseAdmin
-      .from('users')
-      .select('*')
-      .eq('id', memberId)
-      .single()
-
-    if (memberError) throw memberError
-
-    // Generate a timeline of months
-    // Start from the first membership history start_date, or created_at, or 1 year ago
-    let startDate = new Date(member.created_at)
-    if (history && history.length > 0) {
-      const firstHistory = new Date(history[0].start_date)
-      if (firstHistory < startDate) startDate = firstHistory
-    }
-
-    // Normalized registration/history start
-    startDate = startOfMonth(startDate)
-
-    // If billing start month is configured, it overrides the start date
-    if (member.billing_start_month) {
-      const billingStart = startOfMonth(parseISO(member.billing_start_month))
-      startDate = billingStart
-    }
-
-    console.log('Timeline range calculated:', {
-      member_created_at: member.created_at,
-      billing_start_month: member.billing_start_month,
-      final_startDate: format(startDate, 'yyyy-MM-dd')
-    })
-
-    // End date determination
-    let endDate = endOfMonth(addMonths(today, 3))
-
-    // If user has withdrawn or suspended in the latest history, stop the timeline there
-    if (history && history.length > 0) {
-      const latestRect = history[history.length - 1] // sorted ASC
-      if (latestRect.status === 'withdrawn' || latestRect.status === 'suspended') {
-        const hEnd = latestRect.end_date ? endOfMonth(parseISO(latestRect.end_date)) : endOfMonth(parseISO(latestRect.start_date))
-        if (hEnd < endDate) {
-          endDate = hEnd
-        }
-      }
-    }
-
+    if (!user?.isAdmin) return createErrorResponse('管理者権限が必要です', 403)
+    const [members, histories, payments] = await Promise.all([
+      supabaseAdmin.from('users').select('id, full_name, email, created_at, billing_start_month, plan, monthly_fee, status, store_id').eq('id', params.id).single(),
+      supabaseAdmin.from('membership_history').select('*').eq('user_id', params.id).order('start_date'),
+      supabaseAdmin.from('sales').select('*').eq('user_id', params.id).eq('type', 'monthly_fee'),
+    ])
+    if (members.error) throw members.error
+    if (histories.error) throw histories.error
+    if (payments.error) throw payments.error
+    const member = members.data
+    const history = histories.data || []
+    const sales = payments.data || []
+    const today = japanDate()
+    const currentMonth = today.slice(0, 7)
+    const current = contractAtDate(member, history, today)
+    const firstMonth = (member.billing_start_month || history[0]?.start_date || member.created_at).slice(0, 7)
+    const lastMonth = [currentMonth, ...history.flatMap(row => [row.start_date.slice(0, 7), row.end_date?.slice(0, 7) || currentMonth]), ...sales.map(row => (row.target_date || row.payment_date || today).slice(0, 7))].sort().pop()!
     const timeline = []
-    let current = startDate
 
-    while (current <= endDate) {
-      const monthStr = format(current, 'yyyy-MM')
-      const monthStart = startOfMonth(current)
-      const monthEnd = endOfMonth(current)
-
-      // A. Determine Plan & Fee for this month from History
-      // Find history records that overlap with this month
-      const monthlyRecords = history?.filter(h => {
-        const hStart = startOfMonth(parseISO(h.start_date))
-        const hEnd = h.end_date ? endOfMonth(parseISO(h.end_date)) : null
-        return hStart <= monthEnd && (!hEnd || hEnd >= monthStart)
-      }) || []
-
-      let activeRecord = null
-      if (monthlyRecords.length > 0) {
-        // Sort by start_date descending to get the latest change in that month
-        monthlyRecords.sort((a, b) => new Date(b.start_date).getTime() - new Date(a.start_date).getTime())
-        activeRecord = monthlyRecords[0]
-      }
-
-      // If no history record covers this month, look for the most recent one BEFORE this month
-      if (!activeRecord && history && history.length > 0) {
-        activeRecord = history
-          .filter(h => startOfMonth(parseISO(h.start_date)) < monthStart)
-          .sort((a, b) => new Date(b.start_date).getTime() - new Date(a.start_date).getTime())[0]
-      }
-
-      // Find actual payment
-      const actualPayment = sales?.find(s => {
-        if (s.target_date) {
-          return s.target_date.startsWith(monthStr) && s.type === 'monthly_fee'
-        }
-        return s.payment_date.startsWith(monthStr) && s.type === 'monthly_fee'
-      })
-
-      // C. Determine Status & Amount
-      let planName = activeRecord?.plan || member.plan || ''
-      // 過去履歴の料金が空でも、現在の料金（休会なら0円）を過去へ流用しない。
-      // 履歴のプラン標準額を使い、実際の入金記録がある場合はactualAmountとして別表示する。
-      let fee = activeRecord
-        ? (activeRecord.monthly_fee ?? getPlanDefaultFee(activeRecord.plan) ?? 0)
-        : (member.monthly_fee ?? getPlanDefaultFee(member.plan) ?? 0)
-      let mStatus = activeRecord?.status ?? member.status ?? 'active'
-
-      // If status is suspended or withdrawn, expected fee should be 0
-      if (mStatus === 'suspended' || mStatus === 'withdrawn') {
-        fee = 0
-        if (!planName) {
-          planName = mStatus === 'suspended' ? '休会' : '退会'
-        }
-      }
-
-      let status = 'unpaid' // default
-
-      // Override fee if actual payment exists (actual is truth)
-      if (actualPayment) {
-        status = 'paid'
-        // If actual payment amount differs from plan fee, show actual?
-      } else {
-        // Future or Unpaid
-        if (current > today) {
-          status = 'future'
-        } else {
-          // Past or Current Month
-          // If fee is 0, it's "free" or "recess", so effectively "paid" (nothing to pay)
-          if (fee === 0) status = 'n/a'
-        }
-      }
-
+    for (let date = parseISO(`${firstMonth}-01`); format(date, 'yyyy-MM') <= lastMonth; date = addMonths(date, 1)) {
+      const month = format(date, 'yyyy-MM')
+      const contract = monthlyContract(member, history, month)
+      const payment = sales.find(row => (row.target_date || row.payment_date || '').startsWith(month))
+      const paid = payment?.status === 'paid' && Boolean(payment.payment_date)
       timeline.push({
-        month: monthStr,
-        plan: planName,
-        expectedAmount: fee,
-        actualAmount: actualPayment?.amount ?? null,
-        status: status,
-        paymentDate: actualPayment?.payment_date ?? null,
-        targetDate: actualPayment?.target_date ?? null,
-        membershipStatus: mStatus,
-        memo: actualPayment?.memo ?? null
+        month,
+        plan: contract.plan,
+        expectedAmount: contract.amount,
+        actualAmount: paid ? payment.amount : null,
+        status: paid ? 'paid' : month > currentMonth ? 'future' : contract.amount === 0 ? 'n/a' : 'unpaid',
+        paymentDate: payment?.payment_date || null,
+        targetDate: payment?.target_date || null,
+        membershipStatus: contract.status,
+        memo: payment?.memo || null,
+        needsReview: contract.needsReview,
       })
-
-      // If this month is suspended or withdrawn, and there are no ACTIVE history records after this month,
-      // stop generating the timeline.
-      const hasLaterActiveHistory = history?.some(h => {
-        const hStart = startOfMonth(parseISO(h.start_date))
-        return hStart > monthEnd && h.status === 'active'
-      })
-      if ((mStatus === 'suspended' || mStatus === 'withdrawn') && !hasLaterActiveHistory) {
-        break
-      }
-
-      current = addMonths(current, 1)
     }
-
-    // Sort timeline descending (newest first)
-    timeline.reverse()
-
-    console.log('Timeline with memos:', timeline.map(t => ({ month: t.month, memo: t.memo })))
 
     return createSuccessResponse({
-      member: {
-        id: member.id,
-        fullName: member.full_name,
-        email: member.email
-      },
-      payments: timeline
+      member: { id: member.id, fullName: member.full_name, email: member.email, plan: current.plan, monthlyFee: current.monthly_fee, status: current.status },
+      payments: timeline.reverse(),
     })
-
-  } catch (error: any) {
+  } catch (error) {
     console.error('Payment history API error:', error)
-    return createErrorResponse(error.message || 'Internal server error', 500)
+    return createErrorResponse('月額プラン履歴を取得できませんでした', 500)
   }
 }

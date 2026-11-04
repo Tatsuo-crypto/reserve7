@@ -10,15 +10,15 @@ import {
 import { useStoreChange } from '@/hooks/useStoreChange'
 import MemberMovementModal from './MemberMovementModal'
 import { AdminStoreOption, fetchAdminStoresOnce } from '@/lib/admin-stores-client'
+import Link from 'next/link'
 
 type AnalyticsData = {
     memberHistory: any[],
     salesHistory: any[],
     projectedSales: number
+    needsReviewCount?: number
 }
 
-const ANALYTICS_CACHE_MS = 30 * 1000
-const analyticsCache = new Map<string, { timestamp: number, data: AnalyticsData }>()
 const analyticsPromises = new Map<string, Promise<AnalyticsData>>()
 
 async function fetchAnalyticsOnce(storeId: string, period: string): Promise<AnalyticsData> {
@@ -27,25 +27,13 @@ async function fetchAnalyticsOnce(storeId: string, period: string): Promise<Anal
     params.append('period', period)
 
     const cacheKey = params.toString()
-    const cached = analyticsCache.get(cacheKey)
-    if (cached && Date.now() - cached.timestamp < ANALYTICS_CACHE_MS) {
-        return cached.data
-    }
-
     const inflight = analyticsPromises.get(cacheKey)
     if (inflight) return inflight
 
-    const promise = fetch(`/api/admin/analytics?${cacheKey}`)
+    const promise = fetch(`/api/admin/analytics?${cacheKey}`, { cache: 'no-store' })
         .then(async (res) => {
             if (!res.ok) throw new Error('Failed to fetch data')
             return res.json()
-        })
-        .then((json) => {
-            analyticsCache.set(cacheKey, {
-                timestamp: Date.now(),
-                data: json,
-            })
-            return json
         })
         .finally(() => {
             analyticsPromises.delete(cacheKey)
@@ -229,6 +217,8 @@ export default function AnalyticsPage() {
                     <div className="mt-2 flex items-baseline">
                         <span className="text-3xl font-bold text-text-primary tabular-nums">¥{projectedSales.toLocaleString()}</span>
                     </div>
+                    <Link href={`/admin/sales?store=${filterStoreId}`} className="mt-2 inline-block text-xs text-text-secondary">会員別の内訳・入金</Link>
+                    {!!data.needsReviewCount && <p className="mt-1 text-xs text-state-danger-500">料金未設定 {data.needsReviewCount}名</p>}
                 </div>
             </div>
 

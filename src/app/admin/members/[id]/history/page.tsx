@@ -5,19 +5,21 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { format, addMonths, startOfMonth, parseISO } from 'date-fns'
 import { PLAN_LIST, PLAN_FEES } from '@/lib/constants'
+import { monthlyPlanChangeSchema } from '@/lib/monthly-membership'
 import Icon from '@/components/ui/icons'
 import Button from '@/components/ui/Button'
 
 interface PaymentItem {
   month: string
   plan: string
-  expectedAmount: number
+  expectedAmount: number | null
   actualAmount: number | null
   status: 'paid' | 'unpaid' | 'future' | 'n/a'
   paymentDate: string | null
   targetDate: string | null
   membershipStatus: string
   memo?: string
+  needsReview?: boolean
 }
 
 interface MemberDetail {
@@ -26,6 +28,7 @@ interface MemberDetail {
   email: string
   plan?: string
   status?: string
+  monthlyFee?: number | null
 }
 
 export default function MemberHistoryPage({ params }: { params: { id: string } }) {
@@ -48,6 +51,8 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
     memo: ''
   })
   const [saving, setSaving] = useState(false)
+  const [applyScope, setApplyScope] = useState<'month' | 'continuing'>('continuing')
+  const [formError, setFormError] = useState('')
 
   const fetchPayments = async () => {
     try {
@@ -55,6 +60,9 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
       if (payRes.ok) {
         const payJson = await payRes.json()
         setPayments(payJson.data?.payments || [])
+        if (payJson.data?.member) setMember(payJson.data.member)
+      } else {
+        throw new Error('月額プラン履歴を取得できませんでした')
       }
     } catch (e) {
       console.error('Failed to fetch payments', e)
@@ -84,7 +92,8 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
           fullName: m.full_name, 
           email: m.email, 
           plan: m.plan,
-          status: m.status
+          status: m.status,
+          monthlyFee: m.monthly_fee,
         })
 
         await fetchPayments()
@@ -100,8 +109,11 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
 
   const handleEditClick = (item: PaymentItem) => {
     setEditingItem(item)
+    setFormError('')
+    const currentMonth = new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' }).slice(0, 7)
+    setApplyScope(item.month < currentMonth ? 'month' : 'continuing')
     
-    let initialPlan = item.plan || '月4回'
+    let initialPlan = item.plan || ''
     if (item.membershipStatus === 'suspended') {
       initialPlan = '休会'
     } else if (item.membershipStatus === 'withdrawn') {
@@ -110,7 +122,7 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
 
     setEditForm({
       plan: initialPlan,
-      monthlyFee: item.expectedAmount ? String(item.expectedAmount) : '',
+      monthlyFee: String(item.expectedAmount ?? ''),
       status: item.membershipStatus,
       paymentDate: item.paymentDate ? item.paymentDate.split('T')[0] : '',
       memo: item.memo || ''
@@ -119,7 +131,7 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
 
   const handleSaveMonth = async () => {
     if (!editingItem) return
-    setSaving(true)
+    setFormError('')
     
     let newStatus = 'active'
     if (editForm.plan === '休会') {
@@ -128,20 +140,30 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
       newStatus = 'withdrawn'
     }
 
-    try {
-      const payload = {
+    if (!editForm.monthlyFee.trim()) {
+      setFormError('月額費用を入力してください。0円の場合は0と入力してください。')
+      return
+    }
+    const parsed = monthlyPlanChangeSchema.safeParse({
         month: editingItem.month,
         plan: editForm.plan,
-        monthlyFee: parseInt(editForm.monthlyFee) || 0,
+        monthlyFee: Number(editForm.monthlyFee),
         status: newStatus,
+        applyScope,
         paymentDate: editForm.paymentDate || null,
         memo: editForm.memo || null
-      }
+    })
+    if (!parsed.success) {
+      setFormError('プランを選択し、月額費用を0以上の整数で入力してください。')
+      return
+    }
+    setSaving(true)
+    try {
       
       const res = await fetch(`/api/admin/members/${memberId}/monthly-plan`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(parsed.data)
       })
 
       if (!res.ok) {
@@ -161,21 +183,16 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
   }
 
   const handleAddMonth = () => {
-    let nextMonth: Date
-    if (payments.length > 0) {
-      const months = payments.map(p => p.month).sort()
-      const latestMonthStr = months[months.length - 1]
-      nextMonth = addMonths(parseISO(`${latestMonthStr}-01`), 1)
-    } else {
-      nextMonth = startOfMonth(new Date())
-    }
+    setFormError('')
+    setApplyScope('continuing')
+    const nextMonth = parseISO(`${new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' }).slice(0, 7)}-01`)
 
     const monthStr = format(nextMonth, 'yyyy-MM')
     
     const newItem: PaymentItem = {
       month: monthStr,
-      plan: member?.plan || '月4回',
-      expectedAmount: member?.plan ? (PLAN_FEES[member.plan] || 0) : (PLAN_FEES['月4回'] || 13200),
+      plan: member?.status === 'active' ? member.plan || '' : '',
+      expectedAmount: member?.status === 'active' ? member.monthlyFee ?? null : null,
       actualAmount: null,
       status: 'future',
       paymentDate: null,
@@ -186,7 +203,7 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
     setEditingItem(newItem)
     setEditForm({
       plan: newItem.plan,
-      monthlyFee: String(newItem.expectedAmount),
+      monthlyFee: newItem.expectedAmount === null ? '' : String(newItem.expectedAmount),
       status: 'active',
       paymentDate: '',
       memo: ''
@@ -217,7 +234,7 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
         <div className="mb-10">
           <div className="flex items-center justify-center">
             <div className="text-center">
-              <h1 className="text-3xl font-normal text-text-primary tracking-tight">月額プラン履歴</h1>
+              <h1 className="text-xl font-medium text-text-primary">月額プラン履歴</h1>
               <p className="mt-1 text-sm font-normal text-text-muted tracking-wider uppercase">{member.fullName} 様</p>
             </div>
           </div>
@@ -227,8 +244,7 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
         <div className="bg-surface-raised rounded-2xl shadow-sm border border-border-subtle overflow-hidden mb-10">
           <div className="px-8 py-6 border-b border-border-subtle flex items-center justify-between">
             <div>
-              <h3 className="text-xl font-semibold text-text-primary tracking-tight">支払い・プラン変更履歴</h3>
-              <p className="text-xs font-normal text-text-muted uppercase tracking-widest mt-0.5">月ごとのプランと支払金額の管理</p>
+              <h3 className="text-base font-medium text-text-primary">契約・入金</h3>
             </div>
             <Button
               type="button"
@@ -236,9 +252,9 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
               size="sm"
               onClick={handleAddMonth}
               title="プランを追加・復帰"
-              className="w-12 h-12 p-0 bg-gradient-to-br from-brand-500 to-brand-600 text-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 hover:scale-105 active:scale-95 group"
+              className="w-12 h-12 p-0 bg-brand-500 text-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 group"
             >
-              <Icon name="plus" size={24} className="group-hover:rotate-90 transition-transform duration-300" />
+              <Icon name="plus" size={24} className="transition-transform duration-300" />
             </Button>
           </div>
           <div className="p-0">
@@ -292,8 +308,9 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
                           </td>
                           <td className="px-3 sm:px-4 py-4">
                             <span className="text-sm font-normal text-text-primary tabular-nums whitespace-nowrap">
-                              {p.expectedAmount > 0 ? `¥${p.expectedAmount.toLocaleString()}` : (isFutureMonth ? '未設定' : '-')}
+                              {p.expectedAmount === null ? '料金未設定' : `¥${p.expectedAmount.toLocaleString()}`}
                             </span>
+                            <div className="mt-1 text-xs text-text-muted">{p.actualAmount !== null ? `入金済み ¥${p.actualAmount.toLocaleString()}` : p.expectedAmount === 0 ? '' : '入金未確認'}</div>
                           </td>
                           <td className="hidden lg:table-cell px-8 py-4">
                             <span className="text-xs font-normal text-text-muted line-clamp-1 max-w-[200px]">
@@ -329,28 +346,34 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
         {editingItem && (
           <div className="fixed inset-0 z-50 flex items-center justify-center">
             <div className="absolute inset-0 bg-black/30" onClick={() => setEditingItem(null)} />
-            <div className="relative bg-surface-raised rounded-lg shadow-lg w-full max-w-md p-6">
+            <div role="dialog" aria-modal="true" aria-labelledby="monthly-plan-dialog-title" className="relative max-h-[90dvh] overflow-y-auto bg-surface-raised rounded-lg shadow-lg w-full max-w-md p-6">
               <div className="flex items-center gap-2 mb-4">
-                <h3 className="text-xl font-semibold">{formatMonth(editingItem.month)} の設定</h3>
+                <h3 id="monthly-plan-dialog-title" className="text-sm font-semibold">{formatMonth(editingItem.month)} の設定</h3>
                 {editingItem.status === 'future' && (
                   <span className="text-xs bg-brand-500/15 text-brand-600 px-2 py-0.5 rounded-lg font-normal">翌月以降の予定</span>
                 )}
               </div>
 
-              {editingItem.status === 'future' && (
-                <div className="mb-4 bg-brand-500/15 border border-brand-500/30 rounded-lg p-3 text-sm text-brand-600">
-                  📅 <strong>{formatMonth(editingItem.month)}</strong> からのプラン変更予定を設定します。<br />
-                  <span className="text-xs text-brand-600 mt-1 block">現在のプランは今月末まで継続されます。</span>
-                </div>
-              )}
-              
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-normal text-text-secondary mb-1">プラン</label>
+                  <label htmlFor="monthly-plan-month" className="block text-sm font-normal text-text-secondary mb-1">対象月</label>
+                  <input id="monthly-plan-month" type="month" value={editingItem.month} onChange={event => setEditingItem({ ...editingItem, month: event.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm" />
+                </div>
+                <div>
+                  <label htmlFor="monthly-plan-scope" className="block text-sm font-normal text-text-secondary mb-1">適用範囲</label>
+                  <select id="monthly-plan-scope" className="w-full border rounded-lg px-3 py-2 text-sm" value={applyScope} onChange={event => setApplyScope(event.target.value as 'month' | 'continuing')}>
+                    <option value="continuing">この月から次の設定まで</option>
+                    <option value="month">この月のみ</option>
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="monthly-plan-name" className="block text-sm font-normal text-text-secondary mb-1">プラン</label>
                   <select
+                    id="monthly-plan-name"
                     className="w-full border rounded-lg px-3 py-2 text-sm"
                     value={editForm.plan}
                     onChange={(e) => {
+                      setFormError('')
                       const newPlan = e.target.value
                       let newFee = editForm.monthlyFee
                       
@@ -366,6 +389,7 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
                     <option value="">プランなし</option>
                     <option value="休会">休会</option>
                     <option value="退会">退会</option>
+                    {editForm.plan && !['休会', '退会', ...PLAN_LIST].includes(editForm.plan) && <option value={editForm.plan}>{editForm.plan}</option>}
                     {PLAN_LIST.map(p => (
                       <option key={p} value={p}>{p}</option>
                     ))}
@@ -373,13 +397,15 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
                 </div>
 
                 <div>
-                  <label className="block text-sm font-normal text-text-secondary mb-1">月額費用</label>
+                  <label htmlFor="monthly-plan-fee" className="block text-sm font-normal text-text-secondary mb-1">月額費用</label>
                   <input
+                    id="monthly-plan-fee"
                     type="text"
                     inputMode="numeric"
                     className="w-full border rounded-lg px-3 py-2 text-sm"
                     value={editForm.monthlyFee}
                     onChange={(e) => {
+                      setFormError('')
                       const v = e.target.value.replace(/[^0-9]/g, '')
                       setEditForm({ ...editForm, monthlyFee: v })
                     }}
@@ -410,9 +436,7 @@ export default function MemberHistoryPage({ params }: { params: { id: string } }
                   />
                 </div>
                 
-                <div className="text-xs text-text-secondary bg-yellow-500/15 p-2 rounded-lg">
-                  ※ この月の設定のみ変更されます。前後の月には影響しませんが、この変更により会員履歴データが分割される場合があります。
-                </div>
+                {formError && <p role="alert" className="text-xs text-red-600">{formError}</p>}
               </div>
 
               <div className="mt-6 flex justify-end gap-3">

@@ -40,6 +40,7 @@ export async function GET(
         plan,
         status,
         store_id,
+        shared_calendar_store_ids,
         monthly_fee,
         billing_start_month,
         created_at,

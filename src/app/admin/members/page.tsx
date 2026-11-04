@@ -17,6 +17,7 @@ import {
   generateMemberAccessUrl
 } from '@/lib/utils/member'
 import { useStoreChange } from '@/hooks/useStoreChange'
+import { countsAsMember } from '@/lib/membership-ledger'
 import { fetchJsonCached, invalidateClientFetchCache } from '@/lib/client-fetch-cache'
 
 function MembersPageContent() {
@@ -192,7 +193,7 @@ function MembersPageContent() {
   // AJ-1: 「会員数」には都度(プラン)・休会・退会の人を含めない。プラン別内訳は都度も1つの
   // プランとして表示したいので、こちらはstatus=activeの全員(都度含む)を対象のままにする。
   const activeMembers = members.filter(m => m.status === 'active')
-  const countedMembers = activeMembers.filter(m => m.plan !== '都度')
+  const countedMembers = activeMembers.filter(m => countsAsMember(m))
   const totalActive = countedMembers.length
 
   const planCounts = activeMembers.reduce((acc, member) => {

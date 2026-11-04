@@ -4,6 +4,7 @@ import { useEffect, useState, type ChangeEvent, type FormEvent, type ReactNode }
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import Button from '@/components/ui/Button'
+import Link from 'next/link'
 
 type StoreOption = {
   id: string
@@ -15,6 +16,8 @@ export default function NewMemberPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [duplicates, setDuplicates] = useState<{ id: string; full_name: string }[]>([])
+  const [allowDuplicateName, setAllowDuplicateName] = useState(false)
   const [stores, setStores] = useState<StoreOption[]>([])
   const [formData, setFormData] = useState({
     fullName: '',
@@ -59,6 +62,8 @@ export default function NewMemberPage() {
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
+    setDuplicates([])
+    setAllowDuplicateName(false)
   }
 
   const handleSubmit = async (e: FormEvent) => {
@@ -84,6 +89,7 @@ export default function NewMemberPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           fullName,
+          allowDuplicateName,
           storeId: formData.storeId,
           plan: null,
           monthlyFee: 0,
@@ -98,6 +104,7 @@ export default function NewMemberPage() {
       const result = await response.json().catch(() => ({}))
       if (!response.ok) {
         setError(result.error || '会員を登録できませんでした。')
+        setDuplicates(result.duplicates || [])
         return
       }
 
@@ -127,7 +134,7 @@ export default function NewMemberPage() {
     <div className="min-h-screen bg-surface-base px-4 pb-28 pt-6">
       <main className="mx-auto max-w-md">
         <div className="mb-6 text-center">
-          <h1 className="text-2xl font-normal text-text-primary">体験者を登録</h1>
+          <h1 className="text-xl font-medium text-text-primary">体験者を登録</h1>
           <p className="mt-2 text-sm text-text-secondary">体験に来た方を登録します。入会が決まった後にプランや入会日を設定します。</p>
         </div>
 
@@ -135,6 +142,12 @@ export default function NewMemberPage() {
           {error && (
             <div className="mb-4 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-600">
               {error}
+            </div>
+          )}
+          {duplicates.length > 0 && (
+            <div className="mb-4 space-y-3 text-sm">
+              {duplicates.map(member => <Link key={member.id} href={`/admin/members/${member.id}/history`} className="block text-brand-600">{member.full_name}の契約・復帰を設定</Link>)}
+              <label className="flex items-center gap-2 text-text-secondary"><input type="checkbox" checked={allowDuplicateName} onChange={event => setAllowDuplicateName(event.target.checked)} />同姓同名の別人として登録する</label>
             </div>
           )}
 

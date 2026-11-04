@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { PLAN_FEES, PLAN_LIST } from '@/lib/constants'
 import Button from '@/components/ui/Button'
+import Link from 'next/link'
 
 type Choice = { label: string; value: string }
 type CounselingData = Record<string, string | string[]>
@@ -141,6 +142,7 @@ export default function EditMemberPage() {
     fullName: '',
     email: '',
     storeId: '',
+    sharedCalendarStoreIds: [] as string[],
     plan: '月4回',
     monthlyFee: '',
     startMonth: '',
@@ -196,6 +198,7 @@ export default function EditMemberPage() {
             fullName: member.full_name || '',
             email: member.email || '',
             storeId: member.store_id || '',
+            sharedCalendarStoreIds: Array.isArray(member.shared_calendar_store_ids) ? member.shared_calendar_store_ids : [],
             plan: member.plan || '',
             monthlyFee: member.monthly_fee ? member.monthly_fee.toString() : '',
             startMonth,
@@ -286,13 +289,9 @@ export default function EditMemberPage() {
             fullName: formData.fullName,
             email: formData.email,
             storeId: formData.storeId,
-            plan: formData.plan,
-            monthlyFee: formData.monthlyFee,
-            startMonth: formData.startMonth,
+            sharedCalendarStoreIds: formData.sharedCalendarStoreIds,
             registrationDate: formData.registrationDate,
-            status: formData.status,
             memo: formData.memo,
-            changeDate: formData.changeDate,
             onlineReminderEnabled: formData.onlineReminderEnabled,
             pushNotificationEnabled: formData.pushNotificationEnabled,
             birthDate: formData.birthDate,
@@ -505,7 +504,7 @@ export default function EditMemberPage() {
 
               {isDietSelected ? (
                 <div className="mt-6 pt-6 border-t border-border-subtle space-y-5">
-                  <h3 className="text-xl font-semibold text-text-primary">ダイエット詳細</h3>
+                  <h3 className="text-sm font-semibold text-text-primary">ダイエット詳細</h3>
                   <TextArea label="ダイエット詳細メモ" name="dietDetailMemo" value={valueOf(counseling.dietDetailMemo)} onValue={updateCounseling} placeholder="例：お酒と夜の食事が課題。厳しい糖質制限は過去に続かなかった。" />
                   <ChoiceGroup label="ダイエット意欲" name="dietMotivation" value={valueOf(counseling.dietMotivation)} options={choices.dietMotivation} onValue={updateCounseling} />
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -550,30 +549,43 @@ export default function EditMemberPage() {
                 <option value="">店舗を選択してください</option>
                 {stores.map(store => <option key={store.id} value={store.id}>{store.name}</option>)}
               </SelectField>
-              <SelectField label="入会時プラン" name="plan" value={formData.plan} onChange={handleChange}>
-                <option value="">未入会・未設定</option>
-                {PLAN_LIST.map(plan => <option key={plan} value={plan}>{plan}</option>)}
-              </SelectField>
-              <TextField label="入会時月会費" type="number" name="monthlyFee" value={formData.monthlyFee} onChange={handleChange} unit="円" placeholder="13200" />
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <TextField label="開始月" type="month" name="startMonth" value={formData.startMonth} onChange={handleChange} />
-                <TextField label="登録日" type="date" name="registrationDate" value={formData.registrationDate} onChange={handleChange} />
-              </div>
-              <SelectField label="ステータス" name="status" value={formData.status} onChange={handleChange}>
-                <option value="active">有効</option>
-                <option value="suspended">休会</option>
-                <option value="withdrawn">退会</option>
-              </SelectField>
-
-              {isChanged && (
-                <div className="bg-yellow-500/15 p-4 rounded-lg border border-yellow-500/30">
-                  <TextField label="変更適用日" type="date" name="changeDate" value={formData.changeDate} onChange={handleChange} />
-                  <p className="mt-2 text-sm text-yellow-700">指定した日付から新しいプラン・会費が適用されます。</p>
+              {stores.filter(store => store.id !== formData.storeId).length > 0 && (
+                <div className="rounded-lg border border-border-subtle bg-surface-base p-4">
+                  <div className="text-sm font-semibold text-text-primary">他店舗のカレンダー表示</div>
+                  <p className="mt-1 text-xs text-text-secondary">
+                    チェックした店舗の予約画面にも、この会員を表示します。所属店舗は常に表示されます。
+                  </p>
+                  <div className="mt-3 space-y-2">
+                    {stores.filter(store => store.id !== formData.storeId).map(store => {
+                      const checked = formData.sharedCalendarStoreIds.includes(store.id)
+                      return (
+                        <label key={store.id} className="flex items-center gap-3 cursor-pointer text-sm text-text-primary">
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => setFormData(prev => ({
+                              ...prev,
+                              sharedCalendarStoreIds: checked
+                                ? prev.sharedCalendarStoreIds.filter(id => id !== store.id)
+                                : [...prev.sharedCalendarStoreIds, store.id],
+                            }))}
+                            className="h-4 w-4 rounded border-border-strong text-brand-600 focus:ring-brand-500"
+                          />
+                          {store.name}のカレンダーにも表示する
+                        </label>
+                      )
+                    })}
+                  </div>
                 </div>
               )}
+              <Link href={`/admin/members/${memberId}/history`} className="flex items-center justify-between border-y border-border-subtle py-3 text-sm text-text-secondary">
+                <span>月額プラン・休会・復帰</span>
+                <span>{formData.plan || '未設定'} / {formData.monthlyFee ? `${Number(formData.monthlyFee).toLocaleString()}円` : '0円'} &gt;</span>
+              </Link>
+              <TextField label="登録日" type="date" name="registrationDate" value={formData.registrationDate} onChange={handleChange} />
 
               <div className="pt-4 border-t border-border-subtle">
-                <h3 className="text-xl font-semibold text-text-primary mb-4">機能表示設定</h3>
+                <h3 className="text-sm font-semibold text-text-primary mb-4">機能表示設定</h3>
                 <label className="flex items-center gap-4 p-4 bg-brand-500/10 border border-brand-500/25 rounded-lg cursor-pointer hover:bg-brand-500/15">
                   <input
                     type="checkbox"
@@ -596,7 +608,7 @@ export default function EditMemberPage() {
               </div>
 
               <div className="pt-4 border-t border-border-subtle">
-                <h3 className="text-xl font-semibold text-text-primary mb-4">通知設定</h3>
+                <h3 className="text-sm font-semibold text-text-primary mb-4">通知設定</h3>
                 <div className="space-y-4">
                   <SwitchCard name="pushNotificationEnabled" checked={formData.pushNotificationEnabled} onChange={handleChange} title="アプリ通知を送信する" description="予約確定・変更・キャンセル・リマインダーの通知対象にします。受信には会員側の端末許可が必要です。" color="brand" />
                 </div>
@@ -645,7 +657,7 @@ function Section({ title, description, children }: { title: string; description?
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="text-xl font-semibold text-text-primary">{title}</h2>
+        <h2 className="text-base font-semibold text-text-primary">{title}</h2>
         {description && <p className="mt-1 text-sm text-text-secondary">{description}</p>}
       </div>
       {children}
@@ -829,7 +841,7 @@ function SwitchCard({ name, checked, onChange, title, description, color = 'blue
 function SummaryBox({ summaryText, formData, counseling }: { summaryText: string; formData: { fullName: string; gender: string; heightCm: string }; counseling: CounselingData }) {
   return (
     <div className="mt-6 rounded-lg border border-brand-500/30 bg-brand-500/15 p-4">
-      <h3 className="text-xl font-semibold text-brand-600 mb-3">保存後のカウンセリング要約</h3>
+      <h3 className="text-sm font-semibold text-brand-600 mb-3">保存後のカウンセリング要約</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-brand-600">
         <SummaryItem label="氏名" value={formData.fullName} />
         <SummaryItem label="性別" value={genderLabel(formData.gender)} />
