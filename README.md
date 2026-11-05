@@ -1,116 +1,62 @@
-# T&J GYM - ジム予約システム
+# T&J GYM アプリ
 
-T&J GYMの複数店舗対応予約管理システムです。
+管理者・トレーナー・会員向けの、予約・会員・売上・カルテ・ダイエットサポート管理アプリです。Next.js、TypeScript、Supabase、NextAuth.jsを使用し、Vercelで運用しています。
 
-## 機能概要
+このZIPはソースコード一式です。会員データや実際の接続キーは別途管理します。元の版は `SOURCE_VERSION` で確認できます。
 
-### 🏪 店舗管理
-- 複数店舗対応（1号店・2号店）
-- 店舗別データ分離とアクセス制御
-- 管理者・会員の権限管理
+## 起動
 
-### 👥 ユーザー管理
-- 会員登録・ログイン機能
-- 管理者による会員ステータス管理
-- セキュアなパスワード管理
+Node.jsとnpmが必要です。GitHubの検証環境はNode.js 20で設定されています。
 
-### 📅 予約管理
-- 直感的な予約作成・編集・キャンセル
-- 柔軟なセッション時間設定
-- 自動タイトル生成と回数管理
-- 店舗別重複防止
+1. 依存関係をインストールします。
 
-### 🗓️ Googleカレンダー連携
-- リアルタイム同期
-- 店舗別カレンダー管理
-- 自動イベント作成・更新・削除
+   ```bash
+   npm ci
+   ```
 
-## セットアップ手順
+2. `.env.example` を基に `.env.local` を用意し、利用するSupabase・認証・外部サービスの値を設定します。必須なのはSupabase接続情報、認証用シークレット、管理者メールアドレスです。実際のキーをGitへ登録しないでください。
 
-### 1. 依存関係のインストール
+3. 開発サーバーを起動します。
 
-```bash
-npm install
-```
+   ```bash
+   npm run dev
+   ```
 
-### 2. 環境変数の設定
+   [ローカル画面](http://localhost:3000)を開きます。
 
-`.env.local` ファイルを作成：
+既存の運用環境に接続する場合、データベースを作り直す必要はありません。新しいデータベースを使う場合は、`database/` の初期定義と `supabase/migrations/` の適用状況を確認して準備してください。SQLには既存データを更新する処理もあるため、一括で再実行しないでください。
 
-```bash
-# Database
-SUPABASE_URL=your_supabase_project_url
-SUPABASE_ANON_KEY=your_supabase_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+## フォルダー
 
-# Authentication
-NEXTAUTH_URL=http://localhost:3000
-NEXTAUTH_SECRET=your_nextauth_secret_key
+| 場所 | 用途 |
+| --- | --- |
+| `src/app/` | 各画面とAPI |
+| `src/components/` | 共通の画面部品 |
+| `src/lib/`・`src/hooks/` | 共通処理 |
+| `public/` | 使用中の画像・アイコン |
+| `supabase/migrations/` | データベースの追加変更 |
+| `database/` | 初期定義・旧版のスキーマ変更 |
+| `scripts/`・`tests/` | 開発用コマンド・自動テスト |
+| `docs/` | ZIPの構成・運用手順 |
 
-# Admin Configuration
-ADMIN_EMAILS=tandjgym@gmail.com,tandjgym2goutenn@gmail.com
+## 主なコマンド
 
-# Google Calendar Integration
-GOOGLE_CALENDAR_ID_1=tandjgym@gmail.com
-GOOGLE_CALENDAR_ID_2=tandjgym2goutenn@gmail.com
-GOOGLE_SERVICE_ACCOUNT_KEY=your_service_account_json_key
-```
+| コマンド | 内容 |
+| --- | --- |
+| `npm run dev` | 開発サーバー |
+| `npm run build` | 本番用ビルド |
+| `npm run start` | ビルド済みアプリの起動 |
+| `npm run typecheck` | 型チェック |
+| `npm run lint` | コード検証 |
+| `npm run test:membership` | 契約・売上管理の検証 |
+| `npm run archive:source` | Gitに保存済みの版から整理済みZIPを作成 |
 
-### 3. データベースセットアップ
+画面操作の自動テストには起動中のローカルサーバーとPlaywrightのブラウザーが必要です。最初に `npx playwright install chromium` を実行します。別ポートで起動した場合は `PLAYWRIGHT_BASE_URL` で接続先を指定できます。
 
-1. [Supabase](https://supabase.com/)でプロジェクトを作成
-2. SQL Editorで `database/schema.sql` を実行
-3. 必要に応じて初期データを投入
+## 案内
 
-### 4. アプリケーション起動
+- [ZIPの内容と除外対象](docs/ARCHIVE_CONTENTS.md)
+- [契約・月会費の管理](docs/CONTRACT_MANAGEMENT.md)
+- [Googleカレンダーの設定](GOOGLE_CALENDAR_SETUP.md)
 
-```bash
-npm run dev
-```
-
-http://localhost:3000 でアクセス可能です。
-
-## 技術スタック
-
-- **フレームワーク**: Next.js 14 (App Router)
-- **言語**: TypeScript
-- **データベース**: Supabase (PostgreSQL)
-- **認証**: NextAuth.js
-- **スタイリング**: Tailwind CSS
-- **バリデーション**: Zod
-- **カレンダー**: Google Calendar API
-
-## アーキテクチャ
-
-### セキュリティ
-- bcryptによるパスワードハッシュ化
-- NextAuth.jsによるセッション管理
-- 店舗別データアクセス制御
-- 管理者権限の適切な分離
-
-### データベース設計
-- PostgreSQL (Supabase)
-- 店舗別データ分離
-- リレーショナル設計による整合性保証
-
-### 外部連携
-- Google Calendar API
-- リアルタイム同期
-- エラーハンドリング
-
-## 使用方法
-
-### 管理者機能
-1. 管理者アカウントでログイン
-2. ダッシュボードから各機能にアクセス
-3. 予約管理・会員管理・新規予約作成
-
-### 会員機能
-1. 会員アカウントでログイン
-2. マイ予約から自分の予約を確認
-3. 予約の編集・キャンセルが可能
-
-## ライセンス
-
-このプロジェクトは T&J GYM 専用システムです。
-# Force Vercel rebuild
+T&J GYM専用システムです。

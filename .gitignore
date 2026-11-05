@@ -10,6 +10,7 @@
 
 # next.js
 /.next/
+/.next-preview/
 /out/
 
 # production
@@ -37,3 +38,14 @@ next-env.d.ts
 
 # Local Netlify folder
 .netlify
+
+# Local files that do not belong in application source archives
+/.next*/
+/test-results/
+/playwright-report/
+/outputs/
+/notes/
+/references/
+/personal-task-cloud/
+/video-edit-test/
+/cookies*.txt

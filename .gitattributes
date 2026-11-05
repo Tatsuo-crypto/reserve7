@@ -1,0 +1,75 @@
+# Source archives: keep application code, configuration and maintained guides.
+/.env* export-ignore
+/.env.example -export-ignore
+/.next* export-ignore
+/.next*/** export-ignore
+/.vercel export-ignore
+/.vercel/** export-ignore
+/.netlify export-ignore
+/.netlify/** export-ignore
+/.vercel-* export-ignore
+/netlify.toml export-ignore
+/node_modules export-ignore
+/node_modules/** export-ignore
+/data export-ignore
+/data/** export-ignore
+/scratch export-ignore
+/scratch/** export-ignore
+/public.off export-ignore
+/public.off/** export-ignore
+/test-results export-ignore
+/test-results/** export-ignore
+/playwright-report export-ignore
+/playwright-report/** export-ignore
+/notes export-ignore
+/notes/** export-ignore
+/outputs export-ignore
+/outputs/** export-ignore
+/references export-ignore
+/references/** export-ignore
+/personal-task-cloud export-ignore
+/personal-task-cloud/** export-ignore
+/video-edit-test export-ignore
+/video-edit-test/** export-ignore
+
+# One-off investigations, account maintenance and old planning notes.
+/*.js export-ignore
+/next.config.js -export-ignore
+/postcss.config.js -export-ignore
+/tailwind.config.js -export-ignore
+/*.ts export-ignore
+/playwright.config.ts -export-ignore
+/next-env.d.ts -export-ignore
+/*.sh export-ignore
+/*.sql export-ignore
+/*.txt export-ignore
+/missing_users.json export-ignore
+/*.md export-ignore
+/README.md -export-ignore
+/GOOGLE_CALENDAR_SETUP.md -export-ignore
+/AGENTS.md export-ignore
+
+/docs/** export-ignore
+/docs/ARCHIVE_CONTENTS.md -export-ignore
+/docs/CONTRACT_MANAGEMENT.md -export-ignore
+/scripts/** export-ignore
+/scripts/export-source.mjs -export-ignore
+/scripts/test-membership-transactions.cjs -export-ignore
+/scripts/generate-icons.mjs -export-ignore
+/scripts/compare-bundle-size.js -export-ignore
+/scripts/ui-audit.mjs -export-ignore
+/scripts/css-check.js -export-ignore
+/scripts/resize-icons.js -export-ignore
+
+/database/insert_missing_users.sql export-ignore
+/database/update_admin_passwords.sql export-ignore
+/database/update_all_member_names.sql export-ignore
+/database/cleanup_data.sql export-ignore
+/database/cleanup_trial_reservation_notes.sql export-ignore
+/database/add_space_to_names.sql export-ignore
+**/.DS_Store export-ignore
+**/*.log export-ignore
+**/*.tsbuildinfo export-ignore
+**/*.pem export-ignore
+
+/SOURCE_VERSION export-subst
